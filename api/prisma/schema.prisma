@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  VENDEDOR
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  VENCIDO
+  CANCELADO
+}
+
+enum MetodoPago {
+  TRANSFERENCIA
+  TARJETA
+  EFECTIVO
+  OTRO
+}
+
+enum EstadoFinanciamiento {
+  ACTIVO
+  COMPLETADO
+  CANCELADO
+}
+
+enum TipoCertificado {
+  CURSANDO
+  COMPLETADO
+}
+
+enum RendimientoEstudiante {
+  BAJO
+  MEDIO
+  ALTO
+}
+
+// ─────────────────────────────────────────────
+// Auth & Usuarios
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  role      Role     @default(VENDEDOR)
+  asesor    Asesor?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Asesores (Vendedores)
+// ─────────────────────────────────────────────
+
+model Asesor {
+  id          String      @id @default(cuid())
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String      @unique
+  nombre      String
+  email       String
+  telefono    String
+  pagos       Pago[]
+  estudiantes Estudiante[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Colegios
+// ─────────────────────────────────────────────
+
+model Colegio {
+  id          String       @id @default(cuid())
+  nombre      String       @unique
+  ciudad      String
+  estudiantes Estudiante[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Estudiantes
+// ─────────────────────────────────────────────
+
+model Estudiante {
+  id               String                @id @default(cuid())
+  nombre           String
+  email            String
+  telefono         String
+  fechaNacimiento  DateTime
+  colegio          Colegio?              @relation(fields: [colegioId], references: [id])
+  colegioId        String?
+  asesor           Asesor?               @relation(fields: [asesorId], references: [id])
+  asesorId         String?
+  acudiente        Acudiente?
+  cursos           CursoEstudiante[]
+  pagos            Pago[]
+  financiamientos  Financiamiento[]
+  simulacros       SimulacroEstudiante[]
+  certificados     Certificado[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+}
+
+model Acudiente {
+  id           String     @id @default(cuid())
+  nombre       String
+  email        String
+  telefono     String
+  relacion     String
+  estudiante   Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId String     @unique
+}
+
+// ─────────────────────────────────────────────
+// Cursos
+// ─────────────────────────────────────────────
+
+model Curso {
+  id           String            @id @default(cuid())
+  nombre       String
+  descripcion  String?
+  precio       Float
+  duracionDias Int
+  activo       Boolean           @default(true)
+  estudiantes  CursoEstudiante[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model CursoEstudiante {
+  id           String     @id @default(cuid())
+  estudiante   Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId String
+  curso        Curso      @relation(fields: [cursoId], references: [id])
+  cursoId      String
+  fechaCompra  DateTime   @default(now())
+
+  @@unique([estudianteId, cursoId])
+}
+
+// ─────────────────────────────────────────────
+// Pagos
+// ─────────────────────────────────────────────
+
+model Pago {
+  id               String     @id @default(cuid())
+  estudiante       Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId     String
+  asesor           Asesor?    @relation(fields: [asesorId], references: [id])
+  asesorId         String?
+  monto            Float
+  estado           EstadoPago @default(PENDIENTE)
+  metodo           MetodoPago
+  fechaVencimiento DateTime
+  fechaPago        DateTime?
+  comprobante      String?    // URL en Cloudinary
+  notas            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Financiamientos & Cuotas
+// ─────────────────────────────────────────────
+
+model Financiamiento {
+  id           String               @id @default(cuid())
+  estudiante   Estudiante           @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId String
+  montoTotal   Float
+  estado       EstadoFinanciamiento @default(ACTIVO)
+  cuotas       Cuota[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model Cuota {
+  id               String         @id @default(cuid())
+  financiamiento   Financiamiento @relation(fields: [financiamientoId], references: [id], onDelete: Cascade)
+  financiamientoId String
+  numero           Int
+  monto            Float
+  fechaVencimiento DateTime
+  pagado           Boolean        @default(false)
+  fechaPago        DateTime?
+  reminders        ReminderCobro[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Cobros & Reminders WhatsApp
+// ─────────────────────────────────────────────
+
+model ReminderCobro {
+  id               String   @id @default(cuid())
+  cuota            Cuota    @relation(fields: [cuotaId], references: [id], onDelete: Cascade)
+  cuotaId          String
+  fechaProgramada  DateTime
+  enviado          Boolean  @default(false)
+  fechaEnvio       DateTime?
+  numeroIntento    Int      @default(0)
+  mensajeEnviado   String?
+  createdAt        DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Certificados
+// ─────────────────────────────────────────────
+
+model Certificado {
+  id           String          @id @default(cuid())
+  estudiante   Estudiante      @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId String
+  tipo         TipoCertificado
+  archivoUrl   String          // URL PDF en Cloudinary
+  numeroSerie  String          @unique
+  fechaEmision DateTime        @default(now())
+  expiracion   DateTime?
+}
+
+// ─────────────────────────────────────────────
+// Simulacros & Análisis
+// ─────────────────────────────────────────────
+
+model Simulacro {
+  id            String                @id @default(cuid())
+  nombre        String
+  archivoUrl    String                // URL PDF en Cloudinary
+  procesado     Boolean               @default(false)
+  estudiantes   SimulacroEstudiante[]
+  createdAt     DateTime              @default(now())
+}
+
+model SimulacroEstudiante {
+  id                  String                @id @default(cuid())
+  estudiante          Estudiante            @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId        String
+  simulacro           Simulacro             @relation(fields: [simulacroId], references: [id], onDelete: Cascade)
+  simulacroId         String
+  puntajeTotal        Int
+  porcentajeAciertos  Float
+  areasDebiles        String[]
+  rendimiento         RendimientoEstudiante
+  requiereIntensivo   Boolean               @default(false)
+  fechaAnalisis       DateTime              @default(now())
+
+  @@unique([estudianteId, simulacroId])
+}

@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  * {
+    @apply border-outline-variant;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-on-surface font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Scrollbar personalizado */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-surface-lowest; }
+  ::-webkit-scrollbar-thumb { @apply bg-outline-variant rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-outline; }
+}
+
+@layer components {
+  /* Cards base */
+  .card {
+    @apply bg-surface rounded-lg border border-white/[0.08] shadow-card;
+  }
+
+  .card-elevated {
+    @apply bg-surface-high rounded-lg border border-white/[0.08] shadow-float;
+  }
+
+  /* Status chips */
+  .chip-success {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
+           bg-secondary/10 text-secondary border border-secondary/20;
+  }
+
+  .chip-warning {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
+           bg-tertiary/10 text-tertiary border border-tertiary/20;
+  }
+
+  .chip-error {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
+           bg-error/10 text-error border border-error/20;
+  }
+
+  .chip-info {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
+           bg-primary/10 text-primary border border-primary/20;
+  }
+
+  /* Input base */
+  .input-base {
+    @apply w-full bg-surface-lowest border border-outline-variant rounded
+           px-3 py-2 text-body-md text-on-surface placeholder:text-on-surface-variant
+           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30
+           transition-colors duration-150;
+  }
+
+  /* Botón primario */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold
+           bg-primary text-on-primary hover:bg-primary/90
+           transition-all duration-150 active:scale-[0.98] disabled:opacity-50;
+  }
+
+  /* Botón ghost */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-medium
+           text-on-surface-variant border border-outline-variant
+           hover:bg-surface-high hover:text-on-surface
+           transition-all duration-150 active:scale-[0.98];
+  }
+
+  /* Botón destructivo */
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold
+           bg-error/10 text-error border border-error/30
+           hover:bg-error/20 transition-all duration-150 active:scale-[0.98];
+  }
+}
+
+@layer utilities {
+  /* Tabular numbers para datos financieros */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
