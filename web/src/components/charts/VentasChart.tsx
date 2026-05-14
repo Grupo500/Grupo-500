@@ -89,8 +89,8 @@ export function VentasChart() {
         </div>
       </div>
 
-      {/* Fila 2: variación — tiene su propia línea con espacio */}
-      <div className="mb-3 h-5">
+      {/* Fila 2: variación — alineada a la derecha bajo los tabs */}
+      <div className="mb-3 h-5 flex justify-end">
         {actual > 0 && (
           <div className={cn(
             'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full',
