@@ -51,7 +51,7 @@ export default function VerificandoPage() {
   }, [isLoaded, isSignedIn, getToken, router])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-dvh flex flex-col items-center justify-center gap-6" style={{ background: 'var(--bg)' }}>
       <div className="flex flex-col items-center gap-3">
         <Image src="/logo.png" alt="Grupo 500" width={90} height={90} className="drop-shadow-sm" priority />
         <p className={`${poppins.className} text-lg font-bold tracking-tight text-on-surface`}>Grupo 500</p>
