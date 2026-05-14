@@ -26,7 +26,7 @@ export default function AsesoresPage() {
     return createClientFetcher(token)<T>(path)
   }
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['asesores'],
     queryFn: () => fetcher<any>('/asesores'),
   })
@@ -41,11 +41,16 @@ export default function AsesoresPage() {
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-6 h-6 text-primary animate-spin" />
         </div>
+      ) : isError ? (
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-xl">
+          <p className="text-sm text-[var(--error)]">Error al cargar asesores</p>
+          <p className="text-xs mt-1 opacity-60">{String(error)}</p>
+        </div>
       ) : asesores.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl">
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-xl">
           <UserCheck className="w-10 h-10 mb-3 opacity-30" />
           <p className="text-sm">No hay asesores registrados</p>
-          <p className="text-xs mt-1 opacity-60">Los asesores se crean desde el panel de Clerk</p>
+          <p className="text-xs mt-1 opacity-60">Los usuarios se registran en la app y aparecen aquí automáticamente</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
