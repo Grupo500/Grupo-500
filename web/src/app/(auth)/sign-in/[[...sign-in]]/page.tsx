@@ -21,6 +21,7 @@ export default function SignInPage() {
       {/* Clerk SignIn */}
       <SignIn
         forceRedirectUrl="/verificando"
+        signUpUrl="/sign-up"
         appearance={{
           variables: {
             colorBackground:        '#ffffff',
