@@ -49,7 +49,7 @@ export default function SignInPage() {
               formButtonPrimary:
                 'bg-primary hover:bg-primary/90 text-[#0a0d14] font-semibold rounded-lg transition-colors shadow-none',
               footerActionLink:  'text-primary hover:text-primary/80 font-medium',
-              footer:            'hidden',
+              header:            'hidden',
               identityPreviewText: 'text-sm',
               identityPreviewEditButtonIcon: 'text-primary',
               alertText:         'text-sm',
