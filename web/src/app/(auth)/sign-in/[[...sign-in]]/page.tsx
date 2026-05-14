@@ -16,7 +16,7 @@ export default function SignInPage() {
             className="block mx-auto drop-shadow-sm"
             priority
           />
-          <p className="text-sm text-on-surface-variant mt-0.5">App Grupo 500</p>
+          <p className="text-xs font-bold tracking-[0.2em] uppercase text-primary mt-1">App Grupo 500</p>
         </div>
 
         {/* Clerk SignIn con variables de diseño */}
