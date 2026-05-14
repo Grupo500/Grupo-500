@@ -23,7 +23,7 @@ const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder:   'grupo500/comprobantes',
-    resource_type: 'image',
+    resource_type: 'auto',
     allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
     use_filename: true,
     unique_filename: true,

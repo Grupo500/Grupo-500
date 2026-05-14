@@ -53,12 +53,19 @@ export async function registrar(req: Request, res: Response) {
 
 export async function actualizar(req: Request, res: Response) {
   const { id } = req.params
+  const { monto, metodo, estado, fechaVencimiento, comprobante } = req.body
+
   const pago = await prisma.pago.update({
     where: { id },
     data: {
-      ...req.body,
-      ...(req.body.estado === 'PAGADO' && { fechaPago: new Date() }),
+      ...(monto !== undefined       && { monto: Number(monto) }),
+      ...(metodo                    && { metodo }),
+      ...(estado                    && { estado }),
+      ...(fechaVencimiento          && { fechaVencimiento: new Date(fechaVencimiento) }),
+      ...(comprobante !== undefined  && { comprobante }),
+      ...(estado === 'PAGADO'       && { fechaPago: new Date() }),
     },
+    include: { estudiante: true, asesor: true },
   })
   return ApiResponse.success(res, pago)
 }
