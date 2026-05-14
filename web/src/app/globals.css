@@ -4,68 +4,101 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* ─── TEMA CLARO (default) — Paleta brand Grupo 500 ────────────────────────── */
-/*
-  Brand palette:
-    #95daff — azul cielo claro
-    #21b9f7 — cyan eléctrico
-    #2094ff — azul brillante (brand hero)
-    #4361ee — indigo/azul-púrpura
-    #003060 — navy oscuro (texto/brand dark)
-    #635cef — púrpura
-*/
+/* ─── TEMA CLARO — Material You / Grupo 500 (Stitch design system) ─────────── */
 :root,
 .light {
-  --bg:                 #f4f8ff;   /* fondo muy claro con tono azul brand       */
+  /* Superficies */
+  --bg:                 #f9f9ff;
   --surface-lowest:     #ffffff;
-  --surface-low:        #ebf2ff;
-  --surface:            #e4eeff;
-  --surface-high:       #d6e4ff;
-  --surface-highest:    #c4d7f8;
-  --on-surface:         #001d3d;   /* navy profundo — 15:1 sobre blanco ✓       */
-  --on-surface-variant: #2a4172;   /* azul oscuro suave — 7:1 sobre blanco ✓    */
-  --outline:            #5a74a8;   /* azul medio para bordes decorativos         */
-  --outline-variant:    #c2d4ef;   /* borde sutil en inputs y cards              */
-  --primary:            #1a7de0;   /* #2094ff oscurecido → 4.6:1 sobre blanco ✓ */
+  --surface-low:        #f2f3fd;
+  --surface:            #ecedf7;
+  --surface-high:       #e6e7f2;
+  --surface-highest:    #e1e2ec;
+
+  /* Texto */
+  --on-surface:         #191b23;
+  --on-surface-variant: #424754;
+
+  /* Bordes */
+  --outline:            #727785;
+  --outline-variant:    #c2c6d6;
+
+  /* Primary — azul */
+  --primary:            #2170e4;
   --primary-on:         #ffffff;
-  --primary-container:  #d6eaff;   /* fondo suave para chips/badges de primary   */
-  --secondary:          #4361ee;   /* indigo brand — 4.8:1 sobre blanco ✓        */
+  --primary-container:  #d8e2ff;
+  --primary-dim:        #adc6ff;
+
+  /* Secondary — esmeralda */
+  --secondary:          #006c49;
   --secondary-on:       #ffffff;
-  --tertiary:           #635cef;   /* púrpura brand                              */
+  --secondary-container:#6cf8bb;
+  --secondary-dim:      #4edea3;
+
+  /* Tertiary — ámbar */
+  --tertiary:           #825100;
   --tertiary-on:        #ffffff;
-  --accent:             #21b9f7;   /* cyan para highlights / tags positivos      */
-  --error:              #c0392b;   /* rojo WCAG AA ✓                             */
-  --error-container:    #fde8e6;
-  --scrim:              rgba(0, 30, 60, 0.4);
-  --shadow-card:        0 1px 3px rgba(0,48,96,0.08), 0 0 0 1px rgba(0,48,96,0.07);
-  --shadow-float:       0 8px 24px rgba(0,48,96,0.14), 0 0 0 1px rgba(0,48,96,0.06);
+  --tertiary-container: #ffddb8;
+  --tertiary-dim:       #ffb95f;
+
+  /* Error */
+  --error:              #ba1a1a;
+  --error-container:    #ffdad6;
+  --on-error-container: #93000a;
+
+  /* Utilidades */
+  --scrim:              rgba(25, 27, 35, 0.4);
+  --shadow-card:        0 1px 3px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.06);
+  --shadow-float:       0 4px 24px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.07);
+  --shadow-diffused:    0 4px 12px -4px rgba(0,0,0,0.10);
 }
 
-/* ─── TEMA OSCURO ────────────────────────────────────────────────────────────── */
+/* ─── TEMA OSCURO — Material You / Grupo 500 (Stitch dark tokens) ───────────── */
 .dark {
-  --bg:                 #060d18;   /* navy muy oscuro (basado en #003060 extremo) */
-  --surface-lowest:     #0a1525;
-  --surface-low:        #0f1e35;
-  --surface:            #142543;
-  --surface-high:       #1c2f52;
-  --surface-highest:    #253a61;
-  --on-surface:         #d6eaff;   /* azul claro (basado en #95daff) ✓           */
-  --on-surface-variant: #95c8f0;   /* cyan apagado — fácil de leer               */
-  --outline:            #4a6fa0;
-  --outline-variant:    #253a61;
-  --primary:            #95daff;   /* azul cielo brand — contraste ✓ sobre dark  */
-  --primary-on:         #003060;
+  /* Superficies */
+  --bg:                 #10131a;
+  --surface-lowest:     #0b0e15;
+  --surface-low:        #191b23;
+  --surface:            #1d2027;
+  --surface-high:       #272a31;
+  --surface-highest:    #32353c;
+
+  /* Texto */
+  --on-surface:         #e1e2ec;
+  --on-surface-variant: #c2c6d6;
+
+  /* Bordes */
+  --outline:            #8c909f;
+  --outline-variant:    #424754;
+
+  /* Primary — azul claro sobre oscuro */
+  --primary:            #adc6ff;
+  --primary-on:         #002e6a;
   --primary-container:  #0f2d52;
-  --secondary:          #7b99ff;   /* indigo suavizado para dark                 */
-  --secondary-on:       #001060;
-  --tertiary:           #a9a3ff;   /* púrpura suavizado para dark                */
-  --tertiary-on:        #1e0060;
-  --accent:             #21b9f7;   /* cyan — mismo en ambos temas                */
+  --primary-dim:        #adc6ff;
+
+  /* Secondary — esmeralda sobre oscuro */
+  --secondary:          #4edea3;
+  --secondary-on:       #003824;
+  --secondary-container:#005236;
+  --secondary-dim:      #4edea3;
+
+  /* Tertiary — ámbar sobre oscuro */
+  --tertiary:           #ffb95f;
+  --tertiary-on:        #472a00;
+  --tertiary-container: #653e00;
+  --tertiary-dim:       #ffb95f;
+
+  /* Error */
   --error:              #ffb4ab;
   --error-container:    #93000a;
-  --scrim:              rgba(0,0,0,0.65);
-  --shadow-card:        0 0 0 1px rgba(149,218,255,0.07);
-  --shadow-float:       0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(149,218,255,0.07);
+  --on-error-container: #ffdad6;
+
+  /* Utilidades */
+  --scrim:              rgba(0, 0, 0, 0.65);
+  --shadow-card:        0 0 0 1px rgba(194,198,214,0.08);
+  --shadow-float:       0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(194,198,214,0.08);
+  --shadow-diffused:    0 4px 12px -4px rgba(0,0,0,0.4);
 }
 
 /* ─── BASE ──────────────────────────────────────────────────────────────────── */
@@ -83,11 +116,11 @@
     transition: background-color 0.2s ease, color 0.15s ease;
   }
 
-  /* Select — flecha centrada y apariencia consistente */
+  /* Select — flecha custom */
   select {
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a74a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23727785' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     padding-right: 32px !important;
@@ -102,52 +135,68 @@
 
 /* ─── COMPONENTS ────────────────────────────────────────────────────────────── */
 @layer components {
+
+  /* ── Cards ── */
   .card {
-    background: var(--surface);
-    border-radius: 8px;
+    background: var(--surface-lowest);
+    border-radius: 12px;
     border: 1px solid var(--outline-variant);
     box-shadow: var(--shadow-card);
   }
 
   .card-elevated {
-    background: var(--surface-high);
-    border-radius: 8px;
+    background: var(--surface-lowest);
+    border-radius: 12px;
     border: 1px solid var(--outline-variant);
     box-shadow: var(--shadow-float);
   }
 
+  .card-tonal {
+    background: var(--surface-low);
+    border-radius: 12px;
+    border: 1px solid var(--outline-variant);
+  }
+
+  /* ── Status chips — Material You tonal style ── */
   .chip-success {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
     padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
-    background: color-mix(in srgb, var(--secondary) 12%, transparent);
+    background: var(--secondary-container);
     color: var(--secondary);
-    border: 1px solid color-mix(in srgb, var(--secondary) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--secondary) 20%, transparent);
+  }
+  .dark .chip-success {
+    color: var(--secondary-dim);
   }
 
   .chip-warning {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
     padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
-    background: color-mix(in srgb, var(--tertiary) 12%, transparent);
+    background: var(--tertiary-container);
     color: var(--tertiary);
-    border: 1px solid color-mix(in srgb, var(--tertiary) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--tertiary) 20%, transparent);
+  }
+  .dark .chip-warning {
+    color: var(--tertiary-dim);
   }
 
   .chip-error {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
     padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
-    background: color-mix(in srgb, var(--error) 12%, transparent);
+    background: var(--error-container);
     color: var(--error);
-    border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
   }
 
   .chip-info {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
     padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
-    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    background: var(--primary-container);
     color: var(--primary);
-    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
   }
 
+  /* ── Inputs ── */
   .input-base {
     width: 100%;
     background: var(--surface-lowest);
@@ -156,44 +205,70 @@
     padding: 8px 12px;
     font-size: 14px;
     color: var(--on-surface);
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
     outline: none;
   }
   .input-base:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
   }
-  .input-base::placeholder { color: var(--on-surface-variant); opacity: 0.7; }
+  .input-base::placeholder { color: var(--on-surface-variant); opacity: 0.6; }
 
+  /* ── Buttons ── */
   .btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
     background: var(--primary); color: var(--primary-on);
-    transition: opacity 0.15s, transform 0.1s;
+    transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
     cursor: pointer; border: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
   }
-  .btn-primary:hover   { opacity: 0.9; }
-  .btn-primary:active  { transform: scale(0.98); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary:hover   { opacity: 0.92; box-shadow: var(--shadow-diffused); }
+  .btn-primary:active  { transform: scale(0.98); opacity: 1; }
+  .btn-primary:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }
 
   .btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 500;
     background: transparent;
     color: var(--on-surface-variant);
     border: 1px solid var(--outline-variant);
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     cursor: pointer;
   }
-  .btn-ghost:hover { background: var(--surface-high); color: var(--on-surface); }
+  .btn-ghost:hover {
+    background: var(--surface-high);
+    color: var(--on-surface);
+    border-color: var(--outline);
+  }
+
+  .btn-tonal {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    background: var(--primary-container);
+    color: var(--primary);
+    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+    cursor: pointer;
+  }
+  .btn-tonal:hover  { opacity: 0.85; }
+  .btn-tonal:active { transform: scale(0.98); }
+  .btn-tonal:disabled { opacity: 0.38; cursor: not-allowed; }
 }
 
 /* ─── UTILITIES ─────────────────────────────────────────────────────────────── */
 @layer utilities {
-  .tabular { font-variant-numeric: tabular-nums; }
-  .animate-fade-in { animation: fadeIn 0.2s ease-out; }
-  .animate-slide-up { animation: slideUp 0.3s ease-out; }
+  .tabular          { font-variant-numeric: tabular-nums; }
+  .animate-fade-in  { animation: fadeIn 0.2s ease-out; }
+  .animate-slide-up { animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  /* State layers — Material You hover/focus */
+  .state-hover:hover  { background: color-mix(in srgb, var(--on-surface) 8%, transparent); }
+  .state-focus:focus  { background: color-mix(in srgb, var(--primary) 12%, transparent); }
 
   @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px) scale(0.98) }
+    to   { opacity: 1; transform: translateY(0) scale(1) }
+  }
 }

@@ -12,10 +12,10 @@ interface KpiCardProps {
 }
 
 const variantMap = {
-  default: { icon: 'text-primary', bg: 'bg-primary/10', glow: '' },
-  success: { icon: 'text-secondary', bg: 'bg-secondary/10', glow: 'shadow-glow-green' },
-  warning: { icon: 'text-tertiary', bg: 'bg-tertiary/10', glow: 'shadow-glow-amber' },
-  error:   { icon: 'text-error',    bg: 'bg-error/10',    glow: '' },
+  default: { icon: 'text-primary',    bg: 'bg-[var(--primary-container)]' },
+  success: { icon: 'text-secondary',  bg: 'bg-[var(--secondary-container)]' },
+  warning: { icon: 'text-tertiary',   bg: 'bg-[var(--tertiary-container)]' },
+  error:   { icon: 'text-[var(--error)]', bg: 'bg-[var(--error-container)]' },
 }
 
 export function KpiCard({ title, value, subtitle, icon: Icon, trend, variant = 'default', className }: KpiCardProps) {
@@ -23,15 +23,17 @@ export function KpiCard({ title, value, subtitle, icon: Icon, trend, variant = '
   const isPositive = (trend?.value ?? 0) >= 0
 
   return (
-    <div className={cn('card p-5 flex flex-col gap-4 animate-fade-in', v.glow, className)}>
+    <div className={cn('card p-5 flex flex-col gap-3 animate-fade-in', className)}>
       <div className="flex items-start justify-between">
-        <div className={cn('w-10 h-10 rounded-md flex items-center justify-center', v.bg)}>
-          <Icon className={cn('w-5 h-5', v.icon)} />
+        <div className={cn('w-9 h-9 rounded-md flex items-center justify-center', v.bg)}>
+          <Icon className={cn('w-4.5 h-4.5', v.icon)} />
         </div>
         {trend && (
           <div className={cn(
-            'flex items-center gap-1 text-label-md px-2 py-1 rounded-full',
-            isPositive ? 'text-secondary bg-secondary/10' : 'text-error bg-error/10',
+            'flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full',
+            isPositive
+              ? 'text-secondary bg-[var(--secondary-container)]'
+              : 'text-[var(--error)] bg-[var(--error-container)]',
           )}>
             {isPositive
               ? <TrendingUp className="w-3 h-3" />
@@ -42,10 +44,10 @@ export function KpiCard({ title, value, subtitle, icon: Icon, trend, variant = '
       </div>
 
       <div>
-        <p className="text-2xl font-bold text-on-surface tabular leading-none">{value}</p>
-        <p className="text-body-md text-on-surface-variant mt-1">{title}</p>
-        {subtitle && <p className="text-label-md text-on-surface-variant/60 mt-0.5">{subtitle}</p>}
-        {trend && <p className="text-label-md text-on-surface-variant/50 mt-1">{trend.label}</p>}
+        <p className="text-[22px] font-bold text-on-surface tabular leading-none tracking-tight">{value}</p>
+        <p className="text-[13px] text-on-surface-variant mt-1 font-medium">{title}</p>
+        {subtitle && <p className="text-[11px] text-on-surface-variant/60 mt-0.5">{subtitle}</p>}
+        {trend && <p className="text-[11px] text-on-surface-variant/50 mt-1">{trend.label}</p>}
       </div>
     </div>
   )
