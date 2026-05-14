@@ -14,6 +14,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Grupo 500 — Plataforma Pre-ICFES',
   description: 'Plataforma de gestión para cursos de preparación ICFES',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

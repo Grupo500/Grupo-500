@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import {
   LayoutDashboard, Users, CreditCard, Wallet, CalendarDays,
   UserCheck, BookOpen, School, Award, FileBarChart2,
-  BarChart3, GraduationCap, ChevronLeft, ChevronRight,
+  BarChart3, ChevronLeft, ChevronRight,
   Sun, Moon, ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -61,8 +62,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
         'flex items-center gap-2.5 h-14 border-b border-[var(--outline-variant)] px-4 flex-shrink-0',
         collapsed && 'justify-center px-0',
       )}>
-        <div className="flex-shrink-0 w-7 h-7 rounded-md bg-primary/[0.12] flex items-center justify-center">
-          <GraduationCap className="w-4 h-4 text-primary" />
+        <div className="flex-shrink-0 w-7 h-7">
+          <Image src="/logo.png" alt="Grupo 500" width={28} height={28} className="w-7 h-7 object-contain" priority />
         </div>
         {!collapsed && (
           <div className="min-w-0">
