@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { createClerkClient } from '@clerk/backend'
+import { verifyToken, createClerkClient } from '@clerk/backend'
 import { prisma } from '../config/prisma'
 import { UnauthorizedError, ForbiddenError } from '../utils/errors'
 import { Role } from '@prisma/client'
@@ -21,7 +21,9 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     const token = req.headers.authorization?.replace('Bearer ', '')
     if (!token) throw new UnauthorizedError('Token requerido')
 
-    const { sub: clerkId } = await clerk.verifyToken(token)
+    const { sub: clerkId } = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY!,
+    })
 
     const user = await prisma.user.findUnique({ where: { clerkId }, include: { asesor: true } })
     if (!user) throw new UnauthorizedError('Usuario no encontrado')
