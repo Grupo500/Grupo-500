@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate } from '@/lib/utils'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
-  School, Phone, Mail, Eye, X, Loader2,
+  School, Phone, Mail, Eye, X, Loader2, Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -54,7 +54,7 @@ export default function EstudiantesPage() {
 
   // Formulario nuevo estudiante
   const [form, setForm] = useState({
-    nombre: '', email: '', telefono: '', fechaNacimiento: '',
+    nombre: '', email: '', telefono: '', fechaNacimiento: '', colegioId: '',
     acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
   })
 
@@ -62,6 +62,12 @@ export default function EstudiantesPage() {
     const token = await getToken()
     return createClientFetcher(token)<T>(path, opts)
   }
+
+  const { data: colegiosData } = useQuery({
+    queryKey: ['colegios'],
+    queryFn: () => fetcher<any>('/colegios'),
+  })
+  const colegios: { id: string; nombre: string }[] = colegiosData?.data ?? []
 
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda],
@@ -82,6 +88,7 @@ export default function EstudiantesPage() {
         email: form.email.trim(),
         telefono: form.telefono.trim(),
         fechaNacimiento: form.fechaNacimiento,
+        ...(form.colegioId && { colegioId: form.colegioId }),
       }
 
       // Solo incluir acudiente si TODOS sus campos requeridos están completos
@@ -109,9 +116,14 @@ export default function EstudiantesPage() {
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
       setModalCrear(false)
       setFormError('')
-      setForm({ nombre: '', email: '', telefono: '', fechaNacimiento: '', acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre' })
+      setForm({ nombre: '', email: '', telefono: '', fechaNacimiento: '', colegioId: '', acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre' })
     },
     onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
+  })
+
+  const eliminarMutation = useMutation({
+    mutationFn: (id: string) => fetcher(`/estudiantes/${id}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['estudiantes'] }),
   })
 
   const estudiantes = data?.data ?? []
@@ -228,12 +240,26 @@ export default function EstudiantesPage() {
                     <span className="text-xs text-on-surface-variant">{formatDate(e.createdAt)}</span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setModalDetalle(e)}
-                      className="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => setModalDetalle(e)}
+                        className="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Ver detalle"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`¿Eliminar a ${e.nombre}? Esta acción no se puede deshacer.`))
+                            eliminarMutation.mutate(e.id)
+                        }}
+                        disabled={eliminarMutation.isPending}
+                        className="p-1.5 rounded text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
+                        title="Eliminar estudiante"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -284,9 +310,18 @@ export default function EstudiantesPage() {
                 <label className={labelCls}>Teléfono *</label>
                 <input className={inputCls} value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="3001234567" />
               </div>
-              <div className="col-span-2">
+              <div>
                 <label className={labelCls}>Fecha de nacimiento *</label>
                 <input className={inputCls} type="date" value={form.fechaNacimiento} onChange={e => setForm(f => ({ ...f, fechaNacimiento: e.target.value }))} />
+              </div>
+              <div>
+                <label className={labelCls}>Colegio</label>
+                <select className={inputCls} value={form.colegioId} onChange={e => setForm(f => ({ ...f, colegioId: e.target.value }))}>
+                  <option value="">Sin colegio</option>
+                  {colegios.map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
