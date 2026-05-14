@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import {
   Users, TrendingUp, Wallet, AlertTriangle,
   CreditCard, UserCheck, BookOpen, CalendarDays,
+  Target,
 } from 'lucide-react'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
@@ -22,23 +23,24 @@ async function getDashboardData() {
 
 export default async function DashboardPage() {
   const [data, user] = await Promise.all([getDashboardData(), currentUser()])
-  const role = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
+  const role    = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
   const isAdmin = role === 'ADMIN'
 
   const ingresos    = data?.ingresos    ?? { hoy: 0, semana: 0, mes: 0 }
   const estudiantes = data?.estudiantes ?? { total: 0, nuevosMes: 0 }
   const cobranza    = data?.cobranza    ?? { pendiente: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 } }
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title="Dashboard"
-        subtitle={isAdmin ? 'Resumen general de la operación' : 'Resumen de tu actividad'}
-      />
+  // ── VISTA ADMINISTRADOR ──────────────────────────────────────────────────────
+  if (isAdmin) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader
+          title="Dashboard"
+          subtitle="Resumen general de la operación"
+        />
 
-      {/* KPIs principales — ventas solo ADMIN */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {isAdmin && (
+        {/* KPIs principales */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Ingresos del mes"
             value={formatCOP(ingresos.mes)}
@@ -47,16 +49,14 @@ export default async function DashboardPage() {
             variant="success"
             trend={{ value: 12, label: 'vs mes anterior' }}
           />
-        )}
-        <KpiCard
-          title="Estudiantes activos"
-          value={estudiantes.total.toString()}
-          subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
-          icon={Users}
-          variant="default"
-          trend={{ value: 8, label: 'vs mes anterior' }}
-        />
-        {isAdmin && (
+          <KpiCard
+            title="Estudiantes activos"
+            value={estudiantes.total.toString()}
+            subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
+            icon={Users}
+            variant="default"
+            trend={{ value: 8, label: 'vs mes anterior' }}
+          />
           <KpiCard
             title="Por cobrar"
             value={formatCOP(cobranza.pendiente.monto)}
@@ -64,8 +64,6 @@ export default async function DashboardPage() {
             icon={Wallet}
             variant="warning"
           />
-        )}
-        {isAdmin && (
           <KpiCard
             title="En mora"
             value={formatCOP(cobranza.vencida.monto)}
@@ -73,41 +71,9 @@ export default async function DashboardPage() {
             icon={AlertTriangle}
             variant="error"
           />
-        )}
-      </div>
+        </div>
 
-      {/* KPIs secundarios */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {isAdmin && (
-          <KpiCard
-            title="Ingresos esta semana"
-            value={formatCOP(ingresos.semana)}
-            icon={CreditCard}
-            variant="default"
-          />
-        )}
-        <KpiCard
-          title="Asesores activos"
-          value="—"
-          icon={UserCheck}
-          variant="default"
-        />
-        <KpiCard
-          title="Cursos activos"
-          value="—"
-          icon={BookOpen}
-          variant="default"
-        />
-        <KpiCard
-          title="Cobros próx. 7 días"
-          value="—"
-          icon={CalendarDays}
-          variant="warning"
-        />
-      </div>
-
-      {/* Gráficas — ingresos solo ADMIN */}
-      {isAdmin && (
+        {/* Gráficas + Próximos cobros */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
             <IngresosMensualesChart />
@@ -116,21 +82,111 @@ export default async function DashboardPage() {
             <ProximosCobros />
           </div>
         </div>
-      )}
 
-      {/* Próximos cobros visible para todos */}
-      {!isAdmin && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ProximosCobros />
+        {/* KPIs secundarios */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <KpiCard
+            title="Ingresos esta semana"
+            value={formatCOP(ingresos.semana)}
+            icon={CreditCard}
+            variant="default"
+          />
+          <KpiCard
+            title="Asesores activos"
+            value="—"
+            icon={UserCheck}
+            variant="default"
+          />
+          <KpiCard
+            title="Cobros próx. 7 días"
+            value="—"
+            icon={CalendarDays}
+            variant="warning"
+          />
         </div>
-      )}
 
-      {/* Ranking asesores — solo ADMIN */}
-      {isAdmin && (
+        {/* Ranking asesores */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <RankingAsesores />
         </div>
-      )}
+      </div>
+    )
+  }
+
+  // ── VISTA ASESOR/VENDEDOR ────────────────────────────────────────────────────
+  const metaVentas    = 20_000_000
+  const ventasActual  = 15_000_000
+  const progreso      = Math.round((ventasActual / metaVentas) * 100)
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Mi Panel"
+        subtitle="Resumen de tu actividad y gestión"
+      />
+
+      {/* Meta de ventas */}
+      <div className="card p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
+              <Target className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-[14px] font-semibold text-on-surface">Meta de ventas</p>
+              <p className="text-[12px] text-on-surface-variant">Trimestre actual</p>
+            </div>
+          </div>
+          <span className="text-[22px] font-bold text-on-surface tabular">{progreso}%</span>
+        </div>
+
+        {/* Barra de progreso */}
+        <div className="h-2.5 rounded-full bg-[var(--surface-high)] overflow-hidden mb-2">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500"
+            style={{ width: `${progreso}%` }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between text-[12px]">
+          <span className="text-on-surface-variant">
+            <span className="font-semibold text-on-surface">{formatCOP(ventasActual)}</span>
+            {' '}de {formatCOP(metaVentas)}
+          </span>
+          <span className="chip-info">{progreso >= 100 ? '¡Meta alcanzada!' : `Faltan ${formatCOP(metaVentas - ventasActual)}`}</span>
+        </div>
+      </div>
+
+      {/* KPIs principales vendedor */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <KpiCard
+          title="Estudiantes asignados"
+          value={estudiantes.total.toString()}
+          subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
+          icon={Users}
+          variant="default"
+          trend={{ value: 12, label: 'vs mes anterior' }}
+        />
+        <KpiCard
+          title="Cobros pendientes"
+          value={cobranza.pendiente.cantidad.toString()}
+          subtitle={cobranza.pendiente.cantidad > 0 ? 'Requieren acción' : 'Todo al día'}
+          icon={Wallet}
+          variant="warning"
+        />
+        <KpiCard
+          title="Cursos activos"
+          value="—"
+          subtitle="Productos vigentes"
+          icon={BookOpen}
+          variant="success"
+        />
+      </div>
+
+      {/* Gráfica + próximos cobros */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ProximosCobros />
+      </div>
     </div>
   )
 }
