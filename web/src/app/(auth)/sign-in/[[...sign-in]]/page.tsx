@@ -15,7 +15,7 @@ export default function SignInPage() {
           alt="Grupo 500"
           width={120}
           height={120}
-          className="rounded-full object-cover w-28 h-28 md:w-24 md:h-24 lg:w-20 lg:h-20"
+          className="rounded-full object-cover w-36 h-36 md:w-32 md:h-32 lg:w-28 lg:h-28"
           priority
         />
         <p className={`${poppins.className} text-xl md:text-lg lg:text-base font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
