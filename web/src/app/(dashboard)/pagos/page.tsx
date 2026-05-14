@@ -267,7 +267,7 @@ export default function PagosPage() {
         ))}
       </div>
 
-      {/* Tabla */}
+      {/* Lista / Tabla */}
       <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
@@ -279,59 +279,98 @@ export default function PagosPage() {
             <p className="text-sm">No hay pagos registrados</p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-outline-variant bg-surface-low">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Monto</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Estado</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Método</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Vencimiento</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/40">
+          <>
+            {/* ── Tarjetas móvil ── */}
+            <div className="md:hidden divide-y divide-outline-variant/40">
               {pagos.map((p) => (
-                <tr key={p.id} className="hover:bg-surface-low/40 transition-colors group">
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-on-surface">{p.estudiante.nombre}</p>
-                    <p className="text-xs text-on-surface-variant">{p.asesor?.nombre ?? '—'}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-semibold text-on-surface">{formatCOP(p.monto)}</p>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
+                <div key={p.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-on-surface">{p.estudiante.nombre}</p>
+                      <p className="text-xs text-on-surface-variant">{p.asesor?.nombre ?? '—'}</p>
+                    </div>
                     <EstadoBadge estado={p.estado} />
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <span className="text-xs text-on-surface-variant">{METODOS[p.metodo]}</span>
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <span className="text-xs text-on-surface-variant">{formatDate(p.fechaVencimiento)}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-base font-bold text-on-surface">{formatCOP(p.monto)}</p>
+                      <p className="text-xs text-on-surface-variant">{METODOS[p.metodo]} · Vence {formatDate(p.fechaVencimiento)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
                       {p.estado === 'PENDIENTE' && (
                         <button
                           onClick={() => setModalMarcarPagado(p)}
-                          className="px-2.5 py-1 rounded text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
                         >
                           Marcar pagado
                         </button>
                       )}
                       <button
                         onClick={() => abrirEditar(p)}
-                        className="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
-                        title="Editar pago"
+                        className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Pencil className="w-4 h-4" />
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* ── Tabla desktop ── */}
+            <table className="w-full hidden md:table">
+              <thead>
+                <tr className="border-b border-outline-variant bg-surface-low">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Monto</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estado</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Método</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Vencimiento</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/40">
+                {pagos.map((p) => (
+                  <tr key={p.id} className="hover:bg-surface-low/40 transition-colors group">
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-on-surface">{p.estudiante.nombre}</p>
+                      <p className="text-xs text-on-surface-variant">{p.asesor?.nombre ?? '—'}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-semibold text-on-surface">{formatCOP(p.monto)}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <EstadoBadge estado={p.estado} />
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-on-surface-variant">{METODOS[p.metodo]}</span>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-on-surface-variant">{formatDate(p.fechaVencimiento)}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {p.estado === 'PENDIENTE' && (
+                          <button
+                            onClick={() => setModalMarcarPagado(p)}
+                            className="px-2.5 py-1 rounded text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
+                          >
+                            Marcar pagado
+                          </button>
+                        )}
+                        <button
+                          onClick={() => abrirEditar(p)}
+                          className="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
 
         {totalPages > 1 && (
