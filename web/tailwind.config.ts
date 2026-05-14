@@ -43,6 +43,7 @@ const config: Config = {
         },
         'on-surface':         'var(--on-surface)',
         'on-surface-variant': 'var(--on-surface-variant)',
+        'on-primary':         'var(--primary-on)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
