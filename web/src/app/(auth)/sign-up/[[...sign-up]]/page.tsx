@@ -1,22 +1,28 @@
 import { SignUp } from '@clerk/nextjs'
-import { GraduationCap } from 'lucide-react'
+import Image from 'next/image'
+import { Poppins } from 'next/font/google'
+
+const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-8 px-4 py-8" style={{ background: 'var(--bg)' }}>
 
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <GraduationCap className="w-6 h-6 text-primary" />
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-on-surface tracking-tight">Grupo 500</p>
-            <p className="text-sm text-on-surface-variant mt-0.5">Plataforma Pre-ICFES</p>
-          </div>
-        </div>
+      {/* Logo */}
+      <div className="flex flex-col items-center gap-2">
+        <Image
+          src="/logo.png"
+          alt="Grupo 500"
+          width={120}
+          height={120}
+          className="drop-shadow-sm"
+          priority
+        />
+        <p className={`${poppins.className} text-lg font-bold tracking-tight text-on-surface mt-1`}>Grupo 500</p>
+        <p className="text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
+      </div>
 
+      <div className="w-full max-w-sm">
         <SignUp
           forceRedirectUrl="/verificando?nuevo=1"
           appearance={{
@@ -32,14 +38,14 @@ export default function SignUpPage() {
               colorInputText:       '#001d3d',
               borderRadius:         '0.5rem',
               fontFamily:           'Inter, sans-serif',
-              fontSize:             '14px',
+              fontSize:             '16px',
             },
             elements: {
-              rootBox:          'w-full',
+              rootBox:          'mx-auto',
               card:             'shadow-none border border-black/[0.07] rounded-xl',
               header:           'hidden',
               formFieldLabel:   'text-xs font-medium',
-              formFieldInput:   'border border-white/[0.08] focus:border-primary/50 rounded-lg text-sm',
+              formFieldInput:   'border border-white/[0.08] focus:border-primary/50 rounded-lg',
               formButtonPrimary:
                 'bg-primary hover:bg-primary/90 text-[#0a0d14] font-semibold rounded-lg transition-colors shadow-none',
               footerActionLink: 'text-primary hover:text-primary/80 font-medium',

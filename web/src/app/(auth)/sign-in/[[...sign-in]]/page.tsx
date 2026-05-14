@@ -40,7 +40,7 @@ export default function SignInPage() {
             colorInputText:         '#001d3d',
             borderRadius:           '0.5rem',
             fontFamily:             'Inter, sans-serif',
-            fontSize:               '14px',
+            fontSize:               '16px',
           },
           elements: {
             rootBox:           'mx-auto',
