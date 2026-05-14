@@ -47,15 +47,15 @@ router.post('/clerk', async (req: Request, res: Response) => {
         const clerkId  = data.id as string
         const email    = data.email_addresses?.[0]?.email_address ?? ''
         const telefono = data.phone_numbers?.[0]?.phone_number ?? ''
+        const imageUrl = data.image_url ?? data.profile_image_url ?? null
         const nombre   = `${data.first_name ?? ''} ${data.last_name ?? ''}`.trim()
                          || email.split('@')[0]
 
-        // Evitar duplicados (por si el auto-sync del middleware ya lo creó)
         let user = await prisma.user.findUnique({ where: { clerkId } })
 
         if (!user) {
           user = await prisma.user.create({
-            data: { clerkId, email, role: 'VENDEDOR' },
+            data: { clerkId, email, nombre, imageUrl, role: 'VENDEDOR' },
           })
           logger.info(`Usuario creado en DB: ${email} (${clerkId})`)
         }
@@ -78,12 +78,14 @@ router.post('/clerk', async (req: Request, res: Response) => {
 
       // ── Usuario actualizado en Clerk ─────────────────────────────────────
       case 'user.updated': {
-        const clerkId = data.id as string
-        const email   = data.email_addresses?.[0]?.email_address ?? ''
+        const clerkId  = data.id as string
+        const email    = data.email_addresses?.[0]?.email_address ?? ''
+        const imageUrl = data.image_url ?? data.profile_image_url ?? null
+        const nombre   = `${data.first_name ?? ''} ${data.last_name ?? ''}`.trim() || undefined
 
         await prisma.user.updateMany({
           where: { clerkId },
-          data:  { email },
+          data:  { email, imageUrl, ...(nombre && { nombre }) },
         })
         logger.info(`Usuario actualizado en DB: ${email} (${clerkId})`)
         break

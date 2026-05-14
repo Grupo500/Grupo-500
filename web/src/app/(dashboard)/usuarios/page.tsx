@@ -16,6 +16,8 @@ interface Usuario {
   id: string
   clerkId: string
   email: string
+  nombre: string | null
+  imageUrl: string | null
   role: 'ADMIN' | 'VENDEDOR'
   asesor: Asesor | null
   createdAt: string
@@ -136,16 +138,22 @@ export default function UsuariosPage() {
               <tbody className="divide-y divide-[var(--outline-variant)]">
                 {usuarios.map(u => (
                   <tr key={u.id} className="hover:bg-[var(--surface-low)] transition-colors">
-                    {/* Email + avatar inicial */}
+                    {/* Avatar + nombre */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-bold text-primary">
-                            {u.email[0].toUpperCase()}
-                          </span>
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
+                          {u.imageUrl ? (
+                            <img src={u.imageUrl} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-primary">
+                                {(u.nombre ?? u.email)[0].toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div>
-                          <p className="font-medium text-on-surface">{u.asesor?.nombre ?? '—'}</p>
+                          <p className="font-medium text-on-surface">{u.nombre ?? u.asesor?.nombre ?? '—'}</p>
                           <p className="text-xs text-on-surface-variant">{u.email}</p>
                         </div>
                       </div>
