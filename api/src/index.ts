@@ -85,7 +85,7 @@ app.use('/api/auth', rateLimit({
 
 // Health check
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '2.0.0' })
 })
 
 // Rutas
