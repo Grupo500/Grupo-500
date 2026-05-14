@@ -70,3 +70,47 @@
 - Integrar Clerk en frontend
 
 ---
+
+## Sesión 003 — 2026-05-14
+
+**Objetivo:** Construir todo el frontend — UI completa, todos los módulos.
+
+### Lo que se hizo
+
+**Setup frontend:**
+- Configurado Next.js 15 + Clerk + TanStack Query en `web/`
+- Implementado layout protegido con detección de rol (ADMIN/VENDEDOR)
+- Sidebar con navegación por rol, modo oscuro/claro
+- Bottom navigation para móvil (4 items primarios + sheet "Más")
+
+**Módulos construidos (UI completa):**
+- **Dashboard Admin:** estadísticas, gráficas Recharts, cobros próximos, ranking asesores
+- **Dashboard Vendedor:** mis estudiantes, mis pagos, mis cobros próximos
+- **Estudiantes:** tabla paginada, búsqueda, CRUD completo, gestión acudiente
+- **Pagos:** filtros por estado, registrar pago (+ comprobante URL), marcar pagado
+- **Financiamientos:** crear cuotas automáticas, ver estado por cuotas
+- **Cobros:** calendario mensual conectado a API real, pagar cuota, WhatsApp desde acudiente
+- **Certificados:** tabla, generar certificado, descargar PDF
+- **Simulacros:** tabla resultados, modal "Subir simulacro" (nombre + URL)
+- **Colegios / Cursos / Reportes / Usuarios:** módulos completos
+
+**Fixes de UX aplicados:**
+- `maximumScale: 1` viewport → deshabilita zoom iOS
+- Modales `fixed inset-0` backdrop → no muestra app detrás
+- Tailwind token `on-primary` → texto blanco en botones primarios light mode
+- API `api.ts` maneja 204 No Content en deletes
+- `min-h-dvh` en páginas auth → centrado correcto iOS Safari
+- Custom `ConfirmDialog` reemplaza `confirm()` nativo
+- Bottom nav móvil, sidebar oculto en mobile
+
+### Estado actual
+**PLATAFORMA MVP COMPLETA.** Todos los módulos construidos y funcionales.
+
+### Pendiente / Mejoras futuras
+- Twilio WhatsApp real (actualmente stub)
+- Análisis inteligente PDFs simulacros
+- Upload directo Cloudinary desde UI
+- Notificaciones automáticas de cobro
+- Reportes exportables CSV/PDF
+
+---
