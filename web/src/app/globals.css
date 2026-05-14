@@ -4,92 +4,173 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@layer base {
-  * {
-    @apply border-outline-variant;
-  }
-
-  html {
-    @apply scroll-smooth;
-  }
-
-  body {
-    @apply bg-background text-on-surface font-sans antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-
-  /* Scrollbar personalizado */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { @apply bg-surface-lowest; }
-  ::-webkit-scrollbar-thumb { @apply bg-outline-variant rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-outline; }
+/* ─── TEMA OSCURO (default) ────────────────────────────────────────────────── */
+:root,
+.dark {
+  --bg:                 #10131a;
+  --surface-lowest:     #0b0e15;
+  --surface-low:        #191b23;
+  --surface:            #1d2027;
+  --surface-high:       #272a31;
+  --surface-highest:    #32353c;
+  --on-surface:         #e1e2ec;
+  --on-surface-variant: #c2c6d6;
+  --outline:            #8c909f;
+  --outline-variant:    #424754;
+  --primary:            #adc6ff;
+  --primary-on:         #002e6a;
+  --secondary:          #4edea3;
+  --secondary-on:       #003824;
+  --tertiary:           #ffb95f;
+  --tertiary-on:        #472a00;
+  --error:              #ffb4ab;
+  --error-container:    #93000a;
+  --scrim:              rgba(0,0,0,0.6);
+  --shadow-card:        0 0 0 1px rgba(255,255,255,0.07);
+  --shadow-float:       0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.07);
 }
 
+/* ─── TEMA CLARO ────────────────────────────────────────────────────────────── */
+.light {
+  --bg:                 #f0f4ff;
+  --surface-lowest:     #ffffff;
+  --surface-low:        #edf1fc;
+  --surface:            #e6eaf6;
+  --surface-high:       #dce1f2;
+  --surface-highest:    #d0d7ec;
+  --on-surface:         #0d1220;
+  --on-surface-variant: #3a4465;
+  --outline:            #7880a0;
+  --outline-variant:    #bec7de;
+  --primary:            #2952cc;   /* azul oscuro — 4.6:1 sobre blanco ✓ */
+  --primary-on:         #ffffff;
+  --secondary:          #087a50;   /* verde oscuro — 4.5:1 sobre blanco ✓ */
+  --secondary-on:       #ffffff;
+  --tertiary:           #8a5200;   /* ámbar oscuro — 4.6:1 sobre blanco ✓ */
+  --tertiary-on:        #ffffff;
+  --error:              #c0392b;
+  --error-container:    #fde8e6;
+  --scrim:              rgba(0,0,0,0.4);
+  --shadow-card:        0 0 0 1px rgba(0,0,0,0.08);
+  --shadow-float:       0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+/* ─── BASE ──────────────────────────────────────────────────────────────────── */
+@layer base {
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--on-surface);
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv02","cv03","cv04","cv11";
+    transition: background-color 0.2s ease, color 0.15s ease;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar        { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track  { background: var(--surface-lowest); }
+  ::-webkit-scrollbar-thumb  { background: var(--outline-variant); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--outline); }
+}
+
+/* ─── COMPONENTS ────────────────────────────────────────────────────────────── */
 @layer components {
-  /* Cards base */
   .card {
-    @apply bg-surface rounded-lg border border-white/[0.08] shadow-card;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--outline-variant);
+    box-shadow: var(--shadow-card);
   }
 
   .card-elevated {
-    @apply bg-surface-high rounded-lg border border-white/[0.08] shadow-float;
+    background: var(--surface-high);
+    border-radius: 8px;
+    border: 1px solid var(--outline-variant);
+    box-shadow: var(--shadow-float);
   }
 
-  /* Status chips */
   .chip-success {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
-           bg-secondary/10 text-secondary border border-secondary/20;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    background: color-mix(in srgb, var(--secondary) 12%, transparent);
+    color: var(--secondary);
+    border: 1px solid color-mix(in srgb, var(--secondary) 25%, transparent);
   }
 
   .chip-warning {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
-           bg-tertiary/10 text-tertiary border border-tertiary/20;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    background: color-mix(in srgb, var(--tertiary) 12%, transparent);
+    color: var(--tertiary);
+    border: 1px solid color-mix(in srgb, var(--tertiary) 25%, transparent);
   }
 
   .chip-error {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
-           bg-error/10 text-error border border-error/20;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    background: color-mix(in srgb, var(--error) 12%, transparent);
+    color: var(--error);
+    border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
   }
 
   .chip-info {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-md
-           bg-primary/10 text-primary border border-primary/20;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   }
 
-  /* Input base */
   .input-base {
-    @apply w-full bg-surface-lowest border border-outline-variant rounded
-           px-3 py-2 text-body-md text-on-surface placeholder:text-on-surface-variant
-           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30
-           transition-colors duration-150;
+    width: 100%;
+    background: var(--surface-lowest);
+    border: 1px solid var(--outline-variant);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--on-surface);
+    transition: border-color 0.15s;
+    outline: none;
   }
+  .input-base:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+  .input-base::placeholder { color: var(--on-surface-variant); opacity: 0.7; }
 
-  /* Botón primario */
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold
-           bg-primary text-on-primary hover:bg-primary/90
-           transition-all duration-150 active:scale-[0.98] disabled:opacity-50;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    background: var(--primary); color: var(--primary-on);
+    transition: opacity 0.15s, transform 0.1s;
+    cursor: pointer; border: none;
   }
+  .btn-primary:hover   { opacity: 0.9; }
+  .btn-primary:active  { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* Botón ghost */
   .btn-ghost {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-medium
-           text-on-surface-variant border border-outline-variant
-           hover:bg-surface-high hover:text-on-surface
-           transition-all duration-150 active:scale-[0.98];
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    background: transparent;
+    color: var(--on-surface-variant);
+    border: 1px solid var(--outline-variant);
+    transition: background 0.15s, color 0.15s;
+    cursor: pointer;
   }
-
-  /* Botón destructivo */
-  .btn-danger {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold
-           bg-error/10 text-error border border-error/30
-           hover:bg-error/20 transition-all duration-150 active:scale-[0.98];
-  }
+  .btn-ghost:hover { background: var(--surface-high); color: var(--on-surface); }
 }
 
+/* ─── UTILITIES ─────────────────────────────────────────────────────────────── */
 @layer utilities {
-  /* Tabular numbers para datos financieros */
-  .tabular {
-    font-variant-numeric: tabular-nums;
-  }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+  .animate-slide-up { animation: slideUp 0.3s ease-out; }
+
+  @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
 }

@@ -3,7 +3,7 @@ import { GraduationCap } from 'lucide-react'
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md space-y-8">
 
         {/* Logo */}

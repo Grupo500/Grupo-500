@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Inter } from 'next/font/google'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import './globals.css'
 
 const inter = Inter({
@@ -17,9 +18,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
-      <html lang="es" className="dark">
+      <html lang="es" suppressHydrationWarning>
         <body className={`${inter.variable} font-sans`}>
-          {children}
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
