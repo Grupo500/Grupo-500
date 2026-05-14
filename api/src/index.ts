@@ -22,6 +22,7 @@ import simulacrosRoutes from './routes/simulacros'
 import whatsappRoutes from './routes/whatsapp'
 import reportesRoutes from './routes/reportes'
 import webhookRoutes from './routes/webhooks'
+import uploadRoutes from './routes/upload'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -102,6 +103,7 @@ app.use('/api/certificados', certificadosRoutes)
 app.use('/api/simulacros', simulacrosRoutes)
 app.use('/api/whatsapp', whatsappRoutes)
 app.use('/api/reportes', reportesRoutes)
+app.use('/api/upload',  uploadRoutes)
 
 // Error handler global (siempre al final)
 app.use(errorHandler)

@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { FileBarChart2, Loader2, TrendingUp, TrendingDown, Minus, ExternalLink, Plus, X } from 'lucide-react'
+import {
+  FileBarChart2, Loader2, TrendingUp, TrendingDown, Minus,
+  ExternalLink, Plus, X, Upload, FileText, CheckCircle2,
+} from 'lucide-react'
 
 interface SimulacroEstudiante {
   id: string
@@ -51,8 +54,13 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 export default function SimulacrosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const [modalSubir, setModalSubir] = useState(false)
-  const [form, setForm] = useState({ nombre: '', archivoUrl: '' })
+  const [nombre, setNombre] = useState('')
+  const [archivo, setArchivo] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'done'>('idle')
+  const [archivoUrl, setArchivoUrl] = useState('')
   const [error, setError] = useState('')
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
@@ -65,26 +73,66 @@ export default function SimulacrosPage() {
     queryFn: () => fetcher<any>('/simulacros'),
   })
 
-  const subirMutation = useMutation({
+  // Subir PDF a Cloudinary vía API
+  const handleArchivoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.type !== 'application/pdf') {
+      setError('Solo se permiten archivos PDF')
+      return
+    }
+    setArchivo(file)
+    setError('')
+    setUploadProgress('uploading')
+
+    try {
+      const token = await getToken()
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/pdf`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error ?? 'Error al subir archivo')
+      setArchivoUrl(json.data.url)
+      setUploadProgress('done')
+    } catch (err: any) {
+      setError(err.message ?? 'Error al subir el archivo')
+      setUploadProgress('idle')
+      setArchivo(null)
+    }
+  }
+
+  const registrarMutation = useMutation({
     mutationFn: () => fetcher('/simulacros', {
       method: 'POST',
-      body: JSON.stringify({ nombre: form.nombre, archivoUrl: form.archivoUrl }),
+      body: JSON.stringify({ nombre, archivoUrl }),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['simulacros'] })
-      setModalSubir(false)
-      setForm({ nombre: '', archivoUrl: '' })
-      setError('')
+      handleClose()
     },
     onError: (err: any) => {
       setError(err?.message ?? 'Error al registrar simulacro')
     },
   })
 
-  const handleSubir = () => {
-    if (!form.nombre.trim()) { setError('El nombre es requerido'); return }
+  const handleClose = () => {
+    setModalSubir(false)
+    setNombre('')
+    setArchivo(null)
+    setArchivoUrl('')
+    setUploadProgress('idle')
     setError('')
-    subirMutation.mutate()
+  }
+
+  const handleRegistrar = () => {
+    if (!nombre.trim()) { setError('El nombre es requerido'); return }
+    setError('')
+    registrarMutation.mutate()
   }
 
   const simulacros: Simulacro[] = data?.data ?? []
@@ -126,7 +174,7 @@ export default function SimulacrosPage() {
               <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/40">
                 <div>
                   <h3 className="text-sm font-semibold text-on-surface">{s.nombre}</h3>
-                  <p className="text-xs text-on-surface-variant">{formatDate(s.fechaCreacion)} · {s.estudiantes.length} resultados</p>
+                  <p className="text-xs text-on-surface-variant">{formatDate(s.fechaCreacion)} · {s.estudiantes?.length ?? 0} resultados</p>
                 </div>
                 {s.archivoUrl && (
                   <a href={s.archivoUrl} target="_blank" rel="noopener noreferrer"
@@ -136,7 +184,7 @@ export default function SimulacrosPage() {
                 )}
               </div>
 
-              {s.estudiantes.length > 0 ? (
+              {s.estudiantes?.length > 0 ? (
                 <table className="w-full">
                   <thead>
                     <tr className="bg-surface-low">
@@ -188,44 +236,95 @@ export default function SimulacrosPage() {
         </div>
       )}
 
-      <Modal open={modalSubir} onClose={() => { setModalSubir(false); setError('') }}>
+      {/* Modal subir simulacro */}
+      <Modal open={modalSubir} onClose={handleClose}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-on-surface">Subir simulacro</h2>
-            <button onClick={() => { setModalSubir(false); setError('') }} className="p-1.5 text-on-surface-variant hover:text-on-surface">
+            <button onClick={handleClose} className="p-1.5 text-on-surface-variant hover:text-on-surface">
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="space-y-3">
+
+          <div className="space-y-4">
+            {/* Nombre */}
             <div>
               <label className={labelCls}>Nombre del simulacro *</label>
               <input
                 className={inputCls}
-                value={form.nombre}
-                onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
                 placeholder="Ej: Simulacro ICFES — Marzo 2025"
               />
             </div>
+
+            {/* Zona de upload */}
             <div>
-              <label className={labelCls}>URL del archivo (PDF)</label>
+              <label className={labelCls}>Archivo PDF</label>
               <input
-                className={inputCls}
-                value={form.archivoUrl}
-                onChange={e => setForm(f => ({ ...f, archivoUrl: e.target.value }))}
-                placeholder="https://..."
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={handleArchivoChange}
               />
-              <p className="text-[11px] text-on-surface-variant mt-1">Opcional. Puedes subir el PDF a Cloudinary y pegar el enlace aquí.</p>
+
+              {uploadProgress === 'idle' && !archivo && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl border-2 border-dashed border-outline-variant bg-surface-high hover:border-primary/40 hover:bg-primary/5 transition-colors text-on-surface-variant hover:text-primary group"
+                >
+                  <Upload className="w-7 h-7 transition-transform group-hover:scale-110" />
+                  <span className="text-sm font-medium">Seleccionar PDF</span>
+                  <span className="text-xs opacity-60">Máximo 20 MB</span>
+                </button>
+              )}
+
+              {uploadProgress === 'uploading' && (
+                <div className="flex items-center gap-3 px-4 py-4 rounded-xl border border-outline-variant bg-surface-high">
+                  <Loader2 className="w-5 h-5 text-primary animate-spin flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-on-surface truncate">{archivo?.name}</p>
+                    <p className="text-xs text-on-surface-variant">Subiendo a Cloudinary...</p>
+                  </div>
+                </div>
+              )}
+
+              {uploadProgress === 'done' && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-secondary/30 bg-secondary/5">
+                  <CheckCircle2 className="w-5 h-5 text-secondary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-on-surface truncate">{archivo?.name}</p>
+                    <p className="text-xs text-secondary">Archivo subido correctamente</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setArchivo(null)
+                      setArchivoUrl('')
+                      setUploadProgress('idle')
+                    }}
+                    className="p-1 text-on-surface-variant hover:text-on-surface flex-shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
+
             {error && <p className="text-xs text-red-400">{error}</p>}
           </div>
+
           <div className="flex justify-end gap-3 mt-6">
-            <button onClick={() => { setModalSubir(false); setError('') }} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
+            <button onClick={handleClose} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
             <button
-              onClick={handleSubir}
-              disabled={subirMutation.isPending || !form.nombre.trim()}
+              onClick={handleRegistrar}
+              disabled={registrarMutation.isPending || !nombre.trim() || uploadProgress === 'uploading'}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {subirMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Registrar
+              {registrarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Registrar
             </button>
           </div>
         </div>
