@@ -6,9 +6,9 @@ import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X } from 'lucide-react'
+import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil } from 'lucide-react'
 
-interface Asesor { nombre: string; telefono: string }
+interface Asesor { id: string; nombre: string; telefono: string }
 interface Usuario {
   id: string; clerkId: string; email: string
   nombre: string | null; imageUrl: string | null
@@ -22,6 +22,10 @@ export default function UsuariosPage() {
   const [formEmail, setFormEmail] = useState('')
   const [formRole, setFormRole] = useState<'VENDEDOR' | 'ADMIN'>('VENDEDOR')
   const [formError, setFormError] = useState('')
+
+  // Modal editar asesor
+  const [editAsesor, setEditAsesor] = useState<{ asesorId: string; nombre: string; telefono: string; email: string } | null>(null)
+  const [editError, setEditError] = useState('')
 
   const fetcher = async <T,>(url: string, opts?: RequestInit): Promise<T> => {
     const token = await getToken()
@@ -47,6 +51,21 @@ export default function UsuariosPage() {
     mutationFn: (id: string) =>
       fetcher(`/auth/usuarios/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+
+  const guardarAsesor = useMutation({
+    mutationFn: () =>
+      fetcher(`/asesores/${editAsesor!.asesorId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: editAsesor!.nombre, telefono: editAsesor!.telefono, email: editAsesor!.email }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      setEditAsesor(null)
+      setEditError('')
+    },
+    onError: (e: any) => setEditError(e.message ?? 'Error al guardar'),
   })
 
   const agregar = useMutation({
@@ -160,7 +179,26 @@ export default function UsuariosPage() {
                     {/* Asesor */}
                     <td className="px-5 py-3.5">
                       {u.asesor
-                        ? <div><p className="text-on-surface">{u.asesor.nombre}</p><p className="text-xs text-on-surface-variant">{u.asesor.telefono}</p></div>
+                        ? (
+                          <div className="flex items-center gap-2 group">
+                            <div>
+                              <p className="text-on-surface">{u.asesor.nombre}</p>
+                              <p className="text-xs text-on-surface-variant">{u.asesor.telefono}</p>
+                            </div>
+                            <button
+                              onClick={() => setEditAsesor({
+                                asesorId: (u.asesor as any).id,
+                                nombre: u.asesor!.nombre,
+                                telefono: u.asesor!.telefono,
+                                email: u.email,
+                              })}
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-all"
+                              title="Editar perfil asesor"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )
                         : <span className="text-on-surface-variant text-xs italic">Sin perfil</span>
                       }
                     </td>
@@ -224,6 +262,68 @@ export default function UsuariosPage() {
           El usuario verá el nuevo rol al <strong className="text-on-surface">cerrar sesión y volver a entrar</strong>.
         </p>
       </div>
+
+      {/* Modal editar asesor */}
+      {editAsesor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'var(--scrim)' }}>
+          <div className="card w-full max-w-md p-6 space-y-5 animate-slide-up">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-on-surface">Editar perfil asesor</h2>
+                <p className="text-xs text-on-surface-variant mt-0.5">Actualiza los datos del asesor</p>
+              </div>
+              <button onClick={() => { setEditAsesor(null); setEditError('') }}
+                className="p-1.5 rounded-md text-on-surface-variant hover:bg-[var(--surface-high)]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Nombre</label>
+                <input
+                  type="text"
+                  value={editAsesor.nombre}
+                  onChange={e => setEditAsesor({ ...editAsesor, nombre: e.target.value })}
+                  className="input-base"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
+                <input
+                  type="tel"
+                  value={editAsesor.telefono}
+                  onChange={e => setEditAsesor({ ...editAsesor, telefono: e.target.value })}
+                  placeholder="+57 300 000 0000"
+                  className="input-base"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={editAsesor.email}
+                  onChange={e => setEditAsesor({ ...editAsesor, email: e.target.value })}
+                  className="input-base"
+                />
+              </div>
+              {editError && <p className="text-xs text-[var(--error)]">{editError}</p>}
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setEditAsesor(null); setEditError('') }} className="btn-ghost">Cancelar</button>
+              <button
+                onClick={() => guardarAsesor.mutate()}
+                disabled={!editAsesor.nombre.trim() || !editAsesor.telefono.trim() || guardarAsesor.isPending}
+                className="btn-primary"
+              >
+                {guardarAsesor.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal agregar usuario */}
       {showModal && (

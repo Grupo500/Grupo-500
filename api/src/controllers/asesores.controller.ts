@@ -48,3 +48,19 @@ export async function misEstadisticas(req: Request, res: Response) {
   req.params.id = req.asesorId
   return estadisticas(req, res)
 }
+
+export async function actualizar(req: Request, res: Response) {
+  const { id } = req.params
+  const { nombre, telefono, email } = req.body
+
+  const asesor = await prisma.asesor.update({
+    where: { id },
+    data: {
+      ...(nombre   && { nombre:   nombre.trim() }),
+      ...(telefono && { telefono: telefono.trim() }),
+      ...(email    && { email:    email.trim() }),
+    },
+  })
+
+  return ApiResponse.success(res, asesor)
+}
