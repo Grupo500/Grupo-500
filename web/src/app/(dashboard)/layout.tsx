@@ -12,13 +12,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { getToken } = await auth()
   const token = await getToken()
 
-  const meRes = await fetch(`${API_URL}/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  })
+  let meOk = false
+  try {
+    const meRes = await fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token ?? ''}` },
+      cache: 'no-store',
+    })
+    meOk = meRes.ok // solo 2xx pasa
+  } catch {
+    meOk = false
+  }
 
-  // Si el API responde 403 con USUARIO_NO_REGISTRADO → pantalla de acceso denegado
-  if (meRes.status === 403) {
+  // Cualquier respuesta no-200 o error de red → acceso denegado
+  if (!meOk) {
     redirect('/no-autorizado')
   }
 
