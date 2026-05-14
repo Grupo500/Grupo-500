@@ -33,11 +33,25 @@ app.set('trust proxy', 1)
 app.use(helmet())
 app.disable('x-powered-by')
 
-// CORS — solo orígenes permitidos
+// CORS — valida origen dinámicamente contra ALLOWED_ORIGINS
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
+  .split(',')
+  .map(o => o.trim())
+
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (mobile, Postman, server-to-server)
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    callback(new Error(`CORS bloqueado para origen: ${origin}`))
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }))
+
+// Responder preflight OPTIONS en todas las rutas
+app.options('*', cors())
 
 // ⚠️ Webhooks de Clerk ANTES del JSON middleware — necesita raw body para verificar firma
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes)
