@@ -26,6 +26,9 @@ import webhookRoutes from './routes/webhooks'
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Railway y proxies inversos envían X-Forwarded-For — necesario para rate-limit y HTTPS
+app.set('trust proxy', 1)
+
 // Security headers
 app.use(helmet())
 app.disable('x-powered-by')
