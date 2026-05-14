@@ -7,28 +7,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  // Verificar que el usuario esté registrado en el sistema
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-  const { getToken } = await auth()
-  const token = await getToken()
-
-  let meOk = false
-  try {
-    const meRes = await fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${token ?? ''}` },
-      cache: 'no-store',
-    })
-    meOk = meRes.ok // solo 2xx pasa
-  } catch {
-    meOk = false
-  }
-
-  // Cualquier respuesta no-200 o error de red → acceso denegado
-  if (!meOk) {
-    redirect('/no-autorizado')
-  }
-
-  // Obtener rol del usuario
+  // Rol desde Clerk publicMetadata (asignado por el admin al registrar al usuario)
   const user = await currentUser()
   const role = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
 
