@@ -11,7 +11,7 @@ export default function SignInPage() {
       {/* Logo */}
       <div className="flex flex-col items-center gap-2">
         <Image
-          src="/logo.png"
+          src="/logo-grupo500.png"
           alt="Grupo 500"
           width={120}
           height={120}

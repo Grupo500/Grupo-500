@@ -63,7 +63,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
         collapsed && 'justify-center px-0',
       )}>
         <div className="flex-shrink-0 w-7 h-7">
-          <Image src="/logo.png" alt="Grupo 500" width={28} height={28} className="w-7 h-7 object-contain" priority />
+          <Image src="/logo-grupo500.png" alt="Grupo 500" width={28} height={28} className="w-7 h-7 object-contain" priority />
         </div>
         {!collapsed && (
           <div className="min-w-0">
