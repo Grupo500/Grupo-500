@@ -16,7 +16,7 @@ export default function SignInPage() {
             className="drop-shadow-sm"
             priority
           />
-          <p className="text-sm text-on-surface-variant mt-0.5">Plataforma Pre-ICFES</p>
+          <p className="text-sm text-on-surface-variant mt-0.5 text-center w-full">Plataforma Pre-ICFES</p>
         </div>
 
         {/* Clerk SignIn con variables de diseño */}
