@@ -136,34 +136,33 @@ export default function CursosPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {cursos.map(c => (
-            <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-colors group relative">
-              {/* Acciones */}
-              <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => abrirEditar(c)}
-                  className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors"
-                  title="Editar curso"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`¿Eliminar "${c.nombre}"? Esta acción no se puede deshacer.`))
-                      eliminarMutation.mutate(c.id)
-                  }}
-                  disabled={eliminarMutation.isPending}
-                  className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors"
-                  title="Eliminar curso"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="flex items-start justify-between gap-3 pr-16">
+            <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-colors group">
+              {/* Fila superior: ícono — precio — acciones */}
+              <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                   <BookOpen className="w-4 h-4 text-primary" />
                 </div>
-                <p className="text-lg font-bold text-primary">{formatCOP(c.precio)}</p>
+                <p className="text-lg font-bold text-primary flex-1">{formatCOP(c.precio)}</p>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => abrirEditar(c)}
+                    className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors"
+                    title="Editar curso"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`¿Eliminar "${c.nombre}"? Esta acción no se puede deshacer.`))
+                        eliminarMutation.mutate(c.id)
+                    }}
+                    disabled={eliminarMutation.isPending}
+                    className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors"
+                    title="Eliminar curso"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
               <h3 className="mt-3 text-sm font-semibold text-on-surface">{c.nombre}</h3>
               {c.descripcion && <p className="mt-1 text-xs text-on-surface-variant line-clamp-2">{c.descripcion}</p>}
