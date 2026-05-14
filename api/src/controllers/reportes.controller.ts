@@ -88,6 +88,7 @@ export async function rankingAsesores(_req: Request, res: Response) {
   // Traer asesores + pagos de ambos meses en 3 queries paralelas
   const [asesores, pagosActual, pagosAnterior] = await Promise.all([
     prisma.asesor.findMany({
+      where: { user: { role: 'VENDEDOR' } },
       include: { _count: { select: { estudiantes: true } } },
     }),
     prisma.pago.findMany({

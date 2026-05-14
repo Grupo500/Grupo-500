@@ -107,7 +107,7 @@ export default function UsuariosPage() {
         {[
           { label: 'Total usuarios', value: usuarios.length, icon: Users, color: 'primary' },
           { label: 'Administradores', value: totalAdmin, icon: Shield, color: 'tertiary' },
-          { label: 'Vendedores', value: totalVendedor, icon: UserCheck, color: 'secondary' },
+          { label: 'Asesores', value: totalVendedor, icon: UserCheck, color: 'secondary' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="card p-4 flex items-center gap-3">
             <div className={`w-9 h-9 rounded-lg bg-${color}/10 flex items-center justify-center flex-shrink-0`}>
@@ -201,7 +201,7 @@ export default function UsuariosPage() {
                           : 'bg-primary/10 text-primary border border-primary/20',
                       )}>
                         {u.role === 'ADMIN' ? <Shield className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
-                        {u.role === 'ADMIN' ? 'Administrador' : 'Vendedor'}
+                        {u.role === 'ADMIN' ? 'Administrador' : 'Asesor'}
                       </span>
                     </td>
 
@@ -213,7 +213,7 @@ export default function UsuariosPage() {
                         onChange={e => cambiarRol.mutate({ id: u.id, role: e.target.value as 'ADMIN' | 'VENDEDOR' })}
                         className="text-xs font-medium px-3 py-1.5 rounded-lg border bg-[var(--surface-low)] border-[var(--outline-variant)] text-on-surface focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
                       >
-                        <option value="VENDEDOR">Vendedor</option>
+                        <option value="VENDEDOR">Asesor</option>
                         <option value="ADMIN">Administrador</option>
                       </select>
                     </td>

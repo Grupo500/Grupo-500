@@ -61,7 +61,7 @@ export default function AsesoresPage() {
           <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-xl">
             <UserCheck className="w-10 h-10 mb-3 opacity-30" />
             <p className="text-sm">No hay asesores registrados</p>
-            <p className="text-xs mt-1 opacity-60">Los usuarios con rol Vendedor aparecen aquí</p>
+            <p className="text-xs mt-1 opacity-60">Los usuarios con rol Asesor aparecen aquí</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -80,7 +80,7 @@ export default function AsesoresPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-on-surface truncate">{a.nombre}</p>
                     <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
-                      Vendedor
+                      Asesor
                     </span>
                   </div>
                 </div>

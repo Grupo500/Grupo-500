@@ -88,7 +88,7 @@ export default async function DashboardPage() {
     )
   }
 
-  // ── VISTA ASESOR/VENDEDOR ────────────────────────────────────────────────────
+  // ── VISTA ASESOR ─────────────────────────────────────────────────────────────
   const metaVentas    = 20_000_000
   const ventasActual  = 15_000_000
   const progreso      = Math.round((ventasActual / metaVentas) * 100)
@@ -132,7 +132,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* KPIs principales vendedor */}
+      {/* KPIs principales asesor */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KpiCard
           title="Estudiantes asignados"
