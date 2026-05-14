@@ -26,7 +26,7 @@ export default function SignInPage() {
       <div className="w-full max-w-sm">
 
         {/* Título encima de la tarjeta */}
-        <p className="text-[13px] font-semibold text-on-surface-variant mb-2 px-1">
+        <p className="text-[13px] font-semibold text-on-surface-variant mb-2 text-center">
           Inicia sesión con:
         </p>
 
