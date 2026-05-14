@@ -29,14 +29,38 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     let user = await prisma.user.findUnique({ where: { clerkId }, include: { asesor: true } })
     if (!user) {
       const clerkUser = await clerk.users.getUser(clerkId)
+      const email  = clerkUser.emailAddresses[0]?.emailAddress ?? ''
+      const nombre = `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim()
+                     || email.split('@')[0]
+
       user = await prisma.user.create({
         data: {
           clerkId,
-          email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+          email,
           role: 'VENDEDOR',
+          asesor: {
+            create: {
+              nombre:   nombre.charAt(0).toUpperCase() + nombre.slice(1),
+              email,
+              telefono: clerkUser.phoneNumbers?.[0]?.phoneNumber ?? '000-000-0000',
+            },
+          },
         },
         include: { asesor: true },
       }) as typeof user
+    }
+
+    // Si el User existe pero no tiene Asesor (usuarios creados antes de este fix)
+    if (user && !user.asesor) {
+      const asesor = await prisma.asesor.create({
+        data: {
+          userId:   user.id,
+          nombre:   user.email.split('@')[0],
+          email:    user.email,
+          telefono: '000-000-0000',
+        },
+      })
+      user = { ...user, asesor }
     }
 
     req.userId = user.id

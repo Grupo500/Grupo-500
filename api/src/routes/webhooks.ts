@@ -44,17 +44,34 @@ router.post('/clerk', async (req: Request, res: Response) => {
 
       // ── Usuario creado en Clerk ──────────────────────────────────────────
       case 'user.created': {
-        const clerkId = data.id as string
-        const email   = data.email_addresses?.[0]?.email_address ?? ''
-        const nombre  = `${data.first_name ?? ''} ${data.last_name ?? ''}`.trim() || email
+        const clerkId  = data.id as string
+        const email    = data.email_addresses?.[0]?.email_address ?? ''
+        const telefono = data.phone_numbers?.[0]?.phone_number ?? ''
+        const nombre   = `${data.first_name ?? ''} ${data.last_name ?? ''}`.trim()
+                         || email.split('@')[0]
 
         // Evitar duplicados (por si el auto-sync del middleware ya lo creó)
-        const existe = await prisma.user.findUnique({ where: { clerkId } })
-        if (!existe) {
-          await prisma.user.create({
+        let user = await prisma.user.findUnique({ where: { clerkId } })
+
+        if (!user) {
+          user = await prisma.user.create({
             data: { clerkId, email, role: 'VENDEDOR' },
           })
           logger.info(`Usuario creado en DB: ${email} (${clerkId})`)
+        }
+
+        // Crear perfil Asesor si no existe — todos los usuarios son asesores por defecto
+        const asesorExiste = await prisma.asesor.findUnique({ where: { userId: user.id } })
+        if (!asesorExiste) {
+          await prisma.asesor.create({
+            data: {
+              userId:   user.id,
+              nombre:   nombre.charAt(0).toUpperCase() + nombre.slice(1),
+              email:    user.email,
+              telefono: telefono || '000-000-0000',
+            },
+          })
+          logger.info(`Perfil Asesor creado para: ${email}`)
         }
         break
       }
