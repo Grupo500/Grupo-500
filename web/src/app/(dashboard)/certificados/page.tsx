@@ -67,11 +67,14 @@ export default function CertificadosPage() {
       setModalGenerar(false)
       setForm({ estudianteId: '', tipo: 'CURSANDO' })
     },
+    onError: (err: any) => {
+      alert(err?.message ?? 'Error al generar certificado')
+    },
   })
 
-  const certificados: Certificado[] = data?.data?.items ?? []
-  const total = data?.data?.total ?? 0
-  const estudiantes = estudiantesData?.data?.items ?? []
+  const certificados: Certificado[] = data?.data ?? []
+  const total = certificados.length
+  const estudiantes = estudiantesData?.data ?? []
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'

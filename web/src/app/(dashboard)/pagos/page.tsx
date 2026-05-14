@@ -76,6 +76,7 @@ export default function PagosPage() {
     monto: '',
     metodo: 'TRANSFERENCIA',
     fechaVencimiento: '',
+    comprobante: '',
   })
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
@@ -103,12 +104,16 @@ export default function PagosPage() {
         monto: Number(form.monto),
         metodo: form.metodo,
         fechaVencimiento: form.fechaVencimiento,
+        ...(form.comprobante ? { comprobante: form.comprobante } : {}),
       }),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pagos'] })
       setModalRegistrar(false)
-      setForm({ estudianteId: '', estudianteNombre: '', monto: '', metodo: 'TRANSFERENCIA', fechaVencimiento: '' })
+      setForm({ estudianteId: '', estudianteNombre: '', monto: '', metodo: 'TRANSFERENCIA', fechaVencimiento: '', comprobante: '' })
+    },
+    onError: (err: any) => {
+      alert(err?.message ?? 'Error al registrar pago')
     },
   })
 
@@ -280,6 +285,16 @@ export default function PagosPage() {
             <div>
               <label className={labelCls}>Fecha de vencimiento *</label>
               <input className={inputCls} type="date" value={form.fechaVencimiento} onChange={e => setForm(f => ({ ...f, fechaVencimiento: e.target.value }))} />
+            </div>
+            <div>
+              <label className={labelCls}>URL del comprobante</label>
+              <input
+                className={inputCls}
+                type="url"
+                value={form.comprobante}
+                onChange={e => setForm(f => ({ ...f, comprobante: e.target.value }))}
+                placeholder="https://... (opcional)"
+              />
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-6">

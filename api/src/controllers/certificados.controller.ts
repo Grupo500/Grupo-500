@@ -16,6 +16,14 @@ function generarNumeroSerie(): string {
   return `G500-${timestamp}-${random}`
 }
 
+export async function listar(_req: Request, res: Response) {
+  const certificados = await prisma.certificado.findMany({
+    include: { estudiante: true },
+    orderBy: { fechaEmision: 'desc' },
+  })
+  return ApiResponse.success(res, certificados)
+}
+
 export async function generar(req: Request, res: Response) {
   const { estudianteId, tipo } = generarSchema.parse(req.body)
 
