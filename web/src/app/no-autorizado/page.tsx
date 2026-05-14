@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { Suspense } from 'react'
 import { UserX, Clock } from 'lucide-react'
 import { SignOutButton } from '@clerk/nextjs'
