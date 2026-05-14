@@ -17,6 +17,10 @@ export function createClientFetcher(token: string | null) {
       throw new Error(error.error || `HTTP ${res.status}`)
     }
 
+    if (res.status === 204 || res.headers.get('content-length') === '0') {
+      return null as T
+    }
+
     return res.json()
   }
 }
