@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
+import { esES } from '@clerk/localizations'
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import './globals.css'
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
+      localization={esES}
       signInFallbackRedirectUrl="/verificando"
       signUpFallbackRedirectUrl="/verificando"
       afterSignOutUrl="/sign-in"
