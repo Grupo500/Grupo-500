@@ -18,7 +18,8 @@ export default function SignInPage() {
           className="drop-shadow-sm"
           priority
         />
-        <p className={`${poppins.className} text-sm font-bold tracking-normal uppercase text-primary mt-1`}>App Grupo 500</p>
+        <p className={`${poppins.className} text-lg font-bold tracking-tight text-on-surface mt-1`}>Grupo 500</p>
+        <p className="text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
       </div>
 
       {/* Clerk SignIn */}

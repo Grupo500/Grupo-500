@@ -54,7 +54,8 @@ export default function VerificandoPage() {
     <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: 'var(--bg)' }}>
       <div className="flex flex-col items-center gap-3">
         <Image src="/logo.png" alt="Grupo 500" width={90} height={90} className="drop-shadow-sm" priority />
-        <p className={`${poppins.className} text-sm font-bold tracking-normal uppercase text-primary`}>App Grupo 500</p>
+        <p className={`${poppins.className} text-lg font-bold tracking-tight text-on-surface`}>Grupo 500</p>
+        <p className="text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
       </div>
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
