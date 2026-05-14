@@ -50,10 +50,12 @@ function EstadoBadge({ estado }: { estado: keyof typeof ESTADOS }) {
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {children}
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-md">
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -121,10 +123,10 @@ export default function PagosPage() {
     },
   })
 
-  const pagos: Pago[] = data?.data?.items ?? []
-  const total = data?.data?.total ?? 0
-  const totalPages = data?.data?.totalPages ?? 1
-  const estudiantes = estudiantesData?.data?.items ?? []
+  const pagos: Pago[] = data?.data ?? []
+  const total = data?.pagination?.total ?? 0
+  const totalPages = data?.pagination?.totalPages ?? 1
+  const estudiantes = estudiantesData?.data ?? []
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'

@@ -267,8 +267,10 @@ export default function UsuariosPage() {
 
       {/* Modal editar asesor */}
       {editAsesor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'var(--scrim)' }}>
-          <div className="card w-full max-w-md p-6 space-y-5 animate-slide-up">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="relative card w-full max-w-md p-6 space-y-5 animate-slide-up">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold text-on-surface">Editar perfil asesor</h2>
@@ -324,13 +326,16 @@ export default function UsuariosPage() {
               </button>
             </div>
           </div>
+          </div>
         </div>
       )}
 
       {/* Modal agregar usuario */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'var(--scrim)' }}>
-          <div className="card w-full max-w-md p-6 space-y-5 animate-slide-up">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="relative card w-full max-w-md p-6 space-y-5 animate-slide-up">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold text-on-surface">Agregar usuario</h2>
@@ -378,6 +383,7 @@ export default function UsuariosPage() {
                 Agregar
               </button>
             </div>
+          </div>
           </div>
         </div>
       )}
