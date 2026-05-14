@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/response'
 
 export async function listar(_req: Request, res: Response) {
   const asesores = await prisma.asesor.findMany({
+    where: { user: { role: 'VENDEDOR' } },
     include: {
       user: { select: { role: true, email: true } },
       _count: { select: { estudiantes: true, pagos: true } },
