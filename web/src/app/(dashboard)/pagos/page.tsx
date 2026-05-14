@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, formatCOP, cn } from '@/lib/utils'
 import {
   CreditCard, Plus, X, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle, Clock, AlertTriangle, XCircle, Filter,
+  CheckCircle, Clock, AlertTriangle, XCircle, Filter, Pencil,
 } from 'lucide-react'
 
 interface Pago {
@@ -69,12 +69,21 @@ export default function PagosPage() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [modalRegistrar, setModalRegistrar] = useState(false)
   const [modalMarcarPagado, setModalMarcarPagado] = useState<Pago | null>(null)
+  const [modalEditar, setModalEditar] = useState<Pago | null>(null)
 
   const [form, setForm] = useState({
     estudianteId: '',
     estudianteNombre: '',
     monto: '',
     metodo: 'TRANSFERENCIA',
+    fechaVencimiento: '',
+    comprobante: '',
+  })
+
+  const [formEditar, setFormEditar] = useState({
+    monto: '',
+    metodo: 'TRANSFERENCIA',
+    estado: 'PENDIENTE',
     fechaVencimiento: '',
     comprobante: '',
   })
@@ -127,6 +136,37 @@ export default function PagosPage() {
       setModalMarcarPagado(null)
     },
   })
+
+  const editarMutation = useMutation({
+    mutationFn: (id: string) => fetcher(`/pagos/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        monto: Number(formEditar.monto),
+        metodo: formEditar.metodo,
+        estado: formEditar.estado,
+        fechaVencimiento: formEditar.fechaVencimiento,
+        ...(formEditar.comprobante ? { comprobante: formEditar.comprobante } : {}),
+      }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pagos'] })
+      setModalEditar(null)
+    },
+    onError: (err: any) => {
+      alert(err?.message ?? 'Error al actualizar pago')
+    },
+  })
+
+  const abrirEditar = (p: Pago) => {
+    setFormEditar({
+      monto: String(p.monto),
+      metodo: p.metodo,
+      estado: p.estado,
+      fechaVencimiento: p.fechaVencimiento.split('T')[0],
+      comprobante: p.comprobante ?? '',
+    })
+    setModalEditar(p)
+  }
 
   const pagos: Pago[] = data?.data ?? []
   const total = data?.pagination?.total ?? 0
@@ -214,14 +254,23 @@ export default function PagosPage() {
                     <span className="text-xs text-on-surface-variant">{formatDate(p.fechaVencimiento)}</span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {p.estado === 'PENDIENTE' && (
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {p.estado === 'PENDIENTE' && (
+                        <button
+                          onClick={() => setModalMarcarPagado(p)}
+                          className="px-2.5 py-1 rounded text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
+                        >
+                          Marcar pagado
+                        </button>
+                      )}
                       <button
-                        onClick={() => setModalMarcarPagado(p)}
-                        className="px-2.5 py-1 rounded text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors opacity-0 group-hover:opacity-100"
+                        onClick={() => abrirEditar(p)}
+                        className="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
+                        title="Editar pago"
                       >
-                        Marcar pagado
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -314,6 +363,77 @@ export default function PagosPage() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Modal editar pago */}
+      <Modal open={!!modalEditar} onClose={() => setModalEditar(null)}>
+        {modalEditar && (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-base font-semibold text-on-surface">Editar pago</h2>
+                <p className="text-xs text-on-surface-variant mt-0.5">{modalEditar.estudiante.nombre}</p>
+              </div>
+              <button onClick={() => setModalEditar(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className={labelCls}>Monto *</label>
+                <input className={inputCls} type="number" value={formEditar.monto} onChange={e => setFormEditar(f => ({ ...f, monto: e.target.value }))} />
+              </div>
+              <div>
+                <label className={labelCls}>Estado</label>
+                <select className={inputCls} value={formEditar.estado} onChange={e => setFormEditar(f => ({ ...f, estado: e.target.value }))}>
+                  <option value="PENDIENTE">Pendiente</option>
+                  <option value="PAGADO">Pagado</option>
+                  <option value="VENCIDO">Vencido</option>
+                  <option value="CANCELADO">Cancelado</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Método de pago</label>
+                <select className={inputCls} value={formEditar.metodo} onChange={e => setFormEditar(f => ({ ...f, metodo: e.target.value }))}>
+                  <option value="TRANSFERENCIA">Transferencia</option>
+                  <option value="TARJETA">Tarjeta</option>
+                  <option value="EFECTIVO">Efectivo</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Fecha de vencimiento</label>
+                <input
+                  className={cn(inputCls, 'w-auto min-w-0 max-w-[180px]')}
+                  type="date"
+                  value={formEditar.fechaVencimiento}
+                  onChange={e => setFormEditar(f => ({ ...f, fechaVencimiento: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>URL del comprobante</label>
+                <input
+                  className={inputCls}
+                  type="url"
+                  value={formEditar.comprobante}
+                  onChange={e => setFormEditar(f => ({ ...f, comprobante: e.target.value }))}
+                  placeholder="https://... (opcional)"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setModalEditar(null)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
+              <button
+                onClick={() => editarMutation.mutate(modalEditar.id)}
+                disabled={editarMutation.isPending || !formEditar.monto || !formEditar.fechaVencimiento}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              >
+                {editarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Guardar cambios
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Modal confirmar pagado */}
