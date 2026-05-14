@@ -32,7 +32,7 @@ router.post('/clerk', async (req: Request, res: Response) => {
       'svix-signature': svixSignature,
     })
   } catch (err) {
-    logger.error('Webhook signature inválida:', err)
+    logger.error({ err }, 'Webhook signature inválida')
     return res.status(400).json({ error: 'Firma inválida' })
   }
 
@@ -105,7 +105,7 @@ router.post('/clerk', async (req: Request, res: Response) => {
 
     return res.status(200).json({ received: true })
   } catch (err) {
-    logger.error('Error procesando webhook:', err)
+    logger.error({ err }, 'Error procesando webhook')
     return res.status(500).json({ error: 'Error interno procesando evento' })
   }
 })

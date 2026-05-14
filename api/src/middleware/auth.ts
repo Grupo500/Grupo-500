@@ -2,9 +2,11 @@ import { Request, Response, NextFunction } from 'express'
 import { verifyToken, createClerkClient } from '@clerk/backend'
 import { prisma } from '../config/prisma'
 import { UnauthorizedError, ForbiddenError } from '../utils/errors'
-import { Role } from '@prisma/client'
+import { Role, User, Asesor } from '@prisma/client'
 
 const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+
+type UserWithAsesor = User & { asesor: Asesor | null }
 
 declare global {
   namespace Express {
@@ -26,7 +28,11 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     })
 
     // Auto-sincronizar usuario en DB si no existe (primer login)
-    let user = await prisma.user.findUnique({ where: { clerkId }, include: { asesor: true } })
+    let user: UserWithAsesor | null = await prisma.user.findUnique({
+      where: { clerkId },
+      include: { asesor: true },
+    })
+
     if (!user) {
       const clerkUser = await clerk.users.getUser(clerkId)
       const email  = clerkUser.emailAddresses[0]?.emailAddress ?? ''
@@ -47,11 +53,11 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
           },
         },
         include: { asesor: true },
-      }) as typeof user
+      }) as UserWithAsesor
     }
 
     // Si el User existe pero no tiene Asesor (usuarios creados antes de este fix)
-    if (user && !user.asesor) {
+    if (!user.asesor) {
       const asesor = await prisma.asesor.create({
         data: {
           userId:   user.id,
@@ -63,7 +69,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       user = { ...user, asesor }
     }
 
-    req.userId = user.id
+    req.userId   = user.id
     req.userRole = user.role
     req.asesorId = user.asesor?.id
 
