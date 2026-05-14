@@ -49,6 +49,7 @@ export default function EstudiantesPage() {
   const [busquedaInput, setBusquedaInput] = useState('')
   const [modalCrear, setModalCrear] = useState(false)
   const [modalDetalle, setModalDetalle] = useState<Estudiante | null>(null)
+  const [formError, setFormError] = useState('')
 
   // Formulario nuevo estudiante
   const [form, setForm] = useState({
@@ -70,30 +71,46 @@ export default function EstudiantesPage() {
 
   const crearMutation = useMutation({
     mutationFn: async () => {
+      // Validación client-side antes de enviar
+      if (!form.nombre || !form.email || !form.telefono || !form.fechaNacimiento) {
+        throw new Error('Completa todos los campos obligatorios del estudiante')
+      }
+
       const payload: any = {
-        nombre: form.nombre,
-        email: form.email,
-        telefono: form.telefono,
+        nombre: form.nombre.trim(),
+        email: form.email.trim(),
+        telefono: form.telefono.trim(),
         fechaNacimiento: form.fechaNacimiento,
       }
-      if (form.acudienteNombre) {
+
+      // Solo incluir acudiente si TODOS sus campos requeridos están completos
+      const acudienteCompleto =
+        form.acudienteNombre.trim() &&
+        form.acudienteEmail.trim() &&
+        form.acudienteTelefono.trim()
+
+      if (acudienteCompleto) {
         payload.acudiente = {
-          nombre: form.acudienteNombre,
-          email: form.acudienteEmail,
-          telefono: form.acudienteTelefono,
+          nombre: form.acudienteNombre.trim(),
+          email: form.acudienteEmail.trim(),
+          telefono: form.acudienteTelefono.trim(),
           relacion: form.acudienteRelacion,
         }
       }
+
       return fetcher('/estudiantes', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
       setModalCrear(false)
+      setFormError('')
       setForm({ nombre: '', email: '', telefono: '', fechaNacimiento: '', acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre' })
     },
+    onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
   })
 
   const estudiantes = data?.data?.items ?? []
@@ -298,13 +315,22 @@ export default function EstudiantesPage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
-            <button onClick={() => setModalCrear(false)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors">
+          {formError && (
+            <p className="mt-4 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">
+              {formError}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-3 mt-4">
+            <button
+              onClick={() => { setModalCrear(false); setFormError('') }}
+              className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+            >
               Cancelar
             </button>
             <button
               onClick={() => crearMutation.mutate()}
-              disabled={crearMutation.isPending || !form.nombre || !form.email || !form.telefono}
+              disabled={crearMutation.isPending || !form.nombre || !form.email || !form.telefono || !form.fechaNacimiento}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
               {crearMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
