@@ -77,31 +77,49 @@ export async function ingresos(req: Request, res: Response) {
   return ApiResponse.success(res, { pagos, total })
 }
 
-export async function rankingAsesores(req: Request, res: Response) {
-  const { desde, hasta } = req.query
+export async function rankingAsesores(_req: Request, res: Response) {
+  const hoy = new Date()
 
-  const asesores = await prisma.asesor.findMany({
-    include: {
-      pagos: {
-        where: {
-          estado: 'PAGADO',
-          ...(desde && hasta && {
-            fechaPago: { gte: new Date(String(desde)), lte: new Date(String(hasta)) },
-          }),
-        },
-      },
-      _count: { select: { estudiantes: true } },
-    },
-  })
+  const inicioMesActual   = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const finMesActual      = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
+  const inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
+  const finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+
+  // Traer asesores + pagos de ambos meses en 3 queries paralelas
+  const [asesores, pagosActual, pagosAnterior] = await Promise.all([
+    prisma.asesor.findMany({
+      include: { _count: { select: { estudiantes: true } } },
+    }),
+    prisma.pago.findMany({
+      where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
+      select: { asesorId: true, monto: true },
+    }),
+    prisma.pago.findMany({
+      where: { estado: 'PAGADO', fechaPago: { gte: inicioMesAnterior, lte: finMesAnterior } },
+      select: { asesorId: true, monto: true },
+    }),
+  ])
+
+  // Agrupar por asesor
+  const sumar = (pagos: { asesorId: string | null; monto: number }[], id: string) =>
+    pagos.filter(p => p.asesorId === id).reduce((s, p) => s + p.monto, 0)
 
   const ranking = asesores
-    .map(a => ({
-      id: a.id,
-      nombre: a.nombre,
-      totalVentas: a.pagos.reduce((sum, p) => sum + p.monto, 0),
-      cantidadPagos: a.pagos.length,
-      totalEstudiantes: a._count.estudiantes,
-    }))
+    .map(a => {
+      const ventasActual   = sumar(pagosActual,   a.id)
+      const ventasAnterior = sumar(pagosAnterior, a.id)
+      const variacion      = ventasAnterior > 0 ? Math.round(((ventasActual - ventasAnterior) / ventasAnterior) * 100) : 0
+      return {
+        id: a.id,
+        nombre: a.nombre,
+        totalVentas: ventasActual,
+        cobrado: ventasActual,
+        cantidadPagos: pagosActual.filter(p => p.asesorId === a.id).length,
+        totalEstudiantes: a._count.estudiantes,
+        variacion,
+        ventasAnterior,
+      }
+    })
     .sort((a, b) => b.totalVentas - a.totalVentas)
 
   return ApiResponse.success(res, ranking)
