@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
-import { verifyToken, createClerkClient } from '@clerk/backend'
+import { verifyToken } from '@clerk/backend'
 import { prisma } from '../config/prisma'
 import { UnauthorizedError, ForbiddenError } from '../utils/errors'
 import { Role, User, Asesor } from '@prisma/client'
-
-const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
 
 type UserWithAsesor = User & { asesor: Asesor | null }
 
@@ -27,46 +25,15 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       secretKey: process.env.CLERK_SECRET_KEY!,
     })
 
-    // Auto-sincronizar usuario en DB si no existe (primer login)
-    let user: UserWithAsesor | null = await prisma.user.findUnique({
+    // Buscar usuario en DB — solo usuarios pre-registrados por el admin tienen acceso
+    const user: UserWithAsesor | null = await prisma.user.findUnique({
       where: { clerkId },
       include: { asesor: true },
     })
 
     if (!user) {
-      const clerkUser = await clerk.users.getUser(clerkId)
-      const email  = clerkUser.emailAddresses[0]?.emailAddress ?? ''
-      const nombre = `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim()
-                     || email.split('@')[0]
-
-      user = await prisma.user.create({
-        data: {
-          clerkId,
-          email,
-          role: 'VENDEDOR',
-          asesor: {
-            create: {
-              nombre:   nombre.charAt(0).toUpperCase() + nombre.slice(1),
-              email,
-              telefono: clerkUser.phoneNumbers?.[0]?.phoneNumber ?? '000-000-0000',
-            },
-          },
-        },
-        include: { asesor: true },
-      }) as UserWithAsesor
-    }
-
-    // Si el User existe pero no tiene Asesor (usuarios creados antes de este fix)
-    if (!user.asesor) {
-      const asesor = await prisma.asesor.create({
-        data: {
-          userId:   user.id,
-          nombre:   user.email.split('@')[0],
-          email:    user.email,
-          telefono: '000-000-0000',
-        },
-      })
-      user = { ...user, asesor }
+      // Usuario autenticado en Clerk pero NO registrado en el sistema
+      return next(new ForbiddenError('USUARIO_NO_REGISTRADO'))
     }
 
     req.userId   = user.id
@@ -75,7 +42,9 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
     next()
   } catch (error) {
-    next(error instanceof UnauthorizedError ? error : new UnauthorizedError())
+    next(error instanceof UnauthorizedError || error instanceof ForbiddenError
+      ? error
+      : new UnauthorizedError())
   }
 }
 

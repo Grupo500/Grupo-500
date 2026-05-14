@@ -7,8 +7,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  // Obtener rol del usuario desde el backend
-  // Por ahora usamos metadata de Clerk
+  // Verificar que el usuario esté registrado en el sistema
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+  const { getToken } = await auth()
+  const token = await getToken()
+
+  const meRes = await fetch(`${API_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+
+  // Si el API responde 403 con USUARIO_NO_REGISTRADO → pantalla de acceso denegado
+  if (meRes.status === 403) {
+    redirect('/no-autorizado')
+  }
+
+  // Obtener rol del usuario
   const user = await currentUser()
   const role = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
 
