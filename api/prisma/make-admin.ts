@@ -24,12 +24,16 @@ async function main() {
   let user = await prisma.user.findFirst({ where: { email } })
 
   if (user) {
-    // Ya existe → solo cambiar rol
+    // Ya existe en DB → actualizar rol
     user = await prisma.user.update({
       where: { id: user.id },
       data:  { role: 'ADMIN' },
     })
-    console.log(`✅ Rol actualizado a ADMIN: ${user.email} (id: ${user.id})`)
+    // Sincronizar publicMetadata en Clerk
+    await clerk.users.updateUserMetadata(user.clerkId, {
+      publicMetadata: { role: 'ADMIN' },
+    })
+    console.log(`✅ Rol actualizado a ADMIN en DB y Clerk: ${user.email}`)
   } else {
     // No existe en DB → buscar en Clerk y crear
     console.log('⚠️  No encontrado en DB. Buscando en Clerk...')
@@ -48,7 +52,11 @@ async function main() {
         role:    'ADMIN',
       },
     })
-    console.log(`✅ Usuario creado en DB como ADMIN: ${user.email} (clerkId: ${clerkUser.id})`)
+    // Sincronizar publicMetadata en Clerk
+    await clerk.users.updateUserMetadata(clerkUser.id, {
+      publicMetadata: { role: 'ADMIN' },
+    })
+    console.log(`✅ Usuario creado en DB como ADMIN y Clerk actualizado: ${user.email}`)
   }
 
   // 2. Crear registro Asesor si no tiene (ADMIN también puede ser asesor)
