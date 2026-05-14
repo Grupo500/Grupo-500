@@ -266,21 +266,18 @@ export default function PagosPage() {
 
       {/* Filtros */}
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-on-surface-variant" />
-        {['', 'PENDIENTE', 'PAGADO', 'VENCIDO', 'CANCELADO'].map(estado => (
-          <button
-            key={estado}
-            onClick={() => { setFiltroEstado(estado); setPage(1) }}
-            className={cn(
-              'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-              filtroEstado === estado
-                ? 'bg-primary/10 text-primary border border-primary/20'
-                : 'bg-surface-high text-on-surface-variant border border-outline-variant hover:bg-surface-highest'
-            )}
-          >
-            {estado === '' ? 'Todos' : ESTADOS[estado as keyof typeof ESTADOS]?.label}
-          </button>
-        ))}
+        <Filter className="w-4 h-4 text-on-surface-variant flex-shrink-0" />
+        <select
+          value={filtroEstado}
+          onChange={e => { setFiltroEstado(e.target.value); setPage(1) }}
+          className="bg-surface-high border border-outline-variant rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 cursor-pointer"
+        >
+          <option value="">Todos</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="PAGADO">Pagado</option>
+          <option value="VENCIDO">Vencido</option>
+          <option value="CANCELADO">Cancelado</option>
+        </select>
       </div>
 
       {/* Lista / Tabla */}
