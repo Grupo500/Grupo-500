@@ -40,7 +40,7 @@ export default function SignInPage() {
             colorInputText:         '#001d3d',
             borderRadius:           '0.5rem',
             fontFamily:             'Inter, sans-serif',
-            fontSize:               '16px',
+            fontSize:               '14px',
           },
           elements: {
             rootBox:           'mx-auto',
@@ -52,7 +52,7 @@ export default function SignInPage() {
             dividerLine:       'bg-white/[0.07]',
             dividerText:       'text-xs',
             formFieldLabel:    'text-xs font-medium',
-            formFieldInput:    'border border-white/[0.08] focus:border-primary/50 rounded-lg text-sm',
+            formFieldInput:    'border border-white/[0.08] focus:border-primary/50 rounded-lg text-sm !text-[16px]',
             formButtonPrimary:
               'bg-primary hover:bg-primary/90 text-[#0a0d14] font-semibold rounded-lg transition-colors shadow-none',
             footerActionLink:  'text-primary hover:text-primary/80 font-medium',
