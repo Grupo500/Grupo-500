@@ -22,8 +22,11 @@ async function getDashboardData() {
 
 export default async function DashboardPage() {
   const [data, user] = await Promise.all([getDashboardData(), currentUser()])
-  const role    = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
-  const isAdmin = role === 'ADMIN'
+  const role      = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
+  const isAdmin   = role === 'ADMIN'
+  const firstName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] ?? ''
+  const hora      = new Date().getHours()
+  const saludo    = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   const ingresos    = data?.ingresos    ?? { hoy: 0, semana: 0, mes: 0 }
   const estudiantes = data?.estudiantes ?? { total: 0, nuevosMes: 0 }
@@ -34,7 +37,7 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader
-          title="Dashboard"
+          title={`${saludo}, ${firstName} 👋`}
           subtitle="Resumen general de la operación"
         />
 
@@ -96,7 +99,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Mi Panel"
+        title={`${saludo}, ${firstName} 👋`}
         subtitle="Resumen de tu actividad y gestión"
       />
 
