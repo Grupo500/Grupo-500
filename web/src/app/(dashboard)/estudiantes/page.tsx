@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate } from '@/lib/utils'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
-  School, Phone, Mail, Eye, X, Loader2, Trash2,
+  School, Phone, Mail, Eye, X, Loader2, Trash2, Pencil,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
@@ -19,8 +19,11 @@ interface Estudiante {
   email: string
   telefono: string
   fechaNacimiento: string
-  colegio?: { nombre: string }
-  acudiente?: { nombre: string; telefono: string; relacion: string }
+  departamento?: string
+  ciudad?: string
+  colegioId?: string
+  colegio?: { id: string; nombre: string }
+  acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
   asesor?: { nombre: string }
   createdAt: string
 }
@@ -28,6 +31,12 @@ interface Estudiante {
 interface PaginatedResponse {
   data: Estudiante[]
   pagination: { total: number; page: number; totalPages: number }
+}
+
+const FORM_EMPTY = {
+  nombre: '', email: '', telefono: '', fechaNacimiento: '',
+  departamento: '', ciudad: '', colegioId: '',
+  acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
 }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
@@ -51,14 +60,12 @@ export default function EstudiantesPage() {
   const [busquedaInput, setBusquedaInput] = useState('')
   const [modalCrear, setModalCrear] = useState(false)
   const [modalDetalle, setModalDetalle] = useState<Estudiante | null>(null)
+  const [modalEditar, setModalEditar] = useState<Estudiante | null>(null)
   const [formError, setFormError] = useState('')
+  const [formEditError, setFormEditError] = useState('')
 
-  // Formulario nuevo estudiante
-  const [form, setForm] = useState({
-    nombre: '', email: '', telefono: '', fechaNacimiento: '',
-    departamento: '', ciudad: '', colegioId: '',
-    acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
-  })
+  const [form, setForm] = useState(FORM_EMPTY)
+  const [formEdit, setFormEdit] = useState(FORM_EMPTY)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getToken()
@@ -78,12 +85,11 @@ export default function EstudiantesPage() {
     ),
   })
 
+  // ── Crear ──────────────────────────────────────────────────────────────
   const crearMutation = useMutation({
     mutationFn: async () => {
-      // Validación client-side antes de enviar
-      if (!form.nombre || !form.email || !form.telefono || !form.fechaNacimiento) {
+      if (!form.nombre || !form.email || !form.telefono || !form.fechaNacimiento)
         throw new Error('Completa todos los campos obligatorios del estudiante')
-      }
 
       const payload: any = {
         nombre: form.nombre.trim(),
@@ -95,12 +101,7 @@ export default function EstudiantesPage() {
         ...(form.colegioId   && { colegioId:    form.colegioId }),
       }
 
-      // Solo incluir acudiente si TODOS sus campos requeridos están completos
-      const acudienteCompleto =
-        form.acudienteNombre.trim() &&
-        form.acudienteEmail.trim() &&
-        form.acudienteTelefono.trim()
-
+      const acudienteCompleto = form.acudienteNombre.trim() && form.acudienteEmail.trim() && form.acudienteTelefono.trim()
       if (acudienteCompleto) {
         payload.acudiente = {
           nombre: form.acudienteNombre.trim(),
@@ -110,25 +111,71 @@ export default function EstudiantesPage() {
         }
       }
 
-      return fetcher('/estudiantes', {
-        method: 'POST',
+      return fetcher('/estudiantes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      setModalCrear(false)
+      setFormError('')
+      setForm(FORM_EMPTY)
+    },
+    onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
+  })
+
+  // ── Editar ─────────────────────────────────────────────────────────────
+  const editarMutation = useMutation({
+    mutationFn: async () => {
+      if (!modalEditar) return
+      if (!formEdit.nombre || !formEdit.email || !formEdit.telefono || !formEdit.fechaNacimiento)
+        throw new Error('Completa todos los campos obligatorios')
+
+      const payload: any = {
+        nombre: formEdit.nombre.trim(),
+        email: formEdit.email.trim(),
+        telefono: formEdit.telefono.trim(),
+        fechaNacimiento: formEdit.fechaNacimiento,
+        departamento: formEdit.departamento || null,
+        ciudad: formEdit.ciudad || null,
+        colegioId: formEdit.colegioId || null,
+      }
+
+      return fetcher(`/estudiantes/${modalEditar.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-      setModalCrear(false)
-      setFormError('')
-      setForm({ nombre: '', email: '', telefono: '', fechaNacimiento: '', departamento: '', ciudad: '', colegioId: '', acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre' })
+      setModalEditar(null)
+      setFormEditError('')
     },
-    onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
+    onError: (e: any) => setFormEditError(e.message ?? 'Error al actualizar el estudiante'),
   })
 
+  // ── Eliminar ───────────────────────────────────────────────────────────
   const eliminarMutation = useMutation({
     mutationFn: (id: string) => fetcher(`/estudiantes/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['estudiantes'] }),
   })
+
+  const abrirEditar = (e: Estudiante) => {
+    setFormEdit({
+      nombre: e.nombre,
+      email: e.email,
+      telefono: e.telefono,
+      fechaNacimiento: e.fechaNacimiento ? e.fechaNacimiento.split('T')[0] : '',
+      departamento: e.departamento ?? '',
+      ciudad: e.ciudad ?? '',
+      colegioId: e.colegio?.id ?? '',
+      acudienteNombre: e.acudiente?.nombre ?? '',
+      acudienteEmail: e.acudiente?.email ?? '',
+      acudienteTelefono: e.acudiente?.telefono ?? '',
+      acudienteRelacion: e.acudiente?.relacion ?? 'Padre',
+    })
+    setFormEditError('')
+    setModalEditar(e)
+  }
 
   const estudiantes = data?.data ?? []
   const total = data?.pagination?.total ?? 0
@@ -143,40 +190,96 @@ export default function EstudiantesPage() {
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
+  // ── Formulario reutilizable ────────────────────────────────────────────
+  const renderFormFields = (f: typeof FORM_EMPTY, setF: (fn: (prev: typeof FORM_EMPTY) => typeof FORM_EMPTY) => void) => (
+    <div className="space-y-4">
+      <p className="text-xs font-semibold text-primary uppercase tracking-wider">Datos del estudiante</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <label className={labelCls}>Nombre completo *</label>
+          <input className={inputCls} value={f.nombre} onChange={e => setF(p => ({ ...p, nombre: e.target.value }))} placeholder="Juan Pérez" />
+        </div>
+        <div>
+          <label className={labelCls}>Email *</label>
+          <input className={inputCls} type="email" value={f.email} onChange={e => setF(p => ({ ...p, email: e.target.value }))} placeholder="juan@email.com" />
+        </div>
+        <div>
+          <label className={labelCls}>Teléfono *</label>
+          <input className={inputCls} value={f.telefono} onChange={e => setF(p => ({ ...p, telefono: e.target.value }))} placeholder="3001234567" />
+        </div>
+        <div>
+          <label className={labelCls}>Fecha de nacimiento *</label>
+          <input className={inputCls} type="date" value={f.fechaNacimiento} onChange={e => setF(p => ({ ...p, fechaNacimiento: e.target.value }))} />
+        </div>
+        <div>
+          <label className={labelCls}>Departamento</label>
+          <select className={inputCls} value={f.departamento} onChange={e => setF(p => ({ ...p, departamento: e.target.value, ciudad: '' }))}>
+            <option value="">Seleccionar departamento</option>
+            {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Ciudad / Municipio</label>
+          <select className={inputCls} value={f.ciudad} onChange={e => setF(p => ({ ...p, ciudad: e.target.value }))} disabled={!f.departamento}>
+            <option value="">{f.departamento ? 'Seleccionar municipio' : 'Primero elige departamento'}</option>
+            {getMunicipios(f.departamento).map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Colegio</label>
+          <select className={inputCls} value={f.colegioId} onChange={e => setF(p => ({ ...p, colegioId: e.target.value }))}>
+            <option value="">Sin colegio</option>
+            {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <p className="text-xs font-semibold text-primary uppercase tracking-wider pt-2">Datos del acudiente</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <label className={labelCls}>Nombre del acudiente</label>
+          <input className={inputCls} value={f.acudienteNombre} onChange={e => setF(p => ({ ...p, acudienteNombre: e.target.value }))} placeholder="María López" />
+        </div>
+        <div>
+          <label className={labelCls}>Email acudiente</label>
+          <input className={inputCls} type="email" value={f.acudienteEmail} onChange={e => setF(p => ({ ...p, acudienteEmail: e.target.value }))} placeholder="maria@email.com" />
+        </div>
+        <div>
+          <label className={labelCls}>Teléfono acudiente</label>
+          <input className={inputCls} value={f.acudienteTelefono} onChange={e => setF(p => ({ ...p, acudienteTelefono: e.target.value }))} placeholder="3009876543" />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Relación</label>
+          <select className={inputCls} value={f.acudienteRelacion} onChange={e => setF(p => ({ ...p, acudienteRelacion: e.target.value }))}>
+            <option>Padre</option><option>Madre</option><option>Tutor</option><option>Otro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Estudiantes"
         subtitle={`${total} estudiantes registrados`}
         actions={
-          <button
-            onClick={() => setModalCrear(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo estudiante
+          <button onClick={() => setModalCrear(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" />Nuevo estudiante
           </button>
         }
       />
 
-      {/* Barra de búsqueda */}
+      {/* Búsqueda */}
       <form onSubmit={handleBuscar} className="flex gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={busquedaInput}
-            onChange={e => setBusquedaInput(e.target.value)}
-            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-          />
+          <input type="text" placeholder="Buscar por nombre..." value={busquedaInput} onChange={e => setBusquedaInput(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" />
         </div>
-        <button type="submit" className="px-4 py-2 bg-surface-high border border-outline-variant rounded-lg text-sm text-on-surface hover:bg-surface-highest transition-colors">
-          Buscar
-        </button>
+        <button type="submit" className="px-4 py-2 bg-surface-high border border-outline-variant rounded-lg text-sm text-on-surface hover:bg-surface-highest transition-colors">Buscar</button>
         {busqueda && (
-          <button type="button" onClick={() => { setBusqueda(''); setBusquedaInput(''); setPage(1) }}
-            className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+          <button type="button" onClick={() => { setBusqueda(''); setBusquedaInput(''); setPage(1) }} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -185,9 +288,7 @@ export default function EstudiantesPage() {
       {/* Tabla */}
       <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
-          </div>
+          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
         ) : estudiantes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
             <Users className="w-10 h-10 mb-3 opacity-30" />
@@ -215,9 +316,7 @@ export default function EstudiantesPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-on-surface">{e.nombre}</p>
-                        <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                          <Mail className="w-3 h-3" />{e.email}
-                        </p>
+                        <p className="text-xs text-on-surface-variant flex items-center gap-1"><Mail className="w-3 h-3" />{e.email}</p>
                       </div>
                     </div>
                   </td>
@@ -231,9 +330,7 @@ export default function EstudiantesPage() {
                     {e.acudiente ? (
                       <div>
                         <p className="text-sm text-on-surface">{e.acudiente.nombre}</p>
-                        <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                          <Phone className="w-3 h-3" />{e.acudiente.telefono}
-                        </p>
+                        <p className="text-xs text-on-surface-variant flex items-center gap-1"><Phone className="w-3 h-3" />{e.acudiente.telefono}</p>
                       </div>
                     ) : <span className="text-xs text-on-surface-variant italic opacity-40">Sin acudiente</span>}
                   </td>
@@ -245,22 +342,16 @@ export default function EstudiantesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => setModalDetalle(e)}
-                        className="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Ver detalle"
-                      >
+                      <button onClick={() => setModalDetalle(e)} className="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors" title="Ver detalle">
                         <Eye className="w-4 h-4" />
                       </button>
+                      <button onClick={() => abrirEditar(e)} className="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors" title="Editar estudiante">
+                        <Pencil className="w-4 h-4" />
+                      </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`¿Eliminar a ${e.nombre}? Esta acción no se puede deshacer.`))
-                            eliminarMutation.mutate(e.id)
-                        }}
+                        onClick={() => { if (confirm(`¿Eliminar a ${e.nombre}? Esta acción no se puede deshacer.`)) eliminarMutation.mutate(e.id) }}
                         disabled={eliminarMutation.isPending}
-                        className="p-1.5 rounded text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
-                        title="Eliminar estudiante"
-                      >
+                        className="p-1.5 rounded text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40" title="Eliminar estudiante">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -271,136 +362,55 @@ export default function EstudiantesPage() {
           </table>
         )}
 
-        {/* Paginación */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
             <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
             <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Modal crear estudiante */}
+      {/* Modal crear */}
       <Modal open={modalCrear} onClose={() => setModalCrear(false)}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-on-surface">Nuevo estudiante</h2>
-            <button onClick={() => setModalCrear(false)} className="p-1.5 text-on-surface-variant hover:text-on-surface">
-              <X className="w-4 h-4" />
-            </button>
+            <button onClick={() => setModalCrear(false)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
           </div>
-
-          <div className="space-y-4">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider">Datos del estudiante</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className={labelCls}>Nombre completo *</label>
-                <input className={inputCls} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Juan Pérez" />
-              </div>
-              <div>
-                <label className={labelCls}>Email *</label>
-                <input className={inputCls} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="juan@email.com" />
-              </div>
-              <div>
-                <label className={labelCls}>Teléfono *</label>
-                <input className={inputCls} value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="3001234567" />
-              </div>
-              <div>
-                <label className={labelCls}>Fecha de nacimiento *</label>
-                <input className={inputCls} type="date" value={form.fechaNacimiento} onChange={e => setForm(f => ({ ...f, fechaNacimiento: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelCls}>Departamento</label>
-                <select
-                  className={inputCls}
-                  value={form.departamento}
-                  onChange={e => setForm(f => ({ ...f, departamento: e.target.value, ciudad: '' }))}
-                >
-                  <option value="">Seleccionar departamento</option>
-                  {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Ciudad / Municipio</label>
-                <select
-                  className={inputCls}
-                  value={form.ciudad}
-                  onChange={e => setForm(f => ({ ...f, ciudad: e.target.value }))}
-                  disabled={!form.departamento}
-                >
-                  <option value="">{form.departamento ? 'Seleccionar municipio' : 'Primero elige departamento'}</option>
-                  {getMunicipios(form.departamento).map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Colegio</label>
-                <select className={inputCls} value={form.colegioId} onChange={e => setForm(f => ({ ...f, colegioId: e.target.value }))}>
-                  <option value="">Sin colegio</option>
-                  {colegios.map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider pt-2">Datos del acudiente</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className={labelCls}>Nombre del acudiente</label>
-                <input className={inputCls} value={form.acudienteNombre} onChange={e => setForm(f => ({ ...f, acudienteNombre: e.target.value }))} placeholder="María López" />
-              </div>
-              <div>
-                <label className={labelCls}>Email acudiente</label>
-                <input className={inputCls} type="email" value={form.acudienteEmail} onChange={e => setForm(f => ({ ...f, acudienteEmail: e.target.value }))} placeholder="maria@email.com" />
-              </div>
-              <div>
-                <label className={labelCls}>Teléfono acudiente</label>
-                <input className={inputCls} value={form.acudienteTelefono} onChange={e => setForm(f => ({ ...f, acudienteTelefono: e.target.value }))} placeholder="3009876543" />
-              </div>
-              <div className="col-span-2">
-                <label className={labelCls}>Relación</label>
-                <select className={inputCls} value={form.acudienteRelacion} onChange={e => setForm(f => ({ ...f, acudienteRelacion: e.target.value }))}>
-                  <option>Padre</option>
-                  <option>Madre</option>
-                  <option>Tutor</option>
-                  <option>Otro</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {formError && (
-            <p className="mt-4 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">
-              {formError}
-            </p>
-          )}
-
+          {renderFormFields(form, setForm)}
+          {formError && <p className="mt-4 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{formError}</p>}
           <div className="flex justify-end gap-3 mt-4">
-            <button
-              onClick={() => { setModalCrear(false); setFormError('') }}
-              className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={() => crearMutation.mutate()}
-              disabled={crearMutation.isPending || !form.nombre || !form.email || !form.telefono || !form.fechaNacimiento}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-            >
-              {crearMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              Crear estudiante
+            <button onClick={() => { setModalCrear(false); setFormError('') }} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors">Cancelar</button>
+            <button onClick={() => crearMutation.mutate()} disabled={crearMutation.isPending || !form.nombre || !form.email || !form.telefono || !form.fechaNacimiento}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors">
+              {crearMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Crear estudiante
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Modal editar */}
+      <Modal open={!!modalEditar} onClose={() => setModalEditar(null)}>
+        {modalEditar && (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-base font-semibold text-on-surface">Editar estudiante</h2>
+              <button onClick={() => setModalEditar(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
+            </div>
+            {renderFormFields(formEdit, setFormEdit)}
+            {formEditError && <p className="mt-4 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{formEditError}</p>}
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => setModalEditar(null)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors">Cancelar</button>
+              <button onClick={() => editarMutation.mutate()} disabled={editarMutation.isPending || !formEdit.nombre || !formEdit.email || !formEdit.telefono || !formEdit.fechaNacimiento}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                {editarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Guardar cambios
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Modal detalle */}
@@ -417,11 +427,8 @@ export default function EstudiantesPage() {
                   <p className="text-xs text-on-surface-variant">Registrado {formatDate(modalDetalle.createdAt)}</p>
                 </div>
               </div>
-              <button onClick={() => setModalDetalle(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface">
-                <X className="w-4 h-4" />
-              </button>
+              <button onClick={() => setModalDetalle(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
             </div>
-
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <InfoField label="Email" value={modalDetalle.email} />
@@ -429,6 +436,8 @@ export default function EstudiantesPage() {
                 <InfoField label="Colegio" value={modalDetalle.colegio?.nombre ?? '—'} />
                 <InfoField label="Asesor" value={modalDetalle.asesor?.nombre ?? '—'} />
                 <InfoField label="Fecha nacimiento" value={formatDate(modalDetalle.fechaNacimiento)} />
+                {modalDetalle.departamento && <InfoField label="Departamento" value={modalDetalle.departamento} />}
+                {modalDetalle.ciudad && <InfoField label="Ciudad" value={modalDetalle.ciudad} />}
               </div>
               {modalDetalle.acudiente && (
                 <>
