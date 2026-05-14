@@ -43,35 +43,27 @@ router.post('/clerk', async (req: Request, res: Response) => {
     switch (type) {
 
       // ── Usuario creado en Clerk ──────────────────────────────────────────
+      // IMPORTANTE: NO se crea el usuario en DB aquí. El acceso al sistema solo
+      // se otorga cuando un ADMIN lo registra manualmente desde el módulo Usuarios.
+      // Este evento solo actualiza datos si el usuario YA existe en DB (caso: admin
+      // registró primero y luego el usuario completó su perfil en Clerk).
       case 'user.created': {
         const clerkId  = data.id as string
         const email    = data.email_addresses?.[0]?.email_address ?? ''
-        const telefono = data.phone_numbers?.[0]?.phone_number ?? ''
         const imageUrl = data.image_url ?? data.profile_image_url ?? null
         const nombre   = `${data.first_name ?? ''} ${data.last_name ?? ''}`.trim()
                          || email.split('@')[0]
 
-        let user = await prisma.user.findUnique({ where: { clerkId } })
-
-        if (!user) {
-          user = await prisma.user.create({
-            data: { clerkId, email, nombre, imageUrl, role: 'VENDEDOR' },
+        // Solo actualizar si el admin ya lo registró en DB
+        const user = await prisma.user.findUnique({ where: { clerkId } })
+        if (user) {
+          await prisma.user.update({
+            where: { clerkId },
+            data:  { imageUrl, nombre },
           })
-          logger.info(`Usuario creado en DB: ${email} (${clerkId})`)
-        }
-
-        // Crear perfil Asesor si no existe — todos los usuarios son asesores por defecto
-        const asesorExiste = await prisma.asesor.findUnique({ where: { userId: user.id } })
-        if (!asesorExiste) {
-          await prisma.asesor.create({
-            data: {
-              userId:   user.id,
-              nombre:   nombre.charAt(0).toUpperCase() + nombre.slice(1),
-              email:    user.email,
-              telefono: telefono || '000-000-0000',
-            },
-          })
-          logger.info(`Perfil Asesor creado para: ${email}`)
+          logger.info(`Datos sincronizados para usuario pre-registrado: ${email}`)
+        } else {
+          logger.info(`Registro en Clerk ignorado (no pre-registrado por admin): ${email}`)
         }
         break
       }
