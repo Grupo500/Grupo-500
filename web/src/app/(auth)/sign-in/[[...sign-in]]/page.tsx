@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-dvh flex items-center justify-center p-4 py-8" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md flex flex-col gap-8">
 
         {/* Logo */}
@@ -16,7 +16,7 @@ export default function SignInPage() {
             className="drop-shadow-sm"
             priority
           />
-          <p className="text-sm text-on-surface-variant mt-0.5 text-center w-full">Plataforma Pre-ICFES</p>
+          <p className="text-sm text-on-surface-variant mt-0.5 text-center w-full">App Grupo 500</p>
         </div>
 
         {/* Clerk SignIn con variables de diseño */}
