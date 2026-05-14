@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { GraduationCap } from 'lucide-react'
+import Image from 'next/image'
 
 export default function VerificandoPage() {
   const router = useRouter()
@@ -47,13 +47,15 @@ export default function VerificandoPage() {
     >
       {/* Logo */}
       <div className="flex flex-col items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <GraduationCap className="w-6 h-6 text-primary" />
-        </div>
-        <div className="text-center">
-          <p className="text-xl font-bold text-on-surface tracking-tight">Grupo 500</p>
-          <p className="text-sm text-on-surface-variant mt-0.5">Plataforma Pre-ICFES</p>
-        </div>
+        <Image
+          src="/logo.png"
+          alt="Grupo 500"
+          width={90}
+          height={90}
+          className="drop-shadow-sm"
+          priority
+        />
+        <p className="text-xs font-bold tracking-[0.2em] uppercase text-primary">App Grupo 500</p>
       </div>
 
       {/* Spinner */}
