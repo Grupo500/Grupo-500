@@ -6,19 +6,19 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
 export default function SignInPage() {
   return (
-    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-8 px-4 py-8" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4" style={{ background: 'var(--bg)' }}>
 
       {/* Logo */}
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-1.5">
         <Image
           src="/logo.png"
           alt="Grupo 500"
-          width={120}
-          height={120}
+          width={80}
+          height={80}
           className="drop-shadow-sm"
           priority
         />
-        <p className={`${poppins.className} text-lg font-bold tracking-tight text-on-surface mt-1`}>Grupo 500</p>
+        <p className={`${poppins.className} text-base font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
         <p className="text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
       </div>
 
