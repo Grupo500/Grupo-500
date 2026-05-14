@@ -25,8 +25,19 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       secretKey: process.env.CLERK_SECRET_KEY!,
     })
 
-    const user = await prisma.user.findUnique({ where: { clerkId }, include: { asesor: true } })
-    if (!user) throw new UnauthorizedError('Usuario no encontrado')
+    // Auto-sincronizar usuario en DB si no existe (primer login)
+    let user = await prisma.user.findUnique({ where: { clerkId }, include: { asesor: true } })
+    if (!user) {
+      const clerkUser = await clerk.users.getUser(clerkId)
+      user = await prisma.user.create({
+        data: {
+          clerkId,
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+          role: 'VENDEDOR',
+        },
+        include: { asesor: true },
+      }) as typeof user
+    }
 
     req.userId = user.id
     req.userRole = user.role
