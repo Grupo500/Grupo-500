@@ -83,11 +83,33 @@ export async function obtener(req: Request, res: Response) {
   return ApiResponse.success(res, estudiante)
 }
 
+const actualizarSchema = z.object({
+  nombre:          z.string().min(2).optional(),
+  email:           z.string().email().optional(),
+  telefono:        z.string().min(7).optional(),
+  fechaNacimiento: z.string().optional(),
+  departamento:    z.string().nullable().optional(),
+  ciudad:          z.string().nullable().optional(),
+  colegioId:       z.string().nullable().optional(),
+})
+
 export async function actualizar(req: Request, res: Response) {
+  const data = actualizarSchema.parse(req.body)
+
   const estudiante = await prisma.estudiante.update({
     where: { id: req.params.id },
-    data: req.body,
+    data: {
+      ...(data.nombre          !== undefined && { nombre:          data.nombre }),
+      ...(data.email           !== undefined && { email:           data.email }),
+      ...(data.telefono        !== undefined && { telefono:        data.telefono }),
+      ...(data.fechaNacimiento !== undefined && { fechaNacimiento: new Date(data.fechaNacimiento) }),
+      ...(data.departamento    !== undefined && { departamento:    data.departamento }),
+      ...(data.ciudad          !== undefined && { ciudad:          data.ciudad }),
+      ...(data.colegioId       !== undefined && { colegioId:       data.colegioId }),
+    },
+    include: { colegio: true, acudiente: true },
   })
+
   return ApiResponse.success(res, estudiante)
 }
 
