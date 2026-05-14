@@ -20,22 +20,22 @@ export default function SignUpPage() {
         <SignUp
           appearance={{
             variables: {
-              colorBackground:        '#161a24',
-              colorInputBackground:   '#1e2436',
-              colorText:              '#e2e8f6',
-              colorTextSecondary:     '#8a93b0',
-              colorPrimary:           '#adc6ff',
-              colorDanger:            '#f87171',
-              colorSuccess:           '#4edea3',
-              colorNeutral:           '#8a93b0',
-              colorInputText:         '#e2e8f6',
+              colorBackground:        '#ffffff',
+              colorInputBackground:   '#f4f8ff',
+              colorText:              '#001d3d',
+              colorTextSecondary:     '#2a4172',
+              colorPrimary:           '#1a7de0',
+              colorDanger:            '#c0392b',
+              colorSuccess:           '#087a50',
+              colorNeutral:           '#5a74a8',
+              colorInputText:         '#001d3d',
               borderRadius:           '0.5rem',
               fontFamily:             'Inter, sans-serif',
               fontSize:               '14px',
             },
             elements: {
               rootBox:           'w-full',
-              card:              'shadow-none border border-white/[0.07] rounded-xl',
+              card:              'shadow-none border border-black/[0.07] rounded-xl',
               headerTitle:       'text-base font-semibold',
               headerSubtitle:    'text-sm',
               socialButtonsBlockButton:
