@@ -21,6 +21,7 @@ import certificadosRoutes from './routes/certificados'
 import simulacrosRoutes from './routes/simulacros'
 import whatsappRoutes from './routes/whatsapp'
 import reportesRoutes from './routes/reportes'
+import webhookRoutes from './routes/webhooks'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -35,7 +36,10 @@ app.use(cors({
   credentials: true,
 }))
 
-// Compresión y body parsing
+// ⚠️ Webhooks de Clerk ANTES del JSON middleware — necesita raw body para verificar firma
+app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes)
+
+// Compresión y body parsing (para el resto de rutas)
 app.use(compression())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
@@ -68,7 +72,7 @@ app.get('/health', (_req, res) => {
 })
 
 // Rutas
-app.use('/api/auth', authRoutes)
+app.use('/api/auth',      authRoutes)
 app.use('/api/estudiantes', estudiantesRoutes)
 app.use('/api/asesores', asesoresRoutes)
 app.use('/api/cursos', cursosRoutes)
