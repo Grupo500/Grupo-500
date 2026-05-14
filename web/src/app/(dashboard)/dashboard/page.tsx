@@ -39,7 +39,7 @@ export default async function DashboardPage() {
         />
 
         {/* KPIs principales */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard
             title="Ingresos del mes"
             value={formatCOP(ingresos.mes)}
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPIs principales asesor */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <KpiCard
           title="Estudiantes asignados"
           value={estudiantes.total.toString()}
