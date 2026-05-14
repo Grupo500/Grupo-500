@@ -70,6 +70,12 @@ export async function actualizar(req: Request, res: Response) {
   return ApiResponse.success(res, pago)
 }
 
+export async function eliminar(req: Request, res: Response) {
+  const { id } = req.params
+  await prisma.pago.delete({ where: { id } })
+  return ApiResponse.success(res, { id })
+}
+
 export async function subirComprobante(req: Request, res: Response) {
   // Integración Cloudinary — se completa en siguiente fase
   const { id } = req.params

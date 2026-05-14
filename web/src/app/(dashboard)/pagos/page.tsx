@@ -9,7 +9,7 @@ import { formatDate, formatCOP, cn } from '@/lib/utils'
 import {
   CreditCard, Plus, X, Loader2, ChevronLeft, ChevronRight,
   CheckCircle, Clock, AlertTriangle, XCircle, Filter, Pencil,
-  Paperclip, ExternalLink,
+  Paperclip, ExternalLink, Trash2,
 } from 'lucide-react'
 
 interface Pago {
@@ -49,11 +49,11 @@ function EstadoBadge({ estado }: { estado: keyof typeof ESTADOS }) {
 }
 
 function ComprobanteUpload({
-  value, onChange, token,
+  value, onChange, getToken,
 }: {
   value: string
   onChange: (url: string) => void
-  token: string | null
+  getToken: () => Promise<string | null>
 }) {
   const [uploading, setUploading] = useState(false)
 
@@ -62,6 +62,7 @@ function ComprobanteUpload({
     if (!file) return
     setUploading(true)
     try {
+      const token = await getToken()
       const formData = new FormData()
       formData.append('file', file)
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -70,10 +71,15 @@ function ComprobanteUpload({
         headers: { Authorization: `Bearer ${token ?? ''}` },
         body: formData,
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.error ?? `HTTP ${res.status}`)
+      }
       const data = await res.json()
       if (data?.data?.url) onChange(data.data.url)
-    } catch {
-      alert('Error al subir el comprobante')
+      else throw new Error('No se recibió URL del comprobante')
+    } catch (err: any) {
+      alert(`Error al subir el comprobante: ${err?.message ?? 'Error desconocido'}`)
     } finally {
       setUploading(false)
     }
@@ -119,12 +125,12 @@ export default function PagosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
-  const [token, setToken] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [filtroEstado, setFiltroEstado] = useState('')
   const [modalRegistrar, setModalRegistrar] = useState(false)
   const [modalMarcarPagado, setModalMarcarPagado] = useState<Pago | null>(null)
   const [modalEditar, setModalEditar] = useState<Pago | null>(null)
+  const [modalEliminar, setModalEliminar] = useState<Pago | null>(null)
 
   const [form, setForm] = useState({
     estudianteId: '',
@@ -145,7 +151,6 @@ export default function PagosPage() {
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const t = await getToken()
-    if (!token) setToken(t)
     return createClientFetcher(t)<T>(path, opts)
   }
 
@@ -210,6 +215,17 @@ export default function PagosPage() {
     },
     onError: (err: any) => {
       alert(err?.message ?? 'Error al actualizar pago')
+    },
+  })
+
+  const eliminarMutation = useMutation({
+    mutationFn: (id: string) => fetcher(`/pagos/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pagos'] })
+      setModalEliminar(null)
+    },
+    onError: (err: any) => {
+      alert(err?.message ?? 'Error al eliminar pago')
     },
   })
 
@@ -284,35 +300,51 @@ export default function PagosPage() {
             <div className="md:hidden divide-y divide-outline-variant/40">
               {pagos.map((p) => (
                 <div key={p.id} className="p-4 space-y-3">
+                  {/* Fila 1: nombre + acciones rápidas */}
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-on-surface">{p.estudiante.nombre}</p>
-                      <p className="text-xs text-on-surface-variant">{p.asesor?.nombre ?? '—'}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-on-surface truncate">{p.estudiante.nombre}</p>
+                      {p.asesor?.nombre && <p className="text-xs text-on-surface-variant truncate">{p.asesor.nombre}</p>}
                     </div>
-                    <EstadoBadge estado={p.estado} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <p className="text-base font-bold text-on-surface">{formatCOP(p.monto)}</p>
-                      <p className="text-xs text-on-surface-variant">{METODOS[p.metodo]} · Vence {formatDate(p.fechaVencimiento)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {p.estado === 'PENDIENTE' && (
-                        <button
-                          onClick={() => setModalMarcarPagado(p)}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
-                        >
-                          Marcar pagado
-                        </button>
-                      )}
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={() => abrirEditar(p)}
                         className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
+                      <button
+                        onClick={() => setModalEliminar(p)}
+                        className="p-2 rounded-lg text-on-surface-variant hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
+                  {/* Fila 2: monto + estado */}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-lg font-bold text-on-surface">{formatCOP(p.monto)}</p>
+                    <EstadoBadge estado={p.estado} />
+                  </div>
+                  {/* Fila 3: método + vencimiento */}
+                  <p className="text-xs text-on-surface-variant">{METODOS[p.metodo]} · Vence {formatDate(p.fechaVencimiento)}</p>
+                  {/* Fila 4: botón marcar pagado (solo si pendiente) */}
+                  {p.estado === 'PENDIENTE' && (
+                    <button
+                      onClick={() => setModalMarcarPagado(p)}
+                      className="w-full py-2 rounded-lg text-sm font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
+                    >
+                      Marcar pagado
+                    </button>
+                  )}
+                  {/* Comprobante */}
+                  {p.comprobante && (
+                    <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+                      <ExternalLink className="w-3 h-3" />
+                      Ver comprobante
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -334,7 +366,7 @@ export default function PagosPage() {
                   <tr key={p.id} className="hover:bg-surface-low/40 transition-colors group">
                     <td className="px-4 py-3">
                       <p className="text-sm font-medium text-on-surface">{p.estudiante.nombre}</p>
-                      <p className="text-xs text-on-surface-variant">{p.asesor?.nombre ?? '—'}</p>
+                      {p.asesor?.nombre && <p className="text-xs text-on-surface-variant">{p.asesor.nombre}</p>}
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-sm font-semibold text-on-surface">{formatCOP(p.monto)}</p>
@@ -363,6 +395,12 @@ export default function PagosPage() {
                           className="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
                         >
                           <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setModalEliminar(p)}
+                          className="p-1.5 rounded text-on-surface-variant hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -440,7 +478,7 @@ export default function PagosPage() {
               <ComprobanteUpload
                 value={form.comprobante}
                 onChange={url => setForm(f => ({ ...f, comprobante: url }))}
-                token={token}
+                getToken={getToken}
               />
             </div>
           </div>
@@ -508,7 +546,7 @@ export default function PagosPage() {
                 <ComprobanteUpload
                   value={formEditar.comprobante}
                   onChange={url => setFormEditar(f => ({ ...f, comprobante: url }))}
-                  token={token}
+                  getToken={getToken}
                 />
               </div>
             </div>
@@ -521,6 +559,32 @@ export default function PagosPage() {
               >
                 {editarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Guardar cambios
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal eliminar pago */}
+      <Modal open={!!modalEliminar} onClose={() => setModalEliminar(null)}>
+        {modalEliminar && (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-on-surface">Eliminar pago</h2>
+              <button onClick={() => setModalEliminar(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
+            </div>
+            <p className="text-sm text-on-surface-variant mb-2">¿Eliminar el pago de <span className="text-on-surface font-semibold">{formatCOP(modalEliminar.monto)}</span> de:</p>
+            <p className="text-sm font-semibold text-on-surface mb-1">{modalEliminar.estudiante.nombre}</p>
+            <p className="text-xs text-red-400 mb-6">Esta acción no se puede deshacer.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setModalEliminar(null)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
+              <button
+                onClick={() => eliminarMutation.mutate(modalEliminar.id)}
+                disabled={eliminarMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                {eliminarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Eliminar pago
               </button>
             </div>
           </div>
