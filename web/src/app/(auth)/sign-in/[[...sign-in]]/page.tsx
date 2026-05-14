@@ -1,5 +1,5 @@
 import { SignIn } from '@clerk/nextjs'
-import { GraduationCap } from 'lucide-react'
+import Image from 'next/image'
 
 export default function SignInPage() {
   return (
@@ -7,14 +7,16 @@ export default function SignInPage() {
       <div className="w-full max-w-md space-y-8">
 
         {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <GraduationCap className="w-6 h-6 text-primary" />
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-on-surface tracking-tight">Grupo 500</p>
-            <p className="text-sm text-on-surface-variant mt-0.5">Plataforma Pre-ICFES</p>
-          </div>
+        <div className="flex flex-col items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="Grupo 500"
+            width={120}
+            height={120}
+            className="drop-shadow-sm"
+            priority
+          />
+          <p className="text-sm text-on-surface-variant mt-0.5">Plataforma Pre-ICFES</p>
         </div>
 
         {/* Clerk SignIn con variables de diseño */}
