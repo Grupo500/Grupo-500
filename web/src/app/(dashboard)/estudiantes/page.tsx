@@ -53,6 +53,35 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   )
 }
 
+function ConfirmDialog({ open, nombre, onConfirm, onCancel, isPending }: {
+  open: boolean; nombre: string; onConfirm: () => void; onCancel: () => void; isPending: boolean
+}) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-sm p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--error-container)' }}>
+            <Trash2 className="w-5 h-5" style={{ color: 'var(--error)' }} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-on-surface">¿Eliminar estudiante?</p>
+            <p className="text-xs text-on-surface-variant mt-0.5">Se eliminará a <strong>{nombre}</strong> permanentemente.</p>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3">
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors">Cancelar</button>
+          <button onClick={onConfirm} disabled={isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--error)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+            {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function EstudiantesPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
@@ -63,6 +92,7 @@ export default function EstudiantesPage() {
   const [modalCrear, setModalCrear] = useState(false)
   const [modalDetalle, setModalDetalle] = useState<Estudiante | null>(null)
   const [modalEditar, setModalEditar] = useState<Estudiante | null>(null)
+  const [confirmEliminar, setConfirmEliminar] = useState<Estudiante | null>(null)
   const [formError, setFormError] = useState('')
   const [formEditError, setFormEditError] = useState('')
 
@@ -156,9 +186,19 @@ export default function EstudiantesPage() {
   })
 
   // ── Eliminar ───────────────────────────────────────────────────────────
+  const [eliminarError, setEliminarError] = useState('')
+
   const eliminarMutation = useMutation({
     mutationFn: (id: string) => fetcher(`/estudiantes/${id}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['estudiantes'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      setEliminarError('')
+      setConfirmEliminar(null)
+    },
+    onError: (e: any) => {
+      setEliminarError(e.message ?? 'Error al eliminar el estudiante')
+      setConfirmEliminar(null)
+    },
   })
 
   const abrirEditar = (e: Estudiante) => {
@@ -351,9 +391,8 @@ export default function EstudiantesPage() {
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => { if (confirm(`¿Eliminar a ${e.nombre}? Esta acción no se puede deshacer.`)) eliminarMutation.mutate(e.id) }}
-                        disabled={eliminarMutation.isPending}
-                        className="p-1.5 rounded text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40" title="Eliminar estudiante">
+                        onClick={() => setConfirmEliminar(e)}
+                        className="p-1.5 rounded text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors" title="Eliminar estudiante">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -362,6 +401,12 @@ export default function EstudiantesPage() {
               ))}
             </tbody>
           </table>
+        )}
+
+        {eliminarError && (
+          <div className="px-4 py-2 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border-t border-[var(--error)]/20">
+            {eliminarError}
+          </div>
         )}
 
         {totalPages > 1 && (
@@ -414,6 +459,15 @@ export default function EstudiantesPage() {
           </div>
         )}
       </Modal>
+
+      {/* Confirm eliminar */}
+      <ConfirmDialog
+        open={!!confirmEliminar}
+        nombre={confirmEliminar?.nombre ?? ''}
+        isPending={eliminarMutation.isPending}
+        onConfirm={() => confirmEliminar && eliminarMutation.mutate(confirmEliminar.id)}
+        onCancel={() => setConfirmEliminar(null)}
+      />
 
       {/* Modal detalle */}
       <Modal open={!!modalDetalle} onClose={() => setModalDetalle(null)}>
