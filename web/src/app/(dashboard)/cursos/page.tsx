@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Plus, X, Loader2, Clock, Users } from 'lucide-react'
+import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Trash2 } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -16,6 +16,10 @@ interface Curso {
   duracionDias: number
   _count?: { estudiantes: number }
 }
+
+type FormState = { nombre: string; descripcion: string; precio: string; duracionDias: string }
+
+const emptyForm: FormState = { nombre: '', descripcion: '', precio: '', duracionDias: '30' }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null
@@ -32,9 +36,11 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 export default function CursosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
-  const [modalCrear, setModalCrear] = useState(false)
 
-  const [form, setForm] = useState({ nombre: '', descripcion: '', precio: '', duracionDias: '30' })
+  const [modalCrear, setModalCrear] = useState(false)
+  const [editCurso, setEditCurso] = useState<Curso | null>(null)
+  const [form, setForm] = useState<FormState>(emptyForm)
+  const [editForm, setEditForm] = useState<FormState>(emptyForm)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getToken()
@@ -54,13 +60,59 @@ export default function CursosPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cursos'] })
       setModalCrear(false)
-      setForm({ nombre: '', descripcion: '', precio: '', duracionDias: '30' })
+      setForm(emptyForm)
     },
   })
 
+  const editarMutation = useMutation({
+    mutationFn: () => fetcher(`/cursos/${editCurso!.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: editForm.nombre, descripcion: editForm.descripcion, precio: Number(editForm.precio), duracionDias: Number(editForm.duracionDias) }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] })
+      setEditCurso(null)
+    },
+  })
+
+  const eliminarMutation = useMutation({
+    mutationFn: (id: string) => fetcher(`/cursos/${id}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
+  })
+
+  const abrirEditar = (c: Curso) => {
+    setEditCurso(c)
+    setEditForm({ nombre: c.nombre, descripcion: c.descripcion ?? '', precio: String(c.precio), duracionDias: String(c.duracionDias) })
+  }
+
   const cursos: Curso[] = data?.data ?? []
+
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
+
+  const FormFields = ({ f, setF }: { f: FormState; setF: (fn: (prev: FormState) => FormState) => void }) => (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls}>Nombre del curso *</label>
+        <input className={inputCls} value={f.nombre} onChange={e => setF(p => ({ ...p, nombre: e.target.value }))} placeholder="Curso Intensivo ICFES 2025" />
+      </div>
+      <div>
+        <label className={labelCls}>Descripción</label>
+        <textarea className={inputCls + ' resize-none'} rows={3} value={f.descripcion} onChange={e => setF(p => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción del curso..." />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelCls}>Precio *</label>
+          <input className={inputCls} type="number" value={f.precio} onChange={e => setF(p => ({ ...p, precio: e.target.value }))} placeholder="800000" />
+        </div>
+        <div>
+          <label className={labelCls}>Duración (días) *</label>
+          <input className={inputCls} type="number" value={f.duracionDias} onChange={e => setF(p => ({ ...p, duracionDias: e.target.value }))} />
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -84,8 +136,30 @@ export default function CursosPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {cursos.map(c => (
-            <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-colors group">
-              <div className="flex items-start justify-between gap-3">
+            <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-colors group relative">
+              {/* Acciones */}
+              <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => abrirEditar(c)}
+                  className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors"
+                  title="Editar curso"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`¿Eliminar "${c.nombre}"? Esta acción no se puede deshacer.`))
+                      eliminarMutation.mutate(c.id)
+                  }}
+                  disabled={eliminarMutation.isPending}
+                  className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors"
+                  title="Eliminar curso"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="flex items-start justify-between gap-3 pr-16">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                   <BookOpen className="w-4 h-4 text-primary" />
                 </div>
@@ -106,32 +180,14 @@ export default function CursosPage() {
         </div>
       )}
 
+      {/* Modal crear */}
       <Modal open={modalCrear} onClose={() => setModalCrear(false)}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-on-surface">Nuevo curso</h2>
             <button onClick={() => setModalCrear(false)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
           </div>
-          <div className="space-y-3">
-            <div>
-              <label className={labelCls}>Nombre del curso *</label>
-              <input className={inputCls} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Curso Intensivo ICFES 2025" />
-            </div>
-            <div>
-              <label className={labelCls}>Descripción</label>
-              <textarea className={inputCls + ' resize-none'} rows={3} value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} placeholder="Descripción del curso..." />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Precio *</label>
-                <input className={inputCls} type="number" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} placeholder="800000" />
-              </div>
-              <div>
-                <label className={labelCls}>Duración (días) *</label>
-                <input className={inputCls} type="number" value={form.duracionDias} onChange={e => setForm(f => ({ ...f, duracionDias: e.target.value }))} />
-              </div>
-            </div>
-          </div>
+          <FormFields f={form} setF={setForm} />
           <div className="flex justify-end gap-3 mt-6">
             <button onClick={() => setModalCrear(false)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
             <button
@@ -140,6 +196,32 @@ export default function CursosPage() {
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
               {crearMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Crear curso
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal editar */}
+      <Modal open={!!editCurso} onClose={() => setEditCurso(null)}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-base font-semibold text-on-surface">Editar curso</h2>
+              <p className="text-xs text-on-surface-variant mt-0.5">{editCurso?.nombre}</p>
+            </div>
+            <button onClick={() => setEditCurso(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
+          </div>
+          <FormFields f={editForm} setF={setEditForm} />
+          <div className="flex justify-end gap-3 mt-6">
+            <button onClick={() => setEditCurso(null)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
+            <button
+              onClick={() => editarMutation.mutate()}
+              disabled={editarMutation.isPending || !editForm.nombre || !editForm.precio}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            >
+              {editarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              <Pencil className="w-3.5 h-3.5" />
+              Guardar cambios
             </button>
           </div>
         </div>

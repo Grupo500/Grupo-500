@@ -67,15 +67,15 @@ export function RankingAsesores() {
 
             {/* Eficiencia */}
             <div className="flex items-center justify-end gap-1 w-14">
-              {a.eficiencia >= 90
-                ? <TrendingUp className="w-3 h-3 text-secondary" />
-                : a.eficiencia >= 85
+              {a.eficiencia >= 85
+                ? <TrendingUp className="w-3 h-3 text-[#16a34a]" />
+                : a.eficiencia >= 70
                   ? <Minus className="w-3 h-3 text-tertiary" />
                   : <TrendingDown className="w-3 h-3 text-[var(--error)]" />
               }
               <span className={cn(
                 'text-[12px] font-bold tabular',
-                a.eficiencia >= 90 ? 'text-secondary' : a.eficiencia >= 85 ? 'text-tertiary' : 'text-[var(--error)]',
+                a.eficiencia >= 85 ? 'text-[#16a34a]' : a.eficiencia >= 70 ? 'text-tertiary' : 'text-[var(--error)]',
               )}>
                 {a.eficiencia}%
               </span>
