@@ -52,7 +52,7 @@ export default function NoAutorizadoPage() {
         </div>
 
         <SignOutButton redirectUrl="/sign-in">
-          <button className="btn-ghost mx-auto text-[13px]">Cerrar sesión</button>
+          <button className="btn-ghost mx-auto text-[13px]">Volver</button>
         </SignOutButton>
 
       </div>
