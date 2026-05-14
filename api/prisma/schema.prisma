@@ -104,6 +104,8 @@ model Estudiante {
   email            String
   telefono         String
   fechaNacimiento  DateTime
+  departamento     String?
+  ciudad           String?
   colegio          Colegio?              @relation(fields: [colegioId], references: [id])
   colegioId        String?
   asesor           Asesor?               @relation(fields: [asesorId], references: [id])

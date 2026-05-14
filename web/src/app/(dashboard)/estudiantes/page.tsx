@@ -11,6 +11,7 @@ import {
   School, Phone, Mail, Eye, X, Loader2, Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
 
 interface Estudiante {
   id: string
@@ -54,7 +55,8 @@ export default function EstudiantesPage() {
 
   // Formulario nuevo estudiante
   const [form, setForm] = useState({
-    nombre: '', email: '', telefono: '', fechaNacimiento: '', colegioId: '',
+    nombre: '', email: '', telefono: '', fechaNacimiento: '',
+    departamento: '', ciudad: '', colegioId: '',
     acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
   })
 
@@ -88,7 +90,9 @@ export default function EstudiantesPage() {
         email: form.email.trim(),
         telefono: form.telefono.trim(),
         fechaNacimiento: form.fechaNacimiento,
-        ...(form.colegioId && { colegioId: form.colegioId }),
+        ...(form.departamento && { departamento: form.departamento }),
+        ...(form.ciudad      && { ciudad:       form.ciudad }),
+        ...(form.colegioId   && { colegioId:    form.colegioId }),
       }
 
       // Solo incluir acudiente si TODOS sus campos requeridos están completos
@@ -116,7 +120,7 @@ export default function EstudiantesPage() {
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
       setModalCrear(false)
       setFormError('')
-      setForm({ nombre: '', email: '', telefono: '', fechaNacimiento: '', colegioId: '', acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre' })
+      setForm({ nombre: '', email: '', telefono: '', fechaNacimiento: '', departamento: '', ciudad: '', colegioId: '', acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre' })
     },
     onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
   })
@@ -313,6 +317,29 @@ export default function EstudiantesPage() {
               <div>
                 <label className={labelCls}>Fecha de nacimiento *</label>
                 <input className={inputCls} type="date" value={form.fechaNacimiento} onChange={e => setForm(f => ({ ...f, fechaNacimiento: e.target.value }))} />
+              </div>
+              <div>
+                <label className={labelCls}>Departamento</label>
+                <select
+                  className={inputCls}
+                  value={form.departamento}
+                  onChange={e => setForm(f => ({ ...f, departamento: e.target.value, ciudad: '' }))}
+                >
+                  <option value="">Seleccionar departamento</option>
+                  {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Ciudad / Municipio</label>
+                <select
+                  className={inputCls}
+                  value={form.ciudad}
+                  onChange={e => setForm(f => ({ ...f, ciudad: e.target.value }))}
+                  disabled={!form.departamento}
+                >
+                  <option value="">{form.departamento ? 'Seleccionar municipio' : 'Primero elige departamento'}</option>
+                  {getMunicipios(form.departamento).map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
               <div>
                 <label className={labelCls}>Colegio</label>
