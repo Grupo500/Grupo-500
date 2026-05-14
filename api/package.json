@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "node_modules/.bin/prisma generate && node_modules/.bin/tsc",
+    "build": "prisma generate && tsc",
     "start": "sh start.sh",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
