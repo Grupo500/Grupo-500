@@ -18,12 +18,35 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
 }))
 
 // ── Listar todos los usuarios (solo ADMIN) ───────────────────────────────────
+// Enriquece imageUrl y nombre con datos frescos de Clerk para mantener sincronía
 router.get('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const usuarios = await prisma.user.findMany({
     include: { asesor: true },
     orderBy: { createdAt: 'desc' },
   })
-  return ApiResponse.success(res, usuarios)
+
+  // Obtener datos frescos de Clerk en paralelo
+  const enriquecidos = await Promise.all(
+    usuarios.map(async (u) => {
+      try {
+        const clerkUser = await clerk.users.getUser(u.clerkId)
+        const imageUrl = clerkUser.imageUrl ?? u.imageUrl
+        const nombre   = `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim()
+                         || u.nombre || u.email.split('@')[0]
+
+        // Actualizar DB si hay diferencia (en background, sin bloquear)
+        if (imageUrl !== u.imageUrl || nombre !== u.nombre) {
+          prisma.user.update({ where: { id: u.id }, data: { imageUrl, nombre } }).catch(() => {})
+        }
+
+        return { ...u, imageUrl, nombre }
+      } catch {
+        return u
+      }
+    })
+  )
+
+  return ApiResponse.success(res, enriquecidos)
 }))
 
 // ── Registrar usuario (solo ADMIN) ───────────────────────────────────────────
