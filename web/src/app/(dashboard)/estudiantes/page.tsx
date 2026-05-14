@@ -25,7 +25,8 @@ interface Estudiante {
 }
 
 interface PaginatedResponse {
-  data: { items: Estudiante[]; total: number; page: number; totalPages: number }
+  data: Estudiante[]
+  pagination: { total: number; page: number; totalPages: number }
 }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
@@ -113,9 +114,9 @@ export default function EstudiantesPage() {
     onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
   })
 
-  const estudiantes = data?.data?.items ?? []
-  const total = data?.data?.total ?? 0
-  const totalPages = data?.data?.totalPages ?? 1
+  const estudiantes = data?.data ?? []
+  const total = data?.pagination?.total ?? 0
+  const totalPages = data?.pagination?.totalPages ?? 1
 
   const handleBuscar = (e: React.FormEvent) => {
     e.preventDefault()
