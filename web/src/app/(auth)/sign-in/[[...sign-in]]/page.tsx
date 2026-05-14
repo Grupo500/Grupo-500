@@ -6,20 +6,20 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
 export default function SignInPage() {
   return (
-    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-3 px-4 py-3" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4" style={{ background: 'var(--bg)' }}>
 
       {/* Logo */}
-      <div className="flex flex-col items-center gap-1">
+      <div className="flex flex-col items-center gap-1.5">
         <Image
           src="/logo.png"
           alt="Grupo 500"
-          width={64}
-          height={64}
+          width={80}
+          height={80}
           className="drop-shadow-sm"
           priority
         />
-        <p className={`${poppins.className} text-sm font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
-        <p className="text-[11px] font-medium text-on-surface-variant -mt-0.5">Pre-ICFES</p>
+        <p className={`${poppins.className} text-base font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
+        <p className="text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
       </div>
 
       {/* Clerk SignIn */}
@@ -57,6 +57,7 @@ export default function SignInPage() {
               'bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors shadow-none',
             footerActionLink:  'text-primary hover:text-primary/80 font-medium',
             header:            'hidden',
+            footer:            'hidden',
             identityPreviewText: 'text-sm',
             identityPreviewEditButtonIcon: 'text-primary',
             alertText:         'text-sm',
