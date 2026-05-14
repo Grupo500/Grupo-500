@@ -1,7 +1,7 @@
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { KpiCard } from '@/components/ui/KpiCard'
-import { formatCOP, formatDate } from '@/lib/utils'
+import { formatCOP } from '@/lib/utils'
 import { TrendingUp, Wallet, CreditCard, Users, BarChart3, AlertTriangle } from 'lucide-react'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'

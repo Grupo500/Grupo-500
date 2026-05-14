@@ -40,14 +40,6 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   )
 }
 
-function EstadoBadge({ valor }: { valor: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary">
-      {valor}
-    </span>
-  )
-}
-
 export default function EstudiantesPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
@@ -122,7 +114,7 @@ export default function EstudiantesPage() {
       <PageHeader
         title="Estudiantes"
         subtitle={`${total} estudiantes registrados`}
-        action={
+        actions={
           <button
             onClick={() => setModalCrear(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"

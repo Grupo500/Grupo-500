@@ -67,7 +67,7 @@ export default function CursosPage() {
       <PageHeader
         title="Cursos"
         subtitle={`${cursos.length} cursos disponibles`}
-        action={
+        actions={
           <button onClick={() => setModalCrear(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" />Nuevo curso
           </button>

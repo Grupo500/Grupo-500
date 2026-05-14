@@ -134,7 +134,7 @@ export default function PagosPage() {
       <PageHeader
         title="Pagos"
         subtitle={`${total} pagos registrados`}
-        action={
+        actions={
           <button
             onClick={() => setModalRegistrar(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
