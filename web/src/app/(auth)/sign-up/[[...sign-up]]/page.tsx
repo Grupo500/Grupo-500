@@ -9,17 +9,17 @@ export default function SignUpPage() {
     <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4" style={{ background: 'var(--bg)' }}>
 
       {/* Logo */}
-      <div className="flex flex-col items-center gap-1.5">
+      <div className="flex flex-col items-center gap-2">
         <Image
           src="/logo.png"
           alt="Grupo 500"
-          width={80}
-          height={80}
-          className="drop-shadow-sm"
+          width={120}
+          height={120}
+          className="drop-shadow-sm w-28 h-28 md:w-24 md:h-24 lg:w-20 lg:h-20"
           priority
         />
-        <p className={`${poppins.className} text-base font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
-        <p className="text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
+        <p className={`${poppins.className} text-xl md:text-lg lg:text-base font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
+        <p className="text-sm md:text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
       </div>
 
       <div className="w-full max-w-sm">
