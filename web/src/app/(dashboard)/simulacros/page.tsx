@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import {
   FileBarChart2, Loader2, TrendingUp, TrendingDown, Minus,
-  ExternalLink, Plus, X, Upload, FileText, CheckCircle2,
+  ExternalLink, Plus, X, Upload, CheckCircle2, Sparkles, AlertCircle,
 } from 'lucide-react'
 
 interface SimulacroEstudiante {
@@ -57,6 +57,8 @@ export default function SimulacrosPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [modalSubir, setModalSubir] = useState(false)
+  const [analizando, setAnalizando] = useState<string | null>(null)   // id del simulacro en análisis
+  const [resultadoAnalisis, setResultadoAnalisis] = useState<{ id: string; guardados: number; sinMatch: number; sinMatchNombres: string[] } | null>(null)
   const [nombre, setNombre] = useState('')
   const [archivo, setArchivo] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'done'>('idle')
@@ -103,6 +105,20 @@ export default function SimulacrosPage() {
       setError(err.message ?? 'Error al subir el archivo')
       setUploadProgress('idle')
       setArchivo(null)
+    }
+  }
+
+  const analizarSimulacro = async (id: string) => {
+    setAnalizando(id)
+    setResultadoAnalisis(null)
+    try {
+      const res = await fetcher<any>(`/simulacros/${id}/analizar`, { method: 'POST' })
+      setResultadoAnalisis({ id, ...res.data })
+      queryClient.invalidateQueries({ queryKey: ['simulacros'] })
+    } catch (err: any) {
+      alert(err?.message ?? 'Error al analizar el simulacro')
+    } finally {
+      setAnalizando(null)
     }
   }
 
@@ -155,11 +171,6 @@ export default function SimulacrosPage() {
         }
       />
 
-      <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-sm text-on-surface-variant">
-        <p className="text-primary font-medium mb-1">Análisis automático próximamente</p>
-        <p>El análisis inteligente de PDFs para extracción de puntajes y áreas débiles estará disponible en la siguiente fase.</p>
-      </div>
-
       {isLoading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
       ) : simulacros.length === 0 ? (
@@ -176,13 +187,45 @@ export default function SimulacrosPage() {
                   <h3 className="text-sm font-semibold text-on-surface">{s.nombre}</h3>
                   <p className="text-xs text-on-surface-variant">{formatDate(s.fechaCreacion)} · {s.estudiantes?.length ?? 0} resultados</p>
                 </div>
-                {s.archivoUrl && (
-                  <a href={s.archivoUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-high border border-outline-variant text-xs text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors">
-                    <ExternalLink className="w-3 h-3" />Ver PDF
-                  </a>
-                )}
+                <div className="flex items-center gap-2">
+                  {s.archivoUrl && (
+                    <>
+                      <a href={s.archivoUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-high border border-outline-variant text-xs text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors">
+                        <ExternalLink className="w-3 h-3" />Ver PDF
+                      </a>
+                      <button
+                        onClick={() => analizarSimulacro(s.id)}
+                        disabled={analizando === s.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-primary hover:bg-primary/20 disabled:opacity-50 transition-colors"
+                      >
+                        {analizando === s.id
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <Sparkles className="w-3 h-3" />
+                        }
+                        {analizando === s.id ? 'Analizando...' : 'Analizar PDF'}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
+
+              {/* Resultado del análisis */}
+              {resultadoAnalisis?.id === s.id && (
+                <div className="px-5 py-3 bg-secondary/5 border-b border-secondary/10 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-secondary mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-on-surface-variant">
+                    <span className="text-secondary font-semibold">Análisis completado. </span>
+                    {resultadoAnalisis.guardados} resultados guardados.
+                    {resultadoAnalisis.sinMatch > 0 && (
+                      <span className="block mt-1 text-yellow-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 inline" />
+                        {resultadoAnalisis.sinMatch} sin coincidencia en BD: {resultadoAnalisis.sinMatchNombres.join(', ')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {s.estudiantes?.length > 0 ? (
                 <table className="w-full">
