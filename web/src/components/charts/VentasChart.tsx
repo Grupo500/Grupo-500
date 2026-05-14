@@ -66,31 +66,9 @@ export function VentasChart() {
 
   return (
     <div className="card p-5 h-72">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <h3 className="text-[15px] font-semibold text-on-surface">Ventas</h3>
-
-          {/* Variación vs período anterior */}
-          {actual > 0 && (
-            <div className={cn(
-              'flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full',
-              variacion > 0
-                ? 'text-[#16a34a] bg-[#16a34a]/10 border border-[#16a34a]/20'
-                : variacion < 0
-                  ? 'text-[var(--error)] bg-[var(--error-container)] border border-[var(--error)]/20'
-                  : 'text-on-surface-variant bg-[var(--surface-high)]',
-            )}>
-              {variacion > 0
-                ? <TrendingUp  className="w-3 h-3" />
-                : variacion < 0
-                  ? <TrendingDown className="w-3 h-3" />
-                  : <Minus className="w-3 h-3" />}
-              <span>{variacion > 0 ? '+' : ''}{variacion}%</span>
-              <span className="font-normal opacity-70">{labelPeriodo}</span>
-            </div>
-          )}
-        </div>
+      {/* Header — fila 1: título + tabs */}
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-[15px] font-semibold text-on-surface">Ventas</h3>
 
         {/* Tabs período */}
         <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[var(--surface-high)]">
@@ -109,6 +87,28 @@ export function VentasChart() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Fila 2: variación — tiene su propia línea con espacio */}
+      <div className="mb-3 h-5">
+        {actual > 0 && (
+          <div className={cn(
+            'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full',
+            variacion > 0
+              ? 'text-[#16a34a] bg-[#16a34a]/10 border border-[#16a34a]/20'
+              : variacion < 0
+                ? 'text-[var(--error)] bg-[var(--error-container)] border border-[var(--error)]/20'
+                : 'text-on-surface-variant bg-[var(--surface-high)]',
+          )}>
+            {variacion > 0
+              ? <TrendingUp  className="w-3 h-3" />
+              : variacion < 0
+                ? <TrendingDown className="w-3 h-3" />
+                : <Minus className="w-3 h-3" />}
+            <span>{variacion > 0 ? '+' : ''}{variacion}%</span>
+            <span className="font-normal opacity-70">{labelPeriodo}</span>
+          </div>
+        )}
       </div>
 
       {/* Chart */}

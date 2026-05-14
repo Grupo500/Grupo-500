@@ -284,7 +284,12 @@ export default function PagosPage() {
             </div>
             <div>
               <label className={labelCls}>Fecha de vencimiento *</label>
-              <input className={inputCls} type="date" value={form.fechaVencimiento} onChange={e => setForm(f => ({ ...f, fechaVencimiento: e.target.value }))} />
+              <input
+                className={cn(inputCls, 'w-auto min-w-0 max-w-[180px]')}
+                type="date"
+                value={form.fechaVencimiento}
+                onChange={e => setForm(f => ({ ...f, fechaVencimiento: e.target.value }))}
+              />
             </div>
             <div>
               <label className={labelCls}>URL del comprobante</label>

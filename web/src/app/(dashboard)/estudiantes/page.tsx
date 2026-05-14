@@ -274,9 +274,14 @@ export default function EstudiantesPage() {
           <label className={labelCls}>Teléfono *</label>
           <input className={inputCls} value={f.telefono} onChange={e => setF(p => ({ ...p, telefono: e.target.value }))} placeholder="3001234567" />
         </div>
-        <div>
+        <div className="col-span-2 sm:col-span-1">
           <label className={labelCls}>Fecha de nacimiento *</label>
-          <input className={inputCls} type="date" value={f.fechaNacimiento} onChange={e => setF(p => ({ ...p, fechaNacimiento: e.target.value }))} />
+          <input
+            className={cn(inputCls, 'w-auto min-w-0 max-w-[160px]')}
+            type="date"
+            value={f.fechaNacimiento}
+            onChange={e => setF(p => ({ ...p, fechaNacimiento: e.target.value }))}
+          />
         </div>
         <div>
           <label className={labelCls}>Departamento</label>
