@@ -9,6 +9,7 @@ import { formatDate, formatCOP, cn } from '@/lib/utils'
 import {
   CreditCard, Plus, X, Loader2, ChevronLeft, ChevronRight,
   CheckCircle, Clock, AlertTriangle, XCircle, Filter, Pencil,
+  Paperclip, ExternalLink,
 } from 'lucide-react'
 
 interface Pago {
@@ -47,6 +48,59 @@ function EstadoBadge({ estado }: { estado: keyof typeof ESTADOS }) {
   )
 }
 
+function ComprobanteUpload({
+  value, onChange, token,
+}: {
+  value: string
+  onChange: (url: string) => void
+  token: string | null
+}) {
+  const [uploading, setUploading] = useState(false)
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+      const res = await fetch(`${API_URL}/upload/imagen`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token ?? ''}` },
+        body: formData,
+      })
+      const data = await res.json()
+      if (data?.data?.url) onChange(data.data.url)
+    } catch {
+      alert('Error al subir el comprobante')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 w-full cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-highest transition-colors">
+        <input type="file" accept="image/*,.pdf" className="hidden" onChange={handleFile} disabled={uploading} />
+        {uploading
+          ? <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          : <Paperclip className="w-4 h-4 text-on-surface-variant" />}
+        <span className="text-sm text-on-surface-variant">
+          {uploading ? 'Subiendo...' : value ? 'Cambiar comprobante' : 'Adjuntar comprobante'}
+        </span>
+      </label>
+      {value && (
+        <a href={value} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+          <ExternalLink className="w-3 h-3" />
+          Ver comprobante adjunto
+        </a>
+      )}
+    </div>
+  )
+}
+
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null
   return (
@@ -65,6 +119,7 @@ export default function PagosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
+  const [token, setToken] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [filtroEstado, setFiltroEstado] = useState('')
   const [modalRegistrar, setModalRegistrar] = useState(false)
@@ -89,8 +144,9 @@ export default function PagosPage() {
   })
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const t = await getToken()
+    if (!token) setToken(t)
+    return createClientFetcher(t)<T>(path, opts)
   }
 
   const { data, isLoading } = useQuery({
@@ -341,13 +397,11 @@ export default function PagosPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>URL del comprobante</label>
-              <input
-                className={inputCls}
-                type="url"
+              <label className={labelCls}>Comprobante</label>
+              <ComprobanteUpload
                 value={form.comprobante}
-                onChange={e => setForm(f => ({ ...f, comprobante: e.target.value }))}
-                placeholder="https://... (opcional)"
+                onChange={url => setForm(f => ({ ...f, comprobante: url }))}
+                token={token}
               />
             </div>
           </div>
@@ -411,13 +465,11 @@ export default function PagosPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>URL del comprobante</label>
-                <input
-                  className={inputCls}
-                  type="url"
+                <label className={labelCls}>Comprobante</label>
+                <ComprobanteUpload
                   value={formEditar.comprobante}
-                  onChange={e => setFormEditar(f => ({ ...f, comprobante: e.target.value }))}
-                  placeholder="https://... (opcional)"
+                  onChange={url => setFormEditar(f => ({ ...f, comprobante: url }))}
+                  token={token}
                 />
               </div>
             </div>
