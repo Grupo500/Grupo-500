@@ -218,11 +218,20 @@ export async function matchearConDB(
   resultados: ResultadoEstudiante[],
 ): Promise<ResultadoEstudiante[]> {
   const estudiantes = await prisma.estudiante.findMany({
-    select: { id: true, nombre: true },
+    select: { id: true, nombre: true, documento: true },
   })
 
   return resultados.map(r => {
-    // Match por similitud de nombre (umbral 0.7)
+    // 1. Match exacto por número de documento (más confiable)
+    if (r.documento) {
+      const docLimpio = r.documento.replace(/\D/g, '')
+      const porDoc = estudiantes.find(
+        e => e.documento && e.documento.replace(/\D/g, '') === docLimpio,
+      )
+      if (porDoc) return { ...r, estudianteId: porDoc.id }
+    }
+
+    // 2. Fallback: similitud de nombre (umbral 0.7)
     let mejor: { id: string; score: number } | null = null
     for (const e of estudiantes) {
       const score = similitud(r.nombre, e.nombre)

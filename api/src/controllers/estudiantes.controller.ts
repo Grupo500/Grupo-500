@@ -6,6 +6,8 @@ import { z } from 'zod'
 
 const crearSchema = z.object({
   nombre: z.string().min(2),
+  tipoDocumento: z.enum(['CC', 'TI', 'CE', 'PA', 'RC']).optional(),
+  documento: z.string().optional(),
   email: z.string().email(),
   telefono: z.string().min(7),
   fechaNacimiento: z.string(),
@@ -50,6 +52,8 @@ export async function crear(req: Request, res: Response) {
   const estudiante = await prisma.estudiante.create({
     data: {
       nombre: data.nombre,
+      tipoDocumento: data.tipoDocumento ?? 'CC',
+      documento: data.documento ?? null,
       email: data.email,
       telefono: data.telefono,
       fechaNacimiento: new Date(data.fechaNacimiento),
@@ -85,6 +89,8 @@ export async function obtener(req: Request, res: Response) {
 
 const actualizarSchema = z.object({
   nombre:          z.string().min(2).optional(),
+  tipoDocumento:   z.enum(['CC', 'TI', 'CE', 'PA', 'RC']).optional(),
+  documento:       z.string().nullable().optional(),
   email:           z.string().email().optional(),
   telefono:        z.string().min(7).optional(),
   fechaNacimiento: z.string().optional(),
@@ -100,6 +106,8 @@ export async function actualizar(req: Request, res: Response) {
     where: { id: req.params.id },
     data: {
       ...(data.nombre          !== undefined && { nombre:          data.nombre }),
+      ...(data.tipoDocumento   !== undefined && { tipoDocumento:   data.tipoDocumento }),
+      ...(data.documento       !== undefined && { documento:       data.documento }),
       ...(data.email           !== undefined && { email:           data.email }),
       ...(data.telefono        !== undefined && { telefono:        data.telefono }),
       ...(data.fechaNacimiento !== undefined && { fechaNacimiento: new Date(data.fechaNacimiento) }),

@@ -1,15 +1,22 @@
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
+import { apiFetch } from '@/lib/api.server'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const user = await currentUser()
-  const role = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
+  // Leer rol desde la BD (siempre fresco — nunca usa caché del JWT)
+  let role: 'ADMIN' | 'VENDEDOR' = 'VENDEDOR'
+  try {
+    const me = await apiFetch<{ data: { role: 'ADMIN' | 'VENDEDOR' } }>('/auth/me')
+    role = me.data?.role ?? 'VENDEDOR'
+  } catch {
+    role = 'VENDEDOR'
+  }
 
   return (
     <QueryProvider>

@@ -25,8 +25,8 @@ export default async function DashboardPage() {
   const role      = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
   const isAdmin   = role === 'ADMIN'
   const firstName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] ?? ''
-  const hora      = new Date().getHours()
-  const saludo    = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
+  const horaColombia = Number(new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date()))
+  const saludo = horaColombia < 12 ? 'Buenos días' : horaColombia < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   const ingresos    = data?.ingresos    ?? { hoy: 0, semana: 0, mes: 0 }
   const estudiantes = data?.estudiantes ?? { total: 0, nuevosMes: 0 }

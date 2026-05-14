@@ -16,6 +16,8 @@ import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
 interface Estudiante {
   id: string
   nombre: string
+  tipoDocumento?: string
+  documento?: string
   email: string
   telefono: string
   fechaNacimiento: string
@@ -34,7 +36,8 @@ interface PaginatedResponse {
 }
 
 const FORM_EMPTY = {
-  nombre: '', email: '', telefono: '', fechaNacimiento: '',
+  nombre: '', tipoDocumento: 'CC', documento: '',
+  email: '', telefono: '', fechaNacimiento: '',
   departamento: '', ciudad: '', colegioId: '',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
 }
@@ -125,6 +128,8 @@ export default function EstudiantesPage() {
 
       const payload: any = {
         nombre: form.nombre.trim(),
+        tipoDocumento: form.tipoDocumento,
+        ...(form.documento.trim() && { documento: form.documento.trim() }),
         email: form.email.trim(),
         telefono: form.telefono.trim(),
         fechaNacimiento: form.fechaNacimiento,
@@ -147,6 +152,7 @@ export default function EstudiantesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      queryClient.invalidateQueries({ queryKey: ['estudiantes-select'] })
       setModalCrear(false)
       setFormError('')
       setForm(FORM_EMPTY)
@@ -163,6 +169,8 @@ export default function EstudiantesPage() {
 
       const payload: any = {
         nombre: formEdit.nombre.trim(),
+        tipoDocumento: formEdit.tipoDocumento,
+        documento: formEdit.documento.trim() || null,
         email: formEdit.email.trim(),
         telefono: formEdit.telefono.trim(),
         fechaNacimiento: formEdit.fechaNacimiento,
@@ -192,6 +200,7 @@ export default function EstudiantesPage() {
     mutationFn: (id: string) => fetcher(`/estudiantes/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      queryClient.invalidateQueries({ queryKey: ['estudiantes-select'] })
       setEliminarError('')
       setConfirmEliminar(null)
     },
@@ -204,6 +213,8 @@ export default function EstudiantesPage() {
   const abrirEditar = (e: Estudiante) => {
     setFormEdit({
       nombre: e.nombre,
+      tipoDocumento: e.tipoDocumento ?? 'CC',
+      documento: e.documento ?? '',
       email: e.email,
       telefono: e.telefono,
       fechaNacimiento: e.fechaNacimiento ? e.fechaNacimiento.split('T')[0] : '',
@@ -240,6 +251,20 @@ export default function EstudiantesPage() {
         <div className="col-span-2">
           <label className={labelCls}>Nombre completo *</label>
           <input className={inputCls} value={f.nombre} onChange={e => setF(p => ({ ...p, nombre: e.target.value }))} placeholder="Juan Pérez" />
+        </div>
+        <div>
+          <label className={labelCls}>Tipo de documento</label>
+          <select className={inputCls} value={f.tipoDocumento} onChange={e => setF(p => ({ ...p, tipoDocumento: e.target.value }))}>
+            <option value="CC">Cédula de ciudadanía (CC)</option>
+            <option value="TI">Tarjeta de identidad (TI)</option>
+            <option value="RC">Registro civil (RC)</option>
+            <option value="CE">Cédula extranjería (CE)</option>
+            <option value="PA">Pasaporte (PA)</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Número de documento</label>
+          <input className={inputCls} value={f.documento} onChange={e => setF(p => ({ ...p, documento: e.target.value }))} placeholder="1000123456" />
         </div>
         <div>
           <label className={labelCls}>Email *</label>
@@ -487,6 +512,9 @@ export default function EstudiantesPage() {
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
+                {modalDetalle.documento && (
+                  <InfoField label={modalDetalle.tipoDocumento ?? 'Documento'} value={modalDetalle.documento} />
+                )}
                 <InfoField label="Email" value={modalDetalle.email} />
                 <InfoField label="Teléfono" value={modalDetalle.telefono} />
                 <InfoField label="Colegio" value={modalDetalle.colegio?.nombre ?? '—'} />

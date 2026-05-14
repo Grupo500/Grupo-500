@@ -101,6 +101,8 @@ model Colegio {
 model Estudiante {
   id               String                @id @default(cuid())
   nombre           String
+  tipoDocumento    String?               @default("CC")
+  documento        String?
   email            String
   telefono         String
   fechaNacimiento  DateTime
