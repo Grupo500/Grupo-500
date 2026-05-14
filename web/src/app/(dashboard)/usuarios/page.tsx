@@ -25,14 +25,14 @@ export default function UsuariosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
-  const fetcher = async (url: string, opts?: RequestInit) => {
+  const fetcher = async <T = unknown>(url: string, opts?: RequestInit): Promise<T> => {
     const token = await getToken()
-    return createClientFetcher(token ?? '')(url, opts)
+    return createClientFetcher(token ?? '')(url, opts) as Promise<T>
   }
 
   const { data, isLoading, isError } = useQuery<{ data: Usuario[] }>({
     queryKey: ['usuarios'],
-    queryFn: () => fetcher('/auth/usuarios'),
+    queryFn: () => fetcher<{ data: Usuario[] }>('/auth/usuarios'),
   })
 
   const cambiarRol = useMutation({
