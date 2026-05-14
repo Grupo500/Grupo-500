@@ -17,7 +17,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider afterSignInUrl="/verificando" afterSignUpUrl="/verificando">
+    <ClerkProvider
+      signInFallbackRedirectUrl="/verificando"
+      signUpFallbackRedirectUrl="/verificando"
+      afterSignOutUrl="/sign-in"
+    >
       <html lang="es" suppressHydrationWarning>
         <body className={`${inter.variable} font-sans`}>
           <ThemeProvider>

@@ -19,6 +19,7 @@ export default function SignInPage() {
 
         {/* Clerk SignIn con variables de diseño */}
         <SignIn
+          forceRedirectUrl="/verificando"
           appearance={{
             variables: {
               colorBackground:        '#ffffff',
