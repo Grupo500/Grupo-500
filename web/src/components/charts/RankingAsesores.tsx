@@ -86,10 +86,10 @@ export function RankingAsesores() {
       ) : (
         <div className="space-y-1">
           {/* Header */}
-          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-2 pb-2 border-b border-[var(--outline-variant)]">
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-2 pb-2 border-b border-[var(--outline-variant)]">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">Asesor</span>
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant text-right w-24">Ventas</span>
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant text-right w-20">Cobrado</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant text-right w-20">Ventas</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant text-right w-20 hidden sm:block">Cobrado</span>
             <span className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant text-right w-14">Var.</span>
           </div>
 
@@ -97,13 +97,13 @@ export function RankingAsesores() {
             <div
               key={a.id}
               className={cn(
-                'grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center px-2 py-2.5 rounded-lg transition-colors',
+                'grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center px-2 py-2.5 rounded-lg transition-colors',
                 'hover:bg-[var(--surface-high)]',
                 i === 0 && 'bg-[var(--primary-container)]/40',
               )}
             >
               {/* Avatar + nombre */}
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <div className="relative flex-shrink-0">
                   <div className="w-8 h-8 rounded-full bg-[var(--primary-container)] flex items-center justify-center text-[11px] font-bold text-primary">
                     {getIniciales(a.nombre)}
@@ -119,16 +119,16 @@ export function RankingAsesores() {
               </div>
 
               {/* Ventas */}
-              <span className="text-[13px] font-bold text-on-surface tabular text-right w-24">
+              <span className="text-[13px] font-bold text-on-surface tabular text-right w-20">
                 {formatCOP(a.totalVentas)}
               </span>
 
-              {/* Cobrado */}
-              <span className="text-[13px] font-medium text-on-surface-variant tabular text-right w-20">
+              {/* Cobrado — oculto en móvil */}
+              <span className="text-[13px] font-medium text-on-surface-variant tabular text-right w-20 hidden sm:block">
                 {formatCOP(a.cobrado)}
               </span>
 
-              {/* Variación vs mes anterior */}
+              {/* Variación */}
               <div className="flex items-center justify-end w-14">
                 <VariacionBadge v={a.variacion} />
               </div>
