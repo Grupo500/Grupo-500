@@ -18,7 +18,7 @@ export default function SignUpPage() {
         </div>
 
         <SignUp
-          forceRedirectUrl="/verificando"
+          forceRedirectUrl="/verificando?nuevo=1"
           appearance={{
             variables: {
               colorBackground:      '#ffffff',

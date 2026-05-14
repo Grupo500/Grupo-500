@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Image from 'next/image'
 
 export default function VerificandoPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const esNuevo = searchParams.get('nuevo') === '1'
   const { getToken, isLoaded, isSignedIn } = useAuth()
 
   useEffect(() => {
@@ -30,10 +32,10 @@ export default function VerificandoPage() {
         if (res.ok) {
           router.replace('/dashboard')
         } else {
-          router.replace('/no-autorizado')
+          router.replace(esNuevo ? '/no-autorizado?pendiente=1' : '/no-autorizado')
         }
       } catch {
-        router.replace('/no-autorizado')
+        router.replace(esNuevo ? '/no-autorizado?pendiente=1' : '/no-autorizado')
       }
     }
 
