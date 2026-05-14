@@ -10,6 +10,7 @@ import {
 import { VentasChart } from '@/components/charts/VentasChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
+import { RefreshButton } from '@/components/ui/RefreshButton'
 
 async function getDashboardData() {
   try {
@@ -40,6 +41,8 @@ export default async function DashboardPage() {
           title={`${saludo}, ${firstName} 👋`}
           subtitle="Resumen general de la operación"
         />
+
+        <RefreshButton />
 
         {/* KPIs principales */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -102,6 +105,8 @@ export default async function DashboardPage() {
         title={`${saludo}, ${firstName} 👋`}
         subtitle="Resumen de tu actividad y gestión"
       />
+
+      <RefreshButton />
 
       {/* Meta de ventas */}
       <div className="card p-5">
