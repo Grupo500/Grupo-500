@@ -326,17 +326,18 @@ export default function PagosPage() {
                     <p className="text-lg font-bold text-on-surface">{formatCOP(p.monto)}</p>
                     <EstadoBadge estado={p.estado} />
                   </div>
-                  {/* Fila 3: método + vencimiento */}
-                  <p className="text-xs text-on-surface-variant">{METODOS[p.metodo]} · Vence {formatDate(p.fechaVencimiento)}</p>
-                  {/* Fila 4: botón marcar pagado (solo si pendiente) */}
-                  {p.estado === 'PENDIENTE' && (
-                    <button
-                      onClick={() => setModalMarcarPagado(p)}
-                      className="w-full py-2 rounded-lg text-sm font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
-                    >
-                      Marcar pagado
-                    </button>
-                  )}
+                  {/* Fila 3: método + vencimiento + marcar pagado */}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-on-surface-variant">{METODOS[p.metodo]} · Vence {formatDate(p.fechaVencimiento)}</p>
+                    {p.estado === 'PENDIENTE' && (
+                      <button
+                        onClick={() => setModalMarcarPagado(p)}
+                        className="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
+                      >
+                        Marcar pagado
+                      </button>
+                    )}
+                  </div>
                   {/* Comprobante */}
                   {p.comprobante && (
                     <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
