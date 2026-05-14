@@ -5,10 +5,9 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
   Users, TrendingUp, Wallet, AlertTriangle,
-  CreditCard, UserCheck, BookOpen, CalendarDays,
-  Target,
+  BookOpen, CalendarDays, Target,
 } from 'lucide-react'
-import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
+import { VentasChart } from '@/components/charts/VentasChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
 
@@ -73,42 +72,18 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Gráficas + Próximos cobros */}
+        {/* Gráfica de ventas (tabs diario/semanal/mensual) + Próximos cobros */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
-            <IngresosMensualesChart />
+            <VentasChart />
           </div>
           <div>
             <ProximosCobros />
           </div>
         </div>
 
-        {/* KPIs secundarios */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <KpiCard
-            title="Ingresos esta semana"
-            value={formatCOP(ingresos.semana)}
-            icon={CreditCard}
-            variant="default"
-          />
-          <KpiCard
-            title="Asesores activos"
-            value="—"
-            icon={UserCheck}
-            variant="default"
-          />
-          <KpiCard
-            title="Cobros próx. 7 días"
-            value="—"
-            icon={CalendarDays}
-            variant="warning"
-          />
-        </div>
-
-        {/* Ranking asesores */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <RankingAsesores />
-        </div>
+        {/* Ranking asesores — ancho completo */}
+        <RankingAsesores />
       </div>
     )
   }

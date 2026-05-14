@@ -114,3 +114,61 @@ export async function cursosMasVendidos(_req: Request, res: Response) {
   })
   return ApiResponse.success(res, cursos)
 }
+
+// Datos agregados para la gráfica de ventas por período
+export async function ventasGrafica(req: Request, res: Response) {
+  const periodo = String(req.query.periodo ?? 'mensual')
+  const hoy = new Date()
+  let puntos: { label: string; desde: Date; hasta: Date }[] = []
+
+  if (periodo === 'diario') {
+    // Últimos 14 días
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(hoy)
+      d.setDate(hoy.getDate() - i)
+      const desde = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0)
+      const hasta  = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59)
+      const label  = d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+      puntos.push({ label, desde, hasta })
+    }
+  } else if (periodo === 'semanal') {
+    // Últimas 8 semanas
+    for (let i = 7; i >= 0; i--) {
+      const inicioSem = new Date(hoy)
+      inicioSem.setDate(hoy.getDate() - i * 7 - hoy.getDay() + 1)
+      inicioSem.setHours(0, 0, 0, 0)
+      const finSem = new Date(inicioSem)
+      finSem.setDate(inicioSem.getDate() + 6)
+      finSem.setHours(23, 59, 59, 999)
+      const label = `${inicioSem.getDate()}/${inicioSem.getMonth() + 1}`
+      puntos.push({ label, desde: inicioSem, hasta: finSem })
+    }
+  } else {
+    // Últimos 6 meses
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)
+      const desde = new Date(d.getFullYear(), d.getMonth(), 1)
+      const hasta  = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
+      const label  = d.toLocaleDateString('es-CO', { month: 'short' })
+      puntos.push({ label, desde, hasta })
+    }
+  }
+
+  const resultados = await Promise.all(
+    puntos.map(async ({ label, desde, hasta }) => {
+      const agg = await prisma.pago.aggregate({
+        where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } },
+        _sum: { monto: true },
+        _count: true,
+      })
+      return { label, ingresos: agg._sum.monto ?? 0, pagos: agg._count }
+    })
+  )
+
+  // Variación vs período anterior
+  const actual   = resultados[resultados.length - 1]?.ingresos ?? 0
+  const anterior = resultados[resultados.length - 2]?.ingresos ?? 0
+  const variacion = anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : 0
+
+  return ApiResponse.success(res, { puntos: resultados, variacion, actual, anterior })
+}

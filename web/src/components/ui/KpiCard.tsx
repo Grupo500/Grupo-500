@@ -32,13 +32,13 @@ export function KpiCard({ title, value, subtitle, icon: Icon, trend, variant = '
           <div className={cn(
             'flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full',
             isPositive
-              ? 'text-secondary bg-[var(--secondary-container)]'
-              : 'text-[var(--error)] bg-[var(--error-container)]',
+              ? 'text-[#16a34a] bg-[#16a34a]/10 border border-[#16a34a]/20'
+              : 'text-[var(--error)] bg-[var(--error-container)] border border-[var(--error)]/20',
           )}>
             {isPositive
               ? <TrendingUp className="w-3 h-3" />
               : <TrendingDown className="w-3 h-3" />}
-            <span>{Math.abs(trend.value)}%</span>
+            <span>{isPositive ? '+' : '-'}{Math.abs(trend.value)}%</span>
           </div>
         )}
       </div>
