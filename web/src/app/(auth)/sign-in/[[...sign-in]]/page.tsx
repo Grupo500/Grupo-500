@@ -4,7 +4,7 @@ import Image from 'next/image'
 export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md flex flex-col items-center gap-8">
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
