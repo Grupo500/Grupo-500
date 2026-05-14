@@ -1,17 +1,10 @@
-import { UserX, GraduationCap } from 'lucide-react'
+import { UserX } from 'lucide-react'
 import { SignOutButton } from '@clerk/nextjs'
 
 export default function NoAutorizadoPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md text-center space-y-6">
-
-        {/* Logo */}
-        <div className="flex justify-center">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <GraduationCap className="w-6 h-6 text-primary" />
-          </div>
-        </div>
 
         {/* Icono de error */}
         <div className="flex justify-center">
