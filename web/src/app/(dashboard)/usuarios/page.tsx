@@ -180,23 +180,9 @@ export default function UsuariosPage() {
                     <td className="px-5 py-3.5">
                       {u.asesor
                         ? (
-                          <div className="flex items-center gap-2 group">
-                            <div>
-                              <p className="text-on-surface">{u.asesor.nombre}</p>
-                              <p className="text-xs text-on-surface-variant">{u.asesor.telefono}</p>
-                            </div>
-                            <button
-                              onClick={() => setEditAsesor({
-                                asesorId: (u.asesor as any).id,
-                                nombre: u.asesor!.nombre,
-                                telefono: u.asesor!.telefono,
-                                email: u.email,
-                              })}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-all"
-                              title="Editar perfil asesor"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
+                          <div>
+                            <p className="text-on-surface">{u.asesor.nombre}</p>
+                            <p className="text-xs text-on-surface-variant">{u.asesor.telefono}</p>
                           </div>
                         )
                         : <span className="text-on-surface-variant text-xs italic">Sin perfil</span>
@@ -232,19 +218,35 @@ export default function UsuariosPage() {
                       </select>
                     </td>
 
-                    {/* Eliminar */}
+                    {/* Acciones */}
                     <td className="px-5 py-3.5">
-                      <button
-                        onClick={() => {
-                          if (confirm(`¿Eliminar a ${u.nombre ?? u.email}? Esta acción no se puede deshacer.`))
-                            eliminar.mutate(u.id)
-                        }}
-                        disabled={eliminar.isPending}
-                        className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {u.asesor && (
+                          <button
+                            onClick={() => setEditAsesor({
+                              asesorId: (u.asesor as any).id,
+                              nombre: u.asesor!.nombre,
+                              telefono: u.asesor!.telefono,
+                              email: u.email,
+                            })}
+                            className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors"
+                            title="Editar perfil asesor"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (confirm(`¿Eliminar a ${u.nombre ?? u.email}? Esta acción no se puede deshacer.`))
+                              eliminar.mutate(u.id)
+                          }}
+                          disabled={eliminar.isPending}
+                          className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
+                          title="Eliminar usuario"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
