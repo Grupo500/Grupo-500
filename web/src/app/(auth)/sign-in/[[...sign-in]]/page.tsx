@@ -39,7 +39,8 @@ export default function SignInPage() {
             },
             elements: {
               rootBox:           'w-full',
-              card:              'shadow-none border border-black/[0.07] rounded-xl',
+              cardBox:           'w-full',
+              card:              'w-full shadow-none border border-black/[0.07] rounded-xl',
               headerTitle:       'text-base font-semibold',
               headerSubtitle:    'text-sm',
               socialButtonsBlockButton:
