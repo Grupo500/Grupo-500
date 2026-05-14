@@ -7,16 +7,16 @@ export default function SignInPage() {
       <div className="w-full max-w-md flex flex-col gap-8">
 
         {/* Logo */}
-        <div className="w-full flex flex-col items-center gap-2">
+        <div className="w-full text-center flex flex-col items-center gap-2">
           <Image
             src="/logo.png"
             alt="Grupo 500"
             width={120}
             height={120}
-            className="drop-shadow-sm"
+            className="block mx-auto drop-shadow-sm"
             priority
           />
-          <p className="text-sm text-on-surface-variant mt-0.5 text-center w-full">App Grupo 500</p>
+          <p className="text-sm text-on-surface-variant mt-0.5">App Grupo 500</p>
         </div>
 
         {/* Clerk SignIn con variables de diseño */}
