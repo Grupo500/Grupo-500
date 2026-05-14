@@ -4,6 +4,9 @@ import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Image from 'next/image'
+import { Poppins } from 'next/font/google'
+
+const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
 export default function VerificandoPage() {
   const router = useRouter()
@@ -57,7 +60,7 @@ export default function VerificandoPage() {
           className="drop-shadow-sm"
           priority
         />
-        <p className="text-xs font-bold tracking-[0.2em] uppercase text-primary">App Grupo 500</p>
+        <p className={`${poppins.className} text-sm font-bold tracking-normal uppercase text-primary`}>App Grupo 500</p>
       </div>
 
       {/* Spinner */}

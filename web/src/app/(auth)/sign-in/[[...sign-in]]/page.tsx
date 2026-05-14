@@ -1,5 +1,8 @@
 import { SignIn } from '@clerk/nextjs'
 import Image from 'next/image'
+import { Poppins } from 'next/font/google'
+
+const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
 export default function SignInPage() {
   return (
@@ -15,7 +18,7 @@ export default function SignInPage() {
           className="drop-shadow-sm"
           priority
         />
-        <p className="text-xs font-bold tracking-[0.2em] uppercase text-primary mt-1">App Grupo 500</p>
+        <p className={`${poppins.className} text-sm font-bold tracking-normal uppercase text-primary mt-1`}>App Grupo 500</p>
       </div>
 
       {/* Clerk SignIn */}
