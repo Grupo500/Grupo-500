@@ -4,19 +4,23 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
 import { apiFetch } from '@/lib/api.server'
+import { cache } from 'react'
+
+// Cache el rol por request — evita múltiples fetches en el mismo render
+const getRole = cache(async (): Promise<'ADMIN' | 'VENDEDOR'> => {
+  try {
+    const me = await apiFetch<{ data: { role: 'ADMIN' | 'VENDEDOR' } }>('/auth/me')
+    return me.data?.role ?? 'VENDEDOR'
+  } catch {
+    return 'VENDEDOR'
+  }
+})
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  // Leer rol desde la BD (siempre fresco — nunca usa caché del JWT)
-  let role: 'ADMIN' | 'VENDEDOR' = 'VENDEDOR'
-  try {
-    const me = await apiFetch<{ data: { role: 'ADMIN' | 'VENDEDOR' } }>('/auth/me')
-    role = me.data?.role ?? 'VENDEDOR'
-  } catch {
-    role = 'VENDEDOR'
-  }
+  const role = await getRole()
 
   return (
     <QueryProvider>
