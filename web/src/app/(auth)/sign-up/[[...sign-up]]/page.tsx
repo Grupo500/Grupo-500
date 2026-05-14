@@ -45,9 +45,9 @@ export default function SignUpPage() {
               card:             'shadow-none border border-black/[0.07] rounded-xl',
               header:           'hidden',
               formFieldLabel:   'text-xs font-medium',
-              formFieldInput:   'border border-white/[0.08] focus:border-primary/50 rounded-lg !text-[13px]',
+              formFieldInput:   'border border-white/[0.08] focus:border-primary/50 rounded-lg !text-[16px] !py-1.5 !px-3',
               formButtonPrimary:
-                'bg-primary hover:bg-primary/90 text-[#0a0d14] font-semibold rounded-lg transition-colors shadow-none',
+                'bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors shadow-none',
               footerActionLink: 'text-primary hover:text-primary/80 font-medium',
               alertText:        'text-sm',
             },
