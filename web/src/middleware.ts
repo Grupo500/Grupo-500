@@ -3,17 +3,13 @@ import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
+  '/sign-up(.*)',
   '/no-autorizado(.*)',
   '/verificando(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
   const { pathname } = request.nextUrl
-
-  // Bloquear /sign-up — no existe registro libre
-  if (pathname.startsWith('/sign-up')) {
-    return NextResponse.redirect(new URL('/sign-in', request.url))
-  }
 
   // Rutas públicas: dejar pasar sin verificación
   if (isPublicRoute(request)) {
