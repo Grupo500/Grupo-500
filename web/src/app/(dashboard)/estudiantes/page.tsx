@@ -44,7 +44,7 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
         {children}
       </div>
     </div>
@@ -140,7 +140,7 @@ export default function EstudiantesPage() {
       }
 
       return fetcher(`/estudiantes/${modalEditar.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
@@ -375,7 +375,7 @@ export default function EstudiantesPage() {
 
       {/* Modal crear */}
       <Modal open={modalCrear} onClose={() => setModalCrear(false)}>
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto max-h-[90vh]">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-on-surface">Nuevo estudiante</h2>
             <button onClick={() => setModalCrear(false)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
@@ -395,7 +395,7 @@ export default function EstudiantesPage() {
       {/* Modal editar */}
       <Modal open={!!modalEditar} onClose={() => setModalEditar(null)}>
         {modalEditar && (
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-base font-semibold text-on-surface">Editar estudiante</h2>
               <button onClick={() => setModalEditar(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
@@ -416,7 +416,7 @@ export default function EstudiantesPage() {
       {/* Modal detalle */}
       <Modal open={!!modalDetalle} onClose={() => setModalDetalle(null)}>
         {modalDetalle && (
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
