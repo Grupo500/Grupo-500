@@ -1,5 +1,6 @@
 import { SignIn } from '@clerk/nextjs'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Poppins } from 'next/font/google'
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
@@ -57,6 +58,7 @@ export default function SignInPage() {
               'bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors shadow-none',
             footerActionLink:  'text-primary hover:text-primary/80 font-medium',
             header:            'hidden',
+            footer:            'hidden',
             identityPreviewText: 'text-sm',
             identityPreviewEditButtonIcon: 'text-primary',
             alertText:         'text-sm',
@@ -64,6 +66,11 @@ export default function SignInPage() {
         }}
       />
       </div>
+
+      <p className="text-xs text-on-surface-variant">
+        ¿No tienes cuenta?{' '}
+        <Link href="/sign-up" className="text-primary hover:text-primary/80 font-medium transition-colors">Regístrese</Link>
+      </p>
     </div>
   )
 }
