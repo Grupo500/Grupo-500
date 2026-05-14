@@ -47,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="es" suppressHydrationWarning>
         <body className={`${inter.variable} font-sans`}>
           <ThemeProvider>
+            <ServiceWorkerRegister />
             {children}
           </ThemeProvider>
         </body>
