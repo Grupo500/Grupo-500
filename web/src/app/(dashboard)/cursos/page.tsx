@@ -17,9 +17,9 @@ interface Curso {
   _count?: { estudiantes: number }
 }
 
-type FormState = { nombre: string; descripcion: string; precio: string; duracionHoras: string }
+type FormState = { nombre: string; precio: string; duracionHoras: string }
 
-const emptyForm: FormState = { nombre: '', descripcion: '', precio: '', duracionHoras: '100' }
+const emptyForm: FormState = { nombre: '', precio: '', duracionHoras: '100' }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null
@@ -67,10 +67,6 @@ function FormFields({ f, setF }: { f: FormState; setF: React.Dispatch<React.SetS
         <label className={labelCls}>Nombre del curso *</label>
         <input className={inputCls} value={f.nombre} onChange={e => setF(p => ({ ...p, nombre: e.target.value }))} placeholder="Curso Intensivo ICFES 2025" />
       </div>
-      <div>
-        <label className={labelCls}>Descripción</label>
-        <textarea className={inputCls + ' resize-none'} rows={3} value={f.descripcion} onChange={e => setF(p => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción del curso..." />
-      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Precio *</label>
@@ -107,7 +103,7 @@ export default function CursosPage() {
   const crearMutation = useMutation({
     mutationFn: () => fetcher('/cursos', {
       method: 'POST',
-      body: JSON.stringify({ nombre: form.nombre, descripcion: form.descripcion, precio: Number(form.precio), duracionHoras: Number(form.duracionHoras) }),
+      body: JSON.stringify({ nombre: form.nombre, precio: Number(form.precio), duracionHoras: Number(form.duracionHoras) }),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cursos'] })
@@ -120,7 +116,7 @@ export default function CursosPage() {
     mutationFn: () => fetcher(`/cursos/${editCurso!.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre: editForm.nombre, descripcion: editForm.descripcion, precio: Number(editForm.precio), duracionHoras: Number(editForm.duracionHoras) }),
+      body: JSON.stringify({ nombre: editForm.nombre, precio: Number(editForm.precio), duracionHoras: Number(editForm.duracionHoras) }),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cursos'] })
@@ -135,7 +131,7 @@ export default function CursosPage() {
 
   const abrirEditar = (c: Curso) => {
     setEditCurso(c)
-    setEditForm({ nombre: c.nombre, descripcion: c.descripcion ?? '', precio: String(c.precio), duracionHoras: String(c.duracionHoras) })
+    setEditForm({ nombre: c.nombre, precio: String(c.precio), duracionHoras: String(c.duracionHoras) })
   }
 
   const cursos: Curso[] = data?.data ?? []
@@ -191,7 +187,7 @@ export default function CursosPage() {
                 </div>
               </div>
               <h3 className="mt-3 text-sm font-semibold text-on-surface">{c.nombre}</h3>
-              {c.descripcion && <p className="mt-1 text-xs text-on-surface-variant line-clamp-2">{c.descripcion}</p>}
+
               <div className="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
                   <Clock className="w-3.5 h-3.5" />{c.duracionHoras} horas
