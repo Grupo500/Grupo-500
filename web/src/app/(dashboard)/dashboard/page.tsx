@@ -3,14 +3,9 @@ import { currentUser } from '@clerk/nextjs/server'
 import { formatCOP } from '@/lib/utils'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
-import {
-  Users, TrendingUp, Wallet, AlertTriangle,
-  BookOpen, Target,
-} from 'lucide-react'
-import { VentasChart } from '@/components/charts/VentasChart'
+import { Users, Wallet, AlertTriangle, BookOpen, Target } from 'lucide-react'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
-import { CursosVendidosChart } from '@/components/charts/CursosVendidosChart'
-import { FinancieroSection } from '@/components/charts/FinancieroSection'
+import { DashboardAnalytics } from '@/components/charts/DashboardAnalytics'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 
 async function getDashboardData() {
@@ -30,15 +25,13 @@ export default async function DashboardPage() {
   const horaColombia = Number(new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date()))
   const saludo = horaColombia < 12 ? 'Buenos días' : horaColombia < 18 ? 'Buenas tardes' : 'Buenas noches'
 
-  const ingresos    = data?.ingresos    ?? { hoy: 0, semana: 0, mes: 0 }
   const estudiantes = data?.estudiantes ?? { total: 0, nuevosMes: 0 }
   const cobranza    = data?.cobranza    ?? { pendiente: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 } }
-  const financiero  = data?.financiero  ?? { ventaTotal: 0, recaudo: 0, saldo: 0 }
 
   // ── VISTA ADMINISTRADOR ──────────────────────────────────────────────────────
   if (isAdmin) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-5 animate-fade-in">
         <PageHeader
           title={`${saludo}, ${firstName} 👋`}
           subtitle="Resumen general de la operación"
@@ -46,23 +39,8 @@ export default async function DashboardPage() {
 
         <RefreshButton />
 
-        {/* Sección financiero interactiva: tarjetas + gráfica */}
-        <FinancieroSection
-          ventaTotal={financiero.ventaTotal}
-          recaudo={financiero.recaudo}
-          saldo={financiero.saldo}
-        />
-
-        {/* KPIs principales */}
+        {/* KPIs fijos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard
-            title="Ingresos del mes"
-            value={formatCOP(ingresos.mes)}
-            subtitle={`Hoy: ${formatCOP(ingresos.hoy)}`}
-            icon={TrendingUp}
-            variant="success"
-            trend={{ value: 12, label: 'vs mes anterior' }}
-          />
           <KpiCard
             title="Estudiantes activos"
             value={estudiantes.total.toString()}
@@ -87,26 +65,16 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Gráfica de ventas (tabs diario/semanal/mensual) + Próximos cobros */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <VentasChart />
-          </div>
-          <div>
-            <ProximosCobros />
-          </div>
-        </div>
-
-        {/* Cursos más vendidos */}
-        <CursosVendidosChart />
+        {/* Analytics con período global: tarjetas + gráficas sincronizadas */}
+        <DashboardAnalytics />
       </div>
     )
   }
 
   // ── VISTA ASESOR ─────────────────────────────────────────────────────────────
-  const metaVentas    = 20_000_000
-  const ventasActual  = 15_000_000
-  const progreso      = Math.round((ventasActual / metaVentas) * 100)
+  const metaVentas   = 20_000_000
+  const ventasActual = 15_000_000
+  const progreso     = Math.round((ventasActual / metaVentas) * 100)
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -114,7 +82,6 @@ export default async function DashboardPage() {
         title={`${saludo}, ${firstName} 👋`}
         subtitle="Resumen de tu actividad y gestión"
       />
-
       <RefreshButton />
 
       {/* Meta de ventas */}
@@ -131,15 +98,9 @@ export default async function DashboardPage() {
           </div>
           <span className="text-[22px] font-bold text-on-surface tabular">{progreso}%</span>
         </div>
-
-        {/* Barra de progreso */}
         <div className="h-2.5 rounded-full bg-[var(--surface-high)] overflow-hidden mb-2">
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-500"
-            style={{ width: `${progreso}%` }}
-          />
+          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progreso}%` }} />
         </div>
-
         <div className="flex items-center justify-between text-[12px]">
           <span className="text-on-surface-variant">
             <span className="font-semibold text-on-surface">{formatCOP(ventasActual)}</span>
@@ -149,33 +110,13 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* KPIs principales asesor */}
+      {/* KPIs asesor */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <KpiCard
-          title="Estudiantes asignados"
-          value={estudiantes.total.toString()}
-          subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
-          icon={Users}
-          variant="default"
-          trend={{ value: 12, label: 'vs mes anterior' }}
-        />
-        <KpiCard
-          title="Cobros pendientes"
-          value={cobranza.pendiente.cantidad.toString()}
-          subtitle={cobranza.pendiente.cantidad > 0 ? 'Requieren acción' : 'Todo al día'}
-          icon={Wallet}
-          variant="warning"
-        />
-        <KpiCard
-          title="Cursos activos"
-          value="—"
-          subtitle="Productos vigentes"
-          icon={BookOpen}
-          variant="success"
-        />
+        <KpiCard title="Estudiantes asignados" value={estudiantes.total.toString()} subtitle={`${estudiantes.nuevosMes} nuevos este mes`} icon={Users} variant="default" trend={{ value: 12, label: 'vs mes anterior' }} />
+        <KpiCard title="Cobros pendientes" value={cobranza.pendiente.cantidad.toString()} subtitle={cobranza.pendiente.cantidad > 0 ? 'Requieren acción' : 'Todo al día'} icon={Wallet} variant="warning" />
+        <KpiCard title="Cursos activos" value="—" subtitle="Productos vigentes" icon={BookOpen} variant="success" />
       </div>
 
-      {/* Gráfica + próximos cobros */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ProximosCobros />
       </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
@@ -12,28 +12,16 @@ import { cn } from '@/lib/utils'
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
-const TABS: { key: Periodo; label: string }[] = [
-  { key: 'diario',   label: 'Diario'   },
-  { key: 'semanal',  label: 'Semanal'  },
-  { key: 'mensual',  label: 'Mensual'  },
-]
-
 function Skeleton() {
   return (
-    <div className="card p-5 h-72 animate-pulse">
-      <div className="flex items-center justify-between mb-4">
-        <div className="h-4 w-36 bg-[var(--surface-high)] rounded-md" />
-        <div className="flex gap-1">
-          {[0,1,2].map(i => <div key={i} className="h-7 w-16 bg-[var(--surface-high)] rounded-lg" />)}
-        </div>
-      </div>
+    <div className="card p-5 h-64 animate-pulse">
+      <div className="h-4 w-36 bg-[var(--surface-high)] rounded-md mb-4" />
       <div className="h-full bg-[var(--surface-high)] rounded-xl" style={{ height: '75%' }} />
     </div>
   )
 }
 
-export function VentasChart() {
-  const [periodo, setPeriodo] = useState<Periodo>('mensual')
+export function VentasChart({ periodo }: { periodo: Periodo }) {
   const { getToken } = useAuth()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -65,31 +53,13 @@ export function VentasChart() {
   const labelPeriodo = periodo === 'diario' ? 'vs día anterior' : periodo === 'semanal' ? 'vs semana anterior' : 'vs mes anterior'
 
   return (
-    <div className="card p-5 h-72">
-      {/* Header — fila 1: título + tabs */}
+    <div className="card p-5 h-64">
+      {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-[15px] font-semibold text-on-surface">Ventas</h3>
-
-        {/* Tabs período */}
-        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[var(--surface-high)]">
-          {TABS.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setPeriodo(t.key)}
-              className={cn(
-                'px-3 py-1 rounded-md text-[12px] font-medium transition-all duration-150',
-                periodo === t.key
-                  ? 'bg-[var(--surface-lowest)] text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* Fila 2: variación — alineada a la derecha bajo los tabs */}
+      {/* Variación */}
       <div className="mb-3 h-5 flex justify-end">
         {actual > 0 && (
           <div className={cn(
