@@ -6,7 +6,7 @@ import { useAuth, useUser } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen } from 'lucide-react'
+import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle } from 'lucide-react'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface CursoEstudiante {
@@ -163,6 +163,7 @@ export default function CertificadosPage() {
   const [modalGenerar, setModalGenerar] = useState(false)
   const [form, setForm] = useState({ estudianteId: '', tipo: 'CURSANDO' })
   const [descargando, setDescargando] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState<'sebastian' | 'andres' | null>(null)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
@@ -211,6 +212,32 @@ export default function CertificadosPage() {
       alert(e?.message ?? 'Error al subir la firma')
     } finally {
       setSubiendo(null)
+    }
+  }
+
+  const handleEnviar = async (cert: Certificado, canal: 'whatsapp' | 'correo') => {
+    if (enviando) return
+    setEnviando(`${cert.id}-${canal}`)
+    try {
+      const token = await getToken()
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/certificados/${cert.id}/enviar-${canal}`,
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
+      )
+      const json = await res.json()
+      if (!res.ok) {
+        if (json.error === 'WHATSAPP_NOT_CONFIGURED' || json.error === 'EMAIL_NOT_CONFIGURED') {
+          alert('Esta integración aún no está configurada. Estará disponible próximamente.')
+        } else {
+          alert(json.message ?? 'Error al enviar')
+        }
+      } else {
+        alert(json.data?.message ?? 'Enviado correctamente')
+      }
+    } catch {
+      alert('Error de conexión')
+    } finally {
+      setEnviando(null)
     }
   }
 
@@ -293,7 +320,7 @@ export default function CertificadosPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Tipo</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Emitido</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Descargar</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/40">
@@ -314,17 +341,47 @@ export default function CertificadosPage() {
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <span className="text-xs text-on-surface-variant">{formatDate(c.fechaEmision)}</span>
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDescargar(c, i)}
-                        disabled={!!descargando}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {cargando
-                          ? <><Loader2 className="w-3 h-3 animate-spin" />Generando…</>
-                          : <><Download className="w-3 h-3" />Descargar</>
-                        }
-                      </button>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Descargar */}
+                        <button
+                          onClick={() => handleDescargar(c, i)}
+                          disabled={!!descargando || !!enviando}
+                          title="Descargar PDF"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {cargando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                          <span className="hidden sm:inline">{cargando ? 'Generando…' : 'PDF'}</span>
+                        </button>
+
+                        {/* WhatsApp */}
+                        <button
+                          onClick={() => handleEnviar(c, 'whatsapp')}
+                          disabled={!!descargando || !!enviando}
+                          title="Enviar por WhatsApp"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {enviando === `${c.id}-whatsapp`
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <MessageCircle className="w-3 h-3" />
+                          }
+                          <span className="hidden sm:inline">WhatsApp</span>
+                        </button>
+
+                        {/* Correo */}
+                        <button
+                          onClick={() => handleEnviar(c, 'correo')}
+                          disabled={!!descargando || !!enviando}
+                          title="Enviar por correo"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {enviando === `${c.id}-correo`
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <Mail className="w-3 h-3" />
+                          }
+                          <span className="hidden sm:inline">Correo</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
