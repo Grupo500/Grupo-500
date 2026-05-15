@@ -5,7 +5,7 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
   Users, TrendingUp, Wallet, AlertTriangle,
-  CalendarDays, Target,
+  BookOpen, CalendarDays, Target,
 } from 'lucide-react'
 import { VentasChart } from '@/components/charts/VentasChart'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
