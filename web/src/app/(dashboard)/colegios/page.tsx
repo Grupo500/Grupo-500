@@ -332,8 +332,26 @@ export default function ColegiosPage() {
         ) : (
           <div className="space-y-5">
 
-            {/* ── Barra de pipeline ── */}
-            <div className="bg-surface-lowest border border-outline-variant rounded-xl p-4">
+            {/* ── Selector móvil ── */}
+            <div className="md:hidden">
+              <select
+                value={etapaActiva}
+                onChange={e => setEtapaActiva(e.target.value as Etapa)}
+                className="w-full bg-surface-lowest border border-outline-variant rounded-xl px-4 py-3 text-sm font-medium text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              >
+                {ETAPAS.map(cfg => {
+                  const count = negociaciones.filter(n => n.etapa === cfg.etapa).length
+                  return (
+                    <option key={cfg.etapa} value={cfg.etapa}>
+                      {cfg.label}{count > 0 ? ` (${count})` : ''}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
+
+            {/* ── Barra de pipeline — solo desktop ── */}
+            <div className="hidden md:block bg-surface-lowest border border-outline-variant rounded-xl p-4">
               <div className="flex items-center w-full gap-0">
                 {ETAPAS.map((cfg, i) => {
                   const count  = negociaciones.filter(n => n.etapa === cfg.etapa).length
@@ -346,7 +364,7 @@ export default function ColegiosPage() {
                       <button
                         onClick={() => setEtapaActiva(cfg.etapa)}
                         className={cn(
-                          'flex flex-col items-center gap-1 flex-1 py-2.5 px-1 rounded-xl transition-all duration-200 group min-w-0',
+                          'flex flex-col items-center gap-1 flex-1 py-2.5 px-1 rounded-xl transition-all duration-200 min-w-0',
                           activo ? `${cfg.bgActive} shadow-sm` : 'hover:bg-surface-high',
                         )}
                       >
