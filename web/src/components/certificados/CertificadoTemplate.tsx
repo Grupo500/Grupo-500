@@ -77,7 +77,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         width: '794px',
         height: '1123px',
         backgroundColor: '#ffffff',
-        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontFamily: '"Times New Roman", Times, serif',
         position: 'relative',
         padding: '50px 65px 0',
         boxSizing: 'border-box',
@@ -103,7 +103,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
           <img
             src="/logo-grupo500-transparent.png"
             alt="Grupo 500"
-            style={{ width: '90px', height: '90px', objectFit: 'contain', margin: '0 auto 12px' }}
+            style={{ width: '130px', height: '130px', objectFit: 'contain', margin: '0 auto 12px' }}
           />
           <p style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.5px', color: '#1a1a1a', margin: 0 }}>
             PREICFES GRUPO 500 &nbsp;–&nbsp; NIT: 901768155-8
