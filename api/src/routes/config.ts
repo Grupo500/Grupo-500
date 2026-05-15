@@ -1,12 +1,12 @@
 import { Router } from 'express'
-import { requireAuth, requireRole } from '../middleware/auth'
+import { authenticate, requireRole } from '../middleware/auth'
 import { uploadFirma } from '../middleware/upload'
 import { getFirmas, subirFirma } from '../controllers/config.controller'
-import { asyncHandler } from '../utils/errors'
+import { asyncHandler } from '../middleware/errorHandler'
 
 const router = Router()
 
-router.use(requireAuth)
+router.use(authenticate)
 
 // Cualquier usuario autenticado puede leer las firmas (para generar el PDF)
 router.get('/firmas', asyncHandler(getFirmas))
