@@ -30,7 +30,7 @@ function formatFechaLarga(iso: string) {
 }
 
 // ── SVG Icons ────────────────────────────────────────────────────────────────
-const svgStyle: React.CSSProperties = { display: 'block', verticalAlign: 'middle' }
+const svgStyle: React.CSSProperties = { display: 'inline-block', verticalAlign: 'middle', position: 'relative', top: '-1px' }
 
 const EmailIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={svgStyle}>
@@ -185,9 +185,9 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
               { icon: <InstagramIcon />, text: '@Preicfes_grupo500' },
               { icon: <WhatsAppIcon />, text: '3168819037 · 3174294954' },
             ].map(({ icon, text }) => (
-              <span key={text} style={{ fontSize: '10.5px', color: '#444', display: 'inline-flex', alignItems: 'center', gap: '5px', lineHeight: '13px' }}>
+              <span key={text} style={{ fontSize: '10.5px', color: '#444', whiteSpace: 'nowrap' }}>
                 {icon}
-                <span style={{ display: 'inline-block', lineHeight: '13px' }}>{text}</span>
+                <span style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }}>{text}</span>
               </span>
             ))}
           </div>
