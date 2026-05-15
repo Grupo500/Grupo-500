@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import {
   School, Plus, X, Loader2, MapPin, Users,
-  Handshake, ChevronRight, User, Calendar,
+  Handshake, User, Calendar, ChevronRight,
 } from 'lucide-react'
 
 // ── Interfaces ─────────────────────────────────────────────────────────────
@@ -35,15 +35,25 @@ interface Negociacion {
   asesor:  { id: string; nombre: string }
 }
 
-// ── Config Kanban ──────────────────────────────────────────────────────────
-const COLUMNAS: { etapa: Etapa; label: string; color: string; bg: string; dot: string }[] = [
-  { etapa: 'PROSPECTO',         label: 'Prospecto',         color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800/40',   dot: 'bg-slate-400'   },
-  { etapa: 'CONTACTO_INICIAL',  label: 'Contacto inicial',  color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-900/20',      dot: 'bg-blue-400'    },
-  { etapa: 'VISITA_PROGRAMADA', label: 'Visita programada', color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-900/20',  dot: 'bg-violet-400'  },
-  { etapa: 'PROPUESTA_ENVIADA', label: 'Propuesta enviada', color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-900/20',    dot: 'bg-amber-400'   },
-  { etapa: 'EN_NEGOCIACION',    label: 'En negociación',    color: 'text-orange-500',  bg: 'bg-orange-50 dark:bg-orange-900/20',  dot: 'bg-orange-400'  },
-  { etapa: 'CONVENIO_FIRMADO',  label: 'Convenio firmado',  color: 'text-green-500',   bg: 'bg-green-50 dark:bg-green-900/20',    dot: 'bg-green-400'   },
-  { etapa: 'DESCARTADO',        label: 'Descartado',        color: 'text-red-400',     bg: 'bg-red-50 dark:bg-red-900/20',        dot: 'bg-red-400'     },
+// ── Config pipeline ────────────────────────────────────────────────────────
+const ETAPAS: {
+  etapa: Etapa
+  label: string
+  labelCorto: string
+  color: string
+  bg: string
+  bgActive: string
+  border: string
+  dot: string
+  textActive: string
+}[] = [
+  { etapa: 'PROSPECTO',         label: 'Prospecto',         labelCorto: 'Prospecto',   color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800/40',    bgActive: 'bg-slate-500',   border: 'border-slate-300 dark:border-slate-600',  dot: 'bg-slate-400',   textActive: 'text-white' },
+  { etapa: 'CONTACTO_INICIAL',  label: 'Contacto inicial',  labelCorto: 'Contacto',    color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-900/20',       bgActive: 'bg-blue-500',    border: 'border-blue-200 dark:border-blue-800',    dot: 'bg-blue-400',    textActive: 'text-white' },
+  { etapa: 'VISITA_PROGRAMADA', label: 'Visita programada', labelCorto: 'Visita',      color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-900/20',   bgActive: 'bg-violet-500',  border: 'border-violet-200 dark:border-violet-800',dot: 'bg-violet-400',  textActive: 'text-white' },
+  { etapa: 'PROPUESTA_ENVIADA', label: 'Propuesta enviada', labelCorto: 'Propuesta',   color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-900/20',     bgActive: 'bg-amber-500',   border: 'border-amber-200 dark:border-amber-800',  dot: 'bg-amber-400',   textActive: 'text-white' },
+  { etapa: 'EN_NEGOCIACION',    label: 'En negociación',    labelCorto: 'Negociando',  color: 'text-orange-500',  bg: 'bg-orange-50 dark:bg-orange-900/20',   bgActive: 'bg-orange-500',  border: 'border-orange-200 dark:border-orange-800',dot: 'bg-orange-400',  textActive: 'text-white' },
+  { etapa: 'CONVENIO_FIRMADO',  label: 'Convenio firmado',  labelCorto: 'Convenio',    color: 'text-green-500',   bg: 'bg-green-50 dark:bg-green-900/20',     bgActive: 'bg-green-500',   border: 'border-green-200 dark:border-green-800',  dot: 'bg-green-400',   textActive: 'text-white' },
+  { etapa: 'DESCARTADO',        label: 'Descartado',        labelCorto: 'Descartado',  color: 'text-red-400',     bg: 'bg-red-50 dark:bg-red-900/20',         bgActive: 'bg-red-400',     border: 'border-red-200 dark:border-red-800',      dot: 'bg-red-400',     textActive: 'text-white' },
 ]
 
 // ── Modal genérico ─────────────────────────────────────────────────────────
@@ -61,29 +71,39 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   )
 }
 
-// ── Tarjeta Kanban ─────────────────────────────────────────────────────────
-function KanbanCard({ neg, onClick }: { neg: Negociacion; onClick: () => void }) {
+// ── Tarjeta de negociación ─────────────────────────────────────────────────
+function NegCard({ neg, onClick }: { neg: Negociacion; onClick: () => void }) {
+  const cfg = ETAPAS.find(e => e.etapa === neg.etapa)!
   return (
-    <div onClick={onClick} className="card p-3.5 cursor-pointer hover:shadow-md transition-all group">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-[13px] font-semibold text-on-surface leading-tight line-clamp-2">{neg.colegio.nombre}</p>
-        <ChevronRight className="w-3.5 h-3.5 text-on-surface-variant opacity-0 group-hover:opacity-100 flex-shrink-0 mt-0.5 transition-opacity" />
+    <div
+      onClick={onClick}
+      className="bg-surface-lowest border border-outline-variant rounded-xl p-4 cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group"
+    >
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <p className="text-[13px] font-semibold text-on-surface leading-snug">{neg.colegio.nombre}</p>
+        <ChevronRight className="w-4 h-4 text-on-surface-variant opacity-0 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
       </div>
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant">
-          <School className="w-3 h-3 flex-shrink-0" />{neg.colegio.ciudad}
+      <div className="space-y-1.5 mb-3">
+        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+          <MapPin className="w-3 h-3 flex-shrink-0" />{neg.colegio.ciudad}
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant">
+        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
           <User className="w-3 h-3 flex-shrink-0" />{neg.asesor.nombre}
         </div>
         {neg.fechaProxContacto && (
-          <div className="flex items-center gap-1.5 text-[11px] text-primary">
+          <div className="flex items-center gap-2 text-xs text-primary font-medium">
             <Calendar className="w-3 h-3 flex-shrink-0" />
             Próx: {formatDate(neg.fechaProxContacto)}
           </div>
         )}
       </div>
-      <p className="text-[10px] text-on-surface-variant mt-2">Actualizado {formatDate(neg.updatedAt)}</p>
+      <div className="flex items-center justify-between">
+        <span className={cn('inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
+          <span className={cn('w-1.5 h-1.5 rounded-full', cfg.dot)} />
+          {cfg.labelCorto}
+        </span>
+        <span className="text-[10px] text-on-surface-variant">{formatDate(neg.updatedAt)}</span>
+      </div>
     </div>
   )
 }
@@ -96,6 +116,7 @@ export default function ColegiosPage() {
   const queryClient = useQueryClient()
 
   const [tab, setTab] = useState<'colegios' | 'negociaciones'>('colegios')
+  const [etapaActiva, setEtapaActiva] = useState<Etapa>('PROSPECTO')
 
   // Colegios state
   const [modalCrearColegio, setModalCrearColegio] = useState(false)
@@ -128,7 +149,7 @@ export default function ColegiosPage() {
     queryFn: () => fetcher<any>('/asesores?limit=100'),
   })
 
-  // ── Mutations Colegios ──
+  // ── Mutations colegios ──
   const crearColegioMutation = useMutation({
     mutationFn: () => fetcher('/colegios', { method: 'POST', body: JSON.stringify(formColegio) }),
     onSuccess: () => {
@@ -138,7 +159,7 @@ export default function ColegiosPage() {
     },
   })
 
-  // ── Mutations Negociaciones ──
+  // ── Mutations negociaciones ──
   const resetFormNeg = () => setFormNeg({ colegioId: '', asesorId: '', etapa: 'PROSPECTO', notas: '', fechaContacto: '', fechaVisita: '', fechaProxContacto: '' })
 
   const crearNegMutation = useMutation({
@@ -148,7 +169,8 @@ export default function ColegiosPage() {
   })
 
   const actualizarNegMutation = useMutation({
-    mutationFn: (data: Partial<typeof formNeg>) => fetcher(`/negociaciones/${modalEditarNeg?.id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    mutationFn: (data: Partial<typeof formNeg>) =>
+      fetcher(`/negociaciones/${modalEditarNeg?.id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['negociaciones'] }); setModalEditarNeg(null) },
     onError: (e: any) => alert(e?.message ?? 'Error al actualizar'),
   })
@@ -169,21 +191,22 @@ export default function ColegiosPage() {
     setModalEditarNeg(neg)
   }
 
-  const colegios: Colegio[] = colegiosData?.data ?? []
+  const colegios: Colegio[]      = colegiosData?.data ?? []
   const negociaciones: Negociacion[] = negData?.data ?? []
-  const asesores = asesoresData?.data ?? []
+  const asesores                 = asesoresData?.data ?? []
+  const tarjetasActivas          = negociaciones.filter(n => n.etapa === etapaActiva)
+  const cfgActiva                = ETAPAS.find(e => e.etapa === etapaActiva)!
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
-  // ── Form de negociación ──
   const NegFormFields = ({ value: f, onChange }: { value: typeof formNeg; onChange: (f: typeof formNeg) => void }) => (
     <div className="space-y-3">
       <div>
         <label className={labelCls}>Colegio *</label>
         <select className={inputCls} value={f.colegioId} onChange={e => onChange({ ...f, colegioId: e.target.value })}>
           <option value="">Seleccionar colegio…</option>
-          {colegios.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
         </select>
       </div>
       <div>
@@ -196,7 +219,7 @@ export default function ColegiosPage() {
       <div>
         <label className={labelCls}>Etapa</label>
         <select className={inputCls} value={f.etapa} onChange={e => onChange({ ...f, etapa: e.target.value as Etapa })}>
-          {COLUMNAS.map(c => <option key={c.etapa} value={c.etapa}>{c.label}</option>)}
+          {ETAPAS.map(c => <option key={c.etapa} value={c.etapa}>{c.label}</option>)}
         </select>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -241,17 +264,15 @@ export default function ColegiosPage() {
       {/* ── Tabs ── */}
       <div className="flex gap-1 bg-surface-high border border-outline-variant rounded-xl p-1 w-fit">
         {([
-          { id: 'colegios',      label: 'Colegios',       icon: School,     count: colegios.length },
-          { id: 'negociaciones', label: 'Negociaciones',  icon: Handshake,  count: negociaciones.length },
+          { id: 'colegios',      label: 'Colegios',      icon: School,    count: colegios.length },
+          { id: 'negociaciones', label: 'Negociaciones', icon: Handshake, count: negociaciones.length },
         ] as const).map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
               'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
-              tab === t.id
-                ? 'bg-surface-lowest text-on-surface shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface',
+              tab === t.id ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface',
             )}
           >
             <t.icon className="w-4 h-4" />
@@ -266,7 +287,9 @@ export default function ColegiosPage() {
         ))}
       </div>
 
-      {/* ── Tab: Colegios ── */}
+      {/* ══════════════════════════════════════════
+          TAB: COLEGIOS
+      ══════════════════════════════════════════ */}
       {tab === 'colegios' && (
         loadingColegios ? (
           <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
@@ -300,38 +323,93 @@ export default function ColegiosPage() {
         )
       )}
 
-      {/* ── Tab: Negociaciones (Kanban) ── */}
+      {/* ══════════════════════════════════════════
+          TAB: NEGOCIACIONES — Pipeline
+      ══════════════════════════════════════════ */}
       {tab === 'negociaciones' && (
         loadingNeg ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
         ) : (
-          <div className="overflow-x-auto pb-4">
-            <div className="flex gap-3 min-w-max">
-              {COLUMNAS.map(col => {
-                const tarjetas = negociaciones.filter(n => n.etapa === col.etapa)
-                return (
-                  <div key={col.etapa} className={cn('w-60 rounded-xl p-3 flex flex-col gap-2', col.bg)}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className={cn('w-2 h-2 rounded-full flex-shrink-0', col.dot)} />
-                        <span className={cn('text-[12px] font-semibold', col.color)}>{col.label}</span>
-                      </div>
-                      <span className="text-[11px] text-on-surface-variant font-medium bg-white/60 dark:bg-black/20 px-1.5 py-0.5 rounded-full">
-                        {tarjetas.length}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {tarjetas.map(neg => (
-                        <KanbanCard key={neg.id} neg={neg} onClick={() => abrirEditarNeg(neg)} />
-                      ))}
-                      {tarjetas.length === 0 && (
-                        <p className="text-[11px] text-on-surface-variant text-center py-4 opacity-60">Sin negociaciones</p>
+          <div className="space-y-5">
+
+            {/* ── Barra de pipeline ── */}
+            <div className="bg-surface-lowest border border-outline-variant rounded-xl p-4">
+              <div className="flex items-center w-full gap-0">
+                {ETAPAS.map((cfg, i) => {
+                  const count  = negociaciones.filter(n => n.etapa === cfg.etapa).length
+                  const activo = etapaActiva === cfg.etapa
+                  const isLast = i === ETAPAS.length - 1
+
+                  return (
+                    <div key={cfg.etapa} className="flex items-center flex-1 min-w-0">
+                      {/* Paso */}
+                      <button
+                        onClick={() => setEtapaActiva(cfg.etapa)}
+                        className={cn(
+                          'flex flex-col items-center gap-1 flex-1 py-2.5 px-1 rounded-xl transition-all duration-200 group min-w-0',
+                          activo ? `${cfg.bgActive} shadow-sm` : 'hover:bg-surface-high',
+                        )}
+                      >
+                        {/* Número / dot */}
+                        <div className={cn(
+                          'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
+                          activo
+                            ? 'bg-white/20 text-white'
+                            : count > 0
+                              ? `${cfg.bg} ${cfg.color} border ${cfg.border}`
+                              : 'bg-surface-high text-on-surface-variant border border-outline-variant',
+                        )}>
+                          {count > 0 ? count : <span className="w-2 h-2 rounded-full bg-current opacity-30 block" />}
+                        </div>
+
+                        {/* Label */}
+                        <span className={cn(
+                          'text-[10px] font-semibold leading-tight text-center truncate w-full px-1 transition-colors',
+                          activo ? 'text-white' : count > 0 ? cfg.color : 'text-on-surface-variant',
+                        )}>
+                          {cfg.labelCorto}
+                        </span>
+                      </button>
+
+                      {/* Conector */}
+                      {!isLast && (
+                        <div className={cn(
+                          'h-px w-3 flex-shrink-0 transition-colors',
+                          negociaciones.some(n => ETAPAS.indexOf(ETAPAS.find(e => e.etapa === n.etapa)!) > i)
+                            ? 'bg-primary/40'
+                            : 'bg-outline-variant',
+                        )} />
                       )}
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
+
+            {/* ── Encabezado de etapa activa ── */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className={cn('w-3 h-3 rounded-full', cfgActiva.dot)} />
+                <h3 className={cn('text-sm font-semibold', cfgActiva.color)}>{cfgActiva.label}</h3>
+                <span className="text-xs text-on-surface-variant">
+                  — {tarjetasActivas.length} negociación{tarjetasActivas.length !== 1 ? 'es' : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* ── Grid de tarjetas ── */}
+            {tarjetasActivas.length === 0 ? (
+              <div className={cn('flex flex-col items-center justify-center py-14 rounded-xl border border-dashed', cfgActiva.bg, cfgActiva.border)}>
+                <span className={cn('text-3xl mb-2 opacity-30', cfgActiva.dot.replace('bg-', 'text-'))}>◉</span>
+                <p className="text-sm text-on-surface-variant">Sin negociaciones en esta etapa</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {tarjetasActivas.map(neg => (
+                  <NegCard key={neg.id} neg={neg} onClick={() => abrirEditarNeg(neg)} />
+                ))}
+              </div>
+            )}
           </div>
         )
       )}
