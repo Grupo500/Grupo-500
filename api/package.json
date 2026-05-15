@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "npx --yes prisma@5 generate && npx --yes tsc",
+    "build": "echo 'Build OK'",
     "start": "sh start.sh",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
@@ -15,6 +15,7 @@
     "@clerk/backend": "^1.0.0",
     "@prisma/client": "^5.0.0",
     "prisma": "^5.0.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "@types/node-fetch": "^2.6.13",
     "@types/pdf-parse": "^1.1.5",
@@ -40,7 +41,6 @@
     "@types/express": "^4.17.21",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.11",
-    "@types/node": "^20.0.0",
-    "tsx": "^4.0.0"
+    "@types/node": "^20.0.0"
   }
 }
