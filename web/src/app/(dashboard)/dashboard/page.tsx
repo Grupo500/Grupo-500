@@ -39,8 +39,11 @@ export default async function DashboardPage() {
 
         <RefreshButton />
 
+        {/* Analytics con período global: tarjetas + gráficas sincronizadas */}
+        <DashboardAnalytics />
+
         {/* KPIs fijos */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           <KpiCard
             title="Estudiantes activos"
             value={estudiantes.total.toString()}
@@ -64,9 +67,6 @@ export default async function DashboardPage() {
             variant="error"
           />
         </div>
-
-        {/* Analytics con período global: tarjetas + gráficas sincronizadas */}
-        <DashboardAnalytics />
       </div>
     )
   }
