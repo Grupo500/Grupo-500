@@ -33,17 +33,23 @@ export default async function DashboardPage() {
   if (isAdmin) {
     return (
       <div className="space-y-3 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <PageHeader
-            title={`${saludo}, ${firstName} 👋`}
-            subtitle="Resumen general de la operación"
-          />
+        <div className="flex items-start justify-between">
+          {/* Saludo: en móvil dos líneas, en desktop una sola */}
+          <div>
+            <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+              <span className="md:hidden">
+                {saludo},<br />{firstName} 👋
+              </span>
+              <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
+            </h1>
+            <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen general de la operación</p>
+          </div>
           <Image
             src="/logo-grupo500.png"
             alt="Grupo 500"
-            width={120}
-            height={40}
-            className="object-contain flex-shrink-0"
+            width={110}
+            height={110}
+            className="object-contain flex-shrink-0 rounded-xl"
             priority
           />
         </div>
