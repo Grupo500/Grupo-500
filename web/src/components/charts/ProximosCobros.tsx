@@ -50,7 +50,7 @@ export function ProximosCobros() {
   const total  = cobros.reduce((s, c) => s + c.monto, 0)
 
   return (
-    <div className="card p-5 flex flex-col h-64">
+    <div className="card p-5 flex flex-col h-72">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

@@ -7,6 +7,7 @@ import { Users, Wallet, AlertTriangle, BookOpen, Target } from 'lucide-react'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
 import { DashboardAnalytics } from '@/components/charts/DashboardAnalytics'
 import { RefreshButton } from '@/components/ui/RefreshButton'
+import Image from 'next/image'
 
 async function getDashboardData() {
   try {
@@ -31,11 +32,21 @@ export default async function DashboardPage() {
   // ── VISTA ADMINISTRADOR ──────────────────────────────────────────────────────
   if (isAdmin) {
     return (
-      <div className="space-y-5 animate-fade-in">
-        <PageHeader
-          title={`${saludo}, ${firstName} 👋`}
-          subtitle="Resumen general de la operación"
-        />
+      <div className="space-y-3 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <PageHeader
+            title={`${saludo}, ${firstName} 👋`}
+            subtitle="Resumen general de la operación"
+          />
+          <Image
+            src="/logo-grupo500.png"
+            alt="Grupo 500"
+            width={120}
+            height={40}
+            className="object-contain flex-shrink-0"
+            priority
+          />
+        </div>
 
         <RefreshButton />
 
