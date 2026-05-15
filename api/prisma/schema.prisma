@@ -48,6 +48,11 @@ enum RendimientoEstudiante {
   ALTO
 }
 
+enum CalendarioCurso {
+  A
+  B
+}
+
 // ─────────────────────────────────────────────
 // Auth & Usuarios
 // ─────────────────────────────────────────────
@@ -141,7 +146,8 @@ model Curso {
   nombre       String
   descripcion  String?
   precio       Float
-  duracionDias Int
+  duracionHoras Int
+  calendario   CalendarioCurso   @default(A)
   activo       Boolean           @default(true)
   estudiantes  CursoEstudiante[]
   createdAt    DateTime          @default(now())

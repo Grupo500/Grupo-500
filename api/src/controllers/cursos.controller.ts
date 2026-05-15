@@ -8,7 +8,7 @@ const schema = z.object({
   nombre: z.string().min(2),
   descripcion: z.string().optional(),
   precio: z.number().positive(),
-  duracionDias: z.number().int().positive(),
+  duracionHoras: z.number().int().positive(),
 })
 
 export async function listar(_req: Request, res: Response) {

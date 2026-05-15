@@ -13,13 +13,13 @@ interface Curso {
   nombre: string
   descripcion?: string
   precio: number
-  duracionDias: number
+  duracionHoras: number
   _count?: { estudiantes: number }
 }
 
-type FormState = { nombre: string; descripcion: string; precio: string; duracionDias: string }
+type FormState = { nombre: string; descripcion: string; precio: string; duracionHoras: string }
 
-const emptyForm: FormState = { nombre: '', descripcion: '', precio: '', duracionDias: '30' }
+const emptyForm: FormState = { nombre: '', descripcion: '', precio: '', duracionHoras: '100' }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null
@@ -55,8 +55,8 @@ function FormFields({ f, setF }: { f: FormState; setF: React.Dispatch<React.SetS
           <input className={inputCls} type="number" value={f.precio} onChange={e => setF(p => ({ ...p, precio: e.target.value }))} placeholder="800000" />
         </div>
         <div>
-          <label className={labelCls}>Duración (días) *</label>
-          <input className={inputCls} type="number" value={f.duracionDias} onChange={e => setF(p => ({ ...p, duracionDias: e.target.value }))} />
+          <label className={labelCls}>Duración (horas) *</label>
+          <input className={inputCls} type="number" value={f.duracionHoras} onChange={e => setF(p => ({ ...p, duracionHoras: e.target.value }))} />
         </div>
       </div>
     </div>
@@ -85,7 +85,7 @@ export default function CursosPage() {
   const crearMutation = useMutation({
     mutationFn: () => fetcher('/cursos', {
       method: 'POST',
-      body: JSON.stringify({ nombre: form.nombre, descripcion: form.descripcion, precio: Number(form.precio), duracionDias: Number(form.duracionDias) }),
+      body: JSON.stringify({ nombre: form.nombre, descripcion: form.descripcion, precio: Number(form.precio), duracionHoras: Number(form.duracionHoras) }),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cursos'] })
@@ -98,7 +98,7 @@ export default function CursosPage() {
     mutationFn: () => fetcher(`/cursos/${editCurso!.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre: editForm.nombre, descripcion: editForm.descripcion, precio: Number(editForm.precio), duracionDias: Number(editForm.duracionDias) }),
+      body: JSON.stringify({ nombre: editForm.nombre, descripcion: editForm.descripcion, precio: Number(editForm.precio), duracionHoras: Number(editForm.duracionHoras) }),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cursos'] })
@@ -113,7 +113,7 @@ export default function CursosPage() {
 
   const abrirEditar = (c: Curso) => {
     setEditCurso(c)
-    setEditForm({ nombre: c.nombre, descripcion: c.descripcion ?? '', precio: String(c.precio), duracionDias: String(c.duracionDias) })
+    setEditForm({ nombre: c.nombre, descripcion: c.descripcion ?? '', precio: String(c.precio), duracionHoras: String(c.duracionHoras) })
   }
 
   const cursos: Curso[] = data?.data ?? []
@@ -172,7 +172,7 @@ export default function CursosPage() {
               {c.descripcion && <p className="mt-1 text-xs text-on-surface-variant line-clamp-2">{c.descripcion}</p>}
               <div className="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                  <Clock className="w-3.5 h-3.5" />{c.duracionDias} días
+                  <Clock className="w-3.5 h-3.5" />{c.duracionHoras} horas
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
                   <Users className="w-3.5 h-3.5" />{c._count?.estudiantes ?? 0} estudiantes
