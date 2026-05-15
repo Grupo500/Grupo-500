@@ -1,12 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import { Award, Plus, X, Loader2, Download, CheckCircle, Clock } from 'lucide-react'
+import { CertificadoTemplate } from '@/components/certificados/CertificadoTemplate'
+
+// ── Tipos ──────────────────────────────────────────────────────────────────
+interface CursoEstudiante {
+  curso: { nombre: string; duracionHoras: number; calendario: string }
+}
 
 interface Certificado {
   id: string
@@ -14,14 +20,23 @@ interface Certificado {
   numeroSerie: string
   fechaEmision: string
   archivoUrl: string
-  estudiante: { nombre: string; email: string }
+  estudiante: {
+    nombre: string
+    email: string
+    tipoDocumento?: string
+    documento?: string
+    ciudad?: string
+    colegio?: { nombre: string; ciudad: string } | null
+    cursos?: CursoEstudiante[]
+  }
 }
 
 const TIPOS = {
-  CURSANDO: { label: 'Cursando', color: 'text-yellow-400 bg-yellow-400/10', icon: Clock },
-  COMPLETADO: { label: 'Completado', color: 'text-secondary bg-secondary/10', icon: CheckCircle },
+  CURSANDO:   { label: 'Cursando',   color: 'text-yellow-500 bg-yellow-400/10', icon: Clock },
+  COMPLETADO: { label: 'Completado', color: 'text-secondary bg-secondary/10',   icon: CheckCircle },
 }
 
+// ── Modal genérico ──────────────────────────────────────────────────────────
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null
   return (
@@ -36,11 +51,77 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   )
 }
 
+// ── Generador de PDF ────────────────────────────────────────────────────────
+async function generarPDF(cert: Certificado, index: number, totalCerts: number, containerEl: HTMLDivElement) {
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+    import('html2canvas'),
+    import('jspdf'),
+  ])
+
+  const e = cert.estudiante
+  const cursoData = e.cursos?.[0]?.curso
+
+  // Renderizar template en el contenedor oculto
+  const { createRoot } = await import('react-dom/client')
+  const React = (await import('react')).default
+  const { CertificadoTemplate } = await import('@/components/certificados/CertificadoTemplate')
+
+  const tempDiv = document.createElement('div')
+  tempDiv.style.position = 'fixed'
+  tempDiv.style.left = '-9999px'
+  tempDiv.style.top = '0'
+  tempDiv.style.zIndex = '-1'
+  document.body.appendChild(tempDiv)
+
+  const root = createRoot(tempDiv)
+
+  await new Promise<void>(resolve => {
+    root.render(
+      React.createElement(CertificadoTemplate, {
+        data: {
+          nombreEstudiante: e.nombre,
+          tipoDocumento: e.tipoDocumento ?? 'CC',
+          documento: e.documento ?? '',
+          colegio: e.colegio?.nombre ?? '',
+          ciudadColegio: e.colegio?.ciudad ?? e.ciudad ?? '',
+          curso: cursoData?.nombre ?? 'Preicfes',
+          calendario: cursoData?.calendario ?? 'A',
+          duracionHoras: cursoData?.duracionHoras ?? 310,
+          tipo: cert.tipo,
+          fechaEmision: cert.fechaEmision,
+          numeroCertificado: totalCerts - index,
+        },
+      })
+    )
+    // Dar tiempo a que React renderice
+    setTimeout(resolve, 300)
+  })
+
+  const canvas = await html2canvas(tempDiv.firstElementChild as HTMLElement, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    logging: false,
+  })
+
+  root.unmount()
+  document.body.removeChild(tempDiv)
+
+  const imgData = canvas.toDataURL('image/png')
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const W = 210, H = 297
+  pdf.addImage(imgData, 'PNG', 0, 0, W, H)
+  pdf.save(`Certificado-${e.nombre.replace(/\s+/g, '-')}.pdf`)
+}
+
+// ── Página ──────────────────────────────────────────────────────────────────
 export default function CertificadosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
+  const containerRef = useRef<HTMLDivElement>(null)
   const [modalGenerar, setModalGenerar] = useState(false)
   const [form, setForm] = useState({ estudianteId: '', tipo: 'CURSANDO' })
+  const [descargando, setDescargando] = useState<string | null>(null)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getToken()
@@ -67,10 +148,21 @@ export default function CertificadosPage() {
       setModalGenerar(false)
       setForm({ estudianteId: '', tipo: 'CURSANDO' })
     },
-    onError: (err: any) => {
-      alert(err?.message ?? 'Error al generar certificado')
-    },
+    onError: (err: any) => alert(err?.message ?? 'Error al generar certificado'),
   })
+
+  const handleDescargar = async (cert: Certificado, index: number) => {
+    if (descargando) return
+    setDescargando(cert.id)
+    try {
+      await generarPDF(cert, index, certificados.length, containerRef.current!)
+    } catch (e) {
+      console.error(e)
+      alert('Error al generar el PDF')
+    } finally {
+      setDescargando(null)
+    }
+  }
 
   const certificados: Certificado[] = data?.data ?? []
   const total = certificados.length
@@ -81,19 +173,26 @@ export default function CertificadosPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <div ref={containerRef} />
+
       <PageHeader
         title="Certificados"
-        subtitle={`${total} certificados emitidos`}
+        subtitle={`${total} certificado${total !== 1 ? 's' : ''} emitido${total !== 1 ? 's' : ''}`}
         actions={
-          <button onClick={() => setModalGenerar(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" />Generar certificado
+          <button
+            onClick={() => setModalGenerar(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Generar certificado
           </button>
         }
       />
 
       <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+          </div>
         ) : certificados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
             <Award className="w-10 h-10 mb-3 opacity-30" />
@@ -105,16 +204,16 @@ export default function CertificadosPage() {
               <tr className="border-b border-outline-variant bg-surface-low">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Tipo</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Serie</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Emitido</th>
-                <th className="px-4 py-3"></th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Descargar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/40">
-              {certificados.map(c => {
+              {certificados.map((c, i) => {
                 const { label, color, icon: Icon } = TIPOS[c.tipo]
+                const isLoading = descargando === c.id
                 return (
-                  <tr key={c.id} className="hover:bg-surface-low/40 transition-colors group">
+                  <tr key={c.id} className="hover:bg-surface-low/40 transition-colors">
                     <td className="px-4 py-3">
                       <p className="text-sm font-medium text-on-surface">{c.estudiante.nombre}</p>
                       <p className="text-xs text-on-surface-variant">{c.estudiante.email}</p>
@@ -125,22 +224,19 @@ export default function CertificadosPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-xs font-mono text-on-surface-variant">{c.numeroSerie}</span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
                       <span className="text-xs text-on-surface-variant">{formatDate(c.fechaEmision)}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {c.archivoUrl && (
-                        <a
-                          href={c.archivoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Download className="w-3 h-3" />Descargar
-                        </a>
-                      )}
+                      <button
+                        onClick={() => handleDescargar(c, i)}
+                        disabled={!!descargando}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isLoading
+                          ? <><Loader2 className="w-3 h-3 animate-spin" />Generando…</>
+                          : <><Download className="w-3 h-3" />Descargar</>
+                        }
+                      </button>
                     </td>
                   </tr>
                 )
@@ -150,17 +246,20 @@ export default function CertificadosPage() {
         )}
       </div>
 
+      {/* ── Modal Generar ── */}
       <Modal open={modalGenerar} onClose={() => setModalGenerar(false)}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-on-surface">Generar certificado</h2>
-            <button onClick={() => setModalGenerar(false)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
+            <button onClick={() => setModalGenerar(false)} className="p-1.5 text-on-surface-variant hover:text-on-surface">
+              <X className="w-4 h-4" />
+            </button>
           </div>
           <div className="space-y-3">
             <div>
               <label className={labelCls}>Estudiante *</label>
               <select className={inputCls} value={form.estudianteId} onChange={e => setForm(f => ({ ...f, estudianteId: e.target.value }))}>
-                <option value="">Seleccionar estudiante...</option>
+                <option value="">Seleccionar estudiante…</option>
                 {estudiantes.map((e: any) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
               </select>
             </div>
@@ -186,13 +285,16 @@ export default function CertificadosPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-6">
-            <button onClick={() => setModalGenerar(false)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
+            <button onClick={() => setModalGenerar(false)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">
+              Cancelar
+            </button>
             <button
               onClick={() => generarMutation.mutate()}
               disabled={generarMutation.isPending || !form.estudianteId}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {generarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Generar
+              {generarMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Generar
             </button>
           </div>
         </div>

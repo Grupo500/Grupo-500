@@ -18,7 +18,14 @@ function generarNumeroSerie(): string {
 
 export async function listar(_req: Request, res: Response) {
   const certificados = await prisma.certificado.findMany({
-    include: { estudiante: true },
+    include: {
+      estudiante: {
+        include: {
+          colegio: true,
+          cursos: { include: { curso: true }, orderBy: { fechaCompra: 'asc' }, take: 1 },
+        },
+      },
+    },
     orderBy: { fechaEmision: 'desc' },
   })
   return ApiResponse.success(res, certificados)
