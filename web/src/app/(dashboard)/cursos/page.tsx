@@ -38,6 +38,28 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
 const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
+// Formatea número con puntos: 600000 → "600.000"
+function formatPrecio(raw: string) {
+  const digits = raw.replace(/\D/g, '')
+  if (!digits) return ''
+  return Number(digits).toLocaleString('es-CO', { maximumFractionDigits: 0 })
+}
+
+function PrecioInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <input
+      className={inputCls}
+      inputMode="numeric"
+      placeholder="800.000"
+      value={formatPrecio(value)}
+      onChange={e => {
+        const raw = e.target.value.replace(/\./g, '').replace(/\D/g, '')
+        onChange(raw)
+      }}
+    />
+  )
+}
+
 function FormFields({ f, setF }: { f: FormState; setF: React.Dispatch<React.SetStateAction<FormState>> }) {
   return (
     <div className="space-y-3">
@@ -52,7 +74,7 @@ function FormFields({ f, setF }: { f: FormState; setF: React.Dispatch<React.SetS
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Precio *</label>
-          <input className={inputCls} type="number" value={f.precio} onChange={e => setF(p => ({ ...p, precio: e.target.value }))} placeholder="800000" />
+          <PrecioInput value={f.precio} onChange={v => setF(p => ({ ...p, precio: v }))} />
         </div>
         <div>
           <label className={labelCls}>Duración (horas) *</label>
