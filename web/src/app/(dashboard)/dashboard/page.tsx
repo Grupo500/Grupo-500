@@ -45,11 +45,11 @@ export default async function DashboardPage() {
             <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen general de la operación</p>
           </div>
           <Image
-            src="/logo-grupo500.png"
+            src="/logo-grupo500-transparent.png"
             alt="Grupo 500"
             width={80}
             height={80}
-            className="object-contain flex-shrink-0 rounded-xl mix-blend-multiply dark:mix-blend-normal"
+            className="object-contain flex-shrink-0"
             priority
           />
         </div>
