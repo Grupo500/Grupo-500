@@ -136,25 +136,30 @@ export function FinancieroSection({ ventaTotal, recaudo, saldo }: Props) {
                   : '0 1px 4px rgba(0,0,0,0.04)',
               }}
             >
-              {/* Ícono */}
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center mb-2.5"
-                style={{ background: `${c}18` }}
-              >
-                <Icon className="w-4 h-4" style={{ color: c }} />
+              {/* Ícono + título */}
+              <div className="flex items-center gap-2 mb-3">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${c}18` }}
+                >
+                  <Icon className="w-4 h-4" style={{ color: c }} />
+                </div>
+                <p className="text-[13px] sm:text-[14px] font-semibold text-on-surface leading-tight">
+                  {m.label}
+                </p>
               </div>
 
               {/* Valor */}
               <p
-                className="text-[15px] sm:text-[17px] font-bold tabular-nums leading-tight"
+                className="text-[16px] sm:text-[19px] font-bold tabular-nums leading-tight"
                 style={{ color: isSelected ? c : 'var(--on-surface)' }}
               >
                 {fmtCompact(val)}
               </p>
 
-              {/* Label */}
-              <p className="mt-0.5 text-[10px] sm:text-[11px] font-medium text-on-surface-variant leading-tight">
-                {m.label}
+              {/* Sublabel */}
+              <p className="mt-0.5 text-[10px] text-on-surface-variant/70 leading-tight hidden sm:block">
+                {m.sublabel}
               </p>
 
               {/* Barra de progreso */}
