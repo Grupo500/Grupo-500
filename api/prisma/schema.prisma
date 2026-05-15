@@ -275,3 +275,11 @@ model SimulacroEstudiante {
 
   @@unique([estudianteId, simulacroId])
 }
+
+
+model ConfigApp {
+  id        String   @id @default(cuid())
+  clave     String   @unique
+  valor     String
+  updatedAt DateTime @updatedAt
+}

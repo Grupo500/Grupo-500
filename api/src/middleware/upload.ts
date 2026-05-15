@@ -30,5 +30,17 @@ const imageStorage = new CloudinaryStorage({
   } as any,
 })
 
+const firmaStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder:          'grupo500/firmas',
+    resource_type:   'image',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    use_filename:    true,
+    unique_filename: true,
+  } as any,
+})
+
 export const uploadPdf   = multer({ storage: pdfStorage,   limits: { fileSize: 20 * 1024 * 1024 } })  // 20 MB
 export const uploadImage = multer({ storage: imageStorage, limits: { fileSize: 10 * 1024 * 1024 } })  // 10 MB
+export const uploadFirma = multer({ storage: firmaStorage, limits: { fileSize: 5  * 1024 * 1024 } })  //  5 MB

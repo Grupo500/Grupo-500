@@ -12,6 +12,8 @@ interface CertificadoData {
   tipo: 'CURSANDO' | 'COMPLETADO'
   fechaEmision: string
   numeroCertificado: number
+  firmaSebastian?: string
+  firmaAndres?: string
 }
 
 interface Props {
@@ -32,6 +34,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
     nombreEstudiante, tipoDocumento, documento,
     colegio, ciudadColegio, curso, calendario,
     duracionHoras, tipo, fechaEmision, numeroCertificado,
+    firmaSebastian, firmaAndres,
   } = data
 
   const tipoBold = tipo === 'CURSANDO' ? 'se encuentra matriculado/a' : 'ha completado satisfactoriamente'
@@ -109,11 +112,18 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         {/* Firmas */}
         <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '36px' }}>
           {[
-            { nombre: 'SEBASTIÁN FERNANDO FLÓREZ DUARTE', cc: '10052823 14 Bucaramanga' },
-            { nombre: 'ANDRÉS FELIPE DÍAZ RIVERO', cc: '1005480173 Bucaramanga' },
+            { nombre: 'SEBASTIÁN FERNANDO FLÓREZ DUARTE', cc: '10052823 14 Bucaramanga', img: firmaSebastian },
+            { nombre: 'ANDRÉS FELIPE DÍAZ RIVERO',        cc: '1005480173 Bucaramanga',   img: firmaAndres    },
           ].map((f) => (
             <div key={f.cc} style={{ textAlign: 'center', width: '45%' }}>
-              <div style={{ borderBottom: '1.5px solid #1a1a1a', marginBottom: '6px', height: '40px' }} />
+              {/* Imagen de firma si existe */}
+              <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginBottom: '0' }}>
+                {f.img
+                  ? <img src={f.img} alt={`Firma ${f.nombre}`} style={{ maxHeight: '52px', maxWidth: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+                  : null
+                }
+              </div>
+              <div style={{ borderBottom: '1.5px solid #1a1a1a', marginBottom: '6px' }} />
               <p style={{ fontSize: '11.5px', fontWeight: 700, margin: '0 0 2px' }}>{f.nombre}</p>
               <p style={{ fontSize: '11px', margin: 0, color: '#444' }}>CC: {f.cc}</p>
             </div>

@@ -2,18 +2,16 @@
 
 import { useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Award, Plus, X, Loader2, Download, CheckCircle, Clock } from 'lucide-react'
-import { CertificadoTemplate } from '@/components/certificados/CertificadoTemplate'
+import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen } from 'lucide-react'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface CursoEstudiante {
   curso: { nombre: string; duracionHoras: number; calendario: string }
 }
-
 interface Certificado {
   id: string
   tipo: 'CURSANDO' | 'COMPLETADO'
@@ -21,15 +19,13 @@ interface Certificado {
   fechaEmision: string
   archivoUrl: string
   estudiante: {
-    nombre: string
-    email: string
-    tipoDocumento?: string
-    documento?: string
-    ciudad?: string
+    nombre: string; email: string
+    tipoDocumento?: string; documento?: string; ciudad?: string
     colegio?: { nombre: string; ciudad: string } | null
     cursos?: CursoEstudiante[]
   }
 }
+interface Firmas { firmaSebastian: string | null; firmaAndres: string | null }
 
 const TIPOS = {
   CURSANDO:   { label: 'Cursando',   color: 'text-yellow-500 bg-yellow-400/10', icon: Clock },
@@ -51,77 +47,123 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   )
 }
 
+// ── Tarjeta de firma ────────────────────────────────────────────────────────
+function FirmaCard({ nombre, cargo, url, onUpload, uploading }: {
+  nombre: string; cargo: string; url: string | null
+  onUpload: (file: File) => void; uploading: boolean
+}) {
+  return (
+    <div className="card p-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center flex-shrink-0">
+          <Pen className="w-3.5 h-3.5 text-primary" />
+        </div>
+        <div>
+          <p className="text-[13px] font-semibold text-on-surface">{nombre}</p>
+          <p className="text-[11px] text-on-surface-variant">{cargo}</p>
+        </div>
+      </div>
+
+      {/* Preview de firma */}
+      <div className="h-20 rounded-lg border border-outline-variant bg-[var(--surface-high)] flex items-center justify-center overflow-hidden">
+        {url
+          ? <img src={url} alt={`Firma ${nombre}`} className="max-h-full max-w-full object-contain p-2" />
+          : <p className="text-[11px] text-on-surface-variant">Sin firma cargada</p>
+        }
+      </div>
+
+      {/* Botón subir */}
+      <label className={cn(
+        'flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[12px] font-medium cursor-pointer transition-colors',
+        uploading
+          ? 'border-outline-variant text-on-surface-variant opacity-60 cursor-not-allowed'
+          : 'border-primary/30 text-primary hover:bg-primary/5',
+      )}>
+        {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+        {url ? 'Reemplazar firma' : 'Cargar firma'}
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          disabled={uploading}
+          onChange={e => {
+            const f = e.target.files?.[0]
+            if (f) onUpload(f)
+            e.target.value = ''
+          }}
+        />
+      </label>
+    </div>
+  )
+}
+
 // ── Generador de PDF ────────────────────────────────────────────────────────
-async function generarPDF(cert: Certificado, index: number, totalCerts: number, containerEl: HTMLDivElement) {
+async function generarPDF(
+  cert: Certificado,
+  index: number,
+  totalCerts: number,
+  firmas: Firmas,
+) {
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
     import('html2canvas'),
     import('jspdf'),
   ])
+  const React = (await import('react')).default
+  const { createRoot } = await import('react-dom/client')
+  const { CertificadoTemplate } = await import('@/components/certificados/CertificadoTemplate')
 
   const e = cert.estudiante
   const cursoData = e.cursos?.[0]?.curso
 
-  // Renderizar template en el contenedor oculto
-  const { createRoot } = await import('react-dom/client')
-  const React = (await import('react')).default
-  const { CertificadoTemplate } = await import('@/components/certificados/CertificadoTemplate')
-
   const tempDiv = document.createElement('div')
-  tempDiv.style.position = 'fixed'
-  tempDiv.style.left = '-9999px'
-  tempDiv.style.top = '0'
-  tempDiv.style.zIndex = '-1'
+  tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;'
   document.body.appendChild(tempDiv)
 
   const root = createRoot(tempDiv)
-
   await new Promise<void>(resolve => {
-    root.render(
-      React.createElement(CertificadoTemplate, {
-        data: {
-          nombreEstudiante: e.nombre,
-          tipoDocumento: e.tipoDocumento ?? 'CC',
-          documento: e.documento ?? '',
-          colegio: e.colegio?.nombre ?? '',
-          ciudadColegio: e.colegio?.ciudad ?? e.ciudad ?? '',
-          curso: cursoData?.nombre ?? 'Preicfes',
-          calendario: cursoData?.calendario ?? 'A',
-          duracionHoras: cursoData?.duracionHoras ?? 310,
-          tipo: cert.tipo,
-          fechaEmision: cert.fechaEmision,
-          numeroCertificado: totalCerts - index,
-        },
-      })
-    )
-    // Dar tiempo a que React renderice
-    setTimeout(resolve, 300)
+    root.render(React.createElement(CertificadoTemplate, {
+      data: {
+        nombreEstudiante: e.nombre,
+        tipoDocumento:    e.tipoDocumento ?? 'CC',
+        documento:        e.documento ?? '',
+        colegio:          e.colegio?.nombre ?? '',
+        ciudadColegio:    e.colegio?.ciudad ?? e.ciudad ?? '',
+        curso:            cursoData?.nombre ?? 'Preicfes',
+        calendario:       cursoData?.calendario ?? 'A',
+        duracionHoras:    cursoData?.duracionHoras ?? 310,
+        tipo:             cert.tipo,
+        fechaEmision:     cert.fechaEmision,
+        numeroCertificado: totalCerts - index,
+        firmaSebastian:   firmas.firmaSebastian ?? undefined,
+        firmaAndres:      firmas.firmaAndres    ?? undefined,
+      },
+    }))
+    setTimeout(resolve, 400)
   })
 
   const canvas = await html2canvas(tempDiv.firstElementChild as HTMLElement, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#ffffff',
-    logging: false,
+    scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
   })
 
   root.unmount()
   document.body.removeChild(tempDiv)
 
-  const imgData = canvas.toDataURL('image/png')
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const W = 210, H = 297
-  pdf.addImage(imgData, 'PNG', 0, 0, W, H)
+  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297)
   pdf.save(`Certificado-${e.nombre.replace(/\s+/g, '-')}.pdf`)
 }
 
 // ── Página ──────────────────────────────────────────────────────────────────
 export default function CertificadosPage() {
   const { getToken } = useAuth()
+  const { user } = useUser()
+  const isAdmin = user?.publicMetadata?.role === 'ADMIN'
   const queryClient = useQueryClient()
-  const containerRef = useRef<HTMLDivElement>(null)
+
   const [modalGenerar, setModalGenerar] = useState(false)
   const [form, setForm] = useState({ estudianteId: '', tipo: 'CURSANDO' })
   const [descargando, setDescargando] = useState<string | null>(null)
+  const [subiendo, setSubiendo] = useState<'sebastian' | 'andres' | null>(null)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getToken()
@@ -132,17 +174,19 @@ export default function CertificadosPage() {
     queryKey: ['certificados'],
     queryFn: () => fetcher<any>('/certificados?limit=50'),
   })
-
   const { data: estudiantesData } = useQuery({
     queryKey: ['estudiantes-select'],
     queryFn: () => fetcher<any>('/estudiantes?limit=100'),
   })
+  const { data: firmasData, refetch: refetchFirmas } = useQuery({
+    queryKey: ['config-firmas'],
+    queryFn: () => fetcher<{ data: Firmas }>('/config/firmas'),
+  })
+
+  const firmas: Firmas = firmasData?.data ?? { firmaSebastian: null, firmaAndres: null }
 
   const generarMutation = useMutation({
-    mutationFn: () => fetcher('/certificados', {
-      method: 'POST',
-      body: JSON.stringify(form),
-    }),
+    mutationFn: () => fetcher('/certificados', { method: 'POST', body: JSON.stringify(form) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certificados'] })
       setModalGenerar(false)
@@ -151,11 +195,30 @@ export default function CertificadosPage() {
     onError: (err: any) => alert(err?.message ?? 'Error al generar certificado'),
   })
 
-  const handleDescargar = async (cert: Certificado, index: number) => {
+  const handleSubirFirma = async (quien: 'sebastian' | 'andres', file: File) => {
+    setSubiendo(quien)
+    try {
+      const token = await getToken()
+      const formData = new FormData()
+      formData.append('firma', file)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/config/firmas/${quien}`,
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData }
+      )
+      if (!res.ok) throw new Error('Error al subir firma')
+      await refetchFirmas()
+    } catch (e: any) {
+      alert(e?.message ?? 'Error al subir la firma')
+    } finally {
+      setSubiendo(null)
+    }
+  }
+
+  const handleDescargar = async (cert: Certificado, i: number) => {
     if (descargando) return
     setDescargando(cert.id)
     try {
-      await generarPDF(cert, index, certificados.length, containerRef.current!)
+      await generarPDF(cert, i, certificados.length, firmas)
     } catch (e) {
       console.error(e)
       alert('Error al generar el PDF')
@@ -173,21 +236,46 @@ export default function CertificadosPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div ref={containerRef} />
 
       <PageHeader
         title="Certificados"
         subtitle={`${total} certificado${total !== 1 ? 's' : ''} emitido${total !== 1 ? 's' : ''}`}
-        actions={
+        actions={isAdmin ? (
           <button
             onClick={() => setModalGenerar(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             <Plus className="w-4 h-4" /> Generar certificado
           </button>
-        }
+        ) : undefined}
       />
 
+      {/* ── Sección firmas (solo ADMIN) ── */}
+      {isAdmin && (
+        <div className="space-y-3">
+          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">
+            Firmas de representantes legales
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FirmaCard
+              nombre="Sebastián Fernando Flórez Duarte"
+              cargo="CC: 10052823 14 · Bucaramanga"
+              url={firmas.firmaSebastian}
+              uploading={subiendo === 'sebastian'}
+              onUpload={f => handleSubirFirma('sebastian', f)}
+            />
+            <FirmaCard
+              nombre="Andrés Felipe Díaz Rivero"
+              cargo="CC: 1005480173 · Bucaramanga"
+              url={firmas.firmaAndres}
+              uploading={subiendo === 'andres'}
+              onUpload={f => handleSubirFirma('andres', f)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Tabla de certificados ── */}
       <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
@@ -211,7 +299,7 @@ export default function CertificadosPage() {
             <tbody className="divide-y divide-outline-variant/40">
               {certificados.map((c, i) => {
                 const { label, color, icon: Icon } = TIPOS[c.tipo]
-                const isLoading = descargando === c.id
+                const cargando = descargando === c.id
                 return (
                   <tr key={c.id} className="hover:bg-surface-low/40 transition-colors">
                     <td className="px-4 py-3">
@@ -232,7 +320,7 @@ export default function CertificadosPage() {
                         disabled={!!descargando}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        {isLoading
+                        {cargando
                           ? <><Loader2 className="w-3 h-3 animate-spin" />Generando…</>
                           : <><Download className="w-3 h-3" />Descargar</>
                         }
