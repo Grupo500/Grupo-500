@@ -29,27 +29,57 @@ function formatFechaLarga(iso: string) {
   return `${dia} días del mes de ${mes} de ${anio}`
 }
 
+// ── SVG Icons ────────────────────────────────────────────────────────────────
+const EmailIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="4" width="20" height="16" rx="2" stroke="#555" strokeWidth="1.8"/>
+    <path d="M2 7l10 7 10-7" stroke="#555" strokeWidth="1.8" strokeLinecap="round"/>
+  </svg>
+)
+
+const WhatsAppIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.417A9.953 9.953 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.95 7.95 0 01-4.054-1.107l-.29-.172-2.953.84.847-2.876-.19-.298A7.96 7.96 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8zm4.406-5.884c-.242-.121-1.432-.707-1.654-.787-.222-.08-.384-.121-.545.121-.162.242-.627.787-.769.949-.141.162-.283.182-.525.06-.242-.12-1.021-.376-1.944-1.199-.719-.641-1.204-1.433-1.345-1.675-.141-.242-.015-.373.106-.493.109-.108.242-.283.363-.424.12-.141.161-.242.242-.403.08-.162.04-.303-.02-.424-.061-.12-.545-1.314-.747-1.799-.196-.473-.396-.409-.545-.417l-.464-.008c-.162 0-.424.06-.646.303-.222.242-.848.829-.848 2.022 0 1.192.868 2.344.989 2.506.121.162 1.708 2.607 4.138 3.655.578.25 1.029.398 1.38.51.58.184 1.108.158 1.526.096.465-.069 1.432-.585 1.634-1.15.201-.565.201-1.049.141-1.15-.06-.1-.222-.162-.464-.283z"/>
+  </svg>
+)
+
+const InstagramIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#f09433"/>
+        <stop offset="25%" stopColor="#e6683c"/>
+        <stop offset="50%" stopColor="#dc2743"/>
+        <stop offset="75%" stopColor="#cc2366"/>
+        <stop offset="100%" stopColor="#bc1888"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig)"/>
+    <circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.8" fill="none"/>
+    <circle cx="17.5" cy="6.5" r="1" fill="white"/>
+  </svg>
+)
+
 export function CertificadoTemplate({ data, innerRef }: Props) {
   const {
     nombreEstudiante, tipoDocumento, documento,
-    colegio, ciudadColegio, curso, calendario,
+    colegio, ciudadColegio, calendario,
     duracionHoras, tipo, fechaEmision, numeroCertificado,
     firmaSebastian, firmaAndres,
   } = data
 
   const tipoBold = tipo === 'CURSANDO' ? 'se encuentra matriculado/a' : 'ha completado satisfactoriamente'
-  const modalidad = 'Modalidad Virtual'
 
   return (
     <div
       ref={innerRef}
       style={{
         width: '794px',
-        minHeight: '1123px',
+        height: '1123px',
         backgroundColor: '#ffffff',
         fontFamily: 'Georgia, "Times New Roman", serif',
         position: 'relative',
-        padding: '50px 65px 40px',
+        padding: '50px 65px 0',
         boxSizing: 'border-box',
         color: '#1a1a1a',
       }}
@@ -65,7 +95,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
       </div>
 
       {/* ── Contenido principal ── */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -80,10 +110,10 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
           </p>
         </div>
 
-        {/* Divider */}
-        <div style={{ borderTop: '2px solid #1a1a1a', borderBottom: '1px solid #1a1a1a', padding: '4px 0', textAlign: 'center', marginBottom: '28px' }}>
-          <p style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '2px', margin: 0 }}>CERTIFICA:</p>
-        </div>
+        {/* CERTIFICA sin líneas */}
+        <p style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '2px', textAlign: 'center', marginBottom: '28px' }}>
+          CERTIFICA:
+        </p>
 
         {/* Cuerpo */}
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '18px' }}>
@@ -94,7 +124,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
           , estudiante de{' '}
           <strong style={{ textTransform: 'uppercase' }}>{colegio || 'INSTITUCIÓN EDUCATIVA'}</strong>
           {ciudadColegio ? ` de ${ciudadColegio}` : ''},{' '}
-          {tipoBold} en nuestro PREICFES {modalidad}.
+          {tipoBold} en nuestro PREICFES Modalidad Virtual.
         </p>
 
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '32px' }}>
@@ -116,12 +146,11 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
             { nombre: 'ANDRÉS FELIPE DÍAZ RIVERO',        cc: '1005480173 Bucaramanga',   img: firmaAndres    },
           ].map((f) => (
             <div key={f.cc} style={{ textAlign: 'center', width: '45%' }}>
-              {/* Imagen de firma si existe */}
-              <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginBottom: '0' }}>
-                {f.img
-                  ? <img src={f.img} alt={`Firma ${f.nombre}`} style={{ maxHeight: '52px', maxWidth: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
-                  : null
-                }
+              <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                {f.img && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={f.img} alt="" style={{ maxHeight: '52px', maxWidth: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+                )}
               </div>
               <div style={{ borderBottom: '1.5px solid #1a1a1a', marginBottom: '6px' }} />
               <p style={{ fontSize: '11.5px', fontWeight: 700, margin: '0 0 2px' }}>{f.nombre}</p>
@@ -131,48 +160,46 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         </div>
 
         {/* Fecha expedición */}
-        <p style={{ fontSize: '12.5px', textAlign: 'center', fontWeight: 600, marginBottom: '32px' }}>
+        <p style={{ fontSize: '12.5px', textAlign: 'center', fontWeight: 600 }}>
           Se expide en Bucaramanga, a los {formatFechaLarga(fechaEmision)}
         </p>
 
-        {/* ── Footer mejorado ── */}
+        {/* ── Spacer para empujar footer al fondo ── */}
+        <div style={{ flex: 1 }} />
+
+        {/* ── Footer anclado al fondo ── */}
         <div style={{
-          borderTop: '1.5px solid #e0e0e0',
-          paddingTop: '18px',
+          borderTop: '1px solid #d0d0d0',
+          padding: '14px 0 20px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '12px',
+          gap: '16px',
         }}>
-          {/* Logo pequeño */}
+          {/* Logo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-grupo500-transparent.png"
             alt="Grupo 500"
-            style={{ width: '48px', height: '48px', objectFit: 'contain', flexShrink: 0 }}
+            style={{ width: '42px', height: '42px', objectFit: 'contain', flexShrink: 0 }}
           />
 
-          {/* Info contacto */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <p style={{ margin: 0, fontSize: '11.5px', fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.3px' }}>
-              PREICFES GRUPO 500
-            </p>
-            <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                ✉ pregrupo500@gmail.com
-              </span>
-              <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                📷 @Preicfes_grupo500
-              </span>
-              <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                💬 WhatsApp: 3168819037 · 3174294954
-              </span>
-            </div>
+          {/* Contacto */}
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <EmailIcon /> pregrupo500@gmail.com
+            </span>
+            <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <InstagramIcon /> @Preicfes_grupo500
+            </span>
+            <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <WhatsAppIcon /> 3168819037 · 3174294954
+            </span>
           </div>
 
-          {/* Número de certificado */}
-          <p style={{ margin: 0, fontSize: '10px', color: '#999', flexShrink: 0 }}>
-            Certificado número {numeroCertificado}
+          {/* Número */}
+          <p style={{ margin: 0, fontSize: '10px', color: '#aaa', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            Certificado N° {numeroCertificado}
           </p>
         </div>
       </div>
