@@ -47,9 +47,9 @@ export default async function DashboardPage() {
           <Image
             src="/logo-grupo500.png"
             alt="Grupo 500"
-            width={110}
-            height={110}
-            className="object-contain flex-shrink-0 rounded-xl"
+            width={80}
+            height={80}
+            className="object-contain flex-shrink-0 rounded-xl mix-blend-multiply dark:mix-blend-normal"
             priority
           />
         </div>
