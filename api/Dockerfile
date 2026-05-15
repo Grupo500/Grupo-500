@@ -2,6 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# cache-bust: 2026-05-15
 # Instala todas las dependencias (incluye devDeps para tsc y prisma CLI)
 COPY package*.json ./
 RUN npm install --include=dev
