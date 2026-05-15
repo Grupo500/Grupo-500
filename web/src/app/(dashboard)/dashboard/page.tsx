@@ -5,12 +5,12 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
   Users, TrendingUp, Wallet, AlertTriangle,
-  BookOpen, CalendarDays, Target,
+  BookOpen, Target,
 } from 'lucide-react'
 import { VentasChart } from '@/components/charts/VentasChart'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
 import { CursosVendidosChart } from '@/components/charts/CursosVendidosChart'
-import { FinancieroChart } from '@/components/charts/FinancieroChart'
+import { FinancieroSection } from '@/components/charts/FinancieroSection'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 
 async function getDashboardData() {
@@ -46,30 +46,12 @@ export default async function DashboardPage() {
 
         <RefreshButton />
 
-        {/* Tarjetas financiero: venta total, recaudo, saldo */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <KpiCard
-            title="Venta total"
-            value={formatCOP(financiero.ventaTotal)}
-            subtitle="Todos los pagos registrados"
-            icon={TrendingUp}
-            variant="default"
-          />
-          <KpiCard
-            title="Recaudo"
-            value={formatCOP(financiero.recaudo)}
-            subtitle="Pagos efectivamente cobrados"
-            icon={Wallet}
-            variant="success"
-          />
-          <KpiCard
-            title="Saldo"
-            value={formatCOP(financiero.saldo)}
-            subtitle="Pendiente + vencido por cobrar"
-            icon={AlertTriangle}
-            variant="warning"
-          />
-        </div>
+        {/* Sección financiero interactiva: tarjetas + gráfica */}
+        <FinancieroSection
+          ventaTotal={financiero.ventaTotal}
+          recaudo={financiero.recaudo}
+          saldo={financiero.saldo}
+        />
 
         {/* KPIs principales */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -115,15 +97,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Financiero + Cursos más vendidos */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <FinancieroChart />
-          </div>
-          <div className="lg:col-span-1">
-            <CursosVendidosChart />
-          </div>
-        </div>
+        {/* Cursos más vendidos */}
+        <CursosVendidosChart />
       </div>
     )
   }
