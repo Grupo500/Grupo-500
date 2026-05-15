@@ -10,6 +10,7 @@ import {
 import { VentasChart } from '@/components/charts/VentasChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
+import { CursosVendidosChart } from '@/components/charts/CursosVendidosChart'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 
 async function getDashboardData() {
@@ -88,8 +89,15 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Ranking asesores — ancho completo */}
-        <RankingAsesores />
+        {/* Cursos más vendidos + Ranking asesores */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-1">
+            <CursosVendidosChart />
+          </div>
+          <div className="lg:col-span-2">
+            <RankingAsesores />
+          </div>
+        </div>
       </div>
     )
   }
