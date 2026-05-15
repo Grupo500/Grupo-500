@@ -37,7 +37,7 @@ const IG_ICON     = "data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0
 const CONTACTOS = [
   { src: EMAIL_ICON, alt: 'Email',     text: 'pregrupo500@gmail.com'      },
   { src: IG_ICON,    alt: 'Instagram', text: '@Preicfes_grupo500'          },
-  { src: WA_ICON,    alt: 'WhatsApp',  text: '3168819037 · 3174294954'    },
+  { src: WA_ICON,    alt: 'WhatsApp',  text: '3168819037'    },
 ]
 
 export function CertificadoTemplate({ data, innerRef }: Props) {
@@ -156,7 +156,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
               <tr>
                 {CONTACTOS.map(({ src, alt, text }) => (
                   <React.Fragment key={text}>
-                    <td style={{ verticalAlign: 'middle', paddingRight: '5px', paddingTop: '10px', lineHeight: 0 }}>
+                    <td style={{ verticalAlign: 'middle', paddingRight: '5px', paddingTop: '13px', lineHeight: 0 }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt={alt} width={14} height={14} style={{ display: 'block' }} />
                     </td>
