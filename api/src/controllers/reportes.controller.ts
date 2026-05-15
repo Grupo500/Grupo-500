@@ -17,6 +17,10 @@ export async function dashboard(_req: Request, res: Response) {
     pagosMes,
     cuotasPendientes,
     cuotasVencidas,
+    ventaTotal,
+    recaudo,
+    saldoPendiente,
+    saldoVencido,
   ] = await Promise.all([
     prisma.estudiante.count(),
     prisma.estudiante.count({ where: { createdAt: { gte: inicioMes } } }),
@@ -42,6 +46,10 @@ export async function dashboard(_req: Request, res: Response) {
       _sum: { monto: true },
       _count: true,
     }),
+    prisma.pago.aggregate({ _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO' }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE' }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO' }, _sum: { monto: true } }),
   ])
 
   return ApiResponse.success(res, {
@@ -54,6 +62,11 @@ export async function dashboard(_req: Request, res: Response) {
     cobranza: {
       pendiente: { monto: cuotasPendientes._sum.monto ?? 0, cantidad: cuotasPendientes._count },
       vencida: { monto: cuotasVencidas._sum.monto ?? 0, cantidad: cuotasVencidas._count },
+    },
+    financiero: {
+      ventaTotal: ventaTotal._sum.monto ?? 0,
+      recaudo:    recaudo._sum.monto ?? 0,
+      saldo:      (saldoPendiente._sum.monto ?? 0) + (saldoVencido._sum.monto ?? 0),
     },
   })
 }

@@ -33,6 +33,7 @@ export default async function DashboardPage() {
   const ingresos    = data?.ingresos    ?? { hoy: 0, semana: 0, mes: 0 }
   const estudiantes = data?.estudiantes ?? { total: 0, nuevosMes: 0 }
   const cobranza    = data?.cobranza    ?? { pendiente: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 } }
+  const financiero  = data?.financiero  ?? { ventaTotal: 0, recaudo: 0, saldo: 0 }
 
   // ── VISTA ADMINISTRADOR ──────────────────────────────────────────────────────
   if (isAdmin) {
@@ -44,6 +45,31 @@ export default async function DashboardPage() {
         />
 
         <RefreshButton />
+
+        {/* Tarjetas financiero: venta total, recaudo, saldo */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <KpiCard
+            title="Venta total"
+            value={formatCOP(financiero.ventaTotal)}
+            subtitle="Todos los pagos registrados"
+            icon={TrendingUp}
+            variant="default"
+          />
+          <KpiCard
+            title="Recaudo"
+            value={formatCOP(financiero.recaudo)}
+            subtitle="Pagos efectivamente cobrados"
+            icon={Wallet}
+            variant="success"
+          />
+          <KpiCard
+            title="Saldo"
+            value={formatCOP(financiero.saldo)}
+            subtitle="Pendiente + vencido por cobrar"
+            icon={AlertTriangle}
+            variant="warning"
+          />
+        </div>
 
         {/* KPIs principales */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
