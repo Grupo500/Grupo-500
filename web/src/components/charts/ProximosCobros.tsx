@@ -1,4 +1,8 @@
-import { apiFetch } from '@/lib/api.server'
+'use client'
+
+import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '@clerk/nextjs'
+import { createClientFetcher } from '@/lib/api'
 import { formatCOP, formatRelative } from '@/lib/utils'
 import { CalendarClock, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -15,21 +19,38 @@ interface CuotaProxima {
   }
 }
 
-async function getCobrosProximos(): Promise<CuotaProxima[]> {
-  try {
-    const res = await apiFetch<{ data: CuotaProxima[] }>('/cobros/proximos?dias=7')
-    return res?.data ?? []
-  } catch {
-    return []
-  }
+function Skeleton() {
+  return (
+    <div className="card p-5 flex flex-col h-72 animate-pulse">
+      <div className="h-4 w-36 bg-[var(--surface-high)] rounded-md mb-4" />
+      <div className="flex-1 space-y-2">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className="h-10 bg-[var(--surface-high)] rounded-lg" />
+        ))}
+      </div>
+    </div>
+  )
 }
 
-export async function ProximosCobros() {
-  const cobros = await getCobrosProximos()
-  const total = cobros.reduce((s, c) => s + c.monto, 0)
+export function ProximosCobros() {
+  const { getToken } = useAuth()
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['cobros-proximos'],
+    queryFn: async () => {
+      const token = await getToken()
+      return createClientFetcher(token ?? '')('/cobros/proximos?dias=7') as Promise<{ data: CuotaProxima[] }>
+    },
+    staleTime: 2 * 60_000,
+  })
+
+  if (isLoading) return <Skeleton />
+
+  const cobros = data?.data ?? []
+  const total  = cobros.reduce((s, c) => s + c.monto, 0)
 
   return (
-    <div className="card p-5 flex flex-col h-72">
+    <div className="card p-5 flex flex-col h-64">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -49,7 +70,7 @@ export async function ProximosCobros() {
           </div>
         ) : (
           cobros.slice(0, 6).map((c) => {
-            const nombre = c.financiamiento.estudiante.nombre
+            const nombre   = c.financiamiento.estudiante.nombre
             const isUrgent = new Date(c.fechaVencimiento).getTime() - Date.now() < 2 * 86400000
             return (
               <div
@@ -61,10 +82,7 @@ export async function ProximosCobros() {
                 )}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className={cn(
-                    'w-1.5 h-6 rounded-full flex-shrink-0',
-                    isUrgent ? 'bg-tertiary' : 'bg-[var(--outline-variant)]',
-                  )} />
+                  <div className={cn('w-1.5 h-6 rounded-full flex-shrink-0', isUrgent ? 'bg-tertiary' : 'bg-[var(--outline-variant)]')} />
                   <div className="min-w-0">
                     <p className="text-[13px] font-semibold text-on-surface truncate">{nombre}</p>
                     <p className={cn('text-[11px] font-medium', isUrgent ? 'text-tertiary' : 'text-on-surface-variant')}>
@@ -85,9 +103,7 @@ export async function ProximosCobros() {
       {/* Total */}
       <div className="mt-3 pt-3 border-t border-[var(--outline-variant)] flex items-center justify-between">
         <span className="text-[12px] text-on-surface-variant font-medium">Total próximos 7 días</span>
-        <span className="text-[13px] font-bold text-on-surface tabular">
-          {formatCOP(total)}
-        </span>
+        <span className="text-[13px] font-bold text-on-surface tabular">{formatCOP(total)}</span>
       </div>
     </div>
   )
