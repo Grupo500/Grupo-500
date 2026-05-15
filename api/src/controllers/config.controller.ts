@@ -20,7 +20,7 @@ export async function getFirmas(_req: Request, res: Response) {
   })
 }
 
-export async function subirFirma(quien: 'sebastian' | 'andres') {
+export function subirFirma(quien: 'sebastian' | 'andres') {
   return async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File & { path: string }
     if (!file) return res.status(400).json({ error: 'No se recibió imagen' })
