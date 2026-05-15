@@ -178,19 +178,27 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
           justifyContent: 'space-between',
           gap: '16px',
         }}>
-          {/* Contacto */}
-          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {[
-              { icon: <EmailIcon />, text: 'pregrupo500@gmail.com' },
-              { icon: <InstagramIcon />, text: '@Preicfes_grupo500' },
-              { icon: <WhatsAppIcon />, text: '3168819037 · 3174294954' },
-            ].map(({ icon, text }) => (
-              <span key={text} style={{ fontSize: '10.5px', color: '#444', whiteSpace: 'nowrap' }}>
-                {icon}
-                <span style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }}>{text}</span>
-              </span>
-            ))}
-          </div>
+          {/* Contacto — tabla para alineación perfecta en html2canvas */}
+          <table cellPadding="0" cellSpacing="0" style={{ borderCollapse: 'collapse' }}>
+            <tbody>
+              <tr>
+                {[
+                  { icon: <EmailIcon />, text: 'pregrupo500@gmail.com' },
+                  { icon: <InstagramIcon />, text: '@Preicfes_grupo500' },
+                  { icon: <WhatsAppIcon />, text: '3168819037 · 3174294954' },
+                ].map(({ icon, text }) => (
+                  <>
+                    <td key={`icon-${text}`} style={{ verticalAlign: 'middle', paddingRight: '4px', lineHeight: 0 }}>
+                      {icon}
+                    </td>
+                    <td key={`text-${text}`} style={{ verticalAlign: 'middle', fontSize: '10.5px', color: '#444', paddingRight: '20px', whiteSpace: 'nowrap' }}>
+                      {text}
+                    </td>
+                  </>
+                ))}
+              </tr>
+            </tbody>
+          </table>
 
           {/* Número */}
           <p style={{ margin: 0, fontSize: '10px', color: '#aaa', flexShrink: 0, whiteSpace: 'nowrap' }}>
