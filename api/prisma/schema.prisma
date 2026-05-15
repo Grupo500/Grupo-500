@@ -81,10 +81,11 @@ model Asesor {
   nombre      String
   email       String
   telefono    String
-  pagos       Pago[]
-  estudiantes Estudiante[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  pagos          Pago[]
+  estudiantes    Estudiante[]
+  negociaciones  Negociacion[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 }
 
 // ─────────────────────────────────────────────
@@ -92,12 +93,13 @@ model Asesor {
 // ─────────────────────────────────────────────
 
 model Colegio {
-  id          String       @id @default(cuid())
-  nombre      String       @unique
-  ciudad      String
-  estudiantes Estudiante[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String        @id @default(cuid())
+  nombre         String        @unique
+  ciudad         String
+  estudiantes    Estudiante[]
+  negociaciones  Negociacion[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 // ─────────────────────────────────────────────
@@ -282,4 +284,29 @@ model ConfigApp {
   clave     String   @unique
   valor     String
   updatedAt DateTime @updatedAt
+}
+
+enum EtapaNegociacion {
+  PROSPECTO
+  CONTACTO_INICIAL
+  VISITA_PROGRAMADA
+  PROPUESTA_ENVIADA
+  EN_NEGOCIACION
+  CONVENIO_FIRMADO
+  DESCARTADO
+}
+
+model Negociacion {
+  id          String             @id @default(cuid())
+  colegio     Colegio            @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  colegioId   String
+  asesor      Asesor             @relation(fields: [asesorId], references: [id])
+  asesorId    String
+  etapa       EtapaNegociacion   @default(PROSPECTO)
+  notas       String?
+  fechaContacto   DateTime?
+  fechaVisita     DateTime?
+  fechaProxContacto DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }

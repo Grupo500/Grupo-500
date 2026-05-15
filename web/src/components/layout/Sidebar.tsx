@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, CreditCard, Wallet, CalendarDays,
   UserCheck, BookOpen, School, Award, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  Sun, Moon, ShieldCheck, Handshake,
+  Sun, Moon, ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -31,7 +31,6 @@ const navItems: NavItem[] = [
   { type: 'section', label: 'Académico',                                                        adminOnly: false },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
-  { type: 'link',    href: '/negociaciones',   label: 'Negociaciones',   icon: Handshake,       adminOnly: false },
   { type: 'link',    href: '/certificados',    label: 'Certificados',    icon: Award,           adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
   { type: 'section', label: 'Análisis',                                                         adminOnly: true  },
