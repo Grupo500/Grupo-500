@@ -176,25 +176,18 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
           justifyContent: 'space-between',
           gap: '16px',
         }}>
-          {/* Logo */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-grupo500-transparent.png"
-            alt="Grupo 500"
-            style={{ width: '42px', height: '42px', objectFit: 'contain', flexShrink: 0 }}
-          />
-
           {/* Contacto */}
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <EmailIcon /> pregrupo500@gmail.com
-            </span>
-            <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <InstagramIcon /> @Preicfes_grupo500
-            </span>
-            <span style={{ fontSize: '10.5px', color: '#444', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <WhatsAppIcon /> 3168819037 · 3174294954
-            </span>
+            {[
+              { icon: <EmailIcon />, text: 'pregrupo500@gmail.com' },
+              { icon: <InstagramIcon />, text: '@Preicfes_grupo500' },
+              { icon: <WhatsAppIcon />, text: '3168819037 · 3174294954' },
+            ].map(({ icon, text }) => (
+              <span key={text} style={{ fontSize: '10.5px', color: '#444', display: 'inline-flex', alignItems: 'center', gap: '5px', lineHeight: 1 }}>
+                <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
+                {text}
+              </span>
+            ))}
           </div>
 
           {/* Número */}
