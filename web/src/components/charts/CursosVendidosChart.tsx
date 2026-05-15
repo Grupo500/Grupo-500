@@ -69,7 +69,6 @@ export function CursosVendidosChart() {
   const cursos = (data?.data ?? [])
     .slice(0, 6)
     .map(c => ({ nombre: truncar(c.nombre), vendidos: c._count.estudiantes }))
-    .filter(c => c.vendidos > 0)
 
   return (
     <div className="card p-5 h-72">
