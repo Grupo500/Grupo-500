@@ -134,6 +134,51 @@ export async function cursosMasVendidos(_req: Request, res: Response) {
   return ApiResponse.success(res, cursos)
 }
 
+// Resumen financiero: venta total, recaudo y saldo (últimos 6 meses)
+export async function financiero(_req: Request, res: Response) {
+  const hoy = new Date()
+
+  const meses = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - (5 - i), 1)
+    return {
+      label: d.toLocaleDateString('es-CO', { month: 'short' }),
+      desde: new Date(d.getFullYear(), d.getMonth(), 1),
+      hasta: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59),
+    }
+  })
+
+  const resultados = await Promise.all(
+    meses.map(async ({ label, desde, hasta }) => {
+      const [total, recaudo, pendiente, vencido] = await Promise.all([
+        prisma.pago.aggregate({
+          where: { createdAt: { gte: desde, lte: hasta } },
+          _sum: { monto: true },
+        }),
+        prisma.pago.aggregate({
+          where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } },
+          _sum: { monto: true },
+        }),
+        prisma.pago.aggregate({
+          where: { estado: 'PENDIENTE', createdAt: { gte: desde, lte: hasta } },
+          _sum: { monto: true },
+        }),
+        prisma.pago.aggregate({
+          where: { estado: 'VENCIDO', createdAt: { gte: desde, lte: hasta } },
+          _sum: { monto: true },
+        }),
+      ])
+      return {
+        label,
+        ventaTotal: total._sum.monto ?? 0,
+        recaudo:    recaudo._sum.monto ?? 0,
+        saldo:      (pendiente._sum.monto ?? 0) + (vencido._sum.monto ?? 0),
+      }
+    })
+  )
+
+  return ApiResponse.success(res, resultados)
+}
+
 // Datos agregados para la gráfica de ventas por período
 export async function ventasGrafica(req: Request, res: Response) {
   const periodo = String(req.query.periodo ?? 'mensual')
