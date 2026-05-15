@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { VentasChart } from './VentasChart'
 import { FinancieroSection } from './FinancieroSection'
 import { ProximosCobros } from './ProximosCobros'
 import { CursosVendidosChart } from './CursosVendidosChart'
@@ -45,18 +44,11 @@ export function DashboardAnalytics() {
       {/* ── Tarjetas financieras + gráfica del métrico ─────────────────── */}
       <FinancieroSection periodo={periodo} />
 
-      {/* ── Ventas (área) + Próximos cobros ────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <VentasChart periodo={periodo} />
-        </div>
-        <div>
-          <ProximosCobros />
-        </div>
+      {/* ── Próximos cobros + Cursos más vendidos ──────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ProximosCobros />
+        <CursosVendidosChart />
       </div>
-
-      {/* ── Cursos más vendidos ─────────────────────────────────────────── */}
-      <CursosVendidosChart />
 
     </div>
   )
