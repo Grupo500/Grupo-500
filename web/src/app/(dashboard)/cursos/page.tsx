@@ -35,6 +35,34 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   )
 }
 
+const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
+const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
+
+function FormFields({ f, setF }: { f: FormState; setF: React.Dispatch<React.SetStateAction<FormState>> }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls}>Nombre del curso *</label>
+        <input className={inputCls} value={f.nombre} onChange={e => setF(p => ({ ...p, nombre: e.target.value }))} placeholder="Curso Intensivo ICFES 2025" />
+      </div>
+      <div>
+        <label className={labelCls}>Descripción</label>
+        <textarea className={inputCls + ' resize-none'} rows={3} value={f.descripcion} onChange={e => setF(p => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción del curso..." />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelCls}>Precio *</label>
+          <input className={inputCls} type="number" value={f.precio} onChange={e => setF(p => ({ ...p, precio: e.target.value }))} placeholder="800000" />
+        </div>
+        <div>
+          <label className={labelCls}>Duración (días) *</label>
+          <input className={inputCls} type="number" value={f.duracionDias} onChange={e => setF(p => ({ ...p, duracionDias: e.target.value }))} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CursosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
@@ -89,32 +117,6 @@ export default function CursosPage() {
   }
 
   const cursos: Curso[] = data?.data ?? []
-
-  const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
-  const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
-
-  const FormFields = ({ f, setF }: { f: FormState; setF: (fn: (prev: FormState) => FormState) => void }) => (
-    <div className="space-y-3">
-      <div>
-        <label className={labelCls}>Nombre del curso *</label>
-        <input className={inputCls} value={f.nombre} onChange={e => setF(p => ({ ...p, nombre: e.target.value }))} placeholder="Curso Intensivo ICFES 2025" />
-      </div>
-      <div>
-        <label className={labelCls}>Descripción</label>
-        <textarea className={inputCls + ' resize-none'} rows={3} value={f.descripcion} onChange={e => setF(p => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción del curso..." />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelCls}>Precio *</label>
-          <input className={inputCls} type="number" value={f.precio} onChange={e => setF(p => ({ ...p, precio: e.target.value }))} placeholder="800000" />
-        </div>
-        <div>
-          <label className={labelCls}>Duración (días) *</label>
-          <input className={inputCls} type="number" value={f.duracionDias} onChange={e => setF(p => ({ ...p, duracionDias: e.target.value }))} />
-        </div>
-      </div>
-    </div>
-  )
 
   return (
     <div className="space-y-6 animate-fade-in">
