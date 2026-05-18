@@ -288,13 +288,13 @@ export default function PagosPage() {
             <X className="w-4 h-4" />
           </button>
         )}
-        {/* Mobile: select */}
+        {/* Filtro estado — select en móvil, pills en md+ */}
         <div className="flex items-center gap-2 md:hidden">
           <Filter className="w-4 h-4 text-white flex-shrink-0" />
           <select
             value={filtroEstado}
             onChange={e => { setFiltroEstado(e.target.value); setPage(1) }}
-            className="bg-surface-high border border-outline-variant rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            className="bg-surface-high border border-outline-variant rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface focus:outline-none cursor-pointer"
           >
             <option value="">Todos</option>
             <option value="PENDIENTE">Pendiente</option>
@@ -303,8 +303,7 @@ export default function PagosPage() {
             <option value="CANCELADO">Cancelado</option>
           </select>
         </div>
-        {/* Desktop: pills */}
-        <div className="hidden md:flex items-center gap-1.5">
+        <div className="hidden md:flex items-center gap-1.5 flex-wrap">
           {[
             { value: '', label: 'Todos' },
             { value: 'PENDIENTE', label: 'Pendiente' },
@@ -312,167 +311,95 @@ export default function PagosPage() {
             { value: 'VENCIDO', label: 'Vencido' },
             { value: 'CANCELADO', label: 'Cancelado' },
           ].map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => { setFiltroEstado(opt.value); setPage(1) }}
-              className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
+            <button key={opt.value} onClick={() => { setFiltroEstado(opt.value); setPage(1) }}
+              className={cn('px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                 filtroEstado === opt.value
                   ? 'bg-primary text-on-primary'
                   : 'bg-surface-high text-on-surface-variant hover:bg-surface-highest border border-outline-variant'
-              )}
-            >
+              )}>
               {opt.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Lista / Tabla */}
-      <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
-          </div>
-        ) : pagos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
-            <CreditCard className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">No hay pagos registrados</p>
-          </div>
-        ) : (
-          <>
-            {/* ── Tarjetas móvil ── */}
-            <div className="md:hidden divide-y divide-outline-variant/40">
-              {pagos.map((p) => (
-                <div key={p.id} className="p-4 space-y-3">
-                  {/* Fila 1: nombre + acciones rápidas */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-on-surface truncate">{p.estudiante.nombre}</p>
-                      {p.asesor?.nombre && <p className="text-xs text-on-surface-variant truncate">{p.asesor.nombre}</p>}
-                    </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => abrirEditar(p)}
-                        className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setModalEliminar(p)}
-                        className="p-2 rounded-lg text-on-surface-variant hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  {/* Fila 2: monto + estado */}
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-lg font-bold text-on-surface">{formatCOP(p.monto)}</p>
-                    <EstadoBadge estado={p.estado} />
-                  </div>
-                  {/* Fila 3: método + vencimiento + marcar pagado */}
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-on-surface-variant">{METODOS[p.metodo]} · Vence {formatDate(p.fechaVencimiento)}</p>
-                    {p.estado === 'PENDIENTE' && (
-                      <button
-                        onClick={() => setModalMarcarPagado(p)}
-                        className="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
-                      >
-                        Marcar pagado
-                      </button>
-                    )}
-                  </div>
-                  {/* Comprobante */}
-                  {p.comprobante && (
-                    <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
-                      <ExternalLink className="w-3 h-3" />
-                      Ver comprobante
-                    </a>
-                  )}
+      {/* Grid */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+      ) : pagos.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl">
+          <CreditCard className="w-10 h-10 mb-3 opacity-30" />
+          <p className="text-sm">No hay pagos registrados</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+          {pagos.map((p) => (
+            <div key={p.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 md:p-4 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
+              {/* Nombre + acciones */}
+              <div className="flex items-start justify-between gap-1.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] md:text-sm font-semibold text-on-surface truncate leading-snug">{p.estudiante.nombre}</p>
+                  {p.asesor?.nombre && <p className="text-[10px] md:text-xs text-on-surface-variant truncate">{p.asesor.nombre}</p>}
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <button onClick={() => abrirEditar(p)} className="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors">
+                    <Pencil className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                  </button>
+                  <button onClick={() => setModalEliminar(p)} className="p-1 rounded text-on-surface-variant hover:text-red-400 hover:bg-red-400/10 transition-colors">
+                    <Trash2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                  </button>
+                </div>
+              </div>
 
-            {/* ── Tabla desktop ── */}
-            <table className="w-full hidden md:table">
-              <thead>
-                <tr className="border-b border-outline-variant bg-surface-low">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Monto</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estado</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Método</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Vencimiento</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/40">
-                {pagos.map((p) => (
-                  <tr key={p.id} className="hover:bg-surface-low/40 transition-colors group">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-on-surface">{p.estudiante.nombre}</p>
-                      {p.asesor?.nombre && <p className="text-xs text-on-surface-variant">{p.asesor.nombre}</p>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-semibold text-on-surface">{formatCOP(p.monto)}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <EstadoBadge estado={p.estado} />
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-xs text-on-surface-variant">{METODOS[p.metodo]}</span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-xs text-on-surface-variant">{formatDate(p.fechaVencimiento)}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {p.estado === 'PENDIENTE' && (
-                          <button
-                            onClick={() => setModalMarcarPagado(p)}
-                            className="px-2.5 py-1 rounded text-xs font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors"
-                          >
-                            Marcar pagado
-                          </button>
-                        )}
-                        <button
-                          onClick={() => abrirEditar(p)}
-                          className="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setModalEliminar(p)}
-                          className="p-1.5 rounded text-on-surface-variant hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
+              {/* Monto + estado */}
+              <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                <p className="text-sm md:text-base font-bold text-on-surface tabular">{formatCOP(p.monto)}</p>
+                <EstadoBadge estado={p.estado} />
+              </div>
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
-            <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
-            <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {/* Método + vencimiento */}
+              <div className="flex flex-col gap-0.5">
+                <p className="text-[10px] md:text-xs text-on-surface-variant">{METODOS[p.metodo]}</p>
+                <p className="text-[10px] md:text-xs text-on-surface-variant">Vence {formatDate(p.fechaVencimiento)}</p>
+              </div>
+
+              {/* Comprobante */}
+              {p.comprobante && (
+                <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] md:text-xs text-primary hover:underline">
+                  <ExternalLink className="w-3 h-3" />Ver comprobante
+                </a>
+              )}
+
+              {/* Acción principal */}
+              {p.estado === 'PENDIENTE' && (
+                <button
+                  onClick={() => setModalMarcarPagado(p)}
+                  className="mt-auto w-full py-1.5 rounded-lg text-[11px] md:text-xs font-semibold text-on-primary bg-primary hover:bg-primary/85 transition-colors border-t border-outline-variant/30 pt-2.5"
+                >
+                  Marcar pagado
+                </button>
+              )}
             </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal registrar pago */}
       <Modal open={modalRegistrar} onClose={() => setModalRegistrar(false)}>

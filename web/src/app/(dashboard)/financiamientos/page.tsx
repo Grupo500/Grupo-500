@@ -133,8 +133,8 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 function CuotasList({ f, pagarCuotaMutation }: { f: Financiamiento; pagarCuotaMutation: any }) {
   return (
     <div className="bg-surface-low rounded-lg border border-outline-variant/40 overflow-hidden">
-      {/* Mobile: cuotas compactas para grid-2 */}
-      <div className="md:hidden divide-y divide-outline-variant/20">
+      {/* Cuotas — layout compacto para todas las resoluciones */}
+      <div className="divide-y divide-outline-variant/20">
         {f.cuotas.map(c => {
           const fecha = new Date(c.fechaVencimiento)
           const fechaCorta = fecha.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })
@@ -171,46 +171,6 @@ function CuotasList({ f, pagarCuotaMutation }: { f: Financiamiento; pagarCuotaMu
         })}
       </div>
 
-      {/* Desktop: tabla */}
-      <table className="hidden md:table w-full">
-        <thead>
-          <tr className="border-b border-outline-variant/40">
-            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Cuota</th>
-            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Monto</th>
-            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Vencimiento</th>
-            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Estado</th>
-            <th className="px-3 py-2"></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-outline-variant/20">
-          {f.cuotas.map(c => (
-            <tr key={c.id} className="group">
-              <td className="px-3 py-2 text-xs text-on-surface-variant">#{c.numero}</td>
-              <td className="px-3 py-2 text-sm font-medium text-on-surface">{formatCOP(c.monto)}</td>
-              <td className="px-3 py-2 text-xs text-on-surface-variant">{formatDate(c.fechaVencimiento)}</td>
-              <td className="px-3 py-2">
-                {c.pagado
-                  ? <span className="flex items-center gap-1 text-xs text-secondary"><CheckCircle className="w-3 h-3" />Pagado</span>
-                  : new Date(c.fechaVencimiento) < new Date()
-                    ? <span className="flex items-center gap-1 text-xs text-red-400"><AlertTriangle className="w-3 h-3" />Vencida</span>
-                    : <span className="flex items-center gap-1 text-xs text-yellow-400"><Clock className="w-3 h-3" />Pendiente</span>
-                }
-              </td>
-              <td className="px-3 py-2 text-right">
-                {!c.pagado && (
-                  <button
-                    onClick={() => pagarCuotaMutation.mutate(c.id)}
-                    disabled={pagarCuotaMutation.isPending}
-                    className="px-2 py-0.5 rounded text-[11px] font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-30"
-                  >
-                    Pagar
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   )
 }
