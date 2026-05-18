@@ -15,7 +15,7 @@ interface Asesor {
   telefono: string
   user: { role: string; email: string }
   createdAt: string
-  _count?: { pagos: number; estudiantes: number }
+  _count?: { pagos: number; estudiantes: number; cursos: number }
 }
 
 export default function AsesoresPage() {
@@ -139,7 +139,7 @@ export default function AsesoresPage() {
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-1">
                       <BookOpen className="w-3 h-3 text-on-surface-variant" />
-                      <p className="text-base font-bold text-on-surface">—</p>
+                      <p className="text-base font-bold text-on-surface">{a._count?.cursos ?? 0}</p>
                     </div>
                     <p className="text-[10px] text-on-surface-variant mt-0.5">Cursos</p>
                   </div>

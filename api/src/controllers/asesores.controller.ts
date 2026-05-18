@@ -3,15 +3,41 @@ import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 
 export async function listar(_req: Request, res: Response) {
-  const asesores = await prisma.asesor.findMany({
-    where: { user: { role: 'VENDEDOR' } },
-    include: {
-      user: { select: { role: true, email: true } },
-      _count: { select: { estudiantes: true, pagos: true } },
+  const [asesores, cursosXAsesor] = await Promise.all([
+    prisma.asesor.findMany({
+      where: { user: { role: 'VENDEDOR' } },
+      include: {
+        user: { select: { role: true, email: true } },
+        _count: { select: { estudiantes: true, pagos: true } },
+      },
+      orderBy: { nombre: 'asc' },
+    }),
+    // Contar cuántos CursoEstudiante tiene cada asesor (via estudiante.asesorId)
+    prisma.cursoEstudiante.groupBy({
+      by: ['estudianteId'],
+      _count: true,
+    }).then(async () => {
+      // Query directa: contar cursos agrupados por asesorId del estudiante
+      const rows = await prisma.$queryRaw<{ asesor_id: string; total: bigint }[]>`
+        SELECT e."asesorId" as asesor_id, COUNT(ce.id) as total
+        FROM "CursoEstudiante" ce
+        INNER JOIN "Estudiante" e ON e.id = ce."estudianteId"
+        WHERE e."asesorId" IS NOT NULL
+        GROUP BY e."asesorId"
+      `
+      return new Map(rows.map(r => [r.asesor_id, Number(r.total)]))
+    }),
+  ])
+
+  const result = asesores.map(a => ({
+    ...a,
+    _count: {
+      ...a._count,
+      cursos: cursosXAsesor.get(a.id) ?? 0,
     },
-    orderBy: { nombre: 'asc' },
-  })
-  return ApiResponse.success(res, asesores)
+  }))
+
+  return ApiResponse.success(res, result)
 }
 
 export async function estadisticas(req: Request, res: Response) {
