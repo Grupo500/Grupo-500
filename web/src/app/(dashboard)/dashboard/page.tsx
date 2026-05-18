@@ -3,7 +3,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { formatCOP } from '@/lib/utils'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Users, Wallet, AlertTriangle, BookOpen, Target } from 'lucide-react'
+import { Users, Wallet, AlertTriangle, BookOpen, Target, Bell } from 'lucide-react'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
 import { DashboardAnalytics } from '@/components/charts/DashboardAnalytics'
 import { RefreshButton } from '@/components/ui/RefreshButton'
@@ -33,10 +33,9 @@ export default async function DashboardPage() {
   if (isAdmin) {
     return (
       <div className="space-y-3 animate-fade-in">
-        <div className="flex items-start justify-between">
-          {/* Saludo */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Saludo izquierda */}
           <div className="flex items-center gap-3">
-            {/* Avatar solo en móvil */}
             {user?.imageUrl && (
               <Image
                 src={user.imageUrl}
@@ -46,27 +45,19 @@ export default async function DashboardPage() {
                 className="rounded-full md:hidden flex-shrink-0 ring-2 ring-[#2094ff]/25"
               />
             )}
-            <div>
-              <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
-                <span className="md:hidden">
-                  {saludo},<br />{firstName} 👋
-                </span>
-                <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
-              </h1>
-              <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen general de la operación</p>
-            </div>
+            <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+              <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
+              <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
+            </h1>
           </div>
-          <Image
-            src="/logo-grupo500-transparent.png"
-            alt="Grupo 500"
-            width={80}
-            height={80}
-            className="object-contain flex-shrink-0 hidden md:block"
-            priority
-          />
+          {/* Acciones derecha */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button className="w-9 h-9 rounded-xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors relative">
+              <Bell className="w-4 h-4" />
+            </button>
+            <RefreshButton />
+          </div>
         </div>
-
-        <RefreshButton />
 
         {/* Analytics con período global: tarjetas + gráficas sincronizadas */}
         <DashboardAnalytics />
