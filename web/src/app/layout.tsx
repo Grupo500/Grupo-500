@@ -55,6 +55,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <html lang="es" suppressHydrationWarning>
         <body className={`${inter.variable} font-sans`}>
+          {/* Fondo fijo — no se mueve con el scroll en ningún browser/iOS */}
+          <div aria-hidden="true" className="fixed inset-0 -z-10 bg-gradient" />
           <ThemeProvider>
             <ServiceWorkerRegister />
             {children}

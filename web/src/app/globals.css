@@ -126,14 +126,18 @@
   }
 
   body {
-    background: var(--bg);
-    background-attachment: fixed;
+    background: transparent;
     min-height: 100vh;
     color: var(--on-surface);
     font-family: Inter, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02","cv03","cv04","cv11";
     transition: color 0.15s ease;
+  }
+
+  /* Fondo fijo universal — funciona en iOS Safari, Android Chrome y desktop */
+  .bg-gradient {
+    background: var(--bg);
   }
 
   select {
