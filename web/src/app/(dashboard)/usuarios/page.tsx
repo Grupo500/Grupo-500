@@ -110,19 +110,19 @@ export default function UsuariosPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total usuarios', value: usuarios.length, icon: Users, color: 'primary' },
-          { label: 'Administradores', value: totalAdmin, icon: Shield, color: 'tertiary' },
+          { label: 'Total', value: usuarios.length, icon: Users, color: 'primary' },
+          { label: 'Admins', value: totalAdmin, icon: Shield, color: 'tertiary' },
           { label: 'Asesores', value: totalVendedor, icon: UserCheck, color: 'secondary' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card p-4 flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg bg-${color}/10 flex items-center justify-center flex-shrink-0`}>
+          <div key={label} className="card p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3 text-center sm:text-left">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-${color}/10 flex items-center justify-center flex-shrink-0`}>
               <Icon className={`w-4 h-4 text-${color}`} />
             </div>
             <div>
-              <p className="text-xs text-on-surface-variant">{label}</p>
-              <p className="text-xl font-bold text-on-surface tabular">{value}</p>
+              <p className="text-[10px] sm:text-xs text-on-surface-variant leading-tight">{label}</p>
+              <p className="text-lg sm:text-xl font-bold text-on-surface tabular">{value}</p>
             </div>
           </div>
         ))}
@@ -170,8 +170,86 @@ export default function UsuariosPage() {
           </div>
         )}
 
-        {!isLoading && usuarios.length > 0 && (
-          <div className="overflow-x-auto">
+        {!isLoading && usuarios.length > 0 && (<>
+          {/* Mobile: tarjetas */}
+          <div className="md:hidden divide-y divide-[var(--outline-variant)]">
+            {usuarios.map(u => (
+              <div key={u.id} className="p-4 space-y-3">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
+                    {u.imageUrl
+                      ? <img src={u.imageUrl} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-sm font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
+                        </div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-on-surface truncate">{u.nombre ?? u.asesor?.nombre ?? '—'}</p>
+                    <p className="text-xs text-on-surface-variant truncate">{u.email}</p>
+                  </div>
+                  <span className={cn(
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0',
+                    u.role === 'ADMIN'
+                      ? 'bg-tertiary/10 text-tertiary border border-tertiary/20'
+                      : 'bg-primary/10 text-primary border border-primary/20',
+                  )}>
+                    {u.role === 'ADMIN' ? <Shield className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
+                    {u.role === 'ADMIN' ? 'Admin' : 'Asesor'}
+                  </span>
+                </div>
+
+                {/* Perfil asesor */}
+                {u.asesor && (
+                  <div className="text-xs text-on-surface-variant bg-[var(--surface-low)] rounded-lg px-3 py-2">
+                    <span className="font-medium text-on-surface">{u.asesor.nombre}</span>
+                    <span className="mx-1.5">·</span>
+                    {u.asesor.telefono}
+                  </div>
+                )}
+
+                {/* Acciones */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={u.role}
+                    disabled={cambiarRol.isPending}
+                    onChange={e => cambiarRol.mutate({ id: u.id, role: e.target.value as 'ADMIN' | 'VENDEDOR' })}
+                    className="flex-1 text-xs font-medium px-3 py-2 rounded-lg border bg-[var(--surface-low)] border-[var(--outline-variant)] text-on-surface focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
+                  >
+                    <option value="VENDEDOR">Cambiar a Asesor</option>
+                    <option value="ADMIN">Cambiar a Admin</option>
+                  </select>
+                  {u.asesor && (
+                    <button
+                      onClick={() => setEditAsesor({
+                        asesorId: (u.asesor as any).id,
+                        nombre: u.asesor!.nombre,
+                        telefono: u.asesor!.telefono,
+                        email: u.email,
+                      })}
+                      className="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (confirm(`¿Eliminar a ${u.nombre ?? u.email}? Esta acción no se puede deshacer.`))
+                        eliminar.mutate(u.id)
+                    }}
+                    disabled={eliminar.isPending}
+                    className="p-2 rounded-lg text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center disabled:opacity-40"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: tabla */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--outline-variant)] bg-[var(--surface-low)]">
@@ -183,8 +261,6 @@ export default function UsuariosPage() {
               <tbody className="divide-y divide-[var(--outline-variant)]">
                 {usuarios.map(u => (
                   <tr key={u.id} className="hover:bg-[var(--surface-low)] transition-colors">
-
-                    {/* Avatar + nombre */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
@@ -201,24 +277,13 @@ export default function UsuariosPage() {
                         </div>
                       </div>
                     </td>
-
-                    {/* Asesor */}
                     <td className="px-5 py-3.5">
                       {u.asesor
-                        ? (
-                          <div>
-                            <p className="text-on-surface">{u.asesor.nombre}</p>
-                            <p className="text-xs text-on-surface-variant">{u.asesor.telefono}</p>
-                          </div>
-                        )
+                        ? <div><p className="text-on-surface">{u.asesor.nombre}</p><p className="text-xs text-on-surface-variant">{u.asesor.telefono}</p></div>
                         : <span className="text-on-surface-variant text-xs italic">Sin perfil</span>
                       }
                     </td>
-
-                    {/* Fecha */}
                     <td className="px-5 py-3.5 text-on-surface-variant text-xs">{formatDate(u.createdAt)}</td>
-
-                    {/* Badge rol */}
                     <td className="px-5 py-3.5">
                       <span className={cn(
                         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
@@ -230,8 +295,6 @@ export default function UsuariosPage() {
                         {u.role === 'ADMIN' ? 'Administrador' : 'Asesor'}
                       </span>
                     </td>
-
-                    {/* Selector rol */}
                     <td className="px-5 py-3.5">
                       <select
                         value={u.role}
@@ -243,8 +306,6 @@ export default function UsuariosPage() {
                         <option value="ADMIN">Administrador</option>
                       </select>
                     </td>
-
-                    {/* Acciones */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         {u.asesor && (
@@ -256,7 +317,6 @@ export default function UsuariosPage() {
                               email: u.email,
                             })}
                             className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors"
-                            title="Editar perfil asesor"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -268,7 +328,6 @@ export default function UsuariosPage() {
                           }}
                           disabled={eliminar.isPending}
                           className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
-                          title="Eliminar usuario"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -279,7 +338,7 @@ export default function UsuariosPage() {
               </tbody>
             </table>
           </div>
-        )}
+        </>)}
       </div>
 
       {/* Nota */}
