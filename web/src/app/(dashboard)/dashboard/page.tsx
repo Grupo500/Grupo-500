@@ -33,11 +33,7 @@ export default async function DashboardPage() {
   if (isAdmin) {
     return (
       <div className="space-y-3 animate-fade-in">
-        {/* ── Topbar saludo ── */}
-        <div
-          className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 py-4 mb-4 flex items-center justify-between gap-3"
-          style={{ background: 'linear-gradient(135deg, #003060 0%, #1264b8 100%)' }}
-        >
+        <div className="flex items-center justify-between gap-3">
           {/* Saludo izquierda */}
           <div className="flex items-center gap-3">
             {user?.imageUrl && (
@@ -46,7 +42,7 @@ export default async function DashboardPage() {
                 alt={firstName}
                 width={46}
                 height={46}
-                className="rounded-full md:hidden flex-shrink-0 ring-2 ring-white/25"
+                className="rounded-full md:hidden flex-shrink-0 ring-2 ring-[#2094ff]/25"
               />
             )}
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-tight">
@@ -56,7 +52,7 @@ export default async function DashboardPage() {
           </div>
           {/* Acciones derecha */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition-colors">
+            <button className="w-9 h-9 rounded-xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors relative">
               <Bell className="w-4 h-4" />
             </button>
             <RefreshButton />
@@ -102,31 +98,26 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ── Topbar saludo asesor ── */}
-      <div
-        className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 py-4 mb-4 flex items-center justify-between gap-3"
-        style={{ background: 'linear-gradient(135deg, #003060 0%, #1264b8 100%)' }}
-      >
-        <div className="flex items-center gap-3">
-          {user?.imageUrl && (
-            <Image
-              src={user.imageUrl}
-              alt={firstName}
-              width={46}
-              height={46}
-              className="rounded-full flex-shrink-0 ring-2 ring-white/25"
-            />
-          )}
-          <div>
-            <h1 className="text-[22px] font-bold text-white tracking-tight leading-tight">
-              <span className="sm:hidden">{saludo},<br />{firstName} 👋</span>
-              <span className="hidden sm:inline">{saludo}, {firstName} 👋</span>
-            </h1>
-            <p className="text-[13px] text-white/60 mt-0.5 font-medium">Resumen de tu actividad y gestión</p>
-          </div>
+      {/* Saludo asesor */}
+      <div className="flex items-center gap-3 sm:block">
+        {user?.imageUrl && (
+          <Image
+            src={user.imageUrl}
+            alt={firstName}
+            width={46}
+            height={46}
+            className="rounded-full sm:hidden flex-shrink-0 ring-2 ring-[#2094ff]/25"
+          />
+        )}
+        <div>
+          <h1 className="text-[22px] font-bold text-white tracking-tight leading-tight">
+            <span className="sm:hidden">{saludo},<br />{firstName} 👋</span>
+            <span className="hidden sm:inline">{saludo}, {firstName} 👋</span>
+          </h1>
+          <p className="text-[13px] text-white/70 mt-0.5 font-medium">Resumen de tu actividad y gestión</p>
         </div>
-        <RefreshButton />
       </div>
+      <RefreshButton />
 
       {/* Meta de ventas */}
       <div className="card p-5">
