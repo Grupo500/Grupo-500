@@ -150,6 +150,23 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--outline); }
 }
 
+/* ─── PWA DESKTOP: Window Controls Overlay ─────────────────────────────────── */
+/* Solo activo en Chrome/Edge cuando el PWA está instalado en escritorio       */
+@media (display-mode: window-controls-overlay) {
+  body {
+    /* Extiende el gradiente detrás de la barra de título */
+    padding-top: env(titlebar-area-height, 0px);
+  }
+  /* Hace que el área de la barra de título sea draggable */
+  html {
+    -webkit-app-region: drag;
+  }
+  /* Los elementos interactivos deben ser no-draggable */
+  a, button, input, select, textarea, [role="button"] {
+    -webkit-app-region: no-drag;
+  }
+}
+
 /* ─── COMPONENTS — estructura Stitch + colores brand ───────────────────────── */
 @layer components {
 
