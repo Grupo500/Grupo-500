@@ -173,39 +173,49 @@ export default function UsuariosPage() {
         {!isLoading && usuarios.length > 0 && (<>
           <div className="p-3 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {usuarios.map(u => (
-              <div key={u.id} className="bg-surface-low border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
-                {/* Header */}
-                <div className="flex items-start gap-2">
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
+              <div key={u.id} className="bg-surface-low border border-outline-variant rounded-xl p-3 md:p-4 flex flex-col gap-3 hover:border-primary/30 transition-colors">
+
+                {/* Avatar + nombre + badge */}
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 md:w-11 md:h-11 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
                     {u.imageUrl
                       ? <img src={u.imageUrl} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-xs font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
+                          <span className="text-xs md:text-sm font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
                         </div>
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-on-surface truncate leading-tight">{u.nombre ?? u.asesor?.nombre ?? '—'}</p>
+                    <p className="text-[11px] md:text-sm font-semibold text-on-surface truncate leading-snug">
+                      {u.nombre ?? u.asesor?.nombre ?? '—'}
+                    </p>
                     <span className={cn(
-                      'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold mt-0.5',
-                      u.role === 'ADMIN' ? 'bg-tertiary/10 text-tertiary' : 'bg-primary/10 text-primary',
+                      'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5',
+                      u.role === 'ADMIN'
+                        ? 'bg-tertiary text-white'
+                        : 'bg-primary text-white',
                     )}>
                       {u.role === 'ADMIN' ? <Shield className="w-2.5 h-2.5" /> : <UserCheck className="w-2.5 h-2.5" />}
                       {u.role === 'ADMIN' ? 'Admin' : 'Asesor'}
                     </span>
                   </div>
                 </div>
-                <p className="text-[10px] text-on-surface-variant truncate">{u.email}</p>
-                {u.asesor && (
-                  <p className="text-[10px] text-on-surface-variant truncate">{u.asesor.telefono}</p>
-                )}
+
+                {/* Contacto */}
+                <div className="space-y-1">
+                  <p className="text-[10px] md:text-xs text-on-surface-variant truncate">{u.email}</p>
+                  {u.asesor && (
+                    <p className="text-[10px] md:text-xs text-on-surface-variant">{u.asesor.telefono}</p>
+                  )}
+                </div>
+
                 {/* Acciones */}
-                <div className="pt-1 border-t border-outline-variant/40 flex items-center gap-1">
+                <div className="pt-2 border-t border-outline-variant/40 flex items-center gap-1.5">
                   <select
                     value={u.role}
                     disabled={cambiarRol.isPending}
                     onChange={e => cambiarRol.mutate({ id: u.id, role: e.target.value as 'ADMIN' | 'VENDEDOR' })}
-                    className="flex-1 text-[10px] font-medium px-1.5 py-1.5 rounded-lg border bg-surface-high border-outline-variant text-on-surface focus:outline-none disabled:opacity-50"
+                    className="flex-1 text-[10px] md:text-xs font-medium px-2 py-1.5 rounded-lg border bg-surface-high border-outline-variant text-on-surface focus:outline-none disabled:opacity-50 cursor-pointer"
                   >
                     <option value="VENDEDOR">Asesor</option>
                     <option value="ADMIN">Admin</option>
@@ -214,6 +224,7 @@ export default function UsuariosPage() {
                     <button
                       onClick={() => setEditAsesor({ asesorId: (u.asesor as any).id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email })}
                       className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+                      title="Editar asesor"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
@@ -222,6 +233,7 @@ export default function UsuariosPage() {
                     onClick={() => { if (confirm(`¿Eliminar a ${u.nombre ?? u.email}?`)) eliminar.mutate(u.id) }}
                     disabled={eliminar.isPending}
                     className="p-1.5 rounded-lg text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
+                    title="Eliminar usuario"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
