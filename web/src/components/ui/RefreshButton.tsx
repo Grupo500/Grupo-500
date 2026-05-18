@@ -15,10 +15,10 @@ export function RefreshButton() {
   return (
     <button
       onClick={handleRefresh}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-high border border-outline-variant transition-colors"
+      className="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
+      title="Actualizar"
     >
-      <RefreshCw className={cn('w-3.5 h-3.5', spinning && 'animate-spin')} />
-      Actualizar
+      <RefreshCw className={cn('w-4 h-4', spinning && 'animate-spin')} />
     </button>
   )
 }

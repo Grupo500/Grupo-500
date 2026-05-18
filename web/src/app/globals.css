@@ -18,12 +18,12 @@
 :root,
 .light {
   /* Superficies — base azulada brand */
-  --bg:                 #f4f8ff;
+  --bg:                 linear-gradient(160deg, #ddeeff 0%, #eaf4ff 40%, #f0f6ff 100%);
   --surface-lowest:     #ffffff;
-  --surface-low:        #eaf2ff;
-  --surface:            #e2ecff;
-  --surface-high:       #d4e4ff;
-  --surface-highest:    #c2d6f8;
+  --surface-low:        #e4f0ff;
+  --surface:            #d8eaff;
+  --surface-high:       #c8deff;
+  --surface-highest:    #b8d0f5;
 
   /* Texto — navy brand */
   --on-surface:         #001d3d;
@@ -69,7 +69,7 @@
 /* ─── TEMA OSCURO — brand sobre navy Stitch ─────────────────────────────────── */
 .dark {
   /* Superficies — navy profundo */
-  --bg:                 #060d18;
+  --bg:                 linear-gradient(160deg, #020810 0%, #060d18 45%, #091528 100%);
   --surface-lowest:     #0a1525;
   --surface-low:        #0f1e35;
   --surface:            #142543;
@@ -123,12 +123,13 @@
   html { scroll-behavior: smooth; }
 
   body {
-    background-color: var(--bg);
+    background: var(--bg);
+    min-height: 100vh;
     color: var(--on-surface);
     font-family: Inter, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02","cv03","cv04","cv11";
-    transition: background-color 0.2s ease, color 0.15s ease;
+    transition: background 0.2s ease, color 0.15s ease;
   }
 
   select {

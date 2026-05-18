@@ -187,10 +187,8 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
                     : 'w-10 h-8 group-active:bg-white/10',
                 )}
                   style={isActive ? {
-                    background: isCentral
-                      ? 'linear-gradient(135deg, #2094ff, #4361ee)'
-                      : 'rgba(32,148,255,0.22)',
-                    boxShadow: isCentral ? '0 2px 12px rgba(32,148,255,0.5)' : undefined,
+                    background: 'linear-gradient(135deg, #2094ff, #4361ee)',
+                    boxShadow: '0 2px 12px rgba(32,148,255,0.5)',
                   } : undefined}
                 >
                   <Icon className={cn(
