@@ -290,7 +290,7 @@ export default function PagosPage() {
         )}
         {/* Mobile: select */}
         <div className="flex items-center gap-2 md:hidden">
-          <Filter className="w-4 h-4 text-on-surface-variant flex-shrink-0" />
+          <Filter className="w-4 h-4 text-on-surface flex-shrink-0" />
           <select
             value={filtroEstado}
             onChange={e => { setFiltroEstado(e.target.value); setPage(1) }}

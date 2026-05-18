@@ -6,7 +6,7 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
 export default function SignInPage() {
   return (
-    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4" style={{ background: '#21b9f7' }}>
 
       {/* Logo */}
       <div className="flex flex-col items-center gap-2">
