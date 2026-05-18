@@ -118,10 +118,10 @@ export function FinancieroSection({ periodo }: Props) {
 
       {/* Label período */}
       <div className="flex items-center justify-between px-0.5">
-        <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wide">
+        <p className="text-[12px] font-semibold text-white/80 uppercase tracking-wide">
           {periodoLabel}
         </p>
-        <span className="text-[11px] text-on-surface-variant/60">Período en curso</span>
+        <span className="text-[11px] text-white/55">Período en curso</span>
       </div>
 
       {/* ── 3 tarjetas ──────────────────────────────────────────────────────── */}
