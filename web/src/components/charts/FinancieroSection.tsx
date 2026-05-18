@@ -33,6 +33,49 @@ function fmtCompact(n: number) {
   return `$${n}`
 }
 
+// ── Count-up animado ────────────────────────────────────────────────────────
+function useCountUp(target: number, enabled: boolean, duration = 900) {
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    if (!enabled || target === 0) { setCurrent(target); return }
+
+    const startTime = performance.now()
+    const startVal  = 0
+
+    const tick = (now: number) => {
+      const elapsed  = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCurrent(Math.round(startVal + (target - startVal) * eased))
+      if (progress < 1) requestAnimationFrame(tick)
+    }
+
+    const raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, enabled, duration])
+
+  return current
+}
+
+function AnimatedValue({ value, isLoading, color }: { value: number; isLoading: boolean; color: string }) {
+  const animated = useCountUp(value, !isLoading)
+
+  if (isLoading) {
+    return <div className="h-6 w-16 bg-[var(--surface-high)] rounded animate-pulse" />
+  }
+
+  return (
+    <p
+      className="text-[16px] sm:text-[19px] font-bold tabular-nums leading-tight"
+      style={{ color, transition: 'color 200ms' }}
+    >
+      {fmtCompact(animated)}
+    </p>
+  )
+}
+
 function ChartSkeleton() {
   return <div className="h-48 rounded-xl bg-[var(--surface-high)] animate-pulse" />
 }
@@ -156,15 +199,12 @@ export function FinancieroSection({ periodo }: Props) {
                 <p className="text-[12px] sm:text-[13px] font-semibold text-on-surface leading-tight">{m.label}</p>
               </div>
 
-              {/* Valor */}
-              {isLoading ? (
-                <div className="h-6 w-16 bg-[var(--surface-high)] rounded animate-pulse" />
-              ) : (
-                <p className="text-[16px] sm:text-[19px] font-bold tabular-nums leading-tight"
-                  style={{ color: isSelected ? c : 'var(--on-surface)', transition: 'color 200ms' }}>
-                  {fmtCompact(val)}
-                </p>
-              )}
+              {/* Valor con count-up */}
+              <AnimatedValue
+                value={val}
+                isLoading={isLoading}
+                color={isSelected ? c : 'var(--on-surface)'}
+              />
 
               {/* Sublabel — solo desktop */}
               <p className="mt-0.5 text-[10px] text-on-surface-variant/60 leading-tight hidden sm:block">{m.sublabel}</p>
