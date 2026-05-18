@@ -24,7 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <QueryProvider>
-      <div className="flex h-dvh overflow-hidden bg-background">
+      <div className="flex h-dvh">
         {/* Sidebar — solo tablet y desktop */}
         <div className="hidden md:flex">
           <Sidebar role={role} />
