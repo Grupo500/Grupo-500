@@ -19,7 +19,7 @@ const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
   { href: '/pagos',       label: 'Pagos',       icon: CreditCard,      adminOnly: false },
-  { href: '/cobros',      label: 'Cobros',      icon: CalendarDays,    adminOnly: false },
+  { href: '/cobros',      label: 'Calendario',  icon: CalendarDays,    adminOnly: false },
 ]
 
 const moreItems: NavItem[] = [

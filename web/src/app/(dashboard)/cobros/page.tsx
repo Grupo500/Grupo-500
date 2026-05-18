@@ -108,7 +108,7 @@ export default function CobrosPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <PageHeader title="Calendario de cobros" subtitle="Gestiona las cuotas y envía recordatorios por WhatsApp" />
+      <PageHeader title="Calendario" subtitle="Gestiona las cuotas y envía recordatorios por WhatsApp" />
 
       {/* Tarjetas resumen */}
       <div className="grid grid-cols-3 gap-2.5">
