@@ -98,7 +98,7 @@ export default function EstudiantesPage() {
 
   // Debounce: espera 400ms después de que el usuario deje de escribir
   useEffect(() => {
-    const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 400)
+    const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
     return () => clearTimeout(t)
   }, [busquedaInput])
   const [modalCrear, setModalCrear] = useState(false)
