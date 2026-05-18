@@ -78,6 +78,16 @@ app.use('/api', rateLimit({
   message: { success: false, error: 'Demasiadas solicitudes, intenta más tarde.' }
 }))
 
+// Rate limiting por usuario autenticado (post-auth routes)
+app.use('/api', rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  keyGenerator: (req) => req.headers.authorization?.slice(-20) || req.ip || 'anon',
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Límite por minuto alcanzado.' },
+}))
+
 // Rate limiting estricto en auth
 app.use('/api/auth', rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -88,7 +98,7 @@ app.use('/api/auth', rateLimit({
 
 // Health check
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '2.0.0' })
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
 // Rutas

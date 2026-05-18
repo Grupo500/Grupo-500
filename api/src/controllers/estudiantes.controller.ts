@@ -34,11 +34,15 @@ const crearSchema = z.object({
 export async function listar(req: Request, res: Response) {
   const { page = '1', limit = '20', nombre, colegioId, asesorId } = req.query
   const skip = (Number(page) - 1) * Number(limit)
+  const isAdmin = req.userRole === 'ADMIN'
 
   const where = {
+    // VENDEDORs only see students they registered
+    ...(!isAdmin && req.asesorId && { asesorId: req.asesorId }),
     ...(nombre && { nombre: { contains: String(nombre), mode: 'insensitive' as const } }),
     ...(colegioId && { colegioId: String(colegioId) }),
-    ...(asesorId && { asesorId: String(asesorId) }),
+    // Admins can further filter by asesorId; vendedors can't override scope
+    ...(isAdmin && asesorId && { asesorId: String(asesorId) }),
   }
 
   const [estudiantes, total] = await Promise.all([

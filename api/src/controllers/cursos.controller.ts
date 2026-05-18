@@ -35,8 +35,18 @@ export async function obtener(req: Request, res: Response) {
   return ApiResponse.success(res, curso)
 }
 
+const actualizarSchema = z.object({
+  nombre:       z.string().min(2).optional(),
+  descripcion:  z.string().optional(),
+  precio:       z.number().positive().optional(),
+  duracionHoras: z.number().int().positive().optional(),
+  calendario:   z.enum(['A', 'B']).optional(),
+  activo:       z.boolean().optional(),
+})
+
 export async function actualizar(req: Request, res: Response) {
-  const curso = await prisma.curso.update({ where: { id: req.params.id }, data: req.body })
+  const data = actualizarSchema.parse(req.body)
+  const curso = await prisma.curso.update({ where: { id: req.params.id }, data })
   return ApiResponse.success(res, curso)
 }
 

@@ -14,10 +14,14 @@ const registrarSchema = z.object({
 export async function listar(req: Request, res: Response) {
   const { estudianteId, asesorId, estado, desde, hasta, nombre, page = '1', limit = '20' } = req.query
   const skip = (Number(page) - 1) * Number(limit)
+  const isAdmin = req.userRole === 'ADMIN'
 
   const where = {
+    // VENDEDORs only see their own payments
+    ...(!isAdmin && req.asesorId && { asesorId: req.asesorId }),
     ...(estudianteId && { estudianteId: String(estudianteId) }),
-    ...(asesorId && { asesorId: String(asesorId) }),
+    // Admins can filter by any asesorId; vendedors can't override the scope above
+    ...(isAdmin && asesorId && { asesorId: String(asesorId) }),
     ...(estado && { estado: String(estado) as any }),
     ...(desde && hasta && { fechaVencimiento: { gte: new Date(String(desde)), lte: new Date(String(hasta)) } }),
     ...(nombre && { estudiante: { nombre: { contains: String(nombre), mode: 'insensitive' as const } } }),
@@ -52,19 +56,29 @@ export async function registrar(req: Request, res: Response) {
   return ApiResponse.created(res, pago)
 }
 
+const actualizarSchema = z.object({
+  monto:           z.number().positive().optional(),
+  metodo:          z.enum(['TRANSFERENCIA', 'TARJETA', 'EFECTIVO', 'OTRO']).optional(),
+  estado:          z.enum(['PENDIENTE', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
+  fechaVencimiento: z.string().optional(),
+  comprobante:     z.string().url().nullable().optional(),
+  notas:           z.string().max(500).nullable().optional(),
+})
+
 export async function actualizar(req: Request, res: Response) {
   const { id } = req.params
-  const { monto, metodo, estado, fechaVencimiento, comprobante } = req.body
+  const data = actualizarSchema.parse(req.body)
 
   const pago = await prisma.pago.update({
     where: { id },
     data: {
-      ...(monto !== undefined       && { monto: Number(monto) }),
-      ...(metodo                    && { metodo }),
-      ...(estado                    && { estado }),
-      ...(fechaVencimiento          && { fechaVencimiento: new Date(fechaVencimiento) }),
-      ...(comprobante !== undefined  && { comprobante }),
-      ...(estado === 'PAGADO'       && { fechaPago: new Date() }),
+      ...(data.monto !== undefined           && { monto: data.monto }),
+      ...(data.metodo                        && { metodo: data.metodo }),
+      ...(data.estado                        && { estado: data.estado }),
+      ...(data.fechaVencimiento              && { fechaVencimiento: new Date(data.fechaVencimiento) }),
+      ...(data.comprobante !== undefined     && { comprobante: data.comprobante }),
+      ...(data.notas !== undefined           && { notas: data.notas }),
+      ...(data.estado === 'PAGADO'           && { fechaPago: new Date() }),
     },
     include: { estudiante: true, asesor: true },
   })

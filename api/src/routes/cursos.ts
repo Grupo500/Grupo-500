@@ -12,6 +12,6 @@ router.post('/', requireRole('ADMIN'), asyncHandler(ctrl.crear))
 router.get('/:id', asyncHandler(ctrl.obtener))
 router.patch('/:id', requireRole('ADMIN'), asyncHandler(ctrl.actualizar))
 router.delete('/:id', requireRole('ADMIN'), asyncHandler(ctrl.eliminar))
-router.post('/asignar', asyncHandler(ctrl.asignarACurso))
+router.post('/asignar', requireRole('ADMIN'), asyncHandler(ctrl.asignarACurso))
 
 export default router
