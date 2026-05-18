@@ -18,7 +18,7 @@
 :root,
 .light {
   /* Superficies — base azulada brand */
-  --bg:                 linear-gradient(180deg, #003060 0%, #0a4a8a 15%, #1264b8 28%, #4a8fd4 36%, #95daff 46%, #95daff 100%);
+  --bg:                 linear-gradient(180deg, #003060 0%, #0a4a8a 10%, #1264b8 18%, #4a8fd4 24%, #95daff 30%, #95daff 100%);
   --surface-lowest:     #ffffff;
   --surface-low:        #e4f0ff;
   --surface:            #d8eaff;
@@ -127,12 +127,13 @@
 
   body {
     background: var(--bg);
+    background-attachment: fixed;
     min-height: 100vh;
     color: var(--on-surface);
     font-family: Inter, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02","cv03","cv04","cv11";
-    transition: background 0.2s ease, color 0.15s ease;
+    transition: color 0.15s ease;
   }
 
   select {
