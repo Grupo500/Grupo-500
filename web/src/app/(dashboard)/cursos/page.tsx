@@ -146,8 +146,8 @@ export default function CursosPage() {
         title="Cursos"
         subtitle={`${cursos.length} cursos disponibles`}
         actions={
-          <button onClick={() => setModalCrear(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" />Nuevo curso
+          <button onClick={() => setModalCrear(true)} className="flex items-center gap-2 px-2.5 py-2.5 sm:px-4 sm:py-2 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo curso</span>
           </button>
         }
       />

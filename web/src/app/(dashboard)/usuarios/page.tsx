@@ -102,9 +102,9 @@ export default function UsuariosPage() {
         title="Usuarios"
         subtitle="Gestión de accesos y roles del sistema"
         actions={
-          <button onClick={() => setShowModal(true)} className="btn-primary">
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-2.5 py-2.5 sm:px-4 sm:py-2 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
             <UserPlus className="w-4 h-4" />
-            Agregar usuario
+            <span className="hidden sm:inline">Agregar usuario</span>
           </button>
         }
       />

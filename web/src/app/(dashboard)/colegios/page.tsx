@@ -255,12 +255,12 @@ export default function ColegiosPage() {
         subtitle="Gestiona colegios y el pipeline de negociaciones"
         actions={
           tab === 'colegios' ? (
-            <button onClick={() => setModalCrearColegio(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Plus className="w-4 h-4" /> Nuevo colegio
+            <button onClick={() => setModalCrearColegio(true)} className="flex items-center gap-2 px-2.5 py-2.5 sm:px-4 sm:py-2 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+              <Plus className="w-4 h-4" /><span className="hidden sm:inline"> Nuevo colegio</span>
             </button>
           ) : isAdmin ? (
-            <button onClick={() => { resetFormNeg(); setModalCrearNeg(true) }} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Plus className="w-4 h-4" /> Nueva negociación
+            <button onClick={() => { resetFormNeg(); setModalCrearNeg(true) }} className="flex items-center gap-2 px-2.5 py-2.5 sm:px-4 sm:py-2 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+              <Plus className="w-4 h-4" /><span className="hidden sm:inline"> Nueva negociación</span>
             </button>
           ) : undefined
         }
