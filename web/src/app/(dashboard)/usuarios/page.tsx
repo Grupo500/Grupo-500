@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil } from 'lucide-react'
+import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search } from 'lucide-react'
 
 interface Asesor { id: string; nombre: string; telefono: string }
 interface Usuario {
@@ -18,6 +18,7 @@ interface Usuario {
 export default function UsuariosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
+  const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [formEmail, setFormEmail] = useState('')
   const [formRole, setFormRole] = useState<'VENDEDOR' | 'ADMIN'>('VENDEDOR')
@@ -85,9 +86,15 @@ export default function UsuariosPage() {
     onError: (e: any) => setFormError(e.message ?? 'Error al agregar usuario'),
   })
 
-  const usuarios = data?.data ?? []
-  const totalAdmin    = usuarios.filter(u => u.role === 'ADMIN').length
-  const totalVendedor = usuarios.filter(u => u.role === 'VENDEDOR').length
+  const usuariosTodos = data?.data ?? []
+  const usuarios = usuariosTodos.filter(u =>
+    !busqueda ||
+    u.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    u.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+    u.asesor?.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  )
+  const totalAdmin    = usuariosTodos.filter(u => u.role === 'ADMIN').length
+  const totalVendedor = usuariosTodos.filter(u => u.role === 'VENDEDOR').length
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -119,6 +126,25 @@ export default function UsuariosPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Búsqueda */}
+      <div className="flex gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre o email..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+        {busqueda && (
+          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Tabla */}

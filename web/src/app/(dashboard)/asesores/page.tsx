@@ -1,11 +1,12 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP, formatDate } from '@/lib/utils'
-import { UserCheck, Mail, Phone, Loader2, Users, TrendingUp, BookOpen } from 'lucide-react'
+import { UserCheck, Mail, Phone, Loader2, Users, TrendingUp, BookOpen, Search, X } from 'lucide-react'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 
 interface Asesor {
@@ -20,6 +21,7 @@ interface Asesor {
 
 export default function AsesoresPage() {
   const { getToken } = useAuth()
+  const [busqueda, setBusqueda] = useState('')
 
   const fetcher = async <T,>(path: string) => {
     const token = await getToken()
@@ -31,7 +33,13 @@ export default function AsesoresPage() {
     queryFn: () => fetcher<any>('/asesores'),
   })
 
-  const asesores: Asesor[] = data?.data ?? []
+  const asesoresTodos: Asesor[] = data?.data ?? []
+  const asesores = asesoresTodos.filter(a =>
+    !busqueda ||
+    a.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    a.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+    a.telefono.includes(busqueda)
+  )
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -42,6 +50,25 @@ export default function AsesoresPage() {
 
       {/* Ranking — ocupa ancho completo */}
       <RankingAsesores />
+
+      {/* Búsqueda */}
+      <div className="flex gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre, email o teléfono..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+        {busqueda && (
+          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {/* Lista de asesores registrados */}
       <div>
