@@ -35,13 +35,12 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#2094ff' },
+    { media: '(prefers-color-scheme: light)', color: '#003060' },
     { media: '(prefers-color-scheme: dark)',  color: '#020810' },
   ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
