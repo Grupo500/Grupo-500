@@ -260,13 +260,13 @@ export default function AsesoresPage() {
                   className="bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-xl p-4 hover:border-primary/30 transition-colors flex flex-col"
                 >
                   {/* Header */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[var(--primary-container)] border border-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-primary">{iniciales}</span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[11px] font-bold text-primary">{iniciales}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-on-surface truncate leading-tight">{a.nombre}</p>
-                      <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
+                      <p className="text-[11px] font-semibold text-on-surface truncate leading-snug">{a.nombre}</p>
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-primary text-white leading-none mt-0.5">
                         Asesor
                       </span>
                     </div>
