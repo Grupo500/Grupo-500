@@ -28,6 +28,7 @@ interface Estudiante {
   acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
   asesorId?: string
   asesor?: { id: string; nombre: string }
+  cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; curso: { id: string; nombre: string; precio: number } }[]
   createdAt: string
 }
 
@@ -40,6 +41,7 @@ const FORM_EMPTY = {
   nombre: '', tipoDocumento: 'CC', documento: '',
   email: '', telefono: '', fechaNacimiento: '',
   departamento: '', ciudad: '', colegioId: '', asesorId: '',
+  cursoId: '', descuentoPorcentaje: '0',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
 }
 
@@ -129,6 +131,12 @@ export default function EstudiantesPage() {
   })
   const asesores: { id: string; nombre: string }[] = asesoresData?.data ?? []
 
+  const { data: cursosData } = useQuery({
+    queryKey: ['cursos-select'],
+    queryFn: () => fetcher<any>('/cursos?limit=100'),
+  })
+  const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
+
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda],
     queryFn: () => fetcher<PaginatedResponse>(
@@ -152,6 +160,7 @@ export default function EstudiantesPage() {
         ...(form.departamento && { departamento: form.departamento }),
         ...(form.ciudad      && { ciudad:       form.ciudad }),
         ...(form.colegioId   && { colegioId:    form.colegioId }),
+        ...(form.cursoId     && { cursoId:      form.cursoId, descuentoPorcentaje: Number(form.descuentoPorcentaje) }),
       }
 
       const acudienteCompleto = form.acudienteNombre.trim() && form.acudienteEmail.trim() && form.acudienteTelefono.trim()
@@ -194,6 +203,7 @@ export default function EstudiantesPage() {
         ciudad: formEdit.ciudad || null,
         colegioId: formEdit.colegioId || null,
         ...(isAdmin && { asesorId: formEdit.asesorId || null }),
+        ...(isAdmin && { cursoId: formEdit.cursoId || null, descuentoPorcentaje: Number(formEdit.descuentoPorcentaje) }),
       }
 
       return fetcher(`/estudiantes/${modalEditar.id}`, {
@@ -228,6 +238,7 @@ export default function EstudiantesPage() {
   })
 
   const abrirEditar = (e: Estudiante) => {
+    const cursoActivo = e.cursos?.[0]
     setFormEdit({
       nombre: e.nombre,
       tipoDocumento: e.tipoDocumento ?? 'CC',
@@ -239,6 +250,8 @@ export default function EstudiantesPage() {
       ciudad: e.ciudad ?? '',
       colegioId: e.colegio?.id ?? '',
       asesorId: e.asesor?.id ?? '',
+      cursoId: cursoActivo?.cursoId ?? '',
+      descuentoPorcentaje: String(cursoActivo?.descuentoPorcentaje ?? 0),
       acudienteNombre: e.acudiente?.nombre ?? '',
       acudienteEmail: e.acudiente?.email ?? '',
       acudienteTelefono: e.acudiente?.telefono ?? '',
@@ -256,7 +269,7 @@ export default function EstudiantesPage() {
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
   // ── Formulario reutilizable ────────────────────────────────────────────
-  const renderFormFields = (f: typeof FORM_EMPTY, setF: (fn: (prev: typeof FORM_EMPTY) => typeof FORM_EMPTY) => void) => (
+  const renderFormFields = (f: typeof FORM_EMPTY, setF: (fn: (prev: typeof FORM_EMPTY) => typeof FORM_EMPTY) => void, cursosReadonly = false) => (
     <div className="space-y-4">
       <p className="text-xs font-semibold text-primary uppercase tracking-wider">Datos del estudiante</p>
       <div className="grid grid-cols-2 gap-3">
@@ -316,6 +329,41 @@ export default function EstudiantesPage() {
             {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
         </div>
+      </div>
+
+      <p className="text-xs font-semibold text-primary uppercase tracking-wider pt-2">Curso y descuento</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2 sm:col-span-1">
+          <label className={labelCls}>Curso adquirido</label>
+          <select className={cn(inputCls, cursosReadonly && 'opacity-60 cursor-not-allowed')} value={f.cursoId} onChange={e => setF(p => ({ ...p, cursoId: e.target.value }))} disabled={cursosReadonly}>
+            <option value="">Sin curso</option>
+            {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Descuento (%)</label>
+          <input
+            className={cn(inputCls, (cursosReadonly || !f.cursoId) && 'opacity-60 cursor-not-allowed')}
+            type="number"
+            min="0"
+            max="100"
+            value={f.descuentoPorcentaje}
+            onChange={e => setF(p => ({ ...p, descuentoPorcentaje: e.target.value }))}
+            placeholder="0"
+            disabled={cursosReadonly || !f.cursoId}
+          />
+        </div>
+        {f.cursoId && Number(f.descuentoPorcentaje) > 0 && (() => {
+          const c = cursos.find(c => c.id === f.cursoId)
+          if (!c) return null
+          const precioFinal = c.precio * (1 - Number(f.descuentoPorcentaje) / 100)
+          return (
+            <div className="col-span-2 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 text-xs text-on-surface-variant">
+              <span className="text-primary font-semibold">Precio con descuento: </span>
+              ${precioFinal.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
+            </div>
+          )
+        })()}
       </div>
 
       <p className="text-xs font-semibold text-primary uppercase tracking-wider pt-2">Datos del acudiente</p>
@@ -493,7 +541,7 @@ export default function EstudiantesPage() {
               <h2 className="text-base font-semibold text-on-surface">Editar estudiante</h2>
               <button onClick={() => setModalEditar(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
             </div>
-            {renderFormFields(formEdit, setFormEdit)}
+            {renderFormFields(formEdit, setFormEdit, !isAdmin)}
 
             {/* Asesor asignado — solo admin */}
             {isAdmin && (
@@ -551,6 +599,29 @@ export default function EstudiantesPage() {
               <button onClick={() => setModalDetalle(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-4">
+              {/* Curso */}
+              {modalDetalle.cursos && modalDetalle.cursos.length > 0 && (() => {
+                const ce = modalDetalle.cursos![0]
+                const precioFinal = ce.curso.precio * (1 - ce.descuentoPorcentaje / 100)
+                return (
+                  <div className="bg-primary/5 border border-primary/15 rounded-xl p-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] text-primary font-semibold uppercase tracking-wider mb-0.5">Curso adquirido</p>
+                      <p className="text-sm font-semibold text-on-surface">{ce.curso.nombre}</p>
+                    </div>
+                    <div className="text-right">
+                      {ce.descuentoPorcentaje > 0 && (
+                        <p className="text-[11px] text-on-surface-variant line-through">${ce.curso.precio.toLocaleString('es-CO')}</p>
+                      )}
+                      <p className="text-sm font-bold text-primary">${precioFinal.toLocaleString('es-CO')}</p>
+                      {ce.descuentoPorcentaje > 0 && (
+                        <span className="inline-block text-[10px] font-semibold bg-secondary/15 text-secondary px-1.5 py-0.5 rounded">{ce.descuentoPorcentaje}% dto.</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()}
+
               <div className="grid grid-cols-2 gap-3">
                 {modalDetalle.documento && (
                   <InfoField label={modalDetalle.tipoDocumento ?? 'Documento'} value={modalDetalle.documento} />

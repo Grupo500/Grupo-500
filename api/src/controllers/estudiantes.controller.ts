@@ -14,6 +14,8 @@ const crearSchema = z.object({
   departamento: z.string().optional(),
   ciudad: z.string().optional(),
   colegioId: z.string().optional(),
+  cursoId: z.string().optional(),
+  descuentoPorcentaje: z.number().min(0).max(100).optional(),
   acudiente: z.object({
     nombre: z.string().min(2),
     email: z.string().email(),
@@ -35,7 +37,7 @@ export async function listar(req: Request, res: Response) {
   const [estudiantes, total] = await Promise.all([
     prisma.estudiante.findMany({
       where,
-      include: { colegio: true, acudiente: true, asesor: true },
+      include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
       skip,
       take: Number(limit),
       orderBy: { createdAt: 'desc' },
@@ -62,8 +64,16 @@ export async function crear(req: Request, res: Response) {
       ...(data.colegioId   && { colegioId:    data.colegioId }),
       ...(req.asesorId && { asesorId: req.asesorId }),
       ...(data.acudiente && { acudiente: { create: data.acudiente } }),
+      ...(data.cursoId && {
+        cursos: {
+          create: {
+            cursoId: data.cursoId,
+            descuentoPorcentaje: data.descuentoPorcentaje ?? 0,
+          },
+        },
+      }),
     },
-    include: { acudiente: true, colegio: true },
+    include: { acudiente: true, colegio: true, cursos: { include: { curso: true } } },
   })
 
   return ApiResponse.created(res, estudiante)
@@ -88,23 +98,29 @@ export async function obtener(req: Request, res: Response) {
 }
 
 const actualizarSchema = z.object({
-  nombre:          z.string().min(2).optional(),
-  tipoDocumento:   z.enum(['CC', 'TI', 'CE', 'PA', 'RC']).optional(),
-  documento:       z.string().nullable().optional(),
-  email:           z.string().email().optional(),
-  telefono:        z.string().min(7).optional(),
-  fechaNacimiento: z.string().optional(),
-  departamento:    z.string().nullable().optional(),
-  ciudad:          z.string().nullable().optional(),
-  colegioId:       z.string().nullable().optional(),
-  asesorId:        z.string().nullable().optional(),
+  nombre:              z.string().min(2).optional(),
+  tipoDocumento:       z.enum(['CC', 'TI', 'CE', 'PA', 'RC']).optional(),
+  documento:           z.string().nullable().optional(),
+  email:               z.string().email().optional(),
+  telefono:            z.string().min(7).optional(),
+  fechaNacimiento:     z.string().optional(),
+  departamento:        z.string().nullable().optional(),
+  ciudad:              z.string().nullable().optional(),
+  colegioId:           z.string().nullable().optional(),
+  asesorId:            z.string().nullable().optional(),
+  // Solo admin
+  cursoId:             z.string().nullable().optional(),
+  descuentoPorcentaje: z.number().min(0).max(100).optional(),
 })
 
 export async function actualizar(req: Request, res: Response) {
   const data = actualizarSchema.parse(req.body)
+  const isAdmin = req.userRole === 'ADMIN'
+  const estudianteId = req.params.id
 
+  // Actualizar campos del estudiante
   const estudiante = await prisma.estudiante.update({
-    where: { id: req.params.id },
+    where: { id: estudianteId },
     data: {
       ...(data.nombre          !== undefined && { nombre:          data.nombre }),
       ...(data.tipoDocumento   !== undefined && { tipoDocumento:   data.tipoDocumento }),
@@ -117,8 +133,29 @@ export async function actualizar(req: Request, res: Response) {
       ...(data.colegioId       !== undefined && { colegioId:       data.colegioId }),
       ...(data.asesorId        !== undefined && { asesorId:        data.asesorId }),
     },
-    include: { colegio: true, acudiente: true, asesor: true },
+    include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
   })
+
+  // Solo admin puede modificar curso y descuento
+  if (isAdmin && data.cursoId !== undefined) {
+    // Eliminar cursos existentes y crear el nuevo (un curso activo por estudiante)
+    await prisma.cursoEstudiante.deleteMany({ where: { estudianteId } })
+    if (data.cursoId) {
+      await prisma.cursoEstudiante.create({
+        data: {
+          estudianteId,
+          cursoId: data.cursoId,
+          descuentoPorcentaje: data.descuentoPorcentaje ?? 0,
+        },
+      })
+    }
+    // Recargar con cursos actualizados
+    const actualizado = await prisma.estudiante.findUnique({
+      where: { id: estudianteId },
+      include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
+    })
+    return ApiResponse.success(res, actualizado)
+  }
 
   return ApiResponse.success(res, estudiante)
 }
