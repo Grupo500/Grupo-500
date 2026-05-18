@@ -867,7 +867,7 @@ export default function EstudiantesPage() {
                 {modalDetalle.documento && (
                   <InfoField label={modalDetalle.tipoDocumento ?? 'Documento'} value={modalDetalle.documento} />
                 )}
-                <InfoField label="Email" value={modalDetalle.email} />
+                <div className="col-span-2"><InfoField label="Email" value={modalDetalle.email} /></div>
                 <InfoField label="Teléfono" value={modalDetalle.telefono} />
                 <InfoField label="Colegio" value={modalDetalle.colegio?.nombre ?? '—'} />
                 <InfoField label="Asesor" value={modalDetalle.asesor?.nombre ?? '—'} />
@@ -897,7 +897,7 @@ function InfoField({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-surface-low rounded-lg p-3">
       <p className="text-[11px] text-on-surface-variant mb-0.5">{label}</p>
-      <p className="text-sm text-on-surface font-medium">{value}</p>
+      <p className="text-sm text-on-surface font-medium truncate">{value}</p>
     </div>
   )
 }
