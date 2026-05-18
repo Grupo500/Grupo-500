@@ -46,6 +46,85 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
   )
 }
 
+function CuotasList({ f, pagarCuotaMutation }: { f: Financiamiento; pagarCuotaMutation: any }) {
+  return (
+    <div className="bg-surface-low rounded-lg border border-outline-variant/40 overflow-hidden">
+      {/* Mobile: cuotas como filas compactas */}
+      <div className="md:hidden divide-y divide-outline-variant/20">
+        {f.cuotas.map(c => (
+          <div key={c.id} className="px-3 py-2.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-[11px] text-on-surface-variant flex-shrink-0">#{c.numero}</span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-on-surface">{formatCOP(c.monto)}</p>
+                <p className="text-[11px] text-on-surface-variant">{formatDate(c.fechaVencimiento)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {c.pagado
+                ? <span className="flex items-center gap-1 text-[11px] text-secondary font-medium"><CheckCircle className="w-3 h-3" />Pagado</span>
+                : new Date(c.fechaVencimiento) < new Date()
+                  ? <span className="flex items-center gap-1 text-[11px] text-red-400 font-medium"><AlertTriangle className="w-3 h-3" />Vencida</span>
+                  : <span className="flex items-center gap-1 text-[11px] text-yellow-500 font-medium"><Clock className="w-3 h-3" />Pendiente</span>
+              }
+              {!c.pagado && (
+                <button
+                  onClick={() => pagarCuotaMutation.mutate(c.id)}
+                  disabled={pagarCuotaMutation.isPending}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 transition-colors disabled:opacity-30 min-h-[32px]"
+                >
+                  Pagar
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: tabla */}
+      <table className="hidden md:table w-full">
+        <thead>
+          <tr className="border-b border-outline-variant/40">
+            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Cuota</th>
+            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Monto</th>
+            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Vencimiento</th>
+            <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Estado</th>
+            <th className="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-outline-variant/20">
+          {f.cuotas.map(c => (
+            <tr key={c.id} className="group">
+              <td className="px-3 py-2 text-xs text-on-surface-variant">#{c.numero}</td>
+              <td className="px-3 py-2 text-sm font-medium text-on-surface">{formatCOP(c.monto)}</td>
+              <td className="px-3 py-2 text-xs text-on-surface-variant">{formatDate(c.fechaVencimiento)}</td>
+              <td className="px-3 py-2">
+                {c.pagado
+                  ? <span className="flex items-center gap-1 text-xs text-secondary"><CheckCircle className="w-3 h-3" />Pagado</span>
+                  : new Date(c.fechaVencimiento) < new Date()
+                    ? <span className="flex items-center gap-1 text-xs text-red-400"><AlertTriangle className="w-3 h-3" />Vencida</span>
+                    : <span className="flex items-center gap-1 text-xs text-yellow-400"><Clock className="w-3 h-3" />Pendiente</span>
+                }
+              </td>
+              <td className="px-3 py-2 text-right">
+                {!c.pagado && (
+                  <button
+                    onClick={() => pagarCuotaMutation.mutate(c.id)}
+                    disabled={pagarCuotaMutation.isPending}
+                    className="px-2 py-0.5 rounded text-[11px] font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-30"
+                  >
+                    Pagar
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function FinanciamientoRow({ f }: { f: Financiamiento }) {
   const [expanded, setExpanded] = useState(false)
   const { getToken } = useAuth()
@@ -69,7 +148,44 @@ function FinanciamientoRow({ f }: { f: Financiamiento }) {
 
   return (
     <>
-      <tr className="hover:bg-surface-low/40 transition-colors">
+      {/* Mobile: tarjeta */}
+      <tr className="md:hidden">
+        <td colSpan={2} className="px-4 py-3">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-full text-left"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {expanded
+                  ? <ChevronDown className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  : <ChevronRight className="w-4 h-4 text-on-surface-variant flex-shrink-0 mt-0.5" />
+                }
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-on-surface truncate">{f.estudiante.nombre}</p>
+                  <p className="text-xs text-on-surface-variant truncate">{f.estudiante.email}</p>
+                </div>
+              </div>
+              <div className="flex-shrink-0 text-right">
+                <p className="text-sm font-bold text-on-surface">{formatCOP(f.montoTotal)}</p>
+                <span className={cn('inline-flex px-2 py-0.5 rounded text-[10px] font-medium mt-0.5', ESTADOS[f.estado].color)}>
+                  {ESTADOS[f.estado].label}
+                </span>
+              </div>
+            </div>
+            {/* Barra de progreso siempre visible en móvil */}
+            <div className="mt-2.5 ml-6 flex items-center gap-2">
+              <div className="flex-1 bg-surface-high rounded-full h-1.5">
+                <div className="bg-secondary h-1.5 rounded-full transition-all" style={{ width: `${progreso}%` }} />
+              </div>
+              <span className="text-[11px] text-on-surface-variant flex-shrink-0">{cuotasPagadas}/{f.cuotas.length} cuotas</span>
+            </div>
+          </button>
+        </td>
+      </tr>
+
+      {/* Desktop: fila tabla */}
+      <tr className="hidden md:table-row hover:bg-surface-low/40 transition-colors">
         <td className="px-4 py-3">
           <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
             {expanded ? <ChevronDown className="w-4 h-4 text-primary" /> : <ChevronRight className="w-4 h-4 text-on-surface-variant" />}
@@ -99,49 +215,13 @@ function FinanciamientoRow({ f }: { f: Financiamiento }) {
           <span className="text-xs text-on-surface-variant">{formatDate(f.createdAt)}</span>
         </td>
       </tr>
+
+      {/* Cuotas expandidas */}
       {expanded && (
         <tr>
           <td colSpan={5} className="px-4 pb-4">
-            <div className="ml-6 bg-surface-low rounded-lg border border-outline-variant/40 overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-outline-variant/40">
-                    <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Cuota</th>
-                    <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Monto</th>
-                    <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Vencimiento</th>
-                    <th className="text-left px-3 py-2 text-[11px] text-on-surface-variant uppercase tracking-wider">Estado</th>
-                    <th className="px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/20">
-                  {f.cuotas.map(c => (
-                    <tr key={c.id} className="group">
-                      <td className="px-3 py-2 text-xs text-on-surface-variant">#{c.numero}</td>
-                      <td className="px-3 py-2 text-sm font-medium text-on-surface">{formatCOP(c.monto)}</td>
-                      <td className="px-3 py-2 text-xs text-on-surface-variant">{formatDate(c.fechaVencimiento)}</td>
-                      <td className="px-3 py-2">
-                        {c.pagado
-                          ? <span className="flex items-center gap-1 text-xs text-secondary"><CheckCircle className="w-3 h-3" />Pagado</span>
-                          : new Date(c.fechaVencimiento) < new Date()
-                            ? <span className="flex items-center gap-1 text-xs text-red-400"><AlertTriangle className="w-3 h-3" />Vencida</span>
-                            : <span className="flex items-center gap-1 text-xs text-yellow-400"><Clock className="w-3 h-3" />Pendiente</span>
-                        }
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {!c.pagado && (
-                          <button
-                            onClick={() => pagarCuotaMutation.mutate(c.id)}
-                            disabled={pagarCuotaMutation.isPending}
-                            className="px-2 py-0.5 rounded text-[11px] font-medium text-secondary bg-secondary/10 hover:bg-secondary/20 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-30"
-                          >
-                            Pagar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="ml-6">
+              <CuotasList f={f} pagarCuotaMutation={pagarCuotaMutation} />
             </div>
           </td>
         </tr>
