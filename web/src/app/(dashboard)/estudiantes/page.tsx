@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
@@ -90,8 +90,14 @@ export default function EstudiantesPage() {
   const queryClient = useQueryClient()
 
   const [page, setPage] = useState(1)
-  const [busqueda, setBusqueda] = useState('')
   const [busquedaInput, setBusquedaInput] = useState('')
+  const [busqueda, setBusqueda] = useState('')
+
+  // Debounce: espera 400ms después de que el usuario deje de escribir
+  useEffect(() => {
+    const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 400)
+    return () => clearTimeout(t)
+  }, [busquedaInput])
   const [modalCrear, setModalCrear] = useState(false)
   const [modalDetalle, setModalDetalle] = useState<Estudiante | null>(null)
   const [modalEditar, setModalEditar] = useState<Estudiante | null>(null)
@@ -234,12 +240,6 @@ export default function EstudiantesPage() {
   const total = data?.pagination?.total ?? 0
   const totalPages = data?.pagination?.totalPages ?? 1
 
-  const handleBuscar = (e: React.FormEvent) => {
-    e.preventDefault()
-    setBusqueda(busquedaInput)
-    setPage(1)
-  }
-
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
@@ -343,19 +343,23 @@ export default function EstudiantesPage() {
       />
 
       {/* Búsqueda */}
-      <form onSubmit={handleBuscar} className="flex gap-2">
+      <div className="flex gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-          <input type="text" placeholder="Buscar por nombre..." value={busquedaInput} onChange={e => setBusquedaInput(e.target.value)}
-            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre..."
+            value={busquedaInput}
+            onChange={e => setBusquedaInput(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
         </div>
-        <button type="submit" className="px-4 py-2 bg-surface-high border border-outline-variant rounded-lg text-sm text-on-surface hover:bg-surface-highest transition-colors">Buscar</button>
-        {busqueda && (
-          <button type="button" onClick={() => { setBusqueda(''); setBusquedaInput(''); setPage(1) }} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+        {busquedaInput && (
+          <button type="button" onClick={() => setBusquedaInput('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
             <X className="w-4 h-4" />
           </button>
         )}
-      </form>
+      </div>
 
       {/* Tabla */}
       <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
