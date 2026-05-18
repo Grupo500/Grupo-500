@@ -375,7 +375,7 @@ export default function PagosPage() {
               {p.estado === 'PENDIENTE' && (
                 <button
                   onClick={() => setModalMarcarPagado(p)}
-                  className="mt-auto w-full py-1.5 rounded-lg text-[11px] md:text-xs font-semibold text-on-primary bg-primary hover:bg-primary/85 transition-colors border-t border-outline-variant/30 pt-2.5"
+                  className="mt-auto w-full py-1.5 rounded-lg text-[11px] md:text-xs font-semibold text-on-primary bg-primary hover:bg-primary/85 transition-colors flex items-center justify-center"
                 >
                   Marcar pagado
                 </button>
