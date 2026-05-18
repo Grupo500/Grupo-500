@@ -32,7 +32,7 @@ export default async function ReportesPage() {
 
       {/* KPIs de ingresos */}
       <div>
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Ingresos</p>
+        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-3">Ingresos</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard title="Hoy" value={formatCOP(ingresos.hoy)} icon={TrendingUp} variant="success" />
           <KpiCard title="Esta semana" value={formatCOP(ingresos.semana)} icon={CreditCard} variant="default" />
@@ -43,7 +43,7 @@ export default async function ReportesPage() {
 
       {/* KPIs de cobranza */}
       <div>
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Cobranza</p>
+        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-3">Cobranza</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard title="Por cobrar" value={formatCOP(cobranza.pendiente.monto)} subtitle={`${cobranza.pendiente.cantidad} cuotas`} icon={Wallet} variant="warning" />
           <KpiCard title="En mora" value={formatCOP(cobranza.vencida.monto)} subtitle={`${cobranza.vencida.cantidad} vencidas`} icon={AlertTriangle} variant="error" />

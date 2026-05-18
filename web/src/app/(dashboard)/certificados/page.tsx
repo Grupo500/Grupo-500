@@ -289,7 +289,7 @@ export default function CertificadosPage() {
       {/* ── Sección firmas (solo ADMIN) ── */}
       {isAdmin && (
         <div className="space-y-3">
-          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">
+          <p className="text-[12px] font-semibold text-white/70 uppercase tracking-wider">
             Firmas de representantes legales
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
