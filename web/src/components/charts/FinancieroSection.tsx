@@ -83,15 +83,18 @@ export function FinancieroSection({ periodo }: Props) {
   const { theme }    = useTheme()
   const isDark       = theme === 'dark'
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['financiero-periodo', periodo],
     queryFn: async () => {
       const token = await getToken()
-      return createClientFetcher(token ?? '')(`/reportes/financiero-periodo?periodo=${periodo}`) as Promise<{
+      if (!token) throw new Error('Sin autenticación')
+      const fetcher = createClientFetcher(token)
+      return fetcher(`/reportes/financiero-periodo?periodo=${periodo}`) as Promise<{
         data: { totales: Totales; puntos: Punto[] }
       }>
     },
     staleTime: 60_000,
+    retry: 2,
   })
 
   const totales = data?.data?.totales ?? { ventaTotal: 0, recaudo: 0, saldo: 0 }
@@ -112,6 +115,17 @@ export function FinancieroSection({ periodo }: Props) {
     : periodo === 'semanal'
     ? 'Esta semana'
     : now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+
+  if (isError) {
+    return (
+      <div className="rounded-2xl p-4 bg-[var(--surface-lowest)] border border-[var(--outline-variant)] flex items-center justify-between gap-3">
+        <p className="text-[13px] text-on-surface-variant">No se pudo cargar la información financiera</p>
+        <button onClick={() => refetch()} className="text-[12px] font-medium text-primary hover:underline flex-shrink-0">
+          Reintentar
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-3">
