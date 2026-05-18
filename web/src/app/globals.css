@@ -123,27 +123,28 @@
   html {
     scroll-behavior: smooth;
     height: 100%;
-    /* Sin background aquí — lo pinta ::before para que quede fijo */
-  }
-
-  /* Fondo anclado al viewport — nunca scrollea en ningún browser */
-  html::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background: var(--bg);
+    background-color: #003060; /* color status bar */
   }
 
   body {
     height: 100%;
     background: transparent;
+    position: relative;
     min-height: 100vh;
     color: var(--on-surface);
     font-family: Inter, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02","cv03","cv04","cv11";
     transition: color 0.15s ease;
+  }
+
+  /* Gradiente fijo — en body::before para no interferir con background de html (status bar) */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--bg);
   }
 
   select {
