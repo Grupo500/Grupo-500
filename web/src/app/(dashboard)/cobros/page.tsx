@@ -111,43 +111,49 @@ export default function CobrosPage() {
       <PageHeader title="Calendario de cobros" subtitle="Gestiona las cuotas y envía recordatorios por WhatsApp" />
 
       {/* Tarjetas resumen */}
-      <div className="grid grid-cols-3 gap-3">
-        <button onClick={() => toggleFiltro('porCobrar')} className={cn(cardBase,
+      <div className="grid grid-cols-3 gap-2.5">
+        {/* Por cobrar */}
+        <button onClick={() => toggleFiltro('porCobrar')} className={cn(
+          'card p-3 flex flex-col items-center text-center gap-2 cursor-pointer select-none transition-all duration-150 ring-2 ring-transparent',
           filtro === 'porCobrar' ? 'ring-primary/40 bg-[var(--primary-container)]/50 border-primary/30' : 'hover:bg-[var(--surface-high)]'
         )}>
-          <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0',
+          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
             filtro === 'porCobrar' ? 'bg-primary text-on-primary' : 'bg-[var(--primary-container)] text-primary')}>
             <Wallet className="w-4 h-4" />
           </div>
-          <div className="text-left min-w-0">
-            <p className={cn('text-[11px] font-medium', filtro === 'porCobrar' ? 'text-primary' : 'text-on-surface-variant')}>Por cobrar</p>
-            <p className="text-[15px] font-bold text-on-surface tabular truncate">{formatCOP(totalPorCobrar)}</p>
+          <div className="w-full min-w-0">
+            <p className={cn('text-[10px] font-medium leading-none mb-1', filtro === 'porCobrar' ? 'text-primary' : 'text-on-surface-variant')}>Por cobrar</p>
+            <p className="text-[13px] font-bold text-on-surface tabular leading-none">{formatCOP(totalPorCobrar)}</p>
           </div>
         </button>
 
-        <button onClick={() => toggleFiltro('cobrado')} className={cn(cardBase,
+        {/* Cobrado */}
+        <button onClick={() => toggleFiltro('cobrado')} className={cn(
+          'card p-3 flex flex-col items-center text-center gap-2 cursor-pointer select-none transition-all duration-150 ring-2 ring-transparent',
           filtro === 'cobrado' ? 'ring-secondary/40 bg-[var(--secondary-container)]/50 border-secondary/30' : 'hover:bg-[var(--surface-high)]'
         )}>
-          <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0',
+          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
             filtro === 'cobrado' ? 'bg-secondary text-white' : 'bg-[var(--secondary-container)] text-secondary')}>
             <CheckCircle className="w-4 h-4" />
           </div>
-          <div className="text-left min-w-0">
-            <p className={cn('text-[11px] font-medium', filtro === 'cobrado' ? 'text-secondary' : 'text-on-surface-variant')}>Cobrado</p>
-            <p className="text-[15px] font-bold text-on-surface tabular truncate">{formatCOP(totalCobrado)}</p>
+          <div className="w-full min-w-0">
+            <p className={cn('text-[10px] font-medium leading-none mb-1', filtro === 'cobrado' ? 'text-secondary' : 'text-on-surface-variant')}>Cobrado</p>
+            <p className="text-[13px] font-bold text-on-surface tabular leading-none">{formatCOP(totalCobrado)}</p>
           </div>
         </button>
 
-        <button onClick={() => toggleFiltro('vencidas')} className={cn(cardBase,
+        {/* Vencidas */}
+        <button onClick={() => toggleFiltro('vencidas')} className={cn(
+          'card p-3 flex flex-col items-center text-center gap-2 cursor-pointer select-none transition-all duration-150 ring-2 ring-transparent',
           filtro === 'vencidas' ? 'ring-[var(--error)]/40 bg-[var(--error-container)]/50 border-[var(--error)]/30' : 'hover:bg-[var(--surface-high)]'
         )}>
-          <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0',
+          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
             filtro === 'vencidas' ? 'bg-[var(--error)] text-white' : 'bg-[var(--error-container)] text-[var(--error)]')}>
             <AlertCircle className="w-4 h-4" />
           </div>
-          <div className="text-left min-w-0">
-            <p className={cn('text-[11px] font-medium', filtro === 'vencidas' ? 'text-[var(--error)]' : 'text-on-surface-variant')}>Vencidas</p>
-            <p className="text-[15px] font-bold text-[var(--error)] tabular">{totalVencidas}</p>
+          <div className="w-full min-w-0">
+            <p className={cn('text-[10px] font-medium leading-none mb-1', filtro === 'vencidas' ? 'text-[var(--error)]' : 'text-on-surface-variant')}>Vencidas</p>
+            <p className="text-[13px] font-bold text-[var(--error)] tabular leading-none">{totalVencidas}</p>
           </div>
         </button>
       </div>
@@ -290,7 +296,7 @@ export default function CobrosPage() {
                         )}
                         {!cuota.pagado && waLink && (
                           <a href={waLink} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-colors">
                             <MessageCircle className="w-3 h-3" />WA
                           </a>
                         )}
