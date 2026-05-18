@@ -138,7 +138,9 @@ export function FinancieroSection({ periodo }: Props) {
               onClick={() => setSelected(m.key)}
               className="relative overflow-hidden rounded-2xl p-3.5 text-left focus:outline-none"
               style={{
-                background: isSelected ? `linear-gradient(135deg, ${c}20 0%, ${c}0c 100%)` : 'var(--surface-lowest)',
+                background: isSelected
+                  ? `linear-gradient(135deg, ${c}28 0%, ${c}14 100%), var(--surface-lowest)`
+                  : 'var(--surface-lowest)',
                 border: `1.5px solid ${isSelected ? c : 'var(--outline-variant)'}`,
                 boxShadow: isSelected ? `0 4px 24px ${c}28, 0 0 0 1px ${c}18` : '0 1px 4px rgba(0,0,0,0.04)',
                 transform: isSelected ? 'scale(1.015)' : 'scale(1)',

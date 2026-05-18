@@ -15,7 +15,7 @@ export function RefreshButton() {
   return (
     <button
       onClick={handleRefresh}
-      className="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors"
+      className="w-9 h-9 rounded-xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-highest transition-colors"
       title="Actualizar"
     >
       <RefreshCw className={cn('w-4 h-4', spinning && 'animate-spin')} />
