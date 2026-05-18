@@ -4,7 +4,6 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { formatCOP } from '@/lib/utils'
 import { TrendingUp, Wallet, CreditCard, Users, AlertTriangle } from 'lucide-react'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
-import { RankingAsesores } from '@/components/charts/RankingAsesores'
 
 async function getReporteData() {
   try {
@@ -52,9 +51,8 @@ export default async function ReportesPage() {
       </div>
 
       {/* Gráficas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <IngresosMensualesChart />
-        <RankingAsesores />
       </div>
     </div>
   )

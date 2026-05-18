@@ -7,7 +7,6 @@ import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP, formatDate } from '@/lib/utils'
 import { UserCheck, Mail, Phone, Loader2, Users, TrendingUp, BookOpen, Search, X } from 'lucide-react'
-import { RankingAsesores } from '@/components/charts/RankingAsesores'
 
 interface Asesor {
   id: string
@@ -47,9 +46,6 @@ export default function AsesoresPage() {
         title="Asesores"
         subtitle={`${asesores.length} asesores registrados en el equipo`}
       />
-
-      {/* Ranking — ocupa ancho completo */}
-      <RankingAsesores />
 
       {/* Búsqueda */}
       <div className="flex gap-2">
