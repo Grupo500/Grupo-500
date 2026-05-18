@@ -34,22 +34,34 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-3 animate-fade-in">
         <div className="flex items-start justify-between">
-          {/* Saludo: en móvil dos líneas, en desktop una sola */}
-          <div>
-            <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
-              <span className="md:hidden">
-                {saludo},<br />{firstName} 👋
-              </span>
-              <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
-            </h1>
-            <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen general de la operación</p>
+          {/* Saludo */}
+          <div className="flex items-center gap-3">
+            {/* Avatar solo en móvil */}
+            {user?.imageUrl && (
+              <Image
+                src={user.imageUrl}
+                alt={firstName}
+                width={46}
+                height={46}
+                className="rounded-full md:hidden flex-shrink-0 ring-2 ring-[#2094ff]/25"
+              />
+            )}
+            <div>
+              <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+                <span className="md:hidden">
+                  {saludo},<br />{firstName} 👋
+                </span>
+                <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
+              </h1>
+              <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen general de la operación</p>
+            </div>
           </div>
           <Image
             src="/logo-grupo500-transparent.png"
             alt="Grupo 500"
             width={80}
             height={80}
-            className="object-contain flex-shrink-0"
+            className="object-contain flex-shrink-0 hidden md:block"
             priority
           />
         </div>
@@ -95,10 +107,25 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title={`${saludo}, ${firstName} 👋`}
-        subtitle="Resumen de tu actividad y gestión"
-      />
+      {/* Saludo asesor */}
+      <div className="flex items-center gap-3 sm:block">
+        {user?.imageUrl && (
+          <Image
+            src={user.imageUrl}
+            alt={firstName}
+            width={46}
+            height={46}
+            className="rounded-full sm:hidden flex-shrink-0 ring-2 ring-[#2094ff]/25"
+          />
+        )}
+        <div>
+          <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+            <span className="sm:hidden">{saludo},<br />{firstName} 👋</span>
+            <span className="hidden sm:inline">{saludo}, {firstName} 👋</span>
+          </h1>
+          <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen de tu actividad y gestión</p>
+        </div>
+      </div>
       <RefreshButton />
 
       {/* Meta de ventas */}

@@ -33,10 +33,10 @@
   --outline:            #5a74a8;
   --outline-variant:    #c2d4ef;
 
-  /* Primary — azul brand #2094ff (oscurecido para WCAG AA 4.6:1) */
-  --primary:            #1a7de0;
+  /* Primary — azul brand #2094ff */
+  --primary:            #2094ff;
   --primary-on:         #ffffff;
-  --primary-container:  #d6eaff;
+  --primary-container:  #cce4ff;
   --primary-dim:        #95daff;
 
   /* Secondary — indigo brand #4361ee */
@@ -227,7 +227,7 @@
     background: var(--primary); color: var(--primary-on);
     transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
     cursor: pointer; border: none;
-    box-shadow: 0 1px 3px rgba(0,48,96,0.15);
+    box-shadow: 0 1px 3px rgba(32,148,255,0.25);
   }
   .btn-primary:hover   { opacity: 0.91; box-shadow: var(--shadow-diffused); }
   .btn-primary:active  { transform: scale(0.98); opacity: 1; }
