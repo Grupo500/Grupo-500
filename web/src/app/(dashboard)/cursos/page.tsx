@@ -211,12 +211,12 @@ export default function CursosPage() {
               </div>
               <h3 className="mt-2 text-xs font-semibold text-on-surface">{c.nombre}</h3>
 
-              <div className="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
+              <div className="mt-4 pt-4 border-t border-outline-variant/40 flex flex-col gap-1.5">
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                  <Clock className="w-3.5 h-3.5" />{c.duracionHoras} horas
+                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />{c.duracionHoras} horas
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                  <Users className="w-3.5 h-3.5" />{c._count?.estudiantes ?? 0} estudiantes
+                  <Users className="w-3.5 h-3.5 flex-shrink-0" />{c._count?.estudiantes ?? 0} estudiantes
                 </span>
               </div>
             </div>
