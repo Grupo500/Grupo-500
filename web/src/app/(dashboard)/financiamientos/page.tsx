@@ -393,21 +393,20 @@ export default function FinanciamientosPage() {
 
       {/* ── Lista mobile (< md) ── */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 md:hidden"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
       ) : financiamientos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl md:hidden">
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl">
           <Wallet className="w-10 h-10 mb-3 opacity-30" />
           <p className="text-sm">No hay financiamientos registrados</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:hidden">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {financiamientos.map(f => <FinanciamientoCard key={f.id} f={f} />)}
         </div>
       )}
 
-      {/* Paginación mobile */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between md:hidden">
+        <div className="flex items-center justify-between">
           <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
           <div className="flex gap-2">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
@@ -415,43 +414,6 @@ export default function FinanciamientosPage() {
           </div>
         </div>
       )}
-
-      {/* ── Tabla desktop (≥ md) ── */}
-      <div className="hidden md:block bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
-        ) : financiamientos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
-            <Wallet className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">No hay financiamientos registrados</p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-outline-variant bg-surface-low">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Total</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Estado</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Progreso</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden xl:table-cell">Creado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/40">
-              {financiamientos.map(f => <FinanciamientoRow key={f.id} f={f} />)}
-            </tbody>
-          </table>
-        )}
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
-            <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
-            <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronRight className="w-4 h-4" /></button>
-            </div>
-          </div>
-        )}
-      </div>
 
       <Modal open={modalCrear} onClose={() => setModalCrear(false)}>
         <div className="p-6">

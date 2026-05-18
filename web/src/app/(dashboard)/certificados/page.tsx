@@ -330,16 +330,15 @@ export default function CertificadosPage() {
         )}
       </div>
 
-      {/* ── Grid mobile (< md) ── */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 md:hidden"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
       ) : certificados.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl md:hidden">
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl">
           <Award className="w-10 h-10 mb-3 opacity-30" />
           <p className="text-sm">No hay certificados generados</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:hidden">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {certificados.map((c, i) => {
             const { label, color, icon: Icon } = TIPOS[c.tipo]
             const cargando = descargando === c.id
@@ -387,9 +386,8 @@ export default function CertificadosPage() {
         </div>
       )}
 
-      {/* Paginación mobile */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between md:hidden">
+        <div className="flex items-center justify-between">
           <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
           <div className="flex gap-2">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
@@ -397,111 +395,6 @@ export default function CertificadosPage() {
           </div>
         </div>
       )}
-
-      {/* ── Tabla de certificados ── */}
-      <div className="hidden md:block bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
-          </div>
-        ) : certificados.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
-            <Award className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">No hay certificados generados</p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-outline-variant bg-surface-low">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Tipo</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Emitido</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/40">
-              {certificados.map((c, i) => {
-                const { label, color, icon: Icon } = TIPOS[c.tipo]
-                const cargando = descargando === c.id
-                return (
-                  <tr key={c.id} className="hover:bg-surface-low/40 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-on-surface">{c.estudiante.nombre}</p>
-                      <p className="text-xs text-on-surface-variant">{c.estudiante.email}</p>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium', color)}>
-                        <Icon className="w-3 h-3" />{label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-xs text-on-surface-variant">{formatDate(c.fechaEmision)}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Descargar */}
-                        <button
-                          onClick={() => handleDescargar(c, i)}
-                          disabled={!!descargando || !!enviando}
-                          title="Descargar PDF"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {cargando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-                          <span className="hidden sm:inline">{cargando ? 'Generando…' : 'PDF'}</span>
-                        </button>
-
-                        {/* WhatsApp */}
-                        <button
-                          onClick={() => handleEnviar(c, 'whatsapp')}
-                          disabled={!!descargando || !!enviando}
-                          title="Enviar por WhatsApp"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {enviando === `${c.id}-whatsapp`
-                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                            : <MessageCircle className="w-3 h-3" />
-                          }
-                          <span className="hidden sm:inline">WhatsApp</span>
-                        </button>
-
-                        {/* Correo */}
-                        <button
-                          onClick={() => handleEnviar(c, 'correo')}
-                          disabled={!!descargando || !!enviando}
-                          title="Enviar por correo"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {enviando === `${c.id}-correo`
-                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                            : <Mail className="w-3 h-3" />
-                          }
-                          <span className="hidden sm:inline">Correo</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
-            <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
-            <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* ── Modal Generar ── */}
       <Modal open={modalGenerar} onClose={() => setModalGenerar(false)}>

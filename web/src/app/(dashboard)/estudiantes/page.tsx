@@ -445,12 +445,12 @@ export default function EstudiantesPage() {
       {isLoading ? (
         <div className="flex items-center justify-center py-16 md:hidden"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
       ) : estudiantes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl md:hidden">
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl">
           <Users className="w-10 h-10 mb-3 opacity-30" />
           <p className="text-sm">No se encontraron estudiantes</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:hidden">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {estudiantes.map((e) => (
             <div key={e.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
               {/* Avatar + nombre */}
@@ -490,7 +490,7 @@ export default function EstudiantesPage() {
 
       {/* Paginación mobile */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between md:hidden">
+        <div className="flex items-center justify-between">
           <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
           <div className="flex gap-2">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
@@ -498,93 +498,6 @@ export default function EstudiantesPage() {
           </div>
         </div>
       )}
-
-      {/* ── Tabla desktop (≥ md) ── */}
-      <div className="hidden md:block bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
-        ) : estudiantes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
-            <Users className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">No se encontraron estudiantes</p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-outline-variant bg-surface-low">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Colegio</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Acudiente</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden xl:table-cell">Asesor</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Registrado</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/40">
-              {estudiantes.map((e) => (
-                <tr key={e.id} className="hover:bg-surface-low/40 transition-colors group">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-primary">{e.nombre[0]?.toUpperCase()}</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-on-surface">{e.nombre}</p>
-                        <p className="text-xs text-on-surface-variant flex items-center gap-1"><Mail className="w-3 h-3" />{e.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <span className="flex items-center gap-1.5 text-sm text-on-surface-variant">
-                      <School className="w-3.5 h-3.5" />
-                      {e.colegio?.nombre ?? <span className="italic opacity-40">Sin colegio</span>}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    {e.acudiente ? (
-                      <div>
-                        <p className="text-sm text-on-surface">{e.acudiente.nombre}</p>
-                        <p className="text-xs text-on-surface-variant flex items-center gap-1"><Phone className="w-3 h-3" />{e.acudiente.telefono}</p>
-                      </div>
-                    ) : <span className="text-xs text-on-surface-variant italic opacity-40">Sin acudiente</span>}
-                  </td>
-                  <td className="px-4 py-3 hidden xl:table-cell">
-                    <span className="text-sm text-on-surface-variant">{e.asesor?.nombre ?? '—'}</span>
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <span className="text-xs text-on-surface-variant">{formatDate(e.createdAt)}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => setModalDetalle(e)} className="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors" title="Ver detalle">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => abrirEditar(e)} className="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors" title="Editar estudiante">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setConfirmEliminar(e)}
-                        className="p-1.5 rounded text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors" title="Eliminar estudiante">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
-            <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
-            <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronRight className="w-4 h-4" /></button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Error eliminar (fuera de la tabla para que se vea en mobile también) */}
       {eliminarError && (

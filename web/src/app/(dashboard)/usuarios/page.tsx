@@ -171,8 +171,7 @@ export default function UsuariosPage() {
         )}
 
         {!isLoading && usuarios.length > 0 && (<>
-          {/* Mobile: grid 2 cols */}
-          <div className="md:hidden p-3 grid grid-cols-2 gap-3">
+          <div className="p-3 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {usuarios.map(u => (
               <div key={u.id} className="bg-surface-low border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
                 {/* Header */}
@@ -231,96 +230,6 @@ export default function UsuariosPage() {
             ))}
           </div>
 
-          {/* Desktop: tabla */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--outline-variant)] bg-[var(--surface-low)]">
-                  {['Usuario', 'Perfil asesor', 'Registrado', 'Rol actual', 'Cambiar rol', ''].map(h => (
-                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-on-surface-variant uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--outline-variant)]">
-                {usuarios.map(u => (
-                  <tr key={u.id} className="hover:bg-[var(--surface-low)] transition-colors">
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
-                          {u.imageUrl
-                            ? <img src={u.imageUrl} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-xs font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
-                              </div>
-                          }
-                        </div>
-                        <div>
-                          <p className="font-medium text-on-surface">{u.nombre ?? u.asesor?.nombre ?? '—'}</p>
-                          <p className="text-xs text-on-surface-variant">{u.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {u.asesor
-                        ? <div><p className="text-on-surface">{u.asesor.nombre}</p><p className="text-xs text-on-surface-variant">{u.asesor.telefono}</p></div>
-                        : <span className="text-on-surface-variant text-xs italic">Sin perfil</span>
-                      }
-                    </td>
-                    <td className="px-5 py-3.5 text-on-surface-variant text-xs">{formatDate(u.createdAt)}</td>
-                    <td className="px-5 py-3.5">
-                      <span className={cn(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
-                        u.role === 'ADMIN'
-                          ? 'bg-tertiary/10 text-tertiary border border-tertiary/20'
-                          : 'bg-primary/10 text-primary border border-primary/20',
-                      )}>
-                        {u.role === 'ADMIN' ? <Shield className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
-                        {u.role === 'ADMIN' ? 'Administrador' : 'Asesor'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <select
-                        value={u.role}
-                        disabled={cambiarRol.isPending}
-                        onChange={e => cambiarRol.mutate({ id: u.id, role: e.target.value as 'ADMIN' | 'VENDEDOR' })}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg border bg-[var(--surface-low)] border-[var(--outline-variant)] text-on-surface focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
-                      >
-                        <option value="VENDEDOR">Asesor</option>
-                        <option value="ADMIN">Administrador</option>
-                      </select>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1">
-                        {u.asesor && (
-                          <button
-                            onClick={() => setEditAsesor({
-                              asesorId: (u.asesor as any).id,
-                              nombre: u.asesor!.nombre,
-                              telefono: u.asesor!.telefono,
-                              email: u.email,
-                            })}
-                            className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            if (confirm(`¿Eliminar a ${u.nombre ?? u.email}? Esta acción no se puede deshacer.`))
-                              eliminar.mutate(u.id)
-                          }}
-                          disabled={eliminar.isPending}
-                          className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </>)}
       </div>
 
