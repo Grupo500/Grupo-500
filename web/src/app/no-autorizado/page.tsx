@@ -13,7 +13,7 @@ export default function NoAutorizadoPage() {
   }, [])
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-dvh flex items-center justify-center p-4" style={{ background: '#21b9f7' }}>
       <div className="w-full max-w-sm text-center space-y-5">
 
         <div className="flex justify-center">
