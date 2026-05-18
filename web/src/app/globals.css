@@ -120,7 +120,13 @@
 /* ─── BASE ──────────────────────────────────────────────────────────────────── */
 @layer base {
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+    background-color: #2094ff;
+  }
+  html.dark {
+    background-color: #020810;
+  }
 
   body {
     background: var(--bg);
