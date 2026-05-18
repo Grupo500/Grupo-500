@@ -87,7 +87,7 @@ export default function AsesoresPage() {
             <p className="text-xs mt-1 opacity-60">Los usuarios con rol Asesor aparecen aquí</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {asesores.map(a => (
               <div
                 key={a.id}
@@ -95,13 +95,13 @@ export default function AsesoresPage() {
               >
                 {/* Header */}
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[var(--primary-container)] border border-primary/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[var(--primary-container)] border border-primary/20 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-bold text-primary">
                       {a.nombre.split(' ').slice(0, 2).map(n => n[0]?.toUpperCase() ?? '').join('')}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-on-surface truncate">{a.nombre}</p>
+                    <p className="text-xs sm:text-sm font-semibold text-on-surface truncate">{a.nombre}</p>
                     <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
                       Asesor
                     </span>

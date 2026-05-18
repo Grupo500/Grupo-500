@@ -330,8 +330,76 @@ export default function CertificadosPage() {
         )}
       </div>
 
+      {/* ── Grid mobile (< md) ── */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16 md:hidden"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+      ) : certificados.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl md:hidden">
+          <Award className="w-10 h-10 mb-3 opacity-30" />
+          <p className="text-sm">No hay certificados generados</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {certificados.map((c, i) => {
+            const { label, color, icon: Icon } = TIPOS[c.tipo]
+            const cargando = descargando === c.id
+            return (
+              <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Award className="w-4 h-4 text-primary" />
+                  </div>
+                  <p className="text-xs font-semibold text-on-surface leading-tight line-clamp-2 flex-1">{c.estudiante.nombre}</p>
+                </div>
+                <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium self-start', color)}>
+                  <Icon className="w-3 h-3" />{label}
+                </span>
+                <p className="text-[10px] text-on-surface-variant">{formatDate(c.fechaEmision)}</p>
+                <div className="pt-1 border-t border-outline-variant/40 flex items-center gap-1">
+                  <button
+                    onClick={() => handleDescargar(c, i)}
+                    disabled={!!descargando || !!enviando}
+                    className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50 transition-colors"
+                    title="PDF"
+                  >
+                    {cargando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => handleEnviar(c, 'whatsapp')}
+                    disabled={!!descargando || !!enviando}
+                    className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-[#25D366] bg-[#25D366]/10 hover:bg-[#25D366]/20 disabled:opacity-50 transition-colors"
+                    title="WhatsApp"
+                  >
+                    {enviando === `${c.id}-whatsapp` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => handleEnviar(c, 'correo')}
+                    disabled={!!descargando || !!enviando}
+                    className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 disabled:opacity-50 transition-colors"
+                    title="Correo"
+                  >
+                    {enviando === `${c.id}-correo` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Paginación mobile */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between md:hidden">
+          <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+          </div>
+        </div>
+      )}
+
       {/* ── Tabla de certificados ── */}
-      <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
+      <div className="hidden md:block bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 text-primary animate-spin" />

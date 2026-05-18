@@ -179,15 +179,15 @@ export default function CursosPage() {
           <p className="text-sm">No hay cursos creados</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {cursos.map(c => (
-            <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-colors group">
+            <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 sm:p-5 hover:border-primary/30 transition-colors group">
               {/* Fila superior: ícono — precio — acciones */}
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                   <BookOpen className="w-4 h-4 text-primary" />
                 </div>
-                <p className="text-lg font-bold text-primary flex-1">{formatCOP(c.precio)}</p>
+                <p className="text-sm font-bold text-primary flex-1">{formatCOP(c.precio)}</p>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => abrirEditar(c)}
@@ -209,7 +209,7 @@ export default function CursosPage() {
                   </button>
                 </div>
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-on-surface">{c.nombre}</h3>
+              <h3 className="mt-2 text-xs font-semibold text-on-surface">{c.nombre}</h3>
 
               <div className="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">

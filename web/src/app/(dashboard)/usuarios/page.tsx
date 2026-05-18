@@ -171,77 +171,60 @@ export default function UsuariosPage() {
         )}
 
         {!isLoading && usuarios.length > 0 && (<>
-          {/* Mobile: tarjetas */}
-          <div className="md:hidden divide-y divide-[var(--outline-variant)]">
+          {/* Mobile: grid 2 cols */}
+          <div className="md:hidden p-3 grid grid-cols-2 gap-3">
             {usuarios.map(u => (
-              <div key={u.id} className="p-4 space-y-3">
+              <div key={u.id} className="bg-surface-low border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
                     {u.imageUrl
                       ? <img src={u.imageUrl} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-sm font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
+                          <span className="text-xs font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
                         </div>
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-on-surface truncate">{u.nombre ?? u.asesor?.nombre ?? '—'}</p>
-                    <p className="text-xs text-on-surface-variant truncate">{u.email}</p>
+                    <p className="text-xs font-semibold text-on-surface truncate leading-tight">{u.nombre ?? u.asesor?.nombre ?? '—'}</p>
+                    <span className={cn(
+                      'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold mt-0.5',
+                      u.role === 'ADMIN' ? 'bg-tertiary/10 text-tertiary' : 'bg-primary/10 text-primary',
+                    )}>
+                      {u.role === 'ADMIN' ? <Shield className="w-2.5 h-2.5" /> : <UserCheck className="w-2.5 h-2.5" />}
+                      {u.role === 'ADMIN' ? 'Admin' : 'Asesor'}
+                    </span>
                   </div>
-                  <span className={cn(
-                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0',
-                    u.role === 'ADMIN'
-                      ? 'bg-tertiary/10 text-tertiary border border-tertiary/20'
-                      : 'bg-primary/10 text-primary border border-primary/20',
-                  )}>
-                    {u.role === 'ADMIN' ? <Shield className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
-                    {u.role === 'ADMIN' ? 'Admin' : 'Asesor'}
-                  </span>
                 </div>
-
-                {/* Perfil asesor */}
+                <p className="text-[10px] text-on-surface-variant truncate">{u.email}</p>
                 {u.asesor && (
-                  <div className="text-xs text-on-surface-variant bg-[var(--surface-low)] rounded-lg px-3 py-2">
-                    <span className="font-medium text-on-surface">{u.asesor.nombre}</span>
-                    <span className="mx-1.5">·</span>
-                    {u.asesor.telefono}
-                  </div>
+                  <p className="text-[10px] text-on-surface-variant truncate">{u.asesor.telefono}</p>
                 )}
-
                 {/* Acciones */}
-                <div className="flex items-center gap-2">
+                <div className="pt-1 border-t border-outline-variant/40 flex items-center gap-1">
                   <select
                     value={u.role}
                     disabled={cambiarRol.isPending}
                     onChange={e => cambiarRol.mutate({ id: u.id, role: e.target.value as 'ADMIN' | 'VENDEDOR' })}
-                    className="flex-1 text-xs font-medium px-3 py-2 rounded-lg border bg-[var(--surface-low)] border-[var(--outline-variant)] text-on-surface focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
+                    className="flex-1 text-[10px] font-medium px-1.5 py-1.5 rounded-lg border bg-surface-high border-outline-variant text-on-surface focus:outline-none disabled:opacity-50"
                   >
-                    <option value="VENDEDOR">Cambiar a Asesor</option>
-                    <option value="ADMIN">Cambiar a Admin</option>
+                    <option value="VENDEDOR">Asesor</option>
+                    <option value="ADMIN">Admin</option>
                   </select>
                   {u.asesor && (
                     <button
-                      onClick={() => setEditAsesor({
-                        asesorId: (u.asesor as any).id,
-                        nombre: u.asesor!.nombre,
-                        telefono: u.asesor!.telefono,
-                        email: u.email,
-                      })}
-                      className="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                      onClick={() => setEditAsesor({ asesorId: (u.asesor as any).id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email })}
+                      className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="w-3.5 h-3.5" />
                     </button>
                   )}
                   <button
-                    onClick={() => {
-                      if (confirm(`¿Eliminar a ${u.nombre ?? u.email}? Esta acción no se puede deshacer.`))
-                        eliminar.mutate(u.id)
-                    }}
+                    onClick={() => { if (confirm(`¿Eliminar a ${u.nombre ?? u.email}?`)) eliminar.mutate(u.id) }}
                     disabled={eliminar.isPending}
-                    className="p-2 rounded-lg text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center disabled:opacity-40"
+                    className="p-1.5 rounded-lg text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-40"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

@@ -8,6 +8,62 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, formatCOP, cn } from '@/lib/utils'
 import { Wallet, Plus, X, Loader2, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Clock, AlertTriangle, Search } from 'lucide-react'
 
+function FinanciamientoCard({ f }: { f: Financiamiento }) {
+  const [expanded, setExpanded] = useState(false)
+  const { getToken } = useAuth()
+  const queryClient = useQueryClient()
+
+  const fetcher = async <T,>(path: string, opts?: RequestInit) => {
+    const token = await getToken()
+    return createClientFetcher(token)<T>(path, opts)
+  }
+
+  const pagarCuotaMutation = useMutation({
+    mutationFn: (cuotaId: string) => fetcher(`/cuotas/${cuotaId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ pagado: true }),
+    }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['financiamientos'] }),
+  })
+
+  const cuotasPagadas = f.cuotas.filter(c => c.pagado).length
+  const progreso = f.cuotas.length > 0 ? (cuotasPagadas / f.cuotas.length) * 100 : 0
+  const cfg = ESTADOS[f.estado]
+
+  return (
+    <div className="bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
+      {/* Nombre + estado */}
+      <div className="flex items-start justify-between gap-1.5">
+        <p className="text-xs font-semibold text-on-surface leading-tight line-clamp-2 flex-1">{f.estudiante.nombre}</p>
+        <span className={cn('inline-flex px-1.5 py-0.5 rounded text-[9px] font-semibold flex-shrink-0', cfg.color)}>{cfg.label}</span>
+      </div>
+      {/* Monto */}
+      <p className="text-base font-bold text-on-surface tabular">{formatCOP(f.montoTotal)}</p>
+      {/* Progreso */}
+      <div className="space-y-1">
+        <div className="flex-1 bg-surface-high rounded-full h-1.5">
+          <div className="bg-secondary h-1.5 rounded-full transition-all" style={{ width: `${progreso}%` }} />
+        </div>
+        <p className="text-[10px] text-on-surface-variant text-right">{cuotasPagadas}/{f.cuotas.length} cuotas</p>
+      </div>
+      {/* Botón expandir */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-center gap-1 text-[11px] font-medium text-primary hover:bg-primary/10 py-1.5 rounded-lg transition-colors"
+      >
+        {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+        Ver cuotas
+      </button>
+      {/* Cuotas expandidas */}
+      {expanded && (
+        <div className="-mx-3 -mb-3 border-t border-outline-variant/40 pt-2 px-3 pb-3">
+          <CuotasList f={f} pagarCuotaMutation={pagarCuotaMutation} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface Cuota {
   id: string
   numero: number
@@ -148,42 +204,6 @@ function FinanciamientoRow({ f }: { f: Financiamiento }) {
 
   return (
     <>
-      {/* Mobile: tarjeta */}
-      <tr className="md:hidden">
-        <td colSpan={2} className="px-4 py-3">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="w-full text-left"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {expanded
-                  ? <ChevronDown className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                  : <ChevronRight className="w-4 h-4 text-on-surface-variant flex-shrink-0 mt-0.5" />
-                }
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-on-surface truncate">{f.estudiante.nombre}</p>
-                  <p className="text-xs text-on-surface-variant truncate">{f.estudiante.email}</p>
-                </div>
-              </div>
-              <div className="flex-shrink-0 text-right">
-                <p className="text-sm font-bold text-on-surface">{formatCOP(f.montoTotal)}</p>
-                <span className={cn('inline-flex px-2 py-0.5 rounded text-[10px] font-medium mt-0.5', ESTADOS[f.estado].color)}>
-                  {ESTADOS[f.estado].label}
-                </span>
-              </div>
-            </div>
-            {/* Barra de progreso siempre visible en móvil */}
-            <div className="mt-2.5 ml-6 flex items-center gap-2">
-              <div className="flex-1 bg-surface-high rounded-full h-1.5">
-                <div className="bg-secondary h-1.5 rounded-full transition-all" style={{ width: `${progreso}%` }} />
-              </div>
-              <span className="text-[11px] text-on-surface-variant flex-shrink-0">{cuotasPagadas}/{f.cuotas.length} cuotas</span>
-            </div>
-          </button>
-        </td>
-      </tr>
-
       {/* Desktop: fila tabla */}
       <tr className="hidden md:table-row hover:bg-surface-low/40 transition-colors">
         <td className="px-4 py-3">
@@ -337,11 +357,35 @@ export default function FinanciamientosPage() {
         )}
       </div>
 
-      <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      {/* ── Grid mobile (< md) ── */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16 md:hidden"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+      ) : financiamientos.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl md:hidden">
+          <Wallet className="w-10 h-10 mb-3 opacity-30" />
+          <p className="text-sm">No hay financiamientos registrados</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {financiamientos.map(f => <FinanciamientoCard key={f.id} f={f} />)}
+        </div>
+      )}
+
+      {/* Paginación mobile */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between md:hidden">
+          <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
           </div>
+        </div>
+      )}
+
+      {/* ── Tabla desktop (≥ md) ── */}
+      <div className="hidden md:block bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
         ) : financiamientos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
             <Wallet className="w-10 h-10 mb-3 opacity-30" />
@@ -368,14 +412,8 @@ export default function FinanciamientosPage() {
           <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
             <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
             <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
         )}
