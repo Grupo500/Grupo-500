@@ -441,8 +441,66 @@ export default function EstudiantesPage() {
         )}
       </div>
 
-      {/* Tabla */}
-      <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
+      {/* ── Grid mobile (< md) ── */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16 md:hidden"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+      ) : estudiantes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl md:hidden">
+          <Users className="w-10 h-10 mb-3 opacity-30" />
+          <p className="text-sm">No se encontraron estudiantes</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {estudiantes.map((e) => (
+            <div key={e.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
+              {/* Avatar + nombre */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-primary">{e.nombre[0]?.toUpperCase()}</span>
+                </div>
+                <p className="text-xs font-semibold text-on-surface leading-tight line-clamp-2">{e.nombre}</p>
+              </div>
+              {/* Info */}
+              <div className="space-y-1">
+                <p className="flex items-center gap-1 text-[11px] text-on-surface-variant truncate">
+                  <Phone className="w-3 h-3 flex-shrink-0" />{e.telefono}
+                </p>
+                {e.colegio && (
+                  <p className="flex items-center gap-1 text-[11px] text-on-surface-variant truncate">
+                    <School className="w-3 h-3 flex-shrink-0" />{e.colegio.nombre}
+                  </p>
+                )}
+              </div>
+              {/* Acciones */}
+              <div className="flex items-center gap-1 pt-1 border-t border-outline-variant/40">
+                <button onClick={() => setModalDetalle(e)} className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors" title="Ver detalle">
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button onClick={() => abrirEditar(e)} className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors" title="Editar">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => setConfirmEliminar(e)} className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors" title="Eliminar">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Paginación mobile */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between md:hidden">
+          <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronRight className="w-4 h-4" /></button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Tabla desktop (≥ md) ── */}
+      <div className="hidden md:block bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
         ) : estudiantes.length === 0 ? (
@@ -517,12 +575,6 @@ export default function EstudiantesPage() {
           </table>
         )}
 
-        {eliminarError && (
-          <div className="px-4 py-2 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border-t border-[var(--error)]/20">
-            {eliminarError}
-          </div>
-        )}
-
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
             <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
@@ -533,6 +585,13 @@ export default function EstudiantesPage() {
           </div>
         )}
       </div>
+
+      {/* Error eliminar (fuera de la tabla para que se vea en mobile también) */}
+      {eliminarError && (
+        <div className="px-4 py-2 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-xl">
+          {eliminarError}
+        </div>
+      )}
 
       {/* Modal crear — 3 pasos */}
       <Modal open={modalCrear} onClose={() => { setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY) }}>
