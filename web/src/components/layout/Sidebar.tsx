@@ -58,17 +58,20 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     )}>
 
       {/* ── Logo ─────────────────────────────────── */}
-      <div className={cn(
-        'flex items-center gap-2.5 h-14 border-b border-[var(--outline-variant)] px-4 flex-shrink-0',
-        collapsed && 'justify-center px-0',
-      )}>
+      <div
+        className={cn(
+          'flex items-center gap-2.5 h-14 px-4 flex-shrink-0',
+          collapsed && 'justify-center px-0',
+        )}
+        style={{ background: 'linear-gradient(135deg, #003060 0%, #0a4a8a 100%)' }}
+      >
         <div className="flex-shrink-0 w-7 h-7">
           <Image src="/logo-grupo500.png" alt="Grupo 500" width={28} height={28} className="w-7 h-7 object-cover rounded-full" priority />
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-[13px] font-bold text-on-surface leading-none tracking-tight">Grupo 500</p>
-            <p className="text-[10px] text-on-surface-variant mt-0.5 font-medium">Pre-ICFES</p>
+            <p className="text-[13px] font-bold text-white leading-none tracking-tight">Grupo 500</p>
+            <p className="text-[10px] text-white/60 mt-0.5 font-medium">Pre-ICFES</p>
           </div>
         )}
       </div>
@@ -92,21 +95,17 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
               key={href}
               href={href}
               title={collapsed ? label : undefined}
+              style={isActive ? { background: '#21b9f7', boxShadow: '0 2px 8px rgba(33,185,247,0.35)' } : undefined}
               className={cn(
                 'relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium',
                 'transition-all duration-150 group',
                 collapsed && 'justify-center px-0',
                 isActive
-                  ? 'bg-[var(--primary-container)] text-primary'
+                  ? 'text-white'
                   : 'text-on-surface-variant hover:bg-[var(--surface-high)] hover:text-on-surface',
               )}
             >
-              {/* Active indicator bar */}
-              {isActive && !collapsed && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-primary" />
-              )}
-
-              <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-primary' : 'text-on-surface-variant group-hover:text-on-surface')} />
+              <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-white' : 'text-on-surface-variant group-hover:text-on-surface')} />
 
               {!collapsed && (
                 <>
