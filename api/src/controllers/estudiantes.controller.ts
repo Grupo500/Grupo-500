@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
-import { ApiResponse } from '../utils/response'
+import { ApiResponse, parsePagination } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
+import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
 const crearSchema = z.object({
@@ -32,8 +33,8 @@ const crearSchema = z.object({
 })
 
 export async function listar(req: Request, res: Response) {
-  const { page = '1', limit = '20', nombre, colegioId, asesorId } = req.query
-  const skip = (Number(page) - 1) * Number(limit)
+  const { nombre, colegioId, asesorId } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
   const isAdmin = req.userRole === 'ADMIN'
 
   const where = {
@@ -56,7 +57,7 @@ export async function listar(req: Request, res: Response) {
     prisma.estudiante.count({ where }),
   ])
 
-  return ApiResponse.paginated(res, estudiantes, total, Number(page), Number(limit))
+  return ApiResponse.paginated(res, estudiantes, total, page, limit)
 }
 
 export async function crear(req: Request, res: Response) {
@@ -138,6 +139,7 @@ export async function crear(req: Request, res: Response) {
     return est
   })
 
+  auditLog(req, 'CREATE', 'estudiante', estudiante.id)
   return ApiResponse.created(res, estudiante)
 }
 
@@ -224,6 +226,7 @@ export async function actualizar(req: Request, res: Response) {
 
 export async function eliminar(req: Request, res: Response) {
   await prisma.estudiante.delete({ where: { id: req.params.id } })
+  auditLog(req, 'DELETE', 'estudiante', req.params.id)
   return ApiResponse.noContent(res)
 }
 

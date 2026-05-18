@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
-import { ApiResponse } from '../utils/response'
+import { ApiResponse, parsePagination } from '../utils/response'
+import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
 const registrarSchema = z.object({
@@ -12,8 +13,8 @@ const registrarSchema = z.object({
 })
 
 export async function listar(req: Request, res: Response) {
-  const { estudianteId, asesorId, estado, desde, hasta, nombre, page = '1', limit = '20' } = req.query
-  const skip = (Number(page) - 1) * Number(limit)
+  const { estudianteId, asesorId, estado, desde, hasta, nombre } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
   const isAdmin = req.userRole === 'ADMIN'
 
   const where = {
@@ -38,7 +39,7 @@ export async function listar(req: Request, res: Response) {
     prisma.pago.count({ where }),
   ])
 
-  return ApiResponse.paginated(res, pagos, total, Number(page), Number(limit))
+  return ApiResponse.paginated(res, pagos, total, page, limit)
 }
 
 export async function registrar(req: Request, res: Response) {
@@ -53,6 +54,7 @@ export async function registrar(req: Request, res: Response) {
     include: { estudiante: true },
   })
 
+  auditLog(req, 'CREATE', 'pago', pago.id, { estudianteId: data.estudianteId, monto: data.monto })
   return ApiResponse.created(res, pago)
 }
 
@@ -82,6 +84,7 @@ export async function actualizar(req: Request, res: Response) {
     },
     include: { estudiante: true, asesor: true },
   })
+  auditLog(req, 'UPDATE', 'pago', id, { cambios: data })
   return ApiResponse.success(res, pago)
 }
 

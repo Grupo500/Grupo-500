@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
+import { auditLog } from '../utils/auditLogger'
 
 export async function listar(_req: Request, res: Response) {
   const [asesores, cursosXAsesor] = await Promise.all([
@@ -88,5 +89,6 @@ export async function actualizar(req: Request, res: Response) {
     },
   })
 
+  auditLog(req, 'UPDATE', 'asesor', id, { cambios: { nombre, telefono, email } })
   return ApiResponse.success(res, asesor)
 }

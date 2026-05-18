@@ -1,5 +1,15 @@
 import { Response } from 'express'
 
+const MAX_PAGE_LIMIT = 100
+
+/** Sanitiza y limita los parámetros de paginación de query params */
+export function parsePagination(query: Record<string, unknown>) {
+  const page  = Math.max(1, Number(query.page)  || 1)
+  const limit = Math.min(MAX_PAGE_LIMIT, Math.max(1, Number(query.limit) || 20))
+  const skip  = (page - 1) * limit
+  return { page, limit, skip }
+}
+
 export const ApiResponse = {
   success<T>(res: Response, data: T, statusCode = 200) {
     return res.status(statusCode).json({ success: true, data })

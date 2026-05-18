@@ -16,19 +16,33 @@ function generarNumeroSerie(): string {
   return `G500-${timestamp}-${random}`
 }
 
-export async function listar(_req: Request, res: Response) {
-  const certificados = await prisma.certificado.findMany({
-    include: {
-      estudiante: {
-        include: {
-          colegio: true,
-          cursos: { include: { curso: true }, orderBy: { fechaCompra: 'asc' }, take: 1 },
+export async function listar(req: Request, res: Response) {
+  const { nombre, page = '1', limit = '20' } = req.query
+  const skip = (Number(page) - 1) * Number(limit)
+
+  const where = {
+    ...(nombre && { estudiante: { nombre: { contains: String(nombre), mode: 'insensitive' as const } } }),
+  }
+
+  const [certificados, total] = await Promise.all([
+    prisma.certificado.findMany({
+      where,
+      include: {
+        estudiante: {
+          include: {
+            colegio: true,
+            cursos: { include: { curso: true }, orderBy: { fechaCompra: 'asc' }, take: 1 },
+          },
         },
       },
-    },
-    orderBy: { fechaEmision: 'desc' },
-  })
-  return ApiResponse.success(res, certificados)
+      orderBy: { fechaEmision: 'desc' },
+      skip,
+      take: Number(limit),
+    }),
+    prisma.certificado.count({ where }),
+  ])
+
+  return ApiResponse.paginated(res, certificados, total, Number(page), Number(limit))
 }
 
 export async function generar(req: Request, res: Response) {

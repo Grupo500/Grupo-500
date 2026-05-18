@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
-import { ApiResponse } from '../utils/response'
+import { ApiResponse, parsePagination } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
+import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
 const crearSchema = z.object({
@@ -12,18 +13,27 @@ const crearSchema = z.object({
 })
 
 export async function listar(req: Request, res: Response) {
-  const { estudianteId, estado } = req.query
+  const { estudianteId, estado, nombre } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
-  const financiamientos = await prisma.financiamiento.findMany({
-    where: {
-      ...(estudianteId && { estudianteId: String(estudianteId) }),
-      ...(estado && { estado: String(estado) as any }),
-    },
-    include: { cuotas: true, estudiante: true },
-    orderBy: { createdAt: 'desc' },
-  })
+  const where = {
+    ...(estudianteId && { estudianteId: String(estudianteId) }),
+    ...(estado && { estado: String(estado) as any }),
+    ...(nombre && { estudiante: { nombre: { contains: String(nombre), mode: 'insensitive' as const } } }),
+  }
 
-  return ApiResponse.success(res, financiamientos)
+  const [financiamientos, total] = await Promise.all([
+    prisma.financiamiento.findMany({
+      where,
+      include: { cuotas: true, estudiante: true },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: Number(limit),
+    }),
+    prisma.financiamiento.count({ where }),
+  ])
+
+  return ApiResponse.paginated(res, financiamientos, total, page, limit)
 }
 
 export async function crear(req: Request, res: Response) {
@@ -64,10 +74,16 @@ export async function obtener(req: Request, res: Response) {
   return ApiResponse.success(res, financiamiento)
 }
 
+const actualizarSchema = z.object({
+  estado: z.enum(['ACTIVO', 'COMPLETADO', 'CANCELADO']).optional(),
+})
+
 export async function actualizar(req: Request, res: Response) {
+  const data = actualizarSchema.parse(req.body)
   const financiamiento = await prisma.financiamiento.update({
     where: { id: req.params.id },
-    data: req.body,
+    data,
   })
+  auditLog(req, 'UPDATE', 'financiamiento', req.params.id, { cambios: data })
   return ApiResponse.success(res, financiamiento)
 }

@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
+import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -36,12 +37,20 @@ export async function obtener(req: Request, res: Response) {
   return ApiResponse.success(res, colegio)
 }
 
+const actualizarSchema = z.object({
+  nombre: z.string().min(2).optional(),
+  ciudad: z.string().min(2).optional(),
+})
+
 export async function actualizar(req: Request, res: Response) {
-  const colegio = await prisma.colegio.update({ where: { id: req.params.id }, data: req.body })
+  const data = actualizarSchema.parse(req.body)
+  const colegio = await prisma.colegio.update({ where: { id: req.params.id }, data })
+  auditLog(req, 'UPDATE', 'colegio', req.params.id, { cambios: data })
   return ApiResponse.success(res, colegio)
 }
 
 export async function eliminar(req: Request, res: Response) {
   await prisma.colegio.delete({ where: { id: req.params.id } })
+  auditLog(req, 'DELETE', 'colegio', req.params.id)
   return ApiResponse.noContent(res)
 }

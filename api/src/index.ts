@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
 import compression from 'compression'
@@ -6,6 +6,10 @@ import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import { errorHandler } from './middleware/errorHandler'
 import { logger } from './utils/logger'
+import { validateEnv } from './utils/validateEnv'
+
+// Falla rápido si faltan variables críticas — antes de cualquier otra inicialización
+validateEnv()
 
 // Routes
 import authRoutes from './routes/auth'
@@ -31,6 +35,14 @@ const PORT = process.env.PORT || 3001
 
 // Railway y proxies inversos envían X-Forwarded-For — necesario para rate-limit y HTTPS
 app.set('trust proxy', 1)
+
+// Timeout por request — evita que queries lentas bloqueen workers indefinidamente
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setTimeout(30_000, () => {
+    res.status(503).json({ success: false, error: 'Tiempo de espera agotado.' })
+  })
+  next()
+})
 
 // Security headers
 app.use(helmet())

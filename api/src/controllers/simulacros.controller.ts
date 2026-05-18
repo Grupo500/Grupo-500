@@ -5,17 +5,31 @@ import { NotFoundError } from '../utils/errors'
 import { extraerResultadosDePDF, matchearConDB } from '../services/simulacro.service'
 import fetch from 'node-fetch'
 
-export async function listar(_req: Request, res: Response) {
-  const simulacros = await prisma.simulacro.findMany({
-    include: {
-      estudiantes: {
-        include: { estudiante: { select: { nombre: true } } },
-        orderBy: { puntajeTotal: 'desc' },
+export async function listar(req: Request, res: Response) {
+  const { nombre, page = '1', limit = '20' } = req.query
+  const skip = (Number(page) - 1) * Number(limit)
+
+  const where = {
+    ...(nombre && { nombre: { contains: String(nombre), mode: 'insensitive' as const } }),
+  }
+
+  const [simulacros, total] = await Promise.all([
+    prisma.simulacro.findMany({
+      where,
+      include: {
+        estudiantes: {
+          include: { estudiante: { select: { nombre: true } } },
+          orderBy: { puntajeTotal: 'desc' },
+        },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
-  return ApiResponse.success(res, simulacros)
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: Number(limit),
+    }),
+    prisma.simulacro.count({ where }),
+  ])
+
+  return ApiResponse.paginated(res, simulacros, total, Number(page), Number(limit))
 }
 
 export async function subir(req: Request, res: Response) {
