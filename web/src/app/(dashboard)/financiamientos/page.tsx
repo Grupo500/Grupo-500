@@ -33,49 +33,54 @@ function FinanciamientoCard({ f }: { f: Financiamiento }) {
   const descuento = cursoActivo?.descuentoPorcentaje ?? 0
 
   return (
-    <div className="bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
-      {/* Nombre + estado */}
-      <div className="flex items-start justify-between gap-1.5">
-        <p className="text-xs font-semibold text-on-surface leading-tight line-clamp-2 flex-1">{f.estudiante.nombre}</p>
-        <span className={cn('inline-flex px-1.5 py-0.5 rounded text-[9px] font-semibold flex-shrink-0', cfg.color)}>{cfg.label}</span>
+    <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden hover:border-primary/30 transition-colors flex flex-col">
+      {/* Cuerpo de la tarjeta */}
+      <div className="p-3 flex flex-col gap-2">
+        {/* Estado chip */}
+        <span className={cn('self-start inline-flex px-1.5 py-0.5 rounded text-[9px] font-semibold', cfg.color)}>{cfg.label}</span>
+
+        {/* Nombre */}
+        <p className="text-[11px] font-semibold text-on-surface leading-tight line-clamp-2">{f.estudiante.nombre}</p>
+
+        {/* Curso + descuento */}
+        {cursoActivo && (
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <BookOpen className="w-3 h-3 text-on-surface-variant flex-shrink-0" />
+              <p className="text-[10px] text-on-surface-variant truncate">{cursoActivo.curso.nombre}</p>
+            </div>
+            {descuento > 0 && (
+              <span className="self-start text-[9px] font-bold bg-secondary/15 text-secondary px-1.5 py-0.5 rounded">
+                -{descuento}% desc.
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Monto total */}
+        <p className="text-sm font-bold text-on-surface tabular">{formatCOP(f.montoTotal)}</p>
+
+        {/* Barra progreso */}
+        <div>
+          <div className="w-full bg-surface-high rounded-full h-1">
+            <div className="bg-secondary h-1 rounded-full transition-all" style={{ width: `${progreso}%` }} />
+          </div>
+          <p className="text-[9px] text-on-surface-variant mt-0.5 text-right">{cuotasPagadas}/{f.cuotas.length}</p>
+        </div>
       </div>
 
-      {/* Curso adquirido */}
-      {cursoActivo && (
-        <div className="flex items-center gap-1.5">
-          <BookOpen className="w-3 h-3 text-on-surface-variant flex-shrink-0" />
-          <p className="text-[10px] text-on-surface-variant truncate flex-1">{cursoActivo.curso.nombre}</p>
-          {descuento > 0 && (
-            <span className="text-[9px] font-bold bg-secondary/15 text-secondary px-1.5 py-0.5 rounded flex-shrink-0">
-              -{descuento}%
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Monto */}
-      <p className="text-base font-bold text-on-surface tabular">{formatCOP(f.montoTotal)}</p>
-
-      {/* Progreso */}
-      <div className="space-y-1">
-        <div className="w-full bg-surface-high rounded-full h-1.5">
-          <div className="bg-secondary h-1.5 rounded-full transition-all" style={{ width: `${progreso}%` }} />
-        </div>
-        <p className="text-[10px] text-on-surface-variant text-right">{cuotasPagadas}/{f.cuotas.length} cuotas</p>
-      </div>
-
-      {/* Botón expandir */}
+      {/* Botón expandir — pegado al fondo */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center justify-center gap-1 text-[11px] font-medium text-primary hover:bg-primary/10 py-1.5 rounded-lg transition-colors"
+        className="flex items-center justify-center gap-1 text-[11px] font-medium text-primary bg-primary/5 hover:bg-primary/12 border-t border-outline-variant/40 py-2 transition-colors"
       >
-        {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-        Ver cuotas
+        {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        Cuotas
       </button>
 
       {/* Cuotas expandidas */}
       {expanded && (
-        <div className="-mx-3 -mb-3 border-t border-outline-variant/40 pt-2 px-3 pb-3">
+        <div className="border-t border-outline-variant/40">
           <CuotasList f={f} pagarCuotaMutation={pagarCuotaMutation} />
         </div>
       )}
@@ -128,38 +133,39 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 function CuotasList({ f, pagarCuotaMutation }: { f: Financiamiento; pagarCuotaMutation: any }) {
   return (
     <div className="bg-surface-low rounded-lg border border-outline-variant/40 overflow-hidden">
-      {/* Mobile: cuotas — 2 líneas por fila */}
+      {/* Mobile: cuotas compactas para grid-2 */}
       <div className="md:hidden divide-y divide-outline-variant/20">
         {f.cuotas.map(c => {
           const fecha = new Date(c.fechaVencimiento)
           const fechaCorta = fecha.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })
           const vencida = !c.pagado && fecha < new Date()
           return (
-            <div key={c.id} className="px-3 py-2.5 space-y-1">
-              {/* Línea 1: número + monto + estado */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-on-surface-variant w-5 flex-shrink-0">#{c.numero}</span>
-                <p className="text-sm font-semibold text-on-surface flex-1">{formatCOP(c.monto)}</p>
+            <div key={c.id} className="px-2.5 py-2 flex flex-col gap-1">
+              {/* Línea 1: #N · monto */}
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[10px] text-on-surface-variant flex-shrink-0">#{c.numero}</span>
+                <p className="text-xs font-bold text-on-surface truncate">{formatCOP(c.monto)}</p>
+              </div>
+              {/* Línea 2: fecha · estado */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-on-surface-variant flex-shrink-0">{fechaCorta}</span>
                 {c.pagado
-                  ? <span className="flex items-center gap-1 text-[11px] text-secondary font-medium bg-secondary/10 px-2 py-0.5 rounded-full"><CheckCircle className="w-3 h-3" />Pagado</span>
+                  ? <span className="flex items-center gap-0.5 text-[9px] text-secondary font-semibold"><CheckCircle className="w-2.5 h-2.5" />Pagado</span>
                   : vencida
-                    ? <span className="flex items-center gap-1 text-[11px] text-red-400 font-medium bg-red-400/10 px-2 py-0.5 rounded-full"><AlertTriangle className="w-3 h-3" />Vencida</span>
-                    : <span className="flex items-center gap-1 text-[11px] text-yellow-500 font-medium bg-yellow-400/10 px-2 py-0.5 rounded-full"><Clock className="w-3 h-3" />Pendiente</span>
+                    ? <span className="flex items-center gap-0.5 text-[9px] text-red-400 font-semibold"><AlertTriangle className="w-2.5 h-2.5" />Vencida</span>
+                    : <span className="flex items-center gap-0.5 text-[9px] text-yellow-500 font-semibold"><Clock className="w-2.5 h-2.5" />Pendiente</span>
                 }
               </div>
-              {/* Línea 2: fecha + botón pagar */}
-              <div className="flex items-center justify-between pl-7">
-                <p className="text-[11px] text-on-surface-variant">{fechaCorta}</p>
-                {!c.pagado && (
-                  <button
-                    onClick={() => pagarCuotaMutation.mutate(c.id)}
-                    disabled={pagarCuotaMutation.isPending}
-                    className="px-3 py-1 rounded-lg text-[11px] font-semibold text-primary-on bg-primary hover:bg-primary/85 transition-colors disabled:opacity-30"
-                  >
-                    Registrar pago
-                  </button>
-                )}
-              </div>
+              {/* Línea 3: botón pagar (solo si pendiente) */}
+              {!c.pagado && (
+                <button
+                  onClick={() => pagarCuotaMutation.mutate(c.id)}
+                  disabled={pagarCuotaMutation.isPending}
+                  className="w-full mt-0.5 py-1 rounded text-[10px] font-semibold text-on-primary bg-primary hover:bg-primary/85 transition-colors disabled:opacity-30"
+                >
+                  Pagar
+                </button>
+              )}
             </div>
           )
         })}
@@ -394,7 +400,7 @@ export default function FinanciamientosPage() {
           <p className="text-sm">No hay financiamientos registrados</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 md:hidden">
+        <div className="grid grid-cols-2 gap-3 md:hidden">
           {financiamientos.map(f => <FinanciamientoCard key={f.id} f={f} />)}
         </div>
       )}
