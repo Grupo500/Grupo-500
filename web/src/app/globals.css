@@ -122,21 +122,12 @@
   * { box-sizing: border-box; }
   html {
     scroll-behavior: smooth;
-    background-color: #003060;
-  }
-
-  /* Fondo fijo real — pseudo-elemento anclado al viewport.
-     Funciona en iOS Safari, Android Chrome y desktop.
-     position:fixed en ::before nunca es afectado por overflow ni scroll interno. */
-  html::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
+    height: 100%;
     background: var(--bg);
   }
 
   body {
+    height: 100%;
     background: transparent;
     min-height: 100vh;
     color: var(--on-surface);
