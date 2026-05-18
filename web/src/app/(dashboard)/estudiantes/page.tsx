@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate } from '@/lib/utils'
@@ -26,7 +26,8 @@ interface Estudiante {
   colegioId?: string
   colegio?: { id: string; nombre: string }
   acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
-  asesor?: { nombre: string }
+  asesorId?: string
+  asesor?: { id: string; nombre: string }
   createdAt: string
 }
 
@@ -38,7 +39,7 @@ interface PaginatedResponse {
 const FORM_EMPTY = {
   nombre: '', tipoDocumento: 'CC', documento: '',
   email: '', telefono: '', fechaNacimiento: '',
-  departamento: '', ciudad: '', colegioId: '',
+  departamento: '', ciudad: '', colegioId: '', asesorId: '',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
 }
 
@@ -87,6 +88,8 @@ function ConfirmDialog({ open, nombre, onConfirm, onCancel, isPending }: {
 
 export default function EstudiantesPage() {
   const { getToken } = useAuth()
+  const { user } = useUser()
+  const isAdmin = user?.publicMetadata?.role === 'ADMIN'
   const queryClient = useQueryClient()
 
   const [page, setPage] = useState(1)
@@ -118,6 +121,13 @@ export default function EstudiantesPage() {
     queryFn: () => fetcher<any>('/colegios'),
   })
   const colegios: { id: string; nombre: string }[] = colegiosData?.data ?? []
+
+  const { data: asesoresData } = useQuery({
+    queryKey: ['asesores-select'],
+    queryFn: () => fetcher<any>('/asesores?limit=100'),
+    enabled: isAdmin,
+  })
+  const asesores: { id: string; nombre: string }[] = asesoresData?.data ?? []
 
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda],
@@ -183,6 +193,7 @@ export default function EstudiantesPage() {
         departamento: formEdit.departamento || null,
         ciudad: formEdit.ciudad || null,
         colegioId: formEdit.colegioId || null,
+        ...(isAdmin && { asesorId: formEdit.asesorId || null }),
       }
 
       return fetcher(`/estudiantes/${modalEditar.id}`, {
@@ -227,6 +238,7 @@ export default function EstudiantesPage() {
       departamento: e.departamento ?? '',
       ciudad: e.ciudad ?? '',
       colegioId: e.colegio?.id ?? '',
+      asesorId: e.asesor?.id ?? '',
       acudienteNombre: e.acudiente?.nombre ?? '',
       acudienteEmail: e.acudiente?.email ?? '',
       acudienteTelefono: e.acudiente?.telefono ?? '',
@@ -482,6 +494,25 @@ export default function EstudiantesPage() {
               <button onClick={() => setModalEditar(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
             </div>
             {renderFormFields(formEdit, setFormEdit)}
+
+            {/* Asesor asignado — solo admin */}
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-outline-variant">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Asignación</p>
+                <div>
+                  <label className={labelCls}>Asesor asignado</label>
+                  <select
+                    className={inputCls}
+                    value={formEdit.asesorId}
+                    onChange={e => setFormEdit(p => ({ ...p, asesorId: e.target.value }))}
+                  >
+                    <option value="">Sin asesor</option>
+                    {asesores.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+
             {formEditError && <p className="mt-4 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{formEditError}</p>}
             <div className="flex justify-end gap-3 mt-4">
               <button onClick={() => setModalEditar(null)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors">Cancelar</button>
