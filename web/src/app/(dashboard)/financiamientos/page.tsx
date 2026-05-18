@@ -154,7 +154,6 @@ export default function FinanciamientosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
   const [busquedaInput, setBusquedaInput] = useState('')
-  const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [page, setPage] = useState(1)
   const [modalCrear, setModalCrear] = useState(false)
