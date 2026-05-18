@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import {
   School, Plus, X, Loader2, MapPin, Users,
-  Handshake, User, Calendar, ChevronRight,
+  Handshake, User, Calendar, ChevronRight, Search,
 } from 'lucide-react'
 
 // ── Interfaces ─────────────────────────────────────────────────────────────
@@ -116,6 +116,7 @@ export default function ColegiosPage() {
   const queryClient = useQueryClient()
 
   const [tab, setTab] = useState<'colegios' | 'negociaciones'>('colegios')
+  const [busqueda, setBusqueda] = useState('')
   const [etapaActiva, setEtapaActiva] = useState<Etapa>('PROSPECTO')
 
   // Colegios state
@@ -191,7 +192,11 @@ export default function ColegiosPage() {
     setModalEditarNeg(neg)
   }
 
-  const colegios: Colegio[]      = colegiosData?.data ?? []
+  const colegiosTodos: Colegio[] = colegiosData?.data ?? []
+  const colegios = colegiosTodos.filter(c =>
+    c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    c.ciudad.toLowerCase().includes(busqueda.toLowerCase())
+  )
   const negociaciones: Negociacion[] = negData?.data ?? []
   const asesores                 = asesoresData?.data ?? []
   const tarjetasActivas          = negociaciones.filter(n => n.etapa === etapaActiva)
@@ -264,7 +269,7 @@ export default function ColegiosPage() {
       {/* ── Tabs ── */}
       <div className="flex gap-1 bg-surface-high border border-outline-variant rounded-xl p-1 w-fit">
         {([
-          { id: 'colegios',      label: 'Colegios',      icon: School,    count: colegios.length },
+          { id: 'colegios',      label: 'Colegios',      icon: School,    count: colegiosTodos.length },
           { id: 'negociaciones', label: 'Negociaciones', icon: Handshake, count: negociaciones.length },
         ] as const).map(t => (
           <button
@@ -291,7 +296,27 @@ export default function ColegiosPage() {
           TAB: COLEGIOS
       ══════════════════════════════════════════ */}
       {tab === 'colegios' && (
-        loadingColegios ? (
+        <>
+        {/* Búsqueda */}
+        <div className="flex gap-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o ciudad..."
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+              className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+            />
+          </div>
+          {busqueda && (
+            <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {loadingColegios ? (
           <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
         ) : colegios.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl">
@@ -320,7 +345,8 @@ export default function ColegiosPage() {
               </div>
             ))}
           </div>
-        )
+        )}
+        </>
       )}
 
       {/* ══════════════════════════════════════════
