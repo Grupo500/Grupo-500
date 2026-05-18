@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Trash2 } from 'lucide-react'
+import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Trash2, Search } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -85,6 +85,7 @@ export default function CursosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
+  const [busqueda, setBusqueda] = useState('')
   const [modalCrear, setModalCrear] = useState(false)
   const [editCurso, setEditCurso] = useState<Curso | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
@@ -134,7 +135,10 @@ export default function CursosPage() {
     setEditForm({ nombre: c.nombre, precio: String(c.precio), duracionHoras: String(c.duracionHoras) })
   }
 
-  const cursos: Curso[] = data?.data ?? []
+  const cursosTodos: Curso[] = data?.data ?? []
+  const cursos = cursosTodos.filter(c =>
+    !busqueda || c.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  )
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -147,6 +151,25 @@ export default function CursosPage() {
           </button>
         }
       />
+
+      {/* Búsqueda */}
+      <div className="flex gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+        {busqueda && (
+          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>

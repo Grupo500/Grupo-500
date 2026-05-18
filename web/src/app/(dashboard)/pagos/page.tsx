@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
@@ -9,7 +9,7 @@ import { formatDate, formatCOP, cn } from '@/lib/utils'
 import {
   CreditCard, Plus, X, Loader2, ChevronLeft, ChevronRight,
   CheckCircle, Clock, AlertTriangle, XCircle, Filter, Pencil,
-  Paperclip, ExternalLink, Trash2,
+  Paperclip, ExternalLink, Trash2, Search,
 } from 'lucide-react'
 
 interface Pago {
@@ -127,6 +127,13 @@ export default function PagosPage() {
 
   const [page, setPage] = useState(1)
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [busquedaInput, setBusquedaInput] = useState('')
+  const [busqueda, setBusqueda] = useState('')
+
+  useEffect(() => {
+    const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
+    return () => clearTimeout(t)
+  }, [busquedaInput])
   const [modalRegistrar, setModalRegistrar] = useState(false)
   const [modalMarcarPagado, setModalMarcarPagado] = useState<Pago | null>(null)
   const [modalEditar, setModalEditar] = useState<Pago | null>(null)
@@ -155,9 +162,9 @@ export default function PagosPage() {
   }
 
   const { data, isLoading } = useQuery({
-    queryKey: ['pagos', page, filtroEstado],
+    queryKey: ['pagos', page, filtroEstado, busqueda],
     queryFn: () => fetcher<any>(
-      `/pagos?page=${page}&limit=15${filtroEstado ? `&estado=${filtroEstado}` : ''}`
+      `/pagos?page=${page}&limit=15${filtroEstado ? `&estado=${filtroEstado}` : ''}${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}`
     ),
   })
 
@@ -264,20 +271,37 @@ export default function PagosPage() {
         }
       />
 
-      {/* Filtros */}
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-on-surface-variant flex-shrink-0" />
-        <select
-          value={filtroEstado}
-          onChange={e => { setFiltroEstado(e.target.value); setPage(1) }}
-          className="bg-surface-high border border-outline-variant rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 cursor-pointer"
-        >
-          <option value="">Todos</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="PAGADO">Pagado</option>
-          <option value="VENCIDO">Vencido</option>
-          <option value="CANCELADO">Cancelado</option>
-        </select>
+      {/* Búsqueda + Filtro estado */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input
+            type="text"
+            placeholder="Buscar por estudiante..."
+            value={busquedaInput}
+            onChange={e => setBusquedaInput(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+        {busquedaInput && (
+          <button type="button" onClick={() => setBusquedaInput('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-on-surface-variant flex-shrink-0" />
+          <select
+            value={filtroEstado}
+            onChange={e => { setFiltroEstado(e.target.value); setPage(1) }}
+            className="bg-surface-high border border-outline-variant rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 cursor-pointer"
+          >
+            <option value="">Todos</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="PAGADO">Pagado</option>
+            <option value="VENCIDO">Vencido</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+        </div>
       </div>
 
       {/* Lista / Tabla */}

@@ -6,7 +6,7 @@ import { useAuth, useUser } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle } from 'lucide-react'
+import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle, Search } from 'lucide-react'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface CursoEstudiante {
@@ -160,6 +160,7 @@ export default function CertificadosPage() {
   const isAdmin = user?.publicMetadata?.role === 'ADMIN'
   const queryClient = useQueryClient()
 
+  const [busqueda, setBusqueda] = useState('')
   const [modalGenerar, setModalGenerar] = useState(false)
   const [form, setForm] = useState({ estudianteId: '', tipo: 'CURSANDO' })
   const [descargando, setDescargando] = useState<string | null>(null)
@@ -254,8 +255,11 @@ export default function CertificadosPage() {
     }
   }
 
-  const certificados: Certificado[] = data?.data ?? []
-  const total = certificados.length
+  const certificadosTodos: Certificado[] = data?.data ?? []
+  const certificados = certificadosTodos.filter(c =>
+    !busqueda || c.estudiante.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  )
+  const total = certificadosTodos.length
   const estudiantes = estudiantesData?.data ?? []
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
@@ -301,6 +305,25 @@ export default function CertificadosPage() {
           </div>
         </div>
       )}
+
+      {/* Búsqueda */}
+      <div className="flex gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input
+            type="text"
+            placeholder="Buscar por estudiante..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+        {busqueda && (
+          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {/* ── Tabla de certificados ── */}
       <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">

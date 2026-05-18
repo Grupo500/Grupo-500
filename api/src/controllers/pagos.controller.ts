@@ -12,7 +12,7 @@ const registrarSchema = z.object({
 })
 
 export async function listar(req: Request, res: Response) {
-  const { estudianteId, asesorId, estado, desde, hasta, page = '1', limit = '20' } = req.query
+  const { estudianteId, asesorId, estado, desde, hasta, nombre, page = '1', limit = '20' } = req.query
   const skip = (Number(page) - 1) * Number(limit)
 
   const where = {
@@ -20,6 +20,7 @@ export async function listar(req: Request, res: Response) {
     ...(asesorId && { asesorId: String(asesorId) }),
     ...(estado && { estado: String(estado) as any }),
     ...(desde && hasta && { fechaVencimiento: { gte: new Date(String(desde)), lte: new Date(String(hasta)) } }),
+    ...(nombre && { estudiante: { nombre: { contains: String(nombre), mode: 'insensitive' as const } } }),
   }
 
   const [pagos, total] = await Promise.all([

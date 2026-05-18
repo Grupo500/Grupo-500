@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, formatCOP, cn } from '@/lib/utils'
-import { Wallet, Plus, X, Loader2, ChevronDown, ChevronRight, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
+import { Wallet, Plus, X, Loader2, ChevronDown, ChevronRight, CheckCircle, Clock, AlertTriangle, Search } from 'lucide-react'
 
 interface Cuota {
   id: string
@@ -153,6 +153,7 @@ function FinanciamientoRow({ f }: { f: Financiamiento }) {
 export default function FinanciamientosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
+  const [busqueda, setBusqueda] = useState('')
   const [modalCrear, setModalCrear] = useState(false)
 
   const [form, setForm] = useState({
@@ -202,8 +203,11 @@ export default function FinanciamientosPage() {
     onError: (e: any) => setFormError(e.message ?? 'Error al crear financiamiento'),
   })
 
-  const financiamientos: Financiamiento[] = data?.data ?? []
-  const total = financiamientos.length
+  const financiamientosTodos: Financiamiento[] = data?.data ?? []
+  const financiamientos = financiamientosTodos.filter(f =>
+    !busqueda || f.estudiante.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  )
+  const total = financiamientosTodos.length
   const estudiantes = estudiantesData?.data ?? []
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
@@ -228,6 +232,25 @@ export default function FinanciamientosPage() {
           </button>
         }
       />
+
+      {/* Búsqueda */}
+      <div className="flex gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input
+            type="text"
+            placeholder="Buscar por estudiante..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+        {busqueda && (
+          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       <div className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
         {isLoading ? (
