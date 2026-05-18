@@ -161,7 +161,10 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
       >
         <nav
           className="flex items-center justify-around h-[62px] px-2 rounded-[28px] shadow-2xl"
-          style={{ background: 'var(--surface-inverse, #1c1c1e)' }}
+          style={{
+            background: 'linear-gradient(135deg, #003060 0%, #0a4a8a 60%, #1264b8 100%)',
+            boxShadow: '0 8px 32px rgba(0,48,96,0.45), 0 2px 8px rgba(32,148,255,0.2)',
+          }}
         >
           {/* Ítems primarios */}
           {primaryItems.map((item, idx) => {
@@ -180,21 +183,24 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
                 <div className={cn(
                   'flex items-center justify-center rounded-2xl transition-all duration-250',
                   isActive
-                    ? isCentral
-                      ? 'w-12 h-9 bg-primary shadow-lg shadow-primary/30'
-                      : 'w-12 h-9 bg-white/15'
+                    ? 'w-12 h-9'
                     : 'w-10 h-8 group-active:bg-white/10',
-                )}>
+                )}
+                  style={isActive ? {
+                    background: isCentral
+                      ? 'linear-gradient(135deg, #2094ff, #4361ee)'
+                      : 'rgba(32,148,255,0.22)',
+                    boxShadow: isCentral ? '0 2px 12px rgba(32,148,255,0.5)' : undefined,
+                  } : undefined}
+                >
                   <Icon className={cn(
-                    'transition-all duration-250',
-                    isActive
-                      ? isCentral ? 'w-5 h-5 text-white' : 'w-5 h-5 text-white'
-                      : 'w-5 h-5 text-white/45',
+                    'w-5 h-5 transition-all duration-250',
+                    isActive ? 'text-white' : 'text-white/45',
                   )} />
                 </div>
                 <span className={cn(
                   'text-[9px] font-semibold leading-none transition-all duration-250',
-                  isActive ? 'text-white' : 'text-white/40',
+                  isActive ? 'text-[#95daff]' : 'text-white/40',
                 )}>
                   {item.label}
                 </span>
@@ -207,10 +213,13 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
             onClick={() => setMoreOpen(!moreOpen)}
             className="flex flex-col items-center justify-center gap-1 flex-1 h-full relative group"
           >
-            <div className={cn(
-              'flex items-center justify-center rounded-2xl transition-all duration-250',
-              (moreOpen || isMoreActive) ? 'w-12 h-9 bg-white/15' : 'w-10 h-8 group-active:bg-white/10',
-            )}>
+            <div
+              className={cn(
+                'flex items-center justify-center rounded-2xl transition-all duration-250',
+                (moreOpen || isMoreActive) ? 'w-12 h-9' : 'w-10 h-8 group-active:bg-white/10',
+              )}
+              style={(moreOpen || isMoreActive) ? { background: 'rgba(32,148,255,0.22)' } : undefined}
+            >
               <MoreHorizontal className={cn(
                 'w-5 h-5 transition-all duration-250',
                 (moreOpen || isMoreActive) ? 'text-white' : 'text-white/45',
@@ -218,7 +227,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
             </div>
             <span className={cn(
               'text-[9px] font-semibold leading-none transition-all duration-250',
-              (moreOpen || isMoreActive) ? 'text-white' : 'text-white/40',
+              (moreOpen || isMoreActive) ? 'text-[#95daff]' : 'text-white/40',
             )}>
               Más
             </span>
