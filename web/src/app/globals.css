@@ -124,13 +124,13 @@
     scroll-behavior: smooth;
     height: 100%;
     overflow: hidden;
-    background: var(--bg);
+    background-color: #003060; /* status bar */
   }
 
   body {
     height: 100%;
     overflow: hidden;
-    background: transparent;
+    background: var(--bg); /* gradiente fijo — body nunca scrollea */
     color: var(--on-surface);
     font-family: Inter, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
