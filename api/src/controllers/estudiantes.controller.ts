@@ -97,6 +97,7 @@ const actualizarSchema = z.object({
   departamento:    z.string().nullable().optional(),
   ciudad:          z.string().nullable().optional(),
   colegioId:       z.string().nullable().optional(),
+  asesorId:        z.string().nullable().optional(),
 })
 
 export async function actualizar(req: Request, res: Response) {
@@ -114,8 +115,9 @@ export async function actualizar(req: Request, res: Response) {
       ...(data.departamento    !== undefined && { departamento:    data.departamento }),
       ...(data.ciudad          !== undefined && { ciudad:          data.ciudad }),
       ...(data.colegioId       !== undefined && { colegioId:       data.colegioId }),
+      ...(data.asesorId        !== undefined && { asesorId:        data.asesorId }),
     },
-    include: { colegio: true, acudiente: true },
+    include: { colegio: true, acudiente: true, asesor: true },
   })
 
   return ApiResponse.success(res, estudiante)
