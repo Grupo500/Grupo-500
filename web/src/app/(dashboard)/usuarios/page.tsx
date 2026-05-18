@@ -112,17 +112,17 @@ export default function UsuariosPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total', value: usuarios.length, icon: Users, color: 'primary' },
-          { label: 'Admins', value: totalAdmin, icon: Shield, color: 'tertiary' },
-          { label: 'Asesores', value: totalVendedor, icon: UserCheck, color: 'secondary' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3 text-center sm:text-left">
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-${color}/10 flex items-center justify-center flex-shrink-0`}>
-              <Icon className={`w-4 h-4 text-${color}`} />
+          { label: 'Total usuarios', value: usuariosTodos.length, icon: Users,      color: 'primary',   bg: 'bg-primary/10',   text: 'text-primary'   },
+          { label: 'Administradores', value: totalAdmin,           icon: Shield,     color: 'tertiary',  bg: 'bg-tertiary/10',  text: 'text-tertiary'  },
+          { label: 'Asesores',        value: totalVendedor,        icon: UserCheck,  color: 'secondary', bg: 'bg-secondary/10', text: 'text-secondary' },
+        ].map(({ label, value, icon: Icon, bg, text }) => (
+          <div key={label} className="card p-4 md:p-5 flex items-center gap-3 md:gap-4">
+            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
+              <Icon className={`w-5 h-5 md:w-6 md:h-6 ${text}`} />
             </div>
-            <div>
-              <p className="text-[10px] sm:text-xs text-on-surface-variant leading-tight">{label}</p>
-              <p className="text-lg sm:text-xl font-bold text-on-surface tabular">{value}</p>
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-on-surface-variant font-medium leading-tight truncate">{label}</p>
+              <p className="text-2xl md:text-3xl font-bold text-on-surface tabular leading-none mt-0.5">{value}</p>
             </div>
           </div>
         ))}
