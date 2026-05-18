@@ -324,7 +324,7 @@ export default function ColegiosPage() {
             <p className="text-sm">No hay colegios registrados</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {colegios.map(c => (
               <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-4 hover:border-primary/30 transition-colors">
                 <div className="flex items-center gap-3 mb-3">
@@ -448,7 +448,7 @@ export default function ColegiosPage() {
                 <p className="text-sm text-on-surface-variant">Sin negociaciones en esta etapa</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {tarjetasActivas.map(neg => (
                   <NegCard key={neg.id} neg={neg} onClick={() => abrirEditarNeg(neg)} />
                 ))}
