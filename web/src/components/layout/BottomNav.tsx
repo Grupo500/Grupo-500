@@ -108,13 +108,17 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
                   transition: `opacity 250ms ${i * 25}ms ease-out, transform 250ms ${i * 25}ms ease-out`,
                 }}
               >
-                <div className={cn(
-                  'w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200',
-                  isActive
-                    ? 'bg-primary/15 shadow-sm'
-                    : 'bg-surface-high',
-                )}>
-                  <Icon className={cn('w-5 h-5', isActive ? 'text-primary' : 'text-on-surface-variant')} />
+                <div
+                  className={cn(
+                    'w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200',
+                    !isActive && 'bg-surface-high',
+                  )}
+                  style={isActive ? {
+                    background: 'linear-gradient(135deg, #2094ff, #4361ee)',
+                    boxShadow: '0 3px 10px rgba(32,148,255,0.45)',
+                  } : undefined}
+                >
+                  <Icon className={cn('w-5 h-5', isActive ? 'text-white' : 'text-on-surface-variant')} />
                 </div>
                 <span className={cn(
                   'text-[10px] font-semibold text-center leading-tight',
