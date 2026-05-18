@@ -58,20 +58,17 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     )}>
 
       {/* ── Logo ─────────────────────────────────── */}
-      <div
-        className={cn(
-          'flex items-center gap-2.5 h-14 px-4 flex-shrink-0',
-          collapsed && 'justify-center px-0',
-        )}
-        style={{ background: 'linear-gradient(135deg, #003060 0%, #0a4a8a 100%)' }}
-      >
+      <div className={cn(
+        'flex items-center gap-2.5 h-14 border-b border-[var(--outline-variant)] px-4 flex-shrink-0',
+        collapsed && 'justify-center px-0',
+      )}>
         <div className="flex-shrink-0 w-7 h-7">
           <Image src="/logo-grupo500.png" alt="Grupo 500" width={28} height={28} className="w-7 h-7 object-cover rounded-full" priority />
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-[13px] font-bold text-white leading-none tracking-tight">Grupo 500</p>
-            <p className="text-[10px] text-white/60 mt-0.5 font-medium">Pre-ICFES</p>
+            <p className="text-[13px] font-bold text-on-surface leading-none tracking-tight">Grupo 500</p>
+            <p className="text-[10px] text-on-surface-variant mt-0.5 font-medium">Pre-ICFES</p>
           </div>
         )}
       </div>
