@@ -264,9 +264,9 @@ export default function AsesoresPage() {
                     <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0">
                       <span className="text-[11px] font-bold text-primary">{iniciales}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-on-surface truncate leading-snug">{a.nombre}</p>
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-primary text-white leading-none mt-0.5">
+                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                      <p className="text-[11px] font-semibold text-on-surface truncate leading-none">{a.nombre}</p>
+                      <span className="inline-flex items-center self-start px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-primary text-white leading-none">
                         Asesor
                       </span>
                     </div>
