@@ -18,7 +18,7 @@
 :root,
 .light {
   /* Superficies — base azulada brand */
-  --bg:                 linear-gradient(160deg, #ddeeff 0%, #eaf4ff 40%, #f0f6ff 100%);
+  --bg:                 linear-gradient(180deg, #2094ff 0%, #a8d4ff 25%, #d6ecff 50%, #eef6ff 100%);
   --surface-lowest:     #ffffff;
   --surface-low:        #e4f0ff;
   --surface:            #d8eaff;
