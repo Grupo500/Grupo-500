@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, actions, className }: PageHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between', className)}>
+    <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between', className)}>
       <div>
         <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">{title}</h1>
         {subtitle && (

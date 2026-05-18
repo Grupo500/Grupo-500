@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import {
   FileBarChart2, Loader2, TrendingUp, TrendingDown, Minus,
-  ExternalLink, Plus, X, Upload, CheckCircle2, Sparkles, AlertCircle, Search,
+  ExternalLink, X, Upload, CheckCircle2, Sparkles, AlertCircle, Search,
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
 
@@ -177,7 +177,7 @@ export default function SimulacrosPage() {
             onClick={() => setModalSubir(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
           >
-            <Plus className="w-4 h-4" />Subir simulacro
+            <Upload className="w-4 h-4" />Subir simulacro
           </button>
         }
       />
@@ -257,13 +257,45 @@ export default function SimulacrosPage() {
                 </div>
               )}
 
-              {s.estudiantes?.length > 0 ? (
-                <table className="w-full">
+              {s.estudiantes?.length > 0 ? (<>
+                {/* Mobile: tarjetas */}
+                <div className="md:hidden divide-y divide-outline-variant/30">
+                  {s.estudiantes.map(r => {
+                    const { label, color, icon: Icon } = RENDIMIENTO[r.estado]
+                    return (
+                      <div key={r.id} className="px-4 py-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-on-surface truncate">{r.estudiante.nombre}</p>
+                          <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold flex-shrink-0', color)}>
+                            <Icon className="w-3 h-3" />{label}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <span className="text-sm font-bold text-on-surface">{r.puntajeTotal} pts</span>
+                          <span className="text-xs text-on-surface-variant">{r.porcentajeAciertos.toFixed(0)}% aciertos</span>
+                          {r.requiereIntensivo && (
+                            <span className="px-2 py-0.5 rounded bg-tertiary/10 text-tertiary text-[10px] font-semibold">Intensivo</span>
+                          )}
+                        </div>
+                        {r.areasDebiles.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {r.areasDebiles.slice(0, 3).map(area => (
+                              <span key={area} className="px-1.5 py-0.5 rounded bg-red-400/10 text-red-400 text-[10px] font-medium">{area}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Desktop: tabla */}
+                <table className="hidden md:table w-full">
                   <thead>
                     <tr className="bg-surface-low">
                       <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Puntaje</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Rendimiento</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Puntaje</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Rendimiento</th>
                       <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Áreas débiles</th>
                       <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden xl:table-cell">Intensivo</th>
                     </tr>
@@ -274,11 +306,11 @@ export default function SimulacrosPage() {
                       return (
                         <tr key={r.id} className="hover:bg-surface-low/30 transition-colors">
                           <td className="px-4 py-3 text-sm text-on-surface">{r.estudiante.nombre}</td>
-                          <td className="px-4 py-3 hidden md:table-cell">
+                          <td className="px-4 py-3">
                             <span className="text-sm font-semibold text-on-surface">{r.puntajeTotal}</span>
                             <span className="text-xs text-on-surface-variant ml-1">({r.porcentajeAciertos.toFixed(0)}%)</span>
                           </td>
-                          <td className="px-4 py-3 hidden md:table-cell">
+                          <td className="px-4 py-3">
                             <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium', color)}>
                               <Icon className="w-3 h-3" />{label}
                             </span>
@@ -301,7 +333,7 @@ export default function SimulacrosPage() {
                     })}
                   </tbody>
                 </table>
-              ) : (
+              </>) : (
                 <p className="px-5 py-4 text-sm text-on-surface-variant italic">Sin resultados cargados</p>
               )}
             </div>
