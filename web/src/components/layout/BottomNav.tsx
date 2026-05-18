@@ -44,10 +44,8 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
 
   useEffect(() => setMounted(true), [])
 
-  // Animación entrada/salida del sheet
   useEffect(() => {
     if (moreOpen) {
-      // pequeño delay para que el DOM monte antes de la transición
       requestAnimationFrame(() => setSheetVisible(true))
     } else {
       setSheetVisible(false)
@@ -57,46 +55,41 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   const isDark = theme === 'dark'
   const visibleMore = moreItems.filter(i => !i.adminOnly || role === 'ADMIN')
   const isMoreActive = visibleMore.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
-
-  const handleCloseSheet = () => setMoreOpen(false)
+  const handleClose = () => setMoreOpen(false)
 
   return (
     <>
       {/* Backdrop */}
       <div
-        onClick={handleCloseSheet}
+        onClick={handleClose}
         className={cn(
-          'fixed inset-0 z-40 md:hidden bg-black/50 backdrop-blur-sm transition-opacity duration-300',
+          'fixed inset-0 z-40 md:hidden bg-black/60 backdrop-blur-sm transition-opacity duration-300',
           moreOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
       />
 
-      {/* Sheet "Más" — desliza desde abajo */}
+      {/* Sheet "Más" */}
       <div
         className={cn(
-          'fixed left-0 right-0 z-50 md:hidden mx-3 rounded-2xl border border-outline-variant shadow-float overflow-hidden transition-all duration-300 ease-out',
-          sheetVisible
-            ? 'opacity-100 translate-y-0'
-            : 'opacity-0 translate-y-6 pointer-events-none',
+          'fixed left-4 right-4 z-50 md:hidden rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 ease-out',
+          sheetVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none',
         )}
         style={{
-          bottom: 'calc(env(safe-area-inset-bottom) + 68px)',
+          bottom: 'calc(env(safe-area-inset-bottom) + 88px)',
           background: 'var(--surface-lowest)',
+          border: '1px solid color-mix(in srgb, var(--outline-variant) 60%, transparent)',
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant/60">
-          <p className="text-sm font-semibold text-on-surface">Más secciones</p>
-          <button
-            onClick={handleCloseSheet}
-            className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-high hover:text-on-surface transition-colors"
-          >
-            <X className="w-4 h-4" />
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/40">
+          <p className="text-sm font-bold text-on-surface tracking-tight">Más secciones</p>
+          <button onClick={handleClose} className="w-7 h-7 rounded-full bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Grid ítems */}
-        <div className="grid grid-cols-4 gap-1 p-3">
+        {/* Grid */}
+        <div className="grid grid-cols-4 gap-2 p-4">
           {visibleMore.map((item, i) => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -104,95 +97,104 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={handleCloseSheet}
+                onClick={handleClose}
                 className={cn(
-                  'flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 active:scale-95',
-                  isActive
-                    ? 'bg-primary/12 text-primary'
-                    : 'text-on-surface-variant hover:bg-surface-high hover:text-on-surface',
+                  'flex flex-col items-center gap-2 py-3 px-1 rounded-2xl transition-all duration-200 active:scale-95',
+                  isActive ? 'bg-primary/10 text-primary' : 'text-on-surface-variant active:bg-surface-high',
                 )}
                 style={{
-                  transitionDelay: sheetVisible ? `${i * 30}ms` : '0ms',
                   opacity: sheetVisible ? 1 : 0,
-                  transform: sheetVisible ? 'translateY(0)' : 'translateY(8px)',
+                  transform: sheetVisible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.95)',
+                  transition: `opacity 250ms ${i * 25}ms ease-out, transform 250ms ${i * 25}ms ease-out`,
                 }}
               >
                 <div className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center transition-colors',
-                  isActive ? 'bg-primary/15' : 'bg-surface-high',
+                  'w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200',
+                  isActive
+                    ? 'bg-primary/15 shadow-sm'
+                    : 'bg-surface-high',
                 )}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className={cn('w-5 h-5', isActive ? 'text-primary' : 'text-on-surface-variant')} />
                 </div>
-                <span className="text-[10px] font-medium text-center leading-tight">{item.label}</span>
+                <span className={cn(
+                  'text-[10px] font-semibold text-center leading-tight',
+                  isActive ? 'text-primary' : 'text-on-surface-variant',
+                )}>
+                  {item.label}
+                </span>
               </Link>
             )
           })}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/60">
+        {/* Footer cuenta */}
+        <div
+          className="flex items-center justify-between px-5 py-3.5 border-t border-outline-variant/40"
+          style={{
+            opacity: sheetVisible ? 1 : 0,
+            transform: sheetVisible ? 'translateY(0)' : 'translateY(6px)',
+            transition: 'opacity 280ms 200ms ease-out, transform 280ms 200ms ease-out',
+          }}
+        >
           <div className="flex items-center gap-3">
             <UserButton afterSignOutUrl="/sign-in" />
             <div>
-              <p className="text-[12px] font-semibold text-on-surface">Mi cuenta</p>
-              <p className="text-[10px] text-on-surface-variant capitalize">{role === 'ADMIN' ? 'Administrador' : 'Asesor'}</p>
+              <p className="text-[12px] font-bold text-on-surface">Mi cuenta</p>
+              <p className="text-[10px] text-on-surface-variant">{role === 'ADMIN' ? 'Administrador' : 'Asesor'}</p>
             </div>
           </div>
           {mounted && (
             <button
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              className="p-2 rounded-xl border border-outline-variant text-on-surface-variant hover:bg-surface-high hover:text-on-surface transition-all active:scale-95"
+              className="w-9 h-9 rounded-2xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all active:scale-90"
             >
-              {isDark
-                ? <Sun className="w-4 h-4 text-tertiary" />
-                : <Moon className="w-4 h-4" />
-              }
+              {isDark ? <Sun className="w-4 h-4 text-tertiary" /> : <Moon className="w-4 h-4" />}
             </button>
           )}
         </div>
       </div>
 
-      {/* Barra inferior */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-outline-variant/60 backdrop-blur-md"
-        style={{
-          background: 'color-mix(in srgb, var(--surface-lowest) 85%, transparent)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
+      {/* ── Floating Tab Bar ── */}
+      <div
+        className="fixed left-4 right-4 z-40 md:hidden"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
       >
-        <div className="flex items-center justify-around h-[60px] px-1">
-          {primaryItems.map(item => {
+        <nav
+          className="flex items-center justify-around h-[62px] px-2 rounded-[28px] shadow-2xl"
+          style={{ background: 'var(--surface-inverse, #1c1c1e)' }}
+        >
+          {/* Ítems primarios */}
+          {primaryItems.map((item, idx) => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+
+            // Ítem central (índice 1 = Estudiantes) con acento especial
+            const isCentral = idx === 1
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2 relative group"
+                className="flex flex-col items-center justify-center gap-1 flex-1 h-full relative group"
               >
-                {/* Pill indicador activo */}
-                <span
-                  className={cn(
-                    'absolute top-1 w-8 h-1 rounded-full bg-primary transition-all duration-300',
-                    isActive ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0',
-                  )}
-                />
-
-                {/* Ícono con fondo al activar */}
                 <div className={cn(
-                  'w-10 h-7 rounded-xl flex items-center justify-center transition-all duration-200',
-                  isActive ? 'bg-primary/12' : 'group-active:bg-surface-high',
+                  'flex items-center justify-center rounded-2xl transition-all duration-250',
+                  isActive
+                    ? isCentral
+                      ? 'w-12 h-9 bg-primary shadow-lg shadow-primary/30'
+                      : 'w-12 h-9 bg-white/15'
+                    : 'w-10 h-8 group-active:bg-white/10',
                 )}>
                   <Icon className={cn(
-                    'transition-all duration-200',
-                    isActive ? 'w-5 h-5 text-primary scale-110' : 'w-5 h-5 text-on-surface-variant',
+                    'transition-all duration-250',
+                    isActive
+                      ? isCentral ? 'w-5 h-5 text-white' : 'w-5 h-5 text-white'
+                      : 'w-5 h-5 text-white/45',
                   )} />
                 </div>
-
-                {/* Label — solo activo en color primario */}
                 <span className={cn(
-                  'text-[9px] font-semibold transition-all duration-200 leading-none',
-                  isActive ? 'text-primary' : 'text-on-surface-variant',
+                  'text-[9px] font-semibold leading-none transition-all duration-250',
+                  isActive ? 'text-white' : 'text-white/40',
                 )}>
                   {item.label}
                 </span>
@@ -203,32 +205,26 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           {/* Botón Más */}
           <button
             onClick={() => setMoreOpen(!moreOpen)}
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2 relative group"
+            className="flex flex-col items-center justify-center gap-1 flex-1 h-full relative group"
           >
-            <span
-              className={cn(
-                'absolute top-1 w-8 h-1 rounded-full bg-primary transition-all duration-300',
-                (moreOpen || isMoreActive) ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0',
-              )}
-            />
             <div className={cn(
-              'w-10 h-7 rounded-xl flex items-center justify-center transition-all duration-200',
-              (moreOpen || isMoreActive) ? 'bg-primary/12' : 'group-active:bg-surface-high',
+              'flex items-center justify-center rounded-2xl transition-all duration-250',
+              (moreOpen || isMoreActive) ? 'w-12 h-9 bg-white/15' : 'w-10 h-8 group-active:bg-white/10',
             )}>
               <MoreHorizontal className={cn(
-                'w-5 h-5 transition-all duration-200',
-                (moreOpen || isMoreActive) ? 'text-primary' : 'text-on-surface-variant',
+                'w-5 h-5 transition-all duration-250',
+                (moreOpen || isMoreActive) ? 'text-white' : 'text-white/45',
               )} />
             </div>
             <span className={cn(
-              'text-[9px] font-semibold transition-all duration-200 leading-none',
-              (moreOpen || isMoreActive) ? 'text-primary' : 'text-on-surface-variant',
+              'text-[9px] font-semibold leading-none transition-all duration-250',
+              (moreOpen || isMoreActive) ? 'text-white' : 'text-white/40',
             )}>
               Más
             </span>
           </button>
-        </div>
-      </nav>
+        </nav>
+      </div>
     </>
   )
 }
