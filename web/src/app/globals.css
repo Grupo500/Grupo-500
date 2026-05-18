@@ -125,6 +125,17 @@
     background-color: #003060;
   }
 
+  /* Fondo fijo real — pseudo-elemento anclado al viewport.
+     Funciona en iOS Safari, Android Chrome y desktop.
+     position:fixed en ::before nunca es afectado por overflow ni scroll interno. */
+  html::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--bg);
+  }
+
   body {
     background: transparent;
     min-height: 100vh;
@@ -133,11 +144,6 @@
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02","cv03","cv04","cv11";
     transition: color 0.15s ease;
-  }
-
-  /* Fondo fijo universal — funciona en iOS Safari, Android Chrome y desktop */
-  .bg-gradient {
-    background: var(--bg);
   }
 
   select {
