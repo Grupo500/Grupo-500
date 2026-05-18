@@ -123,6 +123,15 @@
   html {
     scroll-behavior: smooth;
     height: 100%;
+    /* Sin background aquí — lo pinta ::before para que quede fijo */
+  }
+
+  /* Fondo anclado al viewport — nunca scrollea en ningún browser */
+  html::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background: var(--bg);
   }
 
