@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, formatCOP, cn } from '@/lib/utils'
-import { Wallet, Plus, X, Loader2, ChevronDown, ChevronRight, CheckCircle, Clock, AlertTriangle, Search } from 'lucide-react'
+import { Wallet, Plus, X, Loader2, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Clock, AlertTriangle, Search } from 'lucide-react'
 
 interface Cuota {
   id: string
@@ -153,8 +153,16 @@ function FinanciamientoRow({ f }: { f: Financiamiento }) {
 export default function FinanciamientosPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
+  const [busquedaInput, setBusquedaInput] = useState('')
+  const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
+  const [page, setPage] = useState(1)
   const [modalCrear, setModalCrear] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
+    return () => clearTimeout(t)
+  }, [busquedaInput])
 
   const [form, setForm] = useState({
     estudianteId: '',
@@ -169,8 +177,8 @@ export default function FinanciamientosPage() {
   }
 
   const { data, isLoading } = useQuery({
-    queryKey: ['financiamientos'],
-    queryFn: () => fetcher<any>('/financiamientos?limit=50'),
+    queryKey: ['financiamientos', page, busqueda],
+    queryFn: () => fetcher<any>(`/financiamientos?page=${page}&limit=20${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}`),
   })
 
   const { data: estudiantesData } = useQuery({
@@ -203,11 +211,9 @@ export default function FinanciamientosPage() {
     onError: (e: any) => setFormError(e.message ?? 'Error al crear financiamiento'),
   })
 
-  const financiamientosTodos: Financiamiento[] = data?.data ?? []
-  const financiamientos = financiamientosTodos.filter(f =>
-    !busqueda || f.estudiante.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  )
-  const total = financiamientosTodos.length
+  const financiamientos: Financiamiento[] = data?.data ?? []
+  const total = data?.pagination?.total ?? 0
+  const totalPages = data?.pagination?.totalPages ?? 1
   const estudiantes = estudiantesData?.data ?? []
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
@@ -240,13 +246,13 @@ export default function FinanciamientosPage() {
           <input
             type="text"
             placeholder="Buscar por estudiante..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
+            value={busquedaInput}
+            onChange={e => setBusquedaInput(e.target.value)}
             className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
           />
         </div>
-        {busqueda && (
-          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+        {busquedaInput && (
+          <button type="button" onClick={() => setBusquedaInput('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -277,6 +283,22 @@ export default function FinanciamientosPage() {
               {financiamientos.map(f => <FinanciamientoRow key={f.id} f={f} />)}
             </tbody>
           </table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
+            <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
+            <div className="flex gap-2">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

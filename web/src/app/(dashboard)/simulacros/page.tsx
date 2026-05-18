@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
@@ -9,6 +9,7 @@ import { formatDate, cn } from '@/lib/utils'
 import {
   FileBarChart2, Loader2, TrendingUp, TrendingDown, Minus,
   ExternalLink, Plus, X, Upload, CheckCircle2, Sparkles, AlertCircle, Search,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 
 interface SimulacroEstudiante {
@@ -56,7 +57,14 @@ export default function SimulacrosPage() {
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
+  const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
+    return () => clearTimeout(t)
+  }, [busquedaInput])
   const [modalSubir, setModalSubir] = useState(false)
   const [analizando, setAnalizando] = useState<string | null>(null)   // id del simulacro en análisis
   const [resultadoAnalisis, setResultadoAnalisis] = useState<{ id: string; guardados: number; sinMatch: number; sinMatchNombres: string[] } | null>(null)
@@ -72,8 +80,8 @@ export default function SimulacrosPage() {
   }
 
   const { data, isLoading } = useQuery({
-    queryKey: ['simulacros'],
-    queryFn: () => fetcher<any>('/simulacros'),
+    queryKey: ['simulacros', page, busqueda],
+    queryFn: () => fetcher<any>(`/simulacros?page=${page}&limit=20${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}`),
   })
 
   // Subir PDF a Cloudinary vía API
@@ -152,10 +160,9 @@ export default function SimulacrosPage() {
     registrarMutation.mutate()
   }
 
-  const simulacrosTodos: Simulacro[] = data?.data ?? []
-  const simulacros = simulacrosTodos.filter(s =>
-    !busqueda || s.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  )
+  const simulacros: Simulacro[] = data?.data ?? []
+  const total = data?.pagination?.total ?? 0
+  const totalPages = data?.pagination?.totalPages ?? 1
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
@@ -182,13 +189,13 @@ export default function SimulacrosPage() {
           <input
             type="text"
             placeholder="Buscar por nombre..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
+            value={busquedaInput}
+            onChange={e => setBusquedaInput(e.target.value)}
             className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
           />
         </div>
-        {busqueda && (
-          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+        {busquedaInput && (
+          <button type="button" onClick={() => setBusquedaInput('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -299,6 +306,22 @@ export default function SimulacrosPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-surface-lowest border border-outline-variant rounded-xl">
+          <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

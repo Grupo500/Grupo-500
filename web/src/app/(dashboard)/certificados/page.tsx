@@ -1,12 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle, Search } from 'lucide-react'
+import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface CursoEstudiante {
@@ -160,8 +160,15 @@ export default function CertificadosPage() {
   const isAdmin = user?.publicMetadata?.role === 'ADMIN'
   const queryClient = useQueryClient()
 
+  const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
+  const [page, setPage] = useState(1)
   const [modalGenerar, setModalGenerar] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
+    return () => clearTimeout(t)
+  }, [busquedaInput])
   const [form, setForm] = useState({ estudianteId: '', tipo: 'CURSANDO' })
   const [descargando, setDescargando] = useState<string | null>(null)
   const [enviando, setEnviando] = useState<string | null>(null)
@@ -173,8 +180,8 @@ export default function CertificadosPage() {
   }
 
   const { data, isLoading } = useQuery({
-    queryKey: ['certificados'],
-    queryFn: () => fetcher<any>('/certificados?limit=50'),
+    queryKey: ['certificados', page, busqueda],
+    queryFn: () => fetcher<any>(`/certificados?page=${page}&limit=20${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}`),
   })
   const { data: estudiantesData } = useQuery({
     queryKey: ['estudiantes-select'],
@@ -255,11 +262,9 @@ export default function CertificadosPage() {
     }
   }
 
-  const certificadosTodos: Certificado[] = data?.data ?? []
-  const certificados = certificadosTodos.filter(c =>
-    !busqueda || c.estudiante.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  )
-  const total = certificadosTodos.length
+  const certificados: Certificado[] = data?.data ?? []
+  const total = data?.pagination?.total ?? 0
+  const totalPages = data?.pagination?.totalPages ?? 1
   const estudiantes = estudiantesData?.data ?? []
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
@@ -313,13 +318,13 @@ export default function CertificadosPage() {
           <input
             type="text"
             placeholder="Buscar por estudiante..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
+            value={busquedaInput}
+            onChange={e => setBusquedaInput(e.target.value)}
             className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
           />
         </div>
-        {busqueda && (
-          <button type="button" onClick={() => setBusqueda('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
+        {busquedaInput && (
+          <button type="button" onClick={() => setBusquedaInput('')} className="px-3 py-2 text-on-surface-variant hover:text-on-surface">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -411,6 +416,22 @@ export default function CertificadosPage() {
               })}
             </tbody>
           </table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-outline-variant/40">
+            <p className="text-xs text-on-surface-variant">Página {page} de {totalPages} · {total} resultados</p>
+            <div className="flex gap-2">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

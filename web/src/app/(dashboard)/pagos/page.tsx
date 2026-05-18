@@ -288,7 +288,8 @@ export default function PagosPage() {
             <X className="w-4 h-4" />
           </button>
         )}
-        <div className="flex items-center gap-2">
+        {/* Mobile: select */}
+        <div className="flex items-center gap-2 md:hidden">
           <Filter className="w-4 h-4 text-on-surface-variant flex-shrink-0" />
           <select
             value={filtroEstado}
@@ -301,6 +302,29 @@ export default function PagosPage() {
             <option value="VENCIDO">Vencido</option>
             <option value="CANCELADO">Cancelado</option>
           </select>
+        </div>
+        {/* Desktop: pills */}
+        <div className="hidden md:flex items-center gap-1.5">
+          {[
+            { value: '', label: 'Todos' },
+            { value: 'PENDIENTE', label: 'Pendiente' },
+            { value: 'PAGADO', label: 'Pagado' },
+            { value: 'VENCIDO', label: 'Vencido' },
+            { value: 'CANCELADO', label: 'Cancelado' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { setFiltroEstado(opt.value); setPage(1) }}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
+                filtroEstado === opt.value
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-high text-on-surface-variant hover:bg-surface-highest border border-outline-variant'
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
