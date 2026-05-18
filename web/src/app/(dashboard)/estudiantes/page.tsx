@@ -9,6 +9,7 @@ import { formatDate } from '@/lib/utils'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, Mail, Eye, X, Loader2, Trash2, Pencil,
+  Paperclip, ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
@@ -43,6 +44,13 @@ const FORM_EMPTY = {
   departamento: '', ciudad: '', colegioId: '', asesorId: '',
   cursoId: '', descuentoPorcentaje: '0',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
+  // Pago integrado
+  formaPago: 'CONTADO' as 'CONTADO' | 'FINANCIADO',
+  metodoPago: 'TRANSFERENCIA',
+  fechaPago: '',
+  comprobante: '',
+  numeroCuotas: '3',
+  fechaPrimeraCuota: '',
 }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
@@ -104,6 +112,7 @@ export default function EstudiantesPage() {
     return () => clearTimeout(t)
   }, [busquedaInput])
   const [modalCrear, setModalCrear] = useState(false)
+  const [pasoCrear, setPasoCrear] = useState(1)
   const [modalDetalle, setModalDetalle] = useState<Estudiante | null>(null)
   const [modalEditar, setModalEditar] = useState<Estudiante | null>(null)
   const [confirmEliminar, setConfirmEliminar] = useState<Estudiante | null>(null)
@@ -149,6 +158,10 @@ export default function EstudiantesPage() {
     mutationFn: async () => {
       if (!form.nombre || !form.email || !form.telefono || !form.fechaNacimiento)
         throw new Error('Completa todos los campos obligatorios del estudiante')
+      if (form.cursoId && form.formaPago === 'CONTADO' && !form.fechaPago)
+        throw new Error('Ingresa la fecha del pago')
+      if (form.cursoId && form.formaPago === 'FINANCIADO' && !form.fechaPrimeraCuota)
+        throw new Error('Ingresa la fecha de la primera cuota')
 
       const payload: any = {
         nombre: form.nombre.trim(),
@@ -158,16 +171,29 @@ export default function EstudiantesPage() {
         telefono: form.telefono.trim(),
         fechaNacimiento: form.fechaNacimiento,
         ...(form.departamento && { departamento: form.departamento }),
-        ...(form.ciudad      && { ciudad:       form.ciudad }),
-        ...(form.colegioId   && { colegioId:    form.colegioId }),
-        ...(form.cursoId     && { cursoId:      form.cursoId, descuentoPorcentaje: Number(form.descuentoPorcentaje) }),
+        ...(form.ciudad       && { ciudad:       form.ciudad }),
+        ...(form.colegioId    && { colegioId:    form.colegioId }),
+        ...(form.cursoId && {
+          cursoId:             form.cursoId,
+          descuentoPorcentaje: Number(form.descuentoPorcentaje),
+          formaPago:           form.formaPago,
+          ...(form.formaPago === 'CONTADO' && {
+            metodoPago:  form.metodoPago,
+            fechaPago:   form.fechaPago,
+            ...(form.comprobante && { comprobante: form.comprobante }),
+          }),
+          ...(form.formaPago === 'FINANCIADO' && {
+            numeroCuotas:      Number(form.numeroCuotas),
+            fechaPrimeraCuota: form.fechaPrimeraCuota,
+          }),
+        }),
       }
 
       const acudienteCompleto = form.acudienteNombre.trim() && form.acudienteEmail.trim() && form.acudienteTelefono.trim()
       if (acudienteCompleto) {
         payload.acudiente = {
           nombre: form.acudienteNombre.trim(),
-          email: form.acudienteEmail.trim(),
+          email:  form.acudienteEmail.trim(),
           telefono: form.acudienteTelefono.trim(),
           relacion: form.acudienteRelacion,
         }
@@ -178,7 +204,10 @@ export default function EstudiantesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
       queryClient.invalidateQueries({ queryKey: ['estudiantes-select'] })
+      queryClient.invalidateQueries({ queryKey: ['pagos'] })
+      queryClient.invalidateQueries({ queryKey: ['financiamientos'] })
       setModalCrear(false)
+      setPasoCrear(1)
       setFormError('')
       setForm(FORM_EMPTY)
     },
@@ -256,6 +285,12 @@ export default function EstudiantesPage() {
       acudienteEmail: e.acudiente?.email ?? '',
       acudienteTelefono: e.acudiente?.telefono ?? '',
       acudienteRelacion: e.acudiente?.relacion ?? 'Padre',
+      formaPago: 'CONTADO',
+      metodoPago: 'TRANSFERENCIA',
+      fechaPago: '',
+      comprobante: '',
+      numeroCuotas: '3',
+      fechaPrimeraCuota: '',
     })
     setFormEditError('')
     setModalEditar(e)
@@ -268,8 +303,28 @@ export default function EstudiantesPage() {
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
+  const [subiendoComprobante, setSubiendoComprobante] = useState(false)
+  const subirComprobante = async (file: File) => {
+    setSubiendoComprobante(true)
+    try {
+      const token = await getToken()
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
+      })
+      const json = await res.json()
+      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
+      setForm(p => ({ ...p, comprobante: json.data.url }))
+    } catch (e: any) {
+      setFormError(e?.message ?? 'Error al subir comprobante')
+    } finally {
+      setSubiendoComprobante(false)
+    }
+  }
+
   // ── Formulario reutilizable ────────────────────────────────────────────
-  const renderFormFields = (f: typeof FORM_EMPTY, setF: (fn: (prev: typeof FORM_EMPTY) => typeof FORM_EMPTY) => void, cursosReadonly = false) => (
+  const renderFormFields = (f: typeof FORM_EMPTY, setF: (fn: (prev: typeof FORM_EMPTY) => typeof FORM_EMPTY) => void) => (
     <div className="space-y-4">
       <p className="text-xs font-semibold text-primary uppercase tracking-wider">Datos del estudiante</p>
       <div className="grid grid-cols-2 gap-3">
@@ -329,41 +384,6 @@ export default function EstudiantesPage() {
             {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
         </div>
-      </div>
-
-      <p className="text-xs font-semibold text-primary uppercase tracking-wider pt-2">Curso y descuento</p>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2 sm:col-span-1">
-          <label className={labelCls}>Curso adquirido</label>
-          <select className={cn(inputCls, cursosReadonly && 'opacity-60 cursor-not-allowed')} value={f.cursoId} onChange={e => setF(p => ({ ...p, cursoId: e.target.value }))} disabled={cursosReadonly}>
-            <option value="">Sin curso</option>
-            {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Descuento (%)</label>
-          <input
-            className={cn(inputCls, (cursosReadonly || !f.cursoId) && 'opacity-60 cursor-not-allowed')}
-            type="number"
-            min="0"
-            max="100"
-            value={f.descuentoPorcentaje}
-            onChange={e => setF(p => ({ ...p, descuentoPorcentaje: e.target.value }))}
-            placeholder="0"
-            disabled={cursosReadonly || !f.cursoId}
-          />
-        </div>
-        {f.cursoId && Number(f.descuentoPorcentaje) > 0 && (() => {
-          const c = cursos.find(c => c.id === f.cursoId)
-          if (!c) return null
-          const precioFinal = c.precio * (1 - Number(f.descuentoPorcentaje) / 100)
-          return (
-            <div className="col-span-2 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 text-xs text-on-surface-variant">
-              <span className="text-primary font-semibold">Precio con descuento: </span>
-              ${precioFinal.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
-            </div>
-          )
-        })()}
       </div>
 
       <p className="text-xs font-semibold text-primary uppercase tracking-wider pt-2">Datos del acudiente</p>
@@ -514,21 +534,231 @@ export default function EstudiantesPage() {
         )}
       </div>
 
-      {/* Modal crear */}
-      <Modal open={modalCrear} onClose={() => setModalCrear(false)}>
-        <div className="p-6 overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-semibold text-on-surface">Nuevo estudiante</h2>
-            <button onClick={() => setModalCrear(false)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
+      {/* Modal crear — 3 pasos */}
+      <Modal open={modalCrear} onClose={() => { setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY) }}>
+        <div className="flex flex-col max-h-[90vh]">
+          {/* Header fijo */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
+            <div>
+              <h2 className="text-base font-semibold text-on-surface">Nuevo estudiante</h2>
+              <p className="text-xs text-on-surface-variant mt-0.5">Paso {pasoCrear} de {form.cursoId || pasoCrear >= 2 ? 3 : 2}</p>
+            </div>
+            <button onClick={() => { setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY) }} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
           </div>
-          {renderFormFields(form, setForm)}
-          {formError && <p className="mt-4 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{formError}</p>}
-          <div className="flex justify-end gap-3 mt-4">
-            <button onClick={() => { setModalCrear(false); setFormError('') }} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors">Cancelar</button>
-            <button onClick={() => crearMutation.mutate()} disabled={crearMutation.isPending || !form.nombre || !form.email || !form.telefono || !form.fechaNacimiento}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors">
-              {crearMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Crear estudiante
+
+          {/* Indicador de pasos */}
+          <div className="flex items-center gap-0 px-6 pb-5 flex-shrink-0">
+            {[
+              { n: 1, label: 'Estudiante' },
+              { n: 2, label: 'Curso' },
+              { n: 3, label: 'Pago' },
+            ].map(({ n, label }, i) => (
+              <div key={n} className="flex items-center flex-1">
+                <div className="flex flex-col items-center gap-1">
+                  <div className={cn(
+                    'w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors',
+                    pasoCrear > n ? 'bg-secondary text-black' :
+                    pasoCrear === n ? 'bg-primary text-on-primary' :
+                    'bg-surface-high text-on-surface-variant border border-outline-variant'
+                  )}>
+                    {pasoCrear > n ? '✓' : n}
+                  </div>
+                  <span className={cn('text-[10px] font-medium', pasoCrear === n ? 'text-primary' : 'text-on-surface-variant')}>{label}</span>
+                </div>
+                {i < 2 && <div className={cn('h-px flex-1 mb-4 mx-1 transition-colors', pasoCrear > n ? 'bg-secondary' : 'bg-outline-variant')} />}
+              </div>
+            ))}
+          </div>
+
+          {/* Contenido scrollable */}
+          <div className="overflow-y-auto flex-1 px-6 pb-2">
+            {pasoCrear === 1 && renderFormFields(form, setForm)}
+
+            {pasoCrear === 2 && (
+              <div className="space-y-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider">Curso adquirido</p>
+                <div>
+                  <label className={labelCls}>Curso</label>
+                  <select className={inputCls} value={form.cursoId} onChange={e => setForm(p => ({ ...p, cursoId: e.target.value }))}>
+                    <option value="">Sin curso por ahora</option>
+                    {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre} — ${c.precio.toLocaleString('es-CO')}</option>)}
+                  </select>
+                </div>
+                {form.cursoId && (
+                  <>
+                    <div>
+                      <label className={labelCls}>Descuento (%)</label>
+                      <input className={inputCls} type="number" min="0" max="100" value={form.descuentoPorcentaje}
+                        onChange={e => setForm(p => ({ ...p, descuentoPorcentaje: e.target.value }))} placeholder="0" />
+                    </div>
+                    {(() => {
+                      const c = cursos.find(c => c.id === form.cursoId)
+                      if (!c) return null
+                      const desc = Number(form.descuentoPorcentaje)
+                      const final = c.precio * (1 - desc / 100)
+                      return (
+                        <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-[11px] text-on-surface-variant">Precio base</p>
+                              <p className={cn('text-sm font-medium', desc > 0 && 'line-through text-on-surface-variant')}>${c.precio.toLocaleString('es-CO')}</p>
+                            </div>
+                            {desc > 0 && (
+                              <div className="text-center">
+                                <span className="text-xs font-bold bg-secondary/15 text-secondary px-2 py-1 rounded-full">−{desc}%</span>
+                              </div>
+                            )}
+                            <div className="text-right">
+                              <p className="text-[11px] text-on-surface-variant">Total a cobrar</p>
+                              <p className="text-lg font-bold text-primary">${final.toLocaleString('es-CO')}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </>
+                )}
+                {!form.cursoId && (
+                  <p className="text-xs text-on-surface-variant italic bg-surface-high rounded-lg px-3 py-3">
+                    Si no seleccionas un curso, el estudiante quedará registrado sin venta asociada. Podrás asignarlo después.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {pasoCrear === 3 && (
+              <div className="space-y-4">
+                {form.cursoId ? (
+                  <>
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider">Forma de pago</p>
+                    {/* Selector contado / financiado */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['CONTADO', 'FINANCIADO'] as const).map(op => (
+                        <button key={op} onClick={() => setForm(p => ({ ...p, formaPago: op }))}
+                          className={cn(
+                            'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 text-sm font-semibold transition-colors',
+                            form.formaPago === op
+                              ? 'border-primary bg-primary/8 text-primary'
+                              : 'border-outline-variant bg-surface-high text-on-surface-variant hover:border-primary/40'
+                          )}>
+                          <span className="text-xl">{op === 'CONTADO' ? '💳' : '📅'}</span>
+                          {op === 'CONTADO' ? 'Contado' : 'Financiado'}
+                          <span className="text-[10px] font-normal text-on-surface-variant">
+                            {op === 'CONTADO' ? 'Pago único inmediato' : 'Cuotas mensuales'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {form.formaPago === 'CONTADO' && (
+                      <div className="space-y-3 pt-1">
+                        <div>
+                          <label className={labelCls}>Método de pago *</label>
+                          <select className={inputCls} value={form.metodoPago} onChange={e => setForm(p => ({ ...p, metodoPago: e.target.value }))}>
+                            <option value="TRANSFERENCIA">Transferencia</option>
+                            <option value="EFECTIVO">Efectivo</option>
+                            <option value="TARJETA">Tarjeta</option>
+                            <option value="OTRO">Otro</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className={labelCls}>Fecha del pago *</label>
+                          <input className={cn(inputCls, 'max-w-[180px]')} type="date" value={form.fechaPago}
+                            onChange={e => setForm(p => ({ ...p, fechaPago: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Comprobante (opcional)</label>
+                          <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-highest transition-colors">
+                            <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoComprobante}
+                              onChange={e => { const f = e.target.files?.[0]; if (f) subirComprobante(f); e.target.value = '' }} />
+                            {subiendoComprobante ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <Paperclip className="w-4 h-4 text-on-surface-variant" />}
+                            <span className="text-sm text-on-surface-variant">
+                              {subiendoComprobante ? 'Subiendo...' : form.comprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante'}
+                            </span>
+                          </label>
+                          {form.comprobante && (
+                            <a href={form.comprobante} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+                              <ExternalLink className="w-3 h-3" />Ver comprobante
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {form.formaPago === 'FINANCIADO' && (
+                      <div className="space-y-3 pt-1">
+                        <div>
+                          <label className={labelCls}>Número de cuotas *</label>
+                          <select className={inputCls} value={form.numeroCuotas} onChange={e => setForm(p => ({ ...p, numeroCuotas: e.target.value }))}>
+                            {[2,3,4,5,6,8,10,12].map(n => <option key={n} value={n}>{n} cuotas</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className={labelCls}>Fecha primera cuota *</label>
+                          <input className={cn(inputCls, 'max-w-[180px]')} type="date" value={form.fechaPrimeraCuota}
+                            onChange={e => setForm(p => ({ ...p, fechaPrimeraCuota: e.target.value }))} />
+                        </div>
+                        {form.cursoId && form.numeroCuotas && (() => {
+                          const c = cursos.find(c => c.id === form.cursoId)
+                          if (!c) return null
+                          const total = c.precio * (1 - Number(form.descuentoPorcentaje) / 100)
+                          const cuota = total / Number(form.numeroCuotas)
+                          return (
+                            <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 flex items-center justify-between">
+                              <div>
+                                <p className="text-[11px] text-on-surface-variant">Total financiado</p>
+                                <p className="text-sm font-bold text-on-surface">${total.toLocaleString('es-CO')}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[11px] text-on-surface-variant">Valor por cuota</p>
+                                <p className="text-lg font-bold text-primary">${cuota.toLocaleString('es-CO', { maximumFractionDigits: 0 })}</p>
+                              </div>
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center text-on-surface-variant">
+                    <p className="text-sm">No seleccionaste un curso.</p>
+                    <p className="text-xs mt-1">Vuelve al paso anterior para elegir el curso antes de configurar el pago.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer fijo */}
+          {formError && <p className="mx-6 mt-2 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{formError}</p>}
+          <div className="flex justify-between gap-3 px-6 py-4 border-t border-outline-variant/40 flex-shrink-0">
+            <button
+              onClick={() => pasoCrear > 1 ? setPasoCrear(p => p - 1) : (setModalCrear(false), setPasoCrear(1), setForm(FORM_EMPTY))}
+              className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors">
+              {pasoCrear === 1 ? 'Cancelar' : '← Anterior'}
             </button>
+            {pasoCrear < 3 ? (
+              <button
+                onClick={() => {
+                  if (pasoCrear === 1 && (!form.nombre || !form.email || !form.telefono || !form.fechaNacimiento)) {
+                    setFormError('Completa nombre, email, teléfono y fecha de nacimiento')
+                    return
+                  }
+                  setFormError('')
+                  setPasoCrear(p => p + 1)
+                }}
+                className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                Siguiente →
+              </button>
+            ) : (
+              <button
+                onClick={() => crearMutation.mutate()}
+                disabled={crearMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                {crearMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Registrar estudiante
+              </button>
+            )}
           </div>
         </div>
       </Modal>
@@ -541,22 +771,33 @@ export default function EstudiantesPage() {
               <h2 className="text-base font-semibold text-on-surface">Editar estudiante</h2>
               <button onClick={() => setModalEditar(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface"><X className="w-4 h-4" /></button>
             </div>
-            {renderFormFields(formEdit, setFormEdit, !isAdmin)}
+            {renderFormFields(formEdit, setFormEdit)}
 
-            {/* Asesor asignado — solo admin */}
+            {/* Asignación — solo admin */}
             {isAdmin && (
-              <div className="mt-4 pt-4 border-t border-outline-variant">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Asignación</p>
+              <div className="mt-4 pt-4 border-t border-outline-variant space-y-3">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider">Asignación (solo admin)</p>
                 <div>
                   <label className={labelCls}>Asesor asignado</label>
-                  <select
-                    className={inputCls}
-                    value={formEdit.asesorId}
-                    onChange={e => setFormEdit(p => ({ ...p, asesorId: e.target.value }))}
-                  >
+                  <select className={inputCls} value={formEdit.asesorId} onChange={e => setFormEdit(p => ({ ...p, asesorId: e.target.value }))}>
                     <option value="">Sin asesor</option>
                     {asesores.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                   </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className={labelCls}>Curso adquirido</label>
+                    <select className={inputCls} value={formEdit.cursoId} onChange={e => setFormEdit(p => ({ ...p, cursoId: e.target.value }))}>
+                      <option value="">Sin curso</option>
+                      {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Descuento (%)</label>
+                    <input className={cn(inputCls, !formEdit.cursoId && 'opacity-50 cursor-not-allowed')} type="number" min="0" max="100"
+                      value={formEdit.descuentoPorcentaje} disabled={!formEdit.cursoId}
+                      onChange={e => setFormEdit(p => ({ ...p, descuentoPorcentaje: e.target.value }))} placeholder="0" />
+                  </div>
                 </div>
               </div>
             )}

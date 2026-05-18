@@ -16,6 +16,13 @@ const crearSchema = z.object({
   colegioId: z.string().optional(),
   cursoId: z.string().optional(),
   descuentoPorcentaje: z.number().min(0).max(100).optional(),
+  // Pago integrado
+  formaPago: z.enum(['CONTADO', 'FINANCIADO']).optional(),
+  metodoPago: z.enum(['TRANSFERENCIA', 'TARJETA', 'EFECTIVO', 'OTRO']).optional(),
+  fechaPago: z.string().optional(),
+  comprobante: z.string().optional(),
+  numeroCuotas: z.number().int().min(1).max(24).optional(),
+  fechaPrimeraCuota: z.string().optional(),
   acudiente: z.object({
     nombre: z.string().min(2),
     email: z.string().email(),
@@ -51,29 +58,80 @@ export async function listar(req: Request, res: Response) {
 export async function crear(req: Request, res: Response) {
   const data = crearSchema.parse(req.body)
 
-  const estudiante = await prisma.estudiante.create({
-    data: {
-      nombre: data.nombre,
-      tipoDocumento: data.tipoDocumento ?? 'CC',
-      documento: data.documento ?? null,
-      email: data.email,
-      telefono: data.telefono,
-      fechaNacimiento: new Date(data.fechaNacimiento),
-      ...(data.departamento && { departamento: data.departamento }),
-      ...(data.ciudad      && { ciudad:       data.ciudad }),
-      ...(data.colegioId   && { colegioId:    data.colegioId }),
-      ...(req.asesorId && { asesorId: req.asesorId }),
-      ...(data.acudiente && { acudiente: { create: data.acudiente } }),
-      ...(data.cursoId && {
-        cursos: {
-          create: {
-            cursoId: data.cursoId,
-            descuentoPorcentaje: data.descuentoPorcentaje ?? 0,
-          },
+  const estudiante = await prisma.$transaction(async (tx) => {
+    // 1. Crear estudiante
+    const est = await tx.estudiante.create({
+      data: {
+        nombre:         data.nombre,
+        tipoDocumento:  data.tipoDocumento ?? 'CC',
+        documento:      data.documento ?? null,
+        email:          data.email,
+        telefono:       data.telefono,
+        fechaNacimiento: new Date(data.fechaNacimiento),
+        ...(data.departamento && { departamento: data.departamento }),
+        ...(data.ciudad       && { ciudad:       data.ciudad }),
+        ...(data.colegioId    && { colegioId:    data.colegioId }),
+        ...(req.asesorId      && { asesorId:     req.asesorId }),
+        ...(data.acudiente    && { acudiente: { create: data.acudiente } }),
+      },
+      include: { acudiente: true, colegio: true },
+    })
+
+    // 2. Vincular curso con descuento
+    if (data.cursoId) {
+      await tx.cursoEstudiante.create({
+        data: {
+          estudianteId:       est.id,
+          cursoId:            data.cursoId,
+          descuentoPorcentaje: data.descuentoPorcentaje ?? 0,
         },
-      }),
-    },
-    include: { acudiente: true, colegio: true, cursos: { include: { curso: true } } },
+      })
+    }
+
+    // 3. Registrar pago o financiamiento
+    if (data.cursoId && data.formaPago) {
+      const curso = await tx.curso.findUnique({ where: { id: data.cursoId } })
+      if (!curso) throw new Error('Curso no encontrado')
+
+      const montoFinal = Number(
+        (curso.precio * (1 - (data.descuentoPorcentaje ?? 0) / 100)).toFixed(2)
+      )
+
+      if (data.formaPago === 'CONTADO') {
+        const fechaPago = data.fechaPago ? new Date(data.fechaPago) : new Date()
+        await tx.pago.create({
+          data: {
+            estudianteId:    est.id,
+            monto:           montoFinal,
+            estado:          'PAGADO',
+            metodo:          data.metodoPago ?? 'TRANSFERENCIA',
+            fechaPago,
+            fechaVencimiento: fechaPago,
+            ...(data.comprobante && { comprobante: data.comprobante }),
+            ...(req.asesorId     && { asesorId:    req.asesorId }),
+          },
+        })
+      } else if (data.formaPago === 'FINANCIADO' && data.numeroCuotas && data.fechaPrimeraCuota) {
+        const montoCuota = Number((montoFinal / data.numeroCuotas).toFixed(2))
+        const fechaBase  = new Date(data.fechaPrimeraCuota)
+
+        await tx.financiamiento.create({
+          data: {
+            estudianteId: est.id,
+            montoTotal:   montoFinal,
+            cuotas: {
+              create: Array.from({ length: data.numeroCuotas }, (_, i) => {
+                const fecha = new Date(fechaBase)
+                fecha.setMonth(fecha.getMonth() + i)
+                return { numero: i + 1, monto: montoCuota, fechaVencimiento: fecha }
+              }),
+            },
+          },
+        })
+      }
+    }
+
+    return est
   })
 
   return ApiResponse.created(res, estudiante)
