@@ -13,5 +13,6 @@ router.get('/:id', asyncHandler(ctrl.obtener))
 router.patch('/:id', asyncHandler(ctrl.actualizar))
 router.delete('/:id', requireRole('ADMIN'), asyncHandler(ctrl.eliminar))
 router.get('/:id/rendimiento', asyncHandler(ctrl.rendimiento))
+router.get('/:id/historial',  asyncHandler(ctrl.historial))
 
 export default router

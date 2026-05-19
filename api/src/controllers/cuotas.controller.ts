@@ -5,26 +5,41 @@ import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
 const actualizarSchema = z.object({
-  pagado:      z.boolean(),
-  fechaPago:   z.string().optional(),
-  comprobante: z.string().optional(),
+  pagado:          z.boolean().optional(),
+  fechaPago:       z.string().optional(),
+  comprobante:     z.string().optional(),
+  medioPago:       z.string().optional(),
+  notas:           z.string().optional(),
+  // Campos editables aunque no esté pagada
+  monto:           z.number().positive().optional(),
+  fechaVencimiento:z.string().optional(),
 })
 
 export async function actualizar(req: Request, res: Response) {
   const { id } = req.params
-  const { pagado, fechaPago, comprobante } = actualizarSchema.parse(req.body)
+  const data = actualizarSchema.parse(req.body)
+
+  // Obtener cuota actual para historial
+  const cuotaActual = await prisma.cuota.findUnique({
+    where: { id },
+    include: { financiamiento: { select: { estudianteId: true } } },
+  })
 
   const cuota = await prisma.cuota.update({
     where: { id },
     data: {
-      pagado,
-      ...(pagado && { fechaPago: fechaPago ? new Date(fechaPago) : new Date() }),
-      ...(comprobante !== undefined && { comprobante }),
+      ...(data.pagado !== undefined && { pagado: data.pagado }),
+      ...(data.pagado && { fechaPago: data.fechaPago ? new Date(data.fechaPago) : new Date() }),
+      ...(data.comprobante !== undefined && { comprobante: data.comprobante }),
+      ...(data.medioPago   !== undefined && { medioPago:   data.medioPago }),
+      ...(data.notas       !== undefined && { notas:       data.notas }),
+      ...(data.monto       !== undefined && { monto:       data.monto }),
+      ...(data.fechaVencimiento !== undefined && { fechaVencimiento: new Date(data.fechaVencimiento) }),
     },
   })
 
-  // Si todas las cuotas están pagadas → financiamiento COMPLETADO
-  if (pagado) {
+  // Si se marcó como pagada → verificar si el financiamiento queda COMPLETADO
+  if (data.pagado === true && cuotaActual) {
     const pendientes = await prisma.cuota.count({
       where: { financiamientoId: cuota.financiamientoId, pagado: false },
     })
@@ -36,6 +51,39 @@ export async function actualizar(req: Request, res: Response) {
     }
   }
 
-  auditLog(req, 'UPDATE', 'cuota', id, { pagado, comprobante: !!comprobante })
+  // Registrar en historial si hay estudianteId disponible
+  if (cuotaActual?.financiamiento?.estudianteId) {
+    const estudianteId = cuotaActual.financiamiento.estudianteId
+    let descripcion = ''
+    let accion = 'UPDATE_CUOTA'
+
+    if (data.pagado === true) {
+      accion = 'ABONO'
+      descripcion = `Cuota #${cuota.numero} marcada como pagada — ${data.medioPago ?? 'Sin medio de pago'} — $${cuota.monto.toLocaleString('es-CO')}`
+    } else if (data.monto !== undefined || data.fechaVencimiento !== undefined) {
+      accion = 'EDITAR_CUOTA'
+      descripcion = `Cuota #${cuota.numero} editada`
+      if (data.monto !== undefined) descripcion += ` · monto $${data.monto.toLocaleString('es-CO')}`
+      if (data.fechaVencimiento !== undefined) descripcion += ` · vencimiento ${new Date(data.fechaVencimiento).toLocaleDateString('es-CO')}`
+    } else if (data.pagado === false) {
+      accion = 'REVERTIR_CUOTA'
+      descripcion = `Cuota #${cuota.numero} revertida a pendiente`
+    }
+
+    if (descripcion) {
+      await prisma.historialEstudiante.create({
+        data: {
+          estudianteId,
+          accion,
+          descripcion,
+          cambios: data as any,
+          realizadoPor: (req as any).userName ?? req.userId ?? 'Sistema',
+          userId: req.userId ?? 'sistema',
+        },
+      })
+    }
+  }
+
+  auditLog(req, 'UPDATE', 'cuota', id, { pagado: data.pagado, medioPago: data.medioPago })
   return ApiResponse.success(res, cuota)
 }

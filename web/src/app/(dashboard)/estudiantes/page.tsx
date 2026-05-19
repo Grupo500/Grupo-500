@@ -88,9 +88,10 @@ function calcFinanciero(e: Estudiante) {
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
 
   const estado: 'al-dia' | 'pendiente' | 'mora' | 'sin-deuda' =
-    totalMora > 0 ? 'mora' :
-    totalPendiente > 0 ? 'pendiente' :
-    totalGeneral > 0 ? 'al-dia' : 'sin-deuda'
+    totalMora > 0        ? 'mora' :
+    totalPendiente > 0   ? 'pendiente' :
+    totalGeneral > 0     ? 'al-dia' :
+                           'sin-deuda'
 
   return { totalGeneral, totalPagado, totalPendiente, totalMora, progreso, estado }
 }
@@ -173,6 +174,11 @@ export default function EstudiantesPage() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
 
+  // Invalidar lista al montar (sync después de volver del detalle)
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+  }, [])
+
   useEffect(() => {
     const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
     return () => clearTimeout(t)
@@ -232,6 +238,8 @@ export default function EstudiantesPage() {
         ...(form.departamento && { departamento: form.departamento }),
         ...(form.ciudad       && { ciudad: form.ciudad }),
         ...(form.colegioId    && { colegioId: form.colegioId }),
+        // Admin puede reasignar a otro asesor; vendedor se asigna automáticamente en el backend
+        ...(isAdmin && form.asesorId && { asesorId: form.asesorId }),
         ...(form.cursoId && {
           cursoId: form.cursoId, descuentoPorcentaje: descuentoPct,
           formaPago: form.formaPago,
@@ -371,7 +379,7 @@ export default function EstudiantesPage() {
             return (
               <div key={e.id}
                 onClick={() => router.push(`/estudiantes/${e.id}`)}
-                className="group rounded-2xl border border-outline-variant bg-surface-lowest p-4 hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-3">
+                className="group rounded-2xl border border-outline-variant bg-surface-lowest p-4 hover:border-primary/40 hover:shadow-md active:scale-[0.98] active:border-primary/60 active:bg-surface-high transition-all duration-200 cursor-pointer flex flex-col gap-3 select-none">
 
                 {/* Header: avatar + nombre + badge */}
                 <div className="flex items-start justify-between gap-2">

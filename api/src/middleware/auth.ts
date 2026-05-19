@@ -12,6 +12,7 @@ declare global {
       userId?: string
       userRole?: Role
       asesorId?: string
+      userName?: string
     }
   }
 }
@@ -39,6 +40,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     req.userId   = user.id
     req.userRole = user.role
     req.asesorId = user.asesor?.id
+    req.userName = user.asesor?.nombre ?? user.nombre ?? user.email
 
     next()
   } catch (error) {

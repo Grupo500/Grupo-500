@@ -5,12 +5,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
-import { formatCOP, formatDate, cn } from '@/lib/utils'
+import { formatCOP, cn } from '@/lib/utils'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, MapPin, School, Users, CreditCard, History,
   Wallet, CheckCircle, AlertTriangle, Paperclip, ExternalLink,
-  X, Save, Calendar, Plus,
+  Save, Calendar, ChevronDown, ChevronUp, X,
 } from 'lucide-react'
 import { isBefore, parseISO, isToday } from 'date-fns'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
@@ -20,14 +20,13 @@ interface Cuota {
   id: string; numero: number; monto: number
   fechaVencimiento: string; pagado: boolean
   fechaPago?: string; comprobante?: string
+  medioPago?: string; notas?: string
 }
-
 interface Financiamiento {
   id: string; montoTotal: number
   estado: 'ACTIVO' | 'COMPLETADO' | 'CANCELADO'
   createdAt: string; cuotas: Cuota[]
 }
-
 interface Pago {
   id: string; monto: number
   estado: 'PENDIENTE' | 'PAGADO' | 'VENCIDO' | 'CANCELADO'
@@ -36,12 +35,14 @@ interface Pago {
   createdAt: string; notas?: string
   asesor?: { nombre: string }
 }
-
+interface HistorialItem {
+  id: string; accion: string; descripcion: string
+  cambios?: any; realizadoPor: string; createdAt: string
+}
 interface EstudianteDetalle {
   id: string; nombre: string
   tipoDocumento?: string; documento?: string
-  email: string; telefono: string
-  fechaNacimiento: string
+  email: string; telefono: string; fechaNacimiento: string
   departamento?: string; ciudad?: string
   colegio?: { id: string; nombre: string }
   acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
@@ -56,18 +57,18 @@ interface EstudianteDetalle {
 function esVencida(fechaVenc: string) {
   return isBefore(parseISO(fechaVenc), new Date()) && !isToday(parseISO(fechaVenc))
 }
-
 function fmtFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })
 }
-
+function fmtFechaHora(iso: string) {
+  return new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
 function fmtNum(raw: string | number): string {
   const n = typeof raw === 'string' ? raw.replace(/\./g, '') : String(raw)
   const num = Number(n)
   if (isNaN(num) || n === '') return ''
   return num.toLocaleString('es-CO')
 }
-
 function NumericInput({ value, onChange, placeholder, className }: {
   value: string; onChange: (v: string) => void; placeholder?: string; className?: string
 }) {
@@ -78,17 +79,311 @@ function NumericInput({ value, onChange, placeholder, className }: {
   )
 }
 
-type Tab = 'perfil' | 'financiero' | 'historial' | 'abonos'
-
+type Tab = 'perfil' | 'financiero' | 'historial'
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: 'perfil',      label: 'Perfil',      icon: User      },
-  { key: 'financiero',  label: 'Financiero',  icon: Wallet    },
-  { key: 'historial',  label: 'Historial',   icon: History   },
-  { key: 'abonos',     label: 'Abonos',      icon: CreditCard },
+  { key: 'perfil',     label: 'Perfil',     icon: User    },
+  { key: 'financiero', label: 'Financiero', icon: Wallet  },
+  { key: 'historial',  label: 'Historial',  icon: History },
 ]
 
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
 const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
+
+const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Otro']
+
+// ══════════════════════════════════════════════════════════════════════════
+// COMPONENTE: FILA DE CUOTA (vista + edición inline)
+// ══════════════════════════════════════════════════════════════════════════
+function FilaCuota({ c, fetcher, onRefresh }: {
+  c: Cuota
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+  onRefresh: () => void
+}) {
+  const queryClient = useQueryClient()
+  const { getToken } = useAuth()
+  const [editando, setEditando] = useState(false)
+  const [monto, setMonto] = useState(String(Math.round(c.monto)))
+  const [fecha, setFecha] = useState(c.fechaVencimiento?.split('T')[0] ?? '')
+  const [error, setError] = useState('')
+
+  const vencida = !c.pagado && esVencida(c.fechaVencimiento)
+
+  const editarMutation = useMutation({
+    mutationFn: () => fetcher(`/cuotas/${c.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        monto: Number(monto),
+        fechaVencimiento: fecha,
+      }),
+    }),
+    onSuccess: () => { setEditando(false); setError(''); onRefresh() },
+    onError: (e: any) => setError(e.message ?? 'Error al guardar'),
+  })
+
+  if (editando) return (
+    <div className="px-3 py-3 rounded-xl border-2 border-primary/40 bg-primary/4 space-y-2">
+      <p className="text-[11px] font-semibold text-primary">Editando cuota #{c.numero}</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className={labelCls}>Monto</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">$</span>
+            <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
+          </div>
+        </div>
+        <div>
+          <label className={labelCls}>Vencimiento</label>
+          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={fecha} onChange={e => setFecha(e.target.value)} />
+        </div>
+      </div>
+      {error && <p className="text-xs text-[var(--error)]">{error}</p>}
+      <div className="flex gap-2 justify-end">
+        <button onClick={() => setEditando(false)} className="px-3 py-1 text-xs text-on-surface-variant hover:text-on-surface cursor-pointer">Cancelar</button>
+        <button onClick={() => editarMutation.mutate()} disabled={editarMutation.isPending}
+          className="flex items-center gap-1 px-3 py-1 bg-primary text-on-primary rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50">
+          {editarMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          Guardar
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className={cn(
+      'flex items-center gap-3 px-3 py-2.5 rounded-xl border group',
+      c.pagado ? 'border-[#16a34a]/20 bg-[#16a34a]/4' :
+      vencida  ? 'border-[#dc2626]/25 bg-[#dc2626]/4' :
+                 'border-outline-variant/50 bg-surface-high/40',
+    )}>
+      <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
+        c.pagado ? 'bg-[#16a34a]/15' : vencida ? 'bg-[#dc2626]/15' : 'bg-surface-high')}>
+        {c.pagado ? <CheckCircle className="w-3.5 h-3.5 text-[#16a34a]" />
+                  : vencida ? <AlertTriangle className="w-3.5 h-3.5 text-[#dc2626]" />
+                  : <span className="text-[10px] font-bold text-on-surface-variant">#{c.numero}</span>}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-semibold text-on-surface">Cuota #{c.numero} · {formatCOP(c.monto)}</p>
+        <p className="text-[10px] text-on-surface-variant">
+          {c.pagado
+            ? `Pagado ${c.fechaPago ? fmtFecha(c.fechaPago) : ''}${c.medioPago ? ` · ${c.medioPago}` : ''}`
+            : `Vence ${fmtFecha(c.fechaVencimiento)}`}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {c.comprobante && (
+          <a href={c.comprobante} target="_blank" rel="noopener noreferrer"
+            className="text-[10px] text-primary flex items-center gap-1 hover:underline">
+            <Paperclip className="w-3 h-3" />Ver
+          </a>
+        )}
+        {!c.pagado && (
+          <button onClick={() => setEditando(true)}
+            className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-surface-high transition-all cursor-pointer">
+            <Pencil className="w-3 h-3 text-on-surface-variant" />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// COMPONENTE: FORM ABONO
+// ══════════════════════════════════════════════════════════════════════════
+function FormAbono({ cuotasPendientes, fetcher, onSuccess }: {
+  cuotasPendientes: Cuota[]
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+  onSuccess: () => void
+}) {
+  const { getToken } = useAuth()
+
+  type CuotaAbono = { cuotaId: string; numero: number; montoOrig: number; monto: string; fecha: string }
+  const [seleccionadas, setSeleccionadas] = useState<CuotaAbono[]>([])
+  const [medioPago, setMedioPago] = useState('Bancolombia')
+  const [otroMedio, setOtroMedio] = useState('')
+  const [comprobante, setComprobante] = useState('')
+  const [subiendo, setSubiendo] = useState(false)
+  const [error, setError] = useState('')
+  const hoy = new Date().toISOString().split('T')[0]
+
+  const toggleCuota = (c: Cuota) => {
+    setSeleccionadas(prev => {
+      const existe = prev.find(s => s.cuotaId === c.id)
+      if (existe) return prev.filter(s => s.cuotaId !== c.id)
+      return [...prev, { cuotaId: c.id, numero: c.numero, montoOrig: c.monto, monto: String(Math.round(c.monto)), fecha: hoy }]
+    })
+  }
+
+  const actualizarCuotaAbono = (cuotaId: string, field: 'monto' | 'fecha', value: string) => {
+    setSeleccionadas(prev => prev.map(s => s.cuotaId === cuotaId ? { ...s, [field]: value } : s))
+  }
+
+  const subirComprobante = async (file: File) => {
+    setSubiendo(true)
+    try {
+      const token = await getToken()
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
+      })
+      const json = await res.json()
+      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
+      setComprobante(json.data.url)
+    } catch (e: any) { setError(e.message ?? 'Error al subir')
+    } finally { setSubiendo(false) }
+  }
+
+  const medioFinal = medioPago === 'Otro' ? (otroMedio.trim() || 'Otro') : medioPago
+
+  const abonoMutation = useMutation({
+    mutationFn: async () => {
+      if (seleccionadas.length === 0) throw new Error('Selecciona al menos una cuota')
+      if (seleccionadas.some(s => !s.monto || Number(s.monto) <= 0)) throw new Error('Ingresa el monto de cada cuota seleccionada')
+      if (seleccionadas.some(s => !s.fecha)) throw new Error('Ingresa la fecha de pago de cada cuota')
+      await Promise.all(
+        seleccionadas.map(s =>
+          fetcher(`/cuotas/${s.cuotaId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              pagado: true,
+              fechaPago: s.fecha,
+              monto: Number(s.monto),
+              medioPago: medioFinal,
+              ...(comprobante && { comprobante }),
+            }),
+          })
+        )
+      )
+    },
+    onSuccess: () => {
+      setSeleccionadas([]); setComprobante(''); setError(''); setOtroMedio('')
+      onSuccess()
+    },
+    onError: (e: any) => setError(e.message ?? 'Error al registrar abono'),
+  })
+
+  const totalAbono = seleccionadas.reduce((s, c) => s + (Number(c.monto) || 0), 0)
+
+  if (cuotasPendientes.length === 0) return (
+    <div className="flex flex-col items-center justify-center py-8 text-on-surface-variant">
+      <CheckCircle className="w-8 h-8 mb-2 text-[#16a34a] opacity-60" />
+      <p className="text-sm">Todas las cuotas están pagadas</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4 pt-3 border-t border-outline-variant/40">
+      <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Registrar abono</p>
+
+      {/* Selección de cuotas */}
+      <div className="space-y-1.5">
+        <p className="text-[11px] text-on-surface-variant">Seleccioná las cuotas a saldar</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
+          {cuotasPendientes.map(c => {
+            const sel = seleccionadas.find(s => s.cuotaId === c.id)
+            const vencida = esVencida(c.fechaVencimiento)
+            return (
+              <div key={c.id} className="space-y-2">
+                <button type="button" onClick={() => toggleCuota(c)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all duration-150 cursor-pointer',
+                    sel     ? 'border-primary bg-primary/8' :
+                    vencida ? 'border-[#dc2626]/30 bg-[#dc2626]/4 hover:border-[#dc2626]/50' :
+                              'border-outline-variant/60 bg-surface-high hover:border-outline-variant',
+                  )}>
+                  <div className={cn('w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors',
+                    sel ? 'bg-primary border-primary' : 'border-outline-variant bg-surface-lowest')}>
+                    {sel && <CheckCircle className="w-2.5 h-2.5 text-white" />}
+                  </div>
+                  <span className={cn('text-[11px] font-bold w-5 text-center flex-shrink-0',
+                    sel ? 'text-primary' : vencida ? 'text-[#dc2626]' : 'text-on-surface-variant')}>
+                    #{c.numero}
+                  </span>
+                  <span className="text-[13px] font-bold text-on-surface tabular-nums flex-1">{formatCOP(c.monto)}</span>
+                  <div className="text-right">
+                    <p className="text-[11px] text-on-surface-variant">{fmtFecha(c.fechaVencimiento)}</p>
+                    {vencida && <p className="text-[9px] font-bold text-[#dc2626]">VENCIDA</p>}
+                  </div>
+                </button>
+
+                {/* Campos de monto y fecha por cuota seleccionada */}
+                {sel && (
+                  <div className="grid grid-cols-2 gap-2 pl-2">
+                    <div>
+                      <label className={labelCls}>Monto pagado *</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
+                        <NumericInput value={sel.monto} onChange={v => actualizarCuotaAbono(c.id, 'monto', v)}
+                          placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Fecha de pago *</label>
+                      <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={sel.fecha}
+                        onChange={e => actualizarCuotaAbono(c.id, 'fecha', e.target.value)} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Total seleccionado */}
+      {seleccionadas.length > 0 && (
+        <div className="flex items-center justify-between px-3 py-2 bg-primary/6 rounded-xl border border-primary/20">
+          <span className="text-[12px] font-medium text-on-surface-variant">{seleccionadas.length} cuota{seleccionadas.length !== 1 ? 's' : ''} · Total abono</span>
+          <span className="text-[14px] font-bold text-primary tabular-nums">{formatCOP(totalAbono)}</span>
+        </div>
+      )}
+
+      {/* Medio de pago */}
+      <div>
+        <label className={labelCls}>Medio de pago *</label>
+        <div className="flex gap-2">
+          {MEDIOS_PAGO.map(m => (
+            <button key={m} type="button" onClick={() => setMedioPago(m)}
+              className={cn('flex-1 py-2 rounded-lg border-2 text-xs font-semibold transition-all cursor-pointer',
+                medioPago === m ? 'border-primary bg-primary/8 text-primary' : 'border-outline-variant text-on-surface-variant hover:border-outline-variant/80')}>
+              {m}
+            </button>
+          ))}
+        </div>
+        {medioPago === 'Otro' && (
+          <input className={cn(inputCls, 'mt-2')} placeholder="Especifica el medio de pago..." value={otroMedio}
+            onChange={e => setOtroMedio(e.target.value)} />
+        )}
+      </div>
+
+      {/* Comprobante */}
+      <div>
+        <label className={labelCls}>Comprobante (opcional)</label>
+        <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
+          <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
+            onChange={e => { const f = e.target.files?.[0]; if (f) subirComprobante(f); e.target.value = '' }} />
+          {subiendo ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <Paperclip className="w-4 h-4 text-on-surface-variant" />}
+          <span className="text-sm text-on-surface-variant">{subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
+        </label>
+        {comprobante && (
+          <a href={comprobante} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+            <ExternalLink className="w-3 h-3" />Ver comprobante
+          </a>
+        )}
+      </div>
+
+      {error && <p className="text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{error}</p>}
+
+      <button onClick={() => abonoMutation.mutate()}
+        disabled={abonoMutation.isPending || seleccionadas.length === 0}
+        className="flex items-center gap-2 w-full justify-center py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer">
+        {abonoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+        Registrar abono ({seleccionadas.length} cuota{seleccionadas.length !== 1 ? 's' : ''})
+      </button>
+    </div>
+  )
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // TAB: PERFIL
@@ -104,7 +399,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 }) {
   const [editando, setEditando] = useState(false)
   const [error, setError] = useState('')
-
   const cursoActivo = e.cursos?.[0]
   const descuentoValorInicial = cursoActivo
     ? String(Math.round(cursoActivo.curso.precio * cursoActivo.descuentoPorcentaje / 100)) : '0'
@@ -146,7 +440,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 
   if (!editando) return (
     <div className="space-y-6">
-      {/* Datos personales */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Datos personales</p>
@@ -177,7 +470,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
         </div>
       </section>
 
-      {/* Curso */}
       {cursoActivo && (
         <section className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Curso adquirido</p>
@@ -198,7 +490,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
         </section>
       )}
 
-      {/* Acudiente */}
       {e.acudiente && (
         <section className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Acudiente</p>
@@ -220,16 +511,14 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
     </div>
   )
 
-  // ── Modo edición ──
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Editando perfil</p>
         <button onClick={() => setEditando(false)} className="text-xs text-on-surface-variant hover:text-on-surface cursor-pointer">Cancelar</button>
       </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="col-span-2 lg:col-span-2">
           <label className={labelCls}>Nombre completo *</label>
           <input className={inputCls} value={form.nombre} onChange={e => f('nombre')(e.target.value)} />
         </div>
@@ -304,11 +593,9 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           </>
         )}
       </div>
-
-      {/* Acudiente */}
       <div>
         <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-3">Acudiente</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="col-span-2">
             <label className={labelCls}>Nombre</label>
             <input className={inputCls} value={form.acudienteNombre} onChange={e => f('acudienteNombre')(e.target.value)} />
@@ -321,7 +608,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             <label className={labelCls}>Teléfono</label>
             <input className={inputCls} value={form.acudienteTelefono} onChange={e => f('acudienteTelefono')(e.target.value)} />
           </div>
-          <div className="col-span-2">
+          <div>
             <label className={labelCls}>Relación</label>
             <select className={inputCls} value={form.acudienteRelacion} onChange={e => f('acudienteRelacion')(e.target.value)}>
               {['Padre','Madre','Tutor','Hermano/a','Otro'].map(r => <option key={r}>{r}</option>)}
@@ -329,9 +616,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           </div>
         </div>
       </div>
-
       {error && <p className="text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{error}</p>}
-
       <button onClick={() => guardarMutation.mutate()} disabled={guardarMutation.isPending}
         className="flex items-center gap-2 w-full justify-center py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer">
         {guardarMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -342,30 +627,33 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// TAB: FINANCIERO
+// TAB: FINANCIERO (incluye abonos)
 // ══════════════════════════════════════════════════════════════════════════
-function TabFinanciero({ e }: { e: EstudianteDetalle }) {
+function TabFinanciero({ e, fetcher, onRefresh }: {
+  e: EstudianteDetalle
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+  onRefresh: () => void
+}) {
   const financiamientos = e.financiamientos ?? []
   const pagos = e.pagos ?? []
   const hoy = new Date()
+  const [abonoAbierto, setAbonoAbierto] = useState(false)
 
-  const totalFin = financiamientos.reduce((s, f) => s + f.montoTotal, 0)
-  const pagadoFin = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-  const pendienteFin = totalFin - pagadoFin
-
-  const totalPagosDir = pagos.reduce((s, p) => s + p.monto, 0)
+  const totalFin       = financiamientos.reduce((s, f) => s + f.montoTotal, 0)
+  const pagadoFin      = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
+  const pendienteFin   = totalFin - pagadoFin
+  const totalPagosDir  = pagos.reduce((s, p) => s + p.monto, 0)
   const pagadoPagosDir = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0)
-  const pendientePagosDir = pagos.filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
-
-  const totalGeneral = totalFin + totalPagosDir
-  const totalPagado = pagadoFin + pagadoPagosDir
-  const totalPendiente = pendienteFin + pendientePagosDir
-  const progreso = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
-
-  const totalMora = financiamientos.flatMap(f => f.cuotas).filter(c =>
+  const pendientePagos = pagos.filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
+  const totalGeneral   = totalFin + totalPagosDir
+  const totalPagado    = pagadoFin + pagadoPagosDir
+  const totalPendiente = pendienteFin + pendientePagos
+  const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
+  const totalMora      = financiamientos.flatMap(f => f.cuotas).filter(c =>
     !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
-  ).reduce((s, c) => s + c.monto, 0)
-    + pagos.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
+  ).reduce((s, c) => s + c.monto, 0) + pagos.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
+
+  const cuotasPendientes = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado))
 
   if (totalGeneral === 0) return (
     <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
@@ -377,12 +665,12 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
   return (
     <div className="space-y-6">
       {/* Resumen */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total', value: formatCOP(totalGeneral), color: 'text-on-surface' },
-          { label: 'Pagado', value: formatCOP(totalPagado), color: 'text-[#16a34a]' },
+          { label: 'Total',     value: formatCOP(totalGeneral),   color: 'text-on-surface' },
+          { label: 'Pagado',    value: formatCOP(totalPagado),    color: 'text-[#16a34a]' },
           { label: 'Pendiente', value: formatCOP(totalPendiente), color: totalPendiente > 0 ? 'text-[#d97706]' : 'text-on-surface-variant' },
-          { label: 'En mora', value: formatCOP(totalMora), color: totalMora > 0 ? 'text-[#dc2626]' : 'text-on-surface-variant' },
+          { label: 'En mora',   value: formatCOP(totalMora),      color: totalMora > 0 ? 'text-[#dc2626]' : 'text-on-surface-variant' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-surface-high rounded-2xl p-3 text-center">
             <p className={cn('text-base font-bold tabular-nums', color)}>{value}</p>
@@ -391,7 +679,7 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
         ))}
       </div>
 
-      {/* Barra progreso */}
+      {/* Progreso */}
       <div className="space-y-1.5">
         <div className="flex justify-between text-xs text-on-surface-variant">
           <span>Progreso de pago</span>
@@ -404,7 +692,7 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
         </div>
       </div>
 
-      {/* Financiamientos (cuotas) */}
+      {/* Financiamientos */}
       {financiamientos.map(fin => (
         <section key={fin.id} className="space-y-2">
           <div className="flex items-center justify-between">
@@ -413,44 +701,15 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
             </p>
             <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full',
               fin.estado === 'COMPLETADO' ? 'bg-[#16a34a]/12 text-[#16a34a]' :
-              fin.estado === 'CANCELADO' ? 'bg-[#dc2626]/12 text-[#dc2626]' :
+              fin.estado === 'CANCELADO'  ? 'bg-[#dc2626]/12 text-[#dc2626]' :
               'bg-primary/10 text-primary')}>
               {fin.estado}
             </span>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
-            {fin.cuotas.map(c => {
-              const vencida = !c.pagado && esVencida(c.fechaVencimiento)
-              return (
-                <div key={c.id} className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl border',
-                  c.pagado ? 'border-[#16a34a]/20 bg-[#16a34a]/4' :
-                  vencida  ? 'border-[#dc2626]/25 bg-[#dc2626]/4' :
-                             'border-outline-variant/50 bg-surface-high/40',
-                )}>
-                  <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-                    c.pagado ? 'bg-[#16a34a]/15' : vencida ? 'bg-[#dc2626]/15' : 'bg-surface-high')}>
-                    {c.pagado
-                      ? <CheckCircle className="w-3.5 h-3.5 text-[#16a34a]" />
-                      : vencida
-                        ? <AlertTriangle className="w-3.5 h-3.5 text-[#dc2626]" />
-                        : <span className="text-[10px] font-bold text-on-surface-variant">#{c.numero}</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-on-surface">Cuota #{c.numero} · {formatCOP(c.monto)}</p>
-                    <p className="text-[10px] text-on-surface-variant">
-                      {c.pagado ? `Pagado ${c.fechaPago ? fmtFecha(c.fechaPago) : ''}` : `Vence ${fmtFecha(c.fechaVencimiento)}`}
-                    </p>
-                  </div>
-                  {c.comprobante && (
-                    <a href={c.comprobante} target="_blank" rel="noopener noreferrer"
-                      className="flex-shrink-0 text-[10px] text-primary flex items-center gap-1 hover:underline">
-                      <Paperclip className="w-3 h-3" />Ver
-                    </a>
-                  )}
-                </div>
-              )
-            })}
+            {fin.cuotas.map(c => (
+              <FilaCuota key={c.id} c={c} fetcher={fetcher} onRefresh={onRefresh} />
+            ))}
           </div>
         </section>
       ))}
@@ -494,6 +753,30 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
           </div>
         </section>
       )}
+
+      {/* ── Sección Abonos ── */}
+      {cuotasPendientes.length > 0 && (
+        <div className="rounded-2xl border border-outline-variant overflow-hidden">
+          <button onClick={() => setAbonoAbierto(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-surface-high hover:bg-surface-highest transition-colors cursor-pointer">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-on-surface">Registrar abono</span>
+              <span className="text-[11px] text-on-surface-variant">· {cuotasPendientes.length} cuota{cuotasPendientes.length !== 1 ? 's' : ''} pendiente{cuotasPendientes.length !== 1 ? 's' : ''}</span>
+            </div>
+            {abonoAbierto ? <ChevronUp className="w-4 h-4 text-on-surface-variant" /> : <ChevronDown className="w-4 h-4 text-on-surface-variant" />}
+          </button>
+          {abonoAbierto && (
+            <div className="px-4 pb-4">
+              <FormAbono
+                cuotasPendientes={cuotasPendientes}
+                fetcher={fetcher}
+                onSuccess={() => { setAbonoAbierto(false); onRefresh() }}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -501,261 +784,82 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
 // ══════════════════════════════════════════════════════════════════════════
 // TAB: HISTORIAL
 // ══════════════════════════════════════════════════════════════════════════
-function TabHistorial({ e }: { e: EstudianteDetalle }) {
-  // Construir línea de tiempo unificada
-  type Evento = {
-    fecha: string; tipo: 'cuota' | 'pago'; descripcion: string
-    monto: number; estado: string; comprobante?: string
+function TabHistorial({ estudianteId, fetcher }: {
+  estudianteId: string
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+}) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['historial-estudiante', estudianteId],
+    queryFn: () => fetcher<{ data: HistorialItem[] }>(`/estudiantes/${estudianteId}/historial`),
+    staleTime: 30_000,
+  })
+
+  const registros = data?.data ?? []
+
+  const ACCION_STYLE: Record<string, { color: string; bg: string; label: string }> = {
+    UPDATE_PERFIL:         { color: 'text-primary',    bg: 'bg-primary/15',    label: 'Perfil' },
+    ABONO:                 { color: 'text-[#16a34a]',  bg: 'bg-[#16a34a]/15', label: 'Abono' },
+    EDITAR_CUOTA:          { color: 'text-[#d97706]',  bg: 'bg-[#d97706]/15', label: 'Edición' },
+    REVERTIR_CUOTA:        { color: 'text-[#dc2626]',  bg: 'bg-[#dc2626]/15', label: 'Reversión' },
+    CREAR_FINANCIAMIENTO:  { color: 'text-primary',    bg: 'bg-primary/15',    label: 'Financiamiento' },
+    UPDATE_CUOTA:          { color: 'text-[#d97706]',  bg: 'bg-[#d97706]/15', label: 'Cuota' },
   }
 
-  const eventos: Evento[] = [
-    ...(e.financiamientos?.flatMap(f =>
-      f.cuotas.filter(c => c.pagado).map(c => ({
-        fecha: c.fechaPago ?? c.fechaVencimiento,
-        tipo: 'cuota' as const,
-        descripcion: `Cuota #${c.numero}`,
-        monto: c.monto, estado: 'PAGADO',
-        comprobante: c.comprobante,
-      }))
-    ) ?? []),
-    ...(e.pagos?.filter(p => p.estado === 'PAGADO').map(p => ({
-      fecha: p.fechaPago ?? p.createdAt,
-      tipo: 'pago' as const,
-      descripcion: `Pago directo · ${p.metodo}`,
-      monto: p.monto, estado: 'PAGADO',
-      comprobante: p.comprobante,
-    })) ?? []),
-  ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+  if (isLoading) return (
+    <div className="space-y-3">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex gap-3 animate-pulse">
+          <div className="w-8 h-8 rounded-full bg-surface-high flex-shrink-0" />
+          <div className="flex-1 space-y-1.5 pt-1">
+            <div className="h-3 w-48 rounded bg-surface-high" />
+            <div className="h-2.5 w-32 rounded bg-surface-high" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 
-  if (eventos.length === 0) return (
+  if (registros.length === 0) return (
     <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
       <History className="w-10 h-10 mb-3 opacity-30" />
-      <p className="text-sm">Sin movimientos registrados aún</p>
+      <p className="text-sm">Sin actividad registrada aún</p>
+      <p className="text-xs mt-1">Los cambios al perfil y abonos aparecerán aquí</p>
     </div>
   )
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-3">
-        {eventos.length} movimiento{eventos.length !== 1 ? 's' : ''} registrado{eventos.length !== 1 ? 's' : ''}
+    <div className="space-y-1">
+      <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-4">
+        {registros.length} evento{registros.length !== 1 ? 's' : ''} registrado{registros.length !== 1 ? 's' : ''}
       </p>
-      <div className="relative pl-5 space-y-0">
-        {/* Línea vertical */}
+      <div className="relative pl-5">
         <div className="absolute left-[9px] top-2 bottom-2 w-px bg-outline-variant/40" />
-        {eventos.map((ev, i) => (
-          <div key={i} className="relative flex gap-3 pb-4">
-            {/* Dot */}
-            <div className="absolute -left-5 mt-1.5 w-3.5 h-3.5 rounded-full bg-[#16a34a]/20 border-2 border-[#16a34a] flex-shrink-0" />
-            <div className="flex-1 pl-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-[13px] font-semibold text-on-surface">{ev.descripcion}</p>
-                  <p className="text-[11px] text-on-surface-variant mt-0.5">{fmtFecha(ev.fecha)}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-[13px] font-bold text-[#16a34a] tabular-nums">{formatCOP(ev.monto)}</p>
-                  {ev.comprobante && (
-                    <a href={ev.comprobante} target="_blank" rel="noopener noreferrer"
-                      className="text-[10px] text-primary flex items-center justify-end gap-1 hover:underline mt-0.5">
-                      <ExternalLink className="w-2.5 h-2.5" />Comprobante
-                    </a>
-                  )}
+        {registros.map((r, i) => {
+          const style = ACCION_STYLE[r.accion] ?? { color: 'text-on-surface-variant', bg: 'bg-surface-high', label: r.accion }
+          return (
+            <div key={r.id} className="relative flex gap-3 pb-4">
+              <div className={cn('absolute -left-5 mt-1 w-3.5 h-3.5 rounded-full border-2 border-surface-lowest flex-shrink-0', style.bg)} />
+              <div className="flex-1 pl-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', style.bg, style.color)}>
+                        {style.label}
+                      </span>
+                      <p className="text-[13px] font-medium text-on-surface">{r.descripcion}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[11px] text-on-surface-variant">{fmtFechaHora(r.createdAt)}</p>
+                      <span className="text-on-surface-variant/30">·</span>
+                      <p className="text-[11px] text-on-surface-variant">{r.realizadoPor}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
-    </div>
-  )
-}
-
-// ══════════════════════════════════════════════════════════════════════════
-// TAB: ABONOS
-// ══════════════════════════════════════════════════════════════════════════
-function TabAbonos({ e, fetcher, onRefresh }: {
-  e: EstudianteDetalle
-  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
-  onRefresh: () => void
-}) {
-  const queryClient = useQueryClient()
-  const { getToken } = useAuth()
-
-  const financiamientos = e.financiamientos ?? []
-  const cuotasPendientes = financiamientos.flatMap(f =>
-    f.cuotas.filter(c => !c.pagado).map(c => ({ ...c, financiamientoId: f.id }))
-  )
-  const pagosPendientes = (e.pagos ?? []).filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO')
-
-  const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set())
-  const [montoAbono, setMontoAbono] = useState('')
-  const [fechaAbono, setFechaAbono] = useState(new Date().toISOString().split('T')[0])
-  const [comprobante, setComprobante] = useState('')
-  const [subiendo, setSubiendo] = useState(false)
-  const [error, setError] = useState('')
-
-  const montoSeleccionado = cuotasPendientes
-    .filter(c => seleccionadas.has(c.id))
-    .reduce((s, c) => s + c.monto, 0)
-
-  const toggleCuota = (id: string, monto: number) => {
-    setSeleccionadas(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      const suma = cuotasPendientes.filter(c => next.has(c.id)).reduce((s, c) => s + c.monto, 0)
-      setMontoAbono(suma > 0 ? String(suma) : '')
-      return next
-    })
-  }
-
-  const subirComprobante = async (file: File) => {
-    setSubiendo(true)
-    try {
-      const token = await getToken()
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
-      })
-      const json = await res.json()
-      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
-      setComprobante(json.data.url)
-    } catch (err: any) {
-      setError(err.message ?? 'Error al subir')
-    } finally { setSubiendo(false) }
-  }
-
-  const abonoMutation = useMutation({
-    mutationFn: async () => {
-      if (seleccionadas.size === 0) throw new Error('Selecciona al menos una cuota')
-      if (!montoAbono || Number(montoAbono) <= 0) throw new Error('Ingresa el monto del abono')
-      if (!fechaAbono) throw new Error('Ingresa la fecha del abono')
-      await Promise.all(
-        Array.from(seleccionadas).map(cuotaId =>
-          fetcher(`/cuotas/${cuotaId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ pagado: true, fechaPago: fechaAbono, ...(comprobante && { comprobante }) }),
-          })
-        )
-      )
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-      setSeleccionadas(new Set()); setMontoAbono(''); setComprobante('')
-      setFechaAbono(new Date().toISOString().split('T')[0]); setError('')
-      onRefresh()
-    },
-    onError: (err: any) => setError(err.message ?? 'Error al registrar abono'),
-  })
-
-  const tienePendientes = cuotasPendientes.length > 0 || pagosPendientes.length > 0
-
-  if (!tienePendientes) return (
-    <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
-      <CheckCircle className="w-10 h-10 mb-3 opacity-30 text-[#16a34a]" />
-      <p className="text-sm font-medium">¡Todo pagado!</p>
-      <p className="text-xs mt-1">No hay cuotas ni pagos pendientes</p>
-    </div>
-  )
-
-  return (
-    <div className="space-y-5">
-      {/* Resumen rápido */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: 'Total pendiente', value: formatCOP(cuotasPendientes.reduce((s,c) => s+c.monto,0) + pagosPendientes.reduce((s,p) => s+p.monto,0)), color: 'text-[#d97706]' },
-          { label: 'Cuotas',  value: String(cuotasPendientes.length), color: 'text-on-surface' },
-          { label: 'Seleccionado', value: formatCOP(montoSeleccionado), color: 'text-primary' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="bg-surface-high rounded-xl p-2.5 text-center">
-            <p className={cn('text-sm font-bold tabular-nums', color)}>{value}</p>
-            <p className="text-[10px] text-on-surface-variant mt-0.5">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Lista de cuotas para seleccionar */}
-      {cuotasPendientes.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide">
-            Cuotas pendientes · seleccioná las que vas a saldar
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
-            {cuotasPendientes.map(c => {
-              const vencida = esVencida(c.fechaVencimiento)
-              const checked = seleccionadas.has(c.id)
-              return (
-                <button key={c.id} type="button" onClick={() => toggleCuota(c.id, c.monto)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all duration-150 cursor-pointer',
-                    checked  ? 'border-primary bg-primary/8' :
-                    vencida  ? 'border-[#dc2626]/30 bg-[#dc2626]/4 hover:border-[#dc2626]/50' :
-                               'border-outline-variant/60 bg-surface-high hover:border-outline-variant',
-                  )}>
-                  <div className={cn('w-4.5 h-4.5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors',
-                    checked ? 'bg-primary border-primary' : 'border-outline-variant bg-surface-lowest')}
-                    style={{ width: 18, height: 18 }}>
-                    {checked && <CheckCircle className="w-3 h-3 text-white" />}
-                  </div>
-                  <span className={cn('text-[11px] font-bold flex-shrink-0 w-6 text-center',
-                    checked ? 'text-primary' : vencida ? 'text-[#dc2626]' : 'text-on-surface-variant')}>
-                    #{c.numero}
-                  </span>
-                  <span className="text-[13px] font-bold text-on-surface tabular-nums flex-1">{formatCOP(c.monto)}</span>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-[11px] text-on-surface-variant">{fmtFecha(c.fechaVencimiento)}</p>
-                    {vencida && <p className="text-[9px] font-bold text-[#dc2626] mt-0.5">VENCIDA</p>}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Datos del abono */}
-      <div className="space-y-3 pt-2 border-t border-outline-variant/40">
-        <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide">Datos del abono</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>Monto recibido *</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">$</span>
-              <NumericInput value={montoAbono} onChange={setMontoAbono} placeholder="0" className={cn(inputCls, 'pl-6')} />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Fecha del abono *</label>
-            <input type="date" className={inputCls} value={fechaAbono} onChange={e => setFechaAbono(e.target.value)} />
-          </div>
-        </div>
-
-        <div>
-          <label className={labelCls}>Comprobante (opcional)</label>
-          <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
-            <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
-              onChange={e => { const file = e.target.files?.[0]; if (file) subirComprobante(file); e.target.value = '' }} />
-            {subiendo ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <Paperclip className="w-4 h-4 text-on-surface-variant" />}
-            <span className="text-sm text-on-surface-variant">
-              {subiendo ? 'Subiendo...' : comprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante'}
-            </span>
-          </label>
-          {comprobante && (
-            <a href={comprobante} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-              <ExternalLink className="w-3 h-3" />Ver comprobante subido
-            </a>
-          )}
-        </div>
-      </div>
-
-      {error && <p className="text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{error}</p>}
-
-      <button onClick={() => abonoMutation.mutate()}
-        disabled={abonoMutation.isPending || seleccionadas.size === 0 || !montoAbono || !fechaAbono}
-        className="flex items-center gap-2 w-full justify-center py-3 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer">
-        {abonoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-        Registrar abono ({seleccionadas.size} cuota{seleccionadas.size !== 1 ? 's' : ''})
-      </button>
     </div>
   )
 }
@@ -802,6 +906,13 @@ export default function EstudianteDetallePage() {
     },
   })
 
+  const handleRefresh = () => {
+    refetch()
+    queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+    queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+    queryClient.invalidateQueries({ queryKey: ['historial-estudiante', params.id] })
+  }
+
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <Loader2 className="w-6 h-6 text-primary animate-spin" />
@@ -834,7 +945,6 @@ export default function EstudianteDetallePage() {
           className="mt-0.5 p-2 rounded-xl border border-outline-variant hover:bg-surface-high transition-colors cursor-pointer flex-shrink-0">
           <ArrowLeft className="w-4 h-4 text-on-surface-variant" />
         </button>
-
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -845,18 +955,16 @@ export default function EstudianteDetallePage() {
                     <BookOpen className="w-3 h-3" />{curso.nombre}
                   </span>
                 )}
-                {totalPend > 0 && (
+                {totalPend > 0 ? (
                   <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full',
                     hasMora ? 'bg-[#dc2626]/12 text-[#dc2626]' : 'bg-[#d97706]/12 text-[#d97706]')}>
                     {totalPend} pendiente{totalPend !== 1 ? 's' : ''}
                   </span>
-                )}
-                {totalPend === 0 && financiamientos.length + pagos.length > 0 && (
+                ) : financiamientos.length + pagos.length > 0 ? (
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#16a34a]/12 text-[#16a34a]">Al día</span>
-                )}
+                ) : null}
               </div>
             </div>
-
             {isAdmin && (
               <button onClick={() => setConfirmEliminar(true)}
                 className="flex-shrink-0 p-2 rounded-xl border border-[#dc2626]/30 text-[#dc2626] hover:bg-[#dc2626]/8 transition-colors cursor-pointer">
@@ -871,7 +979,7 @@ export default function EstudianteDetallePage() {
       <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
         {TABS.map(t => {
           const Icon = t.icon
-          const showBadge = t.key === 'abonos' && totalPend > 0
+          const showBadge = t.key === 'financiero' && totalPend > 0
           return (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={cn(
@@ -880,22 +988,23 @@ export default function EstudianteDetallePage() {
               )}>
               <Icon className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t.label}</span>
-              {showBadge && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
-              )}
+              {showBadge && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#dc2626]" />}
             </button>
           )
         })}
       </div>
 
-      {/* ── Contenido del tab ── */}
+      {/* ── Contenido ── */}
       <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-5">
         {tab === 'perfil' && (
-          <TabPerfil e={e} fetcher={fetcher} isAdmin={isAdmin} colegios={colegios} asesores={asesores} cursos={cursos} onRefresh={() => refetch()} />
+          <TabPerfil e={e} fetcher={fetcher} isAdmin={isAdmin} colegios={colegios} asesores={asesores} cursos={cursos} onRefresh={handleRefresh} />
         )}
-        {tab === 'financiero' && <TabFinanciero e={e} />}
-        {tab === 'historial' && <TabHistorial e={e} />}
-        {tab === 'abonos' && <TabAbonos e={e} fetcher={fetcher} onRefresh={() => refetch()} />}
+        {tab === 'financiero' && (
+          <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} />
+        )}
+        {tab === 'historial' && (
+          <TabHistorial estudianteId={e.id} fetcher={fetcher} />
+        )}
       </div>
 
       {/* Confirmar eliminar */}

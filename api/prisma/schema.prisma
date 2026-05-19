@@ -126,8 +126,25 @@ model Estudiante {
   financiamientos  Financiamiento[]
   simulacros       SimulacroEstudiante[]
   certificados     Certificado[]
+  historial        HistorialEstudiante[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Historial de cambios por estudiante
+// ─────────────────────────────────────────────
+
+model HistorialEstudiante {
+  id           String     @id @default(cuid())
+  estudiante   Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId String
+  accion       String     // UPDATE_PERFIL, PAGO_CUOTA, ABONO, CREAR_FINANCIAMIENTO, etc.
+  descripcion  String
+  cambios      Json?
+  realizadoPor String
+  userId       String
+  createdAt    DateTime   @default(now())
 }
 
 model Acudiente {
@@ -217,6 +234,8 @@ model Cuota {
   pagado           Boolean        @default(false)
   fechaPago        DateTime?
   comprobante      String?
+  medioPago        String?
+  notas            String?
   reminders        ReminderCobro[]
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt

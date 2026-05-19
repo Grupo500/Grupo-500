@@ -248,6 +248,18 @@ export async function actualizar(req: Request, res: Response) {
     return ApiResponse.success(res, actualizado)
   }
 
+  // Registrar en historial
+  await prisma.historialEstudiante.create({
+    data: {
+      estudianteId,
+      accion: 'UPDATE_PERFIL',
+      descripcion: 'Perfil del estudiante actualizado',
+      cambios: data as any,
+      realizadoPor: req.userName ?? req.userId ?? 'Sistema',
+      userId: req.userId ?? 'sistema',
+    },
+  })
+
   return ApiResponse.success(res, estudiante)
 }
 
@@ -264,4 +276,13 @@ export async function rendimiento(req: Request, res: Response) {
     orderBy: { fechaAnalisis: 'desc' },
   })
   return ApiResponse.success(res, simulacros)
+}
+
+export async function historial(req: Request, res: Response) {
+  const registros = await prisma.historialEstudiante.findMany({
+    where: { estudianteId: req.params.id },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  })
+  return ApiResponse.success(res, registros)
 }
