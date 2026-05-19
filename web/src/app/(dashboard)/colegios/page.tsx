@@ -163,7 +163,7 @@ function EstudiantesColegioModal({
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-3">
+                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
                   {estudiantes.length} estudiante{estudiantes.length !== 1 ? 's' : ''}
                 </p>
                 {estudiantes.map((e: any) => (

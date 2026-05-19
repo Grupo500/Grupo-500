@@ -232,7 +232,7 @@ export default function AsesoresPage() {
 
       {/* Lista */}
       <div>
-        <p className="text-[13px] font-semibold text-white/70 uppercase tracking-wide mb-3 px-1">
+        <p className="text-[13px] font-semibold text-on-surface-variant uppercase tracking-wide mb-3 px-1">
           Equipo registrado
         </p>
 

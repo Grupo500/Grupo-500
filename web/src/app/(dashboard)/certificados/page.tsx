@@ -289,7 +289,7 @@ export default function CertificadosPage() {
       {/* ── Sección firmas (solo ADMIN) ── */}
       {isAdmin && (
         <div className="space-y-3">
-          <p className="text-[12px] font-semibold text-white/70 uppercase tracking-wider">
+          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">
             Firmas de representantes legales
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -388,7 +388,7 @@ export default function CertificadosPage() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
+          <p className="text-xs text-on-surface-variant">Pág. {page} / {totalPages}</p>
           <div className="flex gap-2">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>

@@ -11,9 +11,9 @@ export function PageHeader({ title, subtitle, actions, className }: PageHeaderPr
   return (
     <div className={cn('flex flex-row items-center justify-between gap-3', className)}>
       <div>
-        <h1 className="text-[22px] font-bold text-white tracking-tight leading-tight">{title}</h1>
+        <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">{title}</h1>
         {subtitle && (
-          <p className="text-[13px] text-white/70 mt-0.5 font-medium">{subtitle}</p>
+          <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">{subtitle}</p>
         )}
       </div>
       {actions && (

@@ -45,7 +45,7 @@ export default async function DashboardPage() {
                 className="rounded-full md:hidden flex-shrink-0 ring-2 ring-[#2094ff]/25"
               />
             )}
-            <h1 className="text-[22px] font-bold text-white tracking-tight leading-tight">
+            <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
               <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
               <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
             </h1>
@@ -110,11 +110,11 @@ export default async function DashboardPage() {
           />
         )}
         <div>
-          <h1 className="text-[22px] font-bold text-white tracking-tight leading-tight">
+          <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
             <span className="sm:hidden">{saludo},<br />{firstName} 👋</span>
             <span className="hidden sm:inline">{saludo}, {firstName} 👋</span>
           </h1>
-          <p className="text-[13px] text-white/70 mt-0.5 font-medium">Resumen de tu actividad y gestión</p>
+          <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen de tu actividad y gestión</p>
         </div>
       </div>
       <RefreshButton />

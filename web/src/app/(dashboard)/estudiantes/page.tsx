@@ -491,7 +491,7 @@ export default function EstudiantesPage() {
       {/* Paginación mobile */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-white/70">Pág. {page} / {totalPages}</p>
+          <p className="text-xs text-on-surface-variant">Pág. {page} / {totalPages}</p>
           <div className="flex gap-2">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-high disabled:opacity-30 transition-colors"><ChevronRight className="w-4 h-4" /></button>
