@@ -1,59 +1,94 @@
-import { apiFetch } from '@/lib/api.server'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { KpiCard } from '@/components/ui/KpiCard'
-import { formatCOP } from '@/lib/utils'
-import { TrendingUp, Wallet, CreditCard, Users, AlertTriangle } from 'lucide-react'
-import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
+'use client'
 
-async function getReporteData() {
-  try {
-    const [dashboard, ingresos] = await Promise.allSettled([
-      apiFetch<any>('/reportes/dashboard'),
-      apiFetch<any>('/reportes/ingresos?periodo=mes'),
-    ])
-    return {
-      dashboard: dashboard.status === 'fulfilled' ? dashboard.value?.data : null,
-      ingresos: ingresos.status === 'fulfilled' ? ingresos.value?.data : null,
-    }
-  } catch {
-    return { dashboard: null, ingresos: null }
+import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '@clerk/nextjs'
+import { createClientFetcher } from '@/lib/api'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { formatCOP } from '@/lib/utils'
+import { TrendingUp, Wallet, AlertTriangle, Users, CreditCard, Loader2 } from 'lucide-react'
+import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
+import { RankingAsesores } from '@/components/charts/RankingAsesores'
+
+interface DashboardData {
+  estudiantes: { total: number; nuevosMes: number }
+  cobranza: {
+    porCobrar: { monto: number; cantidad: number }
+    vencida:   { monto: number; cantidad: number }
+    cobrado:   { monto: number; cantidad: number }
+    pendiente: { monto: number; cantidad: number }
   }
 }
 
-export default async function ReportesPage() {
-  const { dashboard } = await getReporteData()
+function Kpi({
+  label, value, sub, color, isLoading,
+}: {
+  label: string; value: string; sub?: string; color: string; isLoading?: boolean
+}) {
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl p-4 border border-outline-variant bg-surface-lowest space-y-2">
+        <div className="h-3 w-24 rounded bg-surface-high animate-pulse" />
+        <div className="h-6 w-32 rounded bg-surface-high animate-pulse" />
+        {sub && <div className="h-3 w-16 rounded bg-surface-high animate-pulse" />}
+      </div>
+    )
+  }
+  return (
+    <div className="rounded-2xl p-4 border border-outline-variant bg-surface-lowest"
+      style={{ borderLeftWidth: 3, borderLeftColor: color }}>
+      <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-[17px] sm:text-[20px] font-bold tabular-nums leading-tight" style={{ color }}>{value}</p>
+      {sub && <p className="text-[11px] text-on-surface-variant mt-1">{sub}</p>}
+    </div>
+  )
+}
 
-  const ingresos = dashboard?.ingresos ?? { hoy: 0, semana: 0, mes: 0 }
-  const estudiantes = dashboard?.estudiantes ?? { total: 0, nuevosMes: 0 }
-  const cobranza = dashboard?.cobranza ?? { pendiente: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 } }
+export default function ReportesPage() {
+  const { getToken } = useAuth()
+
+  const fetcher = async <T,>(path: string) => {
+    const token = await getToken()
+    return createClientFetcher(token)<T>(path)
+  }
+
+  const { data: dashData, isLoading } = useQuery({
+    queryKey: ['reportes-dashboard'],
+    queryFn: () => fetcher<{ data: DashboardData }>('/reportes/dashboard'),
+    staleTime: 60_000,
+  })
+
+  const d = dashData?.data
+  const estudiantes = d?.estudiantes ?? { total: 0, nuevosMes: 0 }
+  const cobranza    = d?.cobranza   ?? { porCobrar: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 }, cobrado: { monto: 0, cantidad: 0 }, pendiente: { monto: 0, cantidad: 0 } }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
 
-      {/* KPIs de ingresos */}
-      <div>
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Ingresos</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <KpiCard title="Hoy" value={formatCOP(ingresos.hoy)} icon={TrendingUp} variant="success" />
-          <KpiCard title="Esta semana" value={formatCOP(ingresos.semana)} icon={CreditCard} variant="default" />
-          <KpiCard title="Este mes" value={formatCOP(ingresos.mes)} icon={TrendingUp} variant="success" trend={{ value: 0, label: 'en curso' }} />
-          <KpiCard title="Estudiantes activos" value={estudiantes.total.toString()} subtitle={`+${estudiantes.nuevosMes} este mes`} icon={Users} variant="default" />
+      {/* ── Estudiantes ──────────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Estudiantes</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Kpi label="Total registrados"   value={estudiantes.total.toLocaleString('es-CO')}  color="#1a7de0" isLoading={isLoading} />
+          <Kpi label="Nuevos este mes"      value={`+${estudiantes.nuevosMes}`}                color="#16a34a" isLoading={isLoading} />
         </div>
-      </div>
+      </section>
 
-      {/* KPIs de cobranza */}
-      <div>
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Cobranza</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <KpiCard title="Por cobrar" value={formatCOP(cobranza.pendiente.monto)} subtitle={`${cobranza.pendiente.cantidad} cuotas`} icon={Wallet} variant="warning" />
-          <KpiCard title="En mora" value={formatCOP(cobranza.vencida.monto)} subtitle={`${cobranza.vencida.cantidad} vencidas`} icon={AlertTriangle} variant="error" />
+      {/* ── Cobranza ────────────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Cobranza</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Kpi label="Recaudado"  value={formatCOP(cobranza.cobrado.monto)}   sub={`${cobranza.cobrado.cantidad} cobros`}   color="#16a34a" isLoading={isLoading} />
+          <Kpi label="Por cobrar" value={formatCOP(cobranza.porCobrar.monto)} sub={`${cobranza.porCobrar.cantidad} pendientes`} color="#d97706" isLoading={isLoading} />
+          <Kpi label="En mora"    value={formatCOP(cobranza.vencida.monto)}   sub={`${cobranza.vencida.cantidad} vencidos`}  color="#dc2626" isLoading={isLoading} />
         </div>
-      </div>
+      </section>
 
-      {/* Gráficas */}
-      <div className="grid grid-cols-1 gap-4">
+      {/* ── Gráficas ─────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <IngresosMensualesChart />
-      </div>
+        <RankingAsesores />
+      </section>
     </div>
   )
 }
