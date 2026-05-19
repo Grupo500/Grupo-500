@@ -155,16 +155,16 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             <Pencil className="w-3 h-3" />Editar
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { icon: User,    label: 'Nombre',     value: e.nombre },
-            { icon: CreditCard, label: 'Documento', value: e.documento ? `${e.tipoDocumento} ${e.documento}` : e.tipoDocumento ?? '—' },
-            { icon: Mail,    label: 'Email',      value: e.email },
-            { icon: Phone,   label: 'Teléfono',   value: e.telefono },
-            { icon: MapPin,  label: 'Ubicación',  value: [e.ciudad, e.departamento].filter(Boolean).join(', ') || '—' },
-            { icon: School,  label: 'Colegio',    value: e.colegio?.nombre ?? '—' },
-            { icon: Calendar,label: 'Nacimiento', value: e.fechaNacimiento ? fmtFecha(e.fechaNacimiento) : '—' },
-            { icon: Users,   label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
+            { icon: User,       label: 'Nombre',     value: e.nombre },
+            { icon: CreditCard, label: 'Documento',  value: e.documento ? `${e.tipoDocumento} ${e.documento}` : e.tipoDocumento ?? '—' },
+            { icon: Mail,       label: 'Email',      value: e.email },
+            { icon: Phone,      label: 'Teléfono',   value: e.telefono },
+            { icon: MapPin,     label: 'Ubicación',  value: [e.ciudad, e.departamento].filter(Boolean).join(', ') || '—' },
+            { icon: School,     label: 'Colegio',    value: e.colegio?.nombre ?? '—' },
+            { icon: Calendar,   label: 'Nacimiento', value: e.fechaNacimiento ? fmtFecha(e.fechaNacimiento) : '—' },
+            { icon: Users,      label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
               <Icon className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" />
@@ -202,7 +202,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
       {e.acudiente && (
         <section className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Acudiente</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: 'Nombre',   value: e.acudiente.nombre },
               { label: 'Relación', value: e.acudiente.relacion },
@@ -377,7 +377,7 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
   return (
     <div className="space-y-6">
       {/* Resumen */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
         {[
           { label: 'Total', value: formatCOP(totalGeneral), color: 'text-on-surface' },
           { label: 'Pagado', value: formatCOP(totalPagado), color: 'text-[#16a34a]' },
@@ -418,7 +418,7 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
               {fin.estado}
             </span>
           </div>
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
             {fin.cuotas.map(c => {
               const vencida = !c.pagado && esVencida(c.fechaVencimiento)
               return (
@@ -459,7 +459,7 @@ function TabFinanciero({ e }: { e: EstudianteDetalle }) {
       {pagos.length > 0 && (
         <section className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Pagos directos</p>
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
             {pagos.map(p => {
               const pagado = p.estado === 'PAGADO'
               const vencido = p.estado === 'VENCIDO'
@@ -679,7 +679,7 @@ function TabAbonos({ e, fetcher, onRefresh }: {
           <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide">
             Cuotas pendientes · seleccioná las que vas a saldar
           </p>
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
             {cuotasPendientes.map(c => {
               const vencida = esVencida(c.fechaVencimiento)
               const checked = seleccionadas.has(c.id)
@@ -827,7 +827,7 @@ export default function EstudianteDetallePage() {
   ) || pagos.some(p => p.estado === 'VENCIDO')
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="space-y-5">
       {/* ── Header ── */}
       <div className="flex items-start gap-3">
         <button onClick={() => router.push('/estudiantes')}
