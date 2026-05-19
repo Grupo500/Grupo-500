@@ -121,6 +121,8 @@ export default function EstudiantesPage() {
 
   const [form, setForm] = useState(FORM_EMPTY)
   const [formEdit, setFormEdit] = useState(FORM_EMPTY)
+  // Cuotas editables para financiamiento
+  const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getToken()
@@ -160,8 +162,11 @@ export default function EstudiantesPage() {
         throw new Error('Completa todos los campos obligatorios del estudiante')
       if (form.cursoId && form.formaPago === 'CONTADO' && !form.fechaPago)
         throw new Error('Ingresa la fecha del pago')
-      if (form.cursoId && form.formaPago === 'FINANCIADO' && !form.fechaPrimeraCuota)
-        throw new Error('Ingresa la fecha de la primera cuota')
+      if (form.cursoId && form.formaPago === 'FINANCIADO') {
+        if (cuotasDetalle.length === 0) throw new Error('Configura las cuotas del financiamiento')
+        if (cuotasDetalle.some(c => !c.fecha || !c.monto || Number(c.monto) <= 0))
+          throw new Error('Completa el monto y la fecha de cada cuota')
+      }
 
       const payload: any = {
         nombre: form.nombre.trim(),
@@ -183,8 +188,10 @@ export default function EstudiantesPage() {
             ...(form.comprobante && { comprobante: form.comprobante }),
           }),
           ...(form.formaPago === 'FINANCIADO' && {
-            numeroCuotas:      Number(form.numeroCuotas),
-            fechaPrimeraCuota: form.fechaPrimeraCuota,
+            cuotas: cuotasDetalle.map(c => ({
+              monto:            Number(c.monto),
+              fechaVencimiento: c.fecha,
+            })),
           }),
         }),
       }
@@ -210,6 +217,7 @@ export default function EstudiantesPage() {
       setPasoCrear(1)
       setFormError('')
       setForm(FORM_EMPTY)
+      setCuotasDetalle([])
     },
     onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
   })
@@ -657,39 +665,105 @@ export default function EstudiantesPage() {
                       </div>
                     )}
 
-                    {form.formaPago === 'FINANCIADO' && (
-                      <div className="space-y-3 pt-1">
-                        <div>
-                          <label className={labelCls}>Número de cuotas *</label>
-                          <select className={inputCls} value={form.numeroCuotas} onChange={e => setForm(p => ({ ...p, numeroCuotas: e.target.value }))}>
-                            {[2,3,4,5,6,8,10,12].map(n => <option key={n} value={n}>{n} cuotas</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className={labelCls}>Fecha primera cuota *</label>
-                          <input className={cn(inputCls, 'max-w-[180px]')} type="date" value={form.fechaPrimeraCuota}
-                            onChange={e => setForm(p => ({ ...p, fechaPrimeraCuota: e.target.value }))} />
-                        </div>
-                        {form.cursoId && form.numeroCuotas && (() => {
-                          const c = cursos.find(c => c.id === form.cursoId)
-                          if (!c) return null
-                          const total = c.precio * (1 - Number(form.descuentoPorcentaje) / 100)
-                          const cuota = total / Number(form.numeroCuotas)
-                          return (
-                            <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 flex items-center justify-between">
-                              <div>
-                                <p className="text-[11px] text-on-surface-variant">Total financiado</p>
-                                <p className="text-sm font-bold text-on-surface">${total.toLocaleString('es-CO')}</p>
+                    {form.formaPago === 'FINANCIADO' && (() => {
+                      const curso = cursos.find(c => c.id === form.cursoId)
+                      const total = curso ? curso.precio * (1 - Number(form.descuentoPorcentaje) / 100) : 0
+                      const sumaCuotas = cuotasDetalle.reduce((s, c) => s + (Number(c.monto) || 0), 0)
+                      const diferencia = total - sumaCuotas
+
+                      // Genera cuotas automáticas al cambiar número o fecha
+                      const generarCuotas = (n: number, fechaBase: string) => {
+                        if (!fechaBase || !total) return
+                        const montoCuota = Math.round(total / n)
+                        setCuotasDetalle(Array.from({ length: n }, (_, i) => {
+                          const d = new Date(fechaBase + 'T12:00:00')
+                          d.setMonth(d.getMonth() + i)
+                          return { monto: montoCuota.toString(), fecha: d.toISOString().split('T')[0] }
+                        }))
+                      }
+
+                      return (
+                        <div className="space-y-3 pt-1">
+                          {/* Número de cuotas + fecha primera */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className={labelCls}>Número de cuotas *</label>
+                              <select
+                                className={inputCls}
+                                value={form.numeroCuotas}
+                                onChange={e => {
+                                  setForm(p => ({ ...p, numeroCuotas: e.target.value }))
+                                  generarCuotas(Number(e.target.value), form.fechaPrimeraCuota)
+                                }}
+                              >
+                                {[2,3,4,5,6,8,10,12].map(n => <option key={n} value={n}>{n} cuotas</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className={labelCls}>Fecha primera cuota *</label>
+                              <input
+                                className={inputCls}
+                                type="date"
+                                value={form.fechaPrimeraCuota}
+                                onChange={e => {
+                                  setForm(p => ({ ...p, fechaPrimeraCuota: e.target.value }))
+                                  generarCuotas(Number(form.numeroCuotas), e.target.value)
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Tabla editable de cuotas */}
+                          {cuotasDetalle.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide">Detalle de cuotas</p>
+                                {Math.abs(diferencia) > 1 && (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                    style={{ color: diferencia > 0 ? '#d97706' : '#dc2626', background: diferencia > 0 ? '#d9770618' : '#dc262618' }}>
+                                    {diferencia > 0 ? `Faltan $${diferencia.toLocaleString('es-CO', { maximumFractionDigits: 0 })}` : `Exceden $${Math.abs(diferencia).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`}
+                                  </span>
+                                )}
+                                {Math.abs(diferencia) <= 1 && (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-[#16a34a] bg-[#16a34a18]">✓ Suma correcta</span>
+                                )}
                               </div>
-                              <div className="text-right">
-                                <p className="text-[11px] text-on-surface-variant">Valor por cuota</p>
-                                <p className="text-lg font-bold text-primary">${cuota.toLocaleString('es-CO', { maximumFractionDigits: 0 })}</p>
+
+                              {/* Filas de cuotas */}
+                              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-0.5">
+                                {cuotasDetalle.map((cuota, i) => (
+                                  <div key={i} className="flex items-center gap-2 bg-surface-high rounded-lg px-3 py-2">
+                                    <span className="text-[11px] font-bold text-on-surface-variant w-6 flex-shrink-0">#{i + 1}</span>
+                                    <div className="flex-1">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        placeholder="Monto"
+                                        value={cuota.monto}
+                                        onChange={e => setCuotasDetalle(prev => prev.map((c, j) => j === i ? { ...c, monto: e.target.value } : c))}
+                                        className="w-full bg-transparent text-[13px] font-semibold text-on-surface focus:outline-none"
+                                      />
+                                    </div>
+                                    <input
+                                      type="date"
+                                      value={cuota.fecha}
+                                      onChange={e => setCuotasDetalle(prev => prev.map((c, j) => j === i ? { ...c, fecha: e.target.value } : c))}
+                                      className="bg-transparent text-[12px] text-on-surface-variant focus:outline-none"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Resumen total */}
+                              <div className="flex items-center justify-between px-1 pt-1 border-t border-outline-variant/40">
+                                <span className="text-[11px] text-on-surface-variant">Total financiado</span>
+                                <span className="text-[13px] font-bold text-on-surface">${total.toLocaleString('es-CO', { maximumFractionDigits: 0 })}</span>
                               </div>
                             </div>
-                          )
-                        })()}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )
+                    })()}
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 text-center text-on-surface-variant">

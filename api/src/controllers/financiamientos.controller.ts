@@ -5,11 +5,15 @@ import { NotFoundError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
+const cuotaItemSchema = z.object({
+  monto:            z.number().positive(),
+  fechaVencimiento: z.string(),
+})
+
 const crearSchema = z.object({
   estudianteId: z.string(),
-  montoTotal: z.number().positive(),
-  numeroCuotas: z.number().int().min(1).max(24),
-  fechaPrimeraCuota: z.string(),
+  montoTotal:   z.number().positive(),
+  cuotas:       z.array(cuotaItemSchema).min(1).max(24),
 })
 
 export async function listar(req: Request, res: Response) {
@@ -37,25 +41,18 @@ export async function listar(req: Request, res: Response) {
 }
 
 export async function crear(req: Request, res: Response) {
-  const { estudianteId, montoTotal, numeroCuotas, fechaPrimeraCuota } = crearSchema.parse(req.body)
-
-  const montoCuota = montoTotal / numeroCuotas
-  const fechaBase = new Date(fechaPrimeraCuota)
+  const { estudianteId, montoTotal, cuotas } = crearSchema.parse(req.body)
 
   const financiamiento = await prisma.financiamiento.create({
     data: {
       estudianteId,
       montoTotal,
       cuotas: {
-        create: Array.from({ length: numeroCuotas }, (_, i) => {
-          const fecha = new Date(fechaBase)
-          fecha.setMonth(fecha.getMonth() + i)
-          return {
-            numero: i + 1,
-            monto: Number(montoCuota.toFixed(2)),
-            fechaVencimiento: fecha,
-          }
-        }),
+        create: cuotas.map((c, i) => ({
+          numero:           i + 1,
+          monto:            Number(c.monto.toFixed(2)),
+          fechaVencimiento: new Date(c.fechaVencimiento),
+        })),
       },
     },
     include: { cuotas: true },
