@@ -165,12 +165,26 @@ export async function obtener(req: Request, res: Response) {
       asesor: true,
       cursos: { include: { curso: true } },
       pagos: { orderBy: { createdAt: 'desc' } },
-      financiamientos: { include: { cuotas: true } },
+      financiamientos: { include: { cuotas: { orderBy: { numero: 'asc' } } } },
       certificados: true,
     },
   })
 
   if (!estudiante) throw new NotFoundError('Estudiante no encontrado')
+
+  // Auto-corregir financiamientos ACTIVO cuyas cuotas ya están todas pagadas
+  const finSinCerrar = estudiante.financiamientos.filter(
+    f => f.estado === 'ACTIVO' && f.cuotas.length > 0 && f.cuotas.every(c => c.pagado)
+  )
+  if (finSinCerrar.length > 0) {
+    await Promise.all(
+      finSinCerrar.map(f =>
+        prisma.financiamiento.update({ where: { id: f.id }, data: { estado: 'COMPLETADO' } })
+      )
+    )
+    finSinCerrar.forEach(f => { f.estado = 'COMPLETADO' })
+  }
+
   return ApiResponse.success(res, estudiante)
 }
 
