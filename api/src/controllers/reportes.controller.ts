@@ -163,18 +163,26 @@ export async function financieroPeriodo(req: Request, res: Response) {
   const periodo = String(req.query.periodo ?? 'mensual')
   const hoy = new Date()
 
-  // ── Rango para totales ──────────────────────────────────────────────────
+  // ── Rango para totales (período actual y anterior) ──────────────────────
   let desdeTotales: Date
+  let desdeAnterior: Date
+  let hastaAnterior: Date
 
   if (periodo === 'diario') {
-    desdeTotales = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0)
+    desdeTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0)
+    desdeAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1, 0, 0, 0)
+    hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1, 23, 59, 59)
   } else if (periodo === 'semanal') {
-    const d = new Date(hoy)
-    d.setDate(hoy.getDate() - hoy.getDay() + 1)
-    d.setHours(0, 0, 0, 0)
-    desdeTotales = d
+    const inicioEsta = new Date(hoy)
+    inicioEsta.setDate(hoy.getDate() - hoy.getDay() + 1)
+    inicioEsta.setHours(0, 0, 0, 0)
+    desdeTotales  = inicioEsta
+    desdeAnterior = new Date(inicioEsta); desdeAnterior.setDate(inicioEsta.getDate() - 7)
+    hastaAnterior = new Date(inicioEsta); hastaAnterior.setDate(inicioEsta.getDate() - 1); hastaAnterior.setHours(23, 59, 59)
   } else {
-    desdeTotales = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+    desdeTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+    desdeAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
+    hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
   }
 
   // ── Puntos para la serie temporal ───────────────────────────────────────
@@ -218,19 +226,32 @@ export async function financieroPeriodo(req: Request, res: Response) {
   const [
     totalPagosAgg, recaudoPagosAgg, porCobrarPagosAgg, moraPagosAgg,
     totalCuotasAgg, recaudoCuotasAgg, porCobrarCuotasAgg, moraCuotasAgg,
+    // Período anterior
+    totalPagosAntAgg, recaudoPagosAntAgg, porCobrarPagosAntAgg, moraPagosAntAgg,
+    totalCuotasAntAgg, recaudoCuotasAntAgg, porCobrarCuotasAntAgg, moraCuotasAntAgg,
     serie,
   ] = await Promise.all([
-    // Pagos únicos — totales
+    // ── Período actual — Pagos únicos ──────────────────────────────────────
     prisma.pago.aggregate({ where: { createdAt: { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',   fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
     prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoyInicio }, createdAt: { gte: desdeTotales } }, _sum: { monto: true } }),
     prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { lt:  hoyInicio }, createdAt: { gte: desdeTotales } }, _sum: { monto: true } }),
-    // Cuotas — totales
+    // ── Período actual — Cuotas ────────────────────────────────────────────
     prisma.cuota.aggregate({ where: { financiamiento: { createdAt: { gte: desdeTotales } } }, _sum: { monto: true } }),
     prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
     prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoyInicio }, financiamiento: { createdAt: { gte: desdeTotales } } }, _sum: { monto: true } }),
     prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoyInicio }, financiamiento: { createdAt: { gte: desdeTotales } } }, _sum: { monto: true } }),
-    // Serie temporal
+    // ── Período anterior — Pagos únicos ───────────────────────────────────
+    prisma.pago.aggregate({ where: { createdAt: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: desdeAnterior }, createdAt: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { lt:  desdeAnterior }, createdAt: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
+    // ── Período anterior — Cuotas ─────────────────────────────────────────
+    prisma.cuota.aggregate({ where: { financiamiento: { createdAt: { gte: desdeAnterior, lte: hastaAnterior } } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: desdeAnterior }, financiamiento: { createdAt: { gte: desdeAnterior, lte: hastaAnterior } } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  desdeAnterior }, financiamiento: { createdAt: { gte: desdeAnterior, lte: hastaAnterior } } }, _sum: { monto: true } }),
+    // ── Serie temporal ─────────────────────────────────────────────────────
     Promise.all(puntos.map(async ({ label, desde, hasta }) => {
       const hoyI = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
       const [t, r, pc, mo, tc, rc, pcc, moc] = await Promise.all([
@@ -253,12 +274,30 @@ export async function financieroPeriodo(req: Request, res: Response) {
     })),
   ])
 
+  const variacion = (actual: number, anterior: number) =>
+    anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null
+
+  const totalesActual = {
+    ventaTotal: (totalPagosAgg._sum.monto ?? 0)     + (totalCuotasAgg._sum.monto ?? 0),
+    recaudo:    (recaudoPagosAgg._sum.monto ?? 0)   + (recaudoCuotasAgg._sum.monto ?? 0),
+    porCobrar:  (porCobrarPagosAgg._sum.monto ?? 0) + (porCobrarCuotasAgg._sum.monto ?? 0),
+    mora:       (moraPagosAgg._sum.monto ?? 0)      + (moraCuotasAgg._sum.monto ?? 0),
+  }
+
+  const totalesAnterior = {
+    ventaTotal: (totalPagosAntAgg._sum.monto ?? 0)     + (totalCuotasAntAgg._sum.monto ?? 0),
+    recaudo:    (recaudoPagosAntAgg._sum.monto ?? 0)   + (recaudoCuotasAntAgg._sum.monto ?? 0),
+    porCobrar:  (porCobrarPagosAntAgg._sum.monto ?? 0) + (porCobrarCuotasAntAgg._sum.monto ?? 0),
+    mora:       (moraPagosAntAgg._sum.monto ?? 0)      + (moraCuotasAntAgg._sum.monto ?? 0),
+  }
+
   return ApiResponse.success(res, {
-    totales: {
-      ventaTotal: (totalPagosAgg._sum.monto ?? 0)     + (totalCuotasAgg._sum.monto ?? 0),
-      recaudo:    (recaudoPagosAgg._sum.monto ?? 0)   + (recaudoCuotasAgg._sum.monto ?? 0),
-      porCobrar:  (porCobrarPagosAgg._sum.monto ?? 0) + (porCobrarCuotasAgg._sum.monto ?? 0),
-      mora:       (moraPagosAgg._sum.monto ?? 0)      + (moraCuotasAgg._sum.monto ?? 0),
+    totales: totalesActual,
+    variaciones: {
+      ventaTotal: variacion(totalesActual.ventaTotal, totalesAnterior.ventaTotal),
+      recaudo:    variacion(totalesActual.recaudo,    totalesAnterior.recaudo),
+      porCobrar:  variacion(totalesActual.porCobrar,  totalesAnterior.porCobrar),
+      mora:       variacion(totalesActual.mora,        totalesAnterior.mora),
     },
     puntos: serie,
   })

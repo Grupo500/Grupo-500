@@ -16,9 +16,10 @@ import { TrendingUp, Wallet, Clock, AlertTriangle } from 'lucide-react'
 type Metrica = 'ventaTotal' | 'recaudo' | 'porCobrar' | 'mora'
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
-interface Punto   { label: string; ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
-interface Totales { ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
-interface Props   { periodo: Periodo }
+interface Punto       { label: string; ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
+interface Totales     { ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
+interface Variaciones { ventaTotal: number | null; recaudo: number | null; porCobrar: number | null; mora: number | null }
+interface Props       { periodo: Periodo }
 
 // ── Config de métricas ──────────────────────────────────────────────────────
 const METRICS = [
@@ -132,15 +133,16 @@ export function FinancieroSection({ periodo }: Props) {
     queryFn: async () => {
       const token = await getToken()
       return createClientFetcher(token ?? '')(`/reportes/financiero-periodo?periodo=${periodo}`) as Promise<{
-        data: { totales: Totales; puntos: Punto[] }
+        data: { totales: Totales; variaciones: Variaciones; puntos: Punto[] }
       }>
     },
     staleTime: 60_000,
   })
 
-  const totales = data?.data?.totales ?? { ventaTotal: 0, recaudo: 0, porCobrar: 0, mora: 0 }
-  const puntos  = data?.data?.puntos  ?? []
-  const base    = totales.ventaTotal || 1
+  const totales     = data?.data?.totales     ?? { ventaTotal: 0, recaudo: 0, porCobrar: 0, mora: 0 }
+  const variaciones = data?.data?.variaciones ?? { ventaTotal: null, recaudo: null, porCobrar: null, mora: null } as Variaciones
+  const puntos      = data?.data?.puntos      ?? []
+  const base        = totales.ventaTotal || 1
 
   const metric = METRICS.find(m => m.key === selected)!
   const color  = isDark ? metric.colorDark : metric.colorLight
@@ -197,7 +199,7 @@ export function FinancieroSection({ periodo }: Props) {
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${c}18` }}>
                   <Icon className="w-4 h-4" style={{ color: c }} />
                 </div>
-                <p className="text-[12px] sm:text-[13px] font-semibold text-on-surface leading-tight">{m.label}</p>
+                <p className="text-[12px] sm:text-[13px] font-semibold text-on-surface leading-tight flex-1">{m.label}</p>
               </div>
 
               {/* Valor con count-up */}
@@ -207,8 +209,20 @@ export function FinancieroSection({ periodo }: Props) {
                 color={isSelected ? c : 'var(--on-surface)'}
               />
 
-              {/* Sublabel — solo desktop */}
-              <p className="mt-0.5 text-[10px] text-on-surface-variant/60 leading-tight hidden sm:block">{m.sublabel}</p>
+              {/* Variación vs período anterior */}
+              {(() => {
+                const v = variaciones[m.key]
+                if (isLoading || v === null) return (
+                  <p className="mt-0.5 text-[10px] text-on-surface-variant/60 leading-tight hidden sm:block">{m.sublabel}</p>
+                )
+                const positive = v >= 0
+                return (
+                  <p className="mt-1 text-[10px] font-semibold leading-tight hidden sm:flex items-center gap-0.5"
+                    style={{ color: positive ? '#16a34a' : '#dc2626' }}>
+                    {positive ? '▲' : '▼'} {positive ? '+' : ''}{v}% vs anterior
+                  </p>
+                )
+              })()}
 
               {/* Punto indicador */}
               <div className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full"
