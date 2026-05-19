@@ -1,6 +1,7 @@
 import { SignIn } from '@clerk/nextjs'
 import Image from 'next/image'
 import { Poppins } from 'next/font/google'
+import { PWAInstallButton } from '@/components/pwa/PWAInstallButton'
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
@@ -21,6 +22,9 @@ export default function SignInPage() {
         <p className={`${poppins.className} text-xl md:text-lg lg:text-base font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
         <p className="text-sm md:text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
       </div>
+
+      {/* Botón instalar PWA */}
+      <PWAInstallButton />
 
       {/* Clerk SignIn */}
       <div className="w-full max-w-sm">

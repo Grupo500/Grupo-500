@@ -5,20 +5,21 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Grupo 500 — Plataforma Pre-ICFES',
     short_name: 'Grupo 500',
     description: 'Plataforma de gestión para cursos de preparación ICFES',
-    start_url: '/dashboard',
+    start_url: '/',
     display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#0a0f1a',
-    theme_color: '#0a0f1a',
+    // 'any' es obligatorio para que Chrome en escritorio muestre el botón de instalación
+    orientation: 'any',
+    background_color: '#21b9f7',
+    theme_color: '#21b9f7',
     icons: [
       {
-        src: '/icon-maskable-192.png',
+        src: '/android-chrome-192x192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icon-maskable-512.png',
+        src: '/android-chrome-512x512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
@@ -40,6 +41,24 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '180x180',
         type: 'image/png',
         purpose: 'any',
+      },
+    ],
+    screenshots: [
+      {
+        src: '/android-chrome-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
+
+        form_factor: 'wide',
+        label: 'Dashboard Grupo 500',
+      },
+      {
+        src: '/android-chrome-192x192.png',
+        sizes: '192x192',
+        type: 'image/png',
+
+        form_factor: 'narrow',
+        label: 'Grupo 500 móvil',
       },
     ],
     categories: ['education', 'productivity'],
