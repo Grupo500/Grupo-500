@@ -114,3 +114,31 @@
 - Reportes exportables CSV/PDF
 
 ---
+
+---
+
+## Sesión 004 — 2026-05-19
+
+**Objetivo:** Unificar módulo Estudiantes + Cobros, mejoras de UX profundas, historial de modificaciones.
+
+### Lo que se hizo
+
+**Backend:**
+- `schema.prisma`: migración `20260519190527` — campos `medioPago` y `notas` en `Cuota`; nuevo modelo `HistorialEstudiante`
+- `auth.ts`: expone `req.userName` desde asesor o usuario
+- `cuotas.controller.ts`: reescritura completa — cuotas editables (monto + fechaVencimiento), medioPago, historial, auto-cierre financiamiento
+- `estudiantes.controller.ts`: datos financieros en listar, auto-corrige ACTIVO→COMPLETADO, nueva función historial()
+- Ruta `GET /estudiantes/:id/historial`
+
+**Frontend:**
+- Tarjetas con barra de progreso, saldo, estado (Al día / Pendiente / En mora), filtros, sync en tiempo real, hover/tap feedback
+- Detalle estudiante [id]: 3 tabs — Perfil | Financiero | Historial
+  - FilaCuota con edición inline (pencil en hover)
+  - FormAbono colapsable: por cuota, monto, fecha, medioPago (Bancolombia/Bre-B/Otro), comprobante
+  - Historial como timeline con badges y realizadoPor
+- Certificados: buscador debounced reemplaza select dropdown
+- Cobros eliminado de navegación (integrado en Estudiantes)
+
+### Pendiente
+- Twilio WhatsApp real
+- Exportar reportes CSV/PDF
