@@ -112,17 +112,60 @@ export default function UsuariosPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total usuarios', value: usuariosTodos.length, icon: Users,      color: 'primary',   bg: 'bg-primary/10',   text: 'text-primary'   },
-          { label: 'Administradores', value: totalAdmin,           icon: Shield,     color: 'tertiary',  bg: 'bg-tertiary/10',  text: 'text-tertiary'  },
-          { label: 'Asesores',        value: totalVendedor,        icon: UserCheck,  color: 'secondary', bg: 'bg-secondary/10', text: 'text-secondary' },
-        ].map(({ label, value, icon: Icon, bg, text }) => (
-          <div key={label} className="card p-4 md:p-5 flex items-center gap-3 md:gap-4">
-            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
-              <Icon className={`w-5 h-5 md:w-6 md:h-6 ${text}`} />
+          {
+            label: 'Total usuarios',
+            value: usuariosTodos.length,
+            icon: Users,
+            iconBg: 'bg-primary/12',
+            iconColor: 'text-primary',
+            accent: '#1a7de0',
+            sublabel: 'registrados',
+          },
+          {
+            label: 'Administradores',
+            value: totalAdmin,
+            icon: Shield,
+            iconBg: 'bg-tertiary/12',
+            iconColor: 'text-tertiary',
+            accent: '#7c3aed',
+            sublabel: 'con acceso total',
+          },
+          {
+            label: 'Asesores',
+            value: totalVendedor,
+            icon: UserCheck,
+            iconBg: 'bg-secondary/12',
+            iconColor: 'text-secondary',
+            accent: '#16a34a',
+            sublabel: 'vendedores',
+          },
+        ].map(({ label, value, icon: Icon, iconBg, iconColor, accent, sublabel }) => (
+          <div
+            key={label}
+            className="relative overflow-hidden rounded-2xl bg-surface-lowest border border-outline-variant/60 p-3.5 sm:p-5 flex flex-col gap-3"
+            style={{ boxShadow: `0 2px 12px ${accent}0f` }}
+          >
+            {/* Fondo decorativo */}
+            <div
+              className="absolute -top-4 -right-4 w-20 h-20 rounded-full opacity-[0.07] pointer-events-none"
+              style={{ background: accent }}
+            />
+
+            {/* Ícono */}
+            <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center self-start`}>
+              <Icon className={`w-4 h-4 ${iconColor}`} />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs md:text-sm text-on-surface-variant font-medium leading-tight truncate">{label}</p>
-              <p className="text-2xl md:text-3xl font-bold text-on-surface tabular leading-none mt-0.5">{value}</p>
+
+            {/* Número */}
+            <div>
+              <p
+                className="text-[28px] sm:text-[32px] font-bold tabular leading-none"
+                style={{ color: accent }}
+              >
+                {value}
+              </p>
+              <p className="text-[11px] sm:text-[12px] font-semibold text-on-surface mt-1 leading-tight">{label}</p>
+              <p className="text-[10px] text-on-surface-variant/70 hidden sm:block mt-0.5">{sublabel}</p>
             </div>
           </div>
         ))}
