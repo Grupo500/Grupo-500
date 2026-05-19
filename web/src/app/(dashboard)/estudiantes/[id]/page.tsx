@@ -742,15 +742,16 @@ function TabFinanciero({ e, fetcher, onRefresh, getToken }: {
   const hoy = new Date()
   const [abonoAbierto, setAbonoAbierto] = useState(false)
 
-  const totalFin       = financiamientos.reduce((s, f) => s + f.montoTotal, 0)
+  // Total real = precio del curso con descuento
+  const cursoEst       = e.cursos?.[0]
+  const totalGeneral   = cursoEst
+    ? Math.round(cursoEst.curso.precio * (1 - cursoEst.descuentoPorcentaje / 100))
+    : financiamientos.reduce((s, f) => s + f.montoTotal, 0) + pagos.reduce((s, p) => s + p.monto, 0)
+
   const pagadoFin      = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-  const pendienteFin   = totalFin - pagadoFin
-  const totalPagosDir  = pagos.reduce((s, p) => s + p.monto, 0)
   const pagadoPagosDir = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0)
-  const pendientePagos = pagos.filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
-  const totalGeneral   = totalFin + totalPagosDir
   const totalPagado    = pagadoFin + pagadoPagosDir
-  const totalPendiente = pendienteFin + pendientePagos
+  const totalPendiente = Math.max(0, totalGeneral - totalPagado)
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
   const totalMora      = financiamientos.flatMap(f => f.cuotas).filter(c =>
     !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))

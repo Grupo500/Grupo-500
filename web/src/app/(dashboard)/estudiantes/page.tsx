@@ -69,23 +69,23 @@ interface PaginatedResponse {
 function calcFinanciero(e: Estudiante) {
   const hoy = new Date()
 
-  // Financiamientos
-  const totalFin    = e.financiamientos?.reduce((s, f) => s + f.montoTotal, 0) ?? 0
-  const pagadoFin   = e.financiamientos?.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
-  const pendienteFin = e.financiamientos?.flatMap(f => f.cuotas).filter(c => !c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
+  // Total real = precio del curso con descuento
+  const cursoEst     = e.cursos?.[0]
+  const totalGeneral = cursoEst
+    ? Math.round(cursoEst.curso.precio * (1 - cursoEst.descuentoPorcentaje / 100))
+    : (e.financiamientos?.reduce((s, f) => s + f.montoTotal, 0) ?? 0) + (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
+
+  const pagadoFin      = e.financiamientos?.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
+  const pagadoPagos    = e.pagos?.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0) ?? 0
+  const totalPagado    = pagadoFin + pagadoPagos
+  const totalPendiente = Math.max(0, totalGeneral - totalPagado)
+  const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
+
   const moraFin     = e.financiamientos?.flatMap(f => f.cuotas).filter(c =>
     !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
   ).reduce((s, c) => s + c.monto, 0) ?? 0
-
-  // Pagos directos pendientes
-  const pendientePagos = e.pagos?.filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0) ?? 0
-  const moraPagos = e.pagos?.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0) ?? 0
-
-  const totalPendiente = pendienteFin + pendientePagos
-  const totalMora      = moraFin + moraPagos
-  const totalGeneral   = totalFin + (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
-  const totalPagado    = pagadoFin + (e.pagos?.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0) ?? 0)
-  const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
+  const moraPagos   = e.pagos?.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0) ?? 0
+  const totalMora   = moraFin + moraPagos
 
   const estado: 'al-dia' | 'pendiente' | 'mora' | 'sin-deuda' =
     totalMora > 0        ? 'mora' :
