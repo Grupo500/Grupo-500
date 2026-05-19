@@ -112,35 +112,39 @@ export default function UsuariosPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total usuarios',  value: usuariosTodos.length, icon: Users,     iconBg: 'bg-primary/10',   iconColor: 'text-primary',   accent: '#1a7de0', sublabel: 'Usuarios registrados'  },
-          { label: 'Administradores', value: totalAdmin,            icon: Shield,    iconBg: 'bg-violet-500/10',iconColor: 'text-violet-500', accent: '#7c3aed', sublabel: 'Acceso total'           },
-          { label: 'Asesores',        value: totalVendedor,         icon: UserCheck, iconBg: 'bg-secondary/10', iconColor: 'text-secondary',  accent: '#16a34a', sublabel: 'Vendedores activos'     },
-        ].map(({ label, value, icon: Icon, iconBg, iconColor, accent, sublabel }) => (
+          { label: 'Total',    sublabel: 'Usuarios',       value: usuariosTodos.length, icon: Users,     iconColor: 'text-primary',      iconBg: 'bg-primary/10',      accent: '#1a7de0' },
+          { label: 'Admins',   sublabel: 'Administradores',value: totalAdmin,            icon: Shield,    iconColor: 'text-violet-500',   iconBg: 'bg-violet-500/10',   accent: '#7c3aed' },
+          { label: 'Asesores', sublabel: 'Vendedores',     value: totalVendedor,         icon: UserCheck, iconColor: 'text-secondary',    iconBg: 'bg-secondary/10',    accent: '#16a34a' },
+        ].map(({ label, sublabel, value, icon: Icon, iconBg, iconColor, accent }) => (
           <div
             key={label}
-            className="bg-surface-lowest border border-outline-variant/50 rounded-2xl p-4 sm:p-5 flex flex-col items-start gap-2.5"
-            style={{ boxShadow: `0 1px 8px ${accent}12` }}
+            className="relative bg-surface-lowest rounded-xl overflow-hidden flex flex-col p-4 gap-3 transition-shadow duration-200 hover:shadow-md cursor-default"
+            style={{
+              border: `1px solid ${accent}22`,
+              borderTop: `3px solid ${accent}`,
+              boxShadow: `0 1px 6px ${accent}10`,
+            }}
           >
             {/* Ícono */}
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center self-start flex-shrink-0 ${iconBg}`}>
               <Icon className={`w-[15px] h-[15px] ${iconColor}`} />
             </div>
 
-            {/* Label */}
-            <p className="text-[11px] sm:text-[12px] font-medium text-on-surface-variant leading-tight">{sublabel}</p>
+            {/* Sublabel (descripción muted) */}
+            <p className="text-[11px] font-medium leading-none" style={{ color: `${accent}99` }}>
+              {sublabel}
+            </p>
 
-            {/* Valor */}
+            {/* Valor grande */}
             <p
-              className="text-[26px] sm:text-[30px] font-bold tabular leading-none tracking-tight"
+              className="text-[32px] sm:text-[36px] font-bold tabular leading-none tracking-tight"
               style={{ color: accent }}
             >
               {value}
             </p>
 
-            {/* Divider + nombre */}
-            <div className="w-full pt-2 border-t border-outline-variant/40">
-              <p className="text-[11px] font-semibold text-on-surface">{label}</p>
-            </div>
+            {/* Label nombre */}
+            <p className="text-[12px] font-semibold text-on-surface leading-none">{label}</p>
           </div>
         ))}
       </div>
