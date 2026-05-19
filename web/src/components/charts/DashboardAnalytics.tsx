@@ -22,8 +22,8 @@ export function DashboardAnalytics() {
 
       {/* ── Selector de período global ──────────────────────────────────── */}
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-white/80">Período de análisis</p>
-        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/15">
+        <p className="text-[13px] font-semibold text-on-surface-variant">Período de análisis</p>
+        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-surface-high border border-outline-variant/40">
           {TABS.map(t => (
             <button
               key={t.key}
@@ -31,8 +31,8 @@ export function DashboardAnalytics() {
               className={cn(
                 'px-4 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200',
                 periodo === t.key
-                  ? 'bg-white text-on-surface shadow-sm'
-                  : 'text-white/70 hover:text-white',
+                  ? 'bg-surface-lowest text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface',
               )}
             >
               {t.label}
