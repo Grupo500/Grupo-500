@@ -112,60 +112,34 @@ export default function UsuariosPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          {
-            label: 'Total usuarios',
-            value: usuariosTodos.length,
-            icon: Users,
-            iconBg: 'bg-primary/12',
-            iconColor: 'text-primary',
-            accent: '#1a7de0',
-            sublabel: 'registrados',
-          },
-          {
-            label: 'Administradores',
-            value: totalAdmin,
-            icon: Shield,
-            iconBg: 'bg-tertiary/12',
-            iconColor: 'text-tertiary',
-            accent: '#7c3aed',
-            sublabel: 'con acceso total',
-          },
-          {
-            label: 'Asesores',
-            value: totalVendedor,
-            icon: UserCheck,
-            iconBg: 'bg-secondary/12',
-            iconColor: 'text-secondary',
-            accent: '#16a34a',
-            sublabel: 'vendedores',
-          },
+          { label: 'Total usuarios',  value: usuariosTodos.length, icon: Users,     iconBg: 'bg-primary/10',   iconColor: 'text-primary',   accent: '#1a7de0', sublabel: 'Usuarios registrados'  },
+          { label: 'Administradores', value: totalAdmin,            icon: Shield,    iconBg: 'bg-violet-500/10',iconColor: 'text-violet-500', accent: '#7c3aed', sublabel: 'Acceso total'           },
+          { label: 'Asesores',        value: totalVendedor,         icon: UserCheck, iconBg: 'bg-secondary/10', iconColor: 'text-secondary',  accent: '#16a34a', sublabel: 'Vendedores activos'     },
         ].map(({ label, value, icon: Icon, iconBg, iconColor, accent, sublabel }) => (
           <div
             key={label}
-            className="relative overflow-hidden rounded-2xl bg-surface-lowest border border-outline-variant/60 p-3.5 sm:p-5 flex flex-col gap-3"
-            style={{ boxShadow: `0 2px 12px ${accent}0f` }}
+            className="bg-surface-lowest border border-outline-variant/50 rounded-2xl p-4 sm:p-5 flex flex-col items-start gap-2.5"
+            style={{ boxShadow: `0 1px 8px ${accent}12` }}
           >
-            {/* Fondo decorativo */}
-            <div
-              className="absolute -top-4 -right-4 w-20 h-20 rounded-full opacity-[0.07] pointer-events-none"
-              style={{ background: accent }}
-            />
-
             {/* Ícono */}
-            <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center self-start`}>
-              <Icon className={`w-4 h-4 ${iconColor}`} />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}>
+              <Icon className={`w-[15px] h-[15px] ${iconColor}`} />
             </div>
 
-            {/* Número */}
-            <div>
-              <p
-                className="text-[28px] sm:text-[32px] font-bold tabular leading-none"
-                style={{ color: accent }}
-              >
-                {value}
-              </p>
-              <p className="text-[11px] sm:text-[12px] font-semibold text-on-surface mt-1 leading-tight">{label}</p>
-              <p className="text-[10px] text-on-surface-variant/70 hidden sm:block mt-0.5">{sublabel}</p>
+            {/* Label */}
+            <p className="text-[11px] sm:text-[12px] font-medium text-on-surface-variant leading-tight">{sublabel}</p>
+
+            {/* Valor */}
+            <p
+              className="text-[26px] sm:text-[30px] font-bold tabular leading-none tracking-tight"
+              style={{ color: accent }}
+            >
+              {value}
+            </p>
+
+            {/* Divider + nombre */}
+            <div className="w-full pt-2 border-t border-outline-variant/40">
+              <p className="text-[11px] font-semibold text-on-surface">{label}</p>
             </div>
           </div>
         ))}
