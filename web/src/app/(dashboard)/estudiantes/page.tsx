@@ -72,7 +72,7 @@ function calcFinanciero(e: Estudiante) {
   // Financiamientos
   const totalFin    = e.financiamientos?.reduce((s, f) => s + f.montoTotal, 0) ?? 0
   const pagadoFin   = e.financiamientos?.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
-  const pendienteFin = totalFin - pagadoFin
+  const pendienteFin = e.financiamientos?.flatMap(f => f.cuotas).filter(c => !c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
   const moraFin     = e.financiamientos?.flatMap(f => f.cuotas).filter(c =>
     !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
   ).reduce((s, c) => s + c.monto, 0) ?? 0

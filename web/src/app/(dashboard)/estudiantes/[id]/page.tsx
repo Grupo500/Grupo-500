@@ -167,10 +167,12 @@ function FilaCuota({ c, fetcher, onRefresh }: {
       {/* Campos extra si ya está pagada */}
       {c.pagado && (
         <>
-          <div>
-            <label className={labelCls}>Fecha de pago</label>
-            <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
-          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={labelCls}>Fecha de pago</label>
+              <input type="date" className={cn(inputCls, 'text-sm py-1.5 w-full')} value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
+            </div>
+            <div /></div>
           <div>
             <label className={labelCls}>Medio de pago</label>
             <div className="flex gap-1.5">
