@@ -49,7 +49,20 @@ export async function listar(req: Request, res: Response) {
   const [estudiantes, total] = await Promise.all([
     prisma.estudiante.findMany({
       where,
-      include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
+      include: {
+        colegio: true,
+        acudiente: true,
+        asesor: true,
+        cursos: { include: { curso: true } },
+        pagos: { select: { monto: true, estado: true, fechaVencimiento: true } },
+        financiamientos: {
+          select: {
+            montoTotal: true,
+            estado: true,
+            cuotas: { select: { monto: true, pagado: true, fechaVencimiento: true } },
+          },
+        },
+      },
       skip,
       take: Number(limit),
       orderBy: { createdAt: 'desc' },
