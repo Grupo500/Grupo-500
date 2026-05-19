@@ -1,15 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
 import { cn } from '@/lib/utils'
-import { createClientFetcher } from '@/lib/api'
 import { FinancieroSection } from './FinancieroSection'
 import { ProximosCobros } from './ProximosCobros'
 import { CursosVendidosChart } from './CursosVendidosChart'
-import { KpiCard } from '@/components/ui/KpiCard'
-import { Users } from 'lucide-react'
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
@@ -21,18 +16,6 @@ const TABS: { key: Periodo; label: string }[] = [
 
 export function DashboardAnalytics() {
   const [periodo, setPeriodo] = useState<Periodo>('mensual')
-  const { getToken } = useAuth()
-
-  const { data: statsData, isLoading } = useQuery({
-    queryKey: ['dashboard-stats', periodo],
-    queryFn: async () => {
-      const token = await getToken()
-      return createClientFetcher(token ?? '')(`/reportes/dashboard?periodo=${periodo}`) as Promise<{ data: any }>
-    },
-    staleTime: 60_000,
-  })
-
-  const estudiantes = statsData?.data?.estudiantes ?? { total: 0, nuevosMes: 0 }
 
   return (
     <div className="space-y-5">
@@ -57,19 +40,6 @@ export function DashboardAnalytics() {
           ))}
         </div>
       </div>
-
-      {/* ── KPI Estudiantes ────────────────────────────────────────────── */}
-      <KpiCard
-        title="Estudiantes activos"
-        value={estudiantes.total.toString()}
-        rawValue={estudiantes.total}
-        subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
-        icon={Users}
-        variant="default"
-        isLoading={isLoading}
-        trend={{ value: 8, label: 'vs mes anterior' }}
-        className="max-w-xs"
-      />
 
       {/* ── Financiero: Total facturado · Recaudado · Por cobrar · En mora */}
       <FinancieroSection periodo={periodo} />
