@@ -18,7 +18,7 @@
 :root,
 .light {
   /* Superficies — base azulada brand */
-  --bg:                 linear-gradient(180deg, #003060 0%, #0a4a8a 10%, #1264b8 18%, #4a8fd4 24%, #95daff 30%, #95daff 100%);
+  --bg:                 #95daff;
   --surface-lowest:     #ffffff;
   --surface-low:        #e4f0ff;
   --surface:            #d8eaff;
@@ -122,7 +122,7 @@
   * { box-sizing: border-box; }
   html {
     scroll-behavior: smooth;
-    background-color: #003060;
+    background-color: #95daff;
   }
 
   body {
