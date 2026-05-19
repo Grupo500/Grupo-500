@@ -216,6 +216,7 @@ model Cuota {
   fechaVencimiento DateTime
   pagado           Boolean        @default(false)
   fechaPago        DateTime?
+  comprobante      String?
   reminders        ReminderCobro[]
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
