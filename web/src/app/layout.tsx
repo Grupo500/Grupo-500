@@ -4,7 +4,6 @@ import { esES } from '@clerk/localizations'
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister'
-import { ThemeColorSync } from '@/components/layout/ThemeColorSync'
 import './globals.css'
 
 const inter = Inter({
@@ -58,7 +57,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body className={`${inter.variable} font-sans`}>
           <ThemeProvider>
             <ServiceWorkerRegister />
-            <ThemeColorSync />
             {children}
           </ThemeProvider>
         </body>
