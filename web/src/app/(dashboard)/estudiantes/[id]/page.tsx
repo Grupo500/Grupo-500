@@ -150,27 +150,43 @@ function FilaCuota({ c, fetcher, onRefresh }: {
   if (editando) return (
     <div className="px-3 py-3 rounded-xl border-2 border-primary/40 bg-primary/5 space-y-3">
       <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Editando cuota #{c.numero}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className={labelCls}>Monto</label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
-            <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
+      {/* Cuota pendiente: monto + vencimiento */}
+      {!c.pagado && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className={labelCls}>Monto</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
+              <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Vencimiento</label>
+            <input type="date" className={cn(inputCls, 'text-sm py-1.5 w-full')} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
           </div>
         </div>
-        <div>
-          <label className={labelCls}>Vencimiento</label>
-          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
-        </div>
-      </div>
+      )}
 
-      {/* Campos extra si ya está pagada */}
+      {/* Cuota pagada: fecha pago primero */}
       {c.pagado && (
         <>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className={labelCls}>Fecha de pago</label>
               <input type="date" className={cn(inputCls, 'text-sm py-1.5 w-full')} value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Monto</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
+                <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={labelCls}>Vencimiento</label>
+              <input type="date" className={cn(inputCls, 'text-sm py-1.5 w-full')} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
             </div>
             <div /></div>
           <div>
