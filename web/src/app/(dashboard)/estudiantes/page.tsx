@@ -14,6 +14,41 @@ import {
 import { cn } from '@/lib/utils'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
 
+// ── Helpers de formato numérico ────────────────────────────────────────────
+/** Muestra un número con puntos de miles (ej: 600000 → "600.000") */
+function fmtNum(raw: string | number): string {
+  const n = typeof raw === 'string' ? raw.replace(/\./g, '') : String(raw)
+  const num = Number(n)
+  if (isNaN(num) || n === '') return ''
+  return num.toLocaleString('es-CO')
+}
+
+/** Input numérico con formato de puntos de miles en tiempo real */
+function NumericInput({
+  value, onChange, placeholder, className, disabled,
+}: {
+  value: string
+  onChange: (raw: string) => void
+  placeholder?: string
+  className?: string
+  disabled?: boolean
+}) {
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={fmtNum(value)}
+      placeholder={placeholder}
+      className={className}
+      disabled={disabled}
+      onChange={e => {
+        const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '')
+        onChange(raw)
+      }}
+    />
+  )
+}
+
 interface Estudiante {
   id: string
   nombre: string
@@ -42,7 +77,7 @@ const FORM_EMPTY = {
   nombre: '', tipoDocumento: 'CC', documento: '',
   email: '', telefono: '', fechaNacimiento: '',
   departamento: '', ciudad: '', colegioId: '', asesorId: '',
-  cursoId: '', descuentoPorcentaje: '0',
+  cursoId: '', descuentoValor: '0',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
   // Pago integrado
   formaPago: 'CONTADO' as 'CONTADO' | 'FINANCIADO',
@@ -106,11 +141,11 @@ export default function EstudiantesPage() {
   const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
 
-  // Debounce: espera 400ms después de que el usuario deje de escribir
   useEffect(() => {
     const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
     return () => clearTimeout(t)
   }, [busquedaInput])
+
   const [modalCrear, setModalCrear] = useState(false)
   const [pasoCrear, setPasoCrear] = useState(1)
   const [modalDetalle, setModalDetalle] = useState<Estudiante | null>(null)
@@ -121,7 +156,6 @@ export default function EstudiantesPage() {
 
   const [form, setForm] = useState(FORM_EMPTY)
   const [formEdit, setFormEdit] = useState(FORM_EMPTY)
-  // Cuotas editables para financiamiento
   const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
@@ -168,6 +202,11 @@ export default function EstudiantesPage() {
           throw new Error('Completa el monto y la fecha de cada cuota')
       }
 
+      // Convertir descuento valor → porcentaje para el backend
+      const cursoPrecio = cursos.find(c => c.id === form.cursoId)?.precio ?? 0
+      const descuentoValorNum = Number(form.descuentoValor) || 0
+      const descuentoPct = cursoPrecio > 0 ? (descuentoValorNum / cursoPrecio) * 100 : 0
+
       const payload: any = {
         nombre: form.nombre.trim(),
         tipoDocumento: form.tipoDocumento,
@@ -180,7 +219,7 @@ export default function EstudiantesPage() {
         ...(form.colegioId    && { colegioId:    form.colegioId }),
         ...(form.cursoId && {
           cursoId:             form.cursoId,
-          descuentoPorcentaje: Number(form.descuentoPorcentaje),
+          descuentoPorcentaje: descuentoPct,
           formaPago:           form.formaPago,
           ...(form.formaPago === 'CONTADO' && {
             metodoPago:  form.metodoPago,
@@ -229,6 +268,10 @@ export default function EstudiantesPage() {
       if (!formEdit.nombre || !formEdit.email || !formEdit.telefono || !formEdit.fechaNacimiento)
         throw new Error('Completa todos los campos obligatorios')
 
+      const cursoPrecio = cursos.find(c => c.id === formEdit.cursoId)?.precio ?? 0
+      const descuentoValorNum = Number(formEdit.descuentoValor) || 0
+      const descuentoPct = cursoPrecio > 0 ? (descuentoValorNum / cursoPrecio) * 100 : 0
+
       const payload: any = {
         nombre: formEdit.nombre.trim(),
         tipoDocumento: formEdit.tipoDocumento,
@@ -240,7 +283,7 @@ export default function EstudiantesPage() {
         ciudad: formEdit.ciudad || null,
         colegioId: formEdit.colegioId || null,
         ...(isAdmin && { asesorId: formEdit.asesorId || null }),
-        ...(isAdmin && { cursoId: formEdit.cursoId || null, descuentoPorcentaje: Number(formEdit.descuentoPorcentaje) }),
+        ...(isAdmin && { cursoId: formEdit.cursoId || null, descuentoPorcentaje: descuentoPct }),
       }
 
       return fetcher(`/estudiantes/${modalEditar.id}`, {
@@ -276,6 +319,11 @@ export default function EstudiantesPage() {
 
   const abrirEditar = (e: Estudiante) => {
     const cursoActivo = e.cursos?.[0]
+    // Convertir porcentaje almacenado → valor en pesos para mostrar en el form
+    const descuentoValorEdit = cursoActivo
+      ? String(Math.round(cursoActivo.curso.precio * cursoActivo.descuentoPorcentaje / 100))
+      : '0'
+
     setFormEdit({
       nombre: e.nombre,
       tipoDocumento: e.tipoDocumento ?? 'CC',
@@ -288,7 +336,7 @@ export default function EstudiantesPage() {
       colegioId: e.colegio?.id ?? '',
       asesorId: e.asesor?.id ?? '',
       cursoId: cursoActivo?.cursoId ?? '',
-      descuentoPorcentaje: String(cursoActivo?.descuentoPorcentaje ?? 0),
+      descuentoValor: descuentoValorEdit,
       acudienteNombre: e.acudiente?.nombre ?? '',
       acudienteEmail: e.acudiente?.email ?? '',
       acudienteTelefono: e.acudiente?.telefono ?? '',
@@ -449,9 +497,9 @@ export default function EstudiantesPage() {
         )}
       </div>
 
-      {/* ── Grid mobile (< md) ── */}
+      {/* ── Grid ── */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 md:hidden"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
       ) : estudiantes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-lowest border border-outline-variant rounded-xl">
           <Users className="w-10 h-10 mb-3 opacity-30" />
@@ -461,14 +509,12 @@ export default function EstudiantesPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {estudiantes.map((e) => (
             <div key={e.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
-              {/* Avatar + nombre */}
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold text-primary">{e.nombre[0]?.toUpperCase()}</span>
                 </div>
                 <p className="text-xs font-semibold text-on-surface leading-tight line-clamp-2">{e.nombre}</p>
               </div>
-              {/* Info */}
               <div className="space-y-1">
                 <p className="flex items-center gap-1 text-[11px] text-on-surface-variant truncate">
                   <Phone className="w-3 h-3 flex-shrink-0" />{e.telefono}
@@ -479,7 +525,6 @@ export default function EstudiantesPage() {
                   </p>
                 )}
               </div>
-              {/* Acciones */}
               <div className="flex items-center gap-1 pt-1 border-t border-outline-variant/40">
                 <button onClick={() => setModalDetalle(e)} className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors" title="Ver detalle">
                   <Eye className="w-4 h-4" />
@@ -496,7 +541,7 @@ export default function EstudiantesPage() {
         </div>
       )}
 
-      {/* Paginación mobile */}
+      {/* Paginación */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-xs text-on-surface-variant">Pág. {page} / {totalPages}</p>
@@ -507,17 +552,16 @@ export default function EstudiantesPage() {
         </div>
       )}
 
-      {/* Error eliminar (fuera de la tabla para que se vea en mobile también) */}
       {eliminarError && (
         <div className="px-4 py-2 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-xl">
           {eliminarError}
         </div>
       )}
 
-      {/* Modal crear — 3 pasos */}
+      {/* ── Modal crear — 3 pasos ── */}
       <Modal open={modalCrear} onClose={() => { setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY) }}>
         <div className="flex flex-col max-h-[90vh]">
-          {/* Header fijo */}
+          {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
             <div>
               <h2 className="text-base font-semibold text-on-surface">Nuevo estudiante</h2>
@@ -559,45 +603,51 @@ export default function EstudiantesPage() {
                 <p className="text-xs font-semibold text-primary uppercase tracking-wider">Curso adquirido</p>
                 <div>
                   <label className={labelCls}>Curso</label>
-                  <select className={inputCls} value={form.cursoId} onChange={e => setForm(p => ({ ...p, cursoId: e.target.value }))}>
+                  <select className={inputCls} value={form.cursoId} onChange={e => setForm(p => ({ ...p, cursoId: e.target.value, descuentoValor: '0' }))}>
                     <option value="">Sin curso por ahora</option>
                     {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre} — ${c.precio.toLocaleString('es-CO')}</option>)}
                   </select>
                 </div>
-                {form.cursoId && (
-                  <>
-                    <div>
-                      <label className={labelCls}>Descuento (%)</label>
-                      <input className={inputCls} type="number" min="0" max="100" value={form.descuentoPorcentaje}
-                        onChange={e => setForm(p => ({ ...p, descuentoPorcentaje: e.target.value }))} placeholder="0" />
-                    </div>
-                    {(() => {
-                      const c = cursos.find(c => c.id === form.cursoId)
-                      if (!c) return null
-                      const desc = Number(form.descuentoPorcentaje)
-                      const final = c.precio * (1 - desc / 100)
-                      return (
-                        <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-[11px] text-on-surface-variant">Precio base</p>
-                              <p className={cn('text-sm font-medium', desc > 0 && 'line-through text-on-surface-variant')}>${c.precio.toLocaleString('es-CO')}</p>
+                {form.cursoId && (() => {
+                  const c = cursos.find(c => c.id === form.cursoId)
+                  if (!c) return null
+                  const descVal = Number(form.descuentoValor) || 0
+                  const precioFinal = Math.max(0, c.precio - descVal)
+                  return (
+                    <>
+                      <div>
+                        <label className={labelCls}>Descuento ($)</label>
+                        <NumericInput
+                          className={inputCls}
+                          value={form.descuentoValor}
+                          onChange={v => setForm(p => ({ ...p, descuentoValor: v }))}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-[11px] text-on-surface-variant">Precio base</p>
+                            <p className={cn('text-sm font-medium', descVal > 0 && 'line-through text-on-surface-variant')}>
+                              ${c.precio.toLocaleString('es-CO')}
+                            </p>
+                          </div>
+                          {descVal > 0 && (
+                            <div className="text-center">
+                              <span className="text-xs font-bold bg-secondary/15 text-secondary px-2 py-1 rounded-full">
+                                −${descVal.toLocaleString('es-CO')}
+                              </span>
                             </div>
-                            {desc > 0 && (
-                              <div className="text-center">
-                                <span className="text-xs font-bold bg-secondary/15 text-secondary px-2 py-1 rounded-full">−{desc}%</span>
-                              </div>
-                            )}
-                            <div className="text-right">
-                              <p className="text-[11px] text-on-surface-variant">Total a cobrar</p>
-                              <p className="text-lg font-bold text-primary">${final.toLocaleString('es-CO')}</p>
-                            </div>
+                          )}
+                          <div className="text-right">
+                            <p className="text-[11px] text-on-surface-variant">Total a cobrar</p>
+                            <p className="text-lg font-bold text-primary">${precioFinal.toLocaleString('es-CO')}</p>
                           </div>
                         </div>
-                      )
-                    })()}
-                  </>
-                )}
+                      </div>
+                    </>
+                  )
+                })()}
                 {!form.cursoId && (
                   <p className="text-xs text-on-surface-variant italic bg-surface-high rounded-lg px-3 py-3">
                     Si no seleccionas un curso, el estudiante quedará registrado sin venta asociada. Podrás asignarlo después.
@@ -611,7 +661,6 @@ export default function EstudiantesPage() {
                 {form.cursoId ? (
                   <>
                     <p className="text-xs font-semibold text-primary uppercase tracking-wider">Forma de pago</p>
-                    {/* Selector contado / financiado */}
                     <div className="grid grid-cols-2 gap-3">
                       {(['CONTADO', 'FINANCIADO'] as const).map(op => (
                         <button key={op} onClick={() => setForm(p => ({ ...p, formaPago: op }))}
@@ -667,14 +716,13 @@ export default function EstudiantesPage() {
 
                     {form.formaPago === 'FINANCIADO' && (() => {
                       const curso = cursos.find(c => c.id === form.cursoId)
-                      const total = curso ? curso.precio * (1 - Number(form.descuentoPorcentaje) / 100) : 0
+                      const totalFinanciado = curso ? Math.max(0, curso.precio - (Number(form.descuentoValor) || 0)) : 0
                       const sumaCuotas = cuotasDetalle.reduce((s, c) => s + (Number(c.monto) || 0), 0)
-                      const diferencia = total - sumaCuotas
+                      const diferencia = totalFinanciado - sumaCuotas
 
-                      // Genera cuotas automáticas al cambiar número o fecha
                       const generarCuotas = (n: number, fechaBase: string) => {
-                        if (!fechaBase || !total) return
-                        const montoCuota = Math.round(total / n)
+                        if (!fechaBase || !totalFinanciado) return
+                        const montoCuota = Math.round(totalFinanciado / n)
                         setCuotasDetalle(Array.from({ length: n }, (_, i) => {
                           const d = new Date(fechaBase + 'T12:00:00')
                           d.setMonth(d.getMonth() + i)
@@ -684,7 +732,6 @@ export default function EstudiantesPage() {
 
                       return (
                         <div className="space-y-3 pt-1">
-                          {/* Número de cuotas + fecha primera */}
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className={labelCls}>Número de cuotas *</label>
@@ -713,7 +760,6 @@ export default function EstudiantesPage() {
                             </div>
                           </div>
 
-                          {/* Tabla editable de cuotas */}
                           {cuotasDetalle.length > 0 && (
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
@@ -721,7 +767,9 @@ export default function EstudiantesPage() {
                                 {Math.abs(diferencia) > 1 && (
                                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                                     style={{ color: diferencia > 0 ? '#d97706' : '#dc2626', background: diferencia > 0 ? '#d9770618' : '#dc262618' }}>
-                                    {diferencia > 0 ? `Faltan $${diferencia.toLocaleString('es-CO', { maximumFractionDigits: 0 })}` : `Exceden $${Math.abs(diferencia).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`}
+                                    {diferencia > 0
+                                      ? `Faltan $${diferencia.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`
+                                      : `Exceden $${Math.abs(diferencia).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`}
                                   </span>
                                 )}
                                 {Math.abs(diferencia) <= 1 && (
@@ -729,18 +777,15 @@ export default function EstudiantesPage() {
                                 )}
                               </div>
 
-                              {/* Filas de cuotas */}
                               <div className="space-y-1.5 max-h-52 overflow-y-auto pr-0.5">
                                 {cuotasDetalle.map((cuota, i) => (
                                   <div key={i} className="flex items-center gap-2 bg-surface-high rounded-lg px-3 py-2">
                                     <span className="text-[11px] font-bold text-on-surface-variant w-6 flex-shrink-0">#{i + 1}</span>
                                     <div className="flex-1">
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        placeholder="Monto"
+                                      <NumericInput
                                         value={cuota.monto}
-                                        onChange={e => setCuotasDetalle(prev => prev.map((c, j) => j === i ? { ...c, monto: e.target.value } : c))}
+                                        onChange={v => setCuotasDetalle(prev => prev.map((c, j) => j === i ? { ...c, monto: v } : c))}
+                                        placeholder="Monto"
                                         className="w-full bg-transparent text-[13px] font-semibold text-on-surface focus:outline-none"
                                       />
                                     </div>
@@ -754,10 +799,9 @@ export default function EstudiantesPage() {
                                 ))}
                               </div>
 
-                              {/* Resumen total */}
                               <div className="flex items-center justify-between px-1 pt-1 border-t border-outline-variant/40">
                                 <span className="text-[11px] text-on-surface-variant">Total financiado</span>
-                                <span className="text-[13px] font-bold text-on-surface">${total.toLocaleString('es-CO', { maximumFractionDigits: 0 })}</span>
+                                <span className="text-[13px] font-bold text-on-surface">${totalFinanciado.toLocaleString('es-CO', { maximumFractionDigits: 0 })}</span>
                               </div>
                             </div>
                           )}
@@ -775,7 +819,7 @@ export default function EstudiantesPage() {
             )}
           </div>
 
-          {/* Footer fijo */}
+          {/* Footer */}
           {formError && <p className="mx-6 mt-2 text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{formError}</p>}
           <div className="flex justify-between gap-3 px-6 py-4 border-t border-outline-variant/40 flex-shrink-0">
             <button
@@ -809,7 +853,7 @@ export default function EstudiantesPage() {
         </div>
       </Modal>
 
-      {/* Modal editar */}
+      {/* ── Modal editar ── */}
       <Modal open={!!modalEditar} onClose={() => setModalEditar(null)}>
         {modalEditar && (
           <div className="p-6 overflow-y-auto">
@@ -819,7 +863,6 @@ export default function EstudiantesPage() {
             </div>
             {renderFormFields(formEdit, setFormEdit)}
 
-            {/* Asignación — solo admin */}
             {isAdmin && (
               <div className="mt-4 pt-4 border-t border-outline-variant space-y-3">
                 <p className="text-xs font-semibold text-primary uppercase tracking-wider">Asignación (solo admin)</p>
@@ -833,18 +876,44 @@ export default function EstudiantesPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2 sm:col-span-1">
                     <label className={labelCls}>Curso adquirido</label>
-                    <select className={inputCls} value={formEdit.cursoId} onChange={e => setFormEdit(p => ({ ...p, cursoId: e.target.value }))}>
+                    <select className={inputCls} value={formEdit.cursoId}
+                      onChange={e => setFormEdit(p => ({ ...p, cursoId: e.target.value, descuentoValor: '0' }))}>
                       <option value="">Sin curso</option>
                       {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>Descuento (%)</label>
-                    <input className={cn(inputCls, !formEdit.cursoId && 'opacity-50 cursor-not-allowed')} type="number" min="0" max="100"
-                      value={formEdit.descuentoPorcentaje} disabled={!formEdit.cursoId}
-                      onChange={e => setFormEdit(p => ({ ...p, descuentoPorcentaje: e.target.value }))} placeholder="0" />
+                    <label className={labelCls}>Descuento ($)</label>
+                    <NumericInput
+                      className={cn(inputCls, !formEdit.cursoId && 'opacity-50 cursor-not-allowed')}
+                      value={formEdit.descuentoValor}
+                      onChange={v => setFormEdit(p => ({ ...p, descuentoValor: v }))}
+                      placeholder="0"
+                      disabled={!formEdit.cursoId}
+                    />
                   </div>
                 </div>
+                {/* Preview precio con descuento */}
+                {formEdit.cursoId && (() => {
+                  const c = cursos.find(c => c.id === formEdit.cursoId)
+                  if (!c) return null
+                  const descVal = Number(formEdit.descuentoValor) || 0
+                  const precioFinal = Math.max(0, c.precio - descVal)
+                  if (descVal === 0) return null
+                  return (
+                    <div className="flex items-center justify-between bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
+                      <div>
+                        <p className="text-[11px] text-on-surface-variant">Precio base</p>
+                        <p className="text-sm font-medium line-through text-on-surface-variant">${c.precio.toLocaleString('es-CO')}</p>
+                      </div>
+                      <span className="text-xs font-bold bg-secondary/15 text-secondary px-2 py-1 rounded-full">−${descVal.toLocaleString('es-CO')}</span>
+                      <div className="text-right">
+                        <p className="text-[11px] text-on-surface-variant">Total a cobrar</p>
+                        <p className="text-base font-bold text-primary">${precioFinal.toLocaleString('es-CO')}</p>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             )}
 
@@ -869,7 +938,7 @@ export default function EstudiantesPage() {
         onCancel={() => setConfirmEliminar(null)}
       />
 
-      {/* Modal detalle */}
+      {/* ── Modal detalle ── */}
       <Modal open={!!modalDetalle} onClose={() => setModalDetalle(null)}>
         {modalDetalle && (
           <div className="p-6 overflow-y-auto">
@@ -889,7 +958,8 @@ export default function EstudiantesPage() {
               {/* Curso */}
               {modalDetalle.cursos && modalDetalle.cursos.length > 0 && (() => {
                 const ce = modalDetalle.cursos![0]
-                const precioFinal = ce.curso.precio * (1 - ce.descuentoPorcentaje / 100)
+                const descuentoVal = Math.round(ce.curso.precio * ce.descuentoPorcentaje / 100)
+                const precioFinal = ce.curso.precio - descuentoVal
                 return (
                   <div className="bg-primary/5 border border-primary/15 rounded-xl p-3 flex items-center justify-between gap-3">
                     <div>
@@ -897,12 +967,14 @@ export default function EstudiantesPage() {
                       <p className="text-sm font-semibold text-on-surface">{ce.curso.nombre}</p>
                     </div>
                     <div className="text-right">
-                      {ce.descuentoPorcentaje > 0 && (
+                      {descuentoVal > 0 && (
                         <p className="text-[11px] text-on-surface-variant line-through">${ce.curso.precio.toLocaleString('es-CO')}</p>
                       )}
                       <p className="text-sm font-bold text-primary">${precioFinal.toLocaleString('es-CO')}</p>
-                      {ce.descuentoPorcentaje > 0 && (
-                        <span className="inline-block text-[10px] font-semibold bg-secondary/15 text-secondary px-1.5 py-0.5 rounded">{ce.descuentoPorcentaje}% dto.</span>
+                      {descuentoVal > 0 && (
+                        <span className="inline-block text-[10px] font-semibold bg-secondary/15 text-secondary px-1.5 py-0.5 rounded">
+                          −${descuentoVal.toLocaleString('es-CO')} dto.
+                        </span>
                       )}
                     </div>
                   </div>
