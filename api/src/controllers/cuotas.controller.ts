@@ -29,7 +29,9 @@ export async function actualizar(req: Request, res: Response) {
     where: { id },
     data: {
       ...(data.pagado !== undefined && { pagado: data.pagado }),
-      ...(data.pagado && { fechaPago: data.fechaPago ? new Date(data.fechaPago) : new Date() }),
+      // Actualizar fechaPago: al marcar pagado (default hoy) O si se envía explícitamente para corregirla
+      ...(data.pagado === true && !data.fechaPago && { fechaPago: new Date() }),
+      ...(data.fechaPago !== undefined && { fechaPago: new Date(data.fechaPago) }),
       ...(data.comprobante !== undefined && { comprobante: data.comprobante }),
       ...(data.medioPago   !== undefined && { medioPago:   data.medioPago }),
       ...(data.notas       !== undefined && { notas:       data.notas }),
@@ -60,11 +62,13 @@ export async function actualizar(req: Request, res: Response) {
     if (data.pagado === true) {
       accion = 'ABONO'
       descripcion = `Cuota #${cuota.numero} marcada como pagada — ${data.medioPago ?? 'Sin medio de pago'} — $${cuota.monto.toLocaleString('es-CO')}`
-    } else if (data.monto !== undefined || data.fechaVencimiento !== undefined) {
+    } else if (data.monto !== undefined || data.fechaVencimiento !== undefined || data.medioPago !== undefined || data.comprobante !== undefined || data.fechaPago !== undefined) {
       accion = 'EDITAR_CUOTA'
       descripcion = `Cuota #${cuota.numero} editada`
       if (data.monto !== undefined) descripcion += ` · monto $${data.monto.toLocaleString('es-CO')}`
       if (data.fechaVencimiento !== undefined) descripcion += ` · vencimiento ${new Date(data.fechaVencimiento).toLocaleDateString('es-CO')}`
+      if (data.medioPago !== undefined) descripcion += ` · medio ${data.medioPago}`
+      if (data.comprobante !== undefined) descripcion += ` · comprobante actualizado`
     } else if (data.pagado === false) {
       accion = 'REVERTIR_CUOTA'
       descripcion = `Cuota #${cuota.numero} revertida a pendiente`

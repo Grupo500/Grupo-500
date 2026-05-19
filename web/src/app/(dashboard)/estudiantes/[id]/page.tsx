@@ -99,21 +99,48 @@ function FilaCuota({ c, fetcher, onRefresh }: {
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onRefresh: () => void
 }) {
-  const queryClient = useQueryClient()
   const { getToken } = useAuth()
   const [editando, setEditando] = useState(false)
   const [monto, setMonto] = useState(String(Math.round(c.monto)))
-  const [fecha, setFecha] = useState(c.fechaVencimiento?.split('T')[0] ?? '')
+  const [fechaVenc, setFechaVenc] = useState(c.fechaVencimiento?.split('T')[0] ?? '')
+  const [fechaPago, setFechaPago] = useState(c.fechaPago?.split('T')[0] ?? '')
+  const [medioPago, setMedioPago] = useState(
+    MEDIOS_PAGO.includes(c.medioPago ?? '') ? (c.medioPago ?? 'Bancolombia') : 'Otro'
+  )
+  const [otroMedio, setOtroMedio] = useState(
+    MEDIOS_PAGO.includes(c.medioPago ?? '') ? '' : (c.medioPago ?? '')
+  )
+  const [comprobante, setComprobante] = useState(c.comprobante ?? '')
+  const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState('')
 
   const vencida = !c.pagado && esVencida(c.fechaVencimiento)
+
+  const subirComp = async (file: File) => {
+    setSubiendo(true)
+    try {
+      const token = await getToken()
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
+      })
+      const json = await res.json()
+      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error')
+      setComprobante(json.data.url)
+    } catch (e: any) { setError(e.message ?? 'Error al subir') }
+    finally { setSubiendo(false) }
+  }
+
+  const medioFinal = medioPago === 'Otro' ? (otroMedio.trim() || 'Otro') : medioPago
 
   const editarMutation = useMutation({
     mutationFn: () => fetcher(`/cuotas/${c.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
         monto: Number(monto),
-        fechaVencimiento: fecha,
+        fechaVencimiento: fechaVenc,
+        ...(c.pagado && { fechaPago, medioPago: medioFinal }),
+        ...(comprobante && { comprobante }),
       }),
     }),
     onSuccess: () => { setEditando(false); setError(''); onRefresh() },
@@ -121,21 +148,63 @@ function FilaCuota({ c, fetcher, onRefresh }: {
   })
 
   if (editando) return (
-    <div className="px-3 py-3 rounded-xl border-2 border-primary/40 bg-primary/4 space-y-2">
-      <p className="text-[11px] font-semibold text-primary">Editando cuota #{c.numero}</p>
+    <div className="px-3 py-3 rounded-xl border-2 border-primary/40 bg-primary/5 space-y-3">
+      <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Editando cuota #{c.numero}</p>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className={labelCls}>Monto</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
             <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
           </div>
         </div>
         <div>
           <label className={labelCls}>Vencimiento</label>
-          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={fecha} onChange={e => setFecha(e.target.value)} />
+          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
         </div>
       </div>
+
+      {/* Campos extra si ya está pagada */}
+      {c.pagado && (
+        <>
+          <div>
+            <label className={labelCls}>Fecha de pago</label>
+            <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
+          </div>
+          <div>
+            <label className={labelCls}>Medio de pago</label>
+            <div className="flex gap-1.5">
+              {MEDIOS_PAGO.map(m => (
+                <button key={m} type="button" onClick={() => setMedioPago(m)}
+                  className={cn('flex-1 py-1.5 rounded-lg border-2 text-[11px] font-semibold transition-all cursor-pointer',
+                    medioPago === m ? 'border-primary bg-primary/8 text-primary' : 'border-outline-variant text-on-surface-variant hover:border-outline')}>
+                  {m}
+                </button>
+              ))}
+            </div>
+            {medioPago === 'Otro' && (
+              <input className={cn(inputCls, 'mt-1.5 text-sm')} placeholder="Especifica el medio..." value={otroMedio}
+                onChange={e => setOtroMedio(e.target.value)} />
+            )}
+          </div>
+          <div>
+            <label className={labelCls}>Comprobante</label>
+            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
+              <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
+                onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
+              {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
+              <span className="text-xs text-on-surface-variant">{subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
+            </label>
+            {comprobante && (
+              <a href={comprobante} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+                <ExternalLink className="w-3 h-3" />Ver comprobante actual
+              </a>
+            )}
+          </div>
+        </>
+      )}
+
       {error && <p className="text-xs text-[var(--error)]">{error}</p>}
       <div className="flex gap-2 justify-end">
         <button onClick={() => setEditando(false)} className="px-3 py-1 text-xs text-on-surface-variant hover:text-on-surface cursor-pointer">Cancelar</button>
@@ -176,12 +245,11 @@ function FilaCuota({ c, fetcher, onRefresh }: {
             <Paperclip className="w-3 h-3" />Ver
           </a>
         )}
-        {!c.pagado && (
-          <button onClick={() => setEditando(true)}
-            className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-surface-high transition-all cursor-pointer">
-            <Pencil className="w-3 h-3 text-on-surface-variant" />
-          </button>
-        )}
+        {/* Lápiz disponible para TODAS las cuotas, pagadas o no */}
+        <button onClick={() => setEditando(true)}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-surface-high transition-all cursor-pointer">
+          <Pencil className="w-3 h-3 text-on-surface-variant" />
+        </button>
       </div>
     </div>
   )
