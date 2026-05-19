@@ -17,7 +17,13 @@ const getRole = cache(async (): Promise<'ADMIN' | 'VENDEDOR'> => {
 })
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth()
+  let userId: string | null = null
+  try {
+    const session = await auth()
+    userId = session.userId
+  } catch {
+    redirect('/sign-in')
+  }
   if (!userId) redirect('/sign-in')
 
   const role = await getRole()

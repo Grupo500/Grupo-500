@@ -19,7 +19,10 @@ async function getDashboardData() {
 }
 
 export default async function DashboardPage() {
-  const [data, user] = await Promise.all([getDashboardData(), currentUser()])
+  const [data, user] = await Promise.all([
+    getDashboardData(),
+    currentUser().catch(() => null),   // Si Clerk falla no rompe la página
+  ])
   const role      = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
   const isAdmin   = role === 'ADMIN'
   const firstName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] ?? ''
