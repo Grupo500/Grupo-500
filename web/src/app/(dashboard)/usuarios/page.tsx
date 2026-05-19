@@ -6,9 +6,12 @@ import { useAuth } from '@clerk/nextjs'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search } from 'lucide-react'
+import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp } from 'lucide-react'
 
-interface Asesor { id: string; nombre: string; telefono: string }
+interface Asesor {
+  id: string; nombre: string; telefono: string
+  _count?: { estudiantes: number; pagos: number }
+}
 interface Usuario {
   id: string; clerkId: string; email: string
   nombre: string | null; imageUrl: string | null
@@ -216,6 +219,26 @@ export default function UsuariosPage() {
                     <p className="text-[10px] md:text-xs text-on-surface-variant">{u.asesor.telefono}</p>
                   )}
                 </div>
+
+                {/* Stats asesor */}
+                {u.role === 'VENDEDOR' && u.asesor && (
+                  <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-outline-variant/40">
+                    <div className="flex items-center gap-1.5 bg-surface-high rounded-lg px-2 py-1.5">
+                      <Users className="w-3 h-3 text-primary flex-shrink-0" />
+                      <div>
+                        <p className="text-[12px] font-bold text-on-surface leading-none">{u.asesor._count?.estudiantes ?? 0}</p>
+                        <p className="text-[9px] text-on-surface-variant">Est.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-surface-high rounded-lg px-2 py-1.5">
+                      <TrendingUp className="w-3 h-3 text-[#16a34a] flex-shrink-0" />
+                      <div>
+                        <p className="text-[12px] font-bold text-on-surface leading-none">{u.asesor._count?.pagos ?? 0}</p>
+                        <p className="text-[9px] text-on-surface-variant">Pagos</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Acciones */}
                 <div className="pt-2 border-t border-outline-variant/40 flex items-center gap-1.5">

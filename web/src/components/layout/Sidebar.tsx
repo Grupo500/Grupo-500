@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import {
   LayoutDashboard, Users, Wallet, CalendarDays,
-  UserCheck, BookOpen, School, Award, FileBarChart2,
+  BookOpen, School, Award, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
   Sun, Moon, ShieldCheck,
 } from 'lucide-react'
@@ -23,7 +23,6 @@ const navItems: NavItem[] = [
   { type: 'section', label: 'Gestión',                                                          adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
-  { type: 'link',    href: '/asesores',        label: 'Asesores',        icon: UserCheck,       adminOnly: true  },
   { type: 'section', label: 'Financiero',                                                       adminOnly: false },
   { type: 'link',    href: '/cobros',          label: 'Cobros',          icon: Wallet,          adminOnly: false },
   { type: 'link',    href: '/calendario',      label: 'Calendario',      icon: CalendarDays,    adminOnly: false },

@@ -21,7 +21,11 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
 // Enriquece imageUrl y nombre con datos frescos de Clerk para mantener sincronía
 router.get('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const usuarios = await prisma.user.findMany({
-    include: { asesor: true },
+    include: {
+      asesor: {
+        include: { _count: { select: { estudiantes: true, pagos: true } } },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   })
 

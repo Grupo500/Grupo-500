@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, Wallet, BookOpen, School,
-  Award, FileBarChart2, BarChart3, UserCheck,
+  Award, FileBarChart2, BarChart3,
   ShieldCheck, Sun, Moon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -29,7 +29,6 @@ const moreItems: NavItem[] = [
   { href: '/certificados',    label: 'Certificados',     icon: Award,         adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
-  { href: '/asesores',        label: 'Asesores',         icon: UserCheck,     adminOnly: true  },
   { href: '/reportes',        label: 'Reportes',         icon: BarChart3,     adminOnly: true  },
 ]
 
