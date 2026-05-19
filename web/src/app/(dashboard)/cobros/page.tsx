@@ -716,6 +716,59 @@ function CalendarioView({ fetcher }: { fetcher: <T>(path: string, opts?: Request
   )
 }
 
+// ── Count-up hook ────────────────────────────────────────────────────────────
+function useCountUpValue(target: number, enabled: boolean, duration = 850) {
+  const [current, setCurrent] = useState(0)
+  useEffect(() => {
+    if (!enabled || target === 0) { setCurrent(target); return }
+    const startTime = performance.now()
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1)
+      const eased    = 1 - Math.pow(1 - progress, 3)
+      setCurrent(Math.round(target * eased))
+      if (progress < 1) requestAnimationFrame(tick)
+    }
+    setCurrent(0)
+    const raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, enabled, duration])
+  return current
+}
+
+// ── Stat card individual (hooks fuera del map) ────────────────────────────────
+function StatCard({
+  label, sublabel, rawValue, fmt, icon: Icon, accent, isLoading,
+}: {
+  label: string; sublabel: string; rawValue: number
+  fmt: (n: number) => string; icon: React.ElementType
+  accent: string; isLoading: boolean
+}) {
+  const animated = useCountUpValue(rawValue, !isLoading)
+  return (
+    <div
+      className="relative bg-surface-lowest rounded-xl overflow-hidden flex flex-col p-3 sm:p-4 gap-2.5 transition-shadow duration-200"
+      style={{ border: `1px solid ${accent}22`, borderTop: `3px solid ${accent}`, boxShadow: `0 1px 6px ${accent}10` }}
+    >
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 self-start" style={{ background: `${accent}15` }}>
+        {isLoading
+          ? <div className="w-4 h-4 rounded bg-[var(--surface-high)] animate-pulse" />
+          : <Icon className="w-4 h-4" style={{ color: accent }} />}
+      </div>
+      {isLoading
+        ? <div className="h-2.5 w-16 rounded bg-[var(--surface-high)] animate-pulse" />
+        : <p className="text-[10px] sm:text-[11px] font-medium leading-none" style={{ color: `${accent}99` }}>{sublabel}</p>}
+      {isLoading
+        ? <div className="h-6 w-20 rounded-md bg-[var(--surface-high)] animate-pulse" />
+        : <p className="text-[18px] sm:text-[22px] font-bold tabular leading-none tracking-tight" style={{ color: accent }}>{fmt(animated)}</p>}
+      <div className="border-t pt-2" style={{ borderColor: `${accent}18` }}>
+        {isLoading
+          ? <div className="h-3 w-14 rounded bg-[var(--surface-high)] animate-pulse" />
+          : <p className="text-[11px] font-semibold text-on-surface leading-none">{label}</p>}
+      </div>
+    </div>
+  )
+}
+
 type Periodo = 'diario' | 'semanal' | 'mensual'
 const PERIODO_TABS: { key: Periodo; label: string }[] = [
   { key: 'diario',  label: 'Diario'  },
@@ -785,23 +838,11 @@ export default function CobrosPage() {
         </div>
       </div>
 
-      {/* Stats — siempre visibles, fuente única */}
+      {/* Stats — fuente única, con skeleton + count-up */}
       <div className="grid grid-cols-3 gap-2.5">
-        {[
-          { label: 'Por cobrar', value: formatCOP(totalPorCobrar), color: 'text-on-surface', bg: 'bg-[var(--primary-container)] text-primary', icon: Wallet },
-          { label: 'Cobrado',    value: formatCOP(totalCobrado),    color: 'text-secondary',  bg: 'bg-[var(--secondary-container)] text-secondary', icon: CheckCircle },
-          { label: 'Vencidos',   value: String(totalVencidos),      color: 'text-[var(--error)]', bg: 'bg-[var(--error-container)] text-[var(--error)]', icon: AlertCircle },
-        ].map(({ label, value, color, bg, icon: Icon }) => (
-          <div key={label} className="card p-3 flex flex-col items-center text-center gap-2">
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', bg)}>
-              <Icon className="w-4 h-4" />
-            </div>
-            <div className="w-full">
-              <p className="text-[10px] font-medium text-on-surface-variant leading-none mb-1">{label}</p>
-              <p className={cn('text-[13px] font-bold tabular leading-none', color)}>{value}</p>
-            </div>
-          </div>
-        ))}
+        <StatCard label="Por cobrar" sublabel="Pendiente de cobro" rawValue={totalPorCobrar} fmt={formatCOP}            icon={Wallet}      accent="#1a7de0" isLoading={loadingStats} />
+        <StatCard label="Cobrado"    sublabel="Recaudado"          rawValue={totalCobrado}   fmt={formatCOP}            icon={CheckCircle} accent="#16a34a" isLoading={loadingStats} />
+        <StatCard label="Vencidos"   sublabel="En mora"            rawValue={totalVencidos}  fmt={(n) => String(n)}     icon={AlertCircle} accent="#dc2626" isLoading={loadingStats} />
       </div>
 
       {/* Tabs */}
