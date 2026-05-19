@@ -9,5 +9,6 @@ router.use(authenticate)
 
 router.get('/calendario', asyncHandler(ctrl.calendario))
 router.get('/proximos', asyncHandler(ctrl.proximos))
+router.get('/saldos-pendientes', asyncHandler(ctrl.saldosPendientes))
 
 export default router

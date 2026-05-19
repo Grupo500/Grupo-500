@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { FinancieroSection } from './FinancieroSection'
 import { ProximosCobros } from './ProximosCobros'
 import { CursosVendidosChart } from './CursosVendidosChart'
+import { SaldosPendientes } from './SaldosPendientes'
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
@@ -49,6 +50,9 @@ export function DashboardAnalytics() {
         <ProximosCobros periodo={periodo} />
         <CursosVendidosChart periodo={periodo} />
       </div>
+
+      {/* ── Saldos pendientes por cobrar ────────────────────────────────── */}
+      <SaldosPendientes />
 
     </div>
   )
