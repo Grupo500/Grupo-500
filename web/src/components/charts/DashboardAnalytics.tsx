@@ -23,7 +23,7 @@ export function DashboardAnalytics() {
   const [periodo, setPeriodo] = useState<Periodo>('mensual')
   const { getToken } = useAuth()
 
-  const { data: statsData } = useQuery({
+  const { data: statsData, isLoading } = useQuery({
     queryKey: ['dashboard-stats', periodo],
     queryFn: async () => {
       const token = await getToken()
@@ -67,24 +67,32 @@ export function DashboardAnalytics() {
         <KpiCard
           title="Estudiantes activos"
           value={estudiantes.total.toString()}
+          rawValue={estudiantes.total}
           subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
           icon={Users}
           variant="default"
+          isLoading={isLoading}
           trend={{ value: 8, label: 'vs mes anterior' }}
         />
         <KpiCard
           title="Por cobrar"
           value={formatCOP(cobranza.porCobrar.monto)}
+          rawValue={cobranza.porCobrar.monto}
+          formatValue={formatCOP}
           subtitle={`${cobranza.porCobrar.cantidad} pendientes`}
           icon={Wallet}
           variant="warning"
+          isLoading={isLoading}
         />
         <KpiCard
           title="En mora"
           value={formatCOP(cobranza.vencida.monto)}
+          rawValue={cobranza.vencida.monto}
+          formatValue={formatCOP}
           subtitle={`${cobranza.vencida.cantidad} vencidos`}
           icon={AlertTriangle}
           variant="error"
+          isLoading={isLoading}
         />
       </div>
 
