@@ -43,7 +43,9 @@ function truncar(nombre: string, max = 22) {
   return nombre.length > max ? nombre.slice(0, max - 1) + '…' : nombre
 }
 
-export function CursosVendidosChart() {
+type Periodo = 'diario' | 'semanal' | 'mensual'
+
+export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { getToken } = useAuth()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -56,12 +58,12 @@ export function CursosVendidosChart() {
   const labelColor    = isDark ? '#d6eaff' : '#001d3d'
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['cursos-vendidos'],
+    queryKey: ['cursos-vendidos', periodo],
     queryFn: async () => {
       const token = await getToken()
-      return createClientFetcher(token ?? '')('/reportes/cursos') as Promise<{ data: CursoData[] }>
+      return createClientFetcher(token ?? '')(`/reportes/cursos?periodo=${periodo}`) as Promise<{ data: CursoData[] }>
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
   })
 
   if (isLoading) return <Skeleton />

@@ -32,14 +32,23 @@ function Skeleton() {
   )
 }
 
-export function ProximosCobros() {
+type Periodo = 'diario' | 'semanal' | 'mensual'
+
+const DIAS_LABEL: Record<Periodo, { dias: number; label: string }> = {
+  diario:  { dias: 1,  label: 'Hoy'        },
+  semanal: { dias: 7,  label: '7 días'     },
+  mensual: { dias: 30, label: '30 días'    },
+}
+
+export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { getToken } = useAuth()
+  const { dias, label } = DIAS_LABEL[periodo]
 
   const { data, isLoading } = useQuery({
-    queryKey: ['cobros-proximos'],
+    queryKey: ['cobros-proximos', periodo],
     queryFn: async () => {
       const token = await getToken()
-      return createClientFetcher(token ?? '')('/cobros/proximos?dias=7') as Promise<{ data: CuotaProxima[] }>
+      return createClientFetcher(token ?? '')(`/cobros/proximos?dias=${dias}`) as Promise<{ data: CuotaProxima[] }>
     },
     staleTime: 2 * 60_000,
   })
@@ -59,14 +68,14 @@ export function ProximosCobros() {
           </div>
           <h3 className="text-[15px] font-semibold text-on-surface">Próximos cobros</h3>
         </div>
-        <span className="text-[11px] text-on-surface-variant font-medium">7 días</span>
+        <span className="text-[11px] text-on-surface-variant font-medium">{label}</span>
       </div>
 
       {/* Lista */}
       <div className="flex-1 space-y-1 overflow-y-auto -mx-1 px-1">
         {cobros.length === 0 ? (
           <div className="flex items-center justify-center h-full text-[13px] text-on-surface-variant">
-            Sin cobros en los próximos 7 días
+            Sin cobros en los próximos {label.toLowerCase()}
           </div>
         ) : (
           cobros.slice(0, 6).map((c) => {
@@ -102,7 +111,7 @@ export function ProximosCobros() {
 
       {/* Total */}
       <div className="mt-3 pt-3 border-t border-[var(--outline-variant)] flex items-center justify-between">
-        <span className="text-[12px] text-on-surface-variant font-medium">Total próximos 7 días</span>
+        <span className="text-[12px] text-on-surface-variant font-medium">Total próximos {label.toLowerCase()}</span>
         <span className="text-[13px] font-bold text-on-surface tabular">{formatCOP(total)}</span>
       </div>
     </div>

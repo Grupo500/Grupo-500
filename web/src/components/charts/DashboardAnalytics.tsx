@@ -90,8 +90,8 @@ export function DashboardAnalytics() {
 
       {/* ── Próximos cobros + Cursos más vendidos ──────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProximosCobros />
-        <CursosVendidosChart />
+        <ProximosCobros periodo={periodo} />
+        <CursosVendidosChart periodo={periodo} />
       </div>
 
     </div>

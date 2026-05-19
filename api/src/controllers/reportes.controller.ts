@@ -128,12 +128,34 @@ export async function rankingAsesores(_req: Request, res: Response) {
   return ApiResponse.success(res, ranking)
 }
 
-export async function cursosMasVendidos(_req: Request, res: Response) {
+export async function cursosMasVendidos(req: Request, res: Response) {
+  const hoy     = new Date()
+  const periodo = String(req.query.periodo ?? 'mensual')
+
+  const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
+  const inicioDia    = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+
+  const desde = periodo === 'diario' ? inicioDia
+    : periodo === 'semanal' ? inicioSemana
+    : inicioMes
+
+  // Contar estudiantes cuya fechaCompra esté dentro del período
   const cursos = await prisma.curso.findMany({
-    include: { _count: { select: { estudiantes: true } } },
-    orderBy: { estudiantes: { _count: 'desc' } },
+    where: { activo: true },
+    include: {
+      _count: {
+        select: {
+          estudiantes: { where: { fechaCompra: { gte: desde } } },
+        },
+      },
+    },
+    orderBy: { nombre: 'asc' },
   })
-  return ApiResponse.success(res, cursos)
+
+  // Ordenar por más vendidos en el período
+  const ordenados = [...cursos].sort((a, b) => b._count.estudiantes - a._count.estudiantes)
+  return ApiResponse.success(res, ordenados)
 }
 
 // Financiero por período: totales del período activo + serie temporal
