@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     // 'any' es obligatorio para que Chrome en escritorio muestre el botón de instalación
     orientation: 'any',
-    background_color: '#21b9f7',
-    theme_color: '#21b9f7',
+    background_color: '#000000',
+    theme_color: '#000000',
     icons: [
       {
         src: '/android-chrome-192x192.png',
