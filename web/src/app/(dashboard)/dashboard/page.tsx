@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { apiFetch } from '@/lib/api.server'
 import { currentUser } from '@clerk/nextjs/server'
 import { formatCOP } from '@/lib/utils'
