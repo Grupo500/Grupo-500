@@ -5,10 +5,12 @@ import { NotFoundError } from '../utils/errors'
 import { z } from 'zod'
 
 const schema = z.object({
-  nombre: z.string().min(2),
-  descripcion: z.string().optional(),
-  precio: z.number().positive(),
+  nombre:       z.string().min(2),
+  descripcion:  z.string().optional(),
+  precio:       z.number().positive(),
   duracionHoras: z.number().int().positive(),
+  fechaInicio:  z.string().datetime().optional().nullable(),
+  fechaFin:     z.string().datetime().optional().nullable(),
 })
 
 export async function listar(_req: Request, res: Response) {
@@ -41,6 +43,8 @@ const actualizarSchema = z.object({
   precio:       z.number().positive().optional(),
   duracionHoras: z.number().int().positive().optional(),
   calendario:   z.enum(['A', 'B']).optional(),
+  fechaInicio:  z.string().datetime().optional().nullable(),
+  fechaFin:     z.string().datetime().optional().nullable(),
   activo:       z.boolean().optional(),
 })
 
