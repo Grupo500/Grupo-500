@@ -314,7 +314,14 @@ function DetallePago({
 }
 
 /* ─── Vista Matrículas ───────────────────────────────────────────────────── */
-function MatriculasView({ fetcher }: { fetcher: <T>(path: string, opts?: RequestInit) => Promise<T> }) {
+function MatriculasView({
+  financiamientos, pagos, isLoading, fetcher,
+}: {
+  financiamientos: Financiamiento[]
+  pagos: Pago[]
+  isLoading: boolean
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+}) {
   const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState<'todos' | 'pendiente' | 'vencido' | 'completado'>('todos')
   const [seleccionado, setSeleccionado] = useState<
@@ -322,32 +329,6 @@ function MatriculasView({ fetcher }: { fetcher: <T>(path: string, opts?: Request
     | { tipo: 'pago'; data: Pago }
     | null
   >(null)
-
-  const { data: dataF, isLoading: loadingF } = useQuery({
-    queryKey: ['financiamientos'],
-    queryFn: () => fetcher<any>('/financiamientos'),
-  })
-  const { data: dataP, isLoading: loadingP } = useQuery({
-    queryKey: ['pagos'],
-    queryFn: () => fetcher<any>('/pagos'),
-  })
-
-  const financiamientos: Financiamiento[] = dataF?.data ?? []
-  const pagos: Pago[] = dataP?.data ?? []
-  const isLoading = loadingF || loadingP
-
-  // Stats unificadas
-  const totalPorCobrar =
-    pagos.filter(p => p.estado === 'PENDIENTE').reduce((s, p) => s + p.monto, 0) +
-    financiamientos.flatMap(f => f.cuotas).filter(c => !c.pagado && !esVencidaCuota(c)).reduce((s, c) => s + c.monto, 0)
-
-  const totalCobrado =
-    pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0) +
-    financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-
-  const totalVencidos =
-    pagos.filter(p => p.estado === 'VENCIDO').length +
-    financiamientos.flatMap(f => f.cuotas).filter(c => esVencidaCuota(c)).length
 
   // Filtrado
   const q = busqueda.toLowerCase()
@@ -370,25 +351,6 @@ function MatriculasView({ fetcher }: { fetcher: <T>(path: string, opts?: Request
 
   return (
     <>
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2.5">
-        {[
-          { label: 'Por cobrar', value: formatCOP(totalPorCobrar), color: 'text-on-surface', bg: 'bg-[var(--primary-container)] text-primary', icon: Wallet },
-          { label: 'Cobrado', value: formatCOP(totalCobrado), color: 'text-secondary', bg: 'bg-[var(--secondary-container)] text-secondary', icon: CheckCircle },
-          { label: 'Vencidos', value: String(totalVencidos), color: 'text-[var(--error)]', bg: 'bg-[var(--error-container)] text-[var(--error)]', icon: AlertCircle },
-        ].map(({ label, value, color, bg, icon: Icon }) => (
-          <div key={label} className="card p-3 flex flex-col items-center text-center gap-2">
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', bg)}>
-              <Icon className="w-4 h-4" />
-            </div>
-            <div className="w-full">
-              <p className="text-[10px] font-medium text-on-surface-variant leading-none mb-1">{label}</p>
-              <p className={cn('text-[13px] font-bold tabular leading-none', color)}>{value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Búsqueda + filtros */}
       <div className="flex flex-col gap-2">
         <div className="relative">
@@ -599,35 +561,10 @@ function CalendarioView({ fetcher }: { fetcher: <T>(path: string, opts?: Request
       .filter(([fecha]) => isSameDay(parseISO(fecha), dia))
       .flatMap(([, cuotas]) => cuotas)
 
-  const totalPorCobrar = todasLasCuotas.filter(c => !c.pagado && !esVencidaCuota(c)).reduce((s, c) => s + c.monto, 0)
-  const totalCobrado = todasLasCuotas.filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-  const totalVencidas = todasLasCuotas.filter(c => esVencidaCuota(c)).length
   const toggleFiltro = (f: FiltroEstado) => setFiltro(prev => prev === f ? null : f)
 
   return (
     <>
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2.5">
-        {[
-          { key: 'porCobrar' as FiltroEstado, label: 'Por cobrar', value: formatCOP(totalPorCobrar), activeRing: 'ring-primary/40', activeBg: 'bg-[var(--primary-container)]/50 border-primary/30', iconBg: 'bg-[var(--primary-container)] text-primary', iconBgActive: 'bg-primary text-on-primary', icon: Wallet },
-          { key: 'cobrado' as FiltroEstado, label: 'Cobrado', value: formatCOP(totalCobrado), activeRing: 'ring-secondary/40', activeBg: 'bg-[var(--secondary-container)]/50 border-secondary/30', iconBg: 'bg-[var(--secondary-container)] text-secondary', iconBgActive: 'bg-secondary text-white', icon: CheckCircle },
-          { key: 'vencidas' as FiltroEstado, label: 'Vencidas', value: String(totalVencidas), activeRing: 'ring-[var(--error)]/40', activeBg: 'bg-[var(--error-container)]/50 border-[var(--error)]/30', iconBg: 'bg-[var(--error-container)] text-[var(--error)]', iconBgActive: 'bg-[var(--error)] text-white', icon: AlertCircle },
-        ].map(({ key, label, value, activeRing, activeBg, iconBg, iconBgActive, icon: Icon }) => (
-          <button key={key} onClick={() => toggleFiltro(key)}
-            className={cn('card p-3 flex flex-col items-center text-center gap-2 cursor-pointer select-none transition-all duration-150 ring-2 ring-transparent',
-              filtro === key ? cn(activeRing, activeBg) : 'hover:bg-[var(--surface-high)]'
-            )}>
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', filtro === key ? iconBgActive : iconBg)}>
-              <Icon className="w-4 h-4" />
-            </div>
-            <div className="w-full">
-              <p className="text-[10px] font-medium text-on-surface-variant leading-none mb-1">{label}</p>
-              <p className="text-[13px] font-bold text-on-surface tabular leading-none">{value}</p>
-            </div>
-          </button>
-        ))}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Calendario */}
         <div className="lg:col-span-2 card p-5">
@@ -789,9 +726,54 @@ export default function CobrosPage() {
     return createClientFetcher(token)<T>(path, opts)
   }
 
+  // Queries en el nivel raíz — fuente única de verdad para las stats
+  const { data: dataF, isLoading: loadingF } = useQuery({
+    queryKey: ['financiamientos'],
+    queryFn: () => fetcher<any>('/financiamientos'),
+  })
+  const { data: dataP, isLoading: loadingP } = useQuery({
+    queryKey: ['pagos'],
+    queryFn: () => fetcher<any>('/pagos'),
+  })
+
+  const financiamientos: Financiamiento[] = dataF?.data ?? []
+  const pagos: Pago[] = dataP?.data ?? []
+  const isLoading = loadingF || loadingP
+
+  const totalPorCobrar =
+    pagos.filter(p => p.estado === 'PENDIENTE').reduce((s, p) => s + p.monto, 0) +
+    financiamientos.flatMap(f => f.cuotas).filter(c => !c.pagado && !esVencidaCuota(c)).reduce((s, c) => s + c.monto, 0)
+
+  const totalCobrado =
+    pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0) +
+    financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
+
+  const totalVencidos =
+    pagos.filter(p => p.estado === 'VENCIDO').length +
+    financiamientos.flatMap(f => f.cuotas).filter(c => esVencidaCuota(c)).length
+
   return (
     <div className="space-y-5 animate-fade-in">
       <PageHeader title="Cobros" subtitle="Gestiona matrículas, pagos y fechas de cobro" />
+
+      {/* Stats — siempre visibles, fuente única */}
+      <div className="grid grid-cols-3 gap-2.5">
+        {[
+          { label: 'Por cobrar', value: formatCOP(totalPorCobrar), color: 'text-on-surface', bg: 'bg-[var(--primary-container)] text-primary', icon: Wallet },
+          { label: 'Cobrado',    value: formatCOP(totalCobrado),    color: 'text-secondary',  bg: 'bg-[var(--secondary-container)] text-secondary', icon: CheckCircle },
+          { label: 'Vencidos',   value: String(totalVencidos),      color: 'text-[var(--error)]', bg: 'bg-[var(--error-container)] text-[var(--error)]', icon: AlertCircle },
+        ].map(({ label, value, color, bg, icon: Icon }) => (
+          <div key={label} className="card p-3 flex flex-col items-center text-center gap-2">
+            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', bg)}>
+              <Icon className="w-4 h-4" />
+            </div>
+            <div className="w-full">
+              <p className="text-[10px] font-medium text-on-surface-variant leading-none mb-1">{label}</p>
+              <p className={cn('text-[13px] font-bold tabular leading-none', color)}>{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-surface-high rounded-xl p-1 w-fit">
@@ -811,7 +793,7 @@ export default function CobrosPage() {
 
       {/* Contenido del tab activo */}
       {tab === 'matriculas'
-        ? <MatriculasView fetcher={fetcher} />
+        ? <MatriculasView financiamientos={financiamientos} pagos={pagos} isLoading={isLoading} fetcher={fetcher} />
         : <CalendarioView fetcher={fetcher} />
       }
     </div>
