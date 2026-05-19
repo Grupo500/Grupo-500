@@ -213,32 +213,52 @@ export async function financieroPeriodo(req: Request, res: Response) {
   }
 
   // ── Queries en paralelo ─────────────────────────────────────────────────
-  const [totalAgg, recaudoAgg, pendienteAgg, vencidoAgg, serie] = await Promise.all([
+  const hoyInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+
+  const [
+    totalPagosAgg, recaudoPagosAgg, porCobrarPagosAgg, moraPagosAgg,
+    totalCuotasAgg, recaudoCuotasAgg, porCobrarCuotasAgg, moraCuotasAgg,
+    serie,
+  ] = await Promise.all([
+    // Pagos únicos — totales
     prisma.pago.aggregate({ where: { createdAt: { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', createdAt: { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO', fechaVencimiento: { gte: desdeTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO',   fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoyInicio }, createdAt: { gte: desdeTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { lt:  hoyInicio }, createdAt: { gte: desdeTotales } }, _sum: { monto: true } }),
+    // Cuotas — totales
+    prisma.cuota.aggregate({ where: { financiamiento: { createdAt: { gte: desdeTotales } } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoyInicio }, financiamiento: { createdAt: { gte: desdeTotales } } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoyInicio }, financiamiento: { createdAt: { gte: desdeTotales } } }, _sum: { monto: true } }),
+    // Serie temporal
     Promise.all(puntos.map(async ({ label, desde, hasta }) => {
-      const [t, r, p, v] = await Promise.all([
+      const hoyI = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+      const [t, r, pc, mo, tc, rc, pcc, moc] = await Promise.all([
         prisma.pago.aggregate({ where: { createdAt: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-        prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-        prisma.pago.aggregate({ where: { estado: 'PENDIENTE', createdAt: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-        prisma.pago.aggregate({ where: { estado: 'VENCIDO', fechaVencimiento: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
+        prisma.pago.aggregate({ where: { estado: 'PAGADO',   fechaPago:        { gte: desde, lte: hasta } }, _sum: { monto: true } }),
+        prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoyI }, createdAt: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
+        prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { lt:  hoyI }, createdAt: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
+        prisma.cuota.aggregate({ where: { financiamiento: { createdAt: { gte: desde, lte: hasta } } }, _sum: { monto: true } }),
+        prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desde, lte: hasta } }, _sum: { monto: true } }),
+        prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoyI }, financiamiento: { createdAt: { gte: desde, lte: hasta } } }, _sum: { monto: true } }),
+        prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoyI }, financiamiento: { createdAt: { gte: desde, lte: hasta } } }, _sum: { monto: true } }),
       ])
       return {
         label,
-        ventaTotal: t._sum.monto ?? 0,
-        recaudo:    r._sum.monto ?? 0,
-        saldo:      (p._sum.monto ?? 0) + (v._sum.monto ?? 0),
+        ventaTotal: (t._sum.monto ?? 0) + (tc._sum.monto ?? 0),
+        recaudo:    (r._sum.monto ?? 0) + (rc._sum.monto ?? 0),
+        porCobrar:  (pc._sum.monto ?? 0) + (pcc._sum.monto ?? 0),
+        mora:       (mo._sum.monto ?? 0) + (moc._sum.monto ?? 0),
       }
     })),
   ])
 
   return ApiResponse.success(res, {
     totales: {
-      ventaTotal: totalAgg._sum.monto ?? 0,
-      recaudo:    recaudoAgg._sum.monto ?? 0,
-      saldo:      (pendienteAgg._sum.monto ?? 0) + (vencidoAgg._sum.monto ?? 0),
+      ventaTotal: (totalPagosAgg._sum.monto ?? 0)     + (totalCuotasAgg._sum.monto ?? 0),
+      recaudo:    (recaudoPagosAgg._sum.monto ?? 0)   + (recaudoCuotasAgg._sum.monto ?? 0),
+      porCobrar:  (porCobrarPagosAgg._sum.monto ?? 0) + (porCobrarCuotasAgg._sum.monto ?? 0),
+      mora:       (moraPagosAgg._sum.monto ?? 0)      + (moraCuotasAgg._sum.monto ?? 0),
     },
     puntos: serie,
   })

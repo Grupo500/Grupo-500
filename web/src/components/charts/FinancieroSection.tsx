@@ -10,21 +10,22 @@ import {
 } from 'recharts'
 import { createClientFetcher } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { TrendingUp, Wallet, AlertTriangle } from 'lucide-react'
+import { TrendingUp, Wallet, Clock, AlertTriangle } from 'lucide-react'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
-type Metrica = 'ventaTotal' | 'recaudo' | 'saldo'
+type Metrica = 'ventaTotal' | 'recaudo' | 'porCobrar' | 'mora'
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
-interface Punto   { label: string; ventaTotal: number; recaudo: number; saldo: number }
-interface Totales { ventaTotal: number; recaudo: number; saldo: number }
+interface Punto   { label: string; ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
+interface Totales { ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
 interface Props   { periodo: Periodo }
 
 // ── Config de métricas ──────────────────────────────────────────────────────
 const METRICS = [
-  { key: 'ventaTotal' as Metrica, label: 'Venta total',  sublabel: 'Total registrado',      Icon: TrendingUp,   colorLight: '#1a7de0', colorDark: '#95daff' },
-  { key: 'recaudo'    as Metrica, label: 'Recaudo',       sublabel: 'Efectivamente cobrado', Icon: Wallet,       colorLight: '#16a34a', colorDark: '#6ee7b7' },
-  { key: 'saldo'      as Metrica, label: 'Saldo',         sublabel: 'Pendiente + vencido',   Icon: AlertTriangle,colorLight: '#d97706', colorDark: '#fbbf24' },
+  { key: 'ventaTotal' as Metrica, label: 'Total facturado', sublabel: 'Registrado en el período', Icon: TrendingUp,    colorLight: '#1a7de0', colorDark: '#95daff' },
+  { key: 'recaudo'    as Metrica, label: 'Recaudado',        sublabel: 'Efectivamente cobrado',    Icon: Wallet,        colorLight: '#16a34a', colorDark: '#6ee7b7' },
+  { key: 'porCobrar'  as Metrica, label: 'Por cobrar',       sublabel: 'Pendiente sin vencer',     Icon: Clock,         colorLight: '#d97706', colorDark: '#fbbf24' },
+  { key: 'mora'       as Metrica, label: 'En mora',          sublabel: 'Vencido sin pagar',        Icon: AlertTriangle, colorLight: '#dc2626', colorDark: '#f87171' },
 ]
 
 function fmtCompact(n: number) {
@@ -137,7 +138,7 @@ export function FinancieroSection({ periodo }: Props) {
     staleTime: 60_000,
   })
 
-  const totales = data?.data?.totales ?? { ventaTotal: 0, recaudo: 0, saldo: 0 }
+  const totales = data?.data?.totales ?? { ventaTotal: 0, recaudo: 0, porCobrar: 0, mora: 0 }
   const puntos  = data?.data?.puntos  ?? []
   const base    = totales.ventaTotal || 1
 
@@ -167,8 +168,8 @@ export function FinancieroSection({ periodo }: Props) {
         <span className="text-[11px] text-on-surface-variant">Período en curso</span>
       </div>
 
-      {/* ── 3 tarjetas ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2.5">
+      {/* ── 4 tarjetas ──────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {METRICS.map((m, idx) => {
           const isSelected = selected === m.key
           const val  = totales[m.key]
