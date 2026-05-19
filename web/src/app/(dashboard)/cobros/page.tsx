@@ -716,10 +716,18 @@ function CalendarioView({ fetcher }: { fetcher: <T>(path: string, opts?: Request
   )
 }
 
+type Periodo = 'diario' | 'semanal' | 'mensual'
+const PERIODO_TABS: { key: Periodo; label: string }[] = [
+  { key: 'diario',  label: 'Diario'  },
+  { key: 'semanal', label: 'Semanal' },
+  { key: 'mensual', label: 'Mensual' },
+]
+
 /* ─── Página principal ───────────────────────────────────────────────────── */
 export default function CobrosPage() {
   const { getToken } = useAuth()
   const [tab, setTab] = useState<Tab>('matriculas')
+  const [periodo, setPeriodo] = useState<Periodo>('mensual')
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getToken()
@@ -728,8 +736,9 @@ export default function CobrosPage() {
 
   // Stats — mismo endpoint que usa el Dashboard (fuente única de verdad)
   const { data: statsData, isLoading: loadingStats } = useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: () => fetcher<any>('/reportes/dashboard'),
+    queryKey: ['dashboard-stats', periodo],
+    queryFn: () => fetcher<any>(`/reportes/dashboard?periodo=${periodo}`),
+    staleTime: 60_000,
   })
 
   // Queries para las listas de Matrículas
@@ -754,6 +763,27 @@ export default function CobrosPage() {
   return (
     <div className="space-y-5 animate-fade-in">
       <PageHeader title="Cobros" subtitle="Gestiona matrículas, pagos y fechas de cobro" />
+
+      {/* Selector de período */}
+      <div className="flex items-center justify-between">
+        <p className="text-[13px] font-semibold text-on-surface-variant">Período de análisis</p>
+        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-surface-high border border-outline-variant/40">
+          {PERIODO_TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setPeriodo(t.key)}
+              className={cn(
+                'px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200',
+                periodo === t.key
+                  ? 'bg-surface-lowest text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface',
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Stats — siempre visibles, fuente única */}
       <div className="grid grid-cols-3 gap-2.5">

@@ -2,20 +2,25 @@ import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 
-export async function dashboard(_req: Request, res: Response) {
+export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
-  const inicioSemana = new Date(hoy)
-  inicioSemana.setDate(hoy.getDate() - 7)
-  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-  const inicioDia = new Date(hoy.toDateString())
+  const periodo = (req.query.periodo as string) ?? 'mensual'
+
+  // Calcular inicio del período seleccionado
+  const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
+  const inicioDia    = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+
+  const inicioPeriodo = periodo === 'diario' ? inicioDia
+    : periodo === 'semanal' ? inicioSemana
+    : inicioMes
+
+  // Filtro de fecha para el período activo
+  const filtroPeriodo = { gte: inicioPeriodo }
 
   const [
     totalEstudiantes,
     estudiantesNuevosMes,
-    pagosHoy,
-    pagosSemana,
-    pagosMes,
-    // Cobranza — fuente única de verdad (sin filtro de fecha)
     pagosPendientes,
     pagosVencidos,
     pagosCobrados,
@@ -25,51 +30,33 @@ export async function dashboard(_req: Request, res: Response) {
   ] = await Promise.all([
     prisma.estudiante.count(),
     prisma.estudiante.count({ where: { createdAt: { gte: inicioMes } } }),
-    // Ingresos por período (solo pagos únicos)
-    prisma.pago.aggregate({
-      where: { estado: 'PAGADO', fechaPago: { gte: inicioDia } },
-      _sum: { monto: true },
-    }),
-    prisma.pago.aggregate({
-      where: { estado: 'PAGADO', fechaPago: { gte: inicioSemana } },
-      _sum: { monto: true },
-    }),
-    prisma.pago.aggregate({
-      where: { estado: 'PAGADO', fechaPago: { gte: inicioMes } },
-      _sum: { monto: true },
-    }),
-    // Pagos únicos — sin filtro de fecha
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE' }, _sum: { monto: true }, _count: true }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO' },   _sum: { monto: true }, _count: true }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO' },    _sum: { monto: true }, _count: true }),
-    // Cuotas de financiamiento — sin filtro de fecha
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoy } }, _sum: { monto: true }, _count: true }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt: hoy } },  _sum: { monto: true }, _count: true }),
-    prisma.cuota.aggregate({ where: { pagado: true },                                   _sum: { monto: true }, _count: true }),
+    // Pagos únicos filtrados por período
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', createdAt: filtroPeriodo }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: filtroPeriodo }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago: filtroPeriodo }, _sum: { monto: true }, _count: true }),
+    // Cuotas filtradas por período
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoy > inicioPeriodo ? hoy : inicioPeriodo } }, _sum: { monto: true }, _count: true }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoy, gte: inicioPeriodo } }, _sum: { monto: true }, _count: true }),
+    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago: filtroPeriodo }, _sum: { monto: true }, _count: true }),
   ])
 
   // Totales unificados (pagos únicos + cuotas)
-  const porCobrarMonto   = (pagosPendientes._sum.monto ?? 0) + (cuotasPendientes._sum.monto ?? 0)
-  const porCobrarCantidad = pagosPendientes._count           + cuotasPendientes._count
-  const vencidoMonto     = (pagosVencidos._sum.monto ?? 0)  + (cuotasVencidas._sum.monto ?? 0)
-  const vencidoCantidad  = pagosVencidos._count              + cuotasVencidas._count
-  const cobradoMonto     = (pagosCobrados._sum.monto ?? 0)  + (cuotasCobradas._sum.monto ?? 0)
-  const cobradoCantidad  = pagosCobrados._count              + cuotasCobradas._count
+  const porCobrarMonto    = (pagosPendientes._sum.monto ?? 0) + (cuotasPendientes._sum.monto ?? 0)
+  const porCobrarCantidad = pagosPendientes._count            + cuotasPendientes._count
+  const vencidoMonto      = (pagosVencidos._sum.monto ?? 0)  + (cuotasVencidas._sum.monto ?? 0)
+  const vencidoCantidad   = pagosVencidos._count              + cuotasVencidas._count
+  const cobradoMonto      = (pagosCobrados._sum.monto ?? 0)  + (cuotasCobradas._sum.monto ?? 0)
+  const cobradoCantidad   = pagosCobrados._count              + cuotasCobradas._count
 
   return ApiResponse.success(res, {
     estudiantes: { total: totalEstudiantes, nuevosMes: estudiantesNuevosMes },
-    ingresos: {
-      hoy:    pagosHoy._sum.monto    ?? 0,
-      semana: pagosSemana._sum.monto ?? 0,
-      mes:    pagosMes._sum.monto    ?? 0,
-    },
     cobranza: {
       porCobrar: { monto: porCobrarMonto,  cantidad: porCobrarCantidad },
       vencida:   { monto: vencidoMonto,    cantidad: vencidoCantidad   },
       cobrado:   { monto: cobradoMonto,    cantidad: cobradoCantidad   },
-      // Aliases para compatibilidad con el dashboard existente
       pendiente: { monto: porCobrarMonto,  cantidad: porCobrarCantidad },
     },
+    periodo,
   })
 }
 

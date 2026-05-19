@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '@clerk/nextjs'
+import { cn, formatCOP } from '@/lib/utils'
+import { createClientFetcher } from '@/lib/api'
 import { FinancieroSection } from './FinancieroSection'
 import { ProximosCobros } from './ProximosCobros'
 import { CursosVendidosChart } from './CursosVendidosChart'
+import { KpiCard } from '@/components/ui/KpiCard'
+import { Users, Wallet, AlertTriangle } from 'lucide-react'
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
@@ -16,6 +21,19 @@ const TABS: { key: Periodo; label: string }[] = [
 
 export function DashboardAnalytics() {
   const [periodo, setPeriodo] = useState<Periodo>('mensual')
+  const { getToken } = useAuth()
+
+  const { data: statsData } = useQuery({
+    queryKey: ['dashboard-stats', periodo],
+    queryFn: async () => {
+      const token = await getToken()
+      return createClientFetcher(token ?? '')(`/reportes/dashboard?periodo=${periodo}`) as Promise<{ data: any }>
+    },
+    staleTime: 60_000,
+  })
+
+  const estudiantes = statsData?.data?.estudiantes ?? { total: 0, nuevosMes: 0 }
+  const cobranza    = statsData?.data?.cobranza    ?? { porCobrar: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 } }
 
   return (
     <div className="space-y-5">
@@ -43,6 +61,32 @@ export function DashboardAnalytics() {
 
       {/* ── Tarjetas financieras + gráfica del métrico ─────────────────── */}
       <FinancieroSection periodo={periodo} />
+
+      {/* ── KPIs filtrados por período ─────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <KpiCard
+          title="Estudiantes activos"
+          value={estudiantes.total.toString()}
+          subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
+          icon={Users}
+          variant="default"
+          trend={{ value: 8, label: 'vs mes anterior' }}
+        />
+        <KpiCard
+          title="Por cobrar"
+          value={formatCOP(cobranza.porCobrar.monto)}
+          subtitle={`${cobranza.porCobrar.cantidad} pendientes`}
+          icon={Wallet}
+          variant="warning"
+        />
+        <KpiCard
+          title="En mora"
+          value={formatCOP(cobranza.vencida.monto)}
+          subtitle={`${cobranza.vencida.cantidad} vencidos`}
+          icon={AlertTriangle}
+          variant="error"
+        />
+      </div>
 
       {/* ── Próximos cobros + Cursos más vendidos ──────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

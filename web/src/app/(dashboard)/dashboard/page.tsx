@@ -3,7 +3,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { formatCOP } from '@/lib/utils'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Users, Wallet, AlertTriangle, BookOpen, Target, Bell } from 'lucide-react'
+import { Users, Wallet, BookOpen, Target, Bell } from 'lucide-react'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
 import { DashboardAnalytics } from '@/components/charts/DashboardAnalytics'
 import { RefreshButton } from '@/components/ui/RefreshButton'
@@ -59,34 +59,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Analytics con período global: tarjetas + gráficas sincronizadas */}
+        {/* Analytics con período global: tarjetas + gráficas + KPIs sincronizados */}
         <DashboardAnalytics />
-
-        {/* KPIs fijos */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          <KpiCard
-            title="Estudiantes activos"
-            value={estudiantes.total.toString()}
-            subtitle={`${estudiantes.nuevosMes} nuevos este mes`}
-            icon={Users}
-            variant="default"
-            trend={{ value: 8, label: 'vs mes anterior' }}
-          />
-          <KpiCard
-            title="Por cobrar"
-            value={formatCOP(cobranza.porCobrar.monto)}
-            subtitle={`${cobranza.porCobrar.cantidad} pendientes`}
-            icon={Wallet}
-            variant="warning"
-          />
-          <KpiCard
-            title="En mora"
-            value={formatCOP(cobranza.vencida.monto)}
-            subtitle={`${cobranza.vencida.cantidad} vencidos`}
-            icon={AlertTriangle}
-            variant="error"
-          />
-        </div>
       </div>
     )
   }
