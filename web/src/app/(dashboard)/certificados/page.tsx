@@ -174,6 +174,26 @@ export default function CertificadosPage() {
   const [enviando, setEnviando] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState<'sebastian' | 'andres' | null>(null)
 
+  // Búsqueda de estudiante en modal
+  const [busqEst, setBusqEst] = useState('')
+  const [busqEstDebounced, setBusqEstDebounced] = useState('')
+  const [estSeleccionado, setEstSeleccionado] = useState<{ id: string; nombre: string; documento?: string } | null>(null)
+  const [busqDropOpen, setBusqDropOpen] = useState(false)
+  const busqRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => setBusqEstDebounced(busqEst), 250)
+    return () => clearTimeout(t)
+  }, [busqEst])
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (busqRef.current && !busqRef.current.contains(e.target as Node)) setBusqDropOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getToken()
     return createClientFetcher(token)<T>(path, opts)
@@ -183,9 +203,10 @@ export default function CertificadosPage() {
     queryKey: ['certificados', page, busqueda],
     queryFn: () => fetcher<any>(`/certificados?page=${page}&limit=20${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}`),
   })
-  const { data: estudiantesData } = useQuery({
-    queryKey: ['estudiantes-select'],
-    queryFn: () => fetcher<any>('/estudiantes?limit=100'),
+  const { data: estudiantesSearchData, isFetching: buscandoEst } = useQuery({
+    queryKey: ['estudiantes-cert-search', busqEstDebounced],
+    queryFn: () => fetcher<any>(`/estudiantes?limit=8${busqEstDebounced ? `&nombre=${encodeURIComponent(busqEstDebounced)}` : ''}`),
+    enabled: busqDropOpen && busqEstDebounced.length >= 1,
   })
   const { data: firmasData, refetch: refetchFirmas } = useQuery({
     queryKey: ['config-firmas'],
@@ -193,6 +214,21 @@ export default function CertificadosPage() {
   })
 
   const firmas: Firmas = firmasData?.data ?? { firmaSebastian: null, firmaAndres: null }
+  const resultadosBusq: any[] = estudiantesSearchData?.data ?? []
+
+  const seleccionarEstudiante = (est: any) => {
+    setEstSeleccionado({ id: est.id, nombre: est.nombre, documento: est.documento })
+    setForm(f => ({ ...f, estudianteId: est.id }))
+    setBusqEst(est.nombre)
+    setBusqDropOpen(false)
+  }
+
+  const limpiarEstudiante = () => {
+    setEstSeleccionado(null)
+    setForm(f => ({ ...f, estudianteId: '' }))
+    setBusqEst('')
+    setBusqDropOpen(false)
+  }
 
   const generarMutation = useMutation({
     mutationFn: () => fetcher('/certificados', { method: 'POST', body: JSON.stringify(form) }),
@@ -200,6 +236,7 @@ export default function CertificadosPage() {
       queryClient.invalidateQueries({ queryKey: ['certificados'] })
       setModalGenerar(false)
       setForm({ estudianteId: '', tipo: 'CURSANDO' })
+      limpiarEstudiante()
     },
     onError: (err: any) => alert(err?.message ?? 'Error al generar certificado'),
   })
@@ -265,7 +302,6 @@ export default function CertificadosPage() {
   const certificados: Certificado[] = data?.data ?? []
   const total = data?.pagination?.total ?? 0
   const totalPages = data?.pagination?.totalPages ?? 1
-  const estudiantes = estudiantesData?.data ?? []
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
@@ -397,7 +433,7 @@ export default function CertificadosPage() {
       )}
 
       {/* ── Modal Generar ── */}
-      <Modal open={modalGenerar} onClose={() => setModalGenerar(false)}>
+      <Modal open={modalGenerar} onClose={() => { setModalGenerar(false); limpiarEstudiante() }}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold text-on-surface">Generar certificado</h2>
@@ -406,12 +442,69 @@ export default function CertificadosPage() {
             </button>
           </div>
           <div className="space-y-3">
-            <div>
+            <div ref={busqRef} className="relative">
               <label className={labelCls}>Estudiante *</label>
-              <select className={inputCls} value={form.estudianteId} onChange={e => setForm(f => ({ ...f, estudianteId: e.target.value }))}>
-                <option value="">Seleccionar estudiante…</option>
-                {estudiantes.map((e: any) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-              </select>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o documento…"
+                  value={busqEst}
+                  onChange={e => { setBusqEst(e.target.value); setBusqDropOpen(true); if (!e.target.value) limpiarEstudiante() }}
+                  onFocus={() => setBusqDropOpen(true)}
+                  className={cn(inputCls, 'pl-9 pr-8')}
+                  autoComplete="off"
+                />
+                {busqEst && (
+                  <button type="button" onClick={limpiarEstudiante} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Chip de seleccionado */}
+              {estSeleccionado && (
+                <div className="mt-1.5 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[9px] font-bold text-primary">{estSeleccionado.nombre.charAt(0)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-on-surface truncate">{estSeleccionado.nombre}</p>
+                    {estSeleccionado.documento && <p className="text-[10px] text-on-surface-variant">{estSeleccionado.documento}</p>}
+                  </div>
+                  <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                </div>
+              )}
+
+              {/* Dropdown de resultados */}
+              {busqDropOpen && busqEstDebounced.length >= 1 && (
+                <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-surface-lowest border border-outline-variant rounded-lg shadow-float overflow-hidden">
+                  {buscandoEst ? (
+                    <div className="flex items-center gap-2 px-3 py-2.5 text-xs text-on-surface-variant">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando…
+                    </div>
+                  ) : resultadosBusq.length === 0 ? (
+                    <div className="px-3 py-2.5 text-xs text-on-surface-variant">Sin resultados</div>
+                  ) : (
+                    resultadosBusq.map((est: any) => (
+                      <button
+                        key={est.id}
+                        type="button"
+                        onClick={() => seleccionarEstudiante(est)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-surface-high text-left transition-colors"
+                      >
+                        <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[10px] font-bold text-primary">{est.nombre.charAt(0)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-on-surface truncate">{est.nombre}</p>
+                          <p className="text-[10px] text-on-surface-variant">{est.documento ? `${est.tipoDocumento ?? 'CC'}: ${est.documento}` : est.email}</p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>Tipo de certificado *</label>
@@ -435,7 +528,7 @@ export default function CertificadosPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-6">
-            <button onClick={() => setModalGenerar(false)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">
+            <button onClick={() => { setModalGenerar(false); limpiarEstudiante() }} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">
               Cancelar
             </button>
             <button
