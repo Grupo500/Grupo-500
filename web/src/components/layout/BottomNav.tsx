@@ -6,7 +6,7 @@ import { UserButton } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import {
-  LayoutDashboard, Users, CreditCard, CalendarDays,
+  LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, Wallet, BookOpen, School,
   Award, FileBarChart2, BarChart3, UserCheck,
   ShieldCheck, Sun, Moon,
@@ -18,12 +18,11 @@ type NavItem = { href: string; label: string; icon: React.ElementType; adminOnly
 const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
-  { href: '/pagos',       label: 'Pagos',       icon: CreditCard,      adminOnly: false },
-  { href: '/cobros',      label: 'Calendario',  icon: CalendarDays,    adminOnly: false },
+  { href: '/cobros',      label: 'Cobros',      icon: Wallet,          adminOnly: false },
+  { href: '/certificados', label: 'Certificados', icon: Award,         adminOnly: false },
 ]
 
 const moreItems: NavItem[] = [
-  { href: '/financiamientos', label: 'Financiamientos', icon: Wallet,        adminOnly: false },
   { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/certificados',    label: 'Certificados',     icon: Award,         adminOnly: false },
