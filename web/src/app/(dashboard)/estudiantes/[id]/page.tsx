@@ -263,11 +263,27 @@ function FilaCuota({ c, fetcher, onRefresh }: {
             <Paperclip className="w-3 h-3" />Ver
           </a>
         )}
-        {/* Lápiz disponible para TODAS las cuotas, pagadas o no */}
         <button onClick={() => setEditando(true)}
           className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-surface-high transition-all cursor-pointer">
           <Pencil className="w-3 h-3 text-on-surface-variant" />
         </button>
+        {/* Revertir pago — solo cuotas pagadas */}
+        {c.pagado && (
+          <button
+            onClick={async () => {
+              if (!confirm('¿Revertir este abono? La cuota volverá a pendiente.')) return
+              const token = await getToken()
+              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cuotas/${c.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+                body: JSON.stringify({ pagado: false }),
+              })
+              onRefresh()
+            }}
+            className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-[#dc2626]/10 transition-all cursor-pointer">
+            <Trash2 className="w-3 h-3 text-[#dc2626]" />
+          </button>
+        )}
       </div>
     </div>
   )
@@ -715,10 +731,11 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 // ══════════════════════════════════════════════════════════════════════════
 // TAB: FINANCIERO (incluye abonos)
 // ══════════════════════════════════════════════════════════════════════════
-function TabFinanciero({ e, fetcher, onRefresh }: {
+function TabFinanciero({ e, fetcher, onRefresh, getToken }: {
   e: EstudianteDetalle
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onRefresh: () => void
+  getToken: () => Promise<string | null>
 }) {
   const financiamientos = e.financiamientos ?? []
   const pagos = e.pagos ?? []
@@ -833,6 +850,19 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
                       <Paperclip className="w-3 h-3" />Ver
                     </a>
                   )}
+                  <button
+                    onClick={async () => {
+                      if (!confirm('¿Eliminar este pago?')) return
+                      const token = await getToken()
+                      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pagos/${p.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token ?? ''}` },
+                      })
+                      onRefresh()
+                    }}
+                    className="flex-shrink-0 p-1 rounded-md hover:bg-[#dc2626]/10 transition-colors cursor-pointer">
+                    <Trash2 className="w-3.5 h-3.5 text-[#dc2626]" />
+                  </button>
                 </div>
               )
             })}
@@ -1086,7 +1116,7 @@ export default function EstudianteDetallePage() {
           <TabPerfil e={e} fetcher={fetcher} isAdmin={isAdmin} colegios={colegios} asesores={asesores} cursos={cursos} onRefresh={handleRefresh} />
         )}
         {tab === 'financiero' && (
-          <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} />
+          <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} getToken={getToken} />
         )}
         {tab === 'historial' && (
           <TabHistorial estudianteId={e.id} fetcher={fetcher} />

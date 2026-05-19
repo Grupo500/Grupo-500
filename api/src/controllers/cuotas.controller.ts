@@ -25,15 +25,19 @@ export async function actualizar(req: Request, res: Response) {
     include: { financiamiento: { select: { estudianteId: true } } },
   })
 
+  const revertiendo = data.pagado === false
+
   const cuota = await prisma.cuota.update({
     where: { id },
     data: {
       ...(data.pagado !== undefined && { pagado: data.pagado }),
-      // Actualizar fechaPago: al marcar pagado (default hoy) O si se envía explícitamente para corregirla
+      // Revertir: limpiar todos los campos del pago
+      ...(revertiendo && { fechaPago: null, medioPago: null, comprobante: null }),
+      // Marcar pagado sin fecha explícita → usar hoy
       ...(data.pagado === true && !data.fechaPago && { fechaPago: new Date() }),
-      ...(data.fechaPago !== undefined && { fechaPago: new Date(data.fechaPago) }),
-      ...(data.comprobante !== undefined && { comprobante: data.comprobante }),
-      ...(data.medioPago   !== undefined && { medioPago:   data.medioPago }),
+      ...(data.fechaPago !== undefined && !revertiendo && { fechaPago: new Date(data.fechaPago) }),
+      ...(!revertiendo && data.comprobante !== undefined && { comprobante: data.comprobante }),
+      ...(!revertiendo && data.medioPago   !== undefined && { medioPago:   data.medioPago }),
       ...(data.notas       !== undefined && { notas:       data.notas }),
       ...(data.monto       !== undefined && { monto:       data.monto }),
       ...(data.fechaVencimiento !== undefined && { fechaVencimiento: new Date(data.fechaVencimiento) }),
@@ -51,6 +55,14 @@ export async function actualizar(req: Request, res: Response) {
         data: { estado: 'COMPLETADO' },
       })
     }
+  }
+
+  // Si se revirtió → el financiamiento vuelve a ACTIVO
+  if (revertiendo) {
+    await prisma.financiamiento.update({
+      where: { id: cuota.financiamientoId },
+      data: { estado: 'ACTIVO' },
+    })
   }
 
   // Registrar en historial si hay estudianteId disponible
