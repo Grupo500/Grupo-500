@@ -112,39 +112,26 @@ export default function UsuariosPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total',    sublabel: 'Usuarios',       value: usuariosTodos.length, icon: Users,     iconColor: 'text-primary',      iconBg: 'bg-primary/10',      accent: '#1a7de0' },
-          { label: 'Admins',   sublabel: 'Administradores',value: totalAdmin,            icon: Shield,    iconColor: 'text-violet-500',   iconBg: 'bg-violet-500/10',   accent: '#7c3aed' },
-          { label: 'Asesores', sublabel: 'Vendedores',     value: totalVendedor,         icon: UserCheck, iconColor: 'text-secondary',    iconBg: 'bg-secondary/10',    accent: '#16a34a' },
-        ].map(({ label, sublabel, value, icon: Icon, iconBg, iconColor, accent }) => (
+          { label: 'Total usuarios',  sublabel: 'Usuarios registrados', value: usuariosTodos.length, icon: Users,     accent: '#1a7de0' },
+          { label: 'Administradores', sublabel: 'Con acceso total',      value: totalAdmin,            icon: Shield,    accent: '#7c3aed' },
+          { label: 'Asesores',        sublabel: 'Vendedores activos',    value: totalVendedor,         icon: UserCheck, accent: '#16a34a' },
+        ].map(({ label, sublabel, value, icon: Icon, accent }) => (
           <div
             key={label}
-            className="relative bg-surface-lowest rounded-xl overflow-hidden flex flex-col p-4 gap-3 transition-shadow duration-200 hover:shadow-md cursor-default"
-            style={{
-              border: `1px solid ${accent}22`,
-              borderTop: `3px solid ${accent}`,
-              boxShadow: `0 1px 6px ${accent}10`,
-            }}
+            className="relative overflow-hidden rounded-2xl p-3.5 flex flex-col gap-0"
+            style={{ background: 'var(--surface-lowest)', border: '1.5px solid var(--outline-variant)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
           >
-            {/* Ícono */}
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center self-start flex-shrink-0 ${iconBg}`}>
-              <Icon className={`w-[15px] h-[15px] ${iconColor}`} />
+            {/* Ícono + título */}
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${accent}18` }}>
+                <Icon className="w-4 h-4" style={{ color: accent }} />
+              </div>
+              <p className="text-[12px] sm:text-[13px] font-semibold text-on-surface leading-tight">{label}</p>
             </div>
-
-            {/* Sublabel (descripción muted) */}
-            <p className="text-[11px] font-medium leading-none" style={{ color: `${accent}99` }}>
-              {sublabel}
-            </p>
-
-            {/* Valor grande */}
-            <p
-              className="text-[32px] sm:text-[36px] font-bold tabular leading-none tracking-tight"
-              style={{ color: accent }}
-            >
-              {value}
-            </p>
-
-            {/* Label nombre */}
-            <p className="text-[12px] font-semibold text-on-surface leading-none">{label}</p>
+            {/* Valor */}
+            <p className="text-[16px] sm:text-[19px] font-bold tabular leading-tight" style={{ color: accent }}>{value}</p>
+            {/* Sublabel */}
+            <p className="mt-0.5 text-[10px] text-on-surface-variant/60 leading-tight hidden sm:block">{sublabel}</p>
           </div>
         ))}
       </div>

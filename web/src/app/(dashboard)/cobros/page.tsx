@@ -746,25 +746,28 @@ function StatCard({
   const animated = useCountUpValue(rawValue, !isLoading)
   return (
     <div
-      className="relative bg-surface-lowest rounded-xl overflow-hidden flex flex-col p-3 sm:p-4 gap-2.5 transition-shadow duration-200"
-      style={{ border: `1px solid ${accent}22`, borderTop: `3px solid ${accent}`, boxShadow: `0 1px 6px ${accent}10` }}
+      className="relative overflow-hidden rounded-2xl p-3.5 flex flex-col gap-0"
+      style={{ background: 'var(--surface-lowest)', border: '1.5px solid var(--outline-variant)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
     >
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 self-start" style={{ background: `${accent}15` }}>
+      {/* Ícono + label fila */}
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${accent}18` }}>
+          {isLoading
+            ? <div className="w-4 h-4 rounded bg-[var(--surface-high)] animate-pulse" />
+            : <Icon className="w-4 h-4" style={{ color: accent }} />}
+        </div>
         {isLoading
-          ? <div className="w-4 h-4 rounded bg-[var(--surface-high)] animate-pulse" />
-          : <Icon className="w-4 h-4" style={{ color: accent }} />}
+          ? <div className="h-3.5 w-20 rounded bg-[var(--surface-high)] animate-pulse flex-1" />
+          : <p className="text-[12px] sm:text-[13px] font-semibold text-on-surface leading-tight">{label}</p>}
       </div>
+      {/* Valor */}
       {isLoading
-        ? <div className="h-2.5 w-16 rounded bg-[var(--surface-high)] animate-pulse" />
-        : <p className="text-[10px] sm:text-[11px] font-medium leading-none" style={{ color: `${accent}99` }}>{sublabel}</p>}
+        ? <div className="h-6 w-24 rounded-lg bg-[var(--surface-high)] animate-pulse mb-1" />
+        : <p className="text-[16px] sm:text-[19px] font-bold tabular leading-tight" style={{ color: accent }}>{fmt(animated)}</p>}
+      {/* Sublabel */}
       {isLoading
-        ? <div className="h-6 w-20 rounded-md bg-[var(--surface-high)] animate-pulse" />
-        : <p className="text-[18px] sm:text-[22px] font-bold tabular leading-none tracking-tight" style={{ color: accent }}>{fmt(animated)}</p>}
-      <div className="border-t pt-2" style={{ borderColor: `${accent}18` }}>
-        {isLoading
-          ? <div className="h-3 w-14 rounded bg-[var(--surface-high)] animate-pulse" />
-          : <p className="text-[11px] font-semibold text-on-surface leading-none">{label}</p>}
-      </div>
+        ? <div className="h-3 w-16 rounded bg-[var(--surface-high)] animate-pulse mt-1" />
+        : <p className="mt-0.5 text-[10px] text-on-surface-variant/60 leading-tight hidden sm:block">{sublabel}</p>}
     </div>
   )
 }
