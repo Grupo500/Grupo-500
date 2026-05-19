@@ -15,15 +15,17 @@ export async function dashboard(_req: Request, res: Response) {
     pagosHoy,
     pagosSemana,
     pagosMes,
+    // Cobranza — fuente única de verdad (sin filtro de fecha)
+    pagosPendientes,
+    pagosVencidos,
+    pagosCobrados,
     cuotasPendientes,
     cuotasVencidas,
-    ventaTotal,
-    recaudo,
-    saldoPendiente,
-    saldoVencido,
+    cuotasCobradas,
   ] = await Promise.all([
     prisma.estudiante.count(),
     prisma.estudiante.count({ where: { createdAt: { gte: inicioMes } } }),
+    // Ingresos por período (solo pagos únicos)
     prisma.pago.aggregate({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioDia } },
       _sum: { monto: true },
@@ -36,37 +38,37 @@ export async function dashboard(_req: Request, res: Response) {
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMes } },
       _sum: { monto: true },
     }),
-    prisma.cuota.aggregate({
-      where: { pagado: false, fechaVencimiento: { gte: hoy } },
-      _sum: { monto: true },
-      _count: true,
-    }),
-    prisma.cuota.aggregate({
-      where: { pagado: false, fechaVencimiento: { lt: hoy } },
-      _sum: { monto: true },
-      _count: true,
-    }),
-    prisma.pago.aggregate({ where: { createdAt: { gte: inicioMes } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: { gte: inicioMes } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', createdAt: { gte: inicioMes } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO', fechaVencimiento: { gte: inicioMes } }, _sum: { monto: true } }),
+    // Pagos únicos — sin filtro de fecha
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE' }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO' },   _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO' },    _sum: { monto: true }, _count: true }),
+    // Cuotas de financiamiento — sin filtro de fecha
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoy } }, _sum: { monto: true }, _count: true }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt: hoy } },  _sum: { monto: true }, _count: true }),
+    prisma.cuota.aggregate({ where: { pagado: true },                                   _sum: { monto: true }, _count: true }),
   ])
+
+  // Totales unificados (pagos únicos + cuotas)
+  const porCobrarMonto   = (pagosPendientes._sum.monto ?? 0) + (cuotasPendientes._sum.monto ?? 0)
+  const porCobrarCantidad = pagosPendientes._count           + cuotasPendientes._count
+  const vencidoMonto     = (pagosVencidos._sum.monto ?? 0)  + (cuotasVencidas._sum.monto ?? 0)
+  const vencidoCantidad  = pagosVencidos._count              + cuotasVencidas._count
+  const cobradoMonto     = (pagosCobrados._sum.monto ?? 0)  + (cuotasCobradas._sum.monto ?? 0)
+  const cobradoCantidad  = pagosCobrados._count              + cuotasCobradas._count
 
   return ApiResponse.success(res, {
     estudiantes: { total: totalEstudiantes, nuevosMes: estudiantesNuevosMes },
     ingresos: {
-      hoy: pagosHoy._sum.monto ?? 0,
+      hoy:    pagosHoy._sum.monto    ?? 0,
       semana: pagosSemana._sum.monto ?? 0,
-      mes: pagosMes._sum.monto ?? 0,
+      mes:    pagosMes._sum.monto    ?? 0,
     },
     cobranza: {
-      pendiente: { monto: cuotasPendientes._sum.monto ?? 0, cantidad: cuotasPendientes._count },
-      vencida: { monto: cuotasVencidas._sum.monto ?? 0, cantidad: cuotasVencidas._count },
-    },
-    financiero: {
-      ventaTotal: ventaTotal._sum.monto ?? 0,
-      recaudo:    recaudo._sum.monto ?? 0,
-      saldo:      (saldoPendiente._sum.monto ?? 0) + (saldoVencido._sum.monto ?? 0),
+      porCobrar: { monto: porCobrarMonto,  cantidad: porCobrarCantidad },
+      vencida:   { monto: vencidoMonto,    cantidad: vencidoCantidad   },
+      cobrado:   { monto: cobradoMonto,    cantidad: cobradoCantidad   },
+      // Aliases para compatibilidad con el dashboard existente
+      pendiente: { monto: porCobrarMonto,  cantidad: porCobrarCantidad },
     },
   })
 }

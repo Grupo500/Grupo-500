@@ -726,7 +726,13 @@ export default function CobrosPage() {
     return createClientFetcher(token)<T>(path, opts)
   }
 
-  // Queries en el nivel raíz — fuente única de verdad para las stats
+  // Stats — mismo endpoint que usa el Dashboard (fuente única de verdad)
+  const { data: statsData, isLoading: loadingStats } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => fetcher<any>('/reportes/dashboard'),
+  })
+
+  // Queries para las listas de Matrículas
   const { data: dataF, isLoading: loadingF } = useQuery({
     queryKey: ['financiamientos'],
     queryFn: () => fetcher<any>('/financiamientos'),
@@ -740,17 +746,10 @@ export default function CobrosPage() {
   const pagos: Pago[] = dataP?.data ?? []
   const isLoading = loadingF || loadingP
 
-  const totalPorCobrar =
-    pagos.filter(p => p.estado === 'PENDIENTE').reduce((s, p) => s + p.monto, 0) +
-    financiamientos.flatMap(f => f.cuotas).filter(c => !c.pagado && !esVencidaCuota(c)).reduce((s, c) => s + c.monto, 0)
-
-  const totalCobrado =
-    pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0) +
-    financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-
-  const totalVencidos =
-    pagos.filter(p => p.estado === 'VENCIDO').length +
-    financiamientos.flatMap(f => f.cuotas).filter(c => esVencidaCuota(c)).length
+  const cobranza = statsData?.data?.cobranza
+  const totalPorCobrar = cobranza?.porCobrar?.monto  ?? 0
+  const totalCobrado   = cobranza?.cobrado?.monto    ?? 0
+  const totalVencidos  = cobranza?.vencida?.cantidad ?? 0
 
   return (
     <div className="space-y-5 animate-fade-in">

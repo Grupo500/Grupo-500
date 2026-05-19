@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   const saludo = horaColombia < 12 ? 'Buenos días' : horaColombia < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   const estudiantes = data?.estudiantes ?? { total: 0, nuevosMes: 0 }
-  const cobranza    = data?.cobranza    ?? { pendiente: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 } }
+  const cobranza    = data?.cobranza    ?? { porCobrar: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 }, cobrado: { monto: 0, cantidad: 0 }, pendiente: { monto: 0, cantidad: 0 } }
 
   // ── VISTA ADMINISTRADOR ──────────────────────────────────────────────────────
   if (isAdmin) {
@@ -74,15 +74,15 @@ export default async function DashboardPage() {
           />
           <KpiCard
             title="Por cobrar"
-            value={formatCOP(cobranza.pendiente.monto)}
-            subtitle={`${cobranza.pendiente.cantidad} cuotas`}
+            value={formatCOP(cobranza.porCobrar.monto)}
+            subtitle={`${cobranza.porCobrar.cantidad} pendientes`}
             icon={Wallet}
             variant="warning"
           />
           <KpiCard
             title="En mora"
             value={formatCOP(cobranza.vencida.monto)}
-            subtitle={`${cobranza.vencida.cantidad} cuotas vencidas`}
+            subtitle={`${cobranza.vencida.cantidad} vencidos`}
             icon={AlertTriangle}
             variant="error"
           />
