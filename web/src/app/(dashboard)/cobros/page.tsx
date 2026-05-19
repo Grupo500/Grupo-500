@@ -7,9 +7,10 @@ import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP, formatDate, cn } from '@/lib/utils'
 import {
-  Wallet, CalendarDays, MessageCircle, ChevronLeft, ChevronRight,
+  Wallet, MessageCircle, ChevronLeft, ChevronRight,
   Clock, CheckCircle, AlertCircle, AlertTriangle, Loader2,
   X, Search, BookOpen, Paperclip, ExternalLink, Users,
+  CalendarDays,
 } from 'lucide-react'
 import {
   format, addMonths, subMonths, startOfMonth, endOfMonth,
@@ -68,7 +69,6 @@ interface CuotaCalendario {
   }
 }
 
-type Tab = 'matriculas' | 'calendario'
 type FiltroEstado = 'porCobrar' | 'cobrado' | 'vencidas' | null
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
@@ -782,7 +782,6 @@ const PERIODO_TABS: { key: Periodo; label: string }[] = [
 /* ─── Página principal ───────────────────────────────────────────────────── */
 export default function CobrosPage() {
   const { getToken } = useAuth()
-  const [tab, setTab] = useState<Tab>('matriculas')
   const [periodo, setPeriodo] = useState<Periodo>('mensual')
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
@@ -848,27 +847,7 @@ export default function CobrosPage() {
         <StatCard label="Vencidos"   sublabel="En mora"            rawValue={totalVencidos}  fmt={(n) => String(n)}     icon={AlertCircle} accent="#dc2626" isLoading={loadingStats} />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-surface-high rounded-xl p-1 w-fit">
-        {([
-          { key: 'matriculas', label: 'Matrículas', icon: Wallet },
-          { key: 'calendario', label: 'Calendario', icon: CalendarDays },
-        ] as const).map(({ key, label, icon: Icon }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150',
-              tab === key ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
-            )}>
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Contenido del tab activo */}
-      {tab === 'matriculas'
-        ? <MatriculasView financiamientos={financiamientos} pagos={pagos} isLoading={isLoading} fetcher={fetcher} />
-        : <CalendarioView fetcher={fetcher} />
-      }
+      <MatriculasView financiamientos={financiamientos} pagos={pagos} isLoading={isLoading} fetcher={fetcher} />
     </div>
   )
 }

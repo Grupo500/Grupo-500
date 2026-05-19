@@ -26,6 +26,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/asesores',        label: 'Asesores',        icon: UserCheck,       adminOnly: true  },
   { type: 'section', label: 'Financiero',                                                       adminOnly: false },
   { type: 'link',    href: '/cobros',          label: 'Cobros',          icon: Wallet,          adminOnly: false },
+  { type: 'link',    href: '/calendario',      label: 'Calendario',      icon: CalendarDays,    adminOnly: false },
   { type: 'section', label: 'Académico',                                                        adminOnly: false },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },

@@ -18,11 +18,12 @@ type NavItem = { href: string; label: string; icon: React.ElementType; adminOnly
 const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
-  { href: '/cobros',      label: 'Cobros',      icon: Wallet,          adminOnly: false },
+  { href: '/calendario',   label: 'Calendario',  icon: CalendarDays,    adminOnly: false },
   { href: '/certificados', label: 'Certificados', icon: Award,         adminOnly: false },
 ]
 
 const moreItems: NavItem[] = [
+  { href: '/cobros',          label: 'Cobros',           icon: Wallet,        adminOnly: false },
   { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/certificados',    label: 'Certificados',     icon: Award,         adminOnly: false },
