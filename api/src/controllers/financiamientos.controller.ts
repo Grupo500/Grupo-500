@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse, parsePagination } from '../utils/response'
-import { NotFoundError } from '../utils/errors'
+import { NotFoundError, ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
@@ -42,6 +42,26 @@ export async function listar(req: Request, res: Response) {
 
 export async function crear(req: Request, res: Response) {
   const { estudianteId, montoTotal, cuotas } = crearSchema.parse(req.body)
+
+  // Validar contra precio del curso
+  const est = await prisma.estudiante.findUnique({
+    where: { id: estudianteId },
+    include: {
+      cursos: { include: { curso: true } },
+      financiamientos: { select: { montoTotal: true } },
+      pagos: { select: { monto: true } },
+    },
+  })
+  if (est?.cursos.length) {
+    const ce = est.cursos[0]
+    const precioFinal = ce.curso.precio * (1 - ce.descuentoPorcentaje / 100)
+    const yaRegistrado = est.financiamientos.reduce((s, f) => s + f.montoTotal, 0)
+                       + est.pagos.reduce((s, p) => s + p.monto, 0)
+    if (yaRegistrado + montoTotal > precioFinal + 1)
+      throw new ValidationError(
+        `El monto total excede el precio del curso. Saldo disponible: $${Math.max(0, precioFinal - yaRegistrado).toLocaleString('es-CO')}`
+      )
+  }
 
   const financiamiento = await prisma.financiamiento.create({
     data: {

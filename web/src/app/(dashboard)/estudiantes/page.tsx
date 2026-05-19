@@ -225,6 +225,10 @@ export default function EstudiantesPage() {
         if (cuotasDetalle.length === 0) throw new Error('Configura las cuotas del financiamiento')
         if (cuotasDetalle.some(c => !c.fecha || !c.monto || Number(c.monto) <= 0))
           throw new Error('Completa el monto y la fecha de cada cuota')
+        const sumaCuotas = cuotasDetalle.reduce((s, c) => s + Number(c.monto), 0)
+        const pf = Math.max(0, precioFinal)
+        if (sumaCuotas > pf + 1)
+          throw new Error(`La suma de cuotas (${formatCOP(sumaCuotas)}) supera el precio del curso (${formatCOP(pf)})`)
       }
       const cursoPrecio = cursos.find(c => c.id === form.cursoId)?.precio ?? 0
       const descuentoValorNum = Number(form.descuentoValor) || 0
@@ -692,6 +696,17 @@ export default function EstudiantesPage() {
                               </div>
                             </div>
                           ))}
+                          {cuotasDetalle.length > 0 && (() => {
+                            const suma = cuotasDetalle.reduce((s, c) => s + Number(c.monto), 0)
+                            const pf   = Math.max(0, precioFinal)
+                            const ok   = suma <= pf + 1
+                            return (
+                              <div className={cn('flex items-center justify-between text-[11px] px-3 py-2 rounded-lg', ok ? 'bg-[#16a34a]/8 text-[#16a34a]' : 'bg-[#dc2626]/8 text-[#dc2626]')}>
+                                <span>Suma de cuotas: <strong>{formatCOP(suma)}</strong></span>
+                                <span>Precio final: <strong>{formatCOP(pf)}</strong></span>
+                              </div>
+                            )
+                          })()}
                         </div>
                       )}
                     </>
