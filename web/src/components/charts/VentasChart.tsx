@@ -24,7 +24,8 @@ function Skeleton() {
 export function VentasChart({ periodo }: { periodo: Periodo }) {
   const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
-  const isDark = theme === 'dark'
+  const isDark    = theme === 'dark'
+  const temaListo = theme !== undefined
 
   const primary       = isDark ? '#95daff' : '#1a7de0'
   const gridColor     = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
@@ -44,7 +45,7 @@ export function VentasChart({ periodo }: { periodo: Periodo }) {
     staleTime: 60_000,
   })
 
-  if (isLoading) return <Skeleton />
+  if (!temaListo || isLoading) return <Skeleton />
 
   const puntos    = data?.data?.puntos    ?? []
   const variacion = data?.data?.variacion ?? 0

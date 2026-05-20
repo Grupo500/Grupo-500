@@ -83,6 +83,7 @@ export function FinancieroSection({ periodo }: Props) {
   const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
   const isDark                   = theme === 'dark'
+  const temaListo                = theme !== undefined
 
   const { data, isLoading } = useQuery({
     queryKey: ['financiero-periodo', periodo],
@@ -199,7 +200,7 @@ export function FinancieroSection({ periodo }: Props) {
         </p>
 
         {/* Chart */}
-        {isLoading ? <ChartSkeleton /> : puntos.length === 0 ? (
+        {!temaListo || isLoading ? <ChartSkeleton /> : puntos.length === 0 ? (
           <div className="h-44 flex items-center justify-center text-[13px] text-on-surface-variant">Sin datos</div>
         ) : (
           <ResponsiveContainer width="100%" height={176}>

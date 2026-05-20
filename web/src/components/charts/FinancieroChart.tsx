@@ -53,8 +53,9 @@ function CustomTooltip({ active, payload, label }: any) {
 export function FinancieroChart() {
   const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
-  const isDark = theme === 'dark'
-  const colors = isDark ? COLORS.dark : COLORS.light
+  const isDark    = theme === 'dark'
+  const temaListo = theme !== undefined
+  const colors    = isDark ? COLORS.dark : COLORS.light
 
   const gridColor = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
   const tickColor = isDark ? '#95c8f0' : '#2a4172'
@@ -68,7 +69,7 @@ export function FinancieroChart() {
     staleTime: 5 * 60_000,
   })
 
-  if (isLoading) return <Skeleton />
+  if (!temaListo || isLoading) return <Skeleton />
 
   const puntos = data?.data ?? []
 

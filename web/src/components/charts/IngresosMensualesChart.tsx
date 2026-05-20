@@ -13,6 +13,7 @@ export function IngresosMensualesChart() {
   const { getToken } = useAuth()
   const { resolvedTheme } = useTheme()
   const isDark            = resolvedTheme === 'dark'
+  const temaListo         = resolvedTheme !== undefined
 
   const { data, isLoading } = useQuery({
     queryKey: ['ventas-grafica-mensual'],
@@ -35,7 +36,7 @@ export function IngresosMensualesChart() {
         <span className="text-[11px] text-on-surface-variant">Últimos 6 meses</span>
       </div>
 
-      {isLoading ? (
+      {!temaListo || isLoading ? (
         <div className="h-56 rounded-xl bg-surface-high animate-pulse" />
       ) : puntos.length === 0 ? (
         <div className="h-56 flex items-center justify-center text-[13px] text-on-surface-variant">Sin datos</div>

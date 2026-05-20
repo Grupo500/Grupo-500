@@ -34,10 +34,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#eef6ff' },
-    { media: '(prefers-color-scheme: dark)',  color: '#0a1628' },
-  ],
+  // theme-color se maneja via inline script en <head> para respetar
+  // el tema guardado en localStorage (independiente del modo del SO)
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -54,9 +52,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       afterSignOutUrl="/sign-in"
     >
       <html lang="es" suppressHydrationWarning>
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <script src="//cdn.jsdelivr.net/npm/eruda"></script>
-        <script dangerouslySetInnerHTML={{ __html: 'eruda.init()' }} />
+        {/* Inline script — corre antes de hidratación para que iOS lea el color correcto */}
+        <script dangerouslySetInnerHTML={{ __html: `
+(function(){try{
+  var t=localStorage.getItem('grupo500-theme')||'light';
+  var c=t==='dark'?'#0a1628':'#eef6ff';
+  var m=document.createElement('meta');
+  m.name='theme-color';m.content=c;
+  document.head.appendChild(m);
+}catch(e){}})();
+        `}} />
         <body className={`${inter.variable} font-sans`}>
           <ThemeProvider>
             <ServiceWorkerRegister />

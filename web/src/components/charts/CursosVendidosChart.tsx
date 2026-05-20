@@ -48,7 +48,8 @@ type Periodo = 'diario' | 'semanal' | 'mensual'
 export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
-  const isDark = theme === 'dark'
+  const isDark    = theme === 'dark'
+  const temaListo = theme !== undefined
 
   const colors    = isDark ? COLORS_DARK : COLORS_LIGHT
   const gridColor = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
@@ -66,7 +67,7 @@ export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo
     staleTime: 60_000,
   })
 
-  if (isLoading) return <Skeleton />
+  if (!temaListo || isLoading) return <Skeleton />
 
   const cursos = (data?.data ?? [])
     .slice(0, 6)
