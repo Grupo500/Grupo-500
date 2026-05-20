@@ -52,7 +52,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export function FinancieroChart() {
   const { getToken } = useAuth()
-  const { theme } = useTheme()
+  const { resolvedTheme: theme } = useTheme()
   const isDark = theme === 'dark'
   const colors = isDark ? COLORS.dark : COLORS.light
 

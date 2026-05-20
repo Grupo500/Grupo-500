@@ -11,8 +11,8 @@ interface Punto { label: string; ingresos: number; pagos: number }
 
 export function IngresosMensualesChart() {
   const { getToken } = useAuth()
-  const { theme }    = useTheme()
-  const isDark       = theme === 'dark'
+  const { resolvedTheme } = useTheme()
+  const isDark            = resolvedTheme === 'dark'
 
   const { data, isLoading } = useQuery({
     queryKey: ['ventas-grafica-mensual'],

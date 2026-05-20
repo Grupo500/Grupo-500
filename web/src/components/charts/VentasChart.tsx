@@ -23,7 +23,7 @@ function Skeleton() {
 
 export function VentasChart({ periodo }: { periodo: Periodo }) {
   const { getToken } = useAuth()
-  const { theme } = useTheme()
+  const { resolvedTheme: theme } = useTheme()
   const isDark = theme === 'dark'
 
   const primary       = isDark ? '#95daff' : '#1a7de0'

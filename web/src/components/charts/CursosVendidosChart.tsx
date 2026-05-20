@@ -47,7 +47,7 @@ type Periodo = 'diario' | 'semanal' | 'mensual'
 
 export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { getToken } = useAuth()
-  const { theme } = useTheme()
+  const { resolvedTheme: theme } = useTheme()
   const isDark = theme === 'dark'
 
   const colors    = isDark ? COLORS_DARK : COLORS_LIGHT

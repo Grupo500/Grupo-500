@@ -81,8 +81,8 @@ function CustomTooltip({ active, payload, label, color }: any) {
 export function FinancieroSection({ periodo }: Props) {
   const [selected, setSelected] = useState<Metrica>('ventaTotal')
   const { getToken } = useAuth()
-  const { theme }    = useTheme()
-  const isDark       = theme === 'dark'
+  const { resolvedTheme: theme } = useTheme()
+  const isDark                   = theme === 'dark'
 
   const { data, isLoading } = useQuery({
     queryKey: ['financiero-periodo', periodo],
