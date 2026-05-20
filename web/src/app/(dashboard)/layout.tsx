@@ -37,7 +37,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
 
         {/* Contenido principal */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto edu-bg-pattern">
           <div className="p-4 md:p-6 max-w-container mx-auto pb-20 md:pb-6">
             {children}
           </div>
