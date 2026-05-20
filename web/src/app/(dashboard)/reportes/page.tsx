@@ -8,7 +8,6 @@ import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { formatCOP } from '@/lib/utils'
-import { TrendingUp, Wallet, AlertTriangle, Users, UserPlus } from 'lucide-react'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 
@@ -47,9 +46,9 @@ export default function ReportesPage() {
         <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Estudiantes</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <KpiCard title="Total registrados" value={est.total.toLocaleString('es-CO')}
-            rawValue={est.total} icon={Users} variant="default" isLoading={isLoading} />
+            rawValue={est.total} icon="Users" variant="default" isLoading={isLoading} />
           <KpiCard title="Nuevos este mes"   value={`+${est.nuevosMes}`}
-            rawValue={est.nuevosMes} icon={UserPlus} variant="success" isLoading={isLoading} />
+            rawValue={est.nuevosMes} icon="UserPlus" variant="success" isLoading={isLoading} />
         </div>
       </section>
 
@@ -60,15 +59,15 @@ export default function ReportesPage() {
           <KpiCard title="Recaudado"  value={formatCOP(cobranza.cobrado.monto)}
             rawValue={cobranza.cobrado.monto}   formatValue={formatCOP}
             subtitle={`${cobranza.cobrado.cantidad} cobros`}
-            icon={TrendingUp} variant="success" isLoading={isLoading} />
+            icon="TrendingUp" variant="success" isLoading={isLoading} />
           <KpiCard title="Por cobrar" value={formatCOP(cobranza.porCobrar.monto)}
             rawValue={cobranza.porCobrar.monto} formatValue={formatCOP}
             subtitle={`${cobranza.porCobrar.cantidad} pendientes`}
-            icon={Wallet} variant="warning" isLoading={isLoading} />
+            icon="Wallet" variant="warning" isLoading={isLoading} />
           <KpiCard title="En mora"    value={formatCOP(cobranza.vencida.monto)}
             rawValue={cobranza.vencida.monto}   formatValue={formatCOP}
             subtitle={`${cobranza.vencida.cantidad} vencidos`}
-            icon={AlertTriangle} variant="error" isLoading={isLoading} />
+            icon="AlertTriangle" variant="error" isLoading={isLoading} />
         </div>
       </section>
 

@@ -5,7 +5,6 @@ import { currentUser } from '@clerk/nextjs/server'
 import { formatCOP } from '@/lib/utils'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Users, Wallet, BookOpen, Target, Bell } from 'lucide-react'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
 import { DashboardAnalytics } from '@/components/charts/DashboardAnalytics'
 import { RefreshButton } from '@/components/ui/RefreshButton'
@@ -126,9 +125,9 @@ export default async function DashboardPage() {
 
       {/* KPIs asesor */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <KpiCard title="Estudiantes asignados" value={estudiantes.total.toString()} subtitle={`${estudiantes.nuevosMes} nuevos este mes`} icon={Users} variant="default" trend={{ value: 12, label: 'vs mes anterior' }} />
-        <KpiCard title="Cobros pendientes" value={cobranza.pendiente.cantidad.toString()} subtitle={cobranza.pendiente.cantidad > 0 ? 'Requieren acción' : 'Todo al día'} icon={Wallet} variant="warning" />
-        <KpiCard title="Cursos activos" value="—" subtitle="Productos vigentes" icon={BookOpen} variant="success" />
+        <KpiCard title="Estudiantes asignados" value={estudiantes.total.toString()} subtitle={`${estudiantes.nuevosMes} nuevos este mes`} icon="Users" variant="default" trend={{ value: 12, label: 'vs mes anterior' }} />
+        <KpiCard title="Cobros pendientes" value={cobranza.pendiente.cantidad.toString()} subtitle={cobranza.pendiente.cantidad > 0 ? 'Requieren acción' : 'Todo al día'} icon="Wallet" variant="warning" />
+        <KpiCard title="Cursos activos" value="—" subtitle="Productos vigentes" icon="BookOpen" variant="success" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

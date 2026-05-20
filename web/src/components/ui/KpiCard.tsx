@@ -2,14 +2,28 @@
 
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react'
+import {
+  TrendingUp, TrendingDown,
+  Users, UserPlus, Wallet, BookOpen, Target, Bell,
+  AlertTriangle, DollarSign, BarChart2, CheckCircle,
+  Clock, Star, Award, Activity,
+} from 'lucide-react'
+
+// Mapa de íconos — agregar aquí si se necesitan más
+const ICON_MAP = {
+  Users, UserPlus, Wallet, BookOpen, Target, Bell,
+  AlertTriangle, TrendingUp, DollarSign, BarChart2,
+  CheckCircle, Clock, Star, Award, Activity,
+} as const
+
+type IconName = keyof typeof ICON_MAP
 
 interface KpiCardProps {
   title:        string
   value:        string
   rawValue?:    number
   subtitle?:    string
-  icon:         LucideIcon
+  icon:         IconName
   trend?:       { value: number; label: string }
   variant?:     'default' | 'success' | 'warning' | 'error'
   isLoading?:   boolean
@@ -43,10 +57,11 @@ function useCountUp(target: number, enabled: boolean, duration = 850) {
 }
 
 export function KpiCard({
-  title, value, rawValue, subtitle, icon: Icon,
+  title, value, rawValue, subtitle, icon: iconName,
   trend, variant = 'default', isLoading = false,
   className, formatValue,
 }: KpiCardProps) {
+  const Icon = ICON_MAP[iconName]
   const { accent } = variantMap[variant]
   const isPositive  = (trend?.value ?? 0) >= 0
   const animated    = useCountUp(rawValue ?? 0, !isLoading && rawValue !== undefined)
