@@ -6,8 +6,11 @@ import { auditLog } from '../utils/auditLogger'
 import { z } from 'zod'
 
 const schema = z.object({
-  nombre: z.string().min(2),
-  ciudad: z.string().min(2),
+  nombre:           z.string().min(2),
+  ciudad:           z.string().min(2),
+  contactoNombre:   z.string().optional(),
+  contactoEmail:    z.string().email().optional().or(z.literal('')),
+  contactoTelefono: z.string().optional(),
 })
 
 export async function listar(req: Request, res: Response) {
@@ -38,8 +41,11 @@ export async function obtener(req: Request, res: Response) {
 }
 
 const actualizarSchema = z.object({
-  nombre: z.string().min(2).optional(),
-  ciudad: z.string().min(2).optional(),
+  nombre:           z.string().min(2).optional(),
+  ciudad:           z.string().min(2).optional(),
+  contactoNombre:   z.string().optional(),
+  contactoEmail:    z.string().email().optional().or(z.literal('')),
+  contactoTelefono: z.string().optional(),
 })
 
 export async function actualizar(req: Request, res: Response) {

@@ -93,13 +93,16 @@ model Asesor {
 // ─────────────────────────────────────────────
 
 model Colegio {
-  id             String        @id @default(cuid())
-  nombre         String        @unique
-  ciudad         String
-  estudiantes    Estudiante[]
-  negociaciones  Negociacion[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id               String        @id @default(cuid())
+  nombre           String        @unique
+  ciudad           String
+  contactoNombre   String?
+  contactoEmail    String?
+  contactoTelefono String?
+  estudiantes      Estudiante[]
+  negociaciones    Negociacion[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 // ─────────────────────────────────────────────

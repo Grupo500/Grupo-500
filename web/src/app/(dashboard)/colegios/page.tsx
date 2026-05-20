@@ -9,7 +9,7 @@ import { formatDate, cn } from '@/lib/utils'
 import {
   School, Plus, X, Loader2, MapPin, Users,
   Handshake, User, Calendar, ChevronRight, Search,
-  Eye, Mail, Phone,
+  Eye, Mail, Phone, FileText, Download, MessageCircle, Send,
 } from 'lucide-react'
 
 // ── Interfaces ─────────────────────────────────────────────────────────────
@@ -17,6 +17,9 @@ interface Colegio {
   id: string
   nombre: string
   ciudad: string
+  contactoNombre?: string
+  contactoEmail?: string
+  contactoTelefono?: string
   _count?: { estudiantes: number }
 }
 
@@ -197,6 +200,331 @@ function EstudiantesColegioModal({
   )
 }
 
+// ── Generador de propuesta institucional ──────────────────────────────────
+const TABLA_CURSOS = [
+  { curso: 'Preicfes Calendario A 2026\n(Inició el 18 de abril y finaliza el 25 de julio de 2026)', precio: 600000, precioDesc: 540000 },
+  { curso: 'Preicfes Calendario A 2026 + Intensivo A\n(Calendario A + un curso intensivo de 40 horas)', precio: 1000000, precioDesc: 900000 },
+  { curso: 'Preicfes Intensivo A\n(Curso intensivo de 40 horas: Inicia el 27 de junio y termina el 25 de julio)', precio: 500000, precioDesc: 450000 },
+  { curso: 'Combo Preicfes Calendario A + Calendario G\n(Inicia en abril y finaliza en diciembre de 2026)', precio: 1000000, precioDesc: 900000 },
+  { curso: 'Preicfes Calendario G 2026\n(Inicia en octubre y finaliza en diciembre 20 de 2026)', precio: 650000, precioDesc: 585000 },
+  { curso: 'Año500\n(Curso Calendario A + Intensivo A + Calendario G)', precio: 1600000, precioDesc: 1440000 },
+  { curso: 'Premédico + Cal A o Cal G 2026\n(Curso Premédico para aspirantes a carreras del área de la salud + Calendario A o G)', precio: 900000, precioDesc: 810000 },
+]
+
+function formatCOP(n: number) {
+  return '$' + n.toLocaleString('es-CO')
+}
+
+function PropuestaModal({ colegio, onClose }: { colegio: Colegio; onClose: () => void }) {
+  const [sending, setSending] = useState(false)
+  const today = new Date()
+  const fechaStr = today.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  async function generarPDF(descargar = true): Promise<Uint8Array> {
+    const { jsPDF } = await import('jspdf')
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
+    const W = 210
+    const ml = 20  // margen izquierdo
+    const mr = 20  // margen derecho
+    const cw = W - ml - mr  // ancho de contenido
+    let y = 20
+
+    // ── Encabezado ──
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(13)
+    doc.setTextColor(0, 51, 102)
+    doc.text('GRUPO 500 EDUCACIÓN S.A.S.', W / 2, y, { align: 'center' })
+    y += 6
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(80, 80, 80)
+    doc.text('NIT No. 901.768.155-8', W / 2, y, { align: 'center' })
+    y += 3
+    doc.setDrawColor(0, 51, 102)
+    doc.setLineWidth(0.5)
+    doc.line(ml, y, W - mr, y)
+    y += 7
+
+    // ── Municipio y fecha ──
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(40, 40, 40)
+    doc.text(`${colegio.ciudad}, ${fechaStr}`, ml, y)
+    y += 8
+
+    // ── Destinatario ──
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(0, 0, 0)
+    doc.text(colegio.nombre.toUpperCase(), ml, y)
+    y += 5
+
+    // ── Asunto ──
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(0, 51, 102)
+    doc.text('ASUNTO: PRESENTACIÓN DEL PROGRAMA ALIADOS 500', ml, y)
+    y += 8
+
+    // ── Saludo ──
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(40, 40, 40)
+    const saludo = colegio.contactoNombre
+      ? `Cordial saludo ${colegio.contactoNombre} y padres de familia,`
+      : 'Cordial saludo y padres de familia,'
+    doc.text(saludo, ml, y)
+    y += 8
+
+    // ── Intro ──
+    const intro = 'GRUPO 500 EDUCACIÓN S.A.S., sociedad legalmente constituida e identificada con NIT No. 901.768.155-8, representada legalmente por el señor Andrés Felipe Díaz Rivero, identificado con cédula de ciudadanía No. 1.005.480.173 de San Gil, se permite saludarlos muy respetuosamente. La presente comunicación tiene como propósito poner en su conocimiento el programa ALIADOS 500, una iniciativa que ofrece múltiples beneficios no solo para la Institución Educativa, sino también para sus estudiantes y sus familias.'
+    const introLines = doc.splitTextToSize(intro, cw)
+    doc.text(introLines, ml, y)
+    y += introLines.length * 5 + 5
+
+    // ── Sección A ──
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(0, 51, 102)
+    doc.text('A. Sobre GRUPO 500 EDUCACIÓN S.A.S.', ml, y)
+    y += 6
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9.5)
+    doc.setTextColor(40, 40, 40)
+    const textoA = 'GRUPO 500 EDUCACIÓN S.A.S. es una empresa comprometida con la excelencia académica y con la formación integral de los jóvenes. A lo largo de los años, hemos acompañado a más de 25.000 estudiantes en su proceso de preparación para el examen ICFES, consolidándonos como uno de los programas Preicfes mejor posicionados en Colombia. Nos enorgullece destacar que, a la fecha, cinco de nuestros estudiantes han obtenido el puntaje perfecto: 500/500.\n\nEl programa Preicfes de GRUPO 500 se ha diseñado cuidadosamente para responder a las exigencias actuales del examen Saber 11. Brindamos clases 100% en vivo virtuales, impartidas por un equipo de docentes expertos con más de 310 horas de formación, material digital actualizado, cuatro (4) simulacros oficiales con informes personalizados de desempeño, tutorías personalizadas por WhatsApp y horarios flexibles en calendarios B, A y G.'
+    const linesA = doc.splitTextToSize(textoA, cw)
+    doc.text(linesA, ml, y)
+    y += linesA.length * 4.5 + 7
+
+    // ── Sección B — Nueva página si no hay espacio ──
+    if (y > 200) { doc.addPage(); y = 20 }
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(0, 51, 102)
+    doc.text('B. Oferta — Beneficios para los estudiantes de la Institución', ml, y)
+    y += 5
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9.5)
+    doc.setTextColor(40, 40, 40)
+    const textoB = 'En el marco de nuestra alianza, GRUPO 500 EDUCACIÓN S.A.S. tiene el gusto de otorgar un beneficio institucional del 10% de descuento para todos los estudiantes que deseen prepararse con nuestros diferentes programas Preicfes y Premédico.'
+    const linesB = doc.splitTextToSize(textoB, cw)
+    doc.text(linesB, ml, y)
+    y += linesB.length * 4.5 + 5
+
+    // ── Tabla de cotización ──
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(255, 255, 255)
+    doc.setFillColor(0, 51, 102)
+    doc.rect(ml, y, cw, 7, 'F')
+    doc.text('Tabla de cotización – 10% de descuento institucional', ml + 2, y + 5)
+    y += 7
+
+    // Cabecera
+    doc.setFillColor(220, 232, 245)
+    doc.rect(ml, y, cw, 6, 'F')
+    doc.setTextColor(0, 51, 102)
+    doc.text('Curso / Programa', ml + 2, y + 4)
+    doc.text('Precio Oficial', ml + 110, y + 4)
+    doc.text('Precio con 10% OFF', ml + 140, y + 4)
+    y += 6
+
+    // Filas
+    TABLA_CURSOS.forEach((row, i) => {
+      const lines = doc.splitTextToSize(row.curso, 105)
+      const rowH = Math.max(lines.length * 4.2 + 4, 10)
+      doc.setFillColor(i % 2 === 0 ? 248 : 255, i % 2 === 0 ? 250 : 255, i % 2 === 0 ? 255 : 255)
+      doc.rect(ml, y, cw, rowH, 'F')
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8.5)
+      doc.setTextColor(40, 40, 40)
+      doc.text(lines, ml + 2, y + 4)
+      doc.text(formatCOP(row.precio), ml + 110, y + (rowH / 2) + 1)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(0, 120, 60)
+      doc.text(formatCOP(row.precioDesc), ml + 140, y + (rowH / 2) + 1)
+      doc.setDrawColor(200, 215, 230)
+      doc.setLineWidth(0.2)
+      doc.line(ml, y + rowH, W - mr, y + rowH)
+      y += rowH
+    })
+    y += 5
+
+    // ── Parágrafos ──
+    if (y > 230) { doc.addPage(); y = 20 }
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(60, 60, 60)
+    const p1 = 'PARÁGRAFO PRIMERO. El valor de los cursos con el descuento institucional aplica hasta el 30 de noviembre de 2026. A partir del 1 de diciembre tendrán su respectivo incremento anual. Si deseas mantener estos precios junto con el descuento institucional deberán inscribirse un mínimo de treinta (30) estudiantes realizando un único pago por Institución en las fechas acordadas.'
+    const p2 = 'PARÁGRAFO SEGUNDO. Realizado el pago, la Institución Educativa deberá enviar una lista de los estudiantes beneficiados junto con sus datos de contacto, con el fin de realizar el respectivo control y seguimiento de las inscripciones por Institución.'
+    const p3 = 'PARÁGRAFO TERCERO. Es importante precisar que únicamente se considerarán válidas las inscripciones y pagos realizados a través de la única cuenta autorizada:\nBANCOLOMBIA – AHORROS | GRUPO 500 EDUCACION S.A.S. | No. 09000004600'
+    ;[p1, p2, p3].forEach(p => {
+      const lines = doc.splitTextToSize(p, cw)
+      doc.text(lines, ml, y)
+      y += lines.length * 4 + 4
+    })
+    y += 3
+
+    // ── Sección C ──
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9.5)
+    doc.setTextColor(0, 51, 102)
+    doc.text('C. Opción de Financiación', ml, y)
+    y += 5
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(40, 40, 40)
+    const textoC = 'Recuerda que tus estudiantes pueden pagar la totalidad del curso de contado. Sin embargo, si todos no cuentan con el recurso, desde Preicfes Grupo 500 hemos autorizado que cada estudiante realice un primer pago de $300.000 en el mes de mayo y el restante en el mes de junio. Esta facilidad de pago aplica para los cursos Calendario A, Intensivo A o Calendario G.'
+    const linesC = doc.splitTextToSize(textoC, cw)
+    doc.text(linesC, ml, y)
+    y += linesC.length * 4.5 + 5
+
+    // ── Cierre ──
+    const cierre = 'Apreciada Institución, recuerda que puedes extender la invitación del curso a estudiantes de noveno, décimo y undécimo grado. En caso de requerir una reunión virtual con nuestro equipo directivo puedes comunicarte a: pregrupo500@gmail.com o WhatsApp 311 5233917.'
+    const linesCierre = doc.splitTextToSize(cierre, cw)
+    doc.text(linesCierre, ml, y)
+    y += linesCierre.length * 4.5 + 8
+
+    // ── Firma ──
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(0, 51, 102)
+    doc.text('Con aprecio,', ml, y)
+    y += 5
+    doc.text('GRUPO 500 EDUCACIÓN S.A.S.', ml, y)
+    y += 4
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(80, 80, 80)
+    doc.text('NIT No. 901.768.155-8', ml, y)
+
+    if (descargar) {
+      doc.save(`Propuesta-${colegio.nombre.replace(/\s+/g, '_')}.pdf`)
+    }
+    return doc.output('arraybuffer') as unknown as Uint8Array
+  }
+
+  function enviarWhatsApp() {
+    const tel = colegio.contactoTelefono?.replace(/\D/g, '') ?? ''
+    const msg = encodeURIComponent(
+      `Hola${colegio.contactoNombre ? ` ${colegio.contactoNombre}` : ''}, le saluda GRUPO 500 EDUCACIÓN S.A.S. Le compartimos la propuesta institucional del programa ALIADOS 500 para *${colegio.nombre}*.\n\nPara mayor información: pregrupo500@gmail.com | WhatsApp 311 5233917`
+    )
+    const url = tel ? `https://wa.me/57${tel}?text=${msg}` : `https://wa.me/?text=${msg}`
+    window.open(url, '_blank')
+  }
+
+  function enviarEmail() {
+    const to = colegio.contactoEmail ?? ''
+    const subject = encodeURIComponent(`Propuesta Programa ALIADOS 500 – ${colegio.nombre}`)
+    const body = encodeURIComponent(
+      `${colegio.contactoNombre ? `Cordial saludo ${colegio.contactoNombre},\n\n` : 'Cordial saludo,\n\n'}Le compartimos la propuesta institucional del Programa ALIADOS 500 de GRUPO 500 EDUCACIÓN S.A.S.\n\nPor favor encuentre adjunta la propuesta en PDF con los detalles del programa y la tabla de precios con el 10% de descuento institucional.\n\nCon aprecio,\nGRUPO 500 EDUCACIÓN S.A.S.\nNIT No. 901.768.155-8\npregrupo500@gmail.com | 311 5233917`
+    )
+    window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_blank')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-surface-lowest border border-outline-variant rounded-2xl shadow-float w-full max-w-lg">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-outline-variant">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-on-surface">Propuesta Institucional</h2>
+                <p className="text-xs text-on-surface-variant mt-0.5">Programa ALIADOS 500</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:text-on-surface cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Info del colegio */}
+          <div className="px-6 py-4 space-y-3">
+            <div className="bg-surface-high rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <School className="w-4 h-4 text-primary flex-shrink-0" />
+                <span className="text-sm font-semibold text-on-surface">{colegio.nombre}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                {colegio.ciudad}
+              </div>
+              {colegio.contactoNombre && (
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                  <User className="w-3.5 h-3.5 flex-shrink-0" />
+                  {colegio.contactoNombre}
+                </div>
+              )}
+              {colegio.contactoEmail && (
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                  <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                  {colegio.contactoEmail}
+                </div>
+              )}
+              {colegio.contactoTelefono && (
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                  <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                  {colegio.contactoTelefono}
+                </div>
+              )}
+              {!colegio.contactoNombre && !colegio.contactoEmail && !colegio.contactoTelefono && (
+                <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                  ⚠️ Este colegio no tiene datos de contacto. Edítalo para personalizar la propuesta.
+                </p>
+              )}
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              La propuesta incluirá la carta completa con los datos de <strong>{colegio.nombre}</strong>, la tabla de precios con <strong>10% de descuento institucional</strong> y las condiciones del programa ALIADOS 500.
+            </p>
+          </div>
+
+          {/* Acciones */}
+          <div className="px-6 pb-6 space-y-2">
+            <button
+              onClick={() => generarPDF(true)}
+              disabled={sending}
+              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              Descargar PDF
+            </button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={enviarWhatsApp}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#25D366] text-white rounded-xl text-sm font-medium hover:bg-[#20ba58] transition-colors cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
+              </button>
+              <button
+                onClick={enviarEmail}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-medium hover:bg-surface-high/80 transition-colors cursor-pointer"
+              >
+                <Send className="w-4 h-4" />
+                Correo
+              </button>
+            </div>
+
+            <p className="text-[11px] text-on-surface-variant text-center pt-1">
+              WhatsApp y correo abren la app correspondiente con el mensaje prellenado
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Página principal ───────────────────────────────────────────────────────
 export default function ColegiosPage() {
   const { getToken } = useAuth()
@@ -210,7 +538,8 @@ export default function ColegiosPage() {
 
   // Colegios state
   const [modalCrearColegio, setModalCrearColegio] = useState(false)
-  const [formColegio, setFormColegio] = useState({ nombre: '', ciudad: '' })
+  const [formColegio, setFormColegio] = useState({ nombre: '', ciudad: '', contactoNombre: '', contactoEmail: '', contactoTelefono: '' })
+  const [modalPropuesta, setModalPropuesta] = useState<Colegio | null>(null)
   const [colegioDetalle, setColegioDetalle] = useState<Colegio | null>(null)
 
   // Negociaciones state
@@ -246,7 +575,7 @@ export default function ColegiosPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['colegios'] })
       setModalCrearColegio(false)
-      setFormColegio({ nombre: '', ciudad: '' })
+      setFormColegio({ nombre: '', ciudad: '', contactoNombre: '', contactoEmail: '', contactoTelefono: '' })
     },
   })
 
@@ -433,13 +762,22 @@ export default function ColegiosPage() {
                     <Users className="w-3.5 h-3.5" />
                     <span>{c._count?.estudiantes ?? 0} estudiantes</span>
                   </div>
-                  <button
-                    onClick={() => setColegioDetalle(c)}
-                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 px-2.5 py-1.5 rounded-lg transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Ver</span>
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setModalPropuesta(c)}
+                      title="Generar propuesta"
+                      className="flex items-center gap-1 text-xs font-medium text-amber-600 hover:bg-amber-50 px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setColegioDetalle(c)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Ver</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -573,6 +911,21 @@ export default function ColegiosPage() {
               <label className={labelCls}>Ciudad *</label>
               <input className={inputCls} value={formColegio.ciudad} onChange={e => setFormColegio(f => ({ ...f, ciudad: e.target.value }))} placeholder="Bogotá" />
             </div>
+            <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider pt-1">Contacto institucional</p>
+            <div>
+              <label className={labelCls}>Rector / Coordinador</label>
+              <input className={inputCls} value={formColegio.contactoNombre} onChange={e => setFormColegio(f => ({ ...f, contactoNombre: e.target.value }))} placeholder="Nombre completo" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Correo institucional</label>
+                <input type="email" className={inputCls} value={formColegio.contactoEmail} onChange={e => setFormColegio(f => ({ ...f, contactoEmail: e.target.value }))} placeholder="rectoria@colegio.edu.co" />
+              </div>
+              <div>
+                <label className={labelCls}>WhatsApp / Teléfono</label>
+                <input className={inputCls} value={formColegio.contactoTelefono} onChange={e => setFormColegio(f => ({ ...f, contactoTelefono: e.target.value }))} placeholder="3001234567" />
+              </div>
+            </div>
           </div>
           <div className="flex justify-end gap-3 mt-6">
             <button onClick={() => setModalCrearColegio(false)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface">Cancelar</button>
@@ -615,6 +968,11 @@ export default function ColegiosPage() {
           onClose={() => setColegioDetalle(null)}
           fetcher={fetcher}
         />
+      )}
+
+      {/* ── Modal propuesta institucional ── */}
+      {modalPropuesta && (
+        <PropuestaModal colegio={modalPropuesta} onClose={() => setModalPropuesta(null)} />
       )}
 
       {/* ── Modal editar negociación ── */}
