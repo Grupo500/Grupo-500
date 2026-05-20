@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'Grupo 500',
   },
   icons: {
@@ -34,7 +34,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#eef6ff' },
+    { media: '(prefers-color-scheme: dark)',  color: '#0a1628' },
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
