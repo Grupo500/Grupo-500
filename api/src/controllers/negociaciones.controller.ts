@@ -4,7 +4,7 @@ import { ApiResponse } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
 import { z } from 'zod'
 
-const etapas = ['PROSPECTO','CONTACTO_INICIAL','VISITA_PROGRAMADA','PROPUESTA_ENVIADA','EN_NEGOCIACION','CONVENIO_FIRMADO','DESCARTADO'] as const
+const etapas = ['PROSPECTO','CONTACTO','PROPUESTA','REUNION','CONVENIO','DESCARTADO'] as const
 
 const crearSchema = z.object({
   colegioId:          z.string(),
@@ -12,7 +12,7 @@ const crearSchema = z.object({
   etapa:              z.enum(etapas).optional(),
   notas:              z.string().optional(),
   fechaContacto:      z.string().optional(),
-  fechaVisita:        z.string().optional(),
+  fechaReunion:       z.string().optional(),
   fechaProxContacto:  z.string().optional(),
 })
 
@@ -39,9 +39,9 @@ export async function crear(req: Request, res: Response) {
       asesorId:          data.asesorId,
       etapa:             data.etapa ?? 'PROSPECTO',
       notas:             data.notas,
-      fechaContacto:     data.fechaContacto     ? new Date(data.fechaContacto)     : null,
-      fechaVisita:       data.fechaVisita        ? new Date(data.fechaVisita)        : null,
-      fechaProxContacto: data.fechaProxContacto  ? new Date(data.fechaProxContacto)  : null,
+      fechaContacto:     data.fechaContacto  ? new Date(data.fechaContacto)  : null,
+      fechaReunion:      data.fechaReunion   ? new Date(data.fechaReunion)   : null,
+      fechaProxContacto: data.fechaProxContacto ? new Date(data.fechaProxContacto) : null,
     },
     include,
   })
@@ -57,7 +57,7 @@ export async function actualizar(req: Request, res: Response) {
       ...(data.etapa             && { etapa: data.etapa }),
       ...(data.notas !== undefined && { notas: data.notas }),
       ...(data.fechaContacto     && { fechaContacto:     new Date(data.fechaContacto)     }),
-      ...(data.fechaVisita       && { fechaVisita:        new Date(data.fechaVisita)        }),
+      ...(data.fechaReunion      && { fechaReunion:       new Date(data.fechaReunion)       }),
       ...(data.fechaProxContacto && { fechaProxContacto:  new Date(data.fechaProxContacto)  }),
     },
     include,

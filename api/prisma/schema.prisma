@@ -311,11 +311,10 @@ model ConfigApp {
 
 enum EtapaNegociacion {
   PROSPECTO
-  CONTACTO_INICIAL
-  VISITA_PROGRAMADA
-  PROPUESTA_ENVIADA
-  EN_NEGOCIACION
-  CONVENIO_FIRMADO
+  CONTACTO
+  PROPUESTA
+  REUNION
+  CONVENIO
   DESCARTADO
 }
 
@@ -328,7 +327,7 @@ model Negociacion {
   etapa       EtapaNegociacion   @default(PROSPECTO)
   notas       String?
   fechaContacto   DateTime?
-  fechaVisita     DateTime?
+  fechaReunion    DateTime?
   fechaProxContacto DateTime?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt

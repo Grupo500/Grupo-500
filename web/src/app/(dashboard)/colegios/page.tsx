@@ -21,15 +21,15 @@ interface Colegio {
 }
 
 type Etapa =
-  | 'PROSPECTO' | 'CONTACTO_INICIAL' | 'VISITA_PROGRAMADA'
-  | 'PROPUESTA_ENVIADA' | 'EN_NEGOCIACION' | 'CONVENIO_FIRMADO' | 'DESCARTADO'
+  | 'PROSPECTO' | 'CONTACTO' | 'PROPUESTA'
+  | 'REUNION' | 'CONVENIO' | 'DESCARTADO'
 
 interface Negociacion {
   id: string
   etapa: Etapa
   notas?: string
   fechaContacto?: string
-  fechaVisita?: string
+  fechaReunion?: string
   fechaProxContacto?: string
   updatedAt: string
   colegio: { id: string; nombre: string; ciudad: string }
@@ -48,13 +48,12 @@ const ETAPAS: {
   dot: string
   textActive: string
 }[] = [
-  { etapa: 'PROSPECTO',         label: 'Prospecto',         labelCorto: 'Prospecto',   color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800/40',    bgActive: 'bg-slate-500',   border: 'border-slate-300 dark:border-slate-600',  dot: 'bg-slate-400',   textActive: 'text-white' },
-  { etapa: 'CONTACTO_INICIAL',  label: 'Contacto inicial',  labelCorto: 'Contacto',    color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-900/20',       bgActive: 'bg-blue-500',    border: 'border-blue-200 dark:border-blue-800',    dot: 'bg-blue-400',    textActive: 'text-white' },
-  { etapa: 'VISITA_PROGRAMADA', label: 'Visita programada', labelCorto: 'Visita',      color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-900/20',   bgActive: 'bg-violet-500',  border: 'border-violet-200 dark:border-violet-800',dot: 'bg-violet-400',  textActive: 'text-white' },
-  { etapa: 'PROPUESTA_ENVIADA', label: 'Propuesta enviada', labelCorto: 'Propuesta',   color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-900/20',     bgActive: 'bg-amber-500',   border: 'border-amber-200 dark:border-amber-800',  dot: 'bg-amber-400',   textActive: 'text-white' },
-  { etapa: 'EN_NEGOCIACION',    label: 'En negociación',    labelCorto: 'Negociando',  color: 'text-orange-500',  bg: 'bg-orange-50 dark:bg-orange-900/20',   bgActive: 'bg-orange-500',  border: 'border-orange-200 dark:border-orange-800',dot: 'bg-orange-400',  textActive: 'text-white' },
-  { etapa: 'CONVENIO_FIRMADO',  label: 'Convenio firmado',  labelCorto: 'Convenio',    color: 'text-green-500',   bg: 'bg-green-50 dark:bg-green-900/20',     bgActive: 'bg-green-500',   border: 'border-green-200 dark:border-green-800',  dot: 'bg-green-400',   textActive: 'text-white' },
-  { etapa: 'DESCARTADO',        label: 'Descartado',        labelCorto: 'Descartado',  color: 'text-red-400',     bg: 'bg-red-50 dark:bg-red-900/20',         bgActive: 'bg-red-400',     border: 'border-red-200 dark:border-red-800',      dot: 'bg-red-400',     textActive: 'text-white' },
+  { etapa: 'PROSPECTO',  label: 'Prospecto',  labelCorto: 'Prospecto',  color: 'text-slate-500',  bg: 'bg-slate-100',   bgActive: 'bg-slate-500',   border: 'border-slate-300',  dot: 'bg-slate-400',   textActive: 'text-white' },
+  { etapa: 'CONTACTO',   label: 'Contacto',   labelCorto: 'Contacto',   color: 'text-blue-500',   bg: 'bg-blue-50',     bgActive: 'bg-blue-500',    border: 'border-blue-200',   dot: 'bg-blue-400',    textActive: 'text-white' },
+  { etapa: 'PROPUESTA',  label: 'Propuesta',  labelCorto: 'Propuesta',  color: 'text-amber-500',  bg: 'bg-amber-50',    bgActive: 'bg-amber-500',   border: 'border-amber-200',  dot: 'bg-amber-400',   textActive: 'text-white' },
+  { etapa: 'REUNION',    label: 'Reunión',    labelCorto: 'Reunión',    color: 'text-violet-500', bg: 'bg-violet-50',   bgActive: 'bg-violet-500',  border: 'border-violet-200', dot: 'bg-violet-400',  textActive: 'text-white' },
+  { etapa: 'CONVENIO',   label: 'Convenio',   labelCorto: 'Convenio',   color: 'text-green-500',  bg: 'bg-green-50',    bgActive: 'bg-green-500',   border: 'border-green-200',  dot: 'bg-green-400',   textActive: 'text-white' },
+  { etapa: 'DESCARTADO', label: 'Descartado', labelCorto: 'Descartado', color: 'text-red-400',    bg: 'bg-red-50',      bgActive: 'bg-red-400',     border: 'border-red-200',    dot: 'bg-red-400',     textActive: 'text-white' },
 ]
 
 // ── Modal genérico ─────────────────────────────────────────────────────────
@@ -219,7 +218,7 @@ export default function ColegiosPage() {
   const [modalEditarNeg, setModalEditarNeg] = useState<Negociacion | null>(null)
   const [formNeg, setFormNeg] = useState({
     colegioId: '', asesorId: '', etapa: 'PROSPECTO' as Etapa,
-    notas: '', fechaContacto: '', fechaVisita: '', fechaProxContacto: '',
+    notas: '', fechaContacto: '', fechaReunion: '', fechaProxContacto: '',
   })
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
@@ -252,7 +251,7 @@ export default function ColegiosPage() {
   })
 
   // ── Mutations negociaciones ──
-  const resetFormNeg = () => setFormNeg({ colegioId: '', asesorId: '', etapa: 'PROSPECTO', notas: '', fechaContacto: '', fechaVisita: '', fechaProxContacto: '' })
+  const resetFormNeg = () => setFormNeg({ colegioId: '', asesorId: '', etapa: 'PROSPECTO', notas: '', fechaContacto: '', fechaReunion: '', fechaProxContacto: '' })
 
   const crearNegMutation = useMutation({
     mutationFn: () => fetcher('/negociaciones', { method: 'POST', body: JSON.stringify(formNeg) }),
@@ -276,9 +275,9 @@ export default function ColegiosPage() {
     setFormNeg({
       colegioId: neg.colegio.id, asesorId: neg.asesor.id, etapa: neg.etapa,
       notas: neg.notas ?? '',
-      fechaContacto:     neg.fechaContacto     ? neg.fechaContacto.split('T')[0]     : '',
-      fechaVisita:       neg.fechaVisita        ? neg.fechaVisita.split('T')[0]        : '',
-      fechaProxContacto: neg.fechaProxContacto  ? neg.fechaProxContacto.split('T')[0]  : '',
+      fechaContacto:     neg.fechaContacto    ? neg.fechaContacto.split('T')[0]    : '',
+      fechaReunion:      neg.fechaReunion     ? neg.fechaReunion.split('T')[0]     : '',
+      fechaProxContacto: neg.fechaProxContacto ? neg.fechaProxContacto.split('T')[0] : '',
     })
     setModalEditarNeg(neg)
   }
@@ -324,8 +323,8 @@ export default function ColegiosPage() {
           <input type="date" className={inputCls} value={f.fechaContacto} onChange={e => onChange({ ...f, fechaContacto: e.target.value })} />
         </div>
         <div>
-          <label className={labelCls}>Fecha visita</label>
-          <input type="date" className={inputCls} value={f.fechaVisita} onChange={e => onChange({ ...f, fechaVisita: e.target.value })} />
+          <label className={labelCls}>Fecha reunión</label>
+          <input type="date" className={inputCls} value={f.fechaReunion} onChange={e => onChange({ ...f, fechaReunion: e.target.value })} />
         </div>
       </div>
       <div>
