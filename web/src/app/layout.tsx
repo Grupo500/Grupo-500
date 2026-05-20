@@ -54,6 +54,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       afterSignOutUrl="/sign-in"
     >
       <html lang="es" suppressHydrationWarning>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+        <script dangerouslySetInnerHTML={{ __html: 'eruda.init()' }} />
         <body className={`${inter.variable} font-sans`}>
           <ThemeProvider>
             <ServiceWorkerRegister />
