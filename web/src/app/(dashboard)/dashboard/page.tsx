@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { ProximosCobros } from '@/components/charts/ProximosCobros'
 import { DashboardAnalytics } from '@/components/charts/DashboardAnalytics'
 import { RefreshButton } from '@/components/ui/RefreshButton'
+import { Bell } from 'lucide-react'
 import Image from 'next/image'
 
 async function getDashboardData() {
