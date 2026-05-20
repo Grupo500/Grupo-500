@@ -745,40 +745,47 @@ export default function ColegiosPage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {colegios.map(c => (
-              <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-4 hover:border-primary/30 transition-colors flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                    <School className="w-4 h-4 text-primary" />
+              <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3.5 hover:border-primary/40 hover:shadow-sm transition-all flex flex-col gap-3">
+
+                {/* ── Header: icono + nombre + ciudad ── */}
+                <div className="flex items-start gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <School className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-on-surface truncate">{c.nombre}</p>
-                    <p className="flex items-center gap-1 text-xs text-on-surface-variant">
-                      <MapPin className="w-3 h-3" />{c.ciudad}
+                    <p className="text-[13px] font-semibold text-on-surface truncate leading-snug">{c.nombre}</p>
+                    <p className="flex items-center gap-1 text-[11px] text-on-surface-variant mt-0.5">
+                      <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span className="truncate">{c.ciudad}</span>
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                    <Users className="w-3.5 h-3.5" />
-                    <span>{c._count?.estudiantes ?? 0} estudiantes</span>
+
+                {/* ── Footer: badge estudiantes + acciones ── */}
+                <div className="flex items-center justify-between pt-2.5 border-t border-outline-variant/60">
+                  <div className="flex items-center gap-1 bg-primary/8 px-2 py-1 rounded-lg">
+                    <Users className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span className="text-[11px] font-bold text-primary tabular">{c._count?.estudiantes ?? 0}</span>
+                    <span className="text-[11px] text-on-surface-variant">est.</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <button
                       onClick={() => setModalPropuesta(c)}
                       title="Generar propuesta"
-                      className="flex items-center gap-1 text-xs font-medium text-amber-600 hover:bg-amber-50 px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
                     >
                       <FileText className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setColegioDetalle(c)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      title="Ver estudiantes"
+                      className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Ver</span>
                     </button>
                   </div>
                 </div>
+
               </div>
             ))}
           </div>
