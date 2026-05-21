@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import {
@@ -53,7 +52,6 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 }
 
 export default function SimulacrosPage() {
-  const { getToken } = useAuth()
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -75,8 +73,8 @@ export default function SimulacrosPage() {
   const [error, setError] = useState('')
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   const { data, isLoading } = useQuery({
@@ -97,7 +95,7 @@ export default function SimulacrosPage() {
     setUploadProgress('uploading')
 
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const formData = new FormData()
       formData.append('file', file)
 
@@ -453,3 +451,4 @@ export default function SimulacrosPage() {
     </div>
   )
 }
+

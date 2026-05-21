@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP, cn } from '@/lib/utils'
 import {
@@ -51,15 +50,14 @@ function generarMensajeWA(cuota: CuotaCalendario) {
 
 /* ─── Página ─────────────────────────────────────────────────────────────── */
 export default function CalendarioPage() {
-  const { getToken } = useAuth()
   const queryClient = useQueryClient()
   const [mesActual, setMesActual] = useState(new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState<Date>(new Date())
   const [filtro, setFiltro] = useState<FiltroEstado>(null)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   const desde = startOfMonth(mesActual).toISOString().split('T')[0]
@@ -301,3 +299,4 @@ export default function CalendarioPage() {
     </div>
   )
 }
+

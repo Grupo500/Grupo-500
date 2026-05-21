@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import {
   AreaChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { TrendingUp, Wallet, Clock, AlertTriangle } from 'lucide-react'
 
@@ -80,7 +79,6 @@ function CustomTooltip({ active, payload, label, color }: any) {
 // ── Componente principal ────────────────────────────────────────────────────
 export function FinancieroSection({ periodo }: Props) {
   const [selected, setSelected] = useState<Metrica>('ventaTotal')
-  const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
   const isDark                   = theme === 'dark'
   const temaListo                = theme !== undefined
@@ -88,7 +86,7 @@ export function FinancieroSection({ periodo }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ['financiero-periodo', periodo],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token ?? '')(`/reportes/financiero-periodo?periodo=${periodo}`) as Promise<{
         data: { totales: Totales; variaciones: Variaciones; puntos: Punto[] }
       }>
@@ -225,3 +223,4 @@ export function FinancieroSection({ periodo }: Props) {
     </div>
   )
 }
+

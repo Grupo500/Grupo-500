@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { ClerkProvider } from '@clerk/nextjs'
-import { esES } from '@clerk/localizations'
 import { Inter } from 'next/font/google'
+import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister'
 import './globals.css'
@@ -34,8 +33,6 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  // theme-color se maneja via inline script en <head> para respetar
-  // el tema guardado en localStorage (independiente del modo del SO)
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -43,22 +40,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider
-      localization={esES}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      signInFallbackRedirectUrl="/verificando"
-      signUpFallbackRedirectUrl="/verificando"
-      afterSignOutUrl="/sign-in"
-    >
-      <html lang="es" suppressHydrationWarning>
-        <body className={`${inter.variable} font-sans`}>
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans`}>
+        <SessionProvider>
           <ThemeProvider>
             <ServiceWorkerRegister />
             {children}
           </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </SessionProvider>
+      </body>
+    </html>
   )
 }

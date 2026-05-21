@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { signOut } from 'next-auth/react'
 import { UserX, Clock } from 'lucide-react'
-import { SignOutButton } from '@clerk/nextjs'
 
 export default function NoAutorizadoPage() {
   const [pendiente, setPendiente] = useState(false)
@@ -51,9 +51,12 @@ export default function NoAutorizadoPage() {
           )}
         </div>
 
-        <SignOutButton redirectUrl="/sign-in">
-          <button className="btn-ghost mx-auto text-[13px]">Volver</button>
-        </SignOutButton>
+        <button
+          onClick={() => signOut({ callbackUrl: '/sign-in' })}
+          className="btn-ghost mx-auto text-[13px]"
+        >
+          Volver
+        </button>
 
       </div>
     </div>

@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
 import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Trash2, Search, CalendarDays, CalendarCheck } from 'lucide-react'
@@ -150,7 +149,6 @@ function EstadoBadge({ fechaInicio, fechaFin }: { fechaInicio?: string | null; f
 }
 
 export default function CursosPage() {
-  const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
   const [busqueda, setBusqueda] = useState('')
@@ -160,8 +158,8 @@ export default function CursosPage() {
   const [editForm, setEditForm] = useState<FormState>(emptyForm)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   const { data, isLoading } = useQuery({
@@ -374,3 +372,4 @@ export default function CursosPage() {
     </div>
   )
 }
+

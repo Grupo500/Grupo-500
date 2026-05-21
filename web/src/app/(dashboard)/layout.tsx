@@ -1,32 +1,14 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
-import { apiFetch } from '@/lib/api.server'
-import { cache } from 'react'
-
-// Cache el rol por request — evita múltiples fetches en el mismo render
-const getRole = cache(async (): Promise<'ADMIN' | 'VENDEDOR'> => {
-  try {
-    const me = await apiFetch<{ data: { role: 'ADMIN' | 'VENDEDOR' } }>('/auth/me')
-    return me.data?.role ?? 'VENDEDOR'
-  } catch {
-    return 'VENDEDOR'
-  }
-})
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  let userId: string | null = null
-  try {
-    const session = await auth()
-    userId = session.userId
-  } catch {
-    redirect('/sign-in')
-  }
-  if (!userId) redirect('/sign-in')
+  const session = await auth()
+  if (!session?.user) redirect('/sign-in')
 
-  const role = await getRole()
+  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR'
 
   return (
     <QueryProvider>

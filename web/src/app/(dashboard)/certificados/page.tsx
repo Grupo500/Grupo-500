@@ -2,8 +2,8 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth, useUser } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { useSession } from 'next-auth/react'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -155,9 +155,8 @@ async function generarPDF(
 
 // ── Página ──────────────────────────────────────────────────────────────────
 export default function CertificadosPage() {
-  const { getToken } = useAuth()
-  const { user } = useUser()
-  const isAdmin = user?.publicMetadata?.role === 'ADMIN'
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
 
   const [busquedaInput, setBusquedaInput] = useState('')
@@ -195,8 +194,8 @@ export default function CertificadosPage() {
   }, [])
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   const { data, isLoading } = useQuery({
@@ -244,7 +243,7 @@ export default function CertificadosPage() {
   const handleSubirFirma = async (quien: 'sebastian' | 'andres', file: File) => {
     setSubiendo(quien)
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const formData = new FormData()
       formData.append('firma', file)
       const res = await fetch(
@@ -264,7 +263,7 @@ export default function CertificadosPage() {
     if (enviando) return
     setEnviando(`${cert.id}-${canal}`)
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/certificados/${cert.id}/enviar-${canal}`,
         { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
@@ -545,3 +544,4 @@ export default function CertificadosPage() {
     </div>
   )
 }
+

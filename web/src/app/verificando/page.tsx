@@ -1,54 +1,23 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import { Poppins } from 'next/font/google'
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
 
 export default function VerificandoPage() {
-  const router = useRouter()
-  const { getToken, isLoaded, isSignedIn } = useAuth()
-  const esNuevoRef = useRef(false)
+  const router  = useRouter()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    // Leer el parámetro ?nuevo=1 sin useSearchParams
-    const params = new URLSearchParams(window.location.search)
-    esNuevoRef.current = params.get('nuevo') === '1'
-  }, [])
-
-  useEffect(() => {
-    if (!isLoaded) return
-
-    if (!isSignedIn) {
-      router.replace('/sign-in')
-      return
-    }
-
-    const verificar = async () => {
-      try {
-        const token = await getToken()
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-
-        const res = await fetch(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token ?? ''}` },
-          cache: 'no-store',
-        })
-
-        if (res.ok) {
-          router.replace('/dashboard')
-        } else {
-          router.replace(esNuevoRef.current ? '/no-autorizado?pendiente=1' : '/no-autorizado')
-        }
-      } catch {
-        router.replace(esNuevoRef.current ? '/no-autorizado?pendiente=1' : '/no-autorizado')
-      }
-    }
-
-    verificar()
-  }, [isLoaded, isSignedIn, getToken, router])
+    if (status === 'loading') return
+    if (status === 'unauthenticated') { router.replace('/sign-in'); return }
+    // Autenticado → al dashboard
+    router.replace('/dashboard')
+  }, [status, router])
 
   return (
     <div className="h-dvh w-full flex flex-col items-center justify-center gap-6" style={{ background: '#21b9f7' }}>

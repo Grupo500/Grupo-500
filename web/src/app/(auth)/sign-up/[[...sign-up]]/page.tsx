@@ -1,59 +1,7 @@
-import { SignUp } from '@clerk/nextjs'
-import Image from 'next/image'
-import { Poppins } from 'next/font/google'
+import { redirect } from 'next/navigation'
 
-const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
-
+// El registro de usuarios es gestionado por el administrador desde el panel.
+// No hay registro público disponible.
 export default function SignUpPage() {
-  return (
-    <div className="min-h-dvh w-full overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4" style={{ background: 'var(--bg)' }}>
-
-      {/* Logo */}
-      <div className="flex flex-col items-center gap-2">
-        <Image
-          src="/logo-grupo500.png"
-          alt="Grupo 500"
-          width={120}
-          height={120}
-          className="drop-shadow-sm w-28 h-28 md:w-24 md:h-24 lg:w-20 lg:h-20"
-          priority
-        />
-        <p className={`${poppins.className} text-xl md:text-lg lg:text-base font-bold tracking-tight text-on-surface mt-0.5`}>Grupo 500</p>
-        <p className="text-sm md:text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
-      </div>
-
-      <div className="w-full max-w-sm">
-        <SignUp
-          forceRedirectUrl="/verificando?nuevo=1"
-          appearance={{
-            variables: {
-              colorBackground:      '#ffffff',
-              colorInputBackground: '#f4f8ff',
-              colorText:            '#001d3d',
-              colorTextSecondary:   '#2a4172',
-              colorPrimary:         '#1a7de0',
-              colorDanger:          '#c0392b',
-              colorSuccess:         '#087a50',
-              colorNeutral:         '#5a74a8',
-              colorInputText:       '#001d3d',
-              borderRadius:         '0.5rem',
-              fontFamily:           'Inter, sans-serif',
-              fontSize:             '14px',
-            },
-            elements: {
-              rootBox:          'mx-auto',
-              card:             'shadow-none border border-black/[0.07] rounded-xl',
-              header:           'hidden',
-              formFieldLabel:   'text-xs font-medium',
-              formFieldInput:   'border border-white/[0.08] focus:border-primary/50 rounded-lg !text-[13px] !py-1.5 !px-3',
-              formButtonPrimary:
-                'bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors shadow-none',
-              footerActionLink: 'text-primary hover:text-primary/80 font-medium',
-              alertText:        'text-sm',
-            },
-          }}
-        />
-      </div>
-    </div>
-  )
+  redirect('/sign-in')
 }

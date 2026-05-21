@@ -1,8 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP, formatRelative } from '@/lib/utils'
 import { CalendarClock, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -41,13 +40,12 @@ const DIAS_LABEL: Record<Periodo, { dias: number; label: string }> = {
 }
 
 export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
-  const { getToken } = useAuth()
   const { dias, label } = DIAS_LABEL[periodo]
 
   const { data, isLoading } = useQuery({
     queryKey: ['cobros-proximos', periodo],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token ?? '')(`/cobros/proximos?dias=${dias}`) as Promise<{ data: CuotaProxima[] }>
     },
     staleTime: 2 * 60_000,
@@ -117,3 +115,4 @@ export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
     </div>
   )
 }
+

@@ -1,8 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
@@ -16,12 +15,11 @@ interface Asesor {
 }
 
 export function RankingAsesores() {
-  const { getToken } = useAuth()
 
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-asesores'],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token)<{ data: Asesor[] }>('/reportes/ranking-asesores')
     },
     staleTime: 60_000,
@@ -78,3 +76,4 @@ export function RankingAsesores() {
     </div>
   )
 }
+

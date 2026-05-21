@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { apiFetch } from '@/lib/api.server'
-import { currentUser } from '@clerk/nextjs/server'
+import { auth } from '@/auth'
 import { formatCOP } from '@/lib/utils'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -21,13 +21,14 @@ async function getDashboardData() {
 }
 
 export default async function DashboardPage() {
-  const [data, user] = await Promise.all([
+  const [data, session] = await Promise.all([
     getDashboardData(),
-    currentUser().catch(() => null),   // Si Clerk falla no rompe la página
+    auth().catch(() => null),
   ])
-  const role      = (user?.publicMetadata?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
+  const role      = (session?.user?.role as 'ADMIN' | 'VENDEDOR') ?? 'VENDEDOR'
   const isAdmin   = role === 'ADMIN'
-  const firstName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] ?? ''
+  const fullName  = session?.user?.name ?? session?.user?.email?.split('@')[0] ?? ''
+  const firstName = fullName.split(' ')[0]
   const horaColombia = Number(new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date()))
   const saludo = horaColombia < 12 ? 'Buenos días' : horaColombia < 18 ? 'Buenas tardes' : 'Buenas noches'
 
@@ -41,9 +42,9 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between gap-3">
           {/* Saludo izquierda */}
           <div className="flex items-center gap-3">
-            {user?.imageUrl && (
+            {session?.user?.image && (
               <Image
-                src={user.imageUrl}
+                src={session!.user.image!}
                 alt={firstName}
                 width={46}
                 height={46}
@@ -79,9 +80,9 @@ export default async function DashboardPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Saludo asesor */}
       <div className="flex items-center gap-3 sm:block">
-        {user?.imageUrl && (
+        {session?.user?.image && (
           <Image
-            src={user.imageUrl}
+            src={session!.user.image!}
             alt={firstName}
             width={46}
             height={46}

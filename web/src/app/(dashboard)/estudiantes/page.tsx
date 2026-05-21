@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth, useUser } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
+import { getClientToken } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -163,9 +164,8 @@ function ConfirmDialog({ open, nombre, onConfirm, onCancel, isPending }: {
 
 // ── Página principal ───────────────────────────────────────────────────────
 export default function EstudiantesPage() {
-  const { getToken } = useAuth()
-  const { user } = useUser()
-  const isAdmin = user?.publicMetadata?.role === 'ADMIN'
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
   const router = useRouter()
 
@@ -174,9 +174,9 @@ export default function EstudiantesPage() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
 
-  // Invalidar lista al montar (sync después de volver del detalle)
+  // Invalidar toda la app al montar (sync después de volver del detalle)
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+    queryClient.invalidateQueries()
   }, [])
 
   useEffect(() => {
@@ -193,8 +193,8 @@ export default function EstudiantesPage() {
   const [subiendoComprobante, setSubiendoComprobante] = useState(false)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   const { data: colegiosData } = useQuery({ queryKey: ['colegios'], queryFn: () => fetcher<any>('/colegios') })
@@ -266,8 +266,7 @@ export default function EstudiantesPage() {
       return fetcher('/estudiantes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-      queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+      queryClient.invalidateQueries()
       setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY); setCuotasDetalle([])
     },
     onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
@@ -276,8 +275,7 @@ export default function EstudiantesPage() {
   const eliminarMutation = useMutation({
     mutationFn: (id: string) => fetcher(`/estudiantes/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-      queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+      queryClient.invalidateQueries()
       setConfirmEliminar(null)
     },
     onError: () => setConfirmEliminar(null),
@@ -286,7 +284,7 @@ export default function EstudiantesPage() {
   const subirComprobante = async (file: File) => {
     setSubiendoComprobante(true)
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const fd = new FormData(); fd.append('file', file)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
         method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
@@ -775,3 +773,4 @@ export default function EstudiantesPage() {
     </div>
   )
 }
+

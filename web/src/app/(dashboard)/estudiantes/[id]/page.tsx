@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth, useUser } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { useSession } from 'next-auth/react'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP, cn } from '@/lib/utils'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
@@ -99,7 +99,6 @@ function FilaCuota({ c, fetcher, onRefresh }: {
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onRefresh: () => void
 }) {
-  const { getToken } = useAuth()
   const [editando, setEditando] = useState(false)
   const [monto, setMonto] = useState(String(Math.round(c.monto)))
   const [fechaVenc, setFechaVenc] = useState(c.fechaVencimiento?.split('T')[0] ?? '')
@@ -119,7 +118,7 @@ function FilaCuota({ c, fetcher, onRefresh }: {
   const subirComp = async (file: File) => {
     setSubiendo(true)
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const fd = new FormData(); fd.append('file', file)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
         method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
@@ -272,7 +271,7 @@ function FilaCuota({ c, fetcher, onRefresh }: {
           <button
             onClick={async () => {
               if (!confirm('¿Revertir este abono? La cuota volverá a pendiente.')) return
-              const token = await getToken()
+              const token = await getClientToken()
               await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cuotas/${c.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
@@ -297,8 +296,6 @@ function FormAbono({ cuotasPendientes, fetcher, onSuccess }: {
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onSuccess: () => void
 }) {
-  const { getToken } = useAuth()
-
   type CuotaAbono = { cuotaId: string; numero: number; montoOrig: number; monto: string; fecha: string }
   const [seleccionadas, setSeleccionadas] = useState<CuotaAbono[]>([])
   const [medioPago, setMedioPago] = useState('Bancolombia')
@@ -323,7 +320,7 @@ function FormAbono({ cuotasPendientes, fetcher, onSuccess }: {
   const subirComprobante = async (file: File) => {
     setSubiendo(true)
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const fd = new FormData(); fd.append('file', file)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
         method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
@@ -731,11 +728,10 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 // ══════════════════════════════════════════════════════════════════════════
 // TAB: FINANCIERO (incluye abonos)
 // ══════════════════════════════════════════════════════════════════════════
-function TabFinanciero({ e, fetcher, onRefresh, getToken }: {
+function TabFinanciero({ e, fetcher, onRefresh }: {
   e: EstudianteDetalle
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onRefresh: () => void
-  getToken: () => Promise<string | null>
 }) {
   const financiamientos = e.financiamientos ?? []
   const pagos = e.pagos ?? []
@@ -854,7 +850,7 @@ function TabFinanciero({ e, fetcher, onRefresh, getToken }: {
                   <button
                     onClick={async () => {
                       if (!confirm('¿Eliminar este pago?')) return
-                      const token = await getToken()
+                      const token = await getClientToken()
                       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pagos/${p.id}`, {
                         method: 'DELETE',
                         headers: { Authorization: `Bearer ${token ?? ''}` },
@@ -987,17 +983,16 @@ function TabHistorial({ estudianteId, fetcher }: {
 export default function EstudianteDetallePage() {
   const params  = useParams<{ id: string }>()
   const router  = useRouter()
-  const { getToken } = useAuth()
-  const { user } = useUser()
-  const isAdmin = user?.publicMetadata?.role === 'ADMIN'
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
 
   const [tab, setTab] = useState<Tab>('perfil')
   const [confirmEliminar, setConfirmEliminar] = useState(false)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   const { data, isLoading, refetch } = useQuery({
@@ -1025,9 +1020,7 @@ export default function EstudianteDetallePage() {
 
   const handleRefresh = () => {
     refetch()
-    queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-    queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-    queryClient.invalidateQueries({ queryKey: ['historial-estudiante', params.id] })
+    queryClient.invalidateQueries() // invalida toda la app en tiempo real
   }
 
   if (isLoading) return (
@@ -1117,7 +1110,7 @@ export default function EstudianteDetallePage() {
           <TabPerfil e={e} fetcher={fetcher} isAdmin={isAdmin} colegios={colegios} asesores={asesores} cursos={cursos} onRefresh={handleRefresh} />
         )}
         {tab === 'financiero' && (
-          <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} getToken={getToken} />
+          <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} />
         )}
         {tab === 'historial' && (
           <TabHistorial estudianteId={e.id} fetcher={fetcher} />

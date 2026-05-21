@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import { UserMenu } from '@/components/layout/UserMenu'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
@@ -152,13 +152,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           'flex items-center gap-2.5 px-2 py-1.5',
           collapsed && 'justify-center px-0',
         )}>
-          <UserButton afterSignOutUrl="/sign-in" />
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-on-surface truncate">Mi cuenta</p>
-              <p className="text-[10px] text-on-surface-variant font-medium capitalize">{role.toLowerCase()}</p>
-            </div>
-          )}
+          <UserMenu collapsed={collapsed} />
         </div>
       </div>
 

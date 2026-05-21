@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp } from 'lucide-react'
@@ -13,13 +12,12 @@ interface Asesor {
   _count?: { estudiantes: number; pagos: number }
 }
 interface Usuario {
-  id: string; clerkId: string; email: string
+  id: string; email: string
   nombre: string | null; imageUrl: string | null
   role: 'ADMIN' | 'VENDEDOR'; asesor: Asesor | null; createdAt: string
 }
 
 export default function UsuariosPage() {
-  const { getToken } = useAuth()
   const queryClient = useQueryClient()
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -32,7 +30,7 @@ export default function UsuariosPage() {
   const [editError, setEditError] = useState('')
 
   const fetcher = async <T,>(url: string, opts?: RequestInit): Promise<T> => {
-    const token = await getToken()
+    const token = await getClientToken()
     return createClientFetcher(token ?? '')(url, opts) as Promise<T>
   }
 
@@ -280,7 +278,7 @@ export default function UsuariosPage() {
       <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/15">
         <Shield className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
         <p className="text-xs text-on-surface-variant leading-relaxed">
-          Los cambios de rol y eliminaciones se sincronizan inmediatamente en DB y Clerk.
+          Los cambios de rol se aplican inmediatamente en la base de datos.
           El usuario verá el nuevo rol al <strong className="text-on-surface">cerrar sesión y volver a entrar</strong>.
         </p>
       </div>
@@ -359,7 +357,7 @@ export default function UsuariosPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold text-on-surface">Agregar usuario</h2>
-                <p className="text-xs text-on-surface-variant mt-0.5">El usuario debe haberse registrado primero en Clerk</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">El usuario recibirá credenciales de acceso</p>
               </div>
               <button onClick={() => { setShowModal(false); setFormError('') }}
                 className="p-1.5 rounded-md text-on-surface-variant hover:bg-[var(--surface-high)]">

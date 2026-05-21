@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { AlertTriangle, Clock, ChevronRight, Phone } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -22,14 +21,13 @@ interface SaldoPendiente {
 type Filtro = 'todos' | 'mora'
 
 export function SaldosPendientes() {
-  const { getToken } = useAuth()
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [busqueda, setBusqueda] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['saldos-pendientes'],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token)<{ data: SaldoPendiente[] }>('/cobros/saldos-pendientes?limit=100')
     },
     staleTime: 60_000,
@@ -185,3 +183,4 @@ export function SaldosPendientes() {
     </div>
   )
 }
+

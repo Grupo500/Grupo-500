@@ -1,16 +1,14 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 
 interface Punto { label: string; ingresos: number; pagos: number }
 
 export function IngresosMensualesChart() {
-  const { getToken } = useAuth()
   const { resolvedTheme } = useTheme()
   const isDark            = resolvedTheme === 'dark'
   const temaListo         = resolvedTheme !== undefined
@@ -18,7 +16,7 @@ export function IngresosMensualesChart() {
   const { data, isLoading } = useQuery({
     queryKey: ['ventas-grafica-mensual'],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token)<{ data: { puntos: Punto[]; variacion: number; actual: number } }>('/reportes/ventas-grafica?periodo=mensual')
     },
     staleTime: 60_000,
@@ -72,3 +70,4 @@ export function IngresosMensualesChart() {
     </div>
   )
 }
+

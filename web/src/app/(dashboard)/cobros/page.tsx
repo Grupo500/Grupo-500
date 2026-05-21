@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP, formatDate, cn } from '@/lib/utils'
 import {
@@ -84,7 +83,6 @@ function ModalAbono({
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
 }) {
   const queryClient = useQueryClient()
-  const { getToken } = useAuth()
 
   const cuotasPendientes = f.cuotas.filter(c => !c.pagado)
 
@@ -116,7 +114,7 @@ function ModalAbono({
   const subirComprobante = async (file: File) => {
     setSubiendo(true)
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
@@ -461,7 +459,6 @@ function DetallePago({
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
 }) {
   const queryClient = useQueryClient()
-  const { getToken } = useAuth()
 
   const [fechaPago, setFechaPago]     = useState(new Date().toISOString().split('T')[0])
   const [comprobante, setComprobante] = useState(p.comprobante ?? '')
@@ -471,7 +468,7 @@ function DetallePago({
   const subirComprobante = async (file: File) => {
     setSubiendo(true)
     try {
-      const token = await getToken()
+      const token = await getClientToken()
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
@@ -785,11 +782,10 @@ function MatriculasView({
 
 /* ─── Página ─────────────────────────────────────────────────────────────── */
 export default function CobrosPage() {
-  const { getToken } = useAuth()
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   const { data: dataF, isLoading: loadingF } = useQuery({
@@ -813,3 +809,4 @@ export default function CobrosPage() {
     </div>
   )
 }
+

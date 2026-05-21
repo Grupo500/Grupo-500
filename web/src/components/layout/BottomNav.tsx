@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import { UserMenu } from '@/components/layout/UserMenu'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import {
@@ -138,12 +138,8 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
             transition: 'opacity 280ms 200ms ease-out, transform 280ms 200ms ease-out',
           }}
         >
-          <div className="flex items-center gap-3">
-            <UserButton afterSignOutUrl="/sign-in" />
-            <div>
-              <p className="text-[12px] font-bold text-on-surface">Mi cuenta</p>
-              <p className="text-[10px] text-on-surface-variant">{role === 'ADMIN' ? 'Administrador' : 'Asesor'}</p>
-            </div>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <UserMenu />
           </div>
           {mounted && (
             <button

@@ -1,13 +1,12 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { BarChart2 } from 'lucide-react'
 
@@ -51,7 +50,6 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function FinancieroChart() {
-  const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
@@ -63,7 +61,7 @@ export function FinancieroChart() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['financiero'],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token ?? '')('/reportes/financiero') as Promise<{ data: Punto[] }>
     },
     staleTime: 5 * 60_000,
@@ -119,3 +117,4 @@ export function FinancieroChart() {
     </div>
   )
 }
+

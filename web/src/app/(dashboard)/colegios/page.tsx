@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth, useUser } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { useSession } from 'next-auth/react'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import {
@@ -527,9 +527,8 @@ function PropuestaModal({ colegio, onClose }: { colegio: Colegio; onClose: () =>
 
 // ── Página principal ───────────────────────────────────────────────────────
 export default function ColegiosPage() {
-  const { getToken } = useAuth()
-  const { user } = useUser()
-  const isAdmin = user?.publicMetadata?.role === 'ADMIN'
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
 
   const [tab, setTab] = useState<'colegios' | 'negociaciones'>('colegios')
@@ -551,8 +550,8 @@ export default function ColegiosPage() {
   })
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getToken()
-    return createClientFetcher(token)<T>(path, opts)
+    const token = await getClientToken()
+    return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
   // ── Queries ──
@@ -1015,3 +1014,4 @@ export default function ColegiosPage() {
     </div>
   )
 }
+

@@ -2,11 +2,10 @@
 
 
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
@@ -22,7 +21,6 @@ function Skeleton() {
 }
 
 export function VentasChart({ periodo }: { periodo: Periodo }) {
-  const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
@@ -37,7 +35,7 @@ export function VentasChart({ periodo }: { periodo: Periodo }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ventas-grafica', periodo],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token ?? '')(`/reportes/ventas-grafica?periodo=${periodo}`) as Promise<{
         data: { puntos: { label: string; ingresos: number; pagos: number }[]; variacion: number; actual: number; anterior: number }
       }>
@@ -142,3 +140,4 @@ export function VentasChart({ periodo }: { periodo: Periodo }) {
     </div>
   )
 }
+

@@ -3,8 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { formatCOP } from '@/lib/utils'
@@ -22,13 +21,11 @@ interface DashboardData {
 }
 
 export default function ReportesPage() {
-  const { getToken } = useAuth()
-
   const { data: dashData, isLoading } = useQuery({
     queryKey: ['reportes-dashboard'],
     queryFn: async () => {
-      const token = await getToken()
-      return createClientFetcher(token)<{ data: DashboardData }>('/reportes/dashboard')
+      const token = await getClientToken()
+      return createClientFetcher(token ?? '')<{ data: DashboardData }>('/reportes/dashboard')
     },
     staleTime: 60_000,
   })

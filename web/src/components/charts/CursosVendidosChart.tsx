@@ -1,13 +1,12 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
-import { createClientFetcher } from '@/lib/api'
+import { createClientFetcher, getClientToken } from '@/lib/api'
 import { BookOpen } from 'lucide-react'
 
 interface CursoData {
@@ -46,7 +45,6 @@ function truncar(nombre: string, max = 22) {
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
 export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
-  const { getToken } = useAuth()
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
@@ -61,7 +59,7 @@ export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo
   const { data, isLoading, isError } = useQuery({
     queryKey: ['cursos-vendidos', periodo],
     queryFn: async () => {
-      const token = await getToken()
+      const token = await getClientToken()
       return createClientFetcher(token ?? '')(`/reportes/cursos?periodo=${periodo}`) as Promise<{ data: CursoData[] }>
     },
     staleTime: 60_000,
@@ -134,3 +132,4 @@ export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo
     </div>
   )
 }
+
