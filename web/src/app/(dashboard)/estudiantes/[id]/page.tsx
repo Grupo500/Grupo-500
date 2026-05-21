@@ -726,6 +726,179 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// COMPONENTE: FORM NUEVO PAGO DIRECTO
+// ══════════════════════════════════════════════════════════════════════════
+const METODOS_BACKEND: Record<string, 'TRANSFERENCIA' | 'EFECTIVO' | 'TARJETA' | 'OTRO'> = {
+  Bancolombia: 'TRANSFERENCIA',
+  'Bre-B':     'TRANSFERENCIA',
+  Efectivo:    'EFECTIVO',
+  Tarjeta:     'TARJETA',
+  Otro:        'OTRO',
+}
+const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Efectivo', 'Tarjeta', 'Otro']
+
+function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
+  estudianteId: string
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+  onSuccess: () => void
+}) {
+  const hoy = new Date().toISOString().split('T')[0]
+  const [monto,         setMonto]         = useState('')
+  const [metodo,        setMetodo]        = useState('Bancolombia')
+  const [otroMetodo,    setOtroMetodo]    = useState('')
+  const [fechaVenc,     setFechaVenc]     = useState(hoy)
+  const [pagarAhora,    setPagarAhora]    = useState(true)
+  const [fechaPago,     setFechaPago]     = useState(hoy)
+  const [comprobante,   setComprobante]   = useState('')
+  const [subiendo,      setSubiendo]      = useState(false)
+  const [error,         setError]         = useState('')
+
+  const subirComp = async (file: File) => {
+    setSubiendo(true)
+    try {
+      const token = await getClientToken()
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
+      })
+      const json = await res.json()
+      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
+      setComprobante(json.data.url)
+    } catch (e: any) { setError(e.message ?? 'Error al subir') }
+    finally { setSubiendo(false) }
+  }
+
+  const metodoFinal = metodo === 'Otro' ? (otroMetodo.trim() || 'Otro') : metodo
+  const metodoDB    = METODOS_BACKEND[metodoFinal] ?? 'OTRO'
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const n = Number(monto)
+      if (!n || n <= 0) throw new Error('Ingresa un monto válido')
+      if (!fechaVenc)   throw new Error('Ingresa la fecha de vencimiento')
+
+      // 1. Crear el pago
+      const created = await fetcher<{ data: { id: string } }>('/pagos', {
+        method: 'POST',
+        body: JSON.stringify({
+          estudianteId,
+          monto: n,
+          metodo: metodoDB,
+          fechaVencimiento: fechaVenc,
+        }),
+      })
+
+      // 2. Si "pagar ahora", marcar como PAGADO inmediatamente
+      if (pagarAhora && created?.data?.id) {
+        if (!fechaPago) throw new Error('Ingresa la fecha de pago')
+        await fetcher(`/pagos/${created.data.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            estado:    'PAGADO',
+            fechaPago,
+            ...(comprobante && { comprobante }),
+          }),
+        })
+      }
+    },
+    onSuccess: () => {
+      setMonto(''); setComprobante(''); setError(''); setOtroMetodo('')
+      onSuccess()
+    },
+    onError: (e: any) => setError(e.message ?? 'Error al registrar pago'),
+  })
+
+  return (
+    <div className="space-y-4 pt-3 border-t border-outline-variant/40">
+      <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Registrar pago directo</p>
+
+      <div className="grid grid-cols-2 gap-3">
+        {/* Monto */}
+        <div>
+          <label className={labelCls}>Monto *</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">$</span>
+            <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6')} />
+          </div>
+        </div>
+        {/* Fecha vencimiento */}
+        <div>
+          <label className={labelCls}>Vence el *</label>
+          <input type="date" className={inputCls} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
+        </div>
+      </div>
+
+      {/* Método de pago */}
+      <div>
+        <label className={labelCls}>Método de pago *</label>
+        <div className="flex flex-wrap gap-1.5">
+          {METODOS_DISPLAY.map(m => (
+            <button key={m} type="button" onClick={() => setMetodo(m)}
+              className={cn('px-3 py-1.5 rounded-lg border-2 text-xs font-semibold transition-all cursor-pointer',
+                metodo === m ? 'border-primary bg-primary/8 text-primary' : 'border-outline-variant text-on-surface-variant hover:border-outline')}>
+              {m}
+            </button>
+          ))}
+        </div>
+        {metodo === 'Otro' && (
+          <input className={cn(inputCls, 'mt-1.5')} placeholder="Especifica el método..." value={otroMetodo}
+            onChange={e => setOtroMetodo(e.target.value)} />
+        )}
+      </div>
+
+      {/* Toggle pagar ahora */}
+      <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-surface-high border border-outline-variant/60">
+        <button type="button" onClick={() => setPagarAhora(v => !v)}
+          className={cn('relative w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0 cursor-pointer',
+            pagarAhora ? 'bg-primary' : 'bg-outline-variant')}>
+          <span className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200',
+            pagarAhora && 'translate-x-4')} />
+        </button>
+        <div>
+          <p className="text-[13px] font-semibold text-on-surface">Pagar ahora</p>
+          <p className="text-[11px] text-on-surface-variant">{pagarAhora ? 'El pago se registra como PAGADO' : 'Queda pendiente para cobrar después'}</p>
+        </div>
+      </div>
+
+      {/* Campos adicionales si pagar ahora */}
+      {pagarAhora && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Fecha de pago *</label>
+            <input type="date" className={inputCls} value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
+          </div>
+          <div>
+            <label className={labelCls}>Comprobante</label>
+            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
+              <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
+                onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
+              {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
+              <span className="text-xs text-on-surface-variant truncate">
+                {subiendo ? 'Subiendo...' : comprobante ? '✓ Adjunto' : 'Adjuntar'}
+              </span>
+            </label>
+            {comprobante && (
+              <a href={comprobante} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+                <ExternalLink className="w-3 h-3" />Ver comprobante
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {error && <p className="text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{error}</p>}
+
+      <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !monto || !fechaVenc}
+        className="flex items-center gap-2 w-full justify-center py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer">
+        {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+        {pagarAhora ? `Registrar pago de ${monto ? formatCOP(Number(monto)) : '$0'}` : 'Crear cobro pendiente'}
+      </button>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: FILA DE PAGO DIRECTO (marcar como pagado + comprobante)
 // ══════════════════════════════════════════════════════════════════════════
 function FilaPagoDirecto({ p, fetcher, onRefresh }: {
@@ -901,6 +1074,7 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
   ).reduce((s, c) => s + c.monto, 0) + pagos.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
 
   const cuotasPendientes = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado))
+  const [nuevoPagoAbierto, setNuevoPagoAbierto] = useState(false)
 
   // Sin curso ni pagos ni financiamientos → realmente vacío
   if (!cursoEst && financiamientos.length === 0 && pagos.length === 0) return (
@@ -973,6 +1147,28 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
           </div>
         </section>
       )}
+
+      {/* ── Nuevo pago directo ── */}
+      <div className="rounded-2xl border border-outline-variant overflow-hidden">
+        <button onClick={() => setNuevoPagoAbierto(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-surface-high hover:bg-surface-highest transition-colors cursor-pointer">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-on-surface">Nuevo pago</span>
+            <span className="text-[11px] text-on-surface-variant">· Transferencia, efectivo, etc.</span>
+          </div>
+          {nuevoPagoAbierto ? <ChevronUp className="w-4 h-4 text-on-surface-variant" /> : <ChevronDown className="w-4 h-4 text-on-surface-variant" />}
+        </button>
+        {nuevoPagoAbierto && (
+          <div className="px-4 pb-4">
+            <FormNuevoPago
+              estudianteId={e.id}
+              fetcher={fetcher}
+              onSuccess={() => { setNuevoPagoAbierto(false); onRefresh() }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* ── Sección Abonos ── */}
       {cuotasPendientes.length > 0 && (

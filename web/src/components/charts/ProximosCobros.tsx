@@ -48,7 +48,7 @@ export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
       const token = await getClientToken()
       return createClientFetcher(token ?? '')(`/cobros/proximos?dias=${dias}`) as Promise<{ data: CuotaProxima[] }>
     },
-    staleTime: 2 * 60_000,
+    staleTime: 30_000,
   })
 
   if (isLoading) return <Skeleton />

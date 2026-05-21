@@ -91,7 +91,7 @@ export function FinancieroSection({ periodo }: Props) {
         data: { totales: Totales; variaciones: Variaciones; puntos: Punto[] }
       }>
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   const totales     = data?.data?.totales     ?? { ventaTotal: 0, recaudo: 0, porCobrar: 0, mora: 0 }

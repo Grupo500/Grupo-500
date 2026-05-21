@@ -64,7 +64,7 @@ export function FinancieroChart() {
       const token = await getClientToken()
       return createClientFetcher(token ?? '')('/reportes/financiero') as Promise<{ data: Punto[] }>
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
   })
 
   if (!temaListo || isLoading) return <Skeleton />

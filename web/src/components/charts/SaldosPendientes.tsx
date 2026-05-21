@@ -30,7 +30,7 @@ export function SaldosPendientes() {
       const token = await getClientToken()
       return createClientFetcher(token)<{ data: SaldoPendiente[] }>('/cobros/saldos-pendientes?limit=100')
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   const todos = data?.data ?? []

@@ -22,7 +22,7 @@ export function RankingAsesores() {
       const token = await getClientToken()
       return createClientFetcher(token)<{ data: Asesor[] }>('/reportes/ranking-asesores')
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   const asesores = data?.data ?? []

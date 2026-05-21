@@ -19,7 +19,7 @@ export function IngresosMensualesChart() {
       const token = await getClientToken()
       return createClientFetcher(token)<{ data: { puntos: Punto[]; variacion: number; actual: number } }>('/reportes/ventas-grafica?periodo=mensual')
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   const puntos = data?.data?.puntos ?? []

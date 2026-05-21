@@ -40,7 +40,7 @@ export function VentasChart({ periodo }: { periodo: Periodo }) {
         data: { puntos: { label: string; ingresos: number; pagos: number }[]; variacion: number; actual: number; anterior: number }
       }>
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   if (!temaListo || isLoading) return <Skeleton />

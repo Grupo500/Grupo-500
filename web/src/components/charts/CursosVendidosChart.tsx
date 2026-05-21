@@ -62,7 +62,7 @@ export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo
       const token = await getClientToken()
       return createClientFetcher(token ?? '')(`/reportes/cursos?periodo=${periodo}`) as Promise<{ data: CursoData[] }>
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   if (!temaListo || isLoading) return <Skeleton />
