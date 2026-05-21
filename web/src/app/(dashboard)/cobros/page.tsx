@@ -7,9 +7,10 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP, formatDate, cn } from '@/lib/utils'
 import {
   Wallet, CheckCircle, AlertTriangle, Loader2, X, Search,
-  BookOpen, Paperclip, ExternalLink, Users, Plus, Calendar,
+  BookOpen, Paperclip, Users, Plus, Calendar,
 } from 'lucide-react'
 import { isBefore, parseISO, isToday } from 'date-fns'
+import { VerComprobante } from '@/components/ui/VerComprobante'
 
 /* ─── Tipos ──────────────────────────────────────────────────────────────── */
 interface Cuota {
@@ -296,12 +297,7 @@ function ModalAbono({
                 {subiendo ? 'Subiendo...' : comprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante'}
               </span>
             </label>
-            {comprobante && (
-              <a href={comprobante} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-                <ExternalLink className="w-3 h-3" />Ver comprobante subido
-              </a>
-            )}
+            <VerComprobante url={comprobante} label="Ver comprobante subido" className="mt-1" />
           </div>
         </div>
 
@@ -417,12 +413,7 @@ function DetalleFinanciamiento({
                       <CheckCircle className="w-3 h-3" />Pagado
                     </span>
                     {c.fechaPago && <p className="text-[9px] text-on-surface-variant">{fmtFecha(c.fechaPago)}</p>}
-                    {c.comprobante && (
-                      <a href={c.comprobante} target="_blank" rel="noopener noreferrer"
-                        className="text-[9px] text-primary hover:underline flex items-center gap-0.5 justify-end mt-0.5">
-                        <Paperclip className="w-2.5 h-2.5" />Comp.
-                      </a>
-                    )}
+                    <VerComprobante url={c.comprobante} variante="chip" className="text-[9px] justify-end mt-0.5" />
                   </div>
                 ) : vencida ? (
                   <span className="flex items-center gap-0.5 text-[10px] text-[#dc2626] font-semibold">
@@ -548,14 +539,7 @@ function DetallePago({
       </div>
 
       {/* Comprobante existente */}
-      {p.comprobante && (
-        <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-surface-high border border-outline-variant/40 hover:border-primary/30 transition-colors mb-4">
-          <Paperclip className="w-4 h-4 text-primary flex-shrink-0" />
-          <span className="text-sm text-on-surface flex-1">Ver comprobante</span>
-          <ExternalLink className="w-3.5 h-3.5 text-on-surface-variant" />
-        </a>
-      )}
+      <VerComprobante url={p.comprobante} variante="fila" className="mb-4" />
 
       {/* Formulario cobro */}
       {(isPendiente || isVencido) && (
@@ -576,12 +560,7 @@ function DetallePago({
                 {subiendo ? 'Subiendo...' : comprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante'}
               </span>
             </label>
-            {comprobante && (
-              <a href={comprobante} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-                <ExternalLink className="w-3 h-3" />Ver comprobante
-              </a>
-            )}
+            <VerComprobante url={comprobante} className="mt-1" />
           </div>
           {error && <p className="text-xs text-[var(--error)]">{error}</p>}
           <button
@@ -747,10 +726,7 @@ function MatriculasView({
                 </p>
 
                 {p.comprobante && (
-                  <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-[10px] text-primary hover:underline">
-                    <Paperclip className="w-3 h-3" />Ver comprobante
-                  </a>
+                  <VerComprobante url={p.comprobante} variante="chip" className="text-[10px]" />
                 )}
 
                 <button onClick={() => setSeleccionado({ tipo: 'pago', data: p })}

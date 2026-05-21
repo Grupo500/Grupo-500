@@ -9,9 +9,10 @@ import { formatCOP, cn } from '@/lib/utils'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, MapPin, School, Users, CreditCard, History,
-  Wallet, CheckCircle, AlertTriangle, Paperclip, ExternalLink,
-  Save, Calendar, ChevronDown, ChevronUp, X,
+  Wallet, CheckCircle, AlertTriangle, Paperclip,
+  Save, Calendar, ChevronDown, ChevronUp,
 } from 'lucide-react'
+import { VerComprobante } from '@/components/ui/VerComprobante'
 import { isBefore, parseISO, isToday } from 'date-fns'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
 
@@ -89,7 +90,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
 const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
-const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Otro']
+const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Nequi', 'Otro']
 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: FILA DE CUOTA (vista + edición inline)
@@ -212,12 +213,7 @@ function FilaCuota({ c, fetcher, onRefresh }: {
               {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
               <span className="text-xs text-on-surface-variant">{subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
             </label>
-            {comprobante && (
-              <a href={comprobante} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-                <ExternalLink className="w-3 h-3" />Ver comprobante actual
-              </a>
-            )}
+            <VerComprobante url={comprobante} label="Ver comprobante actual" className="mt-1" />
           </div>
         </>
       )}
@@ -256,12 +252,7 @@ function FilaCuota({ c, fetcher, onRefresh }: {
         </p>
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {c.comprobante && (
-          <a href={c.comprobante} target="_blank" rel="noopener noreferrer"
-            className="text-[10px] text-primary flex items-center gap-1 hover:underline">
-            <Paperclip className="w-3 h-3" />Ver
-          </a>
-        )}
+        <VerComprobante url={c.comprobante} variante="chip" />
         <button onClick={() => setEditando(true)}
           className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-surface-high transition-all cursor-pointer">
           <Pencil className="w-3 h-3 text-on-surface-variant" />
@@ -464,12 +455,7 @@ function FormAbono({ cuotasPendientes, fetcher, onSuccess }: {
           {subiendo ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <Paperclip className="w-4 h-4 text-on-surface-variant" />}
           <span className="text-sm text-on-surface-variant">{subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
         </label>
-        {comprobante && (
-          <a href={comprobante} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-            <ExternalLink className="w-3 h-3" />Ver comprobante
-          </a>
-        )}
+        <VerComprobante url={comprobante} className="mt-1" />
       </div>
 
       {error && <p className="text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{error}</p>}
@@ -728,14 +714,14 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: FORM NUEVO PAGO DIRECTO
 // ══════════════════════════════════════════════════════════════════════════
-const METODOS_BACKEND: Record<string, 'TRANSFERENCIA' | 'EFECTIVO' | 'TARJETA' | 'OTRO'> = {
+const METODOS_BACKEND: Record<string, 'TRANSFERENCIA' | 'TARJETA' | 'OTRO'> = {
   Bancolombia: 'TRANSFERENCIA',
   'Bre-B':     'TRANSFERENCIA',
-  Efectivo:    'EFECTIVO',
+  Nequi:       'TRANSFERENCIA',
   Tarjeta:     'TARJETA',
   Otro:        'OTRO',
 }
-const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Efectivo', 'Tarjeta', 'Otro']
+const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Otro']
 
 function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
   estudianteId: string
@@ -877,12 +863,7 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
                 {subiendo ? 'Subiendo...' : comprobante ? '✓ Adjunto' : 'Adjuntar'}
               </span>
             </label>
-            {comprobante && (
-              <a href={comprobante} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-                <ExternalLink className="w-3 h-3" />Ver comprobante
-              </a>
-            )}
+            <VerComprobante url={comprobante} className="mt-1" />
           </div>
         </div>
       )}
@@ -980,12 +961,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
           </p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {p.comprobante && (
-            <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
-              className="text-[10px] text-primary flex items-center gap-1 hover:underline">
-              <Paperclip className="w-3 h-3" />Ver
-            </a>
-          )}
+          <VerComprobante url={p.comprobante} variante="chip" />
           {!pagado && (
             <button onClick={() => setAbierto(v => !v)}
               className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold hover:bg-primary/20 transition-colors cursor-pointer">
@@ -1024,12 +1000,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
               </label>
             </div>
           </div>
-          {comprobante && (
-            <a href={comprobante} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-              <ExternalLink className="w-3 h-3" />Ver comprobante
-            </a>
-          )}
+          <VerComprobante url={comprobante} />
           {error && <p className="text-xs text-[var(--error)]">{error}</p>}
           <button onClick={() => marcarPagado.mutate()}
             disabled={marcarPagado.isPending || !fechaPago}
