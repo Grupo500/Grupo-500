@@ -50,7 +50,7 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         ref: 'bienvenida',
         title: '¡Bienvenido a Grupo 500! 🎯',
         properties: {
-          description: 'Estás a punto de inscribirte al mejor curso de preparación para el ICFES. Completa este formulario con tus datos. ¡Tus datos están seguros con nosotros!',
+          description: '¡Solo te tomará 5 minutos! Completa este formulario con tus datos y queda oficialmente inscrito. ¡Tus datos están seguros con nosotros! 🔒',
           show_button: true,
           button_text: '¡Empecemos!',
         },
