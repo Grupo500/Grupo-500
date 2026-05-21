@@ -52,17 +52,21 @@ export async function registrar(req: Request, res: Response) {
     include: {
       cursos: { include: { curso: true } },
       financiamientos: { select: { montoTotal: true } },
-      pagos: { select: { monto: true } },
+      pagos: { select: { monto: true, estado: true } },
     },
   })
   if (est?.cursos.length) {
     const ce = est.cursos[0]
-    const precioFinal = ce.curso.precio * (1 - ce.descuentoPorcentaje / 100)
-    const yaRegistrado = est.financiamientos.reduce((s, f) => s + f.montoTotal, 0)
-                       + est.pagos.reduce((s, p) => s + p.monto, 0)
-    if (yaRegistrado + data.monto > precioFinal + 1)
+    // Usar precio base sin aplicar descuento — el descuento es informativo y
+    // lo gestiona el admin. Evita que descuentoPorcentaje=100 bloquee pagos.
+    const precioBase = ce.curso.precio
+    // Solo contar pagos no cancelados contra el tope
+    const yaRegistrado =
+      est.financiamientos.reduce((s, f) => s + f.montoTotal, 0) +
+      est.pagos.filter(p => (p as any).estado !== 'CANCELADO').reduce((s, p) => s + p.monto, 0)
+    if (yaRegistrado + data.monto > precioBase + 1)
       throw new ValidationError(
-        `El monto excede el precio del curso. Saldo disponible: $${Math.max(0, precioFinal - yaRegistrado).toLocaleString('es-CO')}`
+        `El monto excede el precio del curso. Saldo disponible: $${Math.max(0, precioBase - yaRegistrado).toLocaleString('es-CO')}`
       )
   }
 
@@ -84,6 +88,7 @@ const actualizarSchema = z.object({
   metodo:          z.enum(['TRANSFERENCIA', 'TARJETA', 'EFECTIVO', 'OTRO']).optional(),
   estado:          z.enum(['PENDIENTE', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
   fechaVencimiento: z.string().optional(),
+  fechaPago:       z.string().optional(),   // fecha real del pago (no auto-now)
   comprobante:     z.string().url().nullable().optional(),
   notas:           z.string().max(500).nullable().optional(),
 })
@@ -101,7 +106,10 @@ export async function actualizar(req: Request, res: Response) {
       ...(data.fechaVencimiento              && { fechaVencimiento: new Date(data.fechaVencimiento) }),
       ...(data.comprobante !== undefined     && { comprobante: data.comprobante }),
       ...(data.notas !== undefined           && { notas: data.notas }),
-      ...(data.estado === 'PAGADO'           && { fechaPago: new Date() }),
+      // Usar la fecha real del body; si no viene pero se marca PAGADO, usar hoy
+      ...(data.fechaPago
+            ? { fechaPago: new Date(data.fechaPago) }
+            : data.estado === 'PAGADO' && { fechaPago: new Date() }),
     },
     include: { estudiante: true, asesor: true },
   })

@@ -729,15 +729,15 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
   onSuccess: () => void
 }) {
   const hoy = new Date().toISOString().split('T')[0]
-  const [monto,         setMonto]         = useState('')
-  const [metodo,        setMetodo]        = useState('Bancolombia')
-  const [otroMetodo,    setOtroMetodo]    = useState('')
-  const [fechaVenc,     setFechaVenc]     = useState(hoy)
-  const [pagarAhora,    setPagarAhora]    = useState(true)
-  const [fechaPago,     setFechaPago]     = useState(hoy)
-  const [comprobante,   setComprobante]   = useState('')
-  const [subiendo,      setSubiendo]      = useState(false)
-  const [error,         setError]         = useState('')
+  const [monto,       setMonto]       = useState('')
+  const [pagarAhora,  setPagarAhora]  = useState(true)
+  const [fechaPago,   setFechaPago]   = useState(hoy)
+  const [fechaVenc,   setFechaVenc]   = useState(hoy)
+  const [metodo,      setMetodo]      = useState('Bancolombia')
+  const [otroMetodo,  setOtroMetodo]  = useState('')
+  const [comprobante, setComprobante] = useState('')
+  const [subiendo,    setSubiendo]    = useState(false)
+  const [error,       setError]       = useState('')
 
   const subirComp = async (file: File) => {
     setSubiendo(true)
@@ -761,45 +761,70 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
     mutationFn: async () => {
       const n = Number(monto)
       if (!n || n <= 0) throw new Error('Ingresa un monto válido')
-      if (!fechaVenc)   throw new Error('Ingresa la fecha de vencimiento')
+      // Si paga ahora la "fecha de vencimiento" = fecha de pago (ya pagó)
+      const vencimiento = pagarAhora ? fechaPago : fechaVenc
+      if (!vencimiento) throw new Error(pagarAhora ? 'Ingresa la fecha de pago' : 'Ingresa la fecha de vencimiento')
 
-      // 1. Crear el pago
+      // 1. Crear el pago (siempre necesita fechaVencimiento en el backend)
       const created = await fetcher<{ data: { id: string } }>('/pagos', {
         method: 'POST',
-        body: JSON.stringify({
-          estudianteId,
-          monto: n,
-          metodo: metodoDB,
-          fechaVencimiento: fechaVenc,
-        }),
+        body: JSON.stringify({ estudianteId, monto: n, metodo: metodoDB, fechaVencimiento: vencimiento }),
       })
 
-      // 2. Si "pagar ahora", marcar como PAGADO inmediatamente
+      // 2. Si "pagar ahora", marcar PAGADO en el mismo request
       if (pagarAhora && created?.data?.id) {
-        if (!fechaPago) throw new Error('Ingresa la fecha de pago')
         await fetcher(`/pagos/${created.data.id}`, {
           method: 'PATCH',
           body: JSON.stringify({
-            estado:    'PAGADO',
-            fechaPago,
+            estado: 'PAGADO', fechaPago,
             ...(comprobante && { comprobante }),
           }),
         })
       }
     },
-    onSuccess: () => {
-      setMonto(''); setComprobante(''); setError(''); setOtroMetodo('')
-      onSuccess()
-    },
-    onError: (e: any) => setError(e.message ?? 'Error al registrar pago'),
+    onSuccess: () => { setMonto(''); setComprobante(''); setError(''); setOtroMetodo(''); onSuccess() },
+    onError:   (e: any) => setError(e.message ?? 'Error al registrar pago'),
   })
+
+  const montoNum = Number(monto)
 
   return (
     <div className="space-y-4 pt-3 border-t border-outline-variant/40">
       <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Registrar pago directo</p>
 
+      {/* ── 1. Toggle "Pagar ahora" PRIMERO — define el flujo completo ── */}
+      <div
+        onClick={() => setPagarAhora(v => !v)}
+        className={cn(
+          'flex items-center gap-3 py-3 px-4 rounded-xl border-2 transition-all duration-200 cursor-pointer select-none',
+          pagarAhora
+            ? 'border-[#16a34a]/40 bg-[#16a34a]/6'
+            : 'border-outline-variant/60 bg-surface-high hover:border-outline-variant',
+        )}
+      >
+        <div className={cn(
+          'relative w-10 h-5 rounded-full transition-colors duration-200 flex-shrink-0',
+          pagarAhora ? 'bg-[#16a34a]' : 'bg-outline-variant',
+        )}>
+          <span className={cn(
+            'absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+            pagarAhora && 'translate-x-5',
+          )} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={cn('text-[13px] font-bold', pagarAhora ? 'text-[#16a34a]' : 'text-on-surface')}>
+            {pagarAhora ? '✓ Pago recibido' : 'Cobro pendiente'}
+          </p>
+          <p className="text-[11px] text-on-surface-variant leading-tight">
+            {pagarAhora
+              ? 'El estudiante ya pagó — se registra como PAGADO'
+              : 'El estudiante aún no paga — queda pendiente para cobrar'}
+          </p>
+        </div>
+      </div>
+
+      {/* ── 2. Monto + fecha (contexto según modo) ── */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Monto */}
         <div>
           <label className={labelCls}>Monto *</label>
           <div className="relative">
@@ -807,14 +832,22 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
             <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6')} />
           </div>
         </div>
-        {/* Fecha vencimiento */}
-        <div>
-          <label className={labelCls}>Vence el *</label>
-          <input type="date" className={inputCls} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
-        </div>
+        {pagarAhora ? (
+          <div>
+            <label className={labelCls}>Fecha de pago *</label>
+            <input type="date" className={inputCls} value={fechaPago}
+              onChange={e => setFechaPago(e.target.value)} />
+          </div>
+        ) : (
+          <div>
+            <label className={labelCls}>Fecha de vencimiento *</label>
+            <input type="date" className={inputCls} value={fechaVenc}
+              onChange={e => setFechaVenc(e.target.value)} />
+          </div>
+        )}
       </div>
 
-      {/* Método de pago */}
+      {/* ── 3. Método de pago ── */}
       <div>
         <label className={labelCls}>Método de pago *</label>
         <div className="flex flex-wrap gap-1.5">
@@ -832,48 +865,38 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
         )}
       </div>
 
-      {/* Toggle pagar ahora */}
-      <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-surface-high border border-outline-variant/60">
-        <button type="button" onClick={() => setPagarAhora(v => !v)}
-          className={cn('relative w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0 cursor-pointer',
-            pagarAhora ? 'bg-primary' : 'bg-outline-variant')}>
-          <span className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200',
-            pagarAhora && 'translate-x-4')} />
-        </button>
-        <div>
-          <p className="text-[13px] font-semibold text-on-surface">Pagar ahora</p>
-          <p className="text-[11px] text-on-surface-variant">{pagarAhora ? 'El pago se registra como PAGADO' : 'Queda pendiente para cobrar después'}</p>
-        </div>
-      </div>
-
-      {/* Campos adicionales si pagar ahora */}
+      {/* ── 4. Comprobante (solo si paga ahora) ── */}
       {pagarAhora && (
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>Fecha de pago *</label>
-            <input type="date" className={inputCls} value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
-          </div>
-          <div>
-            <label className={labelCls}>Comprobante</label>
-            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
-              <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
-                onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
-              {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
-              <span className="text-xs text-on-surface-variant truncate">
-                {subiendo ? 'Subiendo...' : comprobante ? '✓ Adjunto' : 'Adjuntar'}
-              </span>
-            </label>
-            <VerComprobante url={comprobante} className="mt-1" />
-          </div>
+        <div>
+          <label className={labelCls}>Comprobante (opcional)</label>
+          <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
+            <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
+              onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
+            {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
+            <span className="text-xs text-on-surface-variant">
+              {subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}
+            </span>
+          </label>
+          <VerComprobante url={comprobante} className="mt-1" />
         </div>
       )}
 
       {error && <p className="text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{error}</p>}
 
-      <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !monto || !fechaVenc}
-        className="flex items-center gap-2 w-full justify-center py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer">
+      <button
+        onClick={() => mutation.mutate()}
+        disabled={mutation.isPending || !monto}
+        className={cn(
+          'flex items-center gap-2 w-full justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50',
+          pagarAhora
+            ? 'bg-[#16a34a] hover:bg-[#15803d] text-white'
+            : 'bg-primary hover:bg-primary/90 text-on-primary',
+        )}
+      >
         {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-        {pagarAhora ? `Registrar pago de ${monto ? formatCOP(Number(monto)) : '$0'}` : 'Crear cobro pendiente'}
+        {pagarAhora
+          ? `Registrar pago${montoNum > 0 ? ` de ${formatCOP(montoNum)}` : ''}`
+          : `Crear cobro pendiente${montoNum > 0 ? ` · ${formatCOP(montoNum)}` : ''}`}
       </button>
     </div>
   )
