@@ -157,9 +157,19 @@
 - Configurado `web/vercel.json` con `buildCommand` que incluye `prisma generate`
 - Build exitoso en Vercel ✅
 
+**Fix Railway API Crash:**
+- Eliminado `CLERK_SECRET_KEY` de `api/src/utils/validateEnv.ts` — reemplazado por `NEXTAUTH_SECRET`
+- Agregado `NEXTAUTH_SECRET` en Railway variables
+- Railway redesplegado → API **Online** ✅ (`https://api-production-79572.up.railway.app/health`)
+
+### Estado final sesión 005
+- **Vercel (frontend):** ✅ Online — build exitoso, deploy activo
+- **Railway (API):** ✅ Online — `/health` responde `{ status: "ok" }`
+- **Plataforma funcional end-to-end** con NextAuth v5
+
 ### Pendiente
-- Agregar `NEXTAUTH_SECRET` en Railway (requiere login manual del usuario en railway.app)
 - Configurar Google OAuth credentials reales (AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET) en Vercel
+- Crear primer usuario admin en BD de producción (no hay signup público)
 - Face ID / WebAuthn (siguiente fase)
 - Twilio WhatsApp real
 
