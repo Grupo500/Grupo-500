@@ -401,14 +401,42 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
   }
 
   const form = await response.json() as { id: string }
+  const formUrl = `https://form.typeform.com/to/${form.id}`
   logger.info(`Formulario Typeform creado: ${form.id} con ${cursosActivos.length} curso(s)`)
+
+  // Persistir el form activo en ConfigApp para que todos puedan consultar el enlace
+  await prisma.configApp.upsert({
+    where: { clave: 'typeform_form_id' },
+    update: { valor: form.id },
+    create: { clave: 'typeform_form_id', valor: form.id },
+  })
+  await prisma.configApp.upsert({
+    where: { clave: 'typeform_form_url' },
+    update: { valor: formUrl },
+    create: { clave: 'typeform_form_url', valor: formUrl },
+  })
 
   return ApiResponse.created(res, {
     id:      form.id,
-    url:     `https://form.typeform.com/to/${form.id}`,
+    url:     formUrl,
     cursos:  cursosActivos.length,
     message: 'Formulario creado exitosamente en Typeform',
   })
+}))
+
+// ── Formulario activo (para todos los roles autenticados) ────────────────────
+// Retorna el URL del formulario vigente o null si no existe aún.
+router.get('/formulario-activo', authenticate, asyncHandler(async (_req, res) => {
+  const cfg = await prisma.configApp.findUnique({ where: { clave: 'typeform_form_url' } })
+  return ApiResponse.success(res, { url: cfg?.valor ?? null })
+}))
+
+// ── Eliminar formulario activo (reset, solo ADMIN) ────────────────────────────
+router.delete('/formulario-activo', authenticate, requireRole('ADMIN'), asyncHandler(async (_req, res) => {
+  await prisma.configApp.deleteMany({
+    where: { clave: { in: ['typeform_form_id', 'typeform_form_url'] } },
+  })
+  return ApiResponse.success(res, { message: 'Formulario activo eliminado. Ya puedes generar uno nuevo.' })
 }))
 
 // ── Listar formularios ───────────────────────────────────────────────────────

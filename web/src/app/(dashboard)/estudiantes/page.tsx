@@ -200,9 +200,10 @@ export default function EstudiantesPage() {
   const [form, setForm] = useState(FORM_EMPTY)
   const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
   const [subiendoComprobante, setSubiendoComprobante] = useState(false)
-  const [modalTypeform, setModalTypeform]   = useState(false)
-  const [typeformUrl, setTypeformUrl]       = useState<string | null>(null)
+  const [modalTypeform, setModalTypeform]     = useState(false)
+  const [typeformUrl, setTypeformUrl]         = useState<string | null>(null)
   const [typeformCopiado, setTypeformCopiado] = useState(false)
+  const [confirmarReset, setConfirmarReset]   = useState(false)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getClientToken()
@@ -220,6 +221,14 @@ export default function EstudiantesPage() {
   const asesores: { id: string; nombre: string }[] = asesoresData?.data ?? []
 
   const { data: cursosData } = useQuery({ queryKey: ['cursos-select'], queryFn: () => fetcher<any>('/cursos?limit=100') })
+
+  // ── Formulario Typeform activo ─────────────────────────────────────────────
+  const { data: formActivoData, refetch: refetchFormActivo } = useQuery({
+    queryKey: ['typeform-activo'],
+    queryFn:  () => fetcher<{ data: { url: string | null } }>('/typeform/formulario-activo'),
+    staleTime: 5 * 60_000,  // el URL del form no cambia seguido
+  })
+  const formActivoUrl = formActivoData?.data?.url ?? null
   const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
 
   const { data, isLoading } = useQuery({
@@ -296,10 +305,18 @@ export default function EstudiantesPage() {
   const crearTypeform = useMutation({
     mutationFn: () => fetcher<{ data: { url: string } }>('/typeform/crear-formulario', { method: 'POST' }),
     onSuccess: (res: any) => {
-      setTypeformUrl(res.data?.url ?? res.url)
+      const url = res.data?.url ?? res.url
+      setTypeformUrl(url)
       setModalTypeform(true)
+      refetchFormActivo()  // actualiza el estado del botón inmediatamente
     },
     onError: () => alert('Error al crear el formulario. Intenta de nuevo.'),
+  })
+
+  const resetFormActivo = useMutation({
+    mutationFn: () => fetcher('/typeform/formulario-activo', { method: 'DELETE' }),
+    onSuccess: () => { setConfirmarReset(false); refetchFormActivo() },
+    onError:   () => alert('Error al eliminar el formulario activo.'),
   })
 
   const copiarLink = async () => {
@@ -348,17 +365,32 @@ export default function EstudiantesPage() {
         subtitle={`${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`}
         actions={
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => crearTypeform.mutate()}
-              disabled={crearTypeform.isPending}
-              title="Generar enlace de inscripción"
-              className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-low transition-colors cursor-pointer disabled:opacity-50"
-            >
-              {crearTypeform.isPending
-                ? <Loader2 className="w-4 h-4 animate-spin" />
-                : <Link2 className="w-4 h-4" />}
-              <span className="hidden sm:inline">Formulario</span>
-            </button>
+            {formActivoUrl ? (
+              /* Ya existe un formulario activo → Ver enlace */
+              <button
+                onClick={() => { setTypeformUrl(formActivoUrl); setModalTypeform(true) }}
+                title="Ver enlace del formulario activo"
+                className="flex items-center gap-2 px-4 py-2 bg-[#16a34a]/10 border border-[#16a34a]/30 text-[#16a34a] rounded-xl text-sm font-semibold hover:bg-[#16a34a]/20 transition-colors cursor-pointer"
+              >
+                <Link2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Ver enlace</span>
+              </button>
+            ) : (
+              /* Sin formulario activo → Generar */
+              <button
+                onClick={() => crearTypeform.mutate()}
+                disabled={crearTypeform.isPending}
+                title="Generar formulario de inscripción"
+                className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-lowest transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {crearTypeform.isPending
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Link2 className="w-4 h-4" />}
+                <span className="hidden sm:inline">
+                  {crearTypeform.isPending ? 'Generando...' : 'Formulario'}
+                </span>
+              </button>
+            )}
             <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setCuotasDetalle([]); setFormError('') }}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
               <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo</span>
@@ -864,6 +896,39 @@ export default function EstudiantesPage() {
               >
                 Cerrar
               </button>
+
+              {/* Solo admins pueden regenerar el formulario */}
+              {isAdmin && (
+                <div className="pt-2 border-t border-outline-variant/30">
+                  {!confirmarReset ? (
+                    <button
+                      onClick={() => setConfirmarReset(true)}
+                      className="w-full text-xs text-on-surface-variant/50 hover:text-[#dc2626] transition-colors py-1 cursor-pointer"
+                    >
+                      Regenerar formulario (crea uno nuevo)
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-[11px] text-center text-[#dc2626] font-medium">
+                        ¿Seguro? Se eliminará el enlace actual y se generará uno nuevo.
+                      </p>
+                      <div className="flex gap-2">
+                        <button onClick={() => setConfirmarReset(false)}
+                          className="flex-1 py-1.5 text-xs text-on-surface-variant border border-outline-variant rounded-lg hover:bg-surface-high transition-colors cursor-pointer">
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => resetFormActivo.mutate()}
+                          disabled={resetFormActivo.isPending}
+                          className="flex-1 py-1.5 text-xs text-white bg-[#dc2626] rounded-lg hover:bg-[#b91c1c] disabled:opacity-50 transition-colors cursor-pointer"
+                        >
+                          {resetFormActivo.isPending ? 'Eliminando...' : 'Sí, regenerar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
