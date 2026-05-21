@@ -317,13 +317,14 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
           description: 'Escribe el valor exacto que consignaste (sin puntos ni símbolos). Ejemplo: 600000',
         },
       },
+      // TODO: cambiar type a 'file_upload' cuando se adquiera plan de pago en Typeform
       {
         ref: 'comprobante_pago',
-        title: 'Adjunta el comprobante de tu pago 📎',
-        type: 'file_upload',
-        validations: { required: true },
+        title: '¿Tienes el comprobante de tu pago? Pega aquí el link 🔗',
+        type: 'short_text',
+        validations: { required: false },
         properties: {
-          description: 'Sube la foto o PDF del comprobante de tu consignación o transferencia. Esto nos ayuda a verificar tu pago más rápido.',
+          description: 'Sube la foto o PDF a Google Drive, WhatsApp Web o cualquier servicio y pega el enlace aquí. Si no tienes el link ahora, puedes enviarlo después por WhatsApp.',
         },
       },
       // ── PASO 5: MARKETING ─────────────────────────────────────────────────
