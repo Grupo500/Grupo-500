@@ -726,6 +726,151 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// COMPONENTE: FILA DE PAGO DIRECTO (marcar como pagado + comprobante)
+// ══════════════════════════════════════════════════════════════════════════
+function FilaPagoDirecto({ p, fetcher, onRefresh }: {
+  p: Pago
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+  onRefresh: () => void
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const [fechaPago, setFechaPago] = useState(new Date().toISOString().split('T')[0])
+  const [comprobante, setComprobante] = useState(p.comprobante ?? '')
+  const [subiendo, setSubiendo] = useState(false)
+  const [error, setError] = useState('')
+
+  const pagado  = p.estado === 'PAGADO'
+  const vencido = p.estado === 'VENCIDO'
+
+  const subirComp = async (file: File) => {
+    setSubiendo(true)
+    try {
+      const token = await getClientToken()
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
+      })
+      const json = await res.json()
+      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
+      setComprobante(json.data.url)
+    } catch (e: any) { setError(e.message ?? 'Error al subir') }
+    finally { setSubiendo(false) }
+  }
+
+  const marcarPagado = useMutation({
+    mutationFn: () => fetcher(`/pagos/${p.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        estado:    'PAGADO',
+        fechaPago,
+        ...(comprobante && { comprobante }),
+      }),
+    }),
+    onSuccess: () => { setAbierto(false); setError(''); onRefresh() },
+    onError: (e: any) => setError(e.message ?? 'Error al guardar'),
+  })
+
+  const eliminar = async () => {
+    if (!confirm('¿Eliminar este pago?')) return
+    const token = await getClientToken()
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pagos/${p.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token ?? ''}` },
+    })
+    onRefresh()
+  }
+
+  return (
+    <div className={cn(
+      'rounded-xl border overflow-hidden',
+      pagado  ? 'border-[#16a34a]/20' :
+      vencido ? 'border-[#dc2626]/25' :
+                'border-outline-variant/50',
+    )}>
+      {/* Fila principal */}
+      <div className={cn(
+        'flex items-center gap-3 px-3 py-2.5',
+        pagado  ? 'bg-[#16a34a]/4' :
+        vencido ? 'bg-[#dc2626]/4' :
+                  'bg-surface-high/40',
+      )}>
+        <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
+          pagado ? 'bg-[#16a34a]/15' : vencido ? 'bg-[#dc2626]/15' : 'bg-surface-high')}>
+          {pagado  ? <CheckCircle  className="w-3.5 h-3.5 text-[#16a34a]" />
+           : vencido ? <AlertTriangle className="w-3.5 h-3.5 text-[#dc2626]" />
+           : <CreditCard className="w-3.5 h-3.5 text-on-surface-variant" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-semibold text-on-surface">{formatCOP(p.monto)} · {p.metodo}</p>
+          <p className="text-[10px] text-on-surface-variant">
+            {pagado && p.fechaPago ? `Pagado ${fmtFecha(p.fechaPago)}` : `Vence ${fmtFecha(p.fechaVencimiento)}`}
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {p.comprobante && (
+            <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
+              className="text-[10px] text-primary flex items-center gap-1 hover:underline">
+              <Paperclip className="w-3 h-3" />Ver
+            </a>
+          )}
+          {!pagado && (
+            <button onClick={() => setAbierto(v => !v)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold hover:bg-primary/20 transition-colors cursor-pointer">
+              <CheckCircle className="w-3 h-3" />
+              {abierto ? 'Cancelar' : 'Marcar pagado'}
+            </button>
+          )}
+          <button onClick={eliminar}
+            className="p-1 rounded-md hover:bg-[#dc2626]/10 transition-colors cursor-pointer">
+            <Trash2 className="w-3.5 h-3.5 text-[#dc2626]" />
+          </button>
+        </div>
+      </div>
+
+      {/* Panel de confirmación de pago */}
+      {abierto && (
+        <div className="px-4 py-3 border-t border-outline-variant/30 bg-surface-lowest space-y-3">
+          <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Confirmar pago</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={labelCls}>Fecha de pago *</label>
+              <input type="date" className={cn(inputCls, 'text-sm py-1.5')}
+                value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Comprobante (opcional)</label>
+              <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
+                <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
+                {subiendo
+                  ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                  : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
+                <span className="text-[11px] text-on-surface-variant truncate">
+                  {subiendo ? 'Subiendo...' : comprobante ? '✓ Adjunto' : 'Adjuntar'}
+                </span>
+              </label>
+            </div>
+          </div>
+          {comprobante && (
+            <a href={comprobante} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+              <ExternalLink className="w-3 h-3" />Ver comprobante
+            </a>
+          )}
+          {error && <p className="text-xs text-[var(--error)]">{error}</p>}
+          <button onClick={() => marcarPagado.mutate()}
+            disabled={marcarPagado.isPending || !fechaPago}
+            className="flex items-center gap-2 w-full justify-center py-2 bg-[#16a34a] text-white rounded-xl text-xs font-semibold hover:bg-[#15803d] disabled:opacity-50 transition-colors cursor-pointer">
+            {marcarPagado.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+            Confirmar pago de {formatCOP(p.monto)}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // TAB: FINANCIERO (incluye abonos)
 // ══════════════════════════════════════════════════════════════════════════
 function TabFinanciero({ e, fetcher, onRefresh }: {
@@ -818,51 +963,10 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
       {pagos.length > 0 && (
         <section className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Pagos directos</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
-            {pagos.map(p => {
-              const pagado = p.estado === 'PAGADO'
-              const vencido = p.estado === 'VENCIDO'
-              return (
-                <div key={p.id} className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl border',
-                  pagado ? 'border-[#16a34a]/20 bg-[#16a34a]/4' :
-                  vencido ? 'border-[#dc2626]/25 bg-[#dc2626]/4' :
-                  'border-outline-variant/50 bg-surface-high/40',
-                )}>
-                  <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-                    pagado ? 'bg-[#16a34a]/15' : vencido ? 'bg-[#dc2626]/15' : 'bg-surface-high')}>
-                    {pagado ? <CheckCircle className="w-3.5 h-3.5 text-[#16a34a]" />
-                            : vencido ? <AlertTriangle className="w-3.5 h-3.5 text-[#dc2626]" />
-                            : <CreditCard className="w-3.5 h-3.5 text-on-surface-variant" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-on-surface">{formatCOP(p.monto)} · {p.metodo}</p>
-                    <p className="text-[10px] text-on-surface-variant">
-                      {pagado && p.fechaPago ? `Pagado ${fmtFecha(p.fechaPago)}` : `Vence ${fmtFecha(p.fechaVencimiento)}`}
-                    </p>
-                  </div>
-                  {p.comprobante && (
-                    <a href={p.comprobante} target="_blank" rel="noopener noreferrer"
-                      className="flex-shrink-0 text-[10px] text-primary flex items-center gap-1 hover:underline">
-                      <Paperclip className="w-3 h-3" />Ver
-                    </a>
-                  )}
-                  <button
-                    onClick={async () => {
-                      if (!confirm('¿Eliminar este pago?')) return
-                      const token = await getClientToken()
-                      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pagos/${p.id}`, {
-                        method: 'DELETE',
-                        headers: { Authorization: `Bearer ${token ?? ''}` },
-                      })
-                      onRefresh()
-                    }}
-                    className="flex-shrink-0 p-1 rounded-md hover:bg-[#dc2626]/10 transition-colors cursor-pointer">
-                    <Trash2 className="w-3.5 h-3.5 text-[#dc2626]" />
-                  </button>
-                </div>
-              )
-            })}
+          <div className="space-y-2">
+            {pagos.map(p => (
+              <FilaPagoDirecto key={p.id} p={p} fetcher={fetcher} onRefresh={onRefresh} />
+            ))}
           </div>
         </section>
       )}
