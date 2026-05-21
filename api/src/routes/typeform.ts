@@ -383,12 +383,12 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    logger.error('Error creando formulario Typeform:', error)
+    const error: unknown = await response.json()
+    logger.error({ err: error }, 'Error creando formulario Typeform')
     return res.status(500).json({ error: 'Error al crear formulario en Typeform', details: error })
   }
 
-  const form = await response.json()
+  const form = await response.json() as { id: string }
   logger.info(`Formulario Typeform creado: ${form.id}`)
 
   return ApiResponse.created(res, {
