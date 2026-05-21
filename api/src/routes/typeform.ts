@@ -17,6 +17,23 @@ function typeformHeaders() {
 
 // ── Crear formulario de inscripción en Typeform ──────────────────────────────
 router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandler(async (_req, res) => {
+  // Traer cursos activos de la BD para generar las opciones dinámicamente
+  const cursosActivos = await prisma.curso.findMany({
+    where: { activo: true },
+    orderBy: { nombre: 'asc' },
+    select: { id: true, nombre: true, precio: true },
+  })
+
+  const cursoChoices = cursosActivos.map(c => ({
+    ref: `curso_${c.id}`,
+    label: `${c.nombre} - ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(c.precio)}`,
+  }))
+
+  // Si no hay cursos aún, agregar opción genérica
+  if (cursoChoices.length === 0) {
+    cursoChoices.push({ ref: 'curso_general', label: 'Curso Pre-ICFES Grupo 500' })
+  }
+
   const formPayload = {
     title: 'Formulario de Inscripción - Grupo 500',
     settings: {
@@ -44,7 +61,7 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         ref: 'gracias',
         title: '¡Listo! Ya eres parte de Grupo 500 🚀',
         properties: {
-          description: 'Recuerda enviar tu comprobante de pago y un pantallazo de este formulario completado al WhatsApp para que te agreguemos al grupo. ¡Vamos con toda!',
+          description: '¡Tu inscripción fue recibida exitosamente! En breve te contactaremos para confirmar tu pago y darte acceso al grupo de WhatsApp. ¡Vamos con toda!',
           show_button: false,
         },
       },
@@ -79,9 +96,10 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         validations: { required: true },
         properties: {
           choices: [
-            { ref: 'cc', label: 'Cédula de Ciudadanía' },
-            { ref: 'ti', label: 'Tarjeta de Identidad' },
-            { ref: 'ce', label: 'Cédula de extranjería / Pasaporte' },
+            { ref: 'ti',       label: 'Tarjeta de Identidad (TI)' },
+            { ref: 'cc',       label: 'Cédula de Ciudadanía (CC)' },
+            { ref: 'ce',       label: 'Cédula de Extranjería (CE)' },
+            { ref: 'pa',       label: 'Pasaporte' },
             { ref: 'otro_doc', label: 'Otro' },
           ],
           allow_multiple_selection: false,
@@ -99,13 +117,9 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         title: '¿Cuál es tu fecha de nacimiento?',
         type: 'date',
         validations: { required: true },
+        properties: { description: 'Formato: día / mes / año' },
       },
-      {
-        ref: 'edad',
-        title: '¿Cuántos años tienes?',
-        type: 'number',
-        validations: { required: true, min_value: 13, max_value: 30 },
-      },
+      // ── NOTA: edad se calcula automáticamente en el servidor desde fecha_nacimiento ──
       {
         ref: 'colegio',
         title: '¿En qué colegio estudias o estudiaste?',
@@ -156,8 +170,8 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         validations: { required: true },
         properties: {
           choices: [
-            { ref: 'mama', label: 'Mamá' },
-            { ref: 'papa', label: 'Papá' },
+            { ref: 'mama',           label: 'Mamá' },
+            { ref: 'papa',           label: 'Papá' },
             { ref: 'otro_parentesco', label: 'Otro' },
           ],
           allow_multiple_selection: false,
@@ -178,8 +192,8 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         validations: { required: true },
         properties: {
           choices: [
-            { ref: 'cc_acudiente', label: 'Cédula de Ciudadanía' },
-            { ref: 'ce_acudiente', label: 'Cédula de extranjería / Pasaporte' },
+            { ref: 'cc_acudiente',  label: 'Cédula de Ciudadanía (CC)' },
+            { ref: 'ce_acudiente',  label: 'Cédula de Extranjería / Pasaporte' },
             { ref: 'otro_doc_acudiente', label: 'Otro' },
           ],
           allow_multiple_selection: false,
@@ -221,8 +235,8 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         properties: {
           description: 'Medicina, Microbiología, Enfermería, Fisioterapia, Nutrición, Odontología, Psicología u otras.',
           choices: [
-            { ref: 'si_salud', label: 'Sí, quiero estudiar una carrera de la salud' },
-            { ref: 'no_salud', label: 'No, mi carrera no es del área de la salud' },
+            { ref: 'si_salud',  label: 'Sí, quiero estudiar una carrera de la salud' },
+            { ref: 'no_salud',  label: 'No, mi carrera no es del área de la salud' },
           ],
           allow_multiple_selection: false,
           allow_other_choice: false,
@@ -236,10 +250,10 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         properties: {
           description: 'Anatomía, Fisiología, Histología, Bioquímica y Biología Celular explicadas desde cero. Tienes precio especial por ser parte de Grupo 500.',
           choices: [
-            { ref: 'si_premedico', label: 'Sí, mándame la información' },
+            { ref: 'si_premedico',      label: 'Sí, mándame la información' },
             { ref: 'tal_vez_premedico', label: 'Tal vez, si me gusta el preicfes me inscribo' },
-            { ref: 'tal_vez_dinero', label: 'Tal vez, ahorita no tengo el dinero pero en un futuro miramos' },
-            { ref: 'no_premedico', label: 'No, mi carrera no necesita esos conocimientos' },
+            { ref: 'tal_vez_dinero',    label: 'Tal vez, ahorita no tengo el dinero pero en un futuro miramos' },
+            { ref: 'no_premedico',      label: 'No, mi carrera no necesita esos conocimientos' },
           ],
           allow_multiple_selection: false,
           allow_other_choice: false,
@@ -252,23 +266,35 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         validations: { required: true },
         properties: {
           choices: [
-            { ref: 'uis',    label: 'Universidad Industrial de Santander UIS' },
-            { ref: 'unab',   label: 'Universidad Autónoma de Bucaramanga UNAB' },
-            { ref: 'pamplona', label: 'Universidad de Pamplona' },
-            { ref: 'unal',   label: 'Universidad Nacional de Colombia UNAL' },
-            { ref: 'javeriana', label: 'Universidad Javeriana' },
+            { ref: 'uis',        label: 'Universidad Industrial de Santander UIS' },
+            { ref: 'unab',       label: 'Universidad Autónoma de Bucaramanga UNAB' },
+            { ref: 'pamplona',   label: 'Universidad de Pamplona' },
+            { ref: 'unal',       label: 'Universidad Nacional de Colombia UNAL' },
+            { ref: 'javeriana',  label: 'Universidad Javeriana' },
             { ref: 'pontificia', label: 'Universidad Pontificia Bolivariana' },
-            { ref: 'udea',   label: 'Universidad de Antioquia UDEA' },
-            { ref: 'univalle', label: 'Universidad del Valle UNIVALLE' },
-            { ref: 'uptc',   label: 'Universidad Pedagógica y Tecnológica UPTC' },
-            { ref: 'libre',  label: 'Universidad Libre' },
-            { ref: 'cartagena', label: 'Universidad de Cartagena' },
+            { ref: 'udea',       label: 'Universidad de Antioquia UDEA' },
+            { ref: 'univalle',   label: 'Universidad del Valle UNIVALLE' },
+            { ref: 'uptc',       label: 'Universidad Pedagógica y Tecnológica UPTC' },
+            { ref: 'libre',      label: 'Universidad Libre' },
+            { ref: 'cartagena',  label: 'Universidad de Cartagena' },
           ],
           allow_multiple_selection: false,
           allow_other_choice: true,
         },
       },
-      // ── PASO 4: PAGO ─────────────────────────────────────────────────────
+      // ── PASO 4: CURSO Y PAGO ─────────────────────────────────────────────
+      {
+        ref: 'curso_seleccionado',
+        title: '¿Qué curso adquiriste?',
+        type: 'multiple_choice',
+        validations: { required: true },
+        properties: {
+          description: 'Selecciona el curso por el que realizaste tu pago.',
+          choices: cursoChoices,
+          allow_multiple_selection: false,
+          allow_other_choice: false,
+        },
+      },
       {
         ref: 'cuenta_pago',
         title: '¿A qué cuenta realizaste el pago?',
@@ -283,36 +309,21 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         },
       },
       {
-        ref: 'valor_curso',
-        title: '¿Por cuánto valor adquiriste el curso?',
-        type: 'multiple_choice',
-        validations: { required: true },
+        ref: 'monto_consignado',
+        title: '¿Cuánto dinero consignaste?',
+        type: 'number',
+        validations: { required: true, min_value: 1 },
         properties: {
-          choices: [
-            { ref: 'precio_600', label: '$600.000 - Precio general' },
-            { ref: 'precio_540', label: '$540.000 - Precio promoción' },
-            { ref: 'precio_500', label: '$500.000 - Precio promoción' },
-          ],
-          allow_multiple_selection: false,
-          allow_other_choice: true,
+          description: 'Escribe el valor exacto que consignaste (sin puntos ni símbolos). Ejemplo: 600000',
         },
       },
       {
-        ref: 'monto_consignado',
-        title: '¿Cuánto dinero consignaste?',
-        type: 'multiple_choice',
+        ref: 'comprobante_pago',
+        title: 'Adjunta el comprobante de tu pago 📎',
+        type: 'file_upload',
         validations: { required: true },
         properties: {
-          description: 'Sé sincero — esto nos ayuda a verificar tu pago correctamente.',
-          choices: [
-            { ref: 'pago_600',  label: '$600.000 - Pago completo (precio general)' },
-            { ref: 'pago_540',  label: '$540.000 - Pago completo (precio promoción)' },
-            { ref: 'pago_500',  label: '$500.000 - Pago completo (precio promoción)' },
-            { ref: 'pago_300',  label: '$300.000 - 50% del precio general' },
-            { ref: 'pago_250',  label: '$250.000 - 50% del precio promoción' },
-          ],
-          allow_multiple_selection: false,
-          allow_other_choice: true,
+          description: 'Sube la foto o PDF del comprobante de tu consignación o transferencia. Esto nos ayuda a verificar tu pago más rápido.',
         },
       },
       // ── PASO 5: MARKETING ─────────────────────────────────────────────────
@@ -346,8 +357,8 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         properties: {
           description: 'Lee los términos y condiciones antes de continuar: https://drive.google.com/file/d/11uAceAG_244vinKAA4WWZL8ng49q8v11/view',
           choices: [
-            { ref: 'mayor_acepta',  label: 'Soy mayor de edad y acepto los términos y condiciones' },
-            { ref: 'menor_acepta',  label: 'Soy menor de edad y mi acudiente ha leído y aceptado los términos y condiciones' },
+            { ref: 'mayor_acepta', label: 'Soy mayor de edad y acepto los términos y condiciones' },
+            { ref: 'menor_acepta', label: 'Soy menor de edad y mi acudiente ha leído y aceptado los términos y condiciones' },
           ],
           allow_multiple_selection: false,
           allow_other_choice: false,
@@ -361,11 +372,11 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         validations: { required: true },
         properties: {
           choices: [
-            { ref: 'vamos',        label: '¡Vamos con toda!' },
-            { ref: 'obvio',        label: '¡Obvio!' },
-            { ref: 'eso_se_sabe',  label: '¡Eso se sabe!' },
-            { ref: 'claro',        label: 'Claroooooooooooooo' },
-            { ref: 'asi_es',       label: '¡Así es!' },
+            { ref: 'vamos',         label: '¡Vamos con toda!' },
+            { ref: 'obvio',         label: '¡Obvio!' },
+            { ref: 'eso_se_sabe',   label: '¡Eso se sabe!' },
+            { ref: 'claro',         label: 'Claroooooooooooooo' },
+            { ref: 'asi_es',        label: '¡Así es!' },
             { ref: 'efectivamente', label: 'Efectivamente' },
           ],
           allow_multiple_selection: false,
@@ -388,11 +399,12 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
   }
 
   const form = await response.json() as { id: string }
-  logger.info(`Formulario Typeform creado: ${form.id}`)
+  logger.info(`Formulario Typeform creado: ${form.id} con ${cursosActivos.length} curso(s)`)
 
   return ApiResponse.created(res, {
-    id:  form.id,
-    url: `https://form.typeform.com/to/${form.id}`,
+    id:      form.id,
+    url:     `https://form.typeform.com/to/${form.id}`,
+    cursos:  cursosActivos.length,
     message: 'Formulario creado exitosamente en Typeform',
   })
 }))
@@ -421,11 +433,10 @@ router.post('/webhook', asyncHandler(async (req, res) => {
   }
 
   const answers = payload.form_response.answers as any[]
-  const fields  = payload.form_response.definition?.fields as any[]
 
-  // Helper para obtener respuesta por ref del campo
-  const get = (ref: string) => {
-    const answer = answers.find((a: any) => a.field?.ref === ref)
+  // Helper: obtener respuesta por ref del campo
+  const get = (ref: string): any => {
+    const answer = answers?.find((a: any) => a.field?.ref === ref)
     if (!answer) return null
     switch (answer.type) {
       case 'text':         return answer.text
@@ -434,10 +445,20 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       case 'number':       return answer.number
       case 'boolean':      return answer.boolean
       case 'date':         return answer.date
+      case 'file_url':     return answer.file_url        // comprobante
       case 'choice':       return answer.choice?.label ?? answer.choice?.other
       case 'choices':      return answer.choices?.labels?.join(', ')
       default:             return null
     }
+  }
+
+  // Calcular edad desde fecha de nacimiento (no se pregunta en el formulario)
+  function calcularEdad(fechaNac: Date): number {
+    const hoy = new Date()
+    let edad = hoy.getFullYear() - fechaNac.getFullYear()
+    const m = hoy.getMonth() - fechaNac.getMonth()
+    if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) edad--
+    return edad
   }
 
   try {
@@ -452,7 +473,6 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       let colegio = await prisma.colegio.findFirst({
         where: { nombre: { equals: nombreColegio, mode: 'insensitive' } },
       })
-
       if (!colegio) {
         colegio = await prisma.colegio.create({
           data: { nombre: nombreColegio, ciudad },
@@ -461,7 +481,7 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       colegioId = colegio.id
     }
 
-    // ── 2. Crear estudiante ────────────────────────────────────────────────
+    // ── 2. Validar email único ─────────────────────────────────────────────
     const email = get('email_google') as string
     const existente = await prisma.estudiante.findFirst({ where: { email } })
 
@@ -470,30 +490,50 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       return res.status(200).json({ message: 'Estudiante ya registrado', id: existente.id })
     }
 
+    // ── 3. Calcular edad automáticamente ──────────────────────────────────
     const fechaNacRaw = get('fecha_nacimiento') as string | null
     const fechaNacimiento = fechaNacRaw ? new Date(fechaNacRaw) : new Date('2000-01-01')
+    const edad = calcularEdad(fechaNacimiento)
 
+    // ── 4. Buscar curso seleccionado ───────────────────────────────────────
+    const cursoLabel = get('curso_seleccionado') as string | null
+    let cursoId: string | undefined
+    let cursoPrecio = 0
+
+    if (cursoLabel) {
+      // El label tiene formato: "Nombre del curso - $XXX.XXX"
+      // Buscar por nombre (parte antes del " - $")
+      const nombreCurso = cursoLabel.split(' - ')[0].trim()
+      const curso = await prisma.curso.findFirst({
+        where: { nombre: { equals: nombreCurso, mode: 'insensitive' }, activo: true },
+      })
+      if (curso) {
+        cursoId = curso.id
+        cursoPrecio = curso.precio
+      }
+    }
+
+    // ── 5. Crear estudiante ────────────────────────────────────────────────
     const estudiante = await prisma.estudiante.create({
       data: {
-        nombre:            get('nombres_apellidos') as string,
+        nombre:             get('nombres_apellidos') as string,
         email,
-        telefono:          get('celular_estudiante') as string ?? '',
+        telefono:           get('celular_estudiante') as string ?? '',
         fechaNacimiento,
-        tipoDocumento:     get('tipo_documento_estudiante') as string ?? '',
-        documento:         get('numero_documento_estudiante') as string ?? '',
-        grado:             get('grado') as string ?? '',
-        ciudad:            get('ciudad_residencia') as string ?? '',
-        direccion:         get('direccion') as string ?? '',
-        primerIcfes:       get('primer_icfes') as boolean ?? true,
-        puntajeAnterior:   get('puntaje_anterior') as string ?? 'N/A',
-        carreraInteres:    get('carrera_interes') as string ?? '',
-        interesPremedico:  get('interes_premedico') as string ?? '',
+        tipoDocumento:      get('tipo_documento_estudiante') as string ?? 'TI',
+        documento:          get('numero_documento_estudiante') as string ?? '',
+        grado:              get('grado') as string ?? '',
+        ciudad:             get('ciudad_residencia') as string ?? '',
+        direccion:          get('direccion') as string ?? '',
+        primerIcfes:        get('primer_icfes') as boolean ?? true,
+        puntajeAnterior:    get('puntaje_anterior') as string ?? 'N/A',
+        carreraInteres:     get('carrera_interes') as string ?? '',
+        interesPremedico:   get('interes_premedico') as string ?? '',
         universidadInteres: get('universidad_interes') as string ?? '',
         colegioId,
         acudiente: {
           create: {
             nombre:          get('nombres_acudiente') as string ?? '',
-            email:           '',
             telefono:        get('celular_acudiente') as string ?? '',
             relacion:        get('parentesco_acudiente') as string ?? 'Otro',
             tipoDocumento:   get('tipo_documento_acudiente') as string ?? '',
@@ -504,42 +544,76 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       include: { acudiente: true },
     })
 
-    // ── 3. Registrar fuente de marketing ──────────────────────────────────
+    logger.info(`Estudiante creado vía Typeform: ${estudiante.id} — ${estudiante.nombre} (edad calculada: ${edad})`)
+
+    // ── 6. Asignar curso (CursoEstudiante) ────────────────────────────────
+    if (cursoId) {
+      const montoConsignado = (get('monto_consignado') as number) ?? 0
+      // Calcular descuento si pagó menos del precio oficial
+      const descuentoPorcentaje = cursoPrecio > 0 && montoConsignado > 0 && montoConsignado < cursoPrecio
+        ? Math.round(((cursoPrecio - montoConsignado) / cursoPrecio) * 100)
+        : 0
+
+      await prisma.cursoEstudiante.create({
+        data: {
+          estudianteId:        estudiante.id,
+          cursoId,
+          descuentoPorcentaje,
+        },
+      })
+      logger.info(`CursoEstudiante creado: estudianteId=${estudiante.id} cursoId=${cursoId}`)
+    }
+
+    // ── 7. Registrar fuente de marketing ──────────────────────────────────
     const fuenteContacto = get('como_conocio') as string | null
     if (fuenteContacto) {
       await prisma.fuenteContacto.create({
         data: {
           estudianteId: estudiante.id,
-          fuente: fuenteContacto,
-          formId: payload.form_response.form_id ?? '',
-          respondedAt: new Date(payload.form_response.submitted_at ?? Date.now()),
+          fuente:       fuenteContacto,
+          formId:       payload.form_response.form_id ?? '',
+          respondedAt:  new Date(payload.form_response.submitted_at ?? Date.now()),
         },
       })
     }
 
-    // ── 4. Registrar pago inicial ──────────────────────────────────────────
-    const montoRaw = get('monto_consignado') as string | null
-    if (montoRaw) {
-      const montoNumero = parseFloat(montoRaw.replace(/[^0-9]/g, ''))
-      if (!isNaN(montoNumero) && montoNumero > 0) {
-        await prisma.pago.create({
-          data: {
-            estudianteId:    estudiante.id,
-            monto:           montoNumero,
-            estado:          'PENDIENTE', // pendiente de verificar comprobante
-            fechaVencimiento: new Date(),
-            metodo:          'TRANSFERENCIA',
-            notas:           `Inscripción vía Typeform. Cuenta: ${get('cuenta_pago') ?? 'No especificada'}. Valor acordado: ${get('valor_curso') ?? 'No especificado'}`,
-          },
-        })
-      }
+    // ── 8. Registrar pago con comprobante ─────────────────────────────────
+    const montoConsignado  = (get('monto_consignado') as number) ?? 0
+    const comprobanteUrl   = get('comprobante_pago') as string | null   // URL de Typeform
+    const cuentaPago       = get('cuenta_pago') as string | null
+
+    if (montoConsignado > 0) {
+      const tienePago = !!comprobanteUrl
+      await prisma.pago.create({
+        data: {
+          estudianteId:    estudiante.id,
+          monto:           montoConsignado,
+          estado:          tienePago ? 'PENDIENTE' : 'PENDIENTE', // siempre pendiente de verificación humana
+          fechaVencimiento: new Date(),
+          fechaPago:       tienePago ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
+          metodo:          'TRANSFERENCIA',
+          comprobante:     comprobanteUrl ?? null,
+          notas: [
+            `Inscripción vía Typeform.`,
+            cuentaPago ? `Cuenta: ${cuentaPago}.` : '',
+            cursoLabel ? `Curso: ${cursoLabel}.` : '',
+            comprobanteUrl ? 'Comprobante adjunto desde formulario.' : 'Sin comprobante adjunto.',
+          ].filter(Boolean).join(' '),
+        },
+      })
+      logger.info(`Pago registrado: $${montoConsignado} ${comprobanteUrl ? '(con comprobante)' : '(sin comprobante)'}`)
     }
 
-    logger.info(`Estudiante inscrito vía Typeform: ${estudiante.id} — ${estudiante.nombre}`)
-    return res.status(200).json({ message: 'Inscripción procesada correctamente', estudianteId: estudiante.id })
+    return res.status(200).json({
+      message:      'Inscripción procesada correctamente',
+      estudianteId: estudiante.id,
+      edad,
+      cursoAsignado: !!cursoId,
+      comprobante:   !!comprobanteUrl,
+    })
 
   } catch (error: any) {
-    logger.error('Error procesando webhook Typeform:', error)
+    logger.error({ err: error }, 'Error procesando webhook Typeform')
     return res.status(500).json({ error: 'Error procesando inscripción', details: error.message })
   }
 }))

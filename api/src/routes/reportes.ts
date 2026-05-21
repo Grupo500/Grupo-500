@@ -14,5 +14,6 @@ router.get('/cursos',          asyncHandler(ctrl.cursosMasVendidos))
 router.get('/financiero',         asyncHandler(ctrl.financiero))
 router.get('/financiero-periodo', asyncHandler(ctrl.financieroPeriodo))
 router.get('/ventas-grafica',  asyncHandler(ctrl.ventasGrafica))
+router.get('/marketing',       asyncHandler(ctrl.marketing))
 
 export default router

@@ -405,3 +405,22 @@ export async function ventasGrafica(req: Request, res: Response) {
 
   return ApiResponse.success(res, { puntos: resultados, variacion, actual, anterior })
 }
+
+// ── Marketing: fuentes de contacto ──────────────────────────────────────────
+export async function marketing(_req: Request, res: Response) {
+  const fuentes = await prisma.fuenteContacto.groupBy({
+    by: ['fuente'],
+    _count: { fuente: true },
+    orderBy: { _count: { fuente: 'desc' } },
+  })
+
+  const total = fuentes.reduce((s, f) => s + f._count.fuente, 0)
+
+  const data = fuentes.map(f => ({
+    fuente:     f.fuente,
+    cantidad:   f._count.fuente,
+    porcentaje: total > 0 ? Math.round((f._count.fuente / total) * 100) : 0,
+  }))
+
+  return ApiResponse.success(res, { total, fuentes: data })
+}
