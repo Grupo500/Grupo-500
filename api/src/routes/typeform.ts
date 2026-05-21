@@ -23,7 +23,6 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
       language: 'es',
       progress_bar: 'percentage',
       show_progress_bar: true,
-      show_typeform_branding: false,
       meta: {
         title: 'Inscripción Grupo 500 - Curso Pre-ICFES',
         description: 'Formulario de inscripción para el curso de preparación ICFES de Grupo 500.',
