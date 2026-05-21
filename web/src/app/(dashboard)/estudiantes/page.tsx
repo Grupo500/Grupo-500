@@ -71,11 +71,14 @@ interface PaginatedResponse {
 function calcFinanciero(e: Estudiante) {
   const hoy = new Date()
 
-  // Total real = precio del curso con descuento
+  // Total = precio base del curso (SIN aplicar descuento) para evitar
+  // que un descuentoPorcentaje erróneo oculte la deuda real.
+  // El descuento es informativo; lo que importa es si hay pagos registrados.
   const cursoEst     = e.cursos?.[0]
   const totalGeneral = cursoEst
-    ? Math.round(cursoEst.curso.precio * (1 - cursoEst.descuentoPorcentaje / 100))
-    : (e.financiamientos?.reduce((s, f) => s + f.montoTotal, 0) ?? 0) + (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
+    ? cursoEst.curso.precio                                                                   // precio sin descuento
+    : (e.financiamientos?.reduce((s, f) => s + f.montoTotal, 0) ?? 0)
+    + (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
 
   const pagadoFin      = e.financiamientos?.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
   const pagadoPagos    = e.pagos?.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0) ?? 0
@@ -89,11 +92,13 @@ function calcFinanciero(e: Estudiante) {
   const moraPagos   = e.pagos?.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0) ?? 0
   const totalMora   = moraFin + moraPagos
 
+  // Si tiene curso pero 0 pagos → pendiente (nunca "sin deuda")
+  const tieneCurso  = !!cursoEst
   const estado: 'al-dia' | 'pendiente' | 'mora' | 'sin-deuda' =
-    totalMora > 0        ? 'mora' :
-    totalPendiente > 0   ? 'pendiente' :
-    totalGeneral > 0     ? 'al-dia' :
-                           'sin-deuda'
+    totalMora > 0                       ? 'mora'      :
+    totalPendiente > 0                  ? 'pendiente' :
+    totalGeneral > 0 || tieneCurso      ? 'al-dia'    :
+                                          'sin-deuda'
 
   return { totalGeneral, totalPagado, totalPendiente, totalMora, progreso, estado }
 }
