@@ -11,7 +11,7 @@ import { formatCOP } from '@/lib/utils'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
-  CheckCircle, Clock, ChevronRight as Arrow,
+  CheckCircle, Clock, ChevronRight as Arrow, Link2, Copy, Check, ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -191,6 +191,9 @@ export default function EstudiantesPage() {
   const [form, setForm] = useState(FORM_EMPTY)
   const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
   const [subiendoComprobante, setSubiendoComprobante] = useState(false)
+  const [modalTypeform, setModalTypeform]   = useState(false)
+  const [typeformUrl, setTypeformUrl]       = useState<string | null>(null)
+  const [typeformCopiado, setTypeformCopiado] = useState(false)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getClientToken()
@@ -281,6 +284,22 @@ export default function EstudiantesPage() {
     onError: () => setConfirmEliminar(null),
   })
 
+  const crearTypeform = useMutation({
+    mutationFn: () => fetcher<{ data: { url: string } }>('/typeform/crear-formulario', { method: 'POST' }),
+    onSuccess: (res: any) => {
+      setTypeformUrl(res.data?.url ?? res.url)
+      setModalTypeform(true)
+    },
+    onError: () => alert('Error al crear el formulario. Intenta de nuevo.'),
+  })
+
+  const copiarLink = async () => {
+    if (!typeformUrl) return
+    await navigator.clipboard.writeText(typeformUrl)
+    setTypeformCopiado(true)
+    setTimeout(() => setTypeformCopiado(false), 2000)
+  }
+
   const subirComprobante = async (file: File) => {
     setSubiendoComprobante(true)
     try {
@@ -319,10 +338,23 @@ export default function EstudiantesPage() {
         title="Estudiantes"
         subtitle={`${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`}
         actions={
-          <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setCuotasDetalle([]); setFormError('') }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
-            <Plus className="w-4 h-4" />Nuevo
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => crearTypeform.mutate()}
+              disabled={crearTypeform.isPending}
+              title="Generar enlace de inscripción"
+              className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-low transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {crearTypeform.isPending
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Link2 className="w-4 h-4" />}
+              <span className="hidden sm:inline">Formulario</span>
+            </button>
+            <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setCuotasDetalle([]); setFormError('') }}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
+              <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo</span>
+            </button>
+          </div>
         }
       />
 
@@ -770,6 +802,63 @@ export default function EstudiantesPage() {
         onCancel={() => setConfirmEliminar(null)}
         isPending={eliminarMutation.isPending}
       />
+
+      {/* Modal formulario Typeform */}
+      {modalTypeform && typeformUrl && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalTypeform(false)} />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-md p-6 space-y-5">
+              {/* Header */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Link2 className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-on-surface">¡Formulario creado!</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">Comparte este enlace con tus estudiantes</p>
+                </div>
+              </div>
+
+              {/* Link */}
+              <div className="flex items-center gap-2 bg-surface-high border border-outline-variant rounded-lg px-3 py-2.5">
+                <p className="flex-1 text-xs text-on-surface truncate font-mono">{typeformUrl}</p>
+                <button
+                  onClick={copiarLink}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors flex-shrink-0"
+                >
+                  {typeformCopiado
+                    ? <><Check className="w-3.5 h-3.5" /> Copiado</>
+                    : <><Copy className="w-3.5 h-3.5" /> Copiar</>
+                  }
+                </button>
+              </div>
+
+              {/* Abrir en nueva pestaña */}
+              <a
+                href={typeformUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border border-outline-variant rounded-xl text-sm font-medium text-on-surface hover:bg-surface-high transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Ver formulario
+              </a>
+
+              <p className="text-xs text-on-surface-variant text-center leading-relaxed">
+                Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente en la plataforma.
+              </p>
+
+              <button
+                onClick={() => setModalTypeform(false)}
+                className="w-full px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
