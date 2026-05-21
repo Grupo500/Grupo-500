@@ -311,10 +311,10 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
       {
         ref: 'monto_consignado',
         title: '¿Cuánto dinero consignaste?',
-        type: 'number',
-        validations: { required: true, min_value: 1 },
+        type: 'short_text',
+        validations: { required: true },
         properties: {
-          description: 'Escribe el valor exacto que consignaste (sin puntos ni símbolos). Ejemplo: 600000',
+          description: 'Escribe el valor exacto que consignaste. Ejemplo: 600.000 o 300.000',
         },
       },
       // TODO: cambiar type a 'file_upload' cuando se adquiera plan de pago en Typeform
@@ -547,12 +547,23 @@ router.post('/webhook', asyncHandler(async (req, res) => {
 
     logger.info(`Estudiante creado vía Typeform: ${estudiante.id} — ${estudiante.nombre} (edad calculada: ${edad})`)
 
+    // Helper: parsear monto en formato colombiano "600.000" → 600000
+    function parseMonto(raw: unknown): number {
+      if (!raw) return 0
+      const limpio = String(raw).replace(/\./g, '').replace(/,/g, '.').replace(/[^0-9.]/g, '')
+      const n = parseFloat(limpio)
+      return isNaN(n) ? 0 : Math.round(n)
+    }
+
+    const montoConsignado = parseMonto(get('monto_consignado'))
+
     // ── 6. Asignar curso (CursoEstudiante) ────────────────────────────────
     if (cursoId) {
-      const montoConsignado = (get('monto_consignado') as number) ?? 0
-      // Calcular descuento si pagó menos del precio oficial
-      const descuentoPorcentaje = cursoPrecio > 0 && montoConsignado > 0 && montoConsignado < cursoPrecio
-        ? Math.round(((cursoPrecio - montoConsignado) / cursoPrecio) * 100)
+      // Internamente se guarda como porcentaje (requerido por el schema),
+      // pero se calcula a partir del valor en pesos
+      const descuentoValor = cursoPrecio > montoConsignado ? cursoPrecio - montoConsignado : 0
+      const descuentoPorcentaje = cursoPrecio > 0 && descuentoValor > 0
+        ? Math.round((descuentoValor / cursoPrecio) * 100)
         : 0
 
       await prisma.cursoEstudiante.create({
@@ -562,7 +573,7 @@ router.post('/webhook', asyncHandler(async (req, res) => {
           descuentoPorcentaje,
         },
       })
-      logger.info(`CursoEstudiante creado: estudianteId=${estudiante.id} cursoId=${cursoId}`)
+      logger.info(`CursoEstudiante creado: estudianteId=${estudiante.id} cursoId=${cursoId} descuento=$${descuentoValor.toLocaleString('es-CO')}`)
     }
 
     // ── 7. Registrar fuente de marketing ──────────────────────────────────
@@ -579,8 +590,7 @@ router.post('/webhook', asyncHandler(async (req, res) => {
     }
 
     // ── 8. Registrar pago con comprobante ─────────────────────────────────
-    const montoConsignado  = (get('monto_consignado') as number) ?? 0
-    const comprobanteUrl   = get('comprobante_pago') as string | null   // URL de Typeform
+    const comprobanteUrl   = get('comprobante_pago') as string | null
     const cuentaPago       = get('cuenta_pago') as string | null
 
     if (montoConsignado > 0) {
