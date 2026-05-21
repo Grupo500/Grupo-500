@@ -30,6 +30,7 @@ import uploadRoutes from './routes/upload'
 import configRoutes from './routes/config'
 import negociacionesRoutes from './routes/negociaciones'
 import typeformRoutes from './routes/typeform'
+import eventosRoutes from './routes/eventos'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -132,6 +133,7 @@ app.use('/api/upload',  uploadRoutes)
 app.use('/api/config',       configRoutes)
 app.use('/api/negociaciones', negociacionesRoutes)
 app.use('/api/typeform',     typeformRoutes)
+app.use('/api/eventos',     eventosRoutes)
 
 // Error handler global (siempre al final)
 app.use(errorHandler)

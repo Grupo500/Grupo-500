@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler'
 import { ApiResponse } from '../utils/response'
 import { prisma } from '../config/prisma'
 import { logger } from '../utils/logger'
+import { broadcast } from '../utils/sseManager'
 
 const router = Router()
 const TYPEFORM_API = 'https://api.typeform.com'
@@ -615,6 +616,14 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       logger.info(`Pago registrado: $${montoConsignado} ${comprobanteUrl ? '(con comprobante)' : '(sin comprobante)'}`)
     }
 
+    // Notificar en tiempo real a todos los clientes SSE conectados
+    broadcast('nuevo-estudiante', {
+      id:     estudiante.id,
+      nombre: estudiante.nombre,
+      email:  estudiante.email,
+    })
+
+    logger.info(`Estudiante inscrito vía Typeform: ${estudiante.id} — ${estudiante.nombre}`)
     return res.status(200).json({
       message:      'Inscripción procesada correctamente',
       estudianteId: estudiante.id,

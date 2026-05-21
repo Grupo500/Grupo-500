@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSSE } from '@/hooks/useSSE'
 import { useSession } from 'next-auth/react'
 import { getClientToken } from '@/lib/api'
 import { useRouter } from 'next/navigation'
@@ -168,6 +169,9 @@ export default function EstudiantesPage() {
   const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
   const router = useRouter()
+
+  // SSE — actualización en tiempo real cuando llega un estudiante vía Typeform
+  useSSE()
 
   const [page, setPage] = useState(1)
   const [busquedaInput, setBusquedaInput] = useState('')
