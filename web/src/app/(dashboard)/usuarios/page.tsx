@@ -22,6 +22,9 @@ export default function UsuariosPage() {
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [formEmail, setFormEmail] = useState('')
+  const [formNombre, setFormNombre] = useState('')
+  const [formPassword, setFormPassword] = useState('')
+  const [formTelefono, setFormTelefono] = useState('')
   const [formRole, setFormRole] = useState<'VENDEDOR' | 'ADMIN'>('VENDEDOR')
   const [formError, setFormError] = useState('')
 
@@ -75,12 +78,21 @@ export default function UsuariosPage() {
       fetcher('/auth/usuarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formEmail.trim(), role: formRole }),
+        body: JSON.stringify({
+          email:    formEmail.trim(),
+          nombre:   formNombre.trim(),
+          password: formPassword,
+          telefono: formTelefono.trim() || undefined,
+          role:     formRole,
+        }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
       setShowModal(false)
       setFormEmail('')
+      setFormNombre('')
+      setFormPassword('')
+      setFormTelefono('')
       setFormRole('VENDEDOR')
       setFormError('')
     },
@@ -366,6 +378,28 @@ export default function UsuariosPage() {
             </div>
 
             <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Nombre completo</label>
+                  <input
+                    type="text"
+                    value={formNombre}
+                    onChange={e => { setFormNombre(e.target.value); setFormError('') }}
+                    placeholder="Nombre Apellido"
+                    className="input-base"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono <span className="text-on-surface-variant/50">(opcional)</span></label>
+                  <input
+                    type="tel"
+                    value={formTelefono}
+                    onChange={e => setFormTelefono(e.target.value)}
+                    placeholder="+57 300 000 0000"
+                    className="input-base"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Email</label>
                 <input
@@ -377,13 +411,23 @@ export default function UsuariosPage() {
                 />
               </div>
               <div>
+                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Contraseña temporal</label>
+                <input
+                  type="password"
+                  value={formPassword}
+                  onChange={e => { setFormPassword(e.target.value); setFormError('') }}
+                  placeholder="Mínimo 8 caracteres"
+                  className="input-base"
+                />
+              </div>
+              <div>
                 <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Rol</label>
                 <select
                   value={formRole}
                   onChange={e => setFormRole(e.target.value as 'VENDEDOR' | 'ADMIN')}
                   className="input-base"
                 >
-                  <option value="VENDEDOR">Vendedor</option>
+                  <option value="VENDEDOR">Asesor / Vendedor</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
               </div>
@@ -394,7 +438,7 @@ export default function UsuariosPage() {
               <button onClick={() => { setShowModal(false); setFormError('') }} className="btn-ghost">Cancelar</button>
               <button
                 onClick={() => agregar.mutate()}
-                disabled={!formEmail.trim() || agregar.isPending}
+                disabled={!formEmail.trim() || !formNombre.trim() || formPassword.length < 8 || agregar.isPending}
                 className="btn-primary"
               >
                 {agregar.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
