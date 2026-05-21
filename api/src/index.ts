@@ -29,6 +29,7 @@ import webhookRoutes from './routes/webhooks'
 import uploadRoutes from './routes/upload'
 import configRoutes from './routes/config'
 import negociacionesRoutes from './routes/negociaciones'
+import typeformRoutes from './routes/typeform'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -130,6 +131,7 @@ app.use('/api/reportes', reportesRoutes)
 app.use('/api/upload',  uploadRoutes)
 app.use('/api/config',       configRoutes)
 app.use('/api/negociaciones', negociacionesRoutes)
+app.use('/api/typeform',     typeformRoutes)
 
 // Error handler global (siempre al final)
 app.use(errorHandler)

@@ -150,13 +150,20 @@ model Colegio {
 model Estudiante {
   id               String                @id @default(cuid())
   nombre           String
-  tipoDocumento    String?               @default("CC")
+  tipoDocumento    String?               @default("TI")
   documento        String?
   email            String
   telefono         String
   fechaNacimiento  DateTime
   departamento     String?
   ciudad           String?
+  direccion        String?
+  grado            String?               // 10°, 11°, Egresado
+  primerIcfes      Boolean?              @default(true)
+  puntajeAnterior  String?
+  carreraInteres   String?
+  universidadInteres String?
+  interesPremedico String?
   colegio          Colegio?              @relation(fields: [colegioId], references: [id])
   colegioId        String?
   asesor           Asesor?               @relation(fields: [asesorId], references: [id])
@@ -168,6 +175,7 @@ model Estudiante {
   simulacros       SimulacroEstudiante[]
   certificados     Certificado[]
   historial        HistorialEstudiante[]
+  fuenteContacto   FuenteContacto?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 }
@@ -189,13 +197,29 @@ model HistorialEstudiante {
 }
 
 model Acudiente {
+  id              String     @id @default(cuid())
+  nombre          String
+  email           String?
+  telefono        String
+  relacion        String
+  tipoDocumento   String?
+  numeroDocumento String?
+  estudiante      Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudianteId    String     @unique
+}
+
+// ─────────────────────────────────────────────
+// Marketing — fuente de contacto por estudiante
+// ─────────────────────────────────────────────
+
+model FuenteContacto {
   id           String     @id @default(cuid())
-  nombre       String
-  email        String
-  telefono     String
-  relacion     String
   estudiante   Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
   estudianteId String     @unique
+  fuente       String     // Instagram, TikTok, Facebook, YouTube, Google, Referido, etc.
+  formId       String?    // ID del formulario Typeform
+  respondedAt  DateTime   @default(now())
+  createdAt    DateTime   @default(now())
 }
 
 // ─────────────────────────────────────────────
