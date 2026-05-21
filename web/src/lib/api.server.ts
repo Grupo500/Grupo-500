@@ -1,5 +1,5 @@
 import { auth } from '@/auth'
-import { encode } from 'next-auth/jwt'
+import { SignJWT } from 'jose'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
@@ -12,16 +12,16 @@ export async function apiFetch<T>(
   let token: string | undefined
 
   if (session?.user) {
-    // Generar JWT firmado con el secret de NextAuth para el Express API
-    token = await encode({
-      token: {
-        sub:   session.user.id,
-        email: session.user.email ?? '',
-        role:  session.user.role,
-      },
-      secret: process.env.NEXTAUTH_SECRET!,
-      salt:   'authjs.session-token',
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!)
+    token = await new SignJWT({
+      sub:   session.user.id,
+      email: session.user.email ?? '',
+      role:  session.user.role,
     })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('1h')
+      .sign(secret)
   }
 
   const res = await fetch(`${API_URL}${path}`, {
