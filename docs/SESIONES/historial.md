@@ -117,6 +117,54 @@
 
 ---
 
+## Sesión 005 — 2026-05-21
+
+**Objetivo:** Migrar autenticación de Clerk a NextAuth v5 (email/password + Google OAuth). Mejorar estabilidad del build.
+
+### Lo que se hizo
+
+**Migración de auth (Clerk → NextAuth):**
+- Eliminado `@clerk/nextjs` completamente del proyecto
+- Creado `web/src/auth.config.ts` — configuración edge-compatible con callbacks JWT/session/authorized
+- Creado `web/src/auth.ts` — configuración completa con PrismaAdapter, Credentials + Google OAuth providers
+- Creado `web/src/lib/prisma.ts` — cliente Prisma singleton para Next.js
+- Creado `web/src/app/api/auth/[...nextauth]/route.ts` — handlers de NextAuth
+- Creado `web/src/app/api/auth/token/route.ts` — genera JWT firmado para que Client Components llamen al Express API
+- Actualizado `web/src/middleware.ts` — usa NextAuth en vez de Clerk para proteger rutas
+- Actualizado `web/src/lib/api.server.ts` — genera JWT desde sesión NextAuth para Server Components
+- Actualizado `web/src/lib/api.ts` — agrega `getClientToken()` para Client Components
+- Creado `web/src/types/next-auth.d.ts` — extiende tipos de sesión con `role`
+- Creado `web/src/components/layout/UserMenu.tsx` — reemplaza `UserButton` de Clerk con dropdown personalizado
+- Nueva página de sign-in: formulario email/password + botón Google OAuth estilizados
+- Página sign-up redirige a sign-in (registro gestionado por admin)
+- Actualizado `verificando/page.tsx` — usa `useSession` en lugar de `useAuth`
+- Actualizado `no-autorizado/page.tsx` — usa `signOut` de NextAuth
+- Actualizado `Sidebar.tsx` y `BottomNav.tsx` — usan `UserMenu`
+- Actualizado 10+ páginas del dashboard — todas reemplazaron `useAuth`/`getToken` por `getClientToken`/`useSession`
+- Actualizado `usuarios/layout.tsx` y `dashboard/page.tsx` — usan `auth()` de NextAuth en vez de `currentUser()` de Clerk
+
+**Prisma:**
+- Actualizado `schema.prisma`: eliminado `clerkId`, agregados `emailVerified`, `hashedPassword`, modelos `Account`, `Session`, `VerificationToken`
+- Creada migración `20260520000000_migrate_clerk_to_nextauth` y aplicada en producción
+
+**API Express:**
+- Actualizado `middleware/auth.ts` — verifica JWT con `jsonwebtoken` + `NEXTAUTH_SECRET`
+- Actualizado `routes/auth.ts` — elimina toda referencia a Clerk, registro con bcrypt, CRUD de usuarios
+- Simplificado `routes/webhooks.ts`
+
+**Infraestructura:**
+- Configuradas variables en Vercel: `AUTH_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DATABASE_URL`, `DIRECT_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
+- Configurado `web/vercel.json` con `buildCommand` que incluye `prisma generate`
+- Build exitoso en Vercel ✅
+
+### Pendiente
+- Agregar `NEXTAUTH_SECRET` en Railway (requiere login manual del usuario en railway.app)
+- Configurar Google OAuth credentials reales (AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET) en Vercel
+- Face ID / WebAuthn (siguiente fase)
+- Twilio WhatsApp real
+
+---
+
 ## Sesión 004 — 2026-05-19
 
 **Objetivo:** Unificar módulo Estudiantes + Cobros, mejoras de UX profundas, historial de modificaciones.
