@@ -26,7 +26,7 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
 
   const cursoChoices = cursosActivos.map(c => ({
     ref: `curso_${c.id}`,
-    label: `${c.nombre} - ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(c.precio)}`,
+    label: c.nombre,   // Sin precio — el estudiante digita lo que pagó (puede haber promo)
   }))
 
   // Si no hay cursos aún, agregar opción genérica
