@@ -162,16 +162,32 @@
 - Agregado `NEXTAUTH_SECRET` en Railway variables
 - Railway redesplegado → API **Online** ✅ (`https://api-production-79572.up.railway.app/health`)
 
+**Primer usuario admin:**
+- Usuario `pregrupo500@gmail.com` existía desde migración Clerk pero sin contraseña
+- Script `api/scripts/check-admin.ts` detectó y actualizó — hash bcrypt aplicado
+- Password `Grupo500.` verificado correctamente ✅
+
+**Modal "Agregar usuario" mejorado:**
+- Ahora incluye campos: nombre completo, teléfono (opcional), email, contraseña temporal, rol
+- Botón deshabilitado hasta que nombre + email + contraseña (≥8 chars) estén completos
+- Flujo: admin crea usuarios desde la app, sin signup público
+
+**Google OAuth configurado:**
+- `AUTH_GOOGLE_ID` y `AUTH_GOOGLE_SECRET` agregados en Vercel (producción)
+- `AUTH_GOOGLE_ID` y `AUTH_GOOGLE_SECRET` agregados en Railway
+- Botón "Continuar con Google" activo en sign-in ✅
+
 ### Estado final sesión 005
-- **Vercel (frontend):** ✅ Online — build exitoso, deploy activo
+- **Vercel (frontend):** ✅ Online con email/password + Google OAuth
 - **Railway (API):** ✅ Online — `/health` responde `{ status: "ok" }`
-- **Plataforma funcional end-to-end** con NextAuth v5
+- **Primer admin:** ✅ `pregrupo500@gmail.com` / `Grupo500.`
+- **Plataforma lista para uso del equipo**
 
 ### Pendiente
-- Configurar Google OAuth credentials reales (AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET) en Vercel
-- Crear primer usuario admin en BD de producción (no hay signup público)
-- Face ID / WebAuthn (siguiente fase)
-- Twilio WhatsApp real
+- Crear usuarios del equipo desde Usuarios → Agregar usuario
+- Zoom API — reporte de asistencia por reunión (fase futura)
+- Twilio WhatsApp real (fase futura)
+- Face ID / WebAuthn (fase futura)
 
 ---
 
