@@ -53,8 +53,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <html lang="es" suppressHydrationWarning>
         <body className={`${inter.variable} font-sans`}>
-          {/* Inline script — lee localStorage antes de hidratación para theme-color */}
-          <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('grupo500-theme')||'light';var c=t==='dark'?'#0a1628':'#eef6ff';var m=document.querySelector('meta[name="theme-color"]');if(m){m.content=c;}else{m=document.createElement('meta');m.name='theme-color';m.content=c;document.head.appendChild(m);}}catch(e){}})();` }} />
           <ThemeProvider>
             <ServiceWorkerRegister />
             {children}

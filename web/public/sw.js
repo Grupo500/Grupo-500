@@ -1,5 +1,5 @@
 // Cache version — se actualiza con cada deploy de Vercel via query param
-const CACHE_NAME = 'grupo500-v2'
+const CACHE_NAME = 'grupo500-v3'
 
 self.addEventListener('install', () => {
   // Activar inmediatamente sin esperar a que cierren las pestañas
@@ -25,6 +25,9 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('clerk.') ||
     url.hostname.includes('accounts.') ||
     url.hostname.includes('clerk.dev') ||
+    url.hostname.includes('clerk.io') ||
+    url.hostname.startsWith('clerk.') ||
+    url.pathname.includes('clerk') ||
     event.request.mode === 'navigate'   // páginas HTML siempre desde red
   ) return
 
