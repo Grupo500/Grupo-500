@@ -191,6 +191,79 @@
 
 ---
 
+## Sesión 006 — 2026-05-21
+
+**Objetivo:** Integración Typeform, mejoras financieras, marketing en reportes.
+
+### Lo que se hizo
+
+**Typeform — Formulario de inscripción:**
+- Nuevo endpoint `POST /api/typeform/crear-formulario` — crea formulario completo en Typeform con todos los campos del negocio
+- Campos: datos estudiante, acudiente, información académica, curso (dinámico desde BD), pago, comprobante, marketing, T&C, confirmación
+- Eliminado campo "¿Cuántos años tienes?" — edad se calcula automáticamente desde `fechaNacimiento` en el webhook
+- Cursos cargados dinámicamente desde la BD (sin precio en la etiqueta para soportar promociones)
+- Monto en formato colombiano `600.000` (texto, no número)
+- Comprobante temporal como `short_text` (link) — `TODO: cambiar a file_upload` cuando se adquiera plan de pago Typeform
+- Webhook `POST /api/typeform/webhook` procesa respuestas automáticamente:
+  - Busca/crea colegio
+  - Crea estudiante con todos los campos nuevos del schema
+  - Crea acudiente
+  - Crea `CursoEstudiante` con descuento calculado por valor en pesos
+  - Crea `FuenteContacto` para marketing
+  - Crea `Pago` con comprobante adjunto
+- Webhook configurado en Typeform → `https://api-production-79572.up.railway.app/api/typeform/webhook` ✅
+- Botón "Formulario" en módulo Estudiantes → genera link y lo copia al portapapeles
+
+**Schema Prisma — migración `20260521221741_add_typeform_fields`:**
+- `Estudiante`: `direccion`, `grado`, `primerIcfes`, `puntajeAnterior`, `carreraInteres`, `universidadInteres`, `interesPremedico`, `fuenteContacto`
+- `Acudiente`: `email` ahora opcional, agregados `tipoDocumento`, `numeroDocumento`
+- Nuevo modelo `FuenteContacto`: fuente, formId, respondedAt
+
+**Pagos directos — marcar como pagado:**
+- Nuevo componente `FilaPagoDirecto` en vista del estudiante
+- Botón "Marcar pagado" despliega panel inline con: fecha de pago + subida de comprobante (Cloudinary)
+- Mutation `PATCH /pagos/:id` con estado, fechaPago y comprobante
+
+**Reportes — sección Marketing:**
+- Nuevo endpoint `GET /reportes/marketing` — agrupa estudiantes por fuente de contacto con cantidad y porcentaje
+- Sección "Fuentes de contacto" en `/reportes`:
+  - Gráfica de barras por canal (Recharts)
+  - Lista detallada con barra de progreso y porcentaje por fuente
+  - Etiquetas cortas para el gráfico (IG Link, TikTok, Google, Referido, etc.)
+
+### Decisiones técnicas
+- Descuento calculado por valor en pesos (precio curso - monto consignado) → convertido a % para el schema
+- `file_upload` de Typeform requiere plan de pago → temporal con `short_text` + link
+- Edad calculada server-side desde fechaNacimiento (no se pregunta en el form)
+- `show_typeform_branding: false` removido (requiere plan de pago)
+
+### Estado final sesión 006
+- **Typeform:** ✅ Formulario crea automáticamente con cursos dinámicos
+- **Webhook:** ✅ Estudiante + CursoEstudiante + Pago + FuenteContacto registrados automáticamente
+- **Pagos directos:** ✅ Marcar pagado con comprobante desde la app
+- **Reportes Marketing:** ✅ Gráfica de fuentes de contacto
+
+### Propuesta pendiente de análisis — Automatización completa
+
+**Guardada para próxima sesión.** Propuesta de dos flujos de automatización:
+
+**Flujo 1 — Compra por pasarela de pago (web):**
+- Estudiante paga en web con Wompi/MercadoPago → webhook de pago crea registro automático → redirige a Typeform con hidden fields (curso, monto, referencia) → estudiante solo llena datos personales → webhook Typeform completa el perfil
+
+**Flujo 2 — Transferencia manual (WhatsApp):**
+- Asesor genera link personalizado desde la app con curso preseleccionado (hidden field) → estudiante llena el form → webhook registra todo con pago pendiente de verificar
+
+**Módulos a construir para automatización:**
+| Módulo | Prioridad | Descripción |
+|--------|-----------|-------------|
+| Hidden fields Typeform | Alta | Curso, asesor, fuente pre-llenados vía URL |
+| Botón "Generar link asesor" | Alta | Asesor elige curso → genera link personalizado |
+| Integración Wompi/MercadoPago | Media | Webhook de pago → registro automático |
+| Página de cursos en web | Media | Landing con precios + botón de pago |
+| File upload comprobante | Baja | Requiere plan de pago Typeform |
+
+---
+
 ## Sesión 004 — 2026-05-19
 
 **Objetivo:** Unificar módulo Estudiantes + Cobros, mejoras de UX profundas, historial de modificaciones.
