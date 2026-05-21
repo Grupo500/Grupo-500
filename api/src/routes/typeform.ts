@@ -560,21 +560,11 @@ router.post('/webhook', asyncHandler(async (req, res) => {
 
     // ── 6. Asignar curso (CursoEstudiante) ────────────────────────────────
     if (cursoId) {
-      // Internamente se guarda como porcentaje (requerido por el schema),
-      // pero se calcula a partir del valor en pesos
-      const descuentoValor = cursoPrecio > montoConsignado ? cursoPrecio - montoConsignado : 0
-      const descuentoPorcentaje = cursoPrecio > 0 && descuentoValor > 0
-        ? Math.round((descuentoValor / cursoPrecio) * 100)
-        : 0
-
+      // Descuento siempre en 0 al inscribirse — el admin lo ajusta manualmente si aplica
       await prisma.cursoEstudiante.create({
-        data: {
-          estudianteId:        estudiante.id,
-          cursoId,
-          descuentoPorcentaje,
-        },
+        data: { estudianteId: estudiante.id, cursoId, descuentoPorcentaje: 0 },
       })
-      logger.info(`CursoEstudiante creado: estudianteId=${estudiante.id} cursoId=${cursoId} descuento=$${descuentoValor.toLocaleString('es-CO')}`)
+      logger.info(`CursoEstudiante creado: estudianteId=${estudiante.id} cursoId=${cursoId}`)
     }
 
     // ── 7. Registrar fuente de marketing ──────────────────────────────────

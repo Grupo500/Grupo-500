@@ -883,10 +883,12 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
   const hoy = new Date()
   const [abonoAbierto, setAbonoAbierto] = useState(false)
 
-  // Total real = precio del curso con descuento
-  const cursoEst       = e.cursos?.[0]
+  const cursoEst = e.cursos?.[0]
+
+  // Total = precio del curso (sin descuento como referencia base) o suma de pagos/financiamientos
+  const precioBase     = cursoEst ? cursoEst.curso.precio : 0
   const totalGeneral   = cursoEst
-    ? Math.round(cursoEst.curso.precio * (1 - cursoEst.descuentoPorcentaje / 100))
+    ? precioBase
     : financiamientos.reduce((s, f) => s + f.montoTotal, 0) + pagos.reduce((s, p) => s + p.monto, 0)
 
   const pagadoFin      = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
@@ -900,7 +902,8 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
 
   const cuotasPendientes = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado))
 
-  if (totalGeneral === 0) return (
+  // Sin curso ni pagos ni financiamientos → realmente vacío
+  if (!cursoEst && financiamientos.length === 0 && pagos.length === 0) return (
     <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
       <Wallet className="w-10 h-10 mb-3 opacity-30" />
       <p className="text-sm">Sin información financiera registrada</p>
