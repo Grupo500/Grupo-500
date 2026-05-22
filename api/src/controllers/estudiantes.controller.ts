@@ -273,6 +273,17 @@ export async function actualizar(req: Request, res: Response) {
       where: { id: estudianteId },
       include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
     })
+    // Registrar historial (este branch no caía aquí antes)
+    await prisma.historialEstudiante.create({
+      data: {
+        estudianteId,
+        accion: 'UPDATE_PERFIL',
+        descripcion: 'Perfil del estudiante actualizado',
+        cambios: data as any,
+        realizadoPor: req.userName ?? req.userId ?? 'Sistema',
+        userId: req.userId ?? 'sistema',
+      },
+    })
     return ApiResponse.success(res, actualizado)
   }
 

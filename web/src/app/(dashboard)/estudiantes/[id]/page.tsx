@@ -90,7 +90,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
 const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
-const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Nequi', 'Otro']
+const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Otro']
 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: FILA DE CUOTA (vista + edición inline)
@@ -742,11 +742,10 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 const METODOS_BACKEND: Record<string, 'TRANSFERENCIA' | 'TARJETA' | 'OTRO'> = {
   Bancolombia: 'TRANSFERENCIA',
   'Bre-B':     'TRANSFERENCIA',
-  Nequi:       'TRANSFERENCIA',
   Tarjeta:     'TARJETA',
   Otro:        'OTRO',
 }
-const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Otro']
+const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Tarjeta', 'Otro']
 
 function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
   estudianteId: string

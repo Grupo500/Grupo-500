@@ -215,7 +215,7 @@ function formatCOP(n: number) {
   return '$' + n.toLocaleString('es-CO')
 }
 
-function PropuestaModal({ colegio, onClose }: { colegio: Colegio; onClose: () => void }) {
+function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegio; onClose: () => void; onEditarColegio: (c: Colegio) => void }) {
   const [sending, setSending] = useState(false)
   const today = new Date()
   const fechaStr = today.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -481,7 +481,7 @@ function PropuestaModal({ colegio, onClose }: { colegio: Colegio; onClose: () =>
                 </p>
               )}
               <button
-                onClick={() => { setModalPropuesta(null); abrirEditarColegio(colegio) }}
+                onClick={() => { onClose(); onEditarColegio(colegio) }}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-outline-variant text-xs text-on-surface-variant hover:text-on-surface hover:border-primary/40 transition-colors cursor-pointer"
               >
                 ✏️ Editar datos del colegio
@@ -1017,7 +1017,11 @@ export default function ColegiosPage() {
 
       {/* ── Modal propuesta institucional ── */}
       {modalPropuesta && (
-        <PropuestaModal colegio={modalPropuesta} onClose={() => setModalPropuesta(null)} />
+        <PropuestaModal
+          colegio={modalPropuesta}
+          onClose={() => setModalPropuesta(null)}
+          onEditarColegio={(c) => { setModalPropuesta(null); abrirEditarColegio(c) }}
+        />
       )}
 
       {/* ── Modal editar colegio ── */}
