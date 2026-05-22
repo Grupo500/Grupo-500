@@ -480,6 +480,12 @@ function PropuestaModal({ colegio, onClose }: { colegio: Colegio; onClose: () =>
                   ⚠️ Este colegio no tiene datos de contacto. Edítalo para personalizar la propuesta.
                 </p>
               )}
+              <button
+                onClick={() => { setModalPropuesta(null); abrirEditarColegio(colegio) }}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-outline-variant text-xs text-on-surface-variant hover:text-on-surface hover:border-primary/40 transition-colors cursor-pointer"
+              >
+                ✏️ Editar datos del colegio
+              </button>
             </div>
 
             <p className="text-xs text-on-surface-variant leading-relaxed">
@@ -540,6 +546,8 @@ export default function ColegiosPage() {
   const [formColegio, setFormColegio] = useState({ nombre: '', ciudad: '', contactoNombre: '', contactoEmail: '', contactoTelefono: '' })
   const [modalPropuesta, setModalPropuesta] = useState<Colegio | null>(null)
   const [colegioDetalle, setColegioDetalle] = useState<Colegio | null>(null)
+  const [modalEditarColegio, setModalEditarColegio] = useState<Colegio | null>(null)
+  const [formEditarColegio, setFormEditarColegio] = useState({ nombre: '', ciudad: '', contactoNombre: '', contactoEmail: '', contactoTelefono: '' })
 
   // Negociaciones state
   const [modalCrearNeg, setModalCrearNeg] = useState(false)
@@ -577,6 +585,30 @@ export default function ColegiosPage() {
       setFormColegio({ nombre: '', ciudad: '', contactoNombre: '', contactoEmail: '', contactoTelefono: '' })
     },
   })
+
+  const editarColegioMutation = useMutation({
+    mutationFn: () => fetcher(`/colegios/${modalEditarColegio?.id}`, {
+      method: 'PATCH', body: JSON.stringify(formEditarColegio),
+    }),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['colegios'] })
+      // Actualizar colegioDetalle si es el mismo que se editó
+      if (colegioDetalle?.id === modalEditarColegio?.id) setColegioDetalle(res?.data ?? null)
+      setModalEditarColegio(null)
+    },
+    onError: (e: any) => alert(e?.message ?? 'Error al guardar'),
+  })
+
+  const abrirEditarColegio = (c: Colegio) => {
+    setFormEditarColegio({
+      nombre:           c.nombre,
+      ciudad:           c.ciudad,
+      contactoNombre:   c.contactoNombre   ?? '',
+      contactoEmail:    c.contactoEmail    ?? '',
+      contactoTelefono: c.contactoTelefono ?? '',
+    })
+    setModalEditarColegio(c)
+  }
 
   // ── Mutations negociaciones ──
   const resetFormNeg = () => setFormNeg({ colegioId: '', asesorId: '', etapa: 'PROSPECTO', notas: '', fechaContacto: '', fechaReunion: '', fechaProxContacto: '' })
@@ -768,6 +800,13 @@ export default function ColegiosPage() {
                     <span className="text-[11px] text-on-surface-variant">est.</span>
                   </div>
                   <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={() => abrirEditarColegio(c)}
+                      title="Editar colegio"
+                      className="p-1.5 text-on-surface-variant hover:bg-surface-high rounded-lg transition-colors cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
                     <button
                       onClick={() => setModalPropuesta(c)}
                       title="Generar propuesta"
@@ -980,6 +1019,58 @@ export default function ColegiosPage() {
       {modalPropuesta && (
         <PropuestaModal colegio={modalPropuesta} onClose={() => setModalPropuesta(null)} />
       )}
+
+      {/* ── Modal editar colegio ── */}
+      <Modal open={!!modalEditarColegio} onClose={() => setModalEditarColegio(null)}>
+        <div className="p-6 w-full max-w-md">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-on-surface">Editar colegio</h2>
+            <button onClick={() => setModalEditarColegio(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface cursor-pointer"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">Nombre del colegio *</label>
+              <input className={inputCls} value={formEditarColegio.nombre}
+                onChange={e => setFormEditarColegio(f => ({ ...f, nombre: e.target.value }))} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">Ciudad *</label>
+              <input className={inputCls} value={formEditarColegio.ciudad}
+                onChange={e => setFormEditarColegio(f => ({ ...f, ciudad: e.target.value }))} />
+            </div>
+            <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide pt-1">Contacto institucional</p>
+            <div>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">Nombre del contacto</label>
+              <input className={inputCls} value={formEditarColegio.contactoNombre} placeholder="Rector / Coordinador"
+                onChange={e => setFormEditarColegio(f => ({ ...f, contactoNombre: e.target.value }))} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">Email</label>
+              <input type="email" className={inputCls} value={formEditarColegio.contactoEmail} placeholder="rectoria@colegio.edu.co"
+                onChange={e => setFormEditarColegio(f => ({ ...f, contactoEmail: e.target.value }))} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">Teléfono / WhatsApp</label>
+              <input className={inputCls} value={formEditarColegio.contactoTelefono} placeholder="3001234567"
+                onChange={e => setFormEditarColegio(f => ({ ...f, contactoTelefono: e.target.value }))} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-5">
+            <button onClick={() => setModalEditarColegio(null)}
+              className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface cursor-pointer">
+              Cancelar
+            </button>
+            <button
+              onClick={() => editarColegioMutation.mutate()}
+              disabled={editarColegioMutation.isPending || !formEditarColegio.nombre || !formEditarColegio.ciudad}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {editarColegioMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* ── Modal editar negociación ── */}
       <Modal open={!!modalEditarNeg} onClose={() => setModalEditarNeg(null)}>
