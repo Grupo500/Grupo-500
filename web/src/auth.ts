@@ -26,6 +26,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
+    async jwt({ token, user, account, profile }) {
+      // Login inicial: guardar datos en el token
+      if (user) {
+        token.id    = user.id ?? token.sub ?? ''
+        token.role  = (user as any).role ?? 'VENDEDOR'
+        token.image = user.image ?? null
+      }
+      // Google OAuth: foto del perfil de Google
+      if (account?.provider === 'google' && profile) {
+        token.image = (profile as any).picture ?? token.image ?? null
+      }
+      // Sesión activa sin imagen: leer de la DB para no forzar re-login
+      if (!token.image && token.sub) {
+        const dbUser = await prisma.user.findUnique({
+          where:  { id: token.sub },
+          select: { image: true },
+        })
+        if (dbUser?.image) token.image = dbUser.image
+      }
+      return token
+    },
   },
   providers: [
     Google({
