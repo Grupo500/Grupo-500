@@ -644,8 +644,10 @@ router.post('/webhook', asyncHandler(async (req, res) => {
     const existente = await prisma.estudiante.findFirst({ where: { email } })
 
     if (existente) {
-      // Si ya existe, igual registrar el pago si viene uno nuevo
-      logger.info(`Estudiante ya registrado (${existente.id}), procesando pago si aplica`)
+      // Si ya existe, registrar el pago SOLO si no fue procesado antes (idempotencia por token)
+      logger.info(`Estudiante ya registrado (${existente.id}), verificando idempotencia`)
+
+      const responseToken = payload.form_response.token as string | null
 
       function parseMonto2(raw: unknown): number {
         if (!raw) return 0
@@ -655,6 +657,23 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       }
 
       const montoExistente = parseMonto2(get('monto_consignado'))
+
+      // Verificar si este response ya fue procesado (buscar token en notas del pago)
+      const yaProcessado = responseToken
+        ? await prisma.pago.findFirst({
+            where: { estudianteId: existente.id, notas: { contains: responseToken } },
+          })
+        : null
+
+      if (yaProcessado) {
+        logger.info(`Response ${responseToken} ya fue procesado para ${existente.id}, omitiendo`)
+        return res.status(200).json({
+          message:      'Estudiante ya registrado — respuesta ya procesada (duplicado omitido)',
+          estudianteId: existente.id,
+          pagoRegistrado: false,
+        })
+      }
+
       if (montoExistente > 0) {
         const comprobanteExistente = get('comprobante_pago') as string | null
         const cuentaExistente      = get('cuenta_pago') as string | null
@@ -671,6 +690,7 @@ router.post('/webhook', asyncHandler(async (req, res) => {
             comprobante:     comprobanteExistente ?? null,
             notas: [
               'Pago adicional vía Typeform (estudiante ya registrado).',
+              responseToken ? `ResponseID: ${responseToken}.` : '',
               cuentaExistente  ? `Cuenta: ${cuentaExistente}.` : '',
               cursoLabelEx     ? `Curso: ${cursoLabelEx}.` : '',
             ].filter(Boolean).join(' '),
@@ -777,20 +797,21 @@ router.post('/webhook', asyncHandler(async (req, res) => {
     // ── 8. Registrar pago con comprobante ─────────────────────────────────
     const comprobanteUrl   = get('comprobante_pago') as string | null
     const cuentaPago       = get('cuenta_pago') as string | null
+    const responseToken    = payload.form_response.token as string | null
 
     if (montoConsignado > 0) {
-      const tienePago = !!comprobanteUrl
       await prisma.pago.create({
         data: {
           estudianteId:    estudiante.id,
           monto:           montoConsignado,
-          estado:          tienePago ? 'PENDIENTE' : 'PENDIENTE', // siempre pendiente de verificación humana
+          estado:          'PENDIENTE',  // siempre pendiente de verificación humana
           fechaVencimiento: new Date(),
-          fechaPago:       tienePago ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
+          fechaPago:       comprobanteUrl ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
           metodo:          'TRANSFERENCIA',
           comprobante:     comprobanteUrl ?? null,
           notas: [
             `Inscripción vía Typeform.`,
+            responseToken ? `ResponseID: ${responseToken}.` : '',
             cuentaPago ? `Cuenta: ${cuentaPago}.` : '',
             cursoLabel ? `Curso: ${cursoLabel}.` : '',
             comprobanteUrl ? 'Comprobante adjunto desde formulario.' : 'Sin comprobante adjunto.',
