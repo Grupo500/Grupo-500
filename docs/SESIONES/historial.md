@@ -243,6 +243,52 @@
 - **Pagos directos:** ✅ Marcar pagado con comprobante desde la app
 - **Reportes Marketing:** ✅ Gráfica de fuentes de contacto
 
+---
+
+## Sesión 007 — 2026-05-22
+
+**Objetivo:** Face ID / WebAuthn passkeys + medios de pago en reportes + correcciones UX.
+
+### Lo que se hizo
+
+**Correcciones UX:**
+- `lineaAutorizada` (campo 1–6): dropdown admin-only en modal de crear y en perfil estudiante
+- Autocomplete en modal de Usuarios: `type="search"` en buscador + `autoComplete="new-password"` en email/password
+- Rol "Asesor / Vendedor" → renombrado a "Asesor"
+- Contraseña de asesor: fix mutation con try/catch independientes por operación
+- "Olvidaste tu contraseña": reemplazado `<a href="mailto:">` por modal con botón WhatsApp
+- Asesor puede crear/editar colegios (solo admin puede eliminar)
+- Dashboard asesor: corregido bug donde `requireRole('ADMIN')` bloqueaba `/reportes/dashboard`
+- Dashboard asesor: datos reales filtrados por `asesorId` (estudiantes, cobranza, cursos, cobrado mes)
+
+**WebAuthn / Face ID:**
+- Modelo `Passkey` en Prisma + migración aplicada a Neon
+- `api/src/routes/passkeys.ts`: 6 endpoints completos
+  - `GET /passkeys` — lista passkeys del usuario
+  - `DELETE /passkeys/:id` — elimina passkey
+  - `POST /passkeys/register/start` — genera opciones de registro (platform: Face ID/Touch ID)
+  - `POST /passkeys/register/finish` — verifica y guarda en DB
+  - `POST /passkeys/auth/start` — genera challenge de autenticación
+  - `POST /passkeys/auth/finish` — verifica + emite JWT firmado con NEXTAUTH_SECRET
+- `web/src/auth.ts`: provider `credentials-passkey` que verifica el JWT via `jose`
+- Login page: botón "Face ID / Huella digital" con `@simplewebauthn/browser`
+- `UserMenu.tsx`: opción "Face ID / Biometría" → modal para registrar/eliminar passkeys
+
+**Medios de pago:**
+- Backend: `GET /reportes/medios-pago` — agrupa pagos y cuotas por método de pago con monto y cantidad
+- Frontend `/reportes`: nueva sección "Medios de pago" con gráfica de barras + lista detallada con barra de progreso
+
+### Variables de entorno requeridas (Railway + Vercel)
+```
+WEBAUTHN_RP_ID=grupo500.com          # dominio de producción (sin https://)
+WEBAUTHN_RP_NAME=Grupo 500
+WEBAUTHN_ORIGIN=https://grupo500.com # URL exacta de producción
+```
+
+### Pendiente
+- Botón "Importar" en Estudiantes (esperando plantilla Excel del usuario)
+- Dashboard real-time: convertir sección asesor a Client Component con TanStack Query + SSE
+
 ### Pendiente — Formulario Typeform: selector de ciudad/municipio filtrable
 
 **Requiere plan de pago Typeform (Business o superior).**
