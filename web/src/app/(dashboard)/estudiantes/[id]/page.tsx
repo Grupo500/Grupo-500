@@ -488,8 +488,22 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
   const descuentoValorInicial = cursoActivo
     ? String(Math.round(cursoActivo.curso.precio * cursoActivo.descuentoPorcentaje / 100)) : '0'
 
+  // Normalizar tipoDocumento: la BD puede tener el nombre largo (dato antiguo)
+  const TIPO_DOC_MAP: Record<string, string> = {
+    'Cédula de Ciudadanía': 'CC', 'Cedula de Ciudadania': 'CC',
+    'Tarjeta de Identidad': 'TI', 'Tarjeta de Identidad (TI)': 'TI',
+    'Cédula de Extranjería': 'CE', 'Cedula de Extranjeria': 'CE',
+    'Pasaporte': 'PA', 'Registro Civil': 'RC',
+  }
+  const TIPOS_VALIDOS = ['CC', 'TI', 'CE', 'PA', 'RC']
+  const normalizarTipoDoc = (v: string | null | undefined) => {
+    if (!v) return 'CC'
+    if (TIPOS_VALIDOS.includes(v)) return v
+    return TIPO_DOC_MAP[v] ?? 'CC'
+  }
+
   const [form, setForm] = useState({
-    nombre: e.nombre, tipoDocumento: e.tipoDocumento ?? 'CC',
+    nombre: e.nombre, tipoDocumento: normalizarTipoDoc(e.tipoDocumento),
     documento: e.documento ?? '', email: e.email, telefono: e.telefono,
     fechaNacimiento: e.fechaNacimiento?.split('T')[0] ?? '',
     departamento: e.departamento ?? '', ciudad: e.ciudad ?? '',

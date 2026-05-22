@@ -188,9 +188,21 @@ export async function obtener(req: Request, res: Response) {
   return ApiResponse.success(res, estudiante)
 }
 
+// Normaliza valores de tipoDocumento que vengan en formato largo (datos legacy)
+const tipoDocSchema = z.preprocess((val) => {
+  const map: Record<string, string> = {
+    'Cédula de Ciudadanía': 'CC', 'Cedula de Ciudadania': 'CC',
+    'Tarjeta de Identidad': 'TI', 'Tarjeta de Identidad (TI)': 'TI',
+    'Cédula de Extranjería': 'CE', 'Cedula de Extranjeria': 'CE',
+    'Pasaporte': 'PA', 'Registro Civil': 'RC',
+  }
+  if (typeof val === 'string' && map[val]) return map[val]
+  return val
+}, z.enum(['CC', 'TI', 'CE', 'PA', 'RC']))
+
 const actualizarSchema = z.object({
   nombre:              z.string().min(2).optional(),
-  tipoDocumento:       z.enum(['CC', 'TI', 'CE', 'PA', 'RC']).optional(),
+  tipoDocumento:       tipoDocSchema.optional(),
   documento:           z.string().nullable().optional(),
   email:               z.string().email().optional(),
   telefono:            z.string().min(7).optional(),
