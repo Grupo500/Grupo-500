@@ -28,7 +28,7 @@ const securityHeaders = [
       // Imágenes: mismo origen + Cloudinary + Google OAuth avatars + data URIs
       "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://img.clerk.com",
       // Conexiones: mismo origen + API + Google OAuth + Next-Auth
-      `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ?? ''} https://accounts.google.com https://oauth2.googleapis.com`,
+      `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ? new URL(process.env.NEXT_PUBLIC_API_URL).origin : ''} https://accounts.google.com https://oauth2.googleapis.com`,
       // Frames: solo Google OAuth (para el popup de cuenta)
       "frame-src https://accounts.google.com",
       // Workers: mismo origen (PWA service worker)
