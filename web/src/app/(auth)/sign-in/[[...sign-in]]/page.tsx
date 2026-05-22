@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -18,6 +18,7 @@ export default function SignInPage() {
   const [loading,       setLoading]       = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error,         setError]         = useState('')
+  const [showForgot,    setShowForgot]    = useState(false)
 
   async function handleCredentials(e: React.FormEvent) {
     e.preventDefault()
@@ -121,12 +122,13 @@ export default function SignInPage() {
                 <label className="text-xs font-medium text-[#2a4172]">
                   Contraseña
                 </label>
-                <a
-                  href={`mailto:pregrupo500@gmail.com?subject=${encodeURIComponent('Recuperar contraseña — Grupo 500')}&body=${encodeURIComponent('Hola, olvidé mi contraseña. Por favor ayúdame a recuperarla.\n\nCorreo: ')}`}
-                  className="text-[11px] text-[#1a7de0] hover:underline font-medium"
+                <button
+                  type="button"
+                  onClick={() => setShowForgot(true)}
+                  className="text-[11px] text-[#1a7de0] hover:underline font-medium cursor-pointer"
                 >
                   ¿Olvidaste tu contraseña?
-                </a>
+                </button>
               </div>
               <div className="relative">
                 <input
@@ -163,6 +165,49 @@ export default function SignInPage() {
           </form>
         </div>
       </div>
+
+      {/* Modal — ¿Olvidaste tu contraseña? */}
+      {showForgot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowForgot(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#1a7de0]/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-[#1a7de0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#001d3d]">Recuperar contraseña</p>
+                <p className="text-xs text-[#5a74a8] mt-0.5">Contacta al administrador</p>
+              </div>
+            </div>
+            <p className="text-[13px] text-[#334155] leading-relaxed">
+              El acceso a esta plataforma es gestionado por el administrador del sistema. Para recuperar tu contraseña, comunícate con el equipo de <strong>Grupo 500</strong> y solicita que te asignen una nueva.
+            </p>
+            <div className="flex flex-col gap-2 pt-1">
+              <a
+                href="https://wa.me/573164134212"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#25d366] hover:bg-[#20bc5a] text-white rounded-xl text-sm font-semibold transition-colors"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.553 4.124 1.527 5.858L0 24l6.344-1.503A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.003-1.369l-.36-.214-3.727.883.9-3.629-.235-.374A9.818 9.818 0 1112 21.818z"/>
+                </svg>
+                Contactar por WhatsApp
+              </a>
+              <button
+                onClick={() => setShowForgot(false)}
+                className="w-full py-2 text-sm text-[#5a74a8] hover:text-[#001d3d] transition-colors font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

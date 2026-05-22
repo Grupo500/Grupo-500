@@ -61,20 +61,35 @@ export default function UsuariosPage() {
 
   const guardarAsesor = useMutation({
     mutationFn: async () => {
-      // Actualizar datos del asesor
-      await fetcher(`/asesores/${editAsesor!.asesorId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: editAsesor!.nombre, telefono: editAsesor!.telefono, email: editAsesor!.email }),
-      })
-      // Si se ingresó contraseña temporal, actualizarla también
-      if (editPassword.trim()) {
-        await fetcher(`/auth/usuarios/${editAsesor!.userId}/password`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: editPassword.trim() }),
-        })
+      const errors: string[] = []
+
+      // Actualizar datos del asesor (solo si tiene asesorId)
+      if (editAsesor!.asesorId) {
+        try {
+          await fetcher(`/asesores/${editAsesor!.asesorId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre: editAsesor!.nombre, telefono: editAsesor!.telefono, email: editAsesor!.email }),
+          })
+        } catch (e: any) {
+          errors.push(`Datos del asesor: ${e.message}`)
+        }
       }
+
+      // Actualizar contraseña si se ingresó
+      if (editPassword.trim()) {
+        try {
+          await fetcher(`/auth/usuarios/${editAsesor!.userId}/password`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: editPassword.trim() }),
+          })
+        } catch (e: any) {
+          errors.push(`Contraseña: ${e.message}`)
+        }
+      }
+
+      if (errors.length > 0) throw new Error(errors.join(' | '))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
