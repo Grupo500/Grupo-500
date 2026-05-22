@@ -25,18 +25,23 @@ router.get('/', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
-  res.setHeader('X-Accel-Buffering', 'no') // Nginx: deshabilita buffering
+  res.setHeader('X-Accel-Buffering', 'no') // Nginx/Railway: deshabilita buffering
   res.flushHeaders()
+
+  // Desactivar timeout del socket para SSE (conexión larga por diseño)
+  req.socket.setTimeout(0)
+  req.socket.setNoDelay(true)
+  req.socket.setKeepAlive(true, 10_000)
 
   // Confirmación de conexión
   res.write('event: conectado\ndata: {}\n\n')
 
   addClient(res)
 
-  // Ping cada 25s para mantener la conexión viva
+  // Ping cada 20s para mantener la conexión viva en Railway (timeout 300s)
   const ping = setInterval(() => {
     try { res.write(':ping\n\n') } catch { /* cliente desconectado */ }
-  }, 25_000)
+  }, 20_000)
 
   req.on('close', () => {
     clearInterval(ping)

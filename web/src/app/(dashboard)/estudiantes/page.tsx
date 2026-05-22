@@ -240,6 +240,8 @@ export default function EstudiantesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda],
     queryFn: () => fetcher<PaginatedResponse>(`/estudiantes?page=${page}&limit=15${busqueda ? `&nombre=${busqueda}` : ''}`),
+    refetchInterval:       30_000,  // refresca cada 30s como respaldo al SSE
+    refetchOnWindowFocus:  true,
   })
 
   const crearMutation = useMutation({
