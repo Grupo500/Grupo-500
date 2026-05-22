@@ -13,7 +13,7 @@ interface Asesor {
 }
 interface Usuario {
   id: string; email: string
-  nombre: string | null; imageUrl: string | null
+  nombre: string | null; image: string | null
   role: 'ADMIN' | 'VENDEDOR'; asesor: Asesor | null; createdAt: string
 }
 
@@ -199,8 +199,8 @@ export default function UsuariosPage() {
                 {/* Avatar + nombre + badge */}
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 md:w-11 md:h-11 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
-                    {u.imageUrl
-                      ? <img src={u.imageUrl} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
+                    {u.image
+                      ? <img src={u.image} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center">
                           <span className="text-xs md:text-sm font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
                         </div>

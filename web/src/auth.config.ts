@@ -23,17 +23,23 @@ export const authConfig: NextAuthConfig = {
       }
       return true
     },
-    jwt({ token, user }) {
+    jwt({ token, user, account, profile }) {
       if (user) {
-        token.id   = user.id ?? token.sub ?? ''
-        token.role = (user as any).role ?? 'VENDEDOR'
+        token.id    = user.id ?? token.sub ?? ''
+        token.role  = (user as any).role ?? 'VENDEDOR'
+        token.image = user.image ?? null
+      }
+      // Google OAuth: tomar foto del perfil de Google si no tenemos una
+      if (account?.provider === 'google' && profile) {
+        token.image = (profile as any).picture ?? token.image ?? null
       }
       return token
     },
     session({ session, token }) {
       if (token && session.user) {
-        session.user.id   = token.id   as string
-        session.user.role = token.role as 'ADMIN' | 'VENDEDOR'
+        session.user.id    = token.id    as string
+        session.user.role  = token.role  as 'ADMIN' | 'VENDEDOR'
+        session.user.image = token.image as string | null
       }
       return session
     },

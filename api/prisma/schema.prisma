@@ -64,7 +64,7 @@ model User {
   emailVerified  DateTime?
   hashedPassword String?
   nombre         String?
-  imageUrl       String?
+  image          String?
   role           Role      @default(VENDEDOR)
   asesor         Asesor?
   accounts       Account[]
