@@ -23,8 +23,13 @@ const include = {
   asesor:  { include: { user: { select: { email: true } } } },
 }
 
-export async function listar(_req: Request, res: Response) {
+export async function listar(req: Request, res: Response) {
+  const isAdmin = req.userRole === 'ADMIN'
+  // VENDEDOR solo ve sus propias negociaciones
+  const where = !isAdmin && req.asesorId ? { asesorId: req.asesorId } : {}
+
   const negociaciones = await prisma.negociacion.findMany({
+    where,
     include,
     orderBy: { updatedAt: 'desc' },
   })

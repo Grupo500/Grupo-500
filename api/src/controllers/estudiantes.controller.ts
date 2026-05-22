@@ -41,10 +41,11 @@ export async function listar(req: Request, res: Response) {
   const isAdmin = req.userRole === 'ADMIN'
 
   const where = {
-    // Todos los roles ven todos los estudiantes; solo admin puede filtrar por asesorId
-    ...(nombre && { nombre: { contains: String(nombre), mode: 'insensitive' as const } }),
+    // VENDEDOR solo ve sus propios estudiantes; ADMIN puede ver todos y filtrar por asesor
+    ...(!isAdmin && req.asesorId ? { asesorId: req.asesorId } : {}),
+    ...(isAdmin && asesorId    ? { asesorId: String(asesorId) } : {}),
+    ...(nombre    && { nombre:    { contains: String(nombre),    mode: 'insensitive' as const } }),
     ...(colegioId && { colegioId: String(colegioId) }),
-    ...(isAdmin && asesorId && { asesorId: String(asesorId) }),
   }
 
   const [estudiantes, total] = await Promise.all([
@@ -244,7 +245,8 @@ export async function actualizar(req: Request, res: Response) {
       ...(data.departamento    !== undefined && { departamento:    data.departamento }),
       ...(data.ciudad          !== undefined && { ciudad:          data.ciudad }),
       ...(data.colegioId        !== undefined && { colegioId:        data.colegioId }),
-      ...(data.asesorId         !== undefined && { asesorId:         data.asesorId }),
+      // Solo ADMIN puede reasignar el asesor de un estudiante
+      ...(isAdmin && data.asesorId !== undefined && { asesorId: data.asesorId }),
       ...(isAdmin && data.lineaAutorizada !== undefined && { lineaAutorizada: data.lineaAutorizada }),
     },
     include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },

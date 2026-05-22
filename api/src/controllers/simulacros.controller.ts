@@ -56,9 +56,22 @@ export async function analizar(req: Request, res: Response) {
   }
 
   // ── 1. Descargar PDF desde Cloudinary ────────────────────────────────────
-  const pdfRes = await fetch(simulacro.archivoUrl)
+  // Validar que la URL sea de Cloudinary (prevención SSRF)
+  const parsedUrl = new URL(simulacro.archivoUrl)
+  const allowedHosts = ['res.cloudinary.com', 'api.cloudinary.com']
+  if (!allowedHosts.some(h => parsedUrl.hostname === h || parsedUrl.hostname.endsWith(`.${h}`))) {
+    return res.status(400).json({ error: 'URL de archivo no permitida' })
+  }
+
+  const pdfRes = await fetch(simulacro.archivoUrl, {
+    signal: AbortSignal.timeout(15_000),   // 15 s máximo
+  })
   if (!pdfRes.ok) {
     return res.status(502).json({ error: 'No se pudo descargar el PDF desde Cloudinary' })
+  }
+  const contentLength = Number(pdfRes.headers.get('content-length') ?? 0)
+  if (contentLength > 50 * 1024 * 1024) {
+    return res.status(413).json({ error: 'El archivo PDF supera el límite de 50 MB' })
   }
   const buffer = Buffer.from(await pdfRes.arrayBuffer())
 

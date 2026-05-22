@@ -190,7 +190,7 @@ router.post('/auth/finish', asyncHandler(async (req, res) => {
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('30d')
+    .setExpirationTime('8h')
     .sign(secret)
 
   return ApiResponse.success(res, { verified: true, token, user: {

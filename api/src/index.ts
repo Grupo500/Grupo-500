@@ -127,11 +127,11 @@ app.use('/api', rateLimit({
   message: { success: false, error: 'Límite por minuto alcanzado.' },
 }))
 
-// Rate limiting estricto en auth
+// Rate limiting estricto en auth — contar TODOS los intentos (exitosos y fallidos)
 app.use('/api/auth', rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
-  skipSuccessfulRequests: true,
+  skipSuccessfulRequests: false,
   message: { success: false, error: 'Demasiados intentos de autenticación.' }
 }))
 
