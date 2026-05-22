@@ -44,7 +44,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
         {!collapsed && (
           <div className="flex-1 min-w-0 text-left">
             <p className="text-[12px] font-semibold text-on-surface truncate">{name}</p>
-            <p className="text-[10px] text-on-surface-variant truncate">{email}</p>
+            <p className="text-[10px] text-on-surface-variant truncate max-w-full overflow-hidden">{email}</p>
           </div>
         )}
       </button>
