@@ -21,7 +21,7 @@ const crearSchema = z.object({
   descuentoPorcentaje: z.number().min(0).max(100).optional(),
   // Pago integrado
   formaPago: z.enum(['CONTADO', 'FINANCIADO']).optional(),
-  metodoPago: z.enum(['TRANSFERENCIA', 'TARJETA', 'EFECTIVO', 'OTRO']).optional(),
+  metodoPago: z.string().min(1).optional(),
   fechaPago: z.string().optional(),
   comprobante: z.string().optional(),
   numeroCuotas: z.number().int().min(1).max(24).optional(),
@@ -124,7 +124,7 @@ export async function crear(req: Request, res: Response) {
             estudianteId:    est.id,
             monto:           montoFinal,
             estado:          'PAGADO',
-            metodo:          data.metodoPago ?? 'TRANSFERENCIA',
+            metodo:          data.metodoPago ?? 'Bancolombia',
             fechaPago,
             fechaVencimiento: fechaPago,
             ...(data.comprobante && { comprobante: data.comprobante }),

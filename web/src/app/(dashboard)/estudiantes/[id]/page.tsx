@@ -737,13 +737,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: FORM NUEVO PAGO DIRECTO
 // ══════════════════════════════════════════════════════════════════════════
-const METODOS_BACKEND: Record<string, 'TRANSFERENCIA' | 'TARJETA' | 'OTRO'> = {
-  Bancolombia: 'TRANSFERENCIA',
-  'Bre-B':     'TRANSFERENCIA',
-  Nequi:       'TRANSFERENCIA',
-  Tarjeta:     'TARJETA',
-  Otro:        'OTRO',
-}
+// El método se guarda directamente como string en la BD (sin enum)
 const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Otro']
 
 function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
@@ -778,7 +772,6 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
   }
 
   const metodoFinal = metodo === 'Otro' ? (otroMetodo.trim() || 'Otro') : metodo
-  const metodoDB    = METODOS_BACKEND[metodoFinal] ?? 'OTRO'
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -791,7 +784,7 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
       // 1. Crear el pago (siempre necesita fechaVencimiento en el backend)
       const created = await fetcher<{ data: { id: string } }>('/pagos', {
         method: 'POST',
-        body: JSON.stringify({ estudianteId, monto: n, metodo: metodoDB, fechaVencimiento: vencimiento }),
+        body: JSON.stringify({ estudianteId, monto: n, metodo: metodoFinal, fechaVencimiento: vencimiento }),
       })
 
       // 2. Si "pagar ahora", marcar PAGADO en el mismo request
@@ -982,14 +975,13 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
   })
 
   const editMetodoFinal = editMetodo === 'Otro' ? (editOtroMetodo.trim() || 'Otro') : editMetodo
-  const editMetodoDB    = METODOS_BACKEND[editMetodoFinal] ?? 'OTRO'
 
   const editarMutation = useMutation({
     mutationFn: () => fetcher(`/pagos/${p.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
         monto:           Number(editMonto),
-        metodo:          editMetodoDB,
+        metodo:          editMetodoFinal,
         fechaVencimiento: editFechaVenc,
         ...(pagado && editFechaPago && { fechaPago: editFechaPago }),
         ...(esUrlValida(editComp) && { comprobante: editComp }),

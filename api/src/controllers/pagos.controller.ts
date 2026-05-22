@@ -9,7 +9,7 @@ import { z } from 'zod'
 const registrarSchema = z.object({
   estudianteId: z.string(),
   monto: z.number().positive(),
-  metodo: z.enum(['TRANSFERENCIA', 'TARJETA', 'EFECTIVO', 'OTRO']),
+  metodo: z.string().min(1),
   fechaVencimiento: z.string(),
   notas: z.string().optional(),
 })
@@ -87,7 +87,7 @@ export async function registrar(req: Request, res: Response) {
 
 const actualizarSchema = z.object({
   monto:           z.number().positive().optional(),
-  metodo:          z.enum(['TRANSFERENCIA', 'TARJETA', 'EFECTIVO', 'OTRO']).optional(),
+  metodo:          z.string().min(1).optional(),
   estado:          z.enum(['PENDIENTE', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
   fechaVencimiento: z.string().optional(),
   fechaPago:       z.string().optional(),   // fecha real del pago (no auto-now)

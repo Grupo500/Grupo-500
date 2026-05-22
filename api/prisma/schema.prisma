@@ -25,12 +25,6 @@ enum EstadoPago {
   CANCELADO
 }
 
-enum MetodoPago {
-  TRANSFERENCIA
-  TARJETA
-  EFECTIVO
-  OTRO
-}
 
 enum EstadoFinanciamiento {
   ACTIVO
@@ -283,7 +277,7 @@ model Pago {
   asesorId         String?
   monto            Float
   estado           EstadoPago @default(PENDIENTE)
-  metodo           MetodoPago
+  metodo           String
   fechaVencimiento DateTime
   fechaPago        DateTime?
   comprobante      String?    // URL en Cloudinary

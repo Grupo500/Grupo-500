@@ -688,7 +688,7 @@ router.post('/webhook', asyncHandler(async (req, res) => {
             estado:          'PENDIENTE',
             fechaVencimiento: new Date(),
             fechaPago:       comprobanteExistente ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
-            metodo:          'TRANSFERENCIA',
+            metodo:          'Bancolombia',
             comprobante:     comprobanteExistente,
             notas: [
               'Pago adicional vía Typeform (estudiante ya registrado).',
@@ -813,7 +813,7 @@ router.post('/webhook', asyncHandler(async (req, res) => {
           estado:          'PENDIENTE',  // siempre pendiente de verificación humana
           fechaVencimiento: new Date(),
           fechaPago:       comprobanteUrl ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
-          metodo:          'TRANSFERENCIA',
+          metodo:          'Bancolombia',
           comprobante:     comprobanteUrl,  // null si el estudiante no pegó un link real
           notas: [
             `Inscripción vía Typeform.`,
