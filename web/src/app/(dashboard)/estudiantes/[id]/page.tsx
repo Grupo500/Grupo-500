@@ -660,7 +660,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
         </div>
         <div>
           <label className={labelCls}>Fecha nacimiento</label>
-          <input type="date" className={cn(inputCls, 'max-w-[180px]')} value={form.fechaNacimiento} onChange={e => f('fechaNacimiento')(e.target.value)} />
+          <input type="date" className={cn(inputCls, 'max-w-[180px] lg:max-w-none')} value={form.fechaNacimiento} onChange={e => f('fechaNacimiento')(e.target.value)} />
         </div>
         <div>
           <label className={labelCls}>Colegio</label>
