@@ -425,19 +425,21 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
 }))
 
 // ── Formulario activo (para todos los roles autenticados) ────────────────────
-// Retorna el URL del formulario vigente o null si no existe aún.
-// Si existe el form_id pero no el form_url, reconstruye el URL y lo persiste.
+// Retorna el URL del formulario vigente.
+// Si no hay registro en ConfigApp, consulta la API de Typeform para sincronizar
+// automáticamente el formulario más reciente que exista en la cuenta.
 router.get('/formulario-activo', authenticate, asyncHandler(async (_req, res) => {
   const [cfgUrl, cfgId] = await Promise.all([
     prisma.configApp.findUnique({ where: { clave: 'typeform_form_url' } }),
     prisma.configApp.findUnique({ where: { clave: 'typeform_form_id'  } }),
   ])
 
+  // 1. Tenemos URL guardada → retornar directo
   if (cfgUrl?.valor) {
     return ApiResponse.success(res, { url: cfgUrl.valor })
   }
 
-  // Reconstruir URL desde el ID si no hay registro de URL
+  // 2. Tenemos el ID pero no la URL → reconstruir y persistir
   if (cfgId?.valor) {
     const url = `https://form.typeform.com/to/${cfgId.valor}`
     await prisma.configApp.upsert({
@@ -448,7 +450,57 @@ router.get('/formulario-activo', authenticate, asyncHandler(async (_req, res) =>
     return ApiResponse.success(res, { url })
   }
 
-  return ApiResponse.success(res, { url: null })
+  // 3. ConfigApp vacío → consultar API de Typeform para auto-sincronizar
+  if (!process.env.TYPEFORM_API_KEY) {
+    return ApiResponse.success(res, { url: null })
+  }
+
+  try {
+    const resp = await fetch(`${TYPEFORM_API}/forms?page_size=10&sort_by=created_at&order_by=desc`, {
+      headers: typeformHeaders(),
+    })
+
+    if (!resp.ok) {
+      logger.warn('No se pudo consultar Typeform al buscar formulario activo')
+      return ApiResponse.success(res, { url: null })
+    }
+
+    const json = await resp.json() as { items?: { id: string; title: string }[] }
+    const forms = json.items ?? []
+
+    // Buscar el formulario de inscripción de Grupo 500 (por título)
+    const formActivo = forms.find(f =>
+      f.title.toLowerCase().includes('inscripción') ||
+      f.title.toLowerCase().includes('grupo 500') ||
+      f.title.toLowerCase().includes('inscripcion')
+    ) ?? forms[0]  // Si no coincide por título, usar el más reciente
+
+    if (!formActivo) {
+      return ApiResponse.success(res, { url: null })
+    }
+
+    const url = `https://form.typeform.com/to/${formActivo.id}`
+
+    // Persistir en ConfigApp para no volver a consultar la API
+    await Promise.all([
+      prisma.configApp.upsert({
+        where: { clave: 'typeform_form_id' },
+        update: { valor: formActivo.id },
+        create: { clave: 'typeform_form_id', valor: formActivo.id },
+      }),
+      prisma.configApp.upsert({
+        where: { clave: 'typeform_form_url' },
+        update: { valor: url },
+        create: { clave: 'typeform_form_url', valor: url },
+      }),
+    ])
+
+    logger.info(`Formulario Typeform auto-sincronizado: ${formActivo.id} (${formActivo.title})`)
+    return ApiResponse.success(res, { url })
+  } catch (err) {
+    logger.error({ err }, 'Error al auto-sincronizar formulario Typeform')
+    return ApiResponse.success(res, { url: null })
+  }
 }))
 
 // ── Eliminar formulario activo (reset, solo ADMIN) ────────────────────────────
