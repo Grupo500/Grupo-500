@@ -46,8 +46,29 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   next()
 })
 
-// Security headers
-app.use(helmet())
+// Security headers — configuración explícita (no defaults)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:     ["'self'"],
+      scriptSrc:      ["'self'"],
+      styleSrc:       ["'self'"],
+      imgSrc:         ["'self'", 'data:'],
+      connectSrc:     ["'self'"],
+      fontSrc:        ["'self'"],
+      objectSrc:      ["'none'"],
+      frameSrc:       ["'none'"],
+      frameAncestors: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  crossOriginEmbedderPolicy: false,  // Railway/Cloudinary requieren esto desactivado
+  hsts: {
+    maxAge:            31536000,
+    includeSubDomains: true,
+    preload:           true,
+  },
+}))
 app.disable('x-powered-by')
 
 // CORS — valida origen dinámicamente contra ALLOWED_ORIGINS

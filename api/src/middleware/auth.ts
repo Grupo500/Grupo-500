@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../config/prisma'
 import { UnauthorizedError, ForbiddenError } from '../utils/errors'
+import { logSecurityEvent } from '../utils/logger'
 import { Role, User, Asesor } from '@prisma/client'
 
 type UserWithAsesor = User & { asesor: Asesor | null }
@@ -47,6 +48,13 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
     next()
   } catch (error) {
+    logSecurityEvent('AUTH_FAILURE', {
+      ip:        req.ip,
+      userAgent: req.headers['user-agent'],
+      url:       req.originalUrl,
+      method:    req.method,
+      reason:    error instanceof Error ? error.message : 'token_invalid',
+    })
     if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
       return next(error)
     }
@@ -57,6 +65,14 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 export function requireRole(...roles: Role[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.userRole || !roles.includes(req.userRole)) {
+      logSecurityEvent('ACCESS_DENIED', {
+        userId:        req.userId,
+        userRole:      req.userRole,
+        requiredRoles: roles,
+        ip:            req.ip,
+        url:           req.originalUrl,
+        method:        req.method,
+      })
       return next(new ForbiddenError('No tienes permisos para esta acción'))
     }
     next()

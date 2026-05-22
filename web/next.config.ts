@@ -1,11 +1,59 @@
 import type { NextConfig } from 'next'
 
+const securityHeaders = [
+  // Evita que la app sea embebida en iframes (clickjacking)
+  { key: 'X-Frame-Options', value: 'DENY' },
+  // Evita que el browser "adivine" el content-type
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  // Controla cuánta info de referrer se envía
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  // Fuerza HTTPS por 1 año (solo en producción lo respetan browsers)
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
+  // Permisos de APIs del browser — deshabilita las que no usamos
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  },
+  // Content Security Policy
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      // Scripts: solo mismo origen + Next.js inline necesario
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // Estilos: mismo origen + inline (Tailwind lo requiere)
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      // Fuentes: Google Fonts
+      "font-src 'self' https://fonts.gstatic.com",
+      // Imágenes: mismo origen + Cloudinary + Google OAuth avatars + data URIs
+      "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://img.clerk.com",
+      // Conexiones: mismo origen + API + Google OAuth + Next-Auth
+      `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ?? ''} https://accounts.google.com https://oauth2.googleapis.com`,
+      // Frames: solo Google OAuth (para el popup de cuenta)
+      "frame-src https://accounts.google.com",
+      // Workers: mismo origen (PWA service worker)
+      "worker-src 'self' blob:",
+      // Manifest PWA
+      "manifest-src 'self'",
+    ].join('; '),
+  },
+]
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
-      { protocol: 'https', hostname: 'img.clerk.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
+  },
+  async headers() {
+    return [
+      {
+        // Aplicar a todas las rutas
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+    ]
   },
 }
 

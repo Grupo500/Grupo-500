@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs'
 import { authenticate, requireRole } from '../middleware/auth'
 import { asyncHandler } from '../middleware/errorHandler'
 import { ApiResponse } from '../utils/response'
+import { auditLog } from '../utils/auditLogger'
+import { logSecurityEvent } from '../utils/logger'
 import { prisma } from '../config/prisma'
 import { z } from 'zod'
 
@@ -75,6 +77,7 @@ router.patch('/usuarios/:id/rol', authenticate, requireRole('ADMIN'), asyncHandl
     return res.status(400).json({ error: 'Rol inválido' })
   }
   const user = await prisma.user.update({ where: { id: req.params.id }, data: { role } })
+  auditLog(req, 'UPDATE', 'usuario_rol', req.params.id, { nuevoRol: role })
   return ApiResponse.success(res, user)
 }))
 
@@ -82,6 +85,11 @@ router.patch('/usuarios/:id/rol', authenticate, requireRole('ADMIN'), asyncHandl
 router.patch('/usuarios/:id/password', authenticate, asyncHandler(async (req, res) => {
   // Solo el propio usuario o un ADMIN puede cambiar la contraseña
   if (req.userId !== req.params.id && req.userRole !== 'ADMIN') {
+    logSecurityEvent('UNAUTHORIZED_PASSWORD_CHANGE', {
+      requesterId: req.userId,
+      targetId:    req.params.id,
+      ip:          req.ip,
+    })
     return res.status(403).json({ error: 'No autorizado' })
   }
 
@@ -92,6 +100,7 @@ router.patch('/usuarios/:id/password', authenticate, asyncHandler(async (req, re
 
   const hashedPassword = await bcrypt.hash(password, 12)
   await prisma.user.update({ where: { id: req.params.id }, data: { hashedPassword } })
+  auditLog(req, 'UPDATE', 'usuario_password', req.params.id)
   return ApiResponse.success(res, { message: 'Contraseña actualizada' })
 }))
 
@@ -100,6 +109,7 @@ router.delete('/usuarios/:id', authenticate, requireRole('ADMIN'), asyncHandler(
   const user = await prisma.user.findUnique({ where: { id: req.params.id } })
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
   await prisma.user.delete({ where: { id: user.id } })
+  auditLog(req, 'DELETE', 'usuario', req.params.id, { email: user.email })
   return ApiResponse.success(res, { message: 'Usuario eliminado correctamente' })
 }))
 

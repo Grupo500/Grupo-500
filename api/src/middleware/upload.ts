@@ -1,6 +1,7 @@
-import multer from 'multer'
+import multer, { FileFilterCallback } from 'multer'
 import { CloudinaryStorage } from 'multer-storage-cloudinary'
 import { v2 as cloudinary } from 'cloudinary'
+import { Request } from 'express'
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -8,13 +9,38 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
+/* ─── MIME permitidos ─────────────────────────────────────────────────────── */
+const ALLOWED_IMAGE_MIMES = new Set([
+  'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
+  'application/pdf',  // comprobantes también pueden ser PDF
+])
+const ALLOWED_PDF_MIMES = new Set(['application/pdf'])
+const ALLOWED_FIRMA_MIMES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])
+
+/* ─── Filtros ─────────────────────────────────────────────────────────────── */
+function filterImage(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
+  if (ALLOWED_IMAGE_MIMES.has(file.mimetype)) return cb(null, true)
+  cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}. Solo imágenes o PDF.`))
+}
+
+function filterPdf(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
+  if (ALLOWED_PDF_MIMES.has(file.mimetype)) return cb(null, true)
+  cb(new Error(`Solo se permiten archivos PDF. Recibido: ${file.mimetype}`))
+}
+
+function filterFirma(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
+  if (ALLOWED_FIRMA_MIMES.has(file.mimetype)) return cb(null, true)
+  cb(new Error(`Solo se permiten imágenes JPG/PNG/WebP para firma. Recibido: ${file.mimetype}`))
+}
+
+/* ─── Storages ────────────────────────────────────────────────────────────── */
 const pdfStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder:   'grupo500/simulacros',
-    resource_type: 'raw',   // PDFs y archivos binarios
+    folder:          'grupo500/simulacros',
+    resource_type:   'raw',
     allowed_formats: ['pdf'],
-    use_filename: true,
+    use_filename:    true,
     unique_filename: true,
   } as any,
 })
@@ -22,7 +48,6 @@ const pdfStorage = new CloudinaryStorage({
 const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: async (_req: any, file: any) => {
-    // PDFs se suben como raw, imágenes como image
     const isPdf = file.mimetype === 'application/pdf'
     return {
       folder:          'grupo500/comprobantes',
@@ -44,6 +69,21 @@ const firmaStorage = new CloudinaryStorage({
   } as any,
 })
 
-export const uploadPdf   = multer({ storage: pdfStorage,   limits: { fileSize: 20 * 1024 * 1024 } })  // 20 MB
-export const uploadImage = multer({ storage: imageStorage, limits: { fileSize: 20 * 1024 * 1024 } })  // 20 MB
-export const uploadFirma = multer({ storage: firmaStorage, limits: { fileSize: 5  * 1024 * 1024 } })  //  5 MB
+/* ─── Exports ─────────────────────────────────────────────────────────────── */
+export const uploadPdf = multer({
+  storage:    pdfStorage,
+  fileFilter: filterPdf,
+  limits:     { fileSize: 20 * 1024 * 1024, files: 1 },  // 20 MB máx
+})
+
+export const uploadImage = multer({
+  storage:    imageStorage,
+  fileFilter: filterImage,
+  limits:     { fileSize: 10 * 1024 * 1024, files: 1 },  // 10 MB máx (era 20, reducido)
+})
+
+export const uploadFirma = multer({
+  storage:    firmaStorage,
+  fileFilter: filterFirma,
+  limits:     { fileSize: 5 * 1024 * 1024, files: 1 },   // 5 MB máx
+})
