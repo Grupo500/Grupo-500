@@ -243,6 +243,20 @@
 - **Pagos directos:** ✅ Marcar pagado con comprobante desde la app
 - **Reportes Marketing:** ✅ Gráfica de fuentes de contacto
 
+### Pendiente — Formulario Typeform: selector de ciudad/municipio filtrable
+
+**Requiere plan de pago Typeform (Business o superior).**
+
+Actualmente la pregunta "¿En qué ciudad y departamento vives?" es texto libre. La mejora sería:
+1. Dropdown de **departamento** (32 opciones)
+2. Lógica condicional → según departamento seleccionado, mostrar dropdown de **municipios** correspondiente
+3. Base de datos de municipios de Colombia (JSON público disponible)
+
+**Bloqueado por:** plan gratuito de Typeform (límite de preguntas y lógica condicional)
+**Acción:** Implementar cuando se actualice el plan de Typeform
+
+---
+
 ### Propuesta pendiente de análisis — Automatización completa
 
 **Guardada para próxima sesión.** Propuesta de dos flujos de automatización:

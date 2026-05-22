@@ -1,8 +1,19 @@
 import { Request, Response, NextFunction } from 'express'
+import { ZodError } from 'zod'
 import { AppError, ValidationError } from '../utils/errors'
 import { logger } from '../utils/logger'
 
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
+  // Errores de validación Zod → 400
+  if (err instanceof ZodError) {
+    const messages = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+    return res.status(400).json({
+      success: false,
+      error: `Datos inválidos: ${messages}`,
+      errors: err.errors,
+    })
+  }
+
   if (err instanceof ValidationError) {
     return res.status(err.statusCode).json({
       success: false,

@@ -503,7 +503,17 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
     mutationFn: async () => {
       if (!form.nombre || !form.email || !form.telefono) throw new Error('Completa los campos obligatorios')
       const cursoPrecio = cursos.find(c => c.id === form.cursoId)?.precio ?? 0
-      const descPct = cursoPrecio > 0 ? (Number(form.descuentoValor) / cursoPrecio) * 100 : 0
+      // Clamp a 100 para evitar errores de punto flotante
+      const descPct = cursoPrecio > 0 ? Math.min(100, (Number(form.descuentoValor) / cursoPrecio) * 100) : 0
+      // Incluir acudiente si tiene nombre y teléfono
+      const acudiente = form.acudienteNombre.trim() && form.acudienteTelefono.trim()
+        ? {
+            nombre:   form.acudienteNombre.trim(),
+            email:    form.acudienteEmail.trim() || null,
+            telefono: form.acudienteTelefono.trim(),
+            relacion: form.acudienteRelacion,
+          }
+        : undefined
       return fetcher(`/estudiantes/${e.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -514,6 +524,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           departamento: form.departamento || null, ciudad: form.ciudad || null,
           colegioId: form.colegioId || null,
           ...(isAdmin && { asesorId: form.asesorId || null, cursoId: form.cursoId || null, descuentoPorcentaje: descPct }),
+          ...(acudiente && { acudiente }),
         }),
       })
     },

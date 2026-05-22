@@ -201,7 +201,14 @@ const actualizarSchema = z.object({
   asesorId:            z.string().nullable().optional(),
   // Solo admin
   cursoId:             z.string().nullable().optional(),
-  descuentoPorcentaje: z.number().min(0).max(100).optional(),
+  descuentoPorcentaje: z.number().min(0).max(101).optional(), // 101 para tolerar fp
+  // Acudiente (opcional, se actualiza si se envían los campos)
+  acudiente: z.object({
+    nombre:   z.string().min(2),
+    email:    z.string().email().optional().nullable(),
+    telefono: z.string().min(7),
+    relacion: z.string(),
+  }).optional(),
 })
 
 export async function actualizar(req: Request, res: Response) {
@@ -226,6 +233,15 @@ export async function actualizar(req: Request, res: Response) {
     },
     include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
   })
+
+  // Actualizar acudiente si viene en el body
+  if (data.acudiente) {
+    await prisma.acudiente.upsert({
+      where:  { estudianteId },
+      update: { ...data.acudiente },
+      create: { estudianteId, ...data.acudiente },
+    })
+  }
 
   // Solo admin puede modificar curso y descuento
   if (isAdmin && data.cursoId !== undefined) {
