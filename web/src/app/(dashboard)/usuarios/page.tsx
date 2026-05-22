@@ -476,7 +476,7 @@ export default function UsuariosPage() {
                   onChange={e => setFormRole(e.target.value as 'VENDEDOR' | 'ADMIN')}
                   className="input-base"
                 >
-                  <option value="VENDEDOR">Asesor / Vendedor</option>
+                  <option value="VENDEDOR">Asesor</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
               </div>
