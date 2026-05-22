@@ -324,6 +324,57 @@ Actualmente la pregunta "¿En qué ciudad y departamento vives?" es texto libre.
 
 ---
 
+## Sesión 008 — 2026-05-22
+
+**Objetivo:** Performance, bugs real-time, importar Excel, auditoría OWASP.
+
+### Lo que se hizo
+
+**Performance:**
+- `estudiantes/page.tsx`: eliminado `queryClient.invalidateQueries()` global en mount → reemplazado por invalidaciones específicas por query key
+- `QueryProvider.tsx`: eliminado `ReactQueryDevtools` (se cargaba en producción)
+- Queries secundarias (colegios, asesores-select, cursos-select) con `staleTime: 5min`
+
+**Fix ERR_HTTP_HEADERS_SENT:**
+- `api/src/index.ts`: agregado guard `if (!res.headersSent)` en callback de `res.setTimeout()`
+
+**Bug "Próximos cobros" vacío — 5 causas resueltas:**
+1. Query key mismatch: `useSSE.ts` usaba `'proximos-cobros'` vs `'cobros-proximos'` en el componente — corregido
+2. Admin sin SSE: creado `SSEProvider.tsx` ('use client') y envuelto `{children}` en el layout del dashboard
+3. Sin broadcast en pagos: `pagos.controller.ts` ahora llama `broadcast('pago-registrado', ...)` en `registrar()` y `actualizar()`
+4. Sin broadcast en cuotas: `cuotas.controller.ts` ahora llama `broadcast()` cuando `data.pagado !== undefined`
+5. API solo traía cuotas (financiados): `cobros.controller.ts::proximos()` ahora combina `Cuota` + `Pago PENDIENTE` en el rango
+
+**Importación Excel de estudiantes:**
+- `middleware/upload.ts`: nuevo `uploadExcel` con memoryStorage, acepta .xlsx/.xls, límite 10MB
+- `estudiantes.controller.ts`: función `importar()` — parsea Excel, agrupa por teléfono, crea estudiantes + pagos en lote
+- `routes/estudiantes.ts`: ruta `POST /import` (solo ADMIN)
+- `estudiantes/page.tsx`: botón "Importar" + modal con resultado (creados / actualizados / errores)
+
+**Seguridad OWASP — fixes aplicados:**
+- **A01 Broken Access Control:**
+  - `estudiantes.controller.ts::listar()`: VENDEDOR scoped a sus propios estudiantes
+  - `estudiantes.controller.ts::actualizar()`: solo ADMIN puede cambiar `asesorId`
+  - `negociaciones.controller.ts::listar()`: VENDEDOR scoped a sus propias negociaciones
+  - `colegios.ts`: `POST /` y `PATCH /:id` ahora requieren `requireRole('ADMIN')`
+- **A07 Auth Failures:**
+  - `passkeys.ts`: JWT expiry `'30d'` → `'8h'`
+  - `index.ts`: auth rate limit ahora cuenta intentos exitosos también (`skipSuccessfulRequests: false`)
+- **A09 Logging:**
+  - `auth.ts`: `AUTH_FAILURE` ahora incluye `email` y `userId` (decodificado sin verificar para trazabilidad)
+- **A10 SSRF:**
+  - `simulacros.controller.ts`: validación de URL contra allowlist de dominios Cloudinary antes de fetch; timeout 15s; límite 50MB
+
+### Pendientes OWASP (registrados para próxima sesión)
+| Prioridad | Tarea |
+|-----------|-------|
+| MEDIA | Certificados — agregar filtro `asesorId` para VENDEDOR en `certificados.controller.ts` |
+| MEDIA | next-auth beta → stable cuando salga release oficial |
+| BAJA | `$queryRaw` en `asesores.controller.ts` — reemplazar por Prisma nativo |
+| BAJA | Agregar `correlationId`/`requestId` a todos los logs de Railway |
+
+---
+
 ## Sesión 004 — 2026-05-19
 
 **Objetivo:** Unificar módulo Estudiantes + Cobros, mejoras de UX profundas, historial de modificaciones.
