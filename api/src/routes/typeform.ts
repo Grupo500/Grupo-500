@@ -583,13 +583,51 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       colegioId = colegio.id
     }
 
-    // ── 2. Validar email único ─────────────────────────────────────────────
+    // ── 2. Verificar si el estudiante ya existe ────────────────────────────
     const email = get('email_google') as string
     const existente = await prisma.estudiante.findFirst({ where: { email } })
 
     if (existente) {
-      logger.warn(`Estudiante ya registrado con email: ${email}`)
-      return res.status(200).json({ message: 'Estudiante ya registrado', id: existente.id })
+      // Si ya existe, igual registrar el pago si viene uno nuevo
+      logger.info(`Estudiante ya registrado (${existente.id}), procesando pago si aplica`)
+
+      function parseMonto2(raw: unknown): number {
+        if (!raw) return 0
+        const limpio = String(raw).replace(/\./g, '').replace(/,/g, '.').replace(/[^0-9.]/g, '')
+        const n = parseFloat(limpio)
+        return isNaN(n) ? 0 : Math.round(n)
+      }
+
+      const montoExistente = parseMonto2(get('monto_consignado'))
+      if (montoExistente > 0) {
+        const comprobanteExistente = get('comprobante_pago') as string | null
+        const cuentaExistente      = get('cuenta_pago') as string | null
+        const cursoLabelEx         = get('curso_seleccionado') as string | null
+
+        await prisma.pago.create({
+          data: {
+            estudianteId:    existente.id,
+            monto:           montoExistente,
+            estado:          'PENDIENTE',
+            fechaVencimiento: new Date(),
+            fechaPago:       comprobanteExistente ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
+            metodo:          'TRANSFERENCIA',
+            comprobante:     comprobanteExistente ?? null,
+            notas: [
+              'Pago adicional vía Typeform (estudiante ya registrado).',
+              cuentaExistente  ? `Cuenta: ${cuentaExistente}.` : '',
+              cursoLabelEx     ? `Curso: ${cursoLabelEx}.` : '',
+            ].filter(Boolean).join(' '),
+          },
+        })
+        logger.info(`Pago adicional registrado para estudiante existente ${existente.id}: $${montoExistente}`)
+      }
+
+      return res.status(200).json({
+        message:      'Estudiante ya registrado — pago adicional procesado',
+        estudianteId: existente.id,
+        pagoRegistrado: montoExistente > 0,
+      })
     }
 
     // ── 3. Calcular edad automáticamente ──────────────────────────────────

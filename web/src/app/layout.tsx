@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister'
+import { ThemeColorSync } from '@/components/layout/ThemeColorSync'
 import './globals.css'
 
 const inter = Inter({
@@ -36,6 +37,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#eef6ff' },
+    { media: '(prefers-color-scheme: dark)',  color: '#0a1628' },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -45,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           <ThemeProvider>
             <ServiceWorkerRegister />
+            <ThemeColorSync />
             {children}
           </ThemeProvider>
         </SessionProvider>
