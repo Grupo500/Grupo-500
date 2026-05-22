@@ -19,7 +19,7 @@ function checkCloudinary(req: Request, res: Response, next: NextFunction) {
 }
 
 // Wrapper que convierte errores de multer/cloudinary a JSON
-function multerHandler(upload: ReturnType<typeof uploadPdf>) {
+function multerHandler(upload: import('multer').Multer) {
   return (req: Request, res: Response, next: NextFunction) => {
     upload.single('file')(req, res, (err: any) => {
       if (err) {
