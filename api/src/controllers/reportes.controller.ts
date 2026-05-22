@@ -423,6 +423,67 @@ export async function ventasGrafica(req: Request, res: Response) {
   return ApiResponse.success(res, { puntos: resultados, variacion, actual, anterior })
 }
 
+// ── Medios de pago ───────────────────────────────────────────────────────────
+export async function mediosPago(req: Request, res: Response) {
+  const periodo = String(req.query.periodo ?? 'mensual')
+  const hoy = new Date()
+
+  const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
+  const inicioDia    = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+
+  const desde = periodo === 'diario' ? inicioDia
+    : periodo === 'semanal' ? inicioSemana
+    : inicioMes
+
+  // Agrupar pagos pagados por método de pago
+  const [porMetodo, cuotasPorMedio] = await Promise.all([
+    prisma.pago.groupBy({
+      by: ['metodo'],
+      where: { estado: 'PAGADO', fechaPago: { gte: desde } },
+      _count: { metodo: true },
+      _sum:   { monto: true },
+    }),
+    prisma.cuota.groupBy({
+      by: ['medioPago'],
+      where: { pagado: true, fechaPago: { gte: desde }, medioPago: { not: null } },
+      _count: { medioPago: true },
+      _sum:   { monto: true },
+    }),
+  ])
+
+  // Unificar pagos únicos + cuotas por mismo método
+  const mapa: Record<string, { cantidad: number; monto: number }> = {}
+
+  for (const p of porMetodo) {
+    const key = p.metodo
+    if (!mapa[key]) mapa[key] = { cantidad: 0, monto: 0 }
+    mapa[key].cantidad += p._count.metodo
+    mapa[key].monto    += p._sum.monto ?? 0
+  }
+  for (const c of cuotasPorMedio) {
+    const key = c.medioPago ?? 'OTRO'
+    if (!mapa[key]) mapa[key] = { cantidad: 0, monto: 0 }
+    mapa[key].cantidad += c._count.medioPago
+    mapa[key].monto    += c._sum.monto ?? 0
+  }
+
+  const totalMonto    = Object.values(mapa).reduce((s, v) => s + v.monto, 0)
+  const totalCantidad = Object.values(mapa).reduce((s, v) => s + v.cantidad, 0)
+
+  const data = Object.entries(mapa)
+    .map(([metodo, { cantidad, monto }]) => ({
+      metodo,
+      cantidad,
+      monto,
+      porcentajeMonto:    totalMonto    > 0 ? Math.round((monto    / totalMonto)    * 100) : 0,
+      porcentajeCantidad: totalCantidad > 0 ? Math.round((cantidad / totalCantidad) * 100) : 0,
+    }))
+    .sort((a, b) => b.monto - a.monto)
+
+  return ApiResponse.success(res, { total: totalMonto, totalCantidad, metodos: data, periodo })
+}
+
 // ── Marketing: fuentes de contacto ──────────────────────────────────────────
 export async function marketing(_req: Request, res: Response) {
   const fuentes = await prisma.fuenteContacto.groupBy({

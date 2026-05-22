@@ -1,14 +1,20 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Poppins } from 'next/font/google'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ScanFace } from 'lucide-react'
 import { PWAInstallButton } from '@/components/pwa/PWAInstallButton'
+import {
+  startAuthentication,
+  browserSupportsWebAuthn,
+} from '@simplewebauthn/browser'
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['700'] })
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
 export default function SignInPage() {
   const router = useRouter()
@@ -17,8 +23,11 @@ export default function SignInPage() {
   const [showPass,      setShowPass]      = useState(false)
   const [loading,       setLoading]       = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [faceLoading,   setFaceLoading]   = useState(false)
   const [error,         setError]         = useState('')
   const [showForgot,    setShowForgot]    = useState(false)
+
+  const supportsWebAuthn = browserSupportsWebAuthn()
 
   async function handleCredentials(e: React.FormEvent) {
     e.preventDefault()
@@ -40,6 +49,70 @@ export default function SignInPage() {
   async function handleGoogle() {
     setGoogleLoading(true)
     await signIn('google', { callbackUrl: '/dashboard' })
+  }
+
+  async function handleFaceId() {
+    if (!email.trim()) {
+      setError('Escribe tu correo electrónico primero')
+      return
+    }
+    setFaceLoading(true)
+    setError('')
+
+    try {
+      // 1. Obtener opciones del servidor
+      const startRes = await fetch(`${API}/api/passkeys/auth/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+
+      if (!startRes.ok) {
+        const err = await startRes.json()
+        throw new Error(err.error ?? 'Sin passkeys registradas para este correo')
+      }
+
+      const startData = await startRes.json()
+      const { userId, ...authOptions } = startData.data
+
+      // 2. Ejecutar autenticación biométrica en el dispositivo
+      const credential = await startAuthentication({ optionsJSON: authOptions })
+
+      // 3. Verificar en el servidor y obtener token
+      const finishRes = await fetch(`${API}/api/passkeys/auth/finish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...credential, userId }),
+      })
+
+      if (!finishRes.ok) {
+        const err = await finishRes.json()
+        throw new Error(err.error ?? 'Verificación fallida')
+      }
+
+      const { data } = await finishRes.json()
+
+      // 4. Iniciar sesión con NextAuth usando el token JWT
+      const result = await signIn('credentials-passkey', {
+        token: data.token,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        throw new Error('No se pudo iniciar sesión')
+      }
+
+      router.replace('/dashboard')
+    } catch (err: any) {
+      // AbortError = usuario canceló el diálogo biométrico
+      if (err?.name === 'AbortError' || err?.name === 'NotAllowedError') {
+        setError('Autenticación cancelada')
+      } else {
+        setError(err?.message ?? 'Error de autenticación')
+      }
+    } finally {
+      setFaceLoading(false)
+    }
   }
 
   return (
@@ -78,7 +151,7 @@ export default function SignInPage() {
           <button
             type="button"
             onClick={handleGoogle}
-            disabled={googleLoading || loading}
+            disabled={googleLoading || loading || faceLoading}
             className="w-full flex items-center justify-center gap-2 border border-black/[0.08] hover:bg-black/[0.03] transition-colors rounded-lg py-2.5 text-sm font-medium text-[#001d3d] disabled:opacity-60"
           >
             {googleLoading
@@ -137,7 +210,6 @@ export default function SignInPage() {
                   onChange={e => { setPassword(e.target.value); setError('') }}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  required
                   className="w-full border border-black/[0.10] focus:border-[#1a7de0]/50 focus:ring-1 focus:ring-[#1a7de0]/20 rounded-lg text-[13px] py-2 pl-3 pr-10 bg-[#f4f8ff] text-[#001d3d] outline-none transition"
                 />
                 <button
@@ -156,13 +228,41 @@ export default function SignInPage() {
 
             <button
               type="submit"
-              disabled={loading || googleLoading}
+              disabled={loading || googleLoading || faceLoading}
               className="w-full bg-[#1a7de0] hover:bg-[#1570cc] text-white font-semibold rounded-lg py-2.5 text-sm transition-colors shadow-none disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Iniciar sesión
             </button>
           </form>
+
+          {/* Face ID / Biometría */}
+          {supportsWebAuthn && (
+            <>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-black/[0.08]" />
+                <span className="text-xs text-[#5a74a8]">o</span>
+                <div className="flex-1 h-px bg-black/[0.08]" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleFaceId}
+                disabled={faceLoading || loading || googleLoading}
+                className="w-full flex items-center justify-center gap-2 border border-[#1a7de0]/30 hover:bg-[#1a7de0]/5 transition-colors rounded-lg py-2.5 text-sm font-medium text-[#1a7de0] disabled:opacity-60"
+              >
+                {faceLoading
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <ScanFace className="w-4 h-4" />
+                }
+                {faceLoading ? 'Verificando...' : 'Face ID / Huella digital'}
+              </button>
+
+              <p className="text-[11px] text-center text-[#5a74a8]">
+                Escribe tu correo y luego toca el botón
+              </p>
+            </>
+          )}
         </div>
       </div>
 

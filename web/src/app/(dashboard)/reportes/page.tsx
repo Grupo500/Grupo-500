@@ -41,6 +41,21 @@ interface MarketingData {
   fuentes: FuenteItem[]
 }
 
+interface MedioPagoItem {
+  metodo:             string
+  cantidad:           number
+  monto:              number
+  porcentajeMonto:    number
+  porcentajeCantidad: number
+}
+
+interface MediosPagoData {
+  total:         number
+  totalCantidad: number
+  metodos:       MedioPagoItem[]
+  periodo:       string
+}
+
 const COLORES = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
 
 function etiquetaCorta(fuente: string): string {
@@ -90,12 +105,28 @@ export default function ReportesPage() {
     staleTime: 60_000,
   })
 
+  const { data: mediosData, isLoading: mediosLoading } = useQuery({
+    queryKey: ['reportes-medios-pago', periodo],
+    queryFn: async () => (await fetcher())<{ data: MediosPagoData }>(`/reportes/medios-pago?periodo=${periodo}`),
+    staleTime: 30_000,
+  })
+
   const d = dashData?.data
   const est      = d?.estudiantes ?? { total: 0, nuevosMes: 0 }
   const cobranza = d?.cobranza   ?? { porCobrar: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 }, cobrado: { monto: 0, cantidad: 0 }, pendiente: { monto: 0, cantidad: 0 } }
 
   const mkt     = mktData?.data
   const fuentes = mkt?.fuentes ?? []
+
+  const medios  = mediosData?.data
+  const metodos = medios?.metodos ?? []
+
+  const LABEL_METODO: Record<string, string> = {
+    TRANSFERENCIA: 'Transferencia',
+    TARJETA:       'Tarjeta',
+    EFECTIVO:      'Efectivo',
+    OTRO:          'Otro',
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -153,6 +184,78 @@ export default function ReportesPage() {
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <IngresosMensualesChart periodo={periodo} />
         <RankingAsesores />
+      </section>
+
+      {/* ── Medios de pago ─────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Medios de pago</p>
+          {medios && (
+            <span className="text-[11px] text-on-surface-variant">
+              {medios.totalCantidad} transacción{medios.totalCantidad !== 1 ? 'es' : ''} · {formatCOP(medios.total)}
+            </span>
+          )}
+        </div>
+
+        {mediosLoading ? (
+          <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-6 animate-pulse h-40" />
+        ) : metodos.length === 0 ? (
+          <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-8 flex items-center justify-center">
+            <p className="text-sm text-on-surface-variant">Sin pagos registrados en este período</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Gráfica de barras por monto */}
+            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
+              <p className="text-[12px] font-semibold text-on-surface mb-4">Recaudo por medio de pago</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart
+                  data={metodos.map((m, i) => ({
+                    name:  LABEL_METODO[m.metodo] ?? m.metodo,
+                    monto: m.monto,
+                    color: COLORES[i % COLORES.length],
+                  }))}
+                  margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
+                >
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `$${(v / 1_000_000).toFixed(1)}M`} />
+                  <Tooltip
+                    formatter={(v: number) => [formatCOP(v), 'Recaudo']}
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
+                  />
+                  <Bar dataKey="monto" radius={[4, 4, 0, 0]}>
+                    {metodos.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Lista detallada */}
+            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-2">
+              <p className="text-[12px] font-semibold text-on-surface mb-3">Detalle por medio</p>
+              <div className="space-y-3">
+                {metodos.map((m, i) => (
+                  <div key={m.metodo} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORES[i % COLORES.length] }} />
+                        <span className="text-[12px] font-medium text-on-surface">{LABEL_METODO[m.metodo] ?? m.metodo}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[12px] font-bold text-on-surface">{formatCOP(m.monto)}</span>
+                        <span className="text-[10px] text-on-surface-variant ml-2">{m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-surface-high overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${m.porcentajeMonto}%`, background: COLORES[i % COLORES.length] }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── Marketing — Fuentes de contacto ───────────────────────── */}

@@ -31,8 +31,10 @@ import configRoutes from './routes/config'
 import negociacionesRoutes from './routes/negociaciones'
 import typeformRoutes from './routes/typeform'
 import eventosRoutes from './routes/eventos'
+import passkeysRoutes from './routes/passkeys'
 
 const app = express()
+
 const PORT = process.env.PORT || 3001
 
 // Railway y proxies inversos envían X-Forwarded-For — necesario para rate-limit y HTTPS
@@ -155,6 +157,7 @@ app.use('/api/config',       configRoutes)
 app.use('/api/negociaciones', negociacionesRoutes)
 app.use('/api/typeform',     typeformRoutes)
 app.use('/api/eventos',     eventosRoutes)
+app.use('/api/passkeys',    passkeysRoutes)
 
 // Error handler global (siempre al final)
 app.use(errorHandler)

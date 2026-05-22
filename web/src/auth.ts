@@ -4,6 +4,7 @@ import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { jwtVerify } from 'jose'
 import { authConfig } from './auth.config'
 import { prisma } from '@/lib/prisma'
 
@@ -82,6 +83,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name:  user.nombre,
           image: user.image,
           role:  user.role,
+        }
+      },
+    }),
+    // Passkeys / WebAuthn — recibe JWT firmado por el API tras verificar la biometría
+    Credentials({
+      id: 'credentials-passkey',
+      credentials: { token: { label: 'Token', type: 'text' } },
+      async authorize(credentials) {
+        if (!credentials?.token) return null
+
+        try {
+          const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!)
+          const { payload } = await jwtVerify(String(credentials.token), secret)
+
+          if (!payload.sub) return null
+
+          const user = await prisma.user.findUnique({
+            where: { id: payload.sub },
+          })
+
+          if (!user) return null
+
+          return {
+            id:    user.id,
+            email: user.email,
+            name:  user.nombre,
+            image: user.image,
+            role:  user.role,
+          }
+        } catch {
+          return null
         }
       },
     }),
