@@ -263,12 +263,12 @@ export default function CursosPage() {
           {cursos.map(c => (
             <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 sm:p-5 hover:border-primary/30 transition-colors group flex flex-col">
 
-              {/* Fila superior: ícono — precio — acciones */}
+              {/* Fila superior: ícono — nombre — acciones */}
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                   <BookOpen className="w-4 h-4 text-primary" />
                 </div>
-                <p className="text-sm font-bold text-primary flex-1">{formatCOP(c.precio)}</p>
+                <p className="text-sm font-semibold text-on-surface flex-1 leading-tight">{c.nombre}</p>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => abrirEditar(c)}
@@ -291,9 +291,9 @@ export default function CursosPage() {
                 </div>
               </div>
 
-              {/* Nombre + badge estado */}
+              {/* Precio + badge estado */}
               <div className="mt-2 flex items-start justify-between gap-1">
-                <h3 className="text-xs font-semibold text-on-surface leading-tight">{c.nombre}</h3>
+                <h3 className="text-sm font-bold text-primary leading-tight">{formatCOP(c.precio)}</h3>
                 <EstadoBadge fechaInicio={c.fechaInicio} fechaFin={c.fechaFin} />
               </div>
 
