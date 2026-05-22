@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useSSE } from '@/hooks/useSSE'
 import { useSession } from 'next-auth/react'
 import { getClientToken } from '@/lib/api'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
@@ -175,20 +174,11 @@ export default function EstudiantesPage() {
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
-  const router = useRouter()
-
-  // SSE — actualización en tiempo real cuando llega un estudiante vía Typeform
-  useSSE()
 
   const [page, setPage] = useState(1)
   const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
-
-  // Sincronizar lista después de volver del detalle
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-  }, [])
 
   useEffect(() => {
     const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
@@ -240,8 +230,6 @@ export default function EstudiantesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda],
     queryFn: () => fetcher<PaginatedResponse>(`/estudiantes?page=${page}&limit=15${busqueda ? `&nombre=${busqueda}` : ''}`),
-    refetchInterval:       30_000,  // refresca cada 30s como respaldo al SSE
-    refetchOnWindowFocus:  true,
   })
 
   const crearMutation = useMutation({
@@ -512,8 +500,8 @@ export default function EstudiantesPage() {
             const tieneDeuda = fin.totalGeneral > 0
 
             return (
-              <div key={e.id}
-                onClick={() => router.push(`/estudiantes/${e.id}`)}
+              <Link key={e.id}
+                href={`/estudiantes/${e.id}`}
                 className="group rounded-2xl border border-outline-variant bg-surface-lowest p-4 hover:border-primary/40 hover:shadow-md active:scale-[0.98] active:border-primary/60 active:bg-surface-high transition-all duration-200 cursor-pointer flex flex-col gap-3 select-none">
 
                 {/* Header: avatar + nombre + badge */}
@@ -591,7 +579,7 @@ export default function EstudiantesPage() {
                 <div className="flex justify-end -mt-1">
                   <Arrow className="w-3.5 h-3.5 text-on-surface-variant opacity-0 group-hover:opacity-50 transition-opacity" />
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>
