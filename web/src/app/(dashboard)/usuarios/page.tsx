@@ -166,7 +166,7 @@ export default function UsuariosPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
           <input
-            type="text"
+            type="search"
             placeholder="Buscar por nombre o email..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
@@ -351,6 +351,7 @@ export default function UsuariosPage() {
                   type="email"
                   value={editAsesor.email}
                   onChange={e => setEditAsesor({ ...editAsesor, email: e.target.value })}
+                  autoComplete="new-password"
                   className="input-base"
                 />
               </div>
@@ -365,6 +366,7 @@ export default function UsuariosPage() {
                   onChange={e => setEditPassword(e.target.value)}
                   placeholder="Nueva contraseña..."
                   minLength={8}
+                  autoComplete="new-password"
                   className="input-base"
                 />
                 {editPassword && editPassword.length < 8 && (
@@ -437,6 +439,7 @@ export default function UsuariosPage() {
                   value={formEmail}
                   onChange={e => { setFormEmail(e.target.value); setFormError('') }}
                   placeholder="correo@ejemplo.com"
+                  autoComplete="new-password"
                   className="input-base"
                 />
               </div>
@@ -447,6 +450,7 @@ export default function UsuariosPage() {
                   value={formPassword}
                   onChange={e => { setFormPassword(e.target.value); setFormError('') }}
                   placeholder="Mínimo 8 caracteres"
+                  autoComplete="new-password"
                   className="input-base"
                 />
               </div>
