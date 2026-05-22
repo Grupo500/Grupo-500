@@ -56,6 +56,9 @@ interface EstudianteDetalle {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+function esUrlValida(s: string | null | undefined): boolean {
+  return !!s && /^https?:\/\//i.test(s.trim())
+}
 function esVencida(fechaVenc: string) {
   return isBefore(parseISO(fechaVenc), new Date()) && !isToday(parseISO(fechaVenc))
 }
@@ -212,7 +215,7 @@ function FilaCuota({ c, fetcher, onRefresh }: {
               <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
                 onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
               {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
-              <span className="text-xs text-on-surface-variant">{subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
+              <span className="text-xs text-on-surface-variant">{subiendo ? 'Subiendo...' : esUrlValida(comprobante) ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
             </label>
             <VerComprobante url={comprobante} label="Ver comprobante actual" className="mt-1" />
           </div>
@@ -454,7 +457,7 @@ function FormAbono({ cuotasPendientes, fetcher, onSuccess }: {
           <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
             onChange={e => { const f = e.target.files?.[0]; if (f) subirComprobante(f); e.target.value = '' }} />
           {subiendo ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <Paperclip className="w-4 h-4 text-on-surface-variant" />}
-          <span className="text-sm text-on-surface-variant">{subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
+          <span className="text-sm text-on-surface-variant">{subiendo ? 'Subiendo...' : esUrlValida(comprobante) ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
         </label>
         <VerComprobante url={comprobante} className="mt-1" />
       </div>
@@ -893,7 +896,7 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
               onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
             {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
             <span className="text-xs text-on-surface-variant">
-              {subiendo ? 'Subiendo...' : comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}
+              {subiendo ? 'Subiendo...' : esUrlValida(comprobante) ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}
             </span>
           </label>
           <VerComprobante url={comprobante} className="mt-1" />
@@ -988,7 +991,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
         metodo:          editMetodoDB,
         fechaVencimiento: editFechaVenc,
         ...(pagado && editFechaPago && { fechaPago: editFechaPago }),
-        ...(editComp && { comprobante: editComp }),
+        ...(esUrlValida(editComp) && { comprobante: editComp }),
       }),
     }),
     onSuccess: () => { setEditando(false); setEditError(''); onRefresh() },
@@ -1054,7 +1057,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
           <input type="file" accept="image/*,.pdf" className="hidden" disabled={editSubiendo}
             onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f, setEditComp, setEditError, setEditSubiendo); e.target.value = '' }} />
           {editSubiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
-          <span className="text-xs text-on-surface-variant">{editSubiendo ? 'Subiendo...' : editComp ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
+          <span className="text-xs text-on-surface-variant">{editSubiendo ? 'Subiendo...' : esUrlValida(editComp) ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
         </label>
         <VerComprobante url={editComp} label="Ver comprobante actual" className="mt-1" />
       </div>
@@ -1136,7 +1139,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
                   ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                   : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
                 <span className="text-[11px] text-on-surface-variant truncate">
-                  {subiendo ? 'Subiendo...' : comprobante ? '✓ Adjunto' : 'Adjuntar'}
+                  {subiendo ? 'Subiendo...' : esUrlValida(comprobante) ? '✓ Adjunto' : 'Adjuntar'}
                 </span>
               </label>
             </div>

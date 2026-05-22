@@ -675,9 +675,11 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       }
 
       if (montoExistente > 0) {
-        const comprobanteExistente = get('comprobante_pago') as string | null
-        const cuentaExistente      = get('cuenta_pago') as string | null
-        const cursoLabelEx         = get('curso_seleccionado') as string | null
+        const comprobanteRawEx = get('comprobante_pago') as string | null
+        const esUrlEx          = !!comprobanteRawEx && /^https?:\/\//i.test(comprobanteRawEx.trim())
+        const comprobanteExistente = esUrlEx ? comprobanteRawEx!.trim() : null
+        const cuentaExistente  = get('cuenta_pago') as string | null
+        const cursoLabelEx     = get('curso_seleccionado') as string | null
 
         await prisma.pago.create({
           data: {
@@ -687,12 +689,13 @@ router.post('/webhook', asyncHandler(async (req, res) => {
             fechaVencimiento: new Date(),
             fechaPago:       comprobanteExistente ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
             metodo:          'TRANSFERENCIA',
-            comprobante:     comprobanteExistente ?? null,
+            comprobante:     comprobanteExistente,
             notas: [
               'Pago adicional vía Typeform (estudiante ya registrado).',
               responseToken ? `ResponseID: ${responseToken}.` : '',
               cuentaExistente  ? `Cuenta: ${cuentaExistente}.` : '',
               cursoLabelEx     ? `Curso: ${cursoLabelEx}.` : '',
+              !comprobanteExistente && comprobanteRawEx ? `Texto comprobante: "${comprobanteRawEx}".` : '',
             ].filter(Boolean).join(' '),
           },
         })
@@ -795,9 +798,13 @@ router.post('/webhook', asyncHandler(async (req, res) => {
     }
 
     // ── 8. Registrar pago con comprobante ─────────────────────────────────
-    const comprobanteUrl   = get('comprobante_pago') as string | null
+    const comprobanteRaw   = get('comprobante_pago') as string | null
     const cuentaPago       = get('cuenta_pago') as string | null
     const responseToken    = payload.form_response.token as string | null
+
+    // Solo guardar como URL si realmente parece un enlace; de lo contrario va a notas
+    const esUrl = (s: string | null) => !!s && /^https?:\/\//i.test(s.trim())
+    const comprobanteUrl = esUrl(comprobanteRaw) ? comprobanteRaw!.trim() : null
 
     if (montoConsignado > 0) {
       await prisma.pago.create({
@@ -808,13 +815,15 @@ router.post('/webhook', asyncHandler(async (req, res) => {
           fechaVencimiento: new Date(),
           fechaPago:       comprobanteUrl ? new Date(payload.form_response.submitted_at ?? Date.now()) : null,
           metodo:          'TRANSFERENCIA',
-          comprobante:     comprobanteUrl ?? null,
+          comprobante:     comprobanteUrl,  // null si el estudiante no pegó un link real
           notas: [
             `Inscripción vía Typeform.`,
             responseToken ? `ResponseID: ${responseToken}.` : '',
             cuentaPago ? `Cuenta: ${cuentaPago}.` : '',
             cursoLabel ? `Curso: ${cursoLabel}.` : '',
-            comprobanteUrl ? 'Comprobante adjunto desde formulario.' : 'Sin comprobante adjunto.',
+            comprobanteUrl
+              ? 'Comprobante adjunto desde formulario.'
+              : (comprobanteRaw ? `Texto comprobante: "${comprobanteRaw}".` : 'Sin comprobante adjunto.'),
           ].filter(Boolean).join(' '),
         },
       })
