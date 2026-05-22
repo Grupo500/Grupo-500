@@ -1348,12 +1348,35 @@ export default function EstudianteDetallePage() {
   const curso = e.cursos?.[0]?.curso
   const financiamientos = e.financiamientos ?? []
   const pagos = e.pagos ?? []
+
+  // ── Cálculo de estado financiero real ──────────────────────────────────
+  const cursoEst      = e.cursos?.[0]
+  const precioBase    = cursoEst ? cursoEst.curso.precio : 0
+  const totalGeneral  = cursoEst
+    ? precioBase
+    : financiamientos.reduce((s, f) => s + f.montoTotal, 0) +
+      pagos.filter(p => p.estado !== 'CANCELADO').reduce((s, p) => s + p.monto, 0)
+  const pagadoFin     = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
+  const pagadoDir     = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0)
+  const totalPagado   = pagadoFin + pagadoDir
+  const saldoPend     = Math.max(0, totalGeneral - totalPagado)
+
+  // Hay mora si alguna cuota sin pagar ya venció, o hay un pago VENCIDO
+  const hasMora = financiamientos.flatMap(f => f.cuotas).some(c =>
+    !c.pagado && isBefore(parseISO(c.fechaVencimiento), new Date()) && !isToday(parseISO(c.fechaVencimiento))
+  ) || pagos.some(p => p.estado === 'VENCIDO')
+
+  // Pendientes sin mora: cualquier cuota/pago sin pagar, o saldo del curso sin cubrir
   const cuotasPend = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado)).length
   const pagosPend  = pagos.filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO').length
   const totalPend  = cuotasPend + pagosPend
-  const hasMora    = financiamientos.flatMap(f => f.cuotas).some(c =>
-    !c.pagado && isBefore(parseISO(c.fechaVencimiento), new Date()) && !isToday(parseISO(c.fechaVencimiento))
-  ) || pagos.some(p => p.estado === 'VENCIDO')
+
+  // Estado final: "Al día" solo si el saldo está completamente cubierto
+  const tieneSaldo     = saldoPend > 0   // hay deuda aunque sea sin fecha
+  const estadoBadge    = hasMora          ? 'mora'
+                       : tieneSaldo       ? 'pendiente'
+                       : (totalGeneral > 0 || !!cursoEst) ? 'al-dia'
+                       : 'sin-info'
 
   return (
     <div className="space-y-5">
@@ -1373,14 +1396,21 @@ export default function EstudianteDetallePage() {
                     <BookOpen className="w-3 h-3" />{curso.nombre}
                   </span>
                 )}
-                {totalPend > 0 ? (
-                  <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full',
-                    hasMora ? 'bg-[#dc2626]/12 text-[#dc2626]' : 'bg-[#d97706]/12 text-[#d97706]')}>
-                    {totalPend} pendiente{totalPend !== 1 ? 's' : ''}
+                {estadoBadge === 'mora' && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#dc2626]/12 text-[#dc2626]">
+                    En mora
                   </span>
-                ) : financiamientos.length + pagos.length > 0 ? (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#16a34a]/12 text-[#16a34a]">Al día</span>
-                ) : null}
+                )}
+                {estadoBadge === 'pendiente' && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#d97706]/12 text-[#d97706]">
+                    Pendiente
+                  </span>
+                )}
+                {estadoBadge === 'al-dia' && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#16a34a]/12 text-[#16a34a]">
+                    Al día
+                  </span>
+                )}
               </div>
             </div>
             {isAdmin && (
@@ -1397,7 +1427,7 @@ export default function EstudianteDetallePage() {
       <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
         {TABS.map(t => {
           const Icon = t.icon
-          const showBadge = t.key === 'financiero' && totalPend > 0
+          const showBadge = t.key === 'financiero' && (estadoBadge === 'mora' || estadoBadge === 'pendiente')
           return (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={cn(
