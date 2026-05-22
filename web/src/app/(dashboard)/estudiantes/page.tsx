@@ -856,7 +856,7 @@ export default function EstudiantesPage() {
                   <Link2 className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-on-surface">¡Formulario creado!</p>
+                  <p className="text-sm font-semibold text-on-surface">Enlace del formulario</p>
                   <p className="text-xs text-on-surface-variant mt-0.5">Comparte este enlace con tus estudiantes</p>
                 </div>
               </div>
@@ -875,20 +875,23 @@ export default function EstudiantesPage() {
                 </button>
               </div>
 
-              {/* Abrir en nueva pestaña */}
-              <a
-                href={typeformUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border border-outline-variant rounded-xl text-sm font-medium text-on-surface hover:bg-surface-high transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Ver formulario
-              </a>
-
-              <p className="text-xs text-on-surface-variant text-center leading-relaxed">
-                Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente en la plataforma.
-              </p>
+              {/* Solo admins ven el botón de ver formulario y el texto informativo */}
+              {isAdmin && (
+                <>
+                  <a
+                    href={typeformUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border border-outline-variant rounded-xl text-sm font-medium text-on-surface hover:bg-surface-high transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Ver formulario
+                  </a>
+                  <p className="text-xs text-on-surface-variant text-center leading-relaxed">
+                    Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente en la plataforma.
+                  </p>
+                </>
+              )}
 
               <button
                 onClick={() => setModalTypeform(false)}
