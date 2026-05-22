@@ -486,8 +486,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
   const [editando, setEditando] = useState(false)
   const [error, setError] = useState('')
   const cursoActivo = e.cursos?.[0]
-  const descuentoValorInicial = cursoActivo
-    ? String(Math.round(cursoActivo.curso.precio * cursoActivo.descuentoPorcentaje / 100)) : '0'
 
   // Normalizar tipoDocumento: la BD puede tener el nombre largo (dato antiguo)
   const TIPO_DOC_MAP: Record<string, string> = {
@@ -510,7 +508,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
     departamento: e.departamento ?? '', ciudad: e.ciudad ?? '',
     colegioId: e.colegio?.id ?? '', asesorId: e.asesor?.id ?? '',
     lineaAutorizada: e.lineaAutorizada ? String(e.lineaAutorizada) : '',
-    cursoId: cursoActivo?.cursoId ?? '', descuentoValor: descuentoValorInicial,
+    cursoId: cursoActivo?.cursoId ?? '',
     acudienteNombre: e.acudiente?.nombre ?? '', acudienteEmail: e.acudiente?.email ?? '',
     acudienteTelefono: e.acudiente?.telefono ?? '', acudienteRelacion: e.acudiente?.relacion ?? 'Padre',
   })
@@ -518,9 +516,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
   const guardarMutation = useMutation({
     mutationFn: async () => {
       if (!form.nombre || !form.email || !form.telefono) throw new Error('Completa los campos obligatorios')
-      const cursoPrecio = cursos.find(c => c.id === form.cursoId)?.precio ?? 0
-      // Clamp a 100 para evitar errores de punto flotante
-      const descPct = cursoPrecio > 0 ? Math.min(100, (Number(form.descuentoValor) / cursoPrecio) * 100) : 0
       // Incluir acudiente si tiene nombre y teléfono
       const acudiente = form.acudienteNombre.trim() && form.acudienteTelefono.trim()
         ? {
@@ -542,7 +537,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           ...(isAdmin && {
             asesorId: form.asesorId || null,
             cursoId: form.cursoId || null,
-            descuentoPorcentaje: descPct,
             lineaAutorizada: form.lineaAutorizada ? Number(form.lineaAutorizada) : null,
           }),
           ...(acudiente && { acudiente }),
@@ -599,11 +593,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
               <p className="text-sm font-semibold text-on-surface">{cursoActivo.curso.nombre}</p>
               <p className="text-[11px] text-on-surface-variant">Precio: {formatCOP(cursoActivo.curso.precio)}</p>
             </div>
-            {cursoActivo.descuentoPorcentaje > 0 && (
-              <span className="flex-shrink-0 text-[11px] font-semibold px-2 py-1 rounded-lg bg-[#16a34a]/10 text-[#16a34a]">
-                −{formatCOP(Math.round(cursoActivo.curso.precio * cursoActivo.descuentoPorcentaje / 100))}
-              </span>
-            )}
           </div>
         </section>
       )}
@@ -701,20 +690,11 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             </div>
             <div>
               <label className={labelCls}>Curso</label>
-              <select className={inputCls} value={form.cursoId} onChange={e => { f('cursoId')(e.target.value); f('descuentoValor')('0') }}>
+              <select className={inputCls} value={form.cursoId} onChange={e => f('cursoId')(e.target.value)}>
                 <option value="">Sin curso</option>
                 {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </select>
             </div>
-            {form.cursoId && (
-              <div>
-                <label className={labelCls}>Descuento en pesos</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">$</span>
-                  <NumericInput value={form.descuentoValor} onChange={f('descuentoValor')} placeholder="0" className={cn(inputCls, 'pl-6')} />
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -1178,10 +1158,12 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
 // ══════════════════════════════════════════════════════════════════════════
 // TAB: FINANCIERO (incluye abonos)
 // ══════════════════════════════════════════════════════════════════════════
-function TabFinanciero({ e, fetcher, onRefresh }: {
+function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
   e: EstudianteDetalle
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onRefresh: () => void
+  cursos: { id: string; nombre: string; precio: number }[]
+  isAdmin: boolean
 }) {
   const financiamientos = e.financiamientos ?? []
   const pagos = e.pagos ?? []
@@ -1190,10 +1172,37 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
 
   const cursoEst = e.cursos?.[0]
 
-  // Total = precio del curso (sin descuento como referencia base) o suma de pagos/financiamientos
-  const precioBase     = cursoEst ? cursoEst.curso.precio : 0
+  // ── Descuento ────────────────────────────────────────────────────────────
+  const precioBase      = cursoEst ? cursoEst.curso.precio : 0
+  const descuentoMonto  = cursoEst
+    ? Math.round(cursoEst.curso.precio * cursoEst.descuentoPorcentaje / 100) : 0
+  const precioConDescuento = precioBase - descuentoMonto
+
+  const [editDescuento, setEditDescuento] = useState(false)
+  const [descuentoInput, setDescuentoInput] = useState(String(descuentoMonto))
+  const [savingDescuento, setSavingDescuento] = useState(false)
+
+  async function guardarDescuento() {
+    if (!cursoEst) return
+    setSavingDescuento(true)
+    const nuevoMonto = Number(descuentoInput.replace(/\./g, ''))
+    const descPct = precioBase > 0 ? Math.min(100, (nuevoMonto / precioBase) * 100) : 0
+    try {
+      await fetcher(`/estudiantes/${e.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cursoId: cursoEst.cursoId, descuentoPorcentaje: descPct }),
+      })
+      setEditDescuento(false)
+      onRefresh()
+    } finally {
+      setSavingDescuento(false)
+    }
+  }
+
+  // ── Cálculos con descuento aplicado ──────────────────────────────────────
   const totalGeneral   = cursoEst
-    ? precioBase
+    ? precioConDescuento
     : financiamientos.reduce((s, f) => s + f.montoTotal, 0) + pagos.reduce((s, p) => s + p.monto, 0)
 
   const pagadoFin      = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
@@ -1218,6 +1227,68 @@ function TabFinanciero({ e, fetcher, onRefresh }: {
 
   return (
     <div className="space-y-6">
+
+      {/* ── Curso + Descuento ─────────────────────────────────────────────── */}
+      {cursoEst && (
+        <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold text-on-surface">{cursoEst.curso.nombre}</p>
+                <p className="text-[11px] text-on-surface-variant">Precio base: {formatCOP(precioBase)}</p>
+              </div>
+            </div>
+            {isAdmin && !editDescuento && (
+              <button
+                onClick={() => { setDescuentoInput(String(descuentoMonto)); setEditDescuento(true) }}
+                className="text-[11px] text-primary hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <Pencil className="w-3 h-3" />Descuento
+              </button>
+            )}
+          </div>
+
+          {/* Fila de descuento */}
+          {editDescuento ? (
+            <div className="flex items-center gap-2 bg-surface-high rounded-xl px-3 py-2">
+              <span className="text-[12px] text-on-surface-variant flex-1">Descuento en pesos:</span>
+              <span className="text-sm text-on-surface-variant">$</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={fmtNum(descuentoInput)}
+                onChange={e => setDescuentoInput(e.target.value.replace(/\./g, '').replace(/[^0-9]/g, ''))}
+                className="w-28 border border-outline-variant rounded-lg px-2 py-1 text-[13px] text-on-surface bg-surface-lowest focus:outline-none focus:border-primary/50 text-right"
+              />
+              <button onClick={guardarDescuento} disabled={savingDescuento}
+                className="px-3 py-1 rounded-lg bg-primary text-white text-[11px] font-semibold disabled:opacity-60 cursor-pointer">
+                {savingDescuento ? '...' : 'Guardar'}
+              </button>
+              <button onClick={() => setEditDescuento(false)}
+                className="text-[11px] text-on-surface-variant hover:text-on-surface cursor-pointer">
+                Cancelar
+              </button>
+            </div>
+          ) : descuentoMonto > 0 ? (
+            <div className="flex items-center justify-between bg-[#16a34a]/8 rounded-xl px-3 py-2">
+              <span className="text-[12px] text-[#16a34a] font-medium">Descuento aplicado</span>
+              <span className="text-[13px] font-bold text-[#16a34a]">−{formatCOP(descuentoMonto)}</span>
+            </div>
+          ) : null}
+
+          {/* Precio final */}
+          {descuentoMonto > 0 && (
+            <div className="flex items-center justify-between border-t border-outline-variant/40 pt-2">
+              <span className="text-[12px] font-semibold text-on-surface">Precio final</span>
+              <span className="text-[15px] font-bold text-on-surface tabular-nums">{formatCOP(precioConDescuento)}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Resumen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -1434,6 +1505,7 @@ export default function EstudianteDetallePage() {
     queryKey: ['estudiante', params.id],
     queryFn: () => fetcher<{ data: EstudianteDetalle }>(`/estudiantes/${params.id}`),
     enabled: !!params.id,
+    staleTime: 30_000,
   })
 
   const { data: colegiosData } = useQuery({ queryKey: ['colegios'], queryFn: () => fetcher<any>('/colegios') })
@@ -1455,7 +1527,9 @@ export default function EstudianteDetallePage() {
 
   const handleRefresh = () => {
     refetch()
-    queryClient.invalidateQueries() // invalida toda la app en tiempo real
+    queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+    queryClient.invalidateQueries({ queryKey: ['proximos-cobros'] })
+    queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
   }
 
   if (isLoading) return (
@@ -1575,7 +1649,7 @@ export default function EstudianteDetallePage() {
           <TabPerfil e={e} fetcher={fetcher} isAdmin={isAdmin} colegios={colegios} asesores={asesores} cursos={cursos} onRefresh={handleRefresh} />
         )}
         {tab === 'financiero' && (
-          <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} />
+          <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} cursos={cursos} isAdmin={isAdmin} />
         )}
         {tab === 'historial' && (
           <TabHistorial estudianteId={e.id} fetcher={fetcher} />
