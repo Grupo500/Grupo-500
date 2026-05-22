@@ -184,9 +184,9 @@ export default function EstudiantesPage() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
 
-  // Invalidar toda la app al montar (sync después de volver del detalle)
+  // Sincronizar lista después de volver del detalle
   useEffect(() => {
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
   }, [])
 
   useEffect(() => {
@@ -211,17 +211,18 @@ export default function EstudiantesPage() {
     return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
-  const { data: colegiosData } = useQuery({ queryKey: ['colegios'], queryFn: () => fetcher<any>('/colegios') })
+  const { data: colegiosData } = useQuery({ queryKey: ['colegios'], queryFn: () => fetcher<any>('/colegios'), staleTime: 5 * 60_000 })
   const colegios: { id: string; nombre: string }[] = colegiosData?.data ?? []
 
   const { data: asesoresData } = useQuery({
     queryKey: ['asesores-select'],
     queryFn: () => fetcher<any>('/asesores?limit=100'),
     enabled: isAdmin,
+    staleTime: 5 * 60_000,
   })
   const asesores: { id: string; nombre: string }[] = asesoresData?.data ?? []
 
-  const { data: cursosData } = useQuery({ queryKey: ['cursos-select'], queryFn: () => fetcher<any>('/cursos?limit=100') })
+  const { data: cursosData } = useQuery({ queryKey: ['cursos-select'], queryFn: () => fetcher<any>('/cursos?limit=100'), staleTime: 5 * 60_000 })
 
   // ── Formulario Typeform activo ─────────────────────────────────────────────
   const { data: formActivoData, refetch: refetchFormActivo } = useQuery({
@@ -289,7 +290,9 @@ export default function EstudiantesPage() {
       return fetcher('/estudiantes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+      queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
       setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY); setCuotasDetalle([])
     },
     onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
@@ -298,7 +301,9 @@ export default function EstudiantesPage() {
   const eliminarMutation = useMutation({
     mutationFn: (id: string) => fetcher(`/estudiantes/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+      queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
       setConfirmEliminar(null)
     },
     onError: () => setConfirmEliminar(null),
