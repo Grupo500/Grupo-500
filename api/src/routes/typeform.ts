@@ -426,9 +426,29 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
 
 // ── Formulario activo (para todos los roles autenticados) ────────────────────
 // Retorna el URL del formulario vigente o null si no existe aún.
+// Si existe el form_id pero no el form_url, reconstruye el URL y lo persiste.
 router.get('/formulario-activo', authenticate, asyncHandler(async (_req, res) => {
-  const cfg = await prisma.configApp.findUnique({ where: { clave: 'typeform_form_url' } })
-  return ApiResponse.success(res, { url: cfg?.valor ?? null })
+  const [cfgUrl, cfgId] = await Promise.all([
+    prisma.configApp.findUnique({ where: { clave: 'typeform_form_url' } }),
+    prisma.configApp.findUnique({ where: { clave: 'typeform_form_id'  } }),
+  ])
+
+  if (cfgUrl?.valor) {
+    return ApiResponse.success(res, { url: cfgUrl.valor })
+  }
+
+  // Reconstruir URL desde el ID si no hay registro de URL
+  if (cfgId?.valor) {
+    const url = `https://form.typeform.com/to/${cfgId.valor}`
+    await prisma.configApp.upsert({
+      where: { clave: 'typeform_form_url' },
+      update: { valor: url },
+      create: { clave: 'typeform_form_url', valor: url },
+    })
+    return ApiResponse.success(res, { url })
+  }
+
+  return ApiResponse.success(res, { url: null })
 }))
 
 // ── Eliminar formulario activo (reset, solo ADMIN) ────────────────────────────
