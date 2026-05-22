@@ -22,13 +22,10 @@ self.addEventListener('fetch', (event) => {
   if (
     event.request.method !== 'GET' ||
     url.pathname.startsWith('/api/') ||
-    url.hostname.includes('clerk.') ||
-    url.hostname.includes('accounts.') ||
-    url.hostname.includes('clerk.dev') ||
-    url.hostname.includes('clerk.io') ||
-    url.hostname.startsWith('clerk.') ||
-    url.pathname.includes('clerk') ||
-    event.request.mode === 'navigate'   // páginas HTML siempre desde red
+    url.pathname.startsWith('/sign-in') ||
+    url.pathname.startsWith('/sign-up') ||
+    url.hostname !== self.location.hostname ||   // nunca interceptar dominios externos
+    event.request.mode === 'navigate'            // páginas HTML siempre desde red
   ) return
 
   // Assets estáticos (_next/static): cache-first (tienen hash en el nombre)
