@@ -224,168 +224,246 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
     const { jsPDF } = await import('jspdf')
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-    const W   = 210
-    const ml  = 25   // margen izquierdo (carta formal)
-    const mr  = 25   // margen derecho
-    const cw  = W - ml - mr
-    const lh  = 5.5  // interlineado base
-    let   y   = 30
+    const W  = 210
+    const H  = 297
+    const ml = 22   // margen izquierdo
+    const mr = 22   // margen derecho
+    const cw = W - ml - mr
+    const lh = 5.2  // interlineado base
 
-    const negro  = [0,   0,   0]   as [number,number,number]
-    const gris   = [60,  60,  60]  as [number,number,number]
+    // ── Colores exactos del DOCX ──────────────────────────────────────────
+    const NAVY  = [23,  54,  93]  as [number,number,number]   // #17365D
+    const BLUE  = [0,  176, 240]  as [number,number,number]   // #00B0F0
+    const WHITE = [255,255,255]   as [number,number,number]
+    const BLACK = [0,   0,   0]   as [number,number,number]
+    const DARK  = [31,  73, 125]  as [number,number,number]   // #1F497D (texto azul oscuro)
 
-    // Helper: texto normal negro
-    function txt(text: string, x: number, yy: number, opts?: Parameters<typeof doc.text>[3]) {
-      doc.setTextColor(...negro)
-      doc.text(text, x, yy, opts)
+    // ── Cargar imágenes en base64 ─────────────────────────────────────────
+    async function loadImageBase64(url: string): Promise<string> {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
     }
 
-    // ── Municipio y fecha ──────────────────────────────────────────────────
+    const [fondoB64, waB64] = await Promise.all([
+      loadImageBase64('/propuesta/fondo.jpg').catch(() => ''),
+      loadImageBase64('/propuesta/whatsapp.png').catch(() => ''),
+    ])
+
+    // ── Helper: agregar fondo a la página actual ──────────────────────────
+    function addBackground() {
+      if (fondoB64) {
+        doc.addImage(fondoB64, 'JPEG', 0, 0, W, H)
+      }
+    }
+
+    // ── Helper: texto ─────────────────────────────────────────────────────
+    function txt(text: string | string[], x: number, yy: number, opts?: Parameters<typeof doc.text>[3]) {
+      doc.setTextColor(...BLACK)
+      doc.text(text as string, x, yy, opts)
+    }
+
+    // ── Helper: nueva página con fondo ────────────────────────────────────
+    function newPage(): number {
+      doc.addPage()
+      addBackground()
+      return 52  // y inicial en páginas 2+
+    }
+
+    // ── PÁGINA 1 ──────────────────────────────────────────────────────────
+    addBackground()
+    let y = 52   // inicia bajo el header del fondo
+
+    // Municipio y fecha
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(11)
-    txt(`${colegio.ciudad}, ${fechaStr}`, ml, y)
+    doc.setTextColor(...BLACK)
+    doc.text(`${colegio.ciudad}, ${fechaStr}`, ml, y)
     y += lh * 2.5
 
-    // ── Destinatario ──────────────────────────────────────────────────────
+    // Nombre institución — 30pt bold negro
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(30)
+    doc.setTextColor(...BLACK)
+    const nombreLines = doc.splitTextToSize(colegio.nombre.toUpperCase(), cw)
+    doc.text(nombreLines, ml, y)
+    y += nombreLines.length * 11 + lh * 1.5
+
+    // ASUNTO — caja con borde
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(11)
-    txt(colegio.nombre.toUpperCase(), ml, y)
-    y += lh * 2.5
+    doc.setTextColor(...BLACK)
+    const asuntoText = 'ASUNTO. PRESENTACIÓN DEL PROGRAMA ALIADOS 500'
+    const asuntoLines = doc.splitTextToSize(asuntoText, cw - 6)
+    const asuntoH = asuntoLines.length * lh + 5
+    doc.setDrawColor(...NAVY); doc.setLineWidth(0.5)
+    doc.rect(ml, y - 4, cw, asuntoH + 2)
+    doc.text(asuntoLines, ml + 3, y)
+    y += asuntoH + lh * 1.5
 
-    // ── Asunto ────────────────────────────────────────────────────────────
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(11)
-    txt('ASUNTO. PRESENTACIÓN DEL PROGRAMA ALIADOS 500', ml, y)
-    y += lh * 2.5
-
-    // ── Saludo ────────────────────────────────────────────────────────────
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(11)
+    // Saludo
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
     const saludo = colegio.contactoNombre
       ? `Cordial saludo ${colegio.contactoNombre} y padres de familia,`
       : 'Cordial saludo y padres de familia,'
-    txt(saludo, ml, y)
-    y += lh * 2
+    const saludoLines = doc.splitTextToSize(saludo, cw)
+    doc.text(saludoLines, ml, y); y += saludoLines.length * lh + lh * 1.5
 
-    // ── Intro ─────────────────────────────────────────────────────────────
+    // Intro
     const intro = 'GRUPO 500 EDUCACIÓN S.A.S., sociedad legalmente constituida e identificada con NIT No. 901.768.155-8, representada legalmente por el señor Andrés Felipe Díaz Rivero, identificado con cédula de ciudadanía No. 1.005.480.173 de San Gil, se permite saludarlos muy respetuosamente. La presente comunicación tiene como propósito poner en su conocimiento el programa ALIADOS 500, una iniciativa que ofrece múltiples beneficios no solo para la Institución Educativa, sino también para sus estudiantes y sus familias.'
     const introLines = doc.splitTextToSize(intro, cw)
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); txt(introLines, ml, y)
-    y += introLines.length * lh + lh
+    doc.text(introLines, ml, y); y += introLines.length * lh + lh
 
-    // ── A. Sobre GRUPO 500 ────────────────────────────────────────────────
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); txt('A. Sobre GRUPO 500 EDUCACION S.A.S', ml, y)
-    y += lh * 1.5
+    // A. Sobre GRUPO 500
+    if (y > 240) { y = newPage() }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...NAVY)
+    doc.text('A. Sobre GRUPO 500 EDUCACION S.A.S', ml, y); y += lh * 1.8
 
-    const textoA1 = 'GRUPO 500 EDUCACIÓN S.A.S. es una empresa comprometida con la excelencia académica y con la formación integral de los jóvenes. A lo largo de los años, hemos acompañado a más de 25.000 estudiantes en su proceso de preparación para el examen ICFES, consolidándonos como uno de los programas Preicfes mejor posicionados en Colombia. Nos enorgullece destacar que, a la fecha, cinco de nuestros estudiantes han obtenido el puntaje perfecto: 500/500.'
-    const textoA2 = 'El programa Preicfes de GRUPO 500 EDUCACIÓN S.A.S. se ha diseñado cuidadosamente para responder a las exigencias actuales del examen Saber 11. Cada uno de sus componentes busca desarrollar las competencias necesarias en las áreas evaluadas, fortaleciendo tanto el conocimiento disciplinar como las habilidades críticas, analíticas y comunicativas de los estudiantes.'
-    const textoA3 = 'En primer lugar, brindamos clases 100% en vivo virtuales, impartidas por un equipo de docentes expertos con amplia experiencia en la enseñanza y en la preparación para pruebas estandarizadas. A lo largo de más de 310 horas de formación, los jóvenes trabajan bajo un enfoque pedagógico dinámico, centrado en la resolución de problemas, el análisis de situaciones reales y la práctica constante.'
-    const textoA4 = 'Todas las sesiones quedan grabadas y disponibles para consulta hasta la finalización del calendario. Asimismo, los estudiantes cuentan con material digital actualizado conforme a los lineamientos del ICFES, cuatro (4) simulacros oficiales con informes personalizados de desempeño, tutorías personalizadas y seguimiento académico permanente por WhatsApp, y horarios flexibles en tres calendarios: B, A y G.'
-    const horarios = ' • Calendario B (17 de enero al 14 de marzo de 2026): Lunes a viernes 4:00 p.m.–8:00 p.m.; sábados 8:00 a.m.–6:00 p.m.\n • Calendario A (18 de abril al 25 de julio de 2026): Lunes a viernes 6:00 p.m.–8:00 p.m.; sábados 8:00 a.m.–6:00 p.m.\n • Calendario G (octubre al 20 de diciembre de 2026): Lunes a viernes 4:00 p.m.–8:00 p.m.; sábados 8:00 a.m.–6:00 p.m.'
-
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
-    for (const bloque of [textoA1, textoA2, textoA3, textoA4]) {
-      const ls = doc.splitTextToSize(bloque, cw)
-      txt(ls, ml, y); y += ls.length * lh + lh * 0.5
+    const bloques = [
+      'GRUPO 500 EDUCACIÓN S.A.S. es una empresa comprometida con la excelencia académica y con la formación integral de los jóvenes. A lo largo de los años, hemos acompañado a más de 25.000 estudiantes en su proceso de preparación para el examen ICFES, consolidándonos como uno de los programas Preicfes mejor posicionados en Colombia. Nos enorgullece destacar que, a la fecha, cinco de nuestros estudiantes han obtenido el puntaje perfecto: 500/500.',
+      'El programa Preicfes de GRUPO 500 EDUCACIÓN S.A.S. se ha diseñado cuidadosamente para responder a las exigencias actuales del examen Saber 11. Cada uno de sus componentes busca desarrollar las competencias necesarias en las áreas evaluadas, fortaleciendo tanto el conocimiento disciplinar como las habilidades críticas, analíticas y comunicativas de los estudiantes.',
+      'En primer lugar, brindamos clases 100% en vivo virtuales, impartidas por un equipo de docentes expertos con amplia experiencia en la enseñanza y en la preparación para pruebas estandarizadas. A lo largo de más de 310 horas de formación, los jóvenes trabajan bajo un enfoque pedagógico dinámico, centrado en la resolución de problemas, el análisis de situaciones reales y la práctica constante.',
+      'Todas las sesiones quedan grabadas y disponibles para consulta hasta la finalización del calendario. Asimismo, los estudiantes cuentan con material digital actualizado conforme a los lineamientos del ICFES, cuatro (4) simulacros oficiales con informes personalizados de desempeño, tutorías personalizadas y seguimiento académico permanente por WhatsApp, y horarios flexibles en tres calendarios: B, A y G.',
+    ]
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
+    for (const b of bloques) {
+      if (y > 250) { y = newPage() }
+      const ls = doc.splitTextToSize(b, cw)
+      doc.text(ls, ml, y); y += ls.length * lh + lh * 0.6
     }
-    const lsHor = doc.splitTextToSize(horarios, cw)
-    doc.setTextColor(...gris); doc.text(lsHor, ml, y); y += lsHor.length * lh + lh
+
+    // Horarios (bullets)
+    if (y > 245) { y = newPage() }
+    const horarios = [
+      '• Calendario B (17 de enero al 14 de marzo de 2026): Lunes a viernes 4:00 p.m.–8:00 p.m.; sábados 8:00 a.m.–6:00 p.m.',
+      '• Calendario A (18 de abril al 25 de julio de 2026): Lunes a viernes 6:00 p.m.–8:00 p.m.; sábados 8:00 a.m.–6:00 p.m.',
+      '• Calendario G (octubre al 20 de diciembre de 2026): Lunes a viernes 4:00 p.m.–8:00 p.m.; sábados 8:00 a.m.–6:00 p.m.',
+    ]
+    doc.setTextColor(...DARK)
+    for (const h of horarios) {
+      const ls = doc.splitTextToSize(h, cw - 5)
+      doc.text(ls, ml + 3, y); y += ls.length * lh + lh * 0.3
+    }
+    y += lh * 0.7
 
     // ── B. Oferta ─────────────────────────────────────────────────────────
-    if (y > 220) { doc.addPage(); y = 25 }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...negro)
-    txt('B. Oferta', ml, y); y += lh * 1.5
+    if (y > 235) { y = newPage() }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...NAVY)
+    doc.text('B. Oferta', ml, y); y += lh * 1.8
 
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5)
-    txt('1.Beneficios para los estudiantes de la Institución Educativa', ml, y); y += lh * 1.5
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...BLACK)
+    doc.text('1. Beneficios para los estudiantes de la Institución Educativa', ml, y); y += lh * 1.8
 
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
-    const textoB = 'En el marco de nuestra alianza, GRUPO 500 EDUCACIÓN S.A.S. tiene el gusto de otorgar un beneficio institucional del 10% de descuento para todos los estudiantes que deseen prepararse con nuestros diferentes programas Preicfes y Premédico.'
-    const lsB = doc.splitTextToSize(textoB, cw)
-    txt(lsB, ml, y); y += lsB.length * lh + lh * 0.5
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
+    const textoBeneficios = 'En el marco de nuestra alianza, GRUPO 500 EDUCACIÓN S.A.S. tiene el gusto de otorgar un beneficio institucional del 10% de descuento para todos los estudiantes que deseen prepararse con nuestros diferentes programas Preicfes y Premédico.'
+    const lsBen = doc.splitTextToSize(textoBeneficios, cw)
+    doc.text(lsBen, ml, y); y += lsBen.length * lh + lh * 0.6
 
-    const textoB2 = 'Tenga en cuenta que, con dichos descuentos, estos serían los costos finales de los cursos ofrecidos por GRUPO 500 EDUCACIÓN S.A.S para el año 2026 por cada estudiante'
-    const lsB2 = doc.splitTextToSize(textoB2, cw)
-    txt(lsB2, ml, y); y += lsB2.length * lh + lh
+    const textoPreTabla = 'Tenga en cuenta que, con dichos descuentos, estos serían los costos finales de los cursos ofrecidos por GRUPO 500 EDUCACIÓN S.A.S para el año 2026 por cada estudiante:'
+    const lsPT = doc.splitTextToSize(textoPreTabla, cw)
+    doc.text(lsPT, ml, y); y += lsPT.length * lh + lh * 1.2
 
-    // ── Tabla de cotización (estilo Word: bordes simples, negro) ──────────
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10)
-    txt('Tabla de cotización – 10% de descuento institucional', ml, y); y += lh * 1.2
+    // ── TABLA DE COTIZACIÓN ───────────────────────────────────────────────
+    if (y > 230) { y = newPage() }
 
-    const colW = [105, 25, 30]  // ancho de columnas
-    const col1 = ml
-    const col2 = ml + colW[0]
-    const col3 = ml + colW[0] + colW[1]
-    const borde = { color: [0,0,0] as [number,number,number], lw: 0.3 }
+    const colW   = [108, 27, 31]
+    const col1   = ml
+    const col2   = ml + colW[0]
+    const col3   = ml + colW[0] + colW[1]
+    const tableW = colW[0] + colW[1] + colW[2]
 
-    function rectBorde(rx: number, ry: number, rw: number, rh: number) {
-      doc.setDrawColor(...borde.color); doc.setLineWidth(borde.lw)
-      doc.rect(rx, ry, rw, rh)
-    }
+    // Fila 0: título de tabla — fondo navy
+    const titleH = 8
+    doc.setFillColor(...NAVY); doc.setDrawColor(...NAVY); doc.setLineWidth(0.2)
+    doc.rect(col1, y, tableW, titleH, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...WHITE)
+    doc.text('PROGRAMAS PREICFES Y PREMÉDICO AÑO 2026', col1 + tableW / 2, y + 5.5, { align: 'center' })
+    y += titleH
 
-    // Cabecera tabla
-    const cabeceraH = 8
-    doc.setFillColor(220, 220, 220)
-    doc.rect(col1, y, colW[0], cabeceraH, 'FD')
-    doc.rect(col2, y, colW[1], cabeceraH, 'FD')
-    doc.rect(col3, y, colW[2], cabeceraH, 'FD')
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...negro)
-    doc.text('Curso / Programa Año 2026',    col1 + 2, y + 5.5)
-    doc.text('Precio\nOficial',              col2 + 1, y + 3.5)
-    doc.text('Precio con\n10% OFF',          col3 + 1, y + 3.5)
-    y += cabeceraH
+    // Fila 1: cabeceras de columna — fondo azul
+    const headerH = 9
+    doc.setFillColor(...BLUE); doc.setDrawColor(...BLUE)
+    doc.rect(col1, y, colW[0], headerH, 'F')
+    doc.rect(col2, y, colW[1], headerH, 'F')
+    doc.rect(col3, y, colW[2], headerH, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE)
+    doc.text('Curso / Programa',  col1 + 2,           y + 5.8)
+    doc.text('Precio\nOficial',   col2 + colW[1]/2,   y + 3.3, { align: 'center' })
+    doc.text('Precio con\n10% OFF', col3 + colW[2]/2, y + 3.3, { align: 'center' })
+    y += headerH
 
-    // Filas
-    TABLA_CURSOS.forEach((row) => {
-      const lines = doc.splitTextToSize(row.curso, colW[0] - 3)
-      const rowH = Math.max(lines.length * 4 + 4, 10)
-      if (y + rowH > 270) { doc.addPage(); y = 25 }
-      rectBorde(col1, y, colW[0], rowH)
-      rectBorde(col2, y, colW[1], rowH)
-      rectBorde(col3, y, colW[2], rowH)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...negro)
-      doc.text(lines,                    col1 + 2, y + 4)
-      doc.text(formatCOP(row.precio),    col2 + 1, y + rowH / 2 + 1.5, { maxWidth: colW[1] - 2 })
+    // Filas de datos — alternando blanco / azul
+    TABLA_CURSOS.forEach((row, idx) => {
+      const lines  = doc.splitTextToSize(row.curso, colW[0] - 4)
+      const rowH   = Math.max(lines.length * 4.2 + 4, 10)
+      if (y + rowH > 272) { y = newPage() }
+
+      const isBlue = idx % 2 === 1
+      const fillC  = isBlue ? BLUE  : WHITE
+      const textC  = isBlue ? WHITE : BLACK
+
+      doc.setFillColor(...fillC); doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.15)
+      doc.rect(col1, y, colW[0], rowH, 'FD')
+      doc.rect(col2, y, colW[1], rowH, 'FD')
+      doc.rect(col3, y, colW[2], rowH, 'FD')
+
+      const midY = y + rowH / 2 + 1.5
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...textC)
+      doc.text(lines, col1 + 2, y + 4.2)
+      doc.text(formatCOP(row.precio),     col2 + colW[1]/2, midY, { align: 'center' })
       doc.setFont('helvetica', 'bold')
-      doc.text(formatCOP(row.precioDesc), col3 + 1, y + rowH / 2 + 1.5, { maxWidth: colW[2] - 2 })
+      doc.text(formatCOP(row.precioDesc), col3 + colW[2]/2, midY, { align: 'center' })
       y += rowH
     })
-    y += lh
+    y += lh * 1.5
 
     // ── Parágrafos ────────────────────────────────────────────────────────
-    if (y > 230) { doc.addPage(); y = 25 }
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...negro)
-    const p1 = 'PARÁGRAFO PRIMERO. El valor de los cursos con el descuento institucional aplica hasta el 30 de noviembre de 2026. A partir del 1 de diciembre tendrán su respectivo incremento anual. Si deseas mantener estos precios junto con el descuento institucional deberán inscribirse un mínimo de treinta (30) estudiantes realizando un único pago por Institución en las fechas acordadas.'
-    const p2 = 'PARÁGRAFO SEGUNDO. Realizado el pago, la Institución Educativa deberá enviar una lista de los estudiantes beneficiados junto con sus datos de contacto, con el fin de realizar el respectivo control y seguimiento de las inscripciones por Institución.'
-    const p3 = 'PARÁGRAFO TERCERO. Es importante precisar que únicamente se considerarán válidas las inscripciones y pagos realizados a través de la única cuenta autorizada de la Sociedad Preicfes Grupo 500\nBANCOLOMBIA - AHORROS. Nombre: GRUPO 500 EDUCACION S.A.S. Número de cuenta: 09000004600'
-    for (const p of [p1, p2, p3]) {
+    if (y > 235) { y = newPage() }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(...BLACK)
+    const parrafos = [
+      'PARÁGRAFO PRIMERO. El valor de los cursos con el descuento institucional aplica hasta el 30 de noviembre de 2026. A partir del 1 de diciembre tendrán su respectivo incremento anual. Si deseas mantener estos precios junto con el descuento institucional deberán inscribirse un mínimo de treinta (30) estudiantes realizando un único pago por Institución en las fechas acordadas.',
+      'PARÁGRAFO SEGUNDO. Realizado el pago, la Institución Educativa deberá enviar una lista de los estudiantes beneficiados junto con sus datos de contacto, con el fin de realizar el respectivo control y seguimiento de las inscripciones por Institución.',
+      'PARÁGRAFO TERCERO. Es importante precisar que únicamente se considerarán válidas las inscripciones y pagos realizados a través de la única cuenta autorizada de la Sociedad Preicfes Grupo 500. BANCOLOMBIA - AHORROS. Nombre: GRUPO 500 EDUCACION S.A.S. Número de cuenta: 09000004600',
+    ]
+    for (const p of parrafos) {
+      if (y > 255) { y = newPage() }
       const ls = doc.splitTextToSize(p, cw)
-      doc.text(ls, ml, y); y += ls.length * lh + lh * 0.5
+      doc.text(ls, ml, y); y += ls.length * lh + lh * 0.6
     }
     y += lh * 0.5
 
     // ── C. Opción de Financiación ─────────────────────────────────────────
-    if (y > 240) { doc.addPage(); y = 25 }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
-    txt('C. Opción de Financiación', ml, y); y += lh * 1.5
-    doc.setFont('helvetica', 'normal')
-    const textoC = 'Recuerda que tus estudiantes pueden pagar la totalidad del curso de contado. Sin embargo, si todos no cuentan con el recurso de parte del Preicfes Grupo 500 hemos autorizado que cada estudiante realice un primer pago de $300.000 mil pesos en el mes de mayo y el restante en el mes de junio. Esta facilidad de pago en el caso de los Calendario A, Intensivo Calendario A o Calendario G.'
+    if (y > 245) { y = newPage() }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...NAVY)
+    doc.text('C. Opción de Financiación', ml, y); y += lh * 1.8
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
+    const textoC = 'Recuerda que tus estudiantes pueden pagar la totalidad del curso de contado. Sin embargo, si todos no cuentan con el recurso de parte del Preicfes Grupo 500 hemos autorizado que cada estudiante realice un primer pago de $300.000 mil pesos en el mes de mayo y el restante en el mes de junio. Esta facilidad de pago aplica en el caso de los Calendario A, Intensivo Calendario A o Calendario G.'
     const lsC = doc.splitTextToSize(textoC, cw)
-    txt(lsC, ml, y); y += lsC.length * lh + lh
+    doc.text(lsC, ml, y); y += lsC.length * lh + lh * 1.5
 
     // ── Cierre ────────────────────────────────────────────────────────────
-    const cierre = `Apreciada Institución, recuerda que puedes extender la invitación del curso a estudiantes de noveno, décimo y undécimo grado. En caso de requerir una reunión virtual con nuestro equipo directivo debes confirmarnos a través de este correo pregrupo500@gmail.com o comunicarte a nuestra línea institucional de WhatsApp 311 5233917`
-    const lsCierre = doc.splitTextToSize(cierre, cw)
-    if (y + lsCierre.length * lh + 20 > 270) { doc.addPage(); y = 25 }
-    txt(lsCierre, ml, y); y += lsCierre.length * lh + lh * 2
+    const cierreText = 'Apreciada Institución, recuerda que puedes extender la invitación del curso a estudiantes de noveno, décimo y undécimo grado. En caso de requerir una reunión virtual con nuestro equipo directivo debes confirmarnos a través de este correo pregrupo500@gmail.com o comunicarte a nuestra línea institucional de WhatsApp 311 5233917'
+    const lsCierre = doc.splitTextToSize(cierreText, cw - 14)
+    if (y + lsCierre.length * lh + 30 > 272) { y = newPage() }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
+
+    // Ícono WhatsApp junto al texto del cierre
+    if (waB64) {
+      doc.addImage(waB64, 'PNG', ml, y - 3, 8, 8)
+    }
+    doc.text(lsCierre, ml + (waB64 ? 11 : 0), y); y += lsCierre.length * lh + lh * 2.5
 
     // ── Firma ─────────────────────────────────────────────────────────────
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11)
-    txt('Con aprecio,', ml, y);                    y += lh * 1.5
-    doc.setFont('helvetica', 'bold')
-    txt('GRUPO 500 EDUCACIÓN S.A.S',  ml, y);      y += lh
-    doc.setFont('helvetica', 'normal')
-    txt('NIT No. 901.768.155-8',       ml, y)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
+    doc.text('Con aprecio,', ml, y); y += lh * 1.8
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(...NAVY)
+    doc.text('GRUPO 500 EDUCACIÓN S.A.S', ml, y); y += lh * 1.2
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(...BLACK)
+    doc.text('NIT No. 901.768.155-8', ml, y)
 
     if (descargar) {
       doc.save(`Propuesta-${colegio.nombre.replace(/\s+/g, '_')}.pdf`)
