@@ -24,6 +24,7 @@ const crearSchema = z.object({
   comprobante: z.string().optional(),
   numeroCuotas: z.number().int().min(1).max(24).optional(),
   fechaPrimeraCuota: z.string().optional(),
+  lineaAutorizada: z.number().int().min(1).max(6).optional(),
   acudiente: z.object({
     nombre: z.string().min(2),
     email: z.string().email(),
@@ -212,6 +213,7 @@ const actualizarSchema = z.object({
   // Solo admin
   cursoId:             z.string().nullable().optional(),
   descuentoPorcentaje: z.number().min(0).max(101).optional(), // 101 para tolerar fp
+  lineaAutorizada:     z.number().int().min(1).max(6).nullable().optional(),
   // Acudiente (opcional, se actualiza si se envían los campos)
   acudiente: z.object({
     nombre:   z.string().min(2),
@@ -238,8 +240,9 @@ export async function actualizar(req: Request, res: Response) {
       ...(data.fechaNacimiento !== undefined && { fechaNacimiento: new Date(data.fechaNacimiento) }),
       ...(data.departamento    !== undefined && { departamento:    data.departamento }),
       ...(data.ciudad          !== undefined && { ciudad:          data.ciudad }),
-      ...(data.colegioId       !== undefined && { colegioId:       data.colegioId }),
-      ...(data.asesorId        !== undefined && { asesorId:        data.asesorId }),
+      ...(data.colegioId        !== undefined && { colegioId:        data.colegioId }),
+      ...(data.asesorId         !== undefined && { asesorId:         data.asesorId }),
+      ...(isAdmin && data.lineaAutorizada !== undefined && { lineaAutorizada: data.lineaAutorizada }),
     },
     include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
   })

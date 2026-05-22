@@ -115,6 +115,7 @@ const FORM_EMPTY = {
   nombre: '', tipoDocumento: 'CC', documento: '',
   email: '', telefono: '', fechaNacimiento: '',
   departamento: '', ciudad: '', colegioId: '', asesorId: '',
+  lineaAutorizada: '',
   cursoId: '', descuentoValor: '0',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
   formaPago: 'CONTADO' as 'CONTADO' | 'FINANCIADO',
@@ -265,6 +266,7 @@ export default function EstudiantesPage() {
         ...(form.colegioId    && { colegioId: form.colegioId }),
         // Admin puede reasignar a otro asesor; vendedor se asigna automáticamente en el backend
         ...(isAdmin && form.asesorId && { asesorId: form.asesorId }),
+        ...(isAdmin && form.lineaAutorizada && { lineaAutorizada: Number(form.lineaAutorizada) }),
         ...(form.cursoId && {
           cursoId: form.cursoId, descuentoPorcentaje: descuentoPct,
           formaPago: form.formaPago,
@@ -623,11 +625,20 @@ export default function EstudiantesPage() {
                     </select>
                   </div>
                   {isAdmin && (
-                    <div className="col-span-2">
+                    <div>
                       <label className={labelCls}>Asesor</label>
                       <select className={inputCls} value={form.asesorId} onChange={e => setForm(p => ({ ...p, asesorId: e.target.value }))}>
                         <option value="">Sin asignar</option>
                         {asesores.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {isAdmin && (
+                    <div>
+                      <label className={labelCls}>Línea autorizada</label>
+                      <select className={inputCls} value={form.lineaAutorizada} onChange={e => setForm(p => ({ ...p, lineaAutorizada: e.target.value }))}>
+                        <option value="">Sin asignar</option>
+                        {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Línea {n}</option>)}
                       </select>
                     </div>
                   )}

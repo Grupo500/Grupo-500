@@ -168,6 +168,7 @@ model Estudiante {
   colegioId        String?
   asesor           Asesor?               @relation(fields: [asesorId], references: [id])
   asesorId         String?
+  lineaAutorizada  Int?                  // Línea telefónica asignada (1–6), solo admin
   acudiente        Acudiente?
   cursos           CursoEstudiante[]
   pagos            Pago[]

@@ -48,6 +48,7 @@ interface EstudianteDetalle {
   colegio?: { id: string; nombre: string }
   acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
   asesor?: { id: string; nombre: string }
+  lineaAutorizada?: number | null
   cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: Pago[]
   financiamientos?: Financiamiento[]
@@ -508,6 +509,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
     fechaNacimiento: e.fechaNacimiento?.split('T')[0] ?? '',
     departamento: e.departamento ?? '', ciudad: e.ciudad ?? '',
     colegioId: e.colegio?.id ?? '', asesorId: e.asesor?.id ?? '',
+    lineaAutorizada: e.lineaAutorizada ? String(e.lineaAutorizada) : '',
     cursoId: cursoActivo?.cursoId ?? '', descuentoValor: descuentoValorInicial,
     acudienteNombre: e.acudiente?.nombre ?? '', acudienteEmail: e.acudiente?.email ?? '',
     acudienteTelefono: e.acudiente?.telefono ?? '', acudienteRelacion: e.acudiente?.relacion ?? 'Padre',
@@ -537,7 +539,12 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           fechaNacimiento: form.fechaNacimiento,
           departamento: form.departamento || null, ciudad: form.ciudad || null,
           colegioId: form.colegioId || null,
-          ...(isAdmin && { asesorId: form.asesorId || null, cursoId: form.cursoId || null, descuentoPorcentaje: descPct }),
+          ...(isAdmin && {
+            asesorId: form.asesorId || null,
+            cursoId: form.cursoId || null,
+            descuentoPorcentaje: descPct,
+            lineaAutorizada: form.lineaAutorizada ? Number(form.lineaAutorizada) : null,
+          }),
           ...(acudiente && { acudiente }),
         }),
       })
@@ -568,6 +575,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             { icon: School,     label: 'Colegio',    value: e.colegio?.nombre ?? '—' },
             { icon: Calendar,   label: 'Nacimiento', value: e.fechaNacimiento ? fmtFecha(e.fechaNacimiento) : '—' },
             { icon: Users,      label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
+            ...(isAdmin ? [{ icon: Phone, label: 'Línea autorizada', value: e.lineaAutorizada ? `Línea ${e.lineaAutorizada}` : '—' }] : []),
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
               <Icon className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" />
@@ -682,6 +690,13 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
               <select className={inputCls} value={form.asesorId} onChange={e => f('asesorId')(e.target.value)}>
                 <option value="">Sin asignar</option>
                 {asesores.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Línea autorizada</label>
+              <select className={inputCls} value={form.lineaAutorizada} onChange={e => f('lineaAutorizada')(e.target.value)}>
+                <option value="">Sin asignar</option>
+                {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Línea {n}</option>)}
               </select>
             </div>
             <div>
