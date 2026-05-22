@@ -90,7 +90,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
 const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
-const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Otro']
+const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Nequi', 'Otro']
 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: FILA DE CUOTA (vista + edición inline)
