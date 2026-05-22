@@ -954,26 +954,6 @@ export default function EstudiantesPage() {
                     <ExternalLink className="w-4 h-4" />
                     Ver formulario
                   </a>
-                  <button
-                    onClick={() => procesarRespuestas.mutate()}
-                    disabled={procesarRespuestas.isPending}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-primary/10 border border-primary/30 text-primary rounded-xl text-sm font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {procesarRespuestas.isPending
-                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Procesando...</>
-                      : <>↓ Importar respuestas existentes del formulario</>
-                    }
-                  </button>
-                  <button
-                    onClick={() => activarWebhook.mutate()}
-                    disabled={activarWebhook.isPending}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2 text-xs text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {activarWebhook.isPending
-                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Activando...</>
-                      : <>⚡ Reconectar webhook (si los nuevos no llegan)</>
-                    }
-                  </button>
                   <p className="text-xs text-on-surface-variant text-center leading-relaxed">
                     Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente.
                   </p>
