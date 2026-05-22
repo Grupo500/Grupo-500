@@ -737,15 +737,14 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: FORM NUEVO PAGO DIRECTO
 // ══════════════════════════════════════════════════════════════════════════
-const METODOS_BACKEND: Record<string, 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO' | 'OTRO'> = {
+const METODOS_BACKEND: Record<string, 'TRANSFERENCIA' | 'TARJETA' | 'OTRO'> = {
   Bancolombia: 'TRANSFERENCIA',
   'Bre-B':     'TRANSFERENCIA',
   Nequi:       'TRANSFERENCIA',
   Tarjeta:     'TARJETA',
-  Efectivo:    'EFECTIVO',
   Otro:        'OTRO',
 }
-const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Efectivo', 'Otro']
+const METODOS_DISPLAY = ['Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Otro']
 
 function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
   estudianteId: string
