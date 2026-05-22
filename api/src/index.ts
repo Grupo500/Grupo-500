@@ -43,7 +43,9 @@ app.set('trust proxy', 1)
 // Timeout por request — evita que queries lentas bloqueen workers indefinidamente
 app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setTimeout(30_000, () => {
-    res.status(503).json({ success: false, error: 'Tiempo de espera agotado.' })
+    if (!res.headersSent) {
+      res.status(503).json({ success: false, error: 'Tiempo de espera agotado.' })
+    }
   })
   next()
 })
