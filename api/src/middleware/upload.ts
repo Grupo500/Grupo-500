@@ -21,13 +21,16 @@ const pdfStorage = new CloudinaryStorage({
 
 const imageStorage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder:   'grupo500/comprobantes',
-    resource_type: 'auto',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-    use_filename: true,
-    unique_filename: true,
-  } as any,
+  params: async (_req: any, file: any) => {
+    // PDFs se suben como raw, imágenes como image
+    const isPdf = file.mimetype === 'application/pdf'
+    return {
+      folder:          'grupo500/comprobantes',
+      resource_type:   isPdf ? 'raw' : 'image',
+      use_filename:    true,
+      unique_filename: true,
+    }
+  },
 })
 
 const firmaStorage = new CloudinaryStorage({
