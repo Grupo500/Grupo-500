@@ -257,27 +257,27 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
       })
     }
 
-    const [fondoB64, waB64, aptosReg, aptosBold, aptosIt, aptosBoldIt] = await Promise.all([
+    const [fondoB64, waB64, robotoReg, robotoBold, robotoIt, robotoBoldIt] = await Promise.all([
       loadImageBase64('/propuesta/fondo.jpg').catch(() => ''),
       loadImageBase64('/propuesta/whatsapp.png').catch(() => ''),
-      loadBase64('/propuesta/Aptos.ttf').catch(() => ''),
-      loadBase64('/propuesta/Aptos-Bold.ttf').catch(() => ''),
-      loadBase64('/propuesta/Aptos-Italic.ttf').catch(() => ''),
-      loadBase64('/propuesta/Aptos-BoldItalic.ttf').catch(() => ''),
+      loadBase64('/propuesta/Roboto-Regular.ttf').catch(() => ''),
+      loadBase64('/propuesta/Roboto-Bold.ttf').catch(() => ''),
+      loadBase64('/propuesta/Roboto-Italic.ttf').catch(() => ''),
+      loadBase64('/propuesta/Roboto-BoldItalic.ttf').catch(() => ''),
     ])
 
-    // Registrar Aptos en jsPDF (si se pudo cargar)
-    if (aptosReg) {
-      doc.addFileToVFS('Aptos.ttf',           aptosReg)
-      doc.addFileToVFS('Aptos-Bold.ttf',      aptosBold)
-      doc.addFileToVFS('Aptos-Italic.ttf',    aptosIt)
-      doc.addFileToVFS('Aptos-BoldItalic.ttf',aptosBoldIt)
-      doc.addFont('Aptos.ttf',            'Aptos', 'normal')
-      doc.addFont('Aptos-Bold.ttf',       'Aptos', 'bold')
-      doc.addFont('Aptos-Italic.ttf',     'Aptos', 'italic')
-      doc.addFont('Aptos-BoldItalic.ttf', 'Aptos', 'bolditalic')
+    // Registrar Roboto en jsPDF
+    if (robotoReg) {
+      doc.addFileToVFS('Roboto-Regular.ttf',    robotoReg)
+      doc.addFileToVFS('Roboto-Bold.ttf',       robotoBold)
+      doc.addFileToVFS('Roboto-Italic.ttf',     robotoIt)
+      doc.addFileToVFS('Roboto-BoldItalic.ttf', robotoBoldIt)
+      doc.addFont('Roboto-Regular.ttf',    'Roboto', 'normal')
+      doc.addFont('Roboto-Bold.ttf',       'Roboto', 'bold')
+      doc.addFont('Roboto-Italic.ttf',     'Roboto', 'italic')
+      doc.addFont('Roboto-BoldItalic.ttf', 'Roboto', 'bolditalic')
     }
-    const FONT = aptosReg ? 'Aptos' : 'helvetica'
+    const FONT = robotoReg ? 'Roboto' : 'helvetica'
 
     // ── Helper: agregar fondo a la página actual ──────────────────────────
     function addBackground() {
