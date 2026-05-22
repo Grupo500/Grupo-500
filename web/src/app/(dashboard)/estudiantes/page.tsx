@@ -330,6 +330,12 @@ export default function EstudiantesPage() {
     onError:   () => alert('Error al eliminar el formulario activo.'),
   })
 
+  const activarWebhook = useMutation({
+    mutationFn: () => fetcher<{ data: { mensaje: string } }>('/typeform/webhook/activar', { method: 'POST' }),
+    onSuccess: (data) => alert(`✅ ${data?.data?.mensaje ?? 'Webhook activado correctamente'}`),
+    onError:   () => alert('❌ Error al activar el webhook. Revisa los logs de Railway.'),
+  })
+
   const importarMutation = useMutation({
     mutationFn: async (file: File) => {
       const token = await getClientToken()
@@ -938,8 +944,19 @@ export default function EstudiantesPage() {
                     <ExternalLink className="w-4 h-4" />
                     Ver formulario
                   </a>
+                  <button
+                    onClick={() => activarWebhook.mutate()}
+                    disabled={activarWebhook.isPending}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-primary/10 border border-primary/30 text-primary rounded-xl text-sm font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {activarWebhook.isPending
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Activando...</>
+                      : <>⚡ Activar recepción de formularios</>
+                    }
+                  </button>
                   <p className="text-xs text-on-surface-variant text-center leading-relaxed">
                     Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente en la plataforma.
+                    Si no llegan, presiona "Activar recepción" para reconectar.
                   </p>
                 </>
               )}

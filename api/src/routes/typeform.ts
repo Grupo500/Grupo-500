@@ -18,14 +18,10 @@ function typeformHeaders() {
 
 // ── Helper: configurar webhook en un formulario Typeform ──────────────────────
 async function configurarWebhook(formId: string): Promise<{ ok: boolean; mensaje: string }> {
-  const apiUrl = process.env.API_URL ?? process.env.RAILWAY_PUBLIC_DOMAIN
-    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-    : null
-
-  if (!apiUrl) {
-    logger.warn('No se pudo configurar webhook: API_URL / RAILWAY_PUBLIC_DOMAIN no definidos')
-    return { ok: false, mensaje: 'API_URL no configurada — configura el webhook manualmente' }
-  }
+  const apiUrl =
+    process.env.API_URL ??
+    (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null) ??
+    'https://api-production-79572.up.railway.app'  // fallback conocido
 
   const webhookUrl = `${apiUrl}/api/typeform/webhook`
 
