@@ -38,11 +38,9 @@ export async function listar(req: Request, res: Response) {
   const isAdmin = req.userRole === 'ADMIN'
 
   const where = {
-    // VENDEDORs only see students they registered
-    ...(!isAdmin && req.asesorId && { asesorId: req.asesorId }),
+    // Todos los roles ven todos los estudiantes; solo admin puede filtrar por asesorId
     ...(nombre && { nombre: { contains: String(nombre), mode: 'insensitive' as const } }),
     ...(colegioId && { colegioId: String(colegioId) }),
-    // Admins can further filter by asesorId; vendedors can't override scope
     ...(isAdmin && asesorId && { asesorId: String(asesorId) }),
   }
 
