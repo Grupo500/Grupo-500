@@ -48,7 +48,13 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
     next()
   } catch (error) {
+    // Decodificar sin verificar para extraer identidad del intento (auditoría)
+    const token = req.headers.authorization?.replace('Bearer ', '')
+    const rawPayload = token ? jwt.decode(token) as JwtPayload | null : null
+
     logSecurityEvent('AUTH_FAILURE', {
+      email:     rawPayload?.email ?? 'desconocido',
+      userId:    rawPayload?.sub   ?? 'desconocido',
       ip:        req.ip,
       userAgent: req.headers['user-agent'],
       url:       req.originalUrl,
