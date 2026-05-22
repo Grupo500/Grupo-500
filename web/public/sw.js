@@ -1,10 +1,8 @@
-// Service Worker — Grupo 500 PWA
-// Estrategia: Network-first para páginas/API, Cache-first para assets estáticos
+// Service Worker — Grupo 500 PWA v2
+// Solo cachea íconos/imágenes estáticas. NO cachea páginas ni JS de Next.js.
 
-const CACHE_NAME = 'grupo500-v1'
-const STATIC_CACHE = 'grupo500-static-v1'
+const STATIC_CACHE = 'grupo500-static-v2'
 
-// Assets estáticos que cacheamos siempre
 const PRECACHE_ASSETS = [
   '/favicon.ico',
   '/favicon-192x192.png',
@@ -15,7 +13,7 @@ const PRECACHE_ASSETS = [
   '/manifest.webmanifest',
 ]
 
-// ── Install: precachear assets estáticos ─────────────────────────────────────
+// ── Install ───────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_ASSETS))
@@ -23,68 +21,52 @@ self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
-// ── Activate: limpiar caches viejos ──────────────────────────────────────────
+// ── Activate: eliminar TODOS los caches anteriores ───────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k !== CACHE_NAME && k !== STATIC_CACHE)
-          .map((k) => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys
+        .filter((k) => k !== STATIC_CACHE)
+        .map((k) => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   )
 })
 
-// ── Fetch: estrategia según tipo de recurso ───────────────────────────────────
+// ── Fetch: solo íconos/imágenes van a cache, TODO LO DEMÁS va a la red ───────
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // No interceptar: peticiones a la API, autenticación, o cross-origin no conocido
+  // Pasar todo a la red excepto imágenes/iconos propios
   if (
-    url.pathname.startsWith('/api/') ||
+    url.origin !== self.location.origin ||
     url.pathname.startsWith('/_next/') ||
-    url.origin !== self.location.origin
+    url.pathname.startsWith('/api/') ||
+    request.mode === 'navigate'
   ) {
-    return // dejar pasar sin interceptar
+    return // red directa, sin caché
   }
 
-  // Assets estáticos (imágenes, fuentes, iconos): Cache-first
+  // Solo iconos e imágenes estáticas: cache-first
   if (
     request.destination === 'image' ||
-    request.destination === 'font' ||
-    url.pathname.match(/\.(png|jpg|jpeg|svg|ico|woff2?|ttf)$/)
+    url.pathname.match(/\.(png|jpg|jpeg|svg|ico|webp)$/)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached
-        return fetch(request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone()
-            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone))
+        return fetch(request).then((res) => {
+          if (res.ok) {
+            caches.open(STATIC_CACHE).then((c) => c.put(request, res.clone()))
           }
-          return response
+          return res
         })
       })
     )
-    return
-  }
-
-  // Navegación (páginas HTML): Network-first con fallback offline
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() =>
-        caches.match(request).then((cached) => cached || caches.match('/'))
-      )
-    )
-    return
   }
 })
 
-// ── Mensajes desde el cliente (skipWaiting bajo demanda) ─────────────────────
 self.addEventListener('message', (event) => {
-  if (event.data === 'skipWaiting') {
-    self.skipWaiting()
-  }
+  if (event.data === 'skipWaiting') self.skipWaiting()
 })
