@@ -822,4 +822,56 @@ router.post('/webhook', asyncHandler(async (req, res) => {
   }
 }))
 
+// ── Procesar respuestas existentes del formulario (solo ADMIN) ───────────────
+router.post('/procesar-respuestas', authenticate, requireRole('ADMIN'), asyncHandler(async (_req, res) => {
+  const cfg = await prisma.configApp.findUnique({ where: { clave: 'typeform_form_id' } })
+  if (!cfg?.valor) {
+    return res.status(400).json({ error: 'No hay formulario activo configurado.' })
+  }
+
+  const formId = cfg.valor
+  const tfRes = await fetch(`${TYPEFORM_API}/forms/${formId}/responses?page_size=100`, {
+    headers: typeformHeaders(),
+  })
+  if (!tfRes.ok) {
+    return res.status(502).json({ error: 'No se pudieron obtener las respuestas de Typeform.' })
+  }
+
+  const data   = await tfRes.json() as { items: any[] }
+  const items  = data.items ?? []
+
+  let procesados = 0
+  let omitidos   = 0
+  const errores: string[] = []
+
+  for (const item of items) {
+    try {
+      // Reenviar al propio webhook endpoint para reutilizar toda la lógica
+      const r = await fetch(
+        `https://api-production-79572.up.railway.app/api/typeform/webhook`,
+        {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ form_response: item }),
+        }
+      )
+      const json = await r.json() as any
+      if (json?.message?.includes('ya registrado')) {
+        omitidos++
+      } else {
+        procesados++
+      }
+    } catch (err: any) {
+      errores.push(err.message ?? 'Error desconocido')
+    }
+  }
+
+  return ApiResponse.success(res, {
+    total: items.length,
+    procesados,
+    omitidos,
+    errores: errores.slice(0, 10),
+  })
+}))
+
 export default router

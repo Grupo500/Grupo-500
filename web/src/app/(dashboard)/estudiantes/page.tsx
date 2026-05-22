@@ -336,6 +336,16 @@ export default function EstudiantesPage() {
     onError:   () => alert('❌ Error al activar el webhook. Revisa los logs de Railway.'),
   })
 
+  const procesarRespuestas = useMutation({
+    mutationFn: () => fetcher<{ data: { total: number; procesados: number; omitidos: number } }>('/typeform/procesar-respuestas', { method: 'POST' }),
+    onSuccess: (data) => {
+      const d = data?.data
+      alert(`✅ Listo:\n• ${d?.procesados ?? 0} estudiante(s) nuevos creados\n• ${d?.omitidos ?? 0} ya existían`)
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+    },
+    onError: () => alert('❌ Error al procesar respuestas.'),
+  })
+
   const importarMutation = useMutation({
     mutationFn: async (file: File) => {
       const token = await getClientToken()
@@ -945,18 +955,27 @@ export default function EstudiantesPage() {
                     Ver formulario
                   </a>
                   <button
-                    onClick={() => activarWebhook.mutate()}
-                    disabled={activarWebhook.isPending}
+                    onClick={() => procesarRespuestas.mutate()}
+                    disabled={procesarRespuestas.isPending}
                     className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-primary/10 border border-primary/30 text-primary rounded-xl text-sm font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50 cursor-pointer"
                   >
+                    {procesarRespuestas.isPending
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Procesando...</>
+                      : <>↓ Importar respuestas existentes del formulario</>
+                    }
+                  </button>
+                  <button
+                    onClick={() => activarWebhook.mutate()}
+                    disabled={activarWebhook.isPending}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 text-xs text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50 cursor-pointer"
+                  >
                     {activarWebhook.isPending
-                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Activando...</>
-                      : <>⚡ Activar recepción de formularios</>
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Activando...</>
+                      : <>⚡ Reconectar webhook (si los nuevos no llegan)</>
                     }
                   </button>
                   <p className="text-xs text-on-surface-variant text-center leading-relaxed">
-                    Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente en la plataforma.
-                    Si no llegan, presiona "Activar recepción" para reconectar.
+                    Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente.
                   </p>
                 </>
               )}
