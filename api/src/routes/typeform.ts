@@ -695,7 +695,6 @@ router.post('/webhook', asyncHandler(async (req, res) => {
               responseToken ? `ResponseID: ${responseToken}.` : '',
               cuentaExistente  ? `Cuenta: ${cuentaExistente}.` : '',
               cursoLabelEx     ? `Curso: ${cursoLabelEx}.` : '',
-              !comprobanteExistente && comprobanteRawEx ? `Texto comprobante: "${comprobanteRawEx}".` : '',
             ].filter(Boolean).join(' '),
           },
         })
@@ -821,9 +820,6 @@ router.post('/webhook', asyncHandler(async (req, res) => {
             responseToken ? `ResponseID: ${responseToken}.` : '',
             cuentaPago ? `Cuenta: ${cuentaPago}.` : '',
             cursoLabel ? `Curso: ${cursoLabel}.` : '',
-            comprobanteUrl
-              ? 'Comprobante adjunto desde formulario.'
-              : (comprobanteRaw ? `Texto comprobante: "${comprobanteRaw}".` : 'Sin comprobante adjunto.'),
           ].filter(Boolean).join(' '),
         },
       })
