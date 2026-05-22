@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
-import { createClientFetcher, getClientToken } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 import { BookOpen } from 'lucide-react'
 
 interface CursoData {
@@ -59,8 +59,7 @@ export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo
   const { data, isLoading, isError } = useQuery({
     queryKey: ['cursos-vendidos', periodo],
     queryFn: async () => {
-      const token = await getClientToken()
-      return createClientFetcher(token ?? '')(`/reportes/cursos?periodo=${periodo}`) as Promise<{ data: CursoData[] }>
+      return apiFetch(`/reportes/cursos?periodo=${periodo}`) as Promise<{ data: CursoData[] }>
     },
     staleTime: 30_000,
   })

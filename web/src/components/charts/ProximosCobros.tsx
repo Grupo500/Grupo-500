@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createClientFetcher, getClientToken } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 import { formatCOP, formatRelative } from '@/lib/utils'
 import { CalendarClock, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -45,8 +45,7 @@ export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { data, isLoading } = useQuery({
     queryKey: ['cobros-proximos', periodo],
     queryFn: async () => {
-      const token = await getClientToken()
-      return createClientFetcher(token ?? '')(`/cobros/proximos?dias=${dias}`) as Promise<{ data: CuotaProxima[] }>
+      return apiFetch(`/cobros/proximos?dias=${dias}`) as Promise<{ data: CuotaProxima[] }>
     },
     staleTime: 30_000,
   })

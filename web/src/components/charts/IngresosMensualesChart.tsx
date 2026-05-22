@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { createClientFetcher, getClientToken } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
@@ -30,8 +30,7 @@ export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Peri
   const { data, isLoading } = useQuery({
     queryKey: ['ventas-grafica', periodo],
     queryFn: async () => {
-      const token = await getClientToken()
-      return createClientFetcher(token)<{ data: { puntos: Punto[]; variacion: number; actual: number } }>(`/reportes/ventas-grafica?periodo=${periodo}`)
+            return apiFetch<{ data: { puntos: Punto[]; variacion: number; actual: number } }>(`/reportes/ventas-grafica?periodo=${periodo}`)
     },
     staleTime: 30_000,
   })

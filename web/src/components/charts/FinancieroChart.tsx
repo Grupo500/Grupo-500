@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import { createClientFetcher, getClientToken } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { BarChart2 } from 'lucide-react'
 
@@ -61,8 +61,7 @@ export function FinancieroChart() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['financiero'],
     queryFn: async () => {
-      const token = await getClientToken()
-      return createClientFetcher(token ?? '')('/reportes/financiero') as Promise<{ data: Punto[] }>
+      return apiFetch('/reportes/financiero') as Promise<{ data: Punto[] }>
     },
     staleTime: 60_000,
   })

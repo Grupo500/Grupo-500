@@ -7,9 +7,10 @@ import { getClientToken } from '@/lib/api'
 /**
  * useSSE — conecta al endpoint SSE del backend y escucha eventos en tiempo real.
  *
- * Eventos manejados:
- * - 'nuevo-estudiante' → invalida lista de estudiantes + todos los reportes del dashboard
- * - 'pago-registrado'  → invalida datos financieros y reportes (para uso futuro)
+ * Eventos:
+ * - 'estudiante-asignado' → invalida dashboard del asesor + lista de estudiantes
+ * - 'nuevo-estudiante'    → invalida lista de estudiantes + reportes admin
+ * - 'pago-registrado'     → invalida reportes financieros
  */
 export function useSSE() {
   const queryClient = useQueryClient()
@@ -26,11 +27,18 @@ export function useSSE() {
       const url = `${process.env.NEXT_PUBLIC_API_URL}/eventos?token=${encodeURIComponent(token)}`
       es = new EventSource(url)
 
+      // ── Estudiante creado o asignado a asesor ────────────────────────────
+      es.addEventListener('estudiante-asignado', () => {
+        queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
+        queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+        queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+        queryClient.invalidateQueries({ queryKey: ['proximos-cobros'] })
+      })
+
       // ── Nuevo estudiante via Typeform ────────────────────────────────────
       es.addEventListener('nuevo-estudiante', () => {
-        // Lista de estudiantes
         queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-        // Dashboard: todos los reportes financieros y estadísticas
+        queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
         queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
         queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
         queryClient.invalidateQueries({ queryKey: ['proximos-cobros'] })
@@ -39,8 +47,9 @@ export function useSSE() {
         queryClient.invalidateQueries({ queryKey: ['reportes-marketing'] })
       })
 
-      // ── Pago registrado (para uso futuro en backend) ─────────────────────
+      // ── Pago registrado ──────────────────────────────────────────────────
       es.addEventListener('pago-registrado', () => {
+        queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
         queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
         queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
         queryClient.invalidateQueries({ queryKey: ['proximos-cobros'] })
@@ -50,7 +59,6 @@ export function useSSE() {
       es.onerror = () => {
         es?.close()
         if (active) {
-          // Reconexión automática en 5 segundos si falla
           retryTimeout = setTimeout(conectar, 5_000)
         }
       }

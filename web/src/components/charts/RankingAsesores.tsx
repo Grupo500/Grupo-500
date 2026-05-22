@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createClientFetcher, getClientToken } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
@@ -19,8 +19,7 @@ export function RankingAsesores() {
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-asesores'],
     queryFn: async () => {
-      const token = await getClientToken()
-      return createClientFetcher(token)<{ data: Asesor[] }>('/reportes/ranking-asesores')
+            return apiFetch<{ data: Asesor[] }>('/reportes/ranking-asesores')
     },
     staleTime: 30_000,
   })

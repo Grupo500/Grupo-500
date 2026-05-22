@@ -7,7 +7,7 @@ import {
   AreaChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { createClientFetcher, getClientToken } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { TrendingUp, Wallet, Clock, AlertTriangle } from 'lucide-react'
 
@@ -86,8 +86,7 @@ export function FinancieroSection({ periodo }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ['financiero-periodo', periodo],
     queryFn: async () => {
-      const token = await getClientToken()
-      return createClientFetcher(token ?? '')(`/reportes/financiero-periodo?periodo=${periodo}`) as Promise<{
+      return apiFetch(`/reportes/financiero-periodo?periodo=${periodo}`) as Promise<{
         data: { totales: Totales; variaciones: Variaciones; puntos: Punto[] }
       }>
     },

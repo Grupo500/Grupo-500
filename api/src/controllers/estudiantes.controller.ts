@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma'
 import { ApiResponse, parsePagination } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
+import { broadcast } from '../utils/sseManager'
 import { z } from 'zod'
 
 const crearSchema = z.object({
@@ -152,6 +153,7 @@ export async function crear(req: Request, res: Response) {
   })
 
   auditLog(req, 'CREATE', 'estudiante', estudiante.id)
+  broadcast('estudiante-asignado', { estudianteId: estudiante.id })
   return ApiResponse.created(res, estudiante)
 }
 
@@ -285,6 +287,7 @@ export async function actualizar(req: Request, res: Response) {
         userId: req.userId ?? 'sistema',
       },
     })
+    broadcast('estudiante-asignado', { estudianteId })
     return ApiResponse.success(res, actualizado)
   }
 
@@ -299,6 +302,11 @@ export async function actualizar(req: Request, res: Response) {
       userId: req.userId ?? 'sistema',
     },
   })
+
+  // Si se cambió el asesorId, notificar en tiempo real
+  if (data.asesorId !== undefined) {
+    broadcast('estudiante-asignado', { estudianteId })
+  }
 
   return ApiResponse.success(res, estudiante)
 }

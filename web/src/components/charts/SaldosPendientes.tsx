@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { createClientFetcher, getClientToken } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { AlertTriangle, Clock, ChevronRight, Phone } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -27,8 +27,7 @@ export function SaldosPendientes() {
   const { data, isLoading } = useQuery({
     queryKey: ['saldos-pendientes'],
     queryFn: async () => {
-      const token = await getClientToken()
-      return createClientFetcher(token)<{ data: SaldoPendiente[] }>('/cobros/saldos-pendientes?limit=100')
+            return apiFetch<{ data: SaldoPendiente[] }>('/cobros/saldos-pendientes?limit=100')
     },
     staleTime: 30_000,
   })

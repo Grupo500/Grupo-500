@@ -2,7 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Paperclip, X, ZoomIn, ZoomOut, Download } from 'lucide-react'
+import { X, ZoomIn, ZoomOut, Download } from 'lucide-react'
+
+// Ícono de comprobante/recibo SVG limpio
+function IconoRecibo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 2h10a1 1 0 0 1 1 1v14l-2-1.5L12 17l-2-1.5L8 17l-2-1.5L4 17V3a1 1 0 0 1 1-1z"/>
+      <line x1="7" y1="7" x2="13" y2="7"/>
+      <line x1="7" y1="10" x2="13" y2="10"/>
+      <line x1="7" y1="13" x2="10" y2="13"/>
+    </svg>
+  )
+}
 import { cn } from '@/lib/utils'
 
 // ── Lightbox ──────────────────────────────────────────────────────────────────
@@ -149,7 +161,7 @@ export function VerComprobante({ url, variante = 'link', label, className }: Pro
             className,
           )}
         >
-          <Paperclip className="w-3 h-3" />
+          <IconoRecibo className="w-3 h-3" />
           {label ?? 'Ver comprobante'}
         </button>
       )}
@@ -162,7 +174,7 @@ export function VerComprobante({ url, variante = 'link', label, className }: Pro
             className,
           )}
         >
-          <Paperclip className="w-3 h-3" />Ver
+          <IconoRecibo className="w-3 h-3" />Ver
         </button>
       )}
 
@@ -174,7 +186,7 @@ export function VerComprobante({ url, variante = 'link', label, className }: Pro
             className,
           )}
         >
-          <Paperclip className="w-4 h-4 text-primary flex-shrink-0" />
+          <IconoRecibo className="w-4 h-4 text-primary flex-shrink-0" />
           <span className="text-sm text-on-surface flex-1">{label ?? 'Ver comprobante'}</span>
         </button>
       )}

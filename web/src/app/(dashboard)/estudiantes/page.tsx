@@ -227,7 +227,7 @@ export default function EstudiantesPage() {
   const { data: formActivoData, refetch: refetchFormActivo } = useQuery({
     queryKey: ['typeform-activo'],
     queryFn:  () => fetcher<{ data: { url: string | null } }>('/typeform/formulario-activo'),
-    staleTime: 0,
+    staleTime: 5 * 60_000, // 5 min — la URL del form no cambia seguido
   })
   const formActivoUrl = formActivoData?.data?.url ?? null
   const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []

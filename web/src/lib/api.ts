@@ -1,6 +1,43 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
-// Cliente para componentes 'use client' — recibe el token via useClientToken()
+// ── Token cache ───────────────────────────────────────────────────────────────
+// Evita un round-trip a /api/auth/token en cada query.
+// El JWT del Express API dura 1h — cacheamos 50 min para renovar con margen.
+let _cachedToken: string | null = null
+let _tokenExpiry  = 0
+let _fetchPromise: Promise<string | null> | null = null
+
+export async function getClientToken(): Promise<string | null> {
+  if (_cachedToken && Date.now() < _tokenExpiry) return _cachedToken
+
+  // Evitar race condition: si ya hay una petición en vuelo, esperarla
+  if (_fetchPromise) return _fetchPromise
+
+  _fetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/auth/token')
+      if (!res.ok) return null
+      const { token } = await res.json()
+      _cachedToken  = token
+      _tokenExpiry  = Date.now() + 50 * 60 * 1000 // 50 min
+      return token
+    } catch {
+      return null
+    } finally {
+      _fetchPromise = null
+    }
+  })()
+
+  return _fetchPromise
+}
+
+/** Invalida el caché del token (llamar tras logout o cambio de sesión) */
+export function clearTokenCache() {
+  _cachedToken = null
+  _tokenExpiry  = 0
+}
+
+// ── Fetcher cliente ───────────────────────────────────────────────────────────
 export function createClientFetcher(token: string | null) {
   return async function clientFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const res = await fetch(`${API_URL}${path}`, {
@@ -25,15 +62,8 @@ export function createClientFetcher(token: string | null) {
   }
 }
 
-// Helper para obtener token JWT desde la sesión del cliente
-// Llama al endpoint /api/auth/token que genera el JWT para el Express API
-export async function getClientToken(): Promise<string | null> {
-  try {
-    const res = await fetch('/api/auth/token')
-    if (!res.ok) return null
-    const { token } = await res.json()
-    return token
-  } catch {
-    return null
-  }
+// ── Helper rápido: fetcher ya autenticado en una llamada ──────────────────────
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = await getClientToken()
+  return createClientFetcher(token)(path, options)
 }
