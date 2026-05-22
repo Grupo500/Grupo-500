@@ -6,6 +6,10 @@ export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
   const periodo = (req.query.periodo as string) ?? 'mensual'
 
+  // Si el usuario es VENDEDOR, filtrar todo por su asesorId
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId
+    ? req.asesorId : undefined
+
   // Calcular inicio del período seleccionado
   const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
@@ -15,8 +19,12 @@ export async function dashboard(req: Request, res: Response) {
     : periodo === 'semanal' ? inicioSemana
     : inicioMes
 
-  // Filtro de fecha para el período activo
   const filtroPeriodo = { gte: inicioPeriodo }
+
+  // Filtro de estudiante para pagos/cuotas vía relación
+  const filtroEstPago    = filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}
+  const filtroEstCuota   = filtroAsesor
+    ? { financiamiento: { estudiante: { asesorId: filtroAsesor } } } : {}
 
   const [
     totalEstudiantes,
@@ -27,20 +35,27 @@ export async function dashboard(req: Request, res: Response) {
     cuotasPendientes,
     cuotasVencidas,
     cuotasCobradas,
+    cursosActivos,
   ] = await Promise.all([
-    prisma.estudiante.count(),
-    prisma.estudiante.count({ where: { createdAt: { gte: inicioMes } } }),
-    // Pagos únicos filtrados por período
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', createdAt: filtroPeriodo }, _sum: { monto: true }, _count: true }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: filtroPeriodo }, _sum: { monto: true }, _count: true }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago: filtroPeriodo }, _sum: { monto: true }, _count: true }),
-    // Cuotas filtradas por período
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoy > inicioPeriodo ? hoy : inicioPeriodo } }, _sum: { monto: true }, _count: true }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoy, gte: inicioPeriodo } }, _sum: { monto: true }, _count: true }),
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago: filtroPeriodo }, _sum: { monto: true }, _count: true }),
+    prisma.estudiante.count({ where: filtroAsesor ? { asesorId: filtroAsesor } : {} }),
+    prisma.estudiante.count({ where: { createdAt: { gte: inicioMes }, ...(filtroAsesor && { asesorId: filtroAsesor }) } }),
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', createdAt: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoy > inicioPeriodo ? hoy : inicioPeriodo }, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt: hoy, gte: inicioPeriodo }, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),
+    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago: filtroPeriodo, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),
+    prisma.curso.count({ where: { activo: true } }),
   ])
 
-  // Totales unificados (pagos únicos + cuotas)
+  // Cobrado del mes por el asesor (para la tarjeta de ventas)
+  const cobradoMesAsesor = filtroAsesor
+    ? (await prisma.pago.aggregate({
+        where: { estado: 'PAGADO', fechaPago: { gte: inicioMes }, asesorId: filtroAsesor },
+        _sum: { monto: true },
+      }))._sum.monto ?? 0
+    : 0
+
   const porCobrarMonto    = (pagosPendientes._sum.monto ?? 0) + (cuotasPendientes._sum.monto ?? 0)
   const porCobrarCantidad = pagosPendientes._count            + cuotasPendientes._count
   const vencidoMonto      = (pagosVencidos._sum.monto ?? 0)  + (cuotasVencidas._sum.monto ?? 0)
@@ -56,6 +71,8 @@ export async function dashboard(req: Request, res: Response) {
       cobrado:   { monto: cobradoMonto,    cantidad: cobradoCantidad   },
       pendiente: { monto: porCobrarMonto,  cantidad: porCobrarCantidad },
     },
+    cursosActivos,
+    cobradoMes: cobradoMesAsesor,
     periodo,
   })
 }
