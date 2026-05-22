@@ -19,31 +19,80 @@ export async function calendario(req: Request, res: Response) {
       : new Date(fechaInicio.getTime() + 30 * 24 * 60 * 60 * 1000)
   }
 
+  const filtroAsesor = asesorId ? { asesorId: String(asesorId) } : undefined
+
+  // Cuotas de financiamientos pendientes
   const cuotas = await prisma.cuota.findMany({
     where: {
       fechaVencimiento: { gte: fechaInicio, lt: fechaFin },
       pagado: false,
-      financiamiento: {
-        estudiante: asesorId ? { asesorId: String(asesorId) } : undefined,
-      },
+      financiamiento: { estudiante: filtroAsesor },
     },
     include: {
       financiamiento: {
         include: {
-          estudiante: { include: { acudiente: true, asesor: true } },
+          estudiante: { select: { id: true, nombre: true, telefono: true, acudiente: { select: { nombre: true, telefono: true } }, asesor: { select: { nombre: true } } } },
         },
       },
     },
     orderBy: { fechaVencimiento: 'asc' },
   })
 
-  // Agrupar por día para la vista de calendario
-  const agrupado = cuotas.reduce((acc, cuota) => {
-    const key = cuota.fechaVencimiento.toISOString().split('T')[0]
-    if (!acc[key]) acc[key] = []
-    acc[key].push(cuota)
-    return acc
-  }, {} as Record<string, typeof cuotas>)
+  // Pagos directos pendientes o vencidos
+  const pagos = await prisma.pago.findMany({
+    where: {
+      fechaVencimiento: { gte: fechaInicio, lt: fechaFin },
+      estado: { in: ['PENDIENTE', 'VENCIDO'] },
+      estudiante: filtroAsesor,
+    },
+    include: {
+      estudiante: { select: { id: true, nombre: true, telefono: true, acudiente: { select: { nombre: true, telefono: true } }, asesor: { select: { nombre: true } } } },
+    },
+    orderBy: { fechaVencimiento: 'asc' },
+  })
+
+  // Estructura unificada de eventos
+  type Evento = {
+    tipo: 'cuota' | 'pago'
+    id: string
+    monto: number
+    estado: string
+    estudiante: { id: string; nombre: string; telefono: string; acudiente?: { nombre: string; telefono: string } | null; asesor?: { nombre: string } | null }
+    // cuota
+    numero?: number
+    financiamientoId?: string
+  }
+
+  const agrupado: Record<string, Evento[]> = {}
+
+  const addKey = (key: string, e: Evento) => {
+    if (!agrupado[key]) agrupado[key] = []
+    agrupado[key].push(e)
+  }
+
+  for (const c of cuotas) {
+    const key = c.fechaVencimiento.toISOString().split('T')[0]
+    addKey(key, {
+      tipo: 'cuota',
+      id: c.id,
+      monto: c.monto,
+      estado: 'PENDIENTE',
+      estudiante: c.financiamiento.estudiante,
+      numero: c.numero,
+      financiamientoId: c.financiamientoId,
+    })
+  }
+
+  for (const p of pagos) {
+    const key = p.fechaVencimiento.toISOString().split('T')[0]
+    addKey(key, {
+      tipo: 'pago',
+      id: p.id,
+      monto: p.monto,
+      estado: p.estado,
+      estudiante: p.estudiante,
+    })
+  }
 
   return ApiResponse.success(res, agrupado)
 }

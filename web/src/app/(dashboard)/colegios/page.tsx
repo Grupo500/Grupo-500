@@ -677,16 +677,18 @@ export default function ColegiosPage() {
           {ETAPAS.map(c => <option key={c.etapa} value={c.etapa}>{c.label}</option>)}
         </select>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelCls}>Fecha contacto</label>
-          <input type="date" className={inputCls} value={f.fechaContacto} onChange={e => onChange({ ...f, fechaContacto: e.target.value })} />
+      {f.etapa !== 'PROSPECTO' && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Fecha contacto</label>
+            <input type="date" className={inputCls} value={f.fechaContacto} onChange={e => onChange({ ...f, fechaContacto: e.target.value })} />
+          </div>
+          <div>
+            <label className={labelCls}>Fecha reunión</label>
+            <input type="date" className={inputCls} value={f.fechaReunion} onChange={e => onChange({ ...f, fechaReunion: e.target.value })} />
+          </div>
         </div>
-        <div>
-          <label className={labelCls}>Fecha reunión</label>
-          <input type="date" className={inputCls} value={f.fechaReunion} onChange={e => onChange({ ...f, fechaReunion: e.target.value })} />
-        </div>
-      </div>
+      )}
       <div>
         <label className={labelCls}>Próximo contacto</label>
         <input type="date" className={inputCls} value={f.fechaProxContacto} onChange={e => onChange({ ...f, fechaProxContacto: e.target.value })} />
