@@ -11,6 +11,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt' },
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user, account, profile }) {
+      // Al entrar con Google, actualizar la foto en la DB con la del perfil de Google
+      if (account?.provider === 'google' && profile?.sub && user.email) {
+        const picture = (profile as any).picture as string | undefined
+        if (picture) {
+          await prisma.user.updateMany({
+            where: { email: user.email },
+            data:  { image: picture },
+          })
+        }
+      }
+      return true
+    },
+  },
   providers: [
     Google({
       clientId:     process.env.AUTH_GOOGLE_ID!,
