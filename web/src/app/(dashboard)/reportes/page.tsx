@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -10,6 +11,14 @@ import { formatCOP, cn } from '@/lib/utils'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+
+type Periodo = 'diario' | 'semanal' | 'mensual'
+
+const PERIODOS: { key: Periodo; label: string }[] = [
+  { key: 'diario',   label: 'Diario'   },
+  { key: 'semanal',  label: 'Semanal'  },
+  { key: 'mensual',  label: 'Mensual'  },
+]
 
 interface DashboardData {
   estudiantes: { total: number; nuevosMes: number }
@@ -32,10 +41,8 @@ interface MarketingData {
   fuentes: FuenteItem[]
 }
 
-// Paleta de colores para las barras
 const COLORES = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
 
-// Etiquetas cortas para el gráfico
 function etiquetaCorta(fuente: string): string {
   const m: Record<string, string> = {
     'Vi un video con link a WhatsApp en Instagram':              'IG Link',
@@ -51,16 +58,30 @@ function etiquetaCorta(fuente: string): string {
   return m[fuente] ?? fuente.slice(0, 14)
 }
 
+// Etiquetas dinámicas según período
+const labelNuevos: Record<Periodo, string> = {
+  diario:  'Nuevos hoy',
+  semanal: 'Nuevos esta semana',
+  mensual: 'Nuevos este mes',
+}
+const labelRecaudado: Record<Periodo, string> = {
+  diario:  'Recaudado hoy',
+  semanal: 'Recaudado esta semana',
+  mensual: 'Recaudado este mes',
+}
+
 export default function ReportesPage() {
+  const [periodo, setPeriodo] = useState<Periodo>('mensual')
+
   const fetcher = async () => {
     const token = await getClientToken()
     return createClientFetcher(token ?? '')
   }
 
   const { data: dashData, isLoading } = useQuery({
-    queryKey: ['reportes-dashboard'],
-    queryFn: async () => (await fetcher())<{ data: DashboardData }>('/reportes/dashboard'),
-    staleTime: 60_000,
+    queryKey: ['reportes-dashboard', periodo],
+    queryFn: async () => (await fetcher())<{ data: DashboardData }>(`/reportes/dashboard?periodo=${periodo}`),
+    staleTime: 30_000,
   })
 
   const { data: mktData, isLoading: mktLoading } = useQuery({
@@ -80,13 +101,31 @@ export default function ReportesPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
 
+      {/* ── Tabs de período ─────────────────────────────────────────── */}
+      <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40 w-fit">
+        {PERIODOS.map(p => (
+          <button
+            key={p.key}
+            onClick={() => setPeriodo(p.key)}
+            className={cn(
+              'px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
+              periodo === p.key
+                ? 'bg-surface-lowest text-on-surface shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface'
+            )}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       {/* ── Estudiantes ────────────────────────────────────────────── */}
       <section className="space-y-3">
         <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Estudiantes</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <KpiCard title="Total registrados" value={est.total.toLocaleString('es-CO')}
             rawValue={est.total} icon="Users" variant="default" isLoading={isLoading} />
-          <KpiCard title="Nuevos este mes"   value={`+${est.nuevosMes}`}
+          <KpiCard title={labelNuevos[periodo]} value={`+${est.nuevosMes}`}
             rawValue={est.nuevosMes} icon="UserPlus" variant="success" isLoading={isLoading} />
         </div>
       </section>
@@ -95,7 +134,7 @@ export default function ReportesPage() {
       <section className="space-y-3">
         <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Cobranza</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard title="Recaudado"  value={formatCOP(cobranza.cobrado.monto)}
+          <KpiCard title={labelRecaudado[periodo]} value={formatCOP(cobranza.cobrado.monto)}
             rawValue={cobranza.cobrado.monto}   formatValue={formatCOP}
             subtitle={`${cobranza.cobrado.cantidad} cobros`}
             icon="TrendingUp" variant="success" isLoading={isLoading} />
@@ -112,7 +151,7 @@ export default function ReportesPage() {
 
       {/* ── Gráficas de ingresos y asesores ───────────────────────── */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <IngresosMensualesChart />
+        <IngresosMensualesChart periodo={periodo} />
         <RankingAsesores />
       </section>
 
@@ -136,7 +175,6 @@ export default function ReportesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Gráfica de barras */}
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
               <p className="text-[12px] font-semibold text-on-surface mb-4">Inscripciones por canal</p>
               <ResponsiveContainer width="100%" height={220}>
@@ -149,15 +187,12 @@ export default function ReportesPage() {
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
                   />
                   <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
-                    {fuentes.map((_, i) => (
-                      <Cell key={i} fill={COLORES[i % COLORES.length]} />
-                    ))}
+                    {fuentes.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Lista detallada con porcentajes */}
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-2">
               <p className="text-[12px] font-semibold text-on-surface mb-3">Detalle por fuente</p>
               <div className="space-y-2.5">

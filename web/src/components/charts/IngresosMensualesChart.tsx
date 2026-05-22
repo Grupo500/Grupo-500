@@ -6,32 +6,46 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 
+type Periodo = 'diario' | 'semanal' | 'mensual'
+
 interface Punto { label: string; ingresos: number; pagos: number }
 
-export function IngresosMensualesChart() {
+const subtitulos: Record<Periodo, string> = {
+  diario:  'Últimos 14 días',
+  semanal: 'Últimas 8 semanas',
+  mensual: 'Últimos 6 meses',
+}
+
+const titulos: Record<Periodo, string> = {
+  diario:  'Ingresos diarios',
+  semanal: 'Ingresos semanales',
+  mensual: 'Ingresos mensuales',
+}
+
+export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { resolvedTheme } = useTheme()
   const isDark            = resolvedTheme === 'dark'
   const temaListo         = resolvedTheme !== undefined
 
   const { data, isLoading } = useQuery({
-    queryKey: ['ventas-grafica-mensual'],
+    queryKey: ['ventas-grafica', periodo],
     queryFn: async () => {
       const token = await getClientToken()
-      return createClientFetcher(token)<{ data: { puntos: Punto[]; variacion: number; actual: number } }>('/reportes/ventas-grafica?periodo=mensual')
+      return createClientFetcher(token)<{ data: { puntos: Punto[]; variacion: number; actual: number } }>(`/reportes/ventas-grafica?periodo=${periodo}`)
     },
     staleTime: 30_000,
   })
 
-  const puntos = data?.data?.puntos ?? []
-  const primary      = isDark ? '#95daff' : '#1a7de0'
-  const gridColor    = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
-  const tickColor    = isDark ? '#95c8f0' : '#2a4172'
+  const puntos    = data?.data?.puntos ?? []
+  const primary   = isDark ? '#95daff' : '#1a7de0'
+  const gridColor = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
+  const tickColor = isDark ? '#95c8f0' : '#2a4172'
 
   return (
     <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-on-surface">Ingresos mensuales</p>
-        <span className="text-[11px] text-on-surface-variant">Últimos 6 meses</span>
+        <p className="text-[13px] font-semibold text-on-surface">{titulos[periodo]}</p>
+        <span className="text-[11px] text-on-surface-variant">{subtitulos[periodo]}</span>
       </div>
 
       {!temaListo || isLoading ? (
@@ -55,8 +69,7 @@ export function IngresosMensualesChart() {
               contentStyle={{
                 background: isDark ? '#0f1e35' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(149,218,255,0.12)' : 'rgba(0,48,96,0.10)'}`,
-                borderRadius: 10,
-                padding: '8px 12px',
+                borderRadius: 10, padding: '8px 12px',
               }}
               labelStyle={{ color: isDark ? '#d6eaff' : '#001d3d', fontWeight: 600, fontSize: 12 }}
               formatter={(v: number) => [formatCOP(v), 'Ingresos']}
@@ -70,4 +83,3 @@ export function IngresosMensualesChart() {
     </div>
   )
 }
-
