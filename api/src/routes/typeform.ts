@@ -16,6 +16,39 @@ function typeformHeaders() {
   }
 }
 
+// ── Helper: configurar webhook en un formulario Typeform ──────────────────────
+async function configurarWebhook(formId: string): Promise<{ ok: boolean; mensaje: string }> {
+  const apiUrl = process.env.API_URL ?? process.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+    : null
+
+  if (!apiUrl) {
+    logger.warn('No se pudo configurar webhook: API_URL / RAILWAY_PUBLIC_DOMAIN no definidos')
+    return { ok: false, mensaje: 'API_URL no configurada — configura el webhook manualmente' }
+  }
+
+  const webhookUrl = `${apiUrl}/api/typeform/webhook`
+
+  const res = await fetch(`${TYPEFORM_API}/forms/${formId}/webhooks/inscripcion`, {
+    method: 'PUT',
+    headers: typeformHeaders(),
+    body: JSON.stringify({
+      url:     webhookUrl,
+      enabled: true,
+      verify_ssl: true,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    logger.error({ err }, `Error configurando webhook para form ${formId}`)
+    return { ok: false, mensaje: `Error Typeform al configurar webhook: ${res.status}` }
+  }
+
+  logger.info(`Webhook configurado en form ${formId} → ${webhookUrl}`)
+  return { ok: true, mensaje: `Webhook activo → ${webhookUrl}` }
+}
+
 // ── Crear formulario de inscripción en Typeform ──────────────────────────────
 router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandler(async (_req, res) => {
   // Traer cursos activos de la BD para generar las opciones dinámicamente
@@ -404,23 +437,30 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
   const formUrl = `https://form.typeform.com/to/${form.id}`
   logger.info(`Formulario Typeform creado: ${form.id} con ${cursosActivos.length} curso(s)`)
 
-  // Persistir el form activo en ConfigApp para que todos puedan consultar el enlace
-  await prisma.configApp.upsert({
-    where: { clave: 'typeform_form_id' },
-    update: { valor: form.id },
-    create: { clave: 'typeform_form_id', valor: form.id },
-  })
-  await prisma.configApp.upsert({
-    where: { clave: 'typeform_form_url' },
-    update: { valor: formUrl },
-    create: { clave: 'typeform_form_url', valor: formUrl },
-  })
+  // Persistir el form activo en ConfigApp
+  await Promise.all([
+    prisma.configApp.upsert({
+      where: { clave: 'typeform_form_id' },
+      update: { valor: form.id },
+      create: { clave: 'typeform_form_id', valor: form.id },
+    }),
+    prisma.configApp.upsert({
+      where: { clave: 'typeform_form_url' },
+      update: { valor: formUrl },
+      create: { clave: 'typeform_form_url', valor: formUrl },
+    }),
+  ])
+
+  // Configurar webhook automáticamente en el formulario recién creado
+  const webhookResult = await configurarWebhook(form.id)
 
   return ApiResponse.created(res, {
-    id:      form.id,
-    url:     formUrl,
-    cursos:  cursosActivos.length,
-    message: 'Formulario creado exitosamente en Typeform',
+    id:             form.id,
+    url:            formUrl,
+    cursos:         cursosActivos.length,
+    webhookActivo:  webhookResult.ok,
+    webhookMsg:     webhookResult.mensaje,
+    message:        'Formulario creado exitosamente en Typeform',
   })
 }))
 
@@ -501,6 +541,26 @@ router.get('/formulario-activo', authenticate, asyncHandler(async (_req, res) =>
     logger.error({ err }, 'Error al auto-sincronizar formulario Typeform')
     return ApiResponse.success(res, { url: null })
   }
+}))
+
+// ── Activar webhook en el formulario activo (solo ADMIN) ─────────────────────
+router.post('/webhook/activar', authenticate, requireRole('ADMIN'), asyncHandler(async (_req, res) => {
+  const cfg = await prisma.configApp.findUnique({ where: { clave: 'typeform_form_id' } })
+
+  if (!cfg?.valor) {
+    return res.status(400).json({ error: 'No hay formulario activo. Crea uno primero.' })
+  }
+
+  const result = await configurarWebhook(cfg.valor)
+
+  if (!result.ok) {
+    return res.status(500).json({ error: result.mensaje })
+  }
+
+  return ApiResponse.success(res, {
+    formId:  cfg.valor,
+    mensaje: result.mensaje,
+  })
 }))
 
 // ── Eliminar formulario activo (reset, solo ADMIN) ────────────────────────────
