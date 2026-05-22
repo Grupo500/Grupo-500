@@ -1,7 +1,7 @@
 // Service Worker — Grupo 500 PWA v2
 // Solo cachea íconos/imágenes estáticas. NO cachea páginas ni JS de Next.js.
 
-const STATIC_CACHE = 'grupo500-static-v2'
+const STATIC_CACHE = 'grupo500-static-v3'
 
 const PRECACHE_ASSETS = [
   '/favicon.ico',
@@ -58,7 +58,8 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached
         return fetch(request).then((res) => {
           if (res.ok) {
-            caches.open(STATIC_CACHE).then((c) => c.put(request, res.clone()))
+            const resClone = res.clone()   // clonar ANTES de retornar (evita "body already used")
+            caches.open(STATIC_CACHE).then((c) => c.put(request, resClone))
           }
           return res
         })
