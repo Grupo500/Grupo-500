@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from 'next-auth'
+import { NextResponse } from 'next/server'
 
 // Configuración edge-compatible (sin adapter, sin imports pesados)
 export const authConfig: NextAuthConfig = {
@@ -15,10 +16,10 @@ export const authConfig: NextAuthConfig = {
       )
 
       if (isLoggedIn && isAuthPage) {
-        return Response.redirect(new URL('/dashboard', request.nextUrl))
+        return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
       }
       if (!isLoggedIn && !isPublicPage) {
-        return Response.redirect(new URL('/sign-in', request.nextUrl))
+        return NextResponse.redirect(new URL('/sign-in', request.nextUrl))
       }
       return true
     },
