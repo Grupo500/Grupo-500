@@ -29,8 +29,9 @@ export default function UsuariosPage() {
   const [formError, setFormError] = useState('')
 
   // Modal editar asesor
-  const [editAsesor, setEditAsesor] = useState<{ asesorId: string; nombre: string; telefono: string; email: string } | null>(null)
-  const [editError, setEditError] = useState('')
+  const [editAsesor, setEditAsesor] = useState<{ asesorId: string; userId: string; nombre: string; telefono: string; email: string } | null>(null)
+  const [editPassword, setEditPassword] = useState('')
+  const [editError, setEditError]   = useState('')
 
   const fetcher = async <T,>(url: string, opts?: RequestInit): Promise<T> => {
     const token = await getClientToken()
@@ -59,15 +60,26 @@ export default function UsuariosPage() {
   })
 
   const guardarAsesor = useMutation({
-    mutationFn: () =>
-      fetcher(`/asesores/${editAsesor!.asesorId}`, {
+    mutationFn: async () => {
+      // Actualizar datos del asesor
+      await fetcher(`/asesores/${editAsesor!.asesorId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: editAsesor!.nombre, telefono: editAsesor!.telefono, email: editAsesor!.email }),
-      }),
+      })
+      // Si se ingresó contraseña temporal, actualizarla también
+      if (editPassword.trim()) {
+        await fetcher(`/auth/usuarios/${editAsesor!.userId}/password`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: editPassword.trim() }),
+        })
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
       setEditAsesor(null)
+      setEditPassword('')
       setEditError('')
     },
     onError: (e: any) => setEditError(e.message ?? 'Error al guardar'),
@@ -263,7 +275,7 @@ export default function UsuariosPage() {
                   </select>
                   {u.asesor && (
                     <button
-                      onClick={() => setEditAsesor({ asesorId: (u.asesor as any).id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email })}
+                      onClick={() => { setEditAsesor({ asesorId: (u.asesor as any).id, userId: u.id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email }); setEditPassword('') }}
                       className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
                       title="Editar asesor"
                     >
@@ -341,6 +353,23 @@ export default function UsuariosPage() {
                   className="input-base"
                 />
               </div>
+              <div>
+                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
+                  Contraseña temporal
+                  <span className="ml-1.5 text-[10px] text-on-surface-variant/60 font-normal">(dejar vacío para no cambiar)</span>
+                </label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={e => setEditPassword(e.target.value)}
+                  placeholder="Nueva contraseña..."
+                  minLength={8}
+                  className="input-base"
+                />
+                {editPassword && editPassword.length < 8 && (
+                  <p className="text-[11px] text-[var(--error)] mt-1">Mínimo 8 caracteres</p>
+                )}
+              </div>
               {editError && <p className="text-xs text-[var(--error)]">{editError}</p>}
             </div>
 
@@ -348,7 +377,7 @@ export default function UsuariosPage() {
               <button onClick={() => { setEditAsesor(null); setEditError('') }} className="btn-ghost">Cancelar</button>
               <button
                 onClick={() => guardarAsesor.mutate()}
-                disabled={!editAsesor.nombre.trim() || !editAsesor.telefono.trim() || guardarAsesor.isPending}
+                disabled={!editAsesor.nombre.trim() || !editAsesor.telefono.trim() || guardarAsesor.isPending || (!!editPassword && editPassword.length < 8)}
                 className="btn-primary"
               >
                 {guardarAsesor.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
