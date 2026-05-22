@@ -5,6 +5,7 @@ import { NotFoundError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
 import { z } from 'zod'
+import * as XLSX from 'xlsx'
 
 const crearSchema = z.object({
   nombre: z.string().min(2),
@@ -333,4 +334,220 @@ export async function historial(req: Request, res: Response) {
     take: 100,
   })
   return ApiResponse.success(res, registros)
+}
+
+/* ─── Importar estudiantes desde Excel ────────────────────────────────────── */
+
+// Normaliza texto: trim + lowercase para comparaciones
+const norm = (s: unknown) => String(s ?? '').trim().toLowerCase()
+
+// Convierte número de serie Excel a Date (días desde 1900-01-01)
+function excelDateToDate(serial: number): Date | null {
+  if (!serial || isNaN(serial)) return null
+  // Excel tiene un bug histórico donde 1900 era bisiesto — compensar
+  const msPerDay = 86400000
+  const date = new Date((serial - 25569) * msPerDay)
+  if (isNaN(date.getTime())) return null
+  return date
+}
+
+// Parsea una celda que puede ser string "dd/mm/yyyy", número serial Excel, o Date
+function parseExcelDate(val: unknown): Date | null {
+  if (!val) return null
+  if (typeof val === 'number') return excelDateToDate(val)
+  if (val instanceof Date) return val
+  const str = String(val).trim()
+  // dd/mm/yyyy o dd-mm-yyyy
+  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/)
+  if (m) {
+    const y = m[3].length === 2 ? `20${m[3]}` : m[3]
+    return new Date(`${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`)
+  }
+  const d = new Date(str)
+  return isNaN(d.getTime()) ? null : d
+}
+
+// Normaliza método de pago al enum
+function parseMetodo(val: unknown): 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO' | 'OTRO' {
+  const v = norm(val)
+  if (v.includes('transfer') || v.includes('transf') || v.includes('pse') || v.includes('nequi') || v.includes('daviplata')) return 'TRANSFERENCIA'
+  if (v.includes('tarjeta') || v.includes('credito') || v.includes('débito') || v.includes('debito')) return 'TARJETA'
+  if (v.includes('efectivo') || v.includes('cash')) return 'EFECTIVO'
+  return 'OTRO'
+}
+
+interface ImportRow {
+  fecha?:       string   // Fecha de registro
+  asesor?:      string
+  linea?:       number
+  curso?:       string
+  nombre:       string
+  telefono:     string
+  abono?:       number
+  valorCurso?:  number
+  valorPagado?: number
+  total?:       number
+  metodoPago?:  string
+  referencia?:  string
+  fechaPago?:   string
+  estado?:      string
+}
+
+export async function importar(req: Request, res: Response) {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'No se recibió ningún archivo Excel.' })
+  }
+
+  // 1. Leer el archivo
+  const workbook = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: false })
+  const sheetName = workbook.SheetNames[0]
+  const sheet = workbook.Sheets[sheetName]
+  const rawRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: '' })
+
+  if (rawRows.length === 0) {
+    return res.status(400).json({ success: false, error: 'El archivo está vacío o no tiene filas de datos.' })
+  }
+
+  // 2. Normalizar cabeceras (case-insensitive)
+  const normalize = (rows: Record<string, unknown>[]): ImportRow[] =>
+    rows.map(r => {
+      const get = (keys: string[]) => {
+        for (const k of Object.keys(r)) {
+          if (keys.some(key => norm(k).includes(norm(key)))) return r[k]
+        }
+        return ''
+      }
+      return {
+        fecha:       String(get(['fecha']) ?? '').trim(),
+        asesor:      String(get(['asesor']) ?? '').trim(),
+        linea:       Number(get(['linea', 'línea'])) || undefined,
+        curso:       String(get(['curso']) ?? '').trim(),
+        nombre:      String(get(['nombre', 'alumno', 'estudiante']) ?? '').trim(),
+        telefono:    String(get(['número', 'numero', 'telefono', 'teléfono', 'cel']) ?? '').trim(),
+        abono:       Number(String(get(['abono']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        valorCurso:  Number(String(get(['valor curso', 'valor_curso']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        valorPagado: Number(String(get(['valor pagado', 'valor_pagado', 'pagado']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        total:       Number(String(get(['total']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        metodoPago:  String(get(['método', 'metodo', 'método pago', 'metodo pago']) ?? '').trim(),
+        referencia:  String(get(['referencia', 'ref']) ?? '').trim(),
+        fechaPago:   get(['fecha pago', 'fecha_pago']) as any,
+        estado:      String(get(['estado']) ?? '').trim(),
+      }
+    }).filter(r => r.nombre.length >= 2)   // descartar filas vacías
+
+  const rows = normalize(rawRows)
+
+  if (rows.length === 0) {
+    return res.status(400).json({ success: false, error: 'No se encontraron filas válidas. Verifica que el archivo tenga la columna "Nombre Alumno".' })
+  }
+
+  // 3. Pre-cargar catálogos para evitar N+1
+  const [cursosDB, asesoresDB] = await Promise.all([
+    prisma.curso.findMany({ select: { id: true, nombre: true, precio: true } }),
+    prisma.asesor.findMany({ select: { id: true, nombre: true } }),
+  ])
+
+  const findCurso = (name: string) =>
+    cursosDB.find(c => norm(c.nombre) === norm(name) || norm(c.nombre).includes(norm(name)))
+
+  const findAsesor = (name: string) =>
+    asesoresDB.find(a => norm(a.nombre) === norm(name) || norm(a.nombre).includes(norm(name)))
+
+  // 4. Agrupar filas por teléfono (identificador principal)
+  const grouped = new Map<string, ImportRow[]>()
+  for (const row of rows) {
+    const key = row.telefono || norm(row.nombre)
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(row)
+  }
+
+  const resultados: { nombre: string; accion: 'creado' | 'existente'; pagos: number; error?: string }[] = []
+
+  // 5. Procesar cada estudiante
+  for (const [, studentRows] of grouped) {
+    const first = studentRows[0]
+
+    try {
+      const cursoObj = first.curso ? findCurso(first.curso) : null
+      const asesorObj = first.asesor ? findAsesor(first.asesor) : null
+
+      // Construir email ficticio si no viene (requerido por el schema)
+      const tel = first.telefono.replace(/\D/g, '').slice(-10)
+      const emailFallback = `${tel || norm(first.nombre).replace(/\s+/g, '.')}@importado.grupo500`
+
+      // ¿Ya existe el estudiante?
+      let estudiante = await prisma.estudiante.findFirst({
+        where: {
+          OR: [
+            { telefono: first.telefono },
+            { email: emailFallback },
+          ],
+        },
+      })
+
+      let accion: 'creado' | 'existente' = 'existente'
+
+      if (!estudiante) {
+        accion = 'creado'
+        estudiante = await prisma.estudiante.create({
+          data: {
+            nombre:          first.nombre,
+            email:           emailFallback,
+            telefono:        first.telefono || '0000000000',
+            fechaNacimiento: new Date('2000-01-01'),  // placeholder
+            tipoDocumento:   'CC',
+            ...(asesorObj     && { asesorId: asesorObj.id }),
+            ...(first.linea   && { lineaAutorizada: first.linea }),
+          },
+        })
+
+        // Vincular curso
+        if (cursoObj) {
+          await prisma.cursoEstudiante.create({
+            data: { estudianteId: estudiante.id, cursoId: cursoObj.id, descuentoPorcentaje: 0 },
+          })
+        }
+      }
+
+      // 6. Crear pagos para filas con abono > 0
+      let pagosCreados = 0
+      for (const row of studentRows) {
+        const monto = row.abono ?? row.valorPagado ?? 0
+        if (monto <= 0) continue
+
+        const fechaPagoDate = parseExcelDate(row.fechaPago) ?? parseExcelDate(row.fecha) ?? new Date()
+        const estado = norm(row.estado).includes('pagad') ? 'PAGADO' : 'PENDIENTE'
+
+        await prisma.pago.create({
+          data: {
+            estudianteId:    estudiante.id,
+            monto,
+            estado,
+            metodo:          parseMetodo(row.metodoPago),
+            fechaVencimiento: fechaPagoDate,
+            fechaPago:        estado === 'PAGADO' ? fechaPagoDate : null,
+            ...(row.referencia && { comprobante: row.referencia }),
+            ...(asesorObj      && { asesorId: asesorObj.id }),
+          },
+        })
+        pagosCreados++
+      }
+
+      resultados.push({ nombre: first.nombre, accion, pagos: pagosCreados })
+    } catch (err: any) {
+      resultados.push({ nombre: first.nombre, accion: 'creado', pagos: 0, error: err.message ?? 'Error desconocido' })
+    }
+  }
+
+  const creados   = resultados.filter(r => r.accion === 'creado' && !r.error).length
+  const existentes = resultados.filter(r => r.accion === 'existente').length
+  const errores   = resultados.filter(r => r.error).length
+  const totalPagos = resultados.reduce((s, r) => s + r.pagos, 0)
+
+  broadcast('estudiante-asignado', { tipo: 'importacion-masiva' })
+
+  return ApiResponse.success(res, {
+    resumen: { totalFilas: rows.length, estudiantesCreados: creados, estudiantesExistentes: existentes, pagosCreados: totalPagos, errores },
+    detalles: resultados,
+  })
 }

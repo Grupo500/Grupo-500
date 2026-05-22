@@ -70,6 +70,23 @@ const firmaStorage = new CloudinaryStorage({
   } as any,
 })
 
+/* ─── Excel / XLSX (memoria, sin Cloudinary) ─────────────────────────────── */
+const ALLOWED_EXCEL_MIMES = new Set([
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel',                                           // .xls
+])
+
+function filterExcel(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
+  if (ALLOWED_EXCEL_MIMES.has(file.mimetype)) return cb(null, true)
+  cb(new Error(`Solo se permiten archivos Excel (.xlsx/.xls). Recibido: ${file.mimetype}`))
+}
+
+export const uploadExcel = multer({
+  storage:    multer.memoryStorage(),
+  fileFilter: filterExcel,
+  limits:     { fileSize: 10 * 1024 * 1024, files: 1 },  // 10 MB máx
+})
+
 /* ─── Exports ─────────────────────────────────────────────────────────────── */
 export const uploadPdf = multer({
   storage:    pdfStorage,
