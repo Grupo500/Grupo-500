@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -27,7 +27,8 @@ export default function SignInPage() {
   const [error,         setError]         = useState('')
   const [showForgot,    setShowForgot]    = useState(false)
 
-  const supportsWebAuthn = browserSupportsWebAuthn()
+  const [supportsWebAuthn, setSupportsWebAuthn] = useState(false)
+  useEffect(() => { setSupportsWebAuthn(browserSupportsWebAuthn()) }, [])
 
   async function handleCredentials(e: React.FormEvent) {
     e.preventDefault()
@@ -61,7 +62,7 @@ export default function SignInPage() {
 
     try {
       // 1. Obtener opciones del servidor
-      const startRes = await fetch(`${API}/api/passkeys/auth/start`, {
+      const startRes = await fetch(`${API}/passkeys/auth/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
@@ -89,7 +90,7 @@ export default function SignInPage() {
       })
 
       // 3. Verificar en el servidor y obtener token
-      const finishRes = await fetch(`${API}/api/passkeys/auth/finish`, {
+      const finishRes = await fetch(`${API}/passkeys/auth/finish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...credential, userId }),
