@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 import { auditLog } from '../utils/auditLogger'
+import { broadcast } from '../utils/sseManager'
 import { z } from 'zod'
 
 const actualizarSchema = z.object({
@@ -101,5 +102,9 @@ export async function actualizar(req: Request, res: Response) {
   }
 
   auditLog(req, 'UPDATE', 'cuota', id, { pagado: data.pagado, medioPago: data.medioPago })
+  // Notificar en tiempo real cuando cambia el estado de pago de una cuota
+  if (data.pagado !== undefined && cuotaActual?.financiamiento?.estudianteId) {
+    broadcast('pago-registrado', { cuotaId: id, estudianteId: cuotaActual.financiamiento.estudianteId })
+  }
   return ApiResponse.success(res, cuota)
 }

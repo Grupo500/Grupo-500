@@ -176,13 +176,14 @@ export async function saldosPendientes(req: Request, res: Response) {
 
 export async function proximos(req: Request, res: Response) {
   const dias = Number(req.query.dias) || 7
-
+  const now  = new Date()
   const hasta = new Date()
   hasta.setDate(hasta.getDate() + dias)
 
+  // 1. Cuotas de financiamiento pendientes dentro del rango
   const cuotas = await prisma.cuota.findMany({
     where: {
-      fechaVencimiento: { gte: new Date(), lte: hasta },
+      fechaVencimiento: { gte: now, lte: hasta },
       pagado: false,
     },
     include: {
@@ -194,5 +195,39 @@ export async function proximos(req: Request, res: Response) {
     take: 50,
   })
 
-  return ApiResponse.success(res, cuotas)
+  // 2. Pagos directos (CONTADO) pendientes dentro del rango
+  const pagosPendientes = await prisma.pago.findMany({
+    where: {
+      fechaVencimiento: { gte: now, lte: hasta },
+      estado: 'PENDIENTE',
+    },
+    include: {
+      estudiante: { include: { acudiente: true } },
+    },
+    orderBy: { fechaVencimiento: 'asc' },
+    take: 50,
+  })
+
+  // 3. Normalizar pagos directos al mismo shape que cuotas
+  const pagosNormalizados = pagosPendientes.map(p => ({
+    id:               p.id,
+    numero:           null,
+    monto:            p.monto,
+    fechaVencimiento: p.fechaVencimiento,
+    pagado:           false,
+    _tipo:            'pago' as const,
+    financiamiento: {
+      estudiante: p.estudiante,
+    },
+  }))
+
+  // 4. Combinar, ordenar por fecha y limitar a 50
+  const combined = [
+    ...cuotas.map(c => ({ ...c, _tipo: 'cuota' as const })),
+    ...pagosNormalizados,
+  ]
+    .sort((a, b) => new Date(a.fechaVencimiento).getTime() - new Date(b.fechaVencimiento).getTime())
+    .slice(0, 50)
+
+  return ApiResponse.success(res, combined)
 }

@@ -32,7 +32,7 @@ export function useSSE() {
         queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
         queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
         queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-        queryClient.invalidateQueries({ queryKey: ['proximos-cobros'] })
+        queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
       })
 
       // ── Nuevo estudiante via Typeform ────────────────────────────────────
@@ -41,7 +41,7 @@ export function useSSE() {
         queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
         queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
         queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-        queryClient.invalidateQueries({ queryKey: ['proximos-cobros'] })
+        queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
         queryClient.invalidateQueries({ queryKey: ['cursos-vendidos'] })
         queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] })
         queryClient.invalidateQueries({ queryKey: ['reportes-marketing'] })
@@ -52,7 +52,7 @@ export function useSSE() {
         queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
         queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
         queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-        queryClient.invalidateQueries({ queryKey: ['proximos-cobros'] })
+        queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
         queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
       })
 

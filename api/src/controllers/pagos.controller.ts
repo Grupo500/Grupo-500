@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma'
 import { ApiResponse, parsePagination } from '../utils/response'
 import { ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
+import { broadcast } from '../utils/sseManager'
 import { z } from 'zod'
 
 const registrarSchema = z.object({
@@ -80,6 +81,7 @@ export async function registrar(req: Request, res: Response) {
   })
 
   auditLog(req, 'CREATE', 'pago', pago.id, { estudianteId: data.estudianteId, monto: data.monto })
+  broadcast('pago-registrado', { pagoId: pago.id, estudianteId: data.estudianteId })
   return ApiResponse.created(res, pago)
 }
 
@@ -114,6 +116,7 @@ export async function actualizar(req: Request, res: Response) {
     include: { estudiante: true, asesor: true },
   })
   auditLog(req, 'UPDATE', 'pago', id, { cambios: data })
+  broadcast('pago-registrado', { pagoId: pago.id, estudianteId: pago.estudianteId })
   return ApiResponse.success(res, pago)
 }
 
