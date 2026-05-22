@@ -1,7 +1,6 @@
 'use client'
 
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
-import { ThemeColorSync } from '@/components/layout/ThemeColorSync'
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +11,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       enableSystem={false}
       storageKey="grupo500-theme"
     >
-      <ThemeColorSync />
       {children}
     </NextThemesProvider>
   )
