@@ -934,17 +934,29 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onRefresh: () => void
 }) {
-  const [abierto, setAbierto] = useState(false)
-  const [fechaPago, setFechaPago] = useState(new Date().toISOString().split('T')[0])
+  const [abierto,    setAbierto]    = useState(false)
+  const [editando,   setEditando]   = useState(false)
+  const [fechaPago,  setFechaPago]  = useState(new Date().toISOString().split('T')[0])
   const [comprobante, setComprobante] = useState(p.comprobante ?? '')
-  const [subiendo, setSubiendo] = useState(false)
-  const [error, setError] = useState('')
+  const [subiendo,   setSubiendo]   = useState(false)
+  const [error,      setError]      = useState('')
+
+  // Edit state
+  const metodoInicial = METODOS_DISPLAY.includes(p.metodo ?? '') ? (p.metodo ?? 'Bancolombia') : 'Otro'
+  const [editMonto,      setEditMonto]      = useState(String(Math.round(p.monto)))
+  const [editFechaVenc,  setEditFechaVenc]  = useState(p.fechaVencimiento?.split('T')[0] ?? '')
+  const [editFechaPago,  setEditFechaPago]  = useState(p.fechaPago?.split('T')[0] ?? '')
+  const [editMetodo,     setEditMetodo]     = useState(metodoInicial)
+  const [editOtroMetodo, setEditOtroMetodo] = useState(METODOS_DISPLAY.includes(p.metodo ?? '') ? '' : (p.metodo ?? ''))
+  const [editComp,       setEditComp]       = useState(p.comprobante ?? '')
+  const [editSubiendo,   setEditSubiendo]   = useState(false)
+  const [editError,      setEditError]      = useState('')
 
   const pagado  = p.estado === 'PAGADO'
   const vencido = p.estado === 'VENCIDO'
 
-  const subirComp = async (file: File) => {
-    setSubiendo(true)
+  const subirComp = async (file: File, setter: (u: string) => void, errSetter: (e: string) => void, loadSetter: (b: boolean) => void) => {
+    loadSetter(true)
     try {
       const token = await getClientToken()
       const fd = new FormData(); fd.append('file', file)
@@ -953,22 +965,39 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
       })
       const json = await res.json()
       if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
-      setComprobante(json.data.url)
-    } catch (e: any) { setError(e.message ?? 'Error al subir') }
-    finally { setSubiendo(false) }
+      setter(json.data.url)
+    } catch (e: any) { errSetter(e.message ?? 'Error al subir') }
+    finally { loadSetter(false) }
   }
 
   const marcarPagado = useMutation({
     mutationFn: () => fetcher(`/pagos/${p.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
-        estado:    'PAGADO',
-        fechaPago,
+        estado: 'PAGADO', fechaPago,
         ...(comprobante && { comprobante }),
       }),
     }),
     onSuccess: () => { setAbierto(false); setError(''); onRefresh() },
     onError: (e: any) => setError(e.message ?? 'Error al guardar'),
+  })
+
+  const editMetodoFinal = editMetodo === 'Otro' ? (editOtroMetodo.trim() || 'Otro') : editMetodo
+  const editMetodoDB    = METODOS_BACKEND[editMetodoFinal] ?? 'OTRO'
+
+  const editarMutation = useMutation({
+    mutationFn: () => fetcher(`/pagos/${p.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        monto:           Number(editMonto),
+        metodo:          editMetodoDB,
+        fechaVencimiento: editFechaVenc,
+        ...(pagado && editFechaPago && { fechaPago: editFechaPago }),
+        ...(editComp && { comprobante: editComp }),
+      }),
+    }),
+    onSuccess: () => { setEditando(false); setEditError(''); onRefresh() },
+    onError: (e: any) => setEditError(e.message ?? 'Error al guardar'),
   })
 
   const eliminar = async () => {
@@ -981,6 +1010,72 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
     onRefresh()
   }
 
+  // ── Modo edición ──────────────────────────────────────────────────────────
+  if (editando) return (
+    <div className="px-3 py-3 rounded-xl border-2 border-primary/40 bg-primary/5 space-y-3">
+      <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Editando pago directo</p>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className={labelCls}>Monto</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
+            <NumericInput value={editMonto} onChange={setEditMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
+          </div>
+        </div>
+        <div>
+          <label className={labelCls}>Fecha vencimiento</label>
+          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={editFechaVenc} onChange={e => setEditFechaVenc(e.target.value)} />
+        </div>
+      </div>
+
+      {pagado && (
+        <div>
+          <label className={labelCls}>Fecha de pago</label>
+          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={editFechaPago} onChange={e => setEditFechaPago(e.target.value)} />
+        </div>
+      )}
+
+      <div>
+        <label className={labelCls}>Método de pago</label>
+        <div className="flex flex-wrap gap-1.5">
+          {METODOS_DISPLAY.map(m => (
+            <button key={m} type="button" onClick={() => setEditMetodo(m)}
+              className={cn('px-3 py-1.5 rounded-lg border-2 text-[11px] font-semibold transition-all cursor-pointer',
+                editMetodo === m ? 'border-primary bg-primary/8 text-primary' : 'border-outline-variant text-on-surface-variant hover:border-outline')}>
+              {m}
+            </button>
+          ))}
+        </div>
+        {editMetodo === 'Otro' && (
+          <input className={cn(inputCls, 'mt-1.5 text-sm')} placeholder="Especifica el método..." value={editOtroMetodo}
+            onChange={e => setEditOtroMetodo(e.target.value)} />
+        )}
+      </div>
+
+      <div>
+        <label className={labelCls}>Comprobante</label>
+        <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
+          <input type="file" accept="image/*,.pdf" className="hidden" disabled={editSubiendo}
+            onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f, setEditComp, setEditError, setEditSubiendo); e.target.value = '' }} />
+          {editSubiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
+          <span className="text-xs text-on-surface-variant">{editSubiendo ? 'Subiendo...' : editComp ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
+        </label>
+        <VerComprobante url={editComp} label="Ver comprobante actual" className="mt-1" />
+      </div>
+
+      {editError && <p className="text-xs text-[var(--error)]">{editError}</p>}
+      <div className="flex gap-2 justify-end">
+        <button onClick={() => setEditando(false)} className="px-3 py-1 text-xs text-on-surface-variant hover:text-on-surface cursor-pointer">Cancelar</button>
+        <button onClick={() => editarMutation.mutate()} disabled={editarMutation.isPending}
+          className="flex items-center gap-1 px-3 py-1 bg-primary text-on-primary rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50">
+          {editarMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          Guardar
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div className={cn(
       'rounded-xl border overflow-hidden',
@@ -990,7 +1085,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
     )}>
       {/* Fila principal */}
       <div className={cn(
-        'flex items-center gap-3 px-3 py-2.5',
+        'flex items-center gap-3 px-3 py-2.5 group',
         pagado  ? 'bg-[#16a34a]/4' :
         vencido ? 'bg-[#dc2626]/4' :
                   'bg-surface-high/40',
@@ -1016,6 +1111,10 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
               {abierto ? 'Cancelar' : 'Marcar pagado'}
             </button>
           )}
+          <button onClick={() => setEditando(true)}
+            className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-surface-high transition-all cursor-pointer">
+            <Pencil className="w-3 h-3 text-on-surface-variant" />
+          </button>
           <button onClick={eliminar}
             className="p-1 rounded-md hover:bg-[#dc2626]/10 transition-colors cursor-pointer">
             <Trash2 className="w-3.5 h-3.5 text-[#dc2626]" />
@@ -1037,7 +1136,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
               <label className={labelCls}>Comprobante (opcional)</label>
               <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
                 <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
+                  onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f, setComprobante, setError, setSubiendo); e.target.value = '' }} />
                 {subiendo
                   ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                   : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
