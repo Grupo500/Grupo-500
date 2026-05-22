@@ -170,6 +170,7 @@ export default function UsuariosPage() {
             placeholder="Buscar por nombre o email..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
+            autoComplete="off"
             className="w-full bg-surface-high border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
           />
         </div>
