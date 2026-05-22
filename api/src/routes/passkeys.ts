@@ -5,10 +5,6 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server'
-import type {
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-} from '@simplewebauthn/server/esm/deps'
 import { authenticate } from '../middleware/auth'
 import { asyncHandler } from '../middleware/errorHandler'
 import { ApiResponse } from '../utils/response'
@@ -78,7 +74,7 @@ router.post('/register/start', authenticate, asyncHandler(async (req, res) => {
 
 // ── Registro: verificar y guardar ─────────────────────────────────────────────
 router.post('/register/finish', authenticate, asyncHandler(async (req, res) => {
-  const body = req.body as RegistrationResponseJSON & { name?: string }
+  const body = req.body as any & { name?: string }
   const expectedChallenge = challengeStore.get(req.userId!)
   if (!expectedChallenge) return res.status(400).json({ error: 'Challenge expirado' })
 
@@ -140,7 +136,7 @@ router.post('/auth/start', asyncHandler(async (req, res) => {
 
 // ── Autenticación: verificar y emitir JWT ─────────────────────────────────────
 router.post('/auth/finish', asyncHandler(async (req, res) => {
-  const body: AuthenticationResponseJSON & { userId: string } = req.body
+  const body: any & { userId: string } = req.body
   if (!body.userId) return res.status(400).json({ error: 'userId requerido' })
 
   const user = await prisma.user.findUnique({
