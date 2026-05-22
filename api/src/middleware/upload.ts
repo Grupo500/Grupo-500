@@ -51,9 +51,10 @@ const imageStorage = new CloudinaryStorage({
     const isPdf = file.mimetype === 'application/pdf'
     return {
       folder:          'grupo500/comprobantes',
-      resource_type:   isPdf ? 'raw' : 'image',
+      resource_type:   isPdf ? 'auto' : 'image',
       use_filename:    true,
       unique_filename: true,
+      ...(isPdf ? { format: 'pdf' } : {}),
     }
   },
 })
@@ -79,7 +80,7 @@ export const uploadPdf = multer({
 export const uploadImage = multer({
   storage:    imageStorage,
   fileFilter: filterImage,
-  limits:     { fileSize: 10 * 1024 * 1024, files: 1 },  // 10 MB máx (era 20, reducido)
+  limits:     { fileSize: 20 * 1024 * 1024, files: 1 },  // 20 MB máx
 })
 
 export const uploadFirma = multer({

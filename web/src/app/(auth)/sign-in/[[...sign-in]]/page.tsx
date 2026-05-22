@@ -76,7 +76,17 @@ export default function SignInPage() {
       const { userId, ...authOptions } = startData.data
 
       // 2. Ejecutar autenticación biométrica en el dispositivo
-      const credential = await startAuthentication({ optionsJSON: authOptions })
+      // Asegurar que el challenge y allowCredentials tienen el formato base64url correcto
+      const credential = await startAuthentication({
+        optionsJSON: {
+          ...authOptions,
+          challenge: authOptions.challenge as string,
+          allowCredentials: (authOptions.allowCredentials ?? []).map((c: any) => ({
+            ...c,
+            id: String(c.id),
+          })),
+        },
+      })
 
       // 3. Verificar en el servidor y obtener token
       const finishRes = await fetch(`${API}/api/passkeys/auth/finish`, {
@@ -146,6 +156,22 @@ export default function SignInPage() {
         </p>
 
         <div className="bg-white rounded-xl border border-black/[0.07] shadow-none p-5 space-y-4">
+
+          {/* Face ID / Biometría — PRIMERO */}
+          {supportsWebAuthn && (
+            <button
+              type="button"
+              onClick={handleFaceId}
+              disabled={faceLoading || loading || googleLoading}
+              className="w-full flex items-center justify-center gap-2 border border-[#1a7de0]/30 hover:bg-[#1a7de0]/5 transition-colors rounded-lg py-2.5 text-sm font-medium text-[#1a7de0] disabled:opacity-60"
+            >
+              {faceLoading
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <ScanFace className="w-4 h-4" />
+              }
+              {faceLoading ? 'Verificando...' : 'Face ID / Huella digital'}
+            </button>
+          )}
 
           {/* Botón Google */}
           <button
@@ -236,32 +262,10 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {/* Face ID / Biometría */}
           {supportsWebAuthn && (
-            <>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-black/[0.08]" />
-                <span className="text-xs text-[#5a74a8]">o</span>
-                <div className="flex-1 h-px bg-black/[0.08]" />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleFaceId}
-                disabled={faceLoading || loading || googleLoading}
-                className="w-full flex items-center justify-center gap-2 border border-[#1a7de0]/30 hover:bg-[#1a7de0]/5 transition-colors rounded-lg py-2.5 text-sm font-medium text-[#1a7de0] disabled:opacity-60"
-              >
-                {faceLoading
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <ScanFace className="w-4 h-4" />
-                }
-                {faceLoading ? 'Verificando...' : 'Face ID / Huella digital'}
-              </button>
-
-              <p className="text-[11px] text-center text-[#5a74a8]">
-                Escribe tu correo y luego toca el botón
-              </p>
-            </>
+            <p className="text-[11px] text-center text-[#5a74a8]">
+              Face ID requiere correo y huella previamente registrada
+            </p>
           )}
         </div>
       </div>

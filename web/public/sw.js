@@ -47,7 +47,9 @@ self.addEventListener('fetch', (event) => {
 
   // Todo lo demás: network-first
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request).catch(() =>
+      caches.match(event.request).then(r => r ?? Response.error())
+    )
   )
 })
 
