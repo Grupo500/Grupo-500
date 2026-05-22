@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, startTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { getClientToken } from '@/lib/api'
 
@@ -29,31 +29,37 @@ export function useSSE() {
 
       // ── Estudiante creado o asignado a asesor ────────────────────────────
       es.addEventListener('estudiante-asignado', () => {
-        queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-        queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-        queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-        queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
+        startTransition(() => {
+          queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
+          queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+          queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+          queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
+        })
       })
 
       // ── Nuevo estudiante via Typeform ────────────────────────────────────
       es.addEventListener('nuevo-estudiante', () => {
-        queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-        queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-        queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
-        queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-        queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
-        queryClient.invalidateQueries({ queryKey: ['cursos-vendidos'] })
-        queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] })
-        queryClient.invalidateQueries({ queryKey: ['reportes-marketing'] })
+        startTransition(() => {
+          queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+          queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
+          queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
+          queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+          queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
+          queryClient.invalidateQueries({ queryKey: ['cursos-vendidos'] })
+          queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] })
+          queryClient.invalidateQueries({ queryKey: ['reportes-marketing'] })
+        })
       })
 
       // ── Pago registrado ──────────────────────────────────────────────────
       es.addEventListener('pago-registrado', () => {
-        queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-        queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
-        queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-        queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
-        queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+        startTransition(() => {
+          queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
+          queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
+          queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+          queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
+          queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+        })
       })
 
       es.onerror = () => {
