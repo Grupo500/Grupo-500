@@ -119,12 +119,9 @@ export default function ReportesPage() {
   const medios  = mediosData?.data
   const metodos = medios?.metodos ?? []
 
-  const LABEL_METODO: Record<string, string> = {
-    TRANSFERENCIA: 'Transferencia',
-    TARJETA:       'Tarjeta',
-    EFECTIVO:      'Efectivo',
-    OTRO:          'Otro',
-  }
+  // metodo es String libre desde la migración del enum → String
+  // Los valores reales son: 'Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Otro'
+  // Se muestra directamente m.metodo sin mapeo
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -209,7 +206,7 @@ export default function ReportesPage() {
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart
                   data={metodos.map((m, i) => ({
-                    name:  LABEL_METODO[m.metodo] ?? m.metodo,
+                    name:  m.metodo,
                     monto: m.monto,
                     color: COLORES[i % COLORES.length],
                   }))}
@@ -237,7 +234,7 @@ export default function ReportesPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORES[i % COLORES.length] }} />
-                        <span className="text-[12px] font-medium text-on-surface">{LABEL_METODO[m.metodo] ?? m.metodo}</span>
+                        <span className="text-[12px] font-medium text-on-surface">{m.metodo}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[12px] font-bold text-on-surface">{formatCOP(m.monto)}</span>
