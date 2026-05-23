@@ -1045,8 +1045,8 @@ export default function EstudiantesPage() {
                           <p>Nuevos</p>
                         </div>
                         <div className="bg-surface-lowest rounded-lg p-2.5 text-center">
-                          <p className="text-lg font-bold text-on-surface">{importResult.resumen.estudiantesExistentes}</p>
-                          <p>Ya existían</p>
+                          <p className="text-lg font-bold text-on-surface">{importResult.resumen.estudiantesActualizados}</p>
+                          <p>Actualizados</p>
                         </div>
                         <div className="bg-surface-lowest rounded-lg p-2.5 text-center">
                           <p className="text-lg font-bold text-on-surface">{importResult.resumen.pagosCreados}</p>
