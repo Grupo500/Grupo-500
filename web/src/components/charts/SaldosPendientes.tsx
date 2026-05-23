@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
@@ -21,6 +22,7 @@ interface SaldoPendiente {
 type Filtro = 'todos' | 'mora'
 
 export function SaldosPendientes() {
+  const router = useRouter()
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [busqueda, setBusqueda] = useState('')
 
@@ -120,6 +122,7 @@ export function SaldosPendientes() {
             const pendientesCount = e.cuotasPendientes + e.pagosPendientes
             return (
               <div key={e.estudianteId}
+                onClick={() => router.push(`/estudiantes/${e.estudianteId}`)}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors group cursor-pointer',
                   'hover:bg-surface-high',
