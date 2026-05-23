@@ -512,6 +512,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
     departamento: e.departamento ?? '', ciudad: e.ciudad ?? '',
     colegioId: e.colegio?.id ?? '', asesorId: e.asesor?.id ?? '',
     lineaAutorizada: e.lineaAutorizada ? String(e.lineaAutorizada) : '',
+    agregado: e.agregado ? 'si' : 'no',
     cursoId: cursoActivo?.cursoId ?? '',
     acudienteNombre: e.acudiente?.nombre ?? '', acudienteEmail: e.acudiente?.email ?? '',
     acudienteTelefono: e.acudiente?.telefono ?? '', acudienteRelacion: e.acudiente?.relacion ?? 'Padre',
@@ -538,6 +539,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           fechaNacimiento: form.fechaNacimiento,
           departamento: form.departamento || null, ciudad: form.ciudad || null,
           colegioId: form.colegioId || null,
+          agregado: form.agregado === 'si',
           ...(isAdmin && {
             asesorId: form.asesorId || null,
             cursoId: form.cursoId || null,
@@ -574,6 +576,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             { icon: Calendar,   label: 'Nacimiento', value: e.fechaNacimiento ? fmtFecha(e.fechaNacimiento) : '—' },
             { icon: Users,      label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
             ...(isAdmin ? [{ icon: Phone, label: 'Línea autorizada', value: e.lineaAutorizada ? `Línea ${e.lineaAutorizada}` : '—' }] : []),
+            { icon: MessageCircle, label: 'Agregado grupos WhatsApp', value: e.agregado ? 'Sí' : 'No' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
               <Icon className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" />
@@ -585,34 +588,6 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           ))}
         </div>
 
-        {/* Toggle agregado a grupos WhatsApp */}
-        <div className="flex items-center justify-between p-3 rounded-xl border border-outline-variant bg-surface-high/40">
-          <div className="flex items-center gap-2.5">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${e.agregado ? 'bg-[#25d366]/15' : 'bg-surface-high'}`}>
-              <MessageCircle className={`w-3.5 h-3.5 ${e.agregado ? 'text-[#25d366]' : 'text-on-surface-variant'}`} />
-            </div>
-            <div>
-              <p className="text-[13px] font-medium text-on-surface">Grupos de WhatsApp</p>
-              <p className="text-[11px] text-on-surface-variant">
-                {e.agregado ? 'Estudiante agregado a los grupos' : 'Pendiente de agregar a los grupos'}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={async () => {
-              const token = await getClientToken()
-              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/${e.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
-                body: JSON.stringify({ agregado: !e.agregado }),
-              })
-              onRefresh()
-            }}
-            className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0 ${e.agregado ? 'bg-[#25d366]' : 'bg-surface-container'}`}
-          >
-            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${e.agregado ? 'translate-x-[22px]' : 'translate-x-1'}`} />
-          </button>
-        </div>
       </section>
 
       {cursoActivo && (
@@ -719,6 +694,13 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
               <select className={inputCls} value={form.lineaAutorizada} onChange={e => f('lineaAutorizada')(e.target.value)}>
                 <option value="">Sin asignar</option>
                 {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Línea {n}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Agregado grupos WhatsApp</label>
+              <select className={inputCls} value={form.agregado} onChange={e => f('agregado')(e.target.value)}>
+                <option value="no">No</option>
+                <option value="si">Sí</option>
               </select>
             </div>
             <div>
