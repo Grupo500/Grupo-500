@@ -67,7 +67,11 @@ interface DemografiaData {
   totalCiu:      number
 }
 
-const COLORES = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
+const COLORES      = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
+// Paleta cálida/terrosa para Marketing — fuentes de contacto
+const COLORES_MKT  = ['#f97316','#f59e0b','#eab308','#ef4444','#fb923c','#fbbf24','#dc2626','#d97706','#c2410c']
+// Paleta fría/teal-azul para Demografía — departamentos y ciudades
+const COLORES_DEMO = ['#0ea5e9','#06b6d4','#14b8a6','#10b981','#22c55e','#3b82f6','#6366f1','#0284c7','#0891b2']
 
 function etiquetaCorta(fuente: string): string {
   const m: Record<string, string> = {
@@ -299,7 +303,7 @@ export default function ReportesPage() {
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
               <p className="text-[12px] font-semibold text-on-surface mb-4">Inscripciones por canal</p>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={fuentes.map((f, i) => ({ name: etiquetaCorta(f.fuente), cantidad: f.cantidad, color: COLORES[i % COLORES.length] }))}
+                <BarChart data={fuentes.map((f, i) => ({ name: etiquetaCorta(f.fuente), cantidad: f.cantidad, color: COLORES_MKT[i % COLORES_MKT.length] }))}
                   margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
@@ -308,7 +312,7 @@ export default function ReportesPage() {
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
                   />
                   <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
-                    {fuentes.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
+                    {fuentes.map((_, i) => <Cell key={i} fill={COLORES_MKT[i % COLORES_MKT.length]} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -321,7 +325,7 @@ export default function ReportesPage() {
                   <div key={f.fuente} className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORES[i % COLORES.length] }} />
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORES_MKT[i % COLORES_MKT.length] }} />
                         <span className="text-[11px] text-on-surface truncate">{f.fuente}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
@@ -331,7 +335,7 @@ export default function ReportesPage() {
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-surface-high overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${f.porcentaje}%`, background: COLORES[i % COLORES.length] }} />
+                        style={{ width: `${f.porcentaje}%`, background: COLORES_MKT[i % COLORES_MKT.length] }} />
                     </div>
                   </div>
                 ))}
@@ -381,7 +385,7 @@ export default function ReportesPage() {
                     paddingAngle={2}
                   >
                     {departamentos.map((_, i) => (
-                      <Cell key={i} fill={COLORES[i % COLORES.length]} />
+                      <Cell key={i} fill={COLORES_DEMO[i % COLORES_DEMO.length]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -421,7 +425,7 @@ export default function ReportesPage() {
                   />
                   <Bar dataKey="cantidad" radius={[0, 4, 4, 0]}>
                     {ciudades.map((_, i) => (
-                      <Cell key={i} fill={COLORES[i % COLORES.length]} />
+                      <Cell key={i} fill={COLORES_DEMO[i % COLORES_DEMO.length]} />
                     ))}
                   </Bar>
                 </BarChart>

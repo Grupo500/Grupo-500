@@ -514,68 +514,63 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
     y = rm('Recuerda que tus estudiantes pueden pagar la totalidad del curso de contado. Sin embargo, si todos no cuentan con el recurso de parte del **Preicfes Grupo 500** hemos autorizado que cada estudiante realice un primer pago de **$300.000 mil pesos** en el mes de mayo y el restante en el mes de junio. Esta facilidad de pago en el caso de los **Calendario A, Intensivo Calendario A o Calendario G.**', ml, y)
     y += lh * 1.2
 
-    // ── CIERRE — caja navy con texto blanco + ícono WhatsApp inline ────────
-    // 1. Pre-calcular líneas para conocer la altura del bloque
-    const cierreRaw = 'Apreciada Institución, recuerda que puedes extender la invitación del curso a estudiantes de **noveno, décimo y undécimo grado.** En caso de requerir una reunión virtual con nuestro equipo directivo debes confirmarnos a través de este correo pregrupo500@gmail.com o comunicarte a nuestra línea institucional de WhatsApp  311 5233917'
-    const pad = 5       // padding interno de la caja (mm)
-    const cierreW = cw  // ancho del texto dentro de la caja
+    // ── CIERRE — caja navy con texto blanco centrada verticalmente ──────────
+    const cierreRaw = 'Apreciada Institución, recuerda que puedes extender la invitación del curso a estudiantes de **noveno, décimo y undécimo grado.** En caso de requerir una reunión virtual con nuestro equipo directivo debes confirmarnos a través de este correo pregrupo500@gmail.com o comunicarte a nuestra línea institucional de WhatsApp al 311 5233917'
+    const pad  = 5       // padding interno de la caja (mm)
+    const txtX = ml + pad
+    const txtW = cw - pad * 2
     doc.setFont(F, 'normal'); doc.setFontSize(11)
-    // Estimación de líneas (aprox) para reservar espacio en la página
-    const lineasEstimadas = 5
-    const cajaH = pad + lineasEstimadas * lh + pad
-    if (y + cajaH > 272) { y = newPage() }
 
-    // 2. Dibujar rectángulo navy
+    // 1. Medir alto real del texto SIN dibujar (simulación de word-wrap)
+    function measureMixed(raw: string, width: number, fontSize: number): number {
+      doc.setFontSize(fontSize)
+      const parts = raw.split(/\*\*/)
+      type Tok = { text: string; bold: boolean }
+      const tokens: Tok[] = []
+      parts.forEach((p, i) => {
+        const bold = i % 2 === 1
+        const words = p.match(/\S+\s*/g) ?? []
+        words.forEach(w => tokens.push({ text: w, bold }))
+      })
+      let cx = 0, lineCount = 1
+      for (const tok of tokens) {
+        doc.setFont(F, tok.bold ? 'bold' : 'normal')
+        doc.setFontSize(fontSize)
+        const trimW = doc.getTextWidth(tok.text.trimEnd())
+        const tw    = doc.getTextWidth(tok.text)
+        if (cx + trimW > width + 0.5 && cx > 0) { cx = 0; lineCount++ }
+        cx += tw
+      }
+      return (lineCount - 1) * lh   // delta Y desde startY hasta última línea
+    }
+
+    const relH      = measureMixed(cierreRaw, txtW, 11)
+    const cajaHReal = pad + lh * 0.55 + relH + lh * 0.5 + pad
+
+    // 2. Altura de la firma: "Con aprecio," + empresa + NIT
+    const firmaH       = lh * 1.8 + lh * 1.2 + lh
+    const gapCajaFirma = lh * 1.5
+    const totalBloque  = cajaHReal + gapCajaFirma + firmaH
+
+    // 3. Centrar verticalmente en el espacio restante de la página
+    const espacioRestante = 272 - y
+    const offsetCenter    = Math.max(0, (espacioRestante - totalBloque) / 2)
+    if (y + totalBloque > 272) { y = newPage() }
+    y += offsetCenter
+
+    // 4. Dibujar caja navy y renderizar texto blanco
     const cajaY0 = y
     doc.setFillColor(...NAVY); doc.setDrawColor(...NAVY); doc.setLineWidth(0.3)
-    doc.rect(ml, cajaY0, cw, cajaH, 'F')
-
-    // 3. Renderizar texto blanco con bold inline, partiendo desde (ml+pad, cajaY0+pad+lh*0.8)
-    const txtX  = ml + pad
-    const txtW  = cw - pad * 2
-    const txtY0 = cajaY0 + pad + lh * 0.55
-    const resC  = renderMixed(cierreRaw, txtX, txtY0, 11, txtW, WHITE)
-
-    // 4. Insertar ícono WhatsApp justo antes de "311 5233917"
-    //    El texto "WhatsApp " termina antes del número — buscamos la pos X de esa parte.
-    //    Estrategia: renderizar solo hasta "WhatsApp " en seco para medir X, luego
-    //    dibujar el ícono en (lastX de esa sub-render, lastLineY).
-    //    En la llamada anterior ya dibujó todo incluido el número.
-    //    Solo necesitamos colocar el ícono en la línea correcta retroactivamente.
-    //    Para eso medimos donde empieza "311" en esa línea.
-    if (waB64) {
-      // Medir cuánto ancho ocupa " 311 5233917" con fuente bold
-      doc.setFont(F, 'bold'); doc.setFontSize(11)
-      const numW = doc.getTextWidth(' 311 5233917')
-      // El número termina en resC.lastX (aproximado), el ícono va justo antes
-      const iconX = resC.lastX - numW - 6   // 6 = ancho del ícono (5) + gap (1)
-      const iconY = resC.lastLineY - 4.5    // alinear verticalmente con el texto
-      doc.addImage(waB64, 'PNG', iconX, iconY, 5, 5)
-    }
-
-    // 5. Ajustar la caja al alto real del texto renderizado
-    const cajaHReal = (resC.lastLineY - cajaY0) + lh * 0.5 + pad
-    doc.setFillColor(...NAVY); doc.setDrawColor(...NAVY)
     doc.rect(ml, cajaY0, cw, cajaHReal, 'F')
-    // Re-renderizar texto encima (la caja recién dibujada tapó el texto)
+    const txtY0 = cajaY0 + pad + lh * 0.55
     renderMixed(cierreRaw, txtX, txtY0, 11, txtW, WHITE)
-    if (waB64) {
-      doc.setFont(F, 'bold'); doc.setFontSize(11)
-      const numW = doc.getTextWidth(' 311 5233917')
-      const iconX = resC.lastX - numW - 6
-      const iconY = resC.lastLineY - 4.5
-      doc.addImage(waB64, 'PNG', iconX, iconY, 5, 5)
-    }
 
-    y = cajaY0 + cajaHReal + lh * 1.5
+    y = cajaY0 + cajaHReal + gapCajaFirma
 
-    // ── FIRMA ─────────────────────────────────────────────────────────────
-    if (y + 20 > 272) { y = newPage() }
-    doc.setFont(F, 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
+    // ── FIRMA (todo en negrita) ────────────────────────────────────────────
+    doc.setFont(F, 'bold'); doc.setFontSize(11); doc.setTextColor(...BLACK)
     doc.text('Con aprecio,', ml, y); y += lh * 1.8
-    doc.setFont(F, 'bold')
     doc.text('GRUPO 500 EDUCACIÓN S.A.S', ml, y); y += lh * 1.2
-    doc.setFont(F, 'normal')
     doc.text('NIT No. 901.768.155-8', ml, y)
 
     if (descargar) doc.save(`Propuesta-${colegio.nombre.replace(/\s+/g, '_')}.pdf`)
