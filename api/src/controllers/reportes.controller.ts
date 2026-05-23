@@ -494,7 +494,7 @@ export async function demografia(_req: Request, res: Response) {
       orderBy: { _count: { departamento: 'desc' } },
     }),
     prisma.estudiante.groupBy({
-      by:      ['ciudad'],
+      by:      ['ciudad', 'departamento'],
       where:   { ciudad: { not: null } },
       _count:  { ciudad: true },
       orderBy: { _count: { ciudad: 'desc' } },
@@ -512,9 +512,10 @@ export async function demografia(_req: Request, res: Response) {
       porcentaje: totalDep > 0 ? Math.round((r._count.departamento / totalDep) * 100) : 0,
     })),
     ciudades: porCiudad.map(r => ({
-      nombre:     r.ciudad ?? 'Sin dato',
-      cantidad:   r._count.ciudad,
-      porcentaje: totalCiu > 0 ? Math.round((r._count.ciudad / totalCiu) * 100) : 0,
+      nombre:       r.ciudad       ?? 'Sin dato',
+      departamento: r.departamento ?? null,
+      cantidad:     r._count.ciudad,
+      porcentaje:   totalCiu > 0 ? Math.round((r._count.ciudad / totalCiu) * 100) : 0,
     })),
     totalDep,
     totalCiu,

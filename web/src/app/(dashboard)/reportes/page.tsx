@@ -55,9 +55,10 @@ interface MediosPagoData {
 }
 
 interface DemografiaItem {
-  nombre:     string
-  cantidad:   number
-  porcentaje: number
+  nombre:        string
+  departamento?: string | null
+  cantidad:      number
+  porcentaje:    number
 }
 
 interface DemografiaData {
@@ -440,8 +441,8 @@ export default function ReportesPage() {
                     contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
                   />
                   <Bar dataKey="cantidad" radius={[0, 4, 4, 0]}>
-                    {ciudades.map((_, i) => (
-                      <Cell key={i} fill={COLORES_DEMO[i % COLORES_DEMO.length]} />
+                    {ciudades.map((c, i) => (
+                      <Cell key={i} fill={colorDept(c.departamento ?? '', i)} />
                     ))}
                   </Bar>
                 </BarChart>
