@@ -35,7 +35,7 @@ interface Negociacion {
   fechaReunion?: string
   fechaProxContacto?: string
   updatedAt: string
-  colegio: { id: string; nombre: string; ciudad: string }
+  colegio: { id: string; nombre: string; ciudad: string; contactoNombre?: string; contactoEmail?: string; contactoTelefono?: string }
   asesor:  { id: string; nombre: string }
 }
 
@@ -819,8 +819,9 @@ export default function ColegiosPage() {
   )
   const negociaciones: Negociacion[] = negData?.data ?? []
   const asesores                 = asesoresData?.data ?? []
-  const tarjetasActivas          = negociaciones.filter(n => n.etapa === etapaActiva)
-  const cfgActiva                = ETAPAS.find(e => e.etapa === etapaActiva)!
+  const tarjetasActivas = negociaciones.filter(n => n.etapa === etapaActiva)
+  const aliados         = negociaciones.filter(n => n.etapa === 'CONVENIO')
+  const cfgActiva       = ETAPAS.find(e => e.etapa === etapaActiva)!
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
@@ -1108,6 +1109,87 @@ export default function ColegiosPage() {
                 ))}
               </div>
             )}
+
+            {/* ── Divisor ── */}
+            <div className="flex items-center gap-3 pt-4">
+              <div className="h-px flex-1 bg-outline-variant/40" />
+              <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Colegios aliados</span>
+              <div className="h-px flex-1 bg-outline-variant/40" />
+            </div>
+
+            {/* ── Sección Colegios Aliados (CONVENIO) ── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-3 h-3 rounded-full bg-green-400" />
+                  <h3 className="text-sm font-semibold text-green-600 dark:text-green-400">Colegios aliados</h3>
+                  <span className="text-xs text-on-surface-variant">
+                    — {aliados.length} colegio{aliados.length !== 1 ? 's' : ''} con convenio activo
+                  </span>
+                </div>
+                {aliados.length > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    {aliados.length} convenio{aliados.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+
+              {aliados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-14 rounded-xl border border-dashed border-green-200 bg-green-50 dark:border-green-900/30 dark:bg-green-950/20">
+                  <Handshake className="w-8 h-8 text-green-300 mb-2" />
+                  <p className="text-sm text-on-surface-variant">Sin colegios aliados aún</p>
+                  <p className="text-xs text-on-surface-variant/60 mt-1">Los colegios en etapa <strong>Convenio</strong> aparecerán aquí</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {aliados.map(neg => (
+                    <div
+                      key={neg.id}
+                      onClick={() => abrirEditarNeg(neg)}
+                      className="group relative bg-surface-lowest border border-green-200 dark:border-green-900/40 rounded-xl p-4 cursor-pointer hover:border-green-400/60 hover:shadow-md transition-all"
+                    >
+                      {/* Badge aliado */}
+                      <span className="absolute top-3 right-3 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 uppercase tracking-wide">
+                        ✓ Aliado
+                      </span>
+
+                      <div className="pr-10 mb-3">
+                        <p className="text-[13px] font-semibold text-on-surface leading-snug">{neg.colegio.nombre}</p>
+                      </div>
+
+                      <div className="space-y-1.5 mb-3">
+                        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                          <MapPin className="w-3 h-3 flex-shrink-0 text-green-500" />
+                          {neg.colegio.ciudad}
+                        </div>
+                        {neg.colegio.contactoNombre && (
+                          <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                            <User className="w-3 h-3 flex-shrink-0 text-green-500" />
+                            {neg.colegio.contactoNombre}
+                          </div>
+                        )}
+                        {neg.colegio.contactoTelefono && (
+                          <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                            <Phone className="w-3 h-3 flex-shrink-0 text-green-500" />
+                            {neg.colegio.contactoTelefono}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                          <User className="w-3 h-3 flex-shrink-0" />
+                          Asesor: {neg.asesor.nombre}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-green-100 dark:border-green-900/30">
+                        <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">Convenio activo</span>
+                        <span className="text-[10px] text-on-surface-variant">{formatDate(neg.updatedAt)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )
       )}
