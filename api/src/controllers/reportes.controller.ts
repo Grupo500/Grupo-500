@@ -484,6 +484,43 @@ export async function mediosPago(req: Request, res: Response) {
   return ApiResponse.success(res, { total: totalMonto, totalCantidad, metodos: data, periodo })
 }
 
+// ── Demografía: distribución por departamento y ciudad ───────────────────────
+export async function demografia(_req: Request, res: Response) {
+  const [porDepartamento, porCiudad] = await Promise.all([
+    prisma.estudiante.groupBy({
+      by:      ['departamento'],
+      where:   { departamento: { not: null } },
+      _count:  { departamento: true },
+      orderBy: { _count: { departamento: 'desc' } },
+    }),
+    prisma.estudiante.groupBy({
+      by:      ['ciudad'],
+      where:   { ciudad: { not: null } },
+      _count:  { ciudad: true },
+      orderBy: { _count: { ciudad: 'desc' } },
+      take:    10,
+    }),
+  ])
+
+  const totalDep  = porDepartamento.reduce((s, r) => s + r._count.departamento, 0)
+  const totalCiu  = porCiudad.reduce((s, r) => s + r._count.ciudad, 0)
+
+  return ApiResponse.success(res, {
+    departamentos: porDepartamento.map(r => ({
+      nombre:     r.departamento ?? 'Sin dato',
+      cantidad:   r._count.departamento,
+      porcentaje: totalDep > 0 ? Math.round((r._count.departamento / totalDep) * 100) : 0,
+    })),
+    ciudades: porCiudad.map(r => ({
+      nombre:     r.ciudad ?? 'Sin dato',
+      cantidad:   r._count.ciudad,
+      porcentaje: totalCiu > 0 ? Math.round((r._count.ciudad / totalCiu) * 100) : 0,
+    })),
+    totalDep,
+    totalCiu,
+  })
+}
+
 // ── Marketing: fuentes de contacto ──────────────────────────────────────────
 export async function marketing(_req: Request, res: Response) {
   const fuentes = await prisma.fuenteContacto.groupBy({

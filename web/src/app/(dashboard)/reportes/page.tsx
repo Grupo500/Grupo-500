@@ -8,7 +8,7 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { formatCOP, cn } from '@/lib/utils'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts'
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
 
@@ -52,6 +52,19 @@ interface MediosPagoData {
   totalCantidad: number
   metodos:       MedioPagoItem[]
   periodo:       string
+}
+
+interface DemografiaItem {
+  nombre:     string
+  cantidad:   number
+  porcentaje: number
+}
+
+interface DemografiaData {
+  departamentos: DemografiaItem[]
+  ciudades:      DemografiaItem[]
+  totalDep:      number
+  totalCiu:      number
 }
 
 const COLORES = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
@@ -109,6 +122,12 @@ export default function ReportesPage() {
     staleTime: 30_000,
   })
 
+  const { data: demografiaData, isLoading: demografiaLoading } = useQuery({
+    queryKey: ['reportes-demografia'],
+    queryFn: async () => (await fetcher())<{ data: DemografiaData }>('/reportes/demografia'),
+    staleTime: 5 * 60_000,
+  })
+
   const d = dashData?.data
   const est      = d?.estudiantes ?? { total: 0, nuevosMes: 0 }
   const cobranza = d?.cobranza   ?? { porCobrar: { monto: 0, cantidad: 0 }, vencida: { monto: 0, cantidad: 0 }, cobrado: { monto: 0, cantidad: 0 }, pendiente: { monto: 0, cantidad: 0 } }
@@ -122,6 +141,10 @@ export default function ReportesPage() {
   // metodo es String libre desde la migración del enum → String
   // Los valores reales son: 'Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Otro'
   // Se muestra directamente m.metodo sin mapeo
+
+  const demografia    = demografiaData?.data
+  const departamentos = demografia?.departamentos ?? []
+  const ciudades      = demografia?.ciudades      ?? []
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -314,6 +337,97 @@ export default function ReportesPage() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Demografía — Origen de clientes ───────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Demografía — Origen de clientes</p>
+          {demografia && (
+            <span className="text-[11px] text-on-surface-variant">
+              {demografia.totalDep} estudiantes con ubicación registrada
+            </span>
+          )}
+        </div>
+
+        {demografiaLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-6 animate-pulse h-64" />
+            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-6 animate-pulse h-64" />
+          </div>
+        ) : departamentos.length === 0 ? (
+          <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-8 flex flex-col items-center justify-center text-on-surface-variant">
+            <p className="text-sm">Sin datos de ubicación aún</p>
+            <p className="text-xs mt-1 opacity-60">Se registran al crear o importar estudiantes con ciudad/departamento</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Donut — Departamentos */}
+            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
+              <p className="text-[12px] font-semibold text-on-surface mb-4">Por departamento</p>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={departamentos}
+                    dataKey="cantidad"
+                    nameKey="nombre"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={2}
+                  >
+                    {departamentos.map((_, i) => (
+                      <Cell key={i} fill={COLORES[i % COLORES.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number, name: string) => [`${v} estudiantes`, name]}
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
+                  />
+                  <Legend
+                    formatter={(value) => <span style={{ fontSize: 11 }}>{value}</span>}
+                    iconSize={8}
+                    iconType="circle"
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Horizontal bar — Top 10 ciudades */}
+            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
+              <p className="text-[12px] font-semibold text-on-surface mb-4">Top 10 ciudades</p>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart
+                  layout="vertical"
+                  data={ciudades}
+                  margin={{ left: 8, right: 24, top: 0, bottom: 0 }}
+                >
+                  <XAxis type="number" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="nombre"
+                    tick={{ fontSize: 10 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={90}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => [`${v} estudiantes`, 'Cantidad']}
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
+                  />
+                  <Bar dataKey="cantidad" radius={[0, 4, 4, 0]}>
+                    {ciudades.map((_, i) => (
+                      <Cell key={i} fill={COLORES[i % COLORES.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
           </div>
         )}
       </section>
