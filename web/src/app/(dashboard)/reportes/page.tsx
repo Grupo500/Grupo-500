@@ -90,6 +90,20 @@ function colorDept(nombre: string, idx: number): string {
   return COLOR_DEPT[nombre] ?? COLORES_DEMO[idx % COLORES_DEMO.length]
 }
 
+// Colores de marca por canal — se aplican por substring para cubrir todas las variantes
+const COLOR_CANAL: Array<{ match: string; color: string }> = [
+  { match: 'Instagram', color: '#C13584' }, // Instagram magenta
+  { match: 'TikTok',    color: '#010101' }, // TikTok negro
+  { match: 'YouTube',   color: '#FF0000' }, // YouTube rojo
+  { match: 'Facebook',  color: '#1877F2' }, // Facebook azul
+  { match: 'Google',    color: '#4285F4' }, // Google azul
+  { match: 'Referido',  color: '#16a34a' }, // Referido verde
+]
+function colorCanal(fuente: string, idx: number): string {
+  const match = COLOR_CANAL.find(c => fuente.includes(c.match))
+  return match?.color ?? COLORES_MKT[idx % COLORES_MKT.length]
+}
+
 function etiquetaCorta(fuente: string): string {
   const m: Record<string, string> = {
     'Vi un video con link a WhatsApp en Instagram':              'IG Link',
@@ -320,7 +334,7 @@ export default function ReportesPage() {
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
               <p className="text-[12px] font-semibold text-on-surface mb-4">Inscripciones por canal</p>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={fuentes.map((f, i) => ({ name: etiquetaCorta(f.fuente), cantidad: f.cantidad, color: COLORES_MKT[i % COLORES_MKT.length] }))}
+                <BarChart data={fuentes.map((f, i) => ({ name: etiquetaCorta(f.fuente), cantidad: f.cantidad, color: colorCanal(f.fuente, i) }))}
                   margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
@@ -329,7 +343,7 @@ export default function ReportesPage() {
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
                   />
                   <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
-                    {fuentes.map((_, i) => <Cell key={i} fill={COLORES_MKT[i % COLORES_MKT.length]} />)}
+                    {fuentes.map((f, i) => <Cell key={i} fill={colorCanal(f.fuente, i)} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -342,7 +356,7 @@ export default function ReportesPage() {
                   <div key={f.fuente} className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORES_MKT[i % COLORES_MKT.length] }} />
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colorCanal(f.fuente, i) }} />
                         <span className="text-[11px] text-on-surface truncate">{f.fuente}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
@@ -352,7 +366,7 @@ export default function ReportesPage() {
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-surface-high overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${f.porcentaje}%`, background: COLORES_MKT[i % COLORES_MKT.length] }} />
+                        style={{ width: `${f.porcentaje}%`, background: colorCanal(f.fuente, i) }} />
                     </div>
                   </div>
                 ))}
