@@ -1124,7 +1124,7 @@ export default function EstudiantesPage() {
                     <div className="rounded-xl bg-surface-high border border-outline-variant/40 p-3 space-y-2.5">
                       <div className="flex gap-2.5 text-xs text-on-surface-variant">
                         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#d97706]" />
-                        <span>Columnas: <strong>Nombre Alumno, Número, Curso, Asesor, Línea, Abono, Valor Curso, Método Pago, Fecha Pago</strong>. Estudiantes con el mismo teléfono solo reciben pagos nuevos.</span>
+                        <span>Columnas: <strong>Nombre Alumno, Tipo Documento, Número Documento, Email, Número, Curso, Asesor, Línea, Abono, Valor Curso, Método Pago, Fecha Pago, Agregado</strong>. Si el estudiante ya existe se actualizan sus datos.</span>
                       </div>
                       <button
                         onClick={descargarPlantilla}
