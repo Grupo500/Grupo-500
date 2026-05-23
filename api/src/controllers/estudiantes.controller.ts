@@ -348,9 +348,11 @@ const norm = (s: unknown) => String(s ?? '').trim().toLowerCase()
 // Convierte número de serie Excel a Date (días desde 1900-01-01)
 function excelDateToDate(serial: number): Date | null {
   if (!serial || isNaN(serial)) return null
-  // Excel tiene un bug histórico donde 1900 era bisiesto — compensar
+  // Excel serial → ms UTC. Compensar timezone para que la fecha quede en hora local
+  // y no aparezca un día antes en Colombia (UTC-5)
   const msPerDay = 86400000
-  const date = new Date((serial - 25569) * msPerDay)
+  const utcMs = (serial - 25569) * msPerDay
+  const date = new Date(utcMs + new Date(utcMs).getTimezoneOffset() * 60000)
   if (isNaN(date.getTime())) return null
   return date
 }
