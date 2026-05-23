@@ -592,22 +592,11 @@ export async function importar(req: Request, res: Response) {
           ...(asesorObj      && { asesorId: asesorObj.id }),
         }
 
-        if (valorCurso > 0 && abono < valorCurso) {
-          // Pago parcial: registrar abono como PAGADO + saldo restante como PENDIENTE
-          await prisma.pago.create({
-            data: { ...baseData, monto: abono, estado: 'PAGADO', fechaVencimiento: fechaPagoDate, fechaPago: fechaPagoDate },
-          })
-          await prisma.pago.create({
-            data: { ...baseData, monto: valorCurso - abono, estado: 'PENDIENTE', fechaVencimiento: fechaPagoDate },
-          })
-          pagosCreados += 2
-        } else {
-          // Abono cubre el total o no hay precio de curso → un solo pago PAGADO
-          await prisma.pago.create({
-            data: { ...baseData, monto: abono, estado: 'PAGADO', fechaVencimiento: fechaPagoDate, fechaPago: fechaPagoDate },
-          })
-          pagosCreados++
-        }
+        // Registrar únicamente el abono como PAGADO
+        await prisma.pago.create({
+          data: { ...baseData, monto: abono, estado: 'PAGADO', fechaVencimiento: fechaPagoDate, fechaPago: fechaPagoDate },
+        })
+        pagosCreados++
       }
 
       resultados.push({ nombre: first.nombre, accion, pagos: pagosCreados })
