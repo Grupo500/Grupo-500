@@ -271,6 +271,12 @@ export default function SignInPage() {
         </div>
       </div>
 
+      {/* Créditos */}
+      <p className="text-[11px] text-white/60 text-center">
+        Desarrollado por{' '}
+        <span className="text-white/80 font-semibold">NexCode97</span>
+      </p>
+
       {/* Modal — ¿Olvidaste tu contraseña? */}
       {showForgot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
