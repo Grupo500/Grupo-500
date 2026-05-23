@@ -68,10 +68,10 @@ interface DemografiaData {
 }
 
 const COLORES      = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
-// Paleta cálida/terrosa para Marketing — fuentes de contacto
-const COLORES_MKT  = ['#f97316','#f59e0b','#eab308','#ef4444','#fb923c','#fbbf24','#dc2626','#d97706','#c2410c']
-// Paleta fría/teal-azul para Demografía — departamentos y ciudades
-const COLORES_DEMO = ['#0ea5e9','#06b6d4','#14b8a6','#10b981','#22c55e','#3b82f6','#6366f1','#0284c7','#0891b2']
+// Marketing — paleta multi-hue categórica (cada color en familia de tono diferente)
+const COLORES_MKT  = ['#e11d48','#7c3aed','#0ea5e9','#16a34a','#f59e0b','#0d9488','#db2777','#65a30d','#ea580c']
+// Demografía — paleta multi-hue categórica (colores bien separados en el espectro)
+const COLORES_DEMO = ['#2563eb','#dc2626','#16a34a','#9333ea','#f97316','#0891b2','#ca8a04','#be185d','#047857']
 
 function etiquetaCorta(fuente: string): string {
   const m: Record<string, string> = {
