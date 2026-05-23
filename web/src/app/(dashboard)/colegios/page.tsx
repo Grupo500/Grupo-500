@@ -826,21 +826,79 @@ export default function ColegiosPage() {
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
-  const NegFormFields = ({ value: f, onChange }: { value: typeof formNeg; onChange: (f: typeof formNeg) => void }) => (
+  const NegFormFields = ({ value: f, onChange }: { value: typeof formNeg; onChange: (f: typeof formNeg) => void }) => {
+    const [colegioQ, setColegioQ] = useState(f.colegioId ? (colegios.find(c => c.id === f.colegioId)?.nombre ?? '') : '')
+    const [asesorQ,  setAsesorQ]  = useState(f.asesorId  ? (asesores.find((a: any) => a.id === f.asesorId)?.nombre ?? '') : '')
+    const [showCol,  setShowCol]  = useState(false)
+    const [showAse,  setShowAse]  = useState(false)
+
+    const colegiosFiltrados = colegios.filter(c => c.nombre.toLowerCase().includes(colegioQ.toLowerCase()))
+    const asesoresFiltrados = (asesores as any[]).filter(a => a.nombre.toLowerCase().includes(asesorQ.toLowerCase()))
+
+    return (
     <div className="space-y-3">
-      <div>
+      {/* ── Combobox Colegio ── */}
+      <div className="relative">
         <label className={labelCls}>Colegio *</label>
-        <select className={inputCls} value={f.colegioId} onChange={e => onChange({ ...f, colegioId: e.target.value })}>
-          <option value="">Seleccionar colegio…</option>
-          {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-        </select>
+        <input
+          className={inputCls}
+          placeholder="Buscar colegio…"
+          value={colegioQ}
+          onChange={e => { setColegioQ(e.target.value); onChange({ ...f, colegioId: '' }); setShowCol(true) }}
+          onFocus={() => setShowCol(true)}
+          onBlur={() => setTimeout(() => setShowCol(false), 150)}
+          autoComplete="off"
+        />
+        {showCol && colegiosFiltrados.length > 0 && (
+          <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-lg border border-outline-variant bg-surface shadow-lg">
+            {colegiosFiltrados.map(c => (
+              <li
+                key={c.id}
+                className="px-3 py-2 text-sm text-on-surface cursor-pointer hover:bg-primary/10 hover:text-primary"
+                onMouseDown={() => { onChange({ ...f, colegioId: c.id }); setColegioQ(c.nombre); setShowCol(false) }}
+              >
+                {c.nombre}
+              </li>
+            ))}
+          </ul>
+        )}
+        {showCol && colegioQ && colegiosFiltrados.length === 0 && (
+          <div className="absolute z-50 left-0 right-0 mt-1 px-3 py-2 rounded-lg border border-outline-variant bg-surface text-sm text-on-surface-variant shadow-lg">
+            Sin resultados
+          </div>
+        )}
       </div>
-      <div>
+
+      {/* ── Combobox Asesor ── */}
+      <div className="relative">
         <label className={labelCls}>Asesor asignado *</label>
-        <select className={inputCls} value={f.asesorId} onChange={e => onChange({ ...f, asesorId: e.target.value })}>
-          <option value="">Seleccionar asesor…</option>
-          {asesores.map((a: any) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-        </select>
+        <input
+          className={inputCls}
+          placeholder="Buscar asesor…"
+          value={asesorQ}
+          onChange={e => { setAsesorQ(e.target.value); onChange({ ...f, asesorId: '' }); setShowAse(true) }}
+          onFocus={() => setShowAse(true)}
+          onBlur={() => setTimeout(() => setShowAse(false), 150)}
+          autoComplete="off"
+        />
+        {showAse && asesoresFiltrados.length > 0 && (
+          <ul className="absolute z-50 left-0 right-0 mt-1 max-h-36 overflow-y-auto rounded-lg border border-outline-variant bg-surface shadow-lg">
+            {asesoresFiltrados.map((a: any) => (
+              <li
+                key={a.id}
+                className="px-3 py-2 text-sm text-on-surface cursor-pointer hover:bg-primary/10 hover:text-primary"
+                onMouseDown={() => { onChange({ ...f, asesorId: a.id }); setAsesorQ(a.nombre); setShowAse(false) }}
+              >
+                {a.nombre}
+              </li>
+            ))}
+          </ul>
+        )}
+        {showAse && asesorQ && asesoresFiltrados.length === 0 && (
+          <div className="absolute z-50 left-0 right-0 mt-1 px-3 py-2 rounded-lg border border-outline-variant bg-surface text-sm text-on-surface-variant shadow-lg">
+            Sin resultados
+          </div>
+        )}
       </div>
       <div>
         <label className={labelCls}>Etapa</label>
@@ -870,6 +928,7 @@ export default function ColegiosPage() {
       </div>
     </div>
   )
+  }
 
   return (
     <div className="space-y-5 animate-fade-in">
