@@ -181,6 +181,15 @@ export default function ReportesPage() {
   const departamentos = demografia?.departamentos ?? []
   const ciudades      = demografia?.ciudades      ?? []
 
+  // Mapa dinámico departamento → color (cubre cualquier departamento, presente o futuro)
+  const deptColorMap = Object.fromEntries(
+    departamentos.map((dep, i) => [dep.nombre, colorDept(dep.nombre, i)])
+  )
+  function colorCiudad(departamento: string | null | undefined, idx: number): string {
+    if (departamento && deptColorMap[departamento]) return deptColorMap[departamento]
+    return COLORES_DEMO[idx % COLORES_DEMO.length]
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
@@ -456,7 +465,7 @@ export default function ReportesPage() {
                   />
                   <Bar dataKey="cantidad" radius={[0, 4, 4, 0]}>
                     {ciudades.map((c, i) => (
-                      <Cell key={i} fill={colorDept(c.departamento ?? '', i)} />
+                      <Cell key={i} fill={colorCiudad(c.departamento, i)} />
                     ))}
                   </Bar>
                 </BarChart>
