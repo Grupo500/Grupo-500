@@ -517,12 +517,13 @@ export async function importar(req: Request, res: Response) {
       const tel = first.telefono.replace(/\D/g, '').slice(-10)
       const emailFallback = `${tel || norm(first.nombre).replace(/\s+/g, '.')}@importado.grupo500`
 
-      // ¿Ya existe el estudiante?
+      // ¿Ya existe el estudiante? Buscar por teléfono, email ficticio o nombre (fallback)
       let estudiante = await prisma.estudiante.findFirst({
         where: {
           OR: [
-            { telefono: first.telefono },
+            ...(first.telefono ? [{ telefono: first.telefono }] : []),
             { email: emailFallback },
+            { nombre: { equals: first.nombre, mode: 'insensitive' as const } },
           ],
         },
       })
@@ -561,6 +562,10 @@ export async function importar(req: Request, res: Response) {
 
       // Vincular o actualizar curso
       if (cursoObj) {
+        // Reemplazar curso anterior si existe uno diferente
+        await prisma.cursoEstudiante.deleteMany({
+          where: { estudianteId: estudiante.id, NOT: { cursoId: cursoObj.id } },
+        })
         await prisma.cursoEstudiante.upsert({
           where:  { estudianteId_cursoId: { estudianteId: estudiante.id, cursoId: cursoObj.id } },
           update: {},
