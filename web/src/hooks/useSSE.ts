@@ -34,6 +34,7 @@ export function useSSE() {
           queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
           queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
           queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
+          queryClient.invalidateQueries({ queryKey: ['reportes-demografia'] })
         })
       })
 
@@ -48,6 +49,7 @@ export function useSSE() {
           queryClient.invalidateQueries({ queryKey: ['cursos-vendidos'] })
           queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] })
           queryClient.invalidateQueries({ queryKey: ['reportes-marketing'] })
+          queryClient.invalidateQueries({ queryKey: ['reportes-demografia'] })
         })
       })
 
@@ -59,6 +61,7 @@ export function useSSE() {
           queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
           queryClient.invalidateQueries({ queryKey: ['cobros-proximos'] })
           queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+          queryClient.invalidateQueries({ queryKey: ['reportes-medios-pago'] })
         })
       })
 

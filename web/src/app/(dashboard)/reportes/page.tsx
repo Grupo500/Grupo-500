@@ -117,7 +117,7 @@ export default function ReportesPage() {
   const { data: mktData, isLoading: mktLoading } = useQuery({
     queryKey: ['reportes-marketing'],
     queryFn: async () => (await fetcher())<{ data: MarketingData }>('/reportes/marketing'),
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   const { data: mediosData, isLoading: mediosLoading } = useQuery({
@@ -129,7 +129,7 @@ export default function ReportesPage() {
   const { data: demografiaData, isLoading: demografiaLoading } = useQuery({
     queryKey: ['reportes-demografia'],
     queryFn: async () => (await fetcher())<{ data: DemografiaData }>('/reportes/demografia'),
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
   })
 
   const d = dashData?.data
