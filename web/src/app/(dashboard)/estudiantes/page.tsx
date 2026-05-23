@@ -12,7 +12,7 @@ import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
   CheckCircle, Clock, ChevronRight as Arrow, Link2, Copy, Check, ExternalLink,
-  Upload, FileSpreadsheet, X, AlertCircle,
+  Upload, FileSpreadsheet, X, AlertCircle, Download,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -335,6 +335,21 @@ export default function EstudiantesPage() {
     },
     onError: () => alert('❌ Error al procesar respuestas.'),
   })
+
+  function descargarPlantilla() {
+    const encabezados = ['Nombre Alumno', 'Número', 'Curso', 'Asesor', 'Línea', 'Abono', 'Valor Curso', 'Método Pago', 'Fecha Pago', 'Estado']
+    const ejemplos = [
+      ['Juan Pérez García',    '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', '1', '300000', '600000', 'Bancolombia', '2025-05-01', ''],
+      ['María López Ruiz',     '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   '2', '600000', '600000', 'Nequi',       '2025-05-03', ''],
+      ['Carlos Martínez Díaz', '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', '3', '0',      '800000', 'Bre-B',       '',           ''],
+    ]
+    const bom = '﻿'
+    const csv = bom + [encabezados, ...ejemplos].map(r => r.map(c => `"${c}"`).join(',')).join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a'); a.href = url; a.download = 'plantilla-importacion-grupo500.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const importarMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -1109,9 +1124,18 @@ export default function EstudiantesPage() {
                         onChange={e => { const f = e.target.files?.[0]; if (f) { setImportFile(f); setImportResult(null) } }} />
                     </label>
 
-                    <div className="rounded-xl bg-surface-high border border-outline-variant/40 p-3 flex gap-2.5 text-xs text-on-surface-variant">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#d97706]" />
-                      <span>Columnas esperadas: <strong>Nombre Alumno, Número, Curso, Asesor, Abono, Método Pago, Fecha Pago</strong>. Estudiantes con el mismo teléfono solo recibirán pagos nuevos.</span>
+                    <div className="rounded-xl bg-surface-high border border-outline-variant/40 p-3 space-y-2.5">
+                      <div className="flex gap-2.5 text-xs text-on-surface-variant">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#d97706]" />
+                        <span>Columnas: <strong>Nombre Alumno, Número, Curso, Asesor, Línea, Abono, Valor Curso, Método Pago, Fecha Pago</strong>. Estudiantes con el mismo teléfono solo reciben pagos nuevos.</span>
+                      </div>
+                      <button
+                        onClick={descargarPlantilla}
+                        className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border border-outline-variant text-xs font-semibold text-on-surface-variant hover:bg-surface-lowest hover:text-on-surface transition-colors cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Descargar plantilla de ejemplo (.csv)
+                      </button>
                     </div>
 
                     <button
