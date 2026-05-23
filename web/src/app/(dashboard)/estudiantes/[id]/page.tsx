@@ -576,7 +576,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             { icon: Calendar,   label: 'Nacimiento', value: e.fechaNacimiento ? fmtFecha(e.fechaNacimiento) : '—' },
             { icon: Users,      label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
             ...(isAdmin ? [{ icon: Phone, label: 'Línea autorizada', value: e.lineaAutorizada ? `Línea ${e.lineaAutorizada}` : '—' }] : []),
-            { icon: MessageCircle, label: 'Agregado grupos WhatsApp', value: e.agregado ? 'Sí' : 'No' },
+            { icon: MessageCircle, label: 'Agregado', value: e.agregado ? 'Sí' : 'No' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
               <Icon className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" />
@@ -697,7 +697,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
               </select>
             </div>
             <div>
-              <label className={labelCls}>Agregado grupos WhatsApp</label>
+              <label className={labelCls}>Agregado</label>
               <select className={inputCls} value={form.agregado} onChange={e => f('agregado')(e.target.value)}>
                 <option value="no">No</option>
                 <option value="si">Sí</option>
