@@ -10,7 +10,7 @@ import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, MapPin, School, Users, CreditCard, History,
   Wallet, CheckCircle, AlertTriangle, Paperclip,
-  Save, Calendar, ChevronDown, ChevronUp,
+  Save, Calendar, ChevronDown, ChevronUp, MessageCircle,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -49,6 +49,7 @@ interface EstudianteDetalle {
   acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
   asesor?: { id: string; nombre: string }
   lineaAutorizada?: number | null
+  agregado?: boolean
   cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: Pago[]
   financiamientos?: Financiamiento[]
@@ -582,6 +583,35 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Toggle agregado a grupos WhatsApp */}
+        <div className="flex items-center justify-between p-3 rounded-xl border border-outline-variant bg-surface-high/40">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${e.agregado ? 'bg-[#25d366]/15' : 'bg-surface-high'}`}>
+              <MessageCircle className={`w-3.5 h-3.5 ${e.agregado ? 'text-[#25d366]' : 'text-on-surface-variant'}`} />
+            </div>
+            <div>
+              <p className="text-[13px] font-medium text-on-surface">Grupos de WhatsApp</p>
+              <p className="text-[11px] text-on-surface-variant">
+                {e.agregado ? 'Estudiante agregado a los grupos' : 'Pendiente de agregar a los grupos'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              const token = await getClientToken()
+              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/${e.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+                body: JSON.stringify({ agregado: !e.agregado }),
+              })
+              onRefresh()
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0 ${e.agregado ? 'bg-[#25d366]' : 'bg-surface-container'}`}
+          >
+            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${e.agregado ? 'translate-x-[22px]' : 'translate-x-1'}`} />
+          </button>
         </div>
       </section>
 

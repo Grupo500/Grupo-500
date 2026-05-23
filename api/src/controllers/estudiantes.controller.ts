@@ -218,6 +218,7 @@ const actualizarSchema = z.object({
   cursoId:             z.string().nullable().optional(),
   descuentoPorcentaje: z.number().min(0).max(101).optional(), // 101 para tolerar fp
   lineaAutorizada:     z.number().int().min(1).max(6).nullable().optional(),
+  agregado:            z.boolean().optional(),
   // Acudiente (opcional, se actualiza si se envían los campos)
   acudiente: z.object({
     nombre:   z.string().min(2),
@@ -248,6 +249,7 @@ export async function actualizar(req: Request, res: Response) {
       // Solo ADMIN puede reasignar el asesor de un estudiante
       ...(isAdmin && data.asesorId !== undefined && { asesorId: data.asesorId }),
       ...(isAdmin && data.lineaAutorizada !== undefined && { lineaAutorizada: data.lineaAutorizada }),
+      ...(data.agregado !== undefined && { agregado: data.agregado }),
     },
     include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
   })
@@ -393,6 +395,7 @@ interface ImportRow {
   referencia?:  string
   fechaPago?:   string
   estado?:      string
+  agregado?:    boolean
 }
 
 export async function plantillaImport(_req: Request, res: Response) {
@@ -400,13 +403,13 @@ export async function plantillaImport(_req: Request, res: Response) {
 
   const encabezados = [
     'Nombre Alumno', 'Número', 'Curso', 'Asesor', 'Línea',
-    'Abono', 'Valor Curso', 'Método Pago', 'Fecha Pago', 'Estado',
+    'Abono', 'Valor Curso', 'Método Pago', 'Fecha Pago', 'Estado', 'Agregado',
   ]
 
   const ejemplos = [
-    ['Juan Pérez García',    '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', 1, 300000, 600000, 'Bancolombia', '2025-05-01', ''],
-    ['María López Ruiz',     '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   2, 600000, 600000, 'Nequi',       '2025-05-03', ''],
-    ['Carlos Martínez Díaz', '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', 3, 0,      800000, 'Bre-B',       '',           ''],
+    ['Juan Pérez García',    '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', 1, 300000, 600000, 'Bancolombia', '2025-05-01', '', 'Si'],
+    ['María López Ruiz',     '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   2, 600000, 600000, 'Nequi',       '2025-05-03', '', 'No'],
+    ['Carlos Martínez Díaz', '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', 3, 0,      800000, 'Bre-B',       '',           '', ''],
   ]
 
   const ws = XLSX.utils.aoa_to_sheet([encabezados, ...ejemplos])
@@ -415,7 +418,7 @@ export async function plantillaImport(_req: Request, res: Response) {
   ws['!cols'] = [
     { wch: 30 }, { wch: 14 }, { wch: 24 }, { wch: 20 },
     { wch: 7  }, { wch: 12 }, { wch: 12 }, { wch: 14 },
-    { wch: 14 }, { wch: 12 },
+    { wch: 14 }, { wch: 12 }, { wch: 10 },
   ]
 
   XLSX.utils.book_append_sheet(wb, ws, 'Plantilla')
@@ -465,6 +468,7 @@ export async function importar(req: Request, res: Response) {
         referencia:  String(get(['referencia', 'ref']) ?? '').trim(),
         fechaPago:   get(['fecha pago', 'fecha_pago']) as any,
         estado:      String(get(['estado']) ?? '').trim(),
+        agregado:    (() => { const v = norm(get(['agregado'])); return v === 'si' || v === 'sí' || v === '1' || v === 'true' || v === 'x' })(),
       }
     }).filter(r => r.nombre.length >= 2)   // descartar filas vacías
 
@@ -531,6 +535,7 @@ export async function importar(req: Request, res: Response) {
             tipoDocumento:   'CC',
             ...(asesorObj     && { asesorId: asesorObj.id }),
             ...(first.linea   && { lineaAutorizada: first.linea }),
+            ...(first.agregado !== undefined && { agregado: first.agregado }),
           },
         })
 
