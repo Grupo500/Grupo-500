@@ -552,7 +552,9 @@ export async function importar(req: Request, res: Response) {
         if (monto <= 0) continue
 
         const fechaPagoDate = parseExcelDate(row.fechaPago) ?? parseExcelDate(row.fecha) ?? new Date()
-        const estado = norm(row.estado).includes('pagad') ? 'PAGADO' : 'PENDIENTE'
+        // Si el abono cubre el total del curso → PAGADO, de lo contrario → PENDIENTE
+        const valorCurso = row.valorCurso ?? 0
+        const estado: 'PAGADO' | 'PENDIENTE' = (valorCurso > 0 && monto >= valorCurso) ? 'PAGADO' : 'PENDIENTE'
 
         await prisma.pago.create({
           data: {
