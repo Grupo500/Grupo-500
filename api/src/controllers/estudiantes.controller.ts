@@ -261,8 +261,8 @@ export async function actualizar(req: Request, res: Response) {
     })
   }
 
-  // Solo admin puede modificar curso y descuento
-  if (isAdmin && data.cursoId !== undefined) {
+  // Admin y vendedor pueden modificar curso y descuento
+  if (data.cursoId !== undefined) {
     // Eliminar cursos existentes y crear el nuevo (un curso activo por estudiante)
     await prisma.cursoEstudiante.deleteMany({ where: { estudianteId } })
     if (data.cursoId) {

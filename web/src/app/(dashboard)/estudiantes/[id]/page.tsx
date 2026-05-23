@@ -1237,7 +1237,7 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
                 <p className="text-[11px] text-on-surface-variant">Precio base: {formatCOP(precioBase)}</p>
               </div>
             </div>
-            {isAdmin && !editDescuento && (
+            {!editDescuento && (
               <button
                 onClick={() => { setDescuentoInput(String(descuentoMonto)); setEditDescuento(true) }}
                 className="text-[11px] text-primary hover:underline cursor-pointer flex items-center gap-1"
