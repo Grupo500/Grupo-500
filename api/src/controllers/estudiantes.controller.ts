@@ -395,6 +395,37 @@ interface ImportRow {
   estado?:      string
 }
 
+export async function plantillaImport(_req: Request, res: Response) {
+  const wb = XLSX.utils.book_new()
+
+  const encabezados = [
+    'Nombre Alumno', 'Número', 'Curso', 'Asesor', 'Línea',
+    'Abono', 'Valor Curso', 'Método Pago', 'Fecha Pago', 'Estado',
+  ]
+
+  const ejemplos = [
+    ['Juan Pérez García',    '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', 1, 300000, 600000, 'Bancolombia', '2025-05-01', ''],
+    ['María López Ruiz',     '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   2, 600000, 600000, 'Nequi',       '2025-05-03', ''],
+    ['Carlos Martínez Díaz', '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', 3, 0,      800000, 'Bre-B',       '',           ''],
+  ]
+
+  const ws = XLSX.utils.aoa_to_sheet([encabezados, ...ejemplos])
+
+  // Ancho de columnas
+  ws['!cols'] = [
+    { wch: 30 }, { wch: 14 }, { wch: 24 }, { wch: 20 },
+    { wch: 7  }, { wch: 12 }, { wch: 12 }, { wch: 14 },
+    { wch: 14 }, { wch: 12 },
+  ]
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Plantilla')
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+
+  res.setHeader('Content-Disposition', 'attachment; filename="plantilla-importacion-grupo500.xlsx"')
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  res.send(buffer)
+}
+
 export async function importar(req: Request, res: Response) {
   if (!req.file) {
     return res.status(400).json({ success: false, error: 'No se recibió ningún archivo Excel.' })

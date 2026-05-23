@@ -336,18 +336,15 @@ export default function EstudiantesPage() {
     onError: () => alert('❌ Error al procesar respuestas.'),
   })
 
-  function descargarPlantilla() {
-    const encabezados = ['Nombre Alumno', 'Número', 'Curso', 'Asesor', 'Línea', 'Abono', 'Valor Curso', 'Método Pago', 'Fecha Pago', 'Estado']
-    const ejemplos = [
-      ['Juan Pérez García',    '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', '1', '300000', '600000', 'Bancolombia', '2025-05-01', ''],
-      ['María López Ruiz',     '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   '2', '600000', '600000', 'Nequi',       '2025-05-03', ''],
-      ['Carlos Martínez Díaz', '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', '3', '0',      '800000', 'Bre-B',       '',           ''],
-    ]
-    const bom = '﻿'
-    const csv = bom + [encabezados, ...ejemplos].map(r => r.map(c => `"${c}"`).join(',')).join('\r\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  async function descargarPlantilla() {
+    const token = await getClientToken()
+    const res   = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/plantilla`, {
+      headers: { Authorization: `Bearer ${token ?? ''}` },
+    })
+    const blob = await res.blob()
     const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a'); a.href = url; a.download = 'plantilla-importacion-grupo500.csv'; a.click()
+    const a    = document.createElement('a')
+    a.href = url; a.download = 'plantilla-importacion-grupo500.xlsx'; a.click()
     URL.revokeObjectURL(url)
   }
 
