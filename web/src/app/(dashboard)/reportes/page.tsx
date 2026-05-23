@@ -72,6 +72,22 @@ const COLORES      = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6
 const COLORES_MKT  = ['#e11d48','#7c3aed','#0ea5e9','#16a34a','#f59e0b','#0d9488','#db2777','#65a30d','#ea580c']
 // Demografía — paleta multi-hue categórica (colores bien separados en el espectro)
 const COLORES_DEMO = ['#2563eb','#dc2626','#16a34a','#9333ea','#f97316','#0891b2','#ca8a04','#be185d','#047857']
+// Colores fijos por departamento (prevalecen sobre el índice del array)
+const COLOR_DEPT: Record<string, string> = {
+  'Santander':          '#ca8a04', // amarillo
+  'Norte de Santander': '#eab308', // amarillo más vivo
+  'Tolima':             '#92400e', // marrón
+  'Cundinamarca':       '#2563eb', // azul
+  'Antioquia':          '#dc2626', // rojo
+  'Boyacá':             '#16a34a', // verde
+  'Valle del Cauca':    '#9333ea', // violeta
+  'Cauca':              '#0891b2', // cyan
+  'Atlántico':          '#f97316', // naranja
+  'Bolívar':            '#be185d', // rosa
+}
+function colorDept(nombre: string, idx: number): string {
+  return COLOR_DEPT[nombre] ?? COLORES_DEMO[idx % COLORES_DEMO.length]
+}
 
 function etiquetaCorta(fuente: string): string {
   const m: Record<string, string> = {
@@ -384,8 +400,8 @@ export default function ReportesPage() {
                     outerRadius={85}
                     paddingAngle={2}
                   >
-                    {departamentos.map((_, i) => (
-                      <Cell key={i} fill={COLORES_DEMO[i % COLORES_DEMO.length]} />
+                    {departamentos.map((d, i) => (
+                      <Cell key={i} fill={colorDept(d.nombre, i)} />
                     ))}
                   </Pie>
                   <Tooltip
