@@ -735,7 +735,17 @@ router.post('/webhook', asyncHandler(async (req, res) => {
         tipoDocumento:      get('tipo_documento_estudiante') as string ?? 'TI',
         documento:          get('numero_documento_estudiante') as string ?? '',
         grado:              get('grado') as string ?? '',
-        ciudad:             get('ciudad_residencia') as string ?? '',
+        // El campo ciudad_residencia viene en formato "Ciudad, Departamento"
+        // Se parsea aquí para guardar cada uno por separado
+        ...(() => {
+          const raw = (get('ciudad_residencia') as string ?? '').trim()
+          const idx = raw.lastIndexOf(',')
+          if (idx === -1) return { ciudad: raw, departamento: '' }
+          return {
+            ciudad:      raw.slice(0, idx).trim(),
+            departamento: raw.slice(idx + 1).trim(),
+          }
+        })(),
         primerIcfes:        get('primer_icfes') as boolean ?? true,
         puntajeAnterior:    get('puntaje_anterior') as string ?? 'N/A',
         carreraInteres:     get('carrera_interes') as string ?? '',
