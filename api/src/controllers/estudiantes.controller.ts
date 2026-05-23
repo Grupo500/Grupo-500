@@ -548,27 +548,35 @@ export async function importar(req: Request, res: Response) {
       // 6. Crear pagos para filas con abono > 0
       let pagosCreados = 0
       for (const row of studentRows) {
-        const monto = row.abono ?? row.valorPagado ?? 0
-        if (monto <= 0) continue
+        const abono = row.abono ?? row.valorPagado ?? 0
+        if (abono <= 0) continue
 
         const fechaPagoDate = parseExcelDate(row.fechaPago) ?? parseExcelDate(row.fecha) ?? new Date()
-        // Si el abono cubre el total del curso → PAGADO, de lo contrario → PENDIENTE
         const valorCurso = row.valorCurso ?? 0
-        const estado: 'PAGADO' | 'PENDIENTE' = (valorCurso > 0 && monto >= valorCurso) ? 'PAGADO' : 'PENDIENTE'
+        const metodo = parseMetodo(row.metodoPago)
+        const baseData = {
+          estudianteId:     estudiante.id,
+          metodo,
+          ...(row.referencia && { comprobante: row.referencia }),
+          ...(asesorObj      && { asesorId: asesorObj.id }),
+        }
 
-        await prisma.pago.create({
-          data: {
-            estudianteId:    estudiante.id,
-            monto,
-            estado,
-            metodo:          parseMetodo(row.metodoPago),
-            fechaVencimiento: fechaPagoDate,
-            fechaPago:        estado === 'PAGADO' ? fechaPagoDate : null,
-            ...(row.referencia && { comprobante: row.referencia }),
-            ...(asesorObj      && { asesorId: asesorObj.id }),
-          },
-        })
-        pagosCreados++
+        if (valorCurso > 0 && abono < valorCurso) {
+          // Pago parcial: registrar abono como PAGADO + saldo restante como PENDIENTE
+          await prisma.pago.create({
+            data: { ...baseData, monto: abono, estado: 'PAGADO', fechaVencimiento: fechaPagoDate, fechaPago: fechaPagoDate },
+          })
+          await prisma.pago.create({
+            data: { ...baseData, monto: valorCurso - abono, estado: 'PENDIENTE', fechaVencimiento: fechaPagoDate },
+          })
+          pagosCreados += 2
+        } else {
+          // Abono cubre el total o no hay precio de curso → un solo pago PAGADO
+          await prisma.pago.create({
+            data: { ...baseData, monto: abono, estado: 'PAGADO', fechaVencimiento: fechaPagoDate, fechaPago: fechaPagoDate },
+          })
+          pagosCreados++
+        }
       }
 
       resultados.push({ nombre: first.nombre, accion, pagos: pagosCreados })
