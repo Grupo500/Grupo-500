@@ -435,7 +435,7 @@ export default function EstudiantesPage() {
                 title="Importar estudiantes desde Excel"
                 className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-lowest transition-colors cursor-pointer"
               >
-                <FileSpreadsheet className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
                 <span className="hidden sm:inline">Importar</span>
               </button>
             )}
