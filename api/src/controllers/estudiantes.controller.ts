@@ -371,13 +371,10 @@ function parseExcelDate(val: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d
 }
 
-// Normaliza método de pago al enum
-function parseMetodo(val: unknown): 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO' | 'OTRO' {
-  const v = norm(val)
-  if (v.includes('transfer') || v.includes('transf') || v.includes('pse') || v.includes('nequi') || v.includes('daviplata')) return 'TRANSFERENCIA'
-  if (v.includes('tarjeta') || v.includes('credito') || v.includes('débito') || v.includes('debito')) return 'TARJETA'
-  if (v.includes('efectivo') || v.includes('cash')) return 'EFECTIVO'
-  return 'OTRO'
+// Retorna el método de pago tal cual viene del Excel (string libre)
+function parseMetodo(val: unknown): string {
+  const v = String(val ?? '').trim()
+  return v || 'Otro'
 }
 
 interface ImportRow {
