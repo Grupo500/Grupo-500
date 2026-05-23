@@ -179,12 +179,6 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
         validations: { required: true },
         properties: { description: 'Ejemplo: Bucaramanga, Santander.' },
       },
-      {
-        ref: 'direccion',
-        title: '¿Cuál es tu dirección de residencia?',
-        type: 'short_text',
-        validations: { required: true },
-      },
       // ── PASO 2: DATOS DEL ACUDIENTE ──────────────────────────────────────
       {
         ref: 'nombres_acudiente',
@@ -742,7 +736,6 @@ router.post('/webhook', asyncHandler(async (req, res) => {
         documento:          get('numero_documento_estudiante') as string ?? '',
         grado:              get('grado') as string ?? '',
         ciudad:             get('ciudad_residencia') as string ?? '',
-        direccion:          get('direccion') as string ?? '',
         primerIcfes:        get('primer_icfes') as boolean ?? true,
         puntajeAnterior:    get('puntaje_anterior') as string ?? 'N/A',
         carreraInteres:     get('carrera_interes') as string ?? '',

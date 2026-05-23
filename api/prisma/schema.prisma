@@ -168,7 +168,6 @@ model Estudiante {
   fechaNacimiento  DateTime
   departamento     String?
   ciudad           String?
-  direccion        String?
   grado            String?               // 10°, 11°, Egresado
   primerIcfes      Boolean?              @default(true)
   puntajeAnterior  String?
