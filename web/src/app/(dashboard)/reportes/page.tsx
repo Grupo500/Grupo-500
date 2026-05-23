@@ -75,8 +75,8 @@ const COLORES_MKT  = ['#e11d48','#7c3aed','#0ea5e9','#16a34a','#f59e0b','#0d9488
 const COLORES_DEMO = ['#2563eb','#dc2626','#16a34a','#9333ea','#f97316','#0891b2','#ca8a04','#be185d','#047857']
 // Colores fijos por departamento (prevalecen sobre el índice del array)
 const COLOR_DEPT: Record<string, string> = {
-  'Santander':          '#ca8a04', // amarillo
-  'Norte de Santander': '#eab308', // amarillo más vivo
+  'Santander':          '#FFCC00', // amarillo pollo
+  'Norte de Santander': '#FFD700', // amarillo pollo vivo
   'Tolima':             '#92400e', // marrón
   'Cundinamarca':       '#2563eb', // azul
   'Antioquia':          '#dc2626', // rojo
