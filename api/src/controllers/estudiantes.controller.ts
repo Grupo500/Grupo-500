@@ -408,19 +408,13 @@ export async function plantillaImport(_req: Request, res: Response) {
     'Abono', 'Valor Curso', 'Método Pago', 'Fecha Pago', 'Agregado',
   ]
 
-  const ejemplos = [
-    ['Juan Pérez García',    'CC', '1234567890', 'juan@email.com',  '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', 1, 300000, 600000, 'Bancolombia', '2025-05-01', 'Si'],
-    ['María López Ruiz',     'TI', '987654321',  'maria@email.com', '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   2, 600000, 600000, 'Nequi',       '2025-05-03', 'No'],
-    ['Carlos Martínez Díaz', 'CC', '',           '',                '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', 3, 0,      800000, 'Bre-B',       '',           ''],
-  ]
-
-  const ws = XLSX.utils.aoa_to_sheet([encabezados, ...ejemplos])
+  const ws = XLSX.utils.aoa_to_sheet([encabezados])
 
   // Ancho de columnas
   ws['!cols'] = [
     { wch: 30 }, { wch: 16 }, { wch: 18 }, { wch: 28 },
-    { wch: 14 }, { wch: 24 }, { wch: 20 }, { wch: 7  },
-    { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 10 },
+    { wch: 16 }, { wch: 24 }, { wch: 20 }, { wch: 20 },
+    { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
   ]
 
   XLSX.utils.book_append_sheet(wb, ws, 'Plantilla')
@@ -458,7 +452,7 @@ export async function importar(req: Request, res: Response) {
       return {
         fecha:         String(get(['fecha']) ?? '').trim(),
         asesor:        String(get(['asesor']) ?? '').trim(),
-        linea:         Number(get(['linea', 'línea'])) || undefined,
+        linea:         (() => { const v = String(get(['linea', 'línea']) ?? ''); const m = v.match(/\d+/); return m ? Number(m[0]) : undefined })(),
         curso:         String(get(['curso']) ?? '').trim(),
         nombre:        String(get(['nombre', 'alumno', 'estudiante']) ?? '').trim(),
         tipoDocumento: String(get(['tipo documento', 'tipo_documento', 'tipo doc']) ?? '').trim() || undefined,
@@ -473,7 +467,7 @@ export async function importar(req: Request, res: Response) {
         referencia:    String(get(['referencia', 'ref']) ?? '').trim(),
         fechaPago:     get(['fecha pago', 'fecha_pago']) as any,
         estado:        String(get(['estado']) ?? '').trim(),
-        agregado:      (() => { const v = norm(get(['agregado'])); return v === 'si' || v === 'sí' || v === '1' || v === 'true' || v === 'x' })(),
+        agregado:      (() => { const v = norm(get(['agregado'])); return v === 'si' || v === 'sí' || v === '1' || v === 'true' || v === 'x' || v === 'agregado' })(),
       }
     }).filter(r => r.nombre.length >= 2)   // descartar filas vacías
 
