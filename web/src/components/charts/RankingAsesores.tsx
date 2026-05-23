@@ -19,7 +19,7 @@ export function RankingAsesores() {
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-asesores'],
     queryFn: async () => {
-            return apiFetch<{ data: Asesor[] }>('/reportes/ranking-asesores')
+            return apiFetch<{ data: Asesor[] }>('/reportes/asesores')
     },
     staleTime: 30_000,
   })
