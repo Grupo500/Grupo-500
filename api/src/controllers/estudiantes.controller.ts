@@ -467,7 +467,7 @@ export async function importar(req: Request, res: Response) {
         referencia:    String(get(['referencia', 'ref']) ?? '').trim(),
         fechaPago:     get(['fecha pago', 'fecha_pago']) as any,
         estado:        String(get(['estado']) ?? '').trim(),
-        agregado:      (() => { const v = norm(get(['agregado'])); return v === 'si' || v === 'sí' || v === '1' || v === 'true' || v === 'x' || v === 'agregado' })(),
+        agregado:      (() => { const v = norm(get(['agregado'])); return v === 'si' || v === 'sí' })(),
       }
     }).filter(r => r.nombre.length >= 2)   // descartar filas vacías
 
