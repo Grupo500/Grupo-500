@@ -269,8 +269,15 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
     function newPage(): number { doc.addPage(); bg(); return 52 }
 
     // ── renderMixed: renderiza texto con **negrita** inline ───────────────
-    // Retorna nueva posición Y tras el último token
-    function renderMixed(raw: string, x: number, startY: number, fontSize = 11): number {
+    // width : ancho máximo del bloque (default = cw)
+    // color : color RGB del texto (default = BLACK)
+    // Retorna { y, lastX, lastLineY }
+    function renderMixed(
+      raw: string, x: number, startY: number,
+      fontSize = 11,
+      width = cw,
+      color: [number, number, number] = BLACK,
+    ): { y: number; lastX: number; lastLineY: number } {
       doc.setFontSize(fontSize)
       const parts  = raw.split(/\*\*/)
       type Tok = { text: string; bold: boolean }
@@ -284,17 +291,21 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
       for (const tok of tokens) {
         doc.setFont(F, tok.bold ? 'bold' : 'normal')
         doc.setFontSize(fontSize)
-        const tw = doc.getTextWidth(tok.text)
+        const tw    = doc.getTextWidth(tok.text)
         const trimW = doc.getTextWidth(tok.text.trimEnd())
-        if (cx + trimW > x + cw + 0.5 && cx > x) {
+        if (cx + trimW > x + width + 0.5 && cx > x) {
           cx = x; cy += lh
           if (cy > 270) { cy = newPage() }
         }
-        doc.setTextColor(...BLACK)
+        doc.setTextColor(...color)
         doc.text(tok.text, cx, cy)
         cx += tw
       }
-      return cy + lh
+      return { y: cy + lh, lastX: cx, lastLineY: cy }
+    }
+    // Wrapper que solo retorna Y (compatibilidad con llamadas previas)
+    function rm(raw: string, x: number, startY: number, fontSize = 11, width = cw): number {
+      return renderMixed(raw, x, startY, fontSize, width).y
     }
 
     // ── bloque de texto plano (sin inline bold) ───────────────────────────
@@ -344,7 +355,7 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
     doc.text('A. Sobre GRUPO 500 EDUCACION S.A.S', ml, y); y += lh * 1.8
 
     // Párrafo 1 — con inline bold al final
-    y = renderMixed('GRUPO 500 EDUCACIÓN S.A.S. es una empresa comprometida con la excelencia académica y con la formación integral de los jóvenes. A lo largo de los años, hemos acompañado a más de 25.000 estudiantes en su proceso de preparación para el examen ICFES, consolidándonos como uno de los programas Preicfes mejor posicionados en Colombia. Nos enorgullece destacar que, a la fecha, **cinco de nuestros estudiantes han obtenido el puntaje perfecto: 500/500.**', ml, y)
+    y = rm('GRUPO 500 EDUCACIÓN S.A.S. es una empresa comprometida con la excelencia académica y con la formación integral de los jóvenes. A lo largo de los años, hemos acompañado a más de 25.000 estudiantes en su proceso de preparación para el examen ICFES, consolidándonos como uno de los programas Preicfes mejor posicionados en Colombia. Nos enorgullece destacar que, a la fecha, **cinco de nuestros estudiantes han obtenido el puntaje perfecto: 500/500.**', ml, y)
     y += lh * 0.3
 
     // Párrafo 2
@@ -353,7 +364,7 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
 
     // Párrafo 3 — con inline bold
     if (y > 250) { y = newPage() }
-    y = renderMixed('En primer lugar, brindamos **clases 100% en vivo virtuales**, impartidas por un equipo de docentes expertos con amplia experiencia en la enseñanza y en la preparación para pruebas estandarizadas. A lo largo de más de **310 horas** de formación, los jóvenes trabajan bajo un enfoque pedagógico dinámico, centrado en la resolución de problemas, el análisis de situaciones reales y la práctica constante, elementos que fortalecen significativamente su pensamiento crítico y su capacidad de interpretación.', ml, y)
+    y = rm('En primer lugar, brindamos **clases 100% en vivo virtuales**, impartidas por un equipo de docentes expertos con amplia experiencia en la enseñanza y en la preparación para pruebas estandarizadas. A lo largo de más de **310 horas** de formación, los jóvenes trabajan bajo un enfoque pedagógico dinámico, centrado en la resolución de problemas, el análisis de situaciones reales y la práctica constante, elementos que fortalecen significativamente su pensamiento crítico y su capacidad de interpretación.', ml, y)
     y += lh * 0.3
 
     // Párrafo 4 — sesiones grabadas
@@ -362,7 +373,7 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
 
     // Párrafo 5 — simulacros con inline bold
     if (y > 250) { y = newPage() }
-    y = renderMixed('Asimismo, los estudiantes cuentan con material digital actualizado conforme a los lineamientos del ICFES, para reforzar las áreas donde cada uno lo necesite. Cada ejercicio incluye una retroalimentación detallada, de manera que el estudiante no solo identifica la respuesta correcta, sino que comprende el razonamiento y la lógica detrás de ella, consolidando así estrategias de resolución más sólidas. De igual forma, nuestros alumnos presentan **cuatro (4) simulacros oficiales** construidos bajo la misma estructura y metodología del examen real.', ml, y)
+    y = rm('Asimismo, los estudiantes cuentan con material digital actualizado conforme a los lineamientos del ICFES, para reforzar las áreas donde cada uno lo necesite. Cada ejercicio incluye una retroalimentación detallada, de manera que el estudiante no solo identifica la respuesta correcta, sino que comprende el razonamiento y la lógica detrás de ella, consolidando así estrategias de resolución más sólidas. De igual forma, nuestros alumnos presentan **cuatro (4) simulacros oficiales** construidos bajo la misma estructura y metodología del examen real.', ml, y)
     y += lh * 0.3
 
     // Párrafo 6 — tutorías
@@ -382,7 +393,7 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
     ]
     for (const [boldPart, normalPart] of cals) {
       if (y > 265) { y = newPage() }
-      y = renderMixed(`**${boldPart}**${normalPart}`, ml, y)
+      y = rm(`**${boldPart}**${normalPart}`, ml, y)
       y += lh * 0.1
     }
     y += lh * 0.3
@@ -403,11 +414,11 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
 
     // Párrafo beneficios con inline bold
     if (y > 250) { y = newPage() }
-    y = renderMixed('En el marco de nuestra alianza, GRUPO 500 EDUCACIÓN S.A.S. tiene el gusto de otorgar un beneficio institucional del **10% de descuento para todos los estudiantes** que deseen prepararse con nuestros diferentes programas Preicfes y Premédico.', ml, y)
+    y = rm('En el marco de nuestra alianza, GRUPO 500 EDUCACIÓN S.A.S. tiene el gusto de otorgar un beneficio institucional del **10% de descuento para todos los estudiantes** que deseen prepararse con nuestros diferentes programas Preicfes y Premédico.', ml, y)
     y += lh * 0.3
 
     if (y > 250) { y = newPage() }
-    y = renderMixed('Tenga en cuenta que, con dichos descuentos, estos serían los costos finales de los cursos ofrecidos por GRUPO 500 EDUCACIÓN S.A.S para el año 2026 **por cada estudiante**', ml, y)
+    y = rm('Tenga en cuenta que, con dichos descuentos, estos serían los costos finales de los cursos ofrecidos por GRUPO 500 EDUCACIÓN S.A.S para el año 2026 **por cada estudiante**', ml, y)
     y += lh * 0.5
 
     // Tabla título
@@ -471,15 +482,15 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
     if (y > 235) { y = newPage() }
 
     // Párrafo 1 con bold inline
-    y = renderMixed('**PARÁGRAFO PRIMERO.** El valor de los cursos con el descuento institucional aplica hasta el **30 de noviembre de 2026**. A partir del **1 de diciembre** tendrán su respectivo incremento anual. Si deseas mantener estos precios junto con el descuento institucional deberán inscribirse un **mínimo de treinta (30) estudiantes** realizando un **único pago** por Institución en las fechas acordadas.', ml, y)
+    y = rm('**PARÁGRAFO PRIMERO.** El valor de los cursos con el descuento institucional aplica hasta el **30 de noviembre de 2026**. A partir del **1 de diciembre** tendrán su respectivo incremento anual. Si deseas mantener estos precios junto con el descuento institucional deberán inscribirse un **mínimo de treinta (30) estudiantes** realizando un **único pago** por Institución en las fechas acordadas.', ml, y)
     y += lh * 0.3
 
     if (y > 255) { y = newPage() }
-    y = renderMixed('**PARÁGRAFO SEGUNDO.** Realizado el pago, la Institución Educativa deberá enviar una lista de los estudiantes beneficiados junto con sus datos de contacto, con el fin de realizar el respectivo control y seguimiento de las inscripciones por Institución.', ml, y)
+    y = rm('**PARÁGRAFO SEGUNDO.** Realizado el pago, la Institución Educativa deberá enviar una lista de los estudiantes beneficiados junto con sus datos de contacto, con el fin de realizar el respectivo control y seguimiento de las inscripciones por Institución.', ml, y)
     y += lh * 0.3
 
     if (y > 255) { y = newPage() }
-    y = renderMixed('**PARÁGRAFO TERCERO.** Es importante precisar que únicamente se considerarán válidas las inscripciones y pagos realizados a través de la única cuenta autorizada de la Sociedad Preicfes Grupo 500', ml, y)
+    y = rm('**PARÁGRAFO TERCERO.** Es importante precisar que únicamente se considerarán válidas las inscripciones y pagos realizados a través de la única cuenta autorizada de la Sociedad Preicfes Grupo 500', ml, y)
     y += lh * 0.5
 
     // Caja BANCOLOMBIA — fondo navy
@@ -500,27 +511,63 @@ function PropuestaModal({ colegio, onClose, onEditarColegio }: { colegio: Colegi
     doc.text('C. Opción de Financiación', ml, y); y += lh * 1.8
 
     if (y > 250) { y = newPage() }
-    y = renderMixed('Recuerda que tus estudiantes pueden pagar la totalidad del curso de contado. Sin embargo, si todos no cuentan con el recurso de parte del **Preicfes Grupo 500** hemos autorizado que cada estudiante realice un primer pago de **$300.000 mil pesos** en el mes de mayo y el restante en el mes de junio. Esta facilidad de pago en el caso de los **Calendario A, Intensivo Calendario A o Calendario G.**', ml, y)
+    y = rm('Recuerda que tus estudiantes pueden pagar la totalidad del curso de contado. Sin embargo, si todos no cuentan con el recurso de parte del **Preicfes Grupo 500** hemos autorizado que cada estudiante realice un primer pago de **$300.000 mil pesos** en el mes de mayo y el restante en el mes de junio. Esta facilidad de pago en el caso de los **Calendario A, Intensivo Calendario A o Calendario G.**', ml, y)
     y += lh * 1.2
 
-    // ── CIERRE ────────────────────────────────────────────────────────────
-    if (y + 30 > 272) { y = newPage() }
-    // Icono WhatsApp + texto cierre con bold inline
-    if (waB64) { doc.addImage(waB64, 'PNG', ml, y - 3.5, 7, 7) }
-    const cierreX = ml + (waB64 ? 10 : 0)
-    const cierreCW = cw - (waB64 ? 10 : 0)
+    // ── CIERRE — caja navy con texto blanco + ícono WhatsApp inline ────────
+    // 1. Pre-calcular líneas para conocer la altura del bloque
+    const cierreRaw = 'Apreciada Institución, recuerda que puedes extender la invitación del curso a estudiantes de **noveno, décimo y undécimo grado.** En caso de requerir una reunión virtual con nuestro equipo directivo debes confirmarnos a través de este correo pregrupo500@gmail.com o comunicarte a nuestra línea institucional de WhatsApp  311 5233917'
+    const pad = 5       // padding interno de la caja (mm)
+    const cierreW = cw  // ancho del texto dentro de la caja
+    doc.setFont(F, 'normal'); doc.setFontSize(11)
+    // Estimación de líneas (aprox) para reservar espacio en la página
+    const lineasEstimadas = 5
+    const cajaH = pad + lineasEstimadas * lh + pad
+    if (y + cajaH > 272) { y = newPage() }
 
-    doc.setFont(F, 'normal'); doc.setFontSize(11); doc.setTextColor(...BLACK)
-    // Renderizar cierre con inline bold
-    const cierre1 = 'Apreciada Institución, recuerda que puedes extender la invitación del curso a estudiantes de '
-    const cierre2 = 'noveno, décimo y undécimo grado.'
-    const cierre3 = ' En caso de requerir una reunión virtual con nuestro equipo directivo debes confirmarnos a través de este correo pregrupo500@gmail.com o comunicarte a nuestra línea institucional de WhatsApp '
-    const cierre4 = '311 5233917'
-    // Usar renderMixed con ancho reducido para el ícono
-    const oldCW = cw
-    ;(doc as any)._cierreCW = cierreCW  // hack temporal
-    y = renderMixed(`${cierre1}**${cierre2}**${cierre3}**${cierre4}**`, cierreX, y)
-    y += lh * 1.5
+    // 2. Dibujar rectángulo navy
+    const cajaY0 = y
+    doc.setFillColor(...NAVY); doc.setDrawColor(...NAVY); doc.setLineWidth(0.3)
+    doc.rect(ml, cajaY0, cw, cajaH, 'F')
+
+    // 3. Renderizar texto blanco con bold inline, partiendo desde (ml+pad, cajaY0+pad+lh*0.8)
+    const txtX  = ml + pad
+    const txtW  = cw - pad * 2
+    const txtY0 = cajaY0 + pad + lh * 0.55
+    const resC  = renderMixed(cierreRaw, txtX, txtY0, 11, txtW, WHITE)
+
+    // 4. Insertar ícono WhatsApp justo antes de "311 5233917"
+    //    El texto "WhatsApp " termina antes del número — buscamos la pos X de esa parte.
+    //    Estrategia: renderizar solo hasta "WhatsApp " en seco para medir X, luego
+    //    dibujar el ícono en (lastX de esa sub-render, lastLineY).
+    //    En la llamada anterior ya dibujó todo incluido el número.
+    //    Solo necesitamos colocar el ícono en la línea correcta retroactivamente.
+    //    Para eso medimos donde empieza "311" en esa línea.
+    if (waB64) {
+      // Medir cuánto ancho ocupa " 311 5233917" con fuente bold
+      doc.setFont(F, 'bold'); doc.setFontSize(11)
+      const numW = doc.getTextWidth(' 311 5233917')
+      // El número termina en resC.lastX (aproximado), el ícono va justo antes
+      const iconX = resC.lastX - numW - 6   // 6 = ancho del ícono (5) + gap (1)
+      const iconY = resC.lastLineY - 4.5    // alinear verticalmente con el texto
+      doc.addImage(waB64, 'PNG', iconX, iconY, 5, 5)
+    }
+
+    // 5. Ajustar la caja al alto real del texto renderizado
+    const cajaHReal = (resC.lastLineY - cajaY0) + lh * 0.5 + pad
+    doc.setFillColor(...NAVY); doc.setDrawColor(...NAVY)
+    doc.rect(ml, cajaY0, cw, cajaHReal, 'F')
+    // Re-renderizar texto encima (la caja recién dibujada tapó el texto)
+    renderMixed(cierreRaw, txtX, txtY0, 11, txtW, WHITE)
+    if (waB64) {
+      doc.setFont(F, 'bold'); doc.setFontSize(11)
+      const numW = doc.getTextWidth(' 311 5233917')
+      const iconX = resC.lastX - numW - 6
+      const iconY = resC.lastLineY - 4.5
+      doc.addImage(waB64, 'PNG', iconX, iconY, 5, 5)
+    }
+
+    y = cajaY0 + cajaHReal + lh * 1.5
 
     // ── FIRMA ─────────────────────────────────────────────────────────────
     if (y + 20 > 272) { y = newPage() }
