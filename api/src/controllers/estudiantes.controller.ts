@@ -379,44 +379,48 @@ function parseMetodo(val: unknown): string {
 }
 
 interface ImportRow {
-  fecha?:       string   // Fecha de registro
-  asesor?:      string
-  linea?:       number
-  curso?:       string
-  nombre:       string
-  telefono:     string
-  abono?:       number
-  valorCurso?:  number
-  valorPagado?: number
-  total?:       number
-  metodoPago?:  string
-  referencia?:  string
-  fechaPago?:   string
-  estado?:      string
-  agregado?:    boolean
+  fecha?:         string
+  asesor?:        string
+  linea?:         number
+  curso?:         string
+  nombre:         string
+  tipoDocumento?: string
+  documento?:     string
+  email?:         string
+  telefono:       string
+  abono?:         number
+  valorCurso?:    number
+  valorPagado?:   number
+  total?:         number
+  metodoPago?:    string
+  referencia?:    string
+  fechaPago?:     string
+  estado?:        string
+  agregado?:      boolean
 }
 
 export async function plantillaImport(_req: Request, res: Response) {
   const wb = XLSX.utils.book_new()
 
   const encabezados = [
-    'Nombre Alumno', 'Número', 'Curso', 'Asesor', 'Línea',
+    'Nombre Alumno', 'Tipo Documento', 'Número Documento', 'Email',
+    'Número', 'Curso', 'Asesor', 'Línea',
     'Abono', 'Valor Curso', 'Método Pago', 'Fecha Pago', 'Agregado',
   ]
 
   const ejemplos = [
-    ['Juan Pérez García',    '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', 1, 300000, 600000, 'Bancolombia', '2025-05-01', 'Si'],
-    ['María López Ruiz',     '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   2, 600000, 600000, 'Nequi',       '2025-05-03', 'No'],
-    ['Carlos Martínez Díaz', '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', 3, 0,      800000, 'Bre-B',       '',           ''],
+    ['Juan Pérez García',    'CC', '1234567890', 'juan@email.com',  '3001234567', 'Preicfes Calendario A', 'Cielo Guevara', 1, 300000, 600000, 'Bancolombia', '2025-05-01', 'Si'],
+    ['María López Ruiz',     'TI', '987654321',  'maria@email.com', '3117654321', 'Preicfes Calendario B', 'Luis Ibañez',   2, 600000, 600000, 'Nequi',       '2025-05-03', 'No'],
+    ['Carlos Martínez Díaz', 'CC', '',           '',                '3209876543', 'Preicfes Intensivo',    'Cielo Guevara', 3, 0,      800000, 'Bre-B',       '',           ''],
   ]
 
   const ws = XLSX.utils.aoa_to_sheet([encabezados, ...ejemplos])
 
   // Ancho de columnas
   ws['!cols'] = [
-    { wch: 30 }, { wch: 14 }, { wch: 24 }, { wch: 20 },
-    { wch: 7  }, { wch: 12 }, { wch: 12 }, { wch: 14 },
-    { wch: 14 }, { wch: 10 },
+    { wch: 30 }, { wch: 16 }, { wch: 18 }, { wch: 28 },
+    { wch: 14 }, { wch: 24 }, { wch: 20 }, { wch: 7  },
+    { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 10 },
   ]
 
   XLSX.utils.book_append_sheet(wb, ws, 'Plantilla')
@@ -452,21 +456,24 @@ export async function importar(req: Request, res: Response) {
         return ''
       }
       return {
-        fecha:       String(get(['fecha']) ?? '').trim(),
-        asesor:      String(get(['asesor']) ?? '').trim(),
-        linea:       Number(get(['linea', 'línea'])) || undefined,
-        curso:       String(get(['curso']) ?? '').trim(),
-        nombre:      String(get(['nombre', 'alumno', 'estudiante']) ?? '').trim(),
-        telefono:    String(get(['número', 'numero', 'telefono', 'teléfono', 'cel']) ?? '').trim(),
-        abono:       Number(String(get(['abono']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
-        valorCurso:  Number(String(get(['valor curso', 'valor_curso']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
-        valorPagado: Number(String(get(['valor pagado', 'valor_pagado', 'pagado']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
-        total:       Number(String(get(['total']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
-        metodoPago:  String(get(['método', 'metodo', 'método pago', 'metodo pago']) ?? '').trim(),
-        referencia:  String(get(['referencia', 'ref']) ?? '').trim(),
-        fechaPago:   get(['fecha pago', 'fecha_pago']) as any,
-        estado:      String(get(['estado']) ?? '').trim(),
-        agregado:    (() => { const v = norm(get(['agregado'])); return v === 'si' || v === 'sí' || v === '1' || v === 'true' || v === 'x' })(),
+        fecha:         String(get(['fecha']) ?? '').trim(),
+        asesor:        String(get(['asesor']) ?? '').trim(),
+        linea:         Number(get(['linea', 'línea'])) || undefined,
+        curso:         String(get(['curso']) ?? '').trim(),
+        nombre:        String(get(['nombre', 'alumno', 'estudiante']) ?? '').trim(),
+        tipoDocumento: String(get(['tipo documento', 'tipo_documento', 'tipo doc']) ?? '').trim() || undefined,
+        documento:     String(get(['número documento', 'numero documento', 'documento']) ?? '').trim() || undefined,
+        email:         String(get(['email', 'correo']) ?? '').trim() || undefined,
+        telefono:      String(get(['número', 'numero', 'telefono', 'teléfono', 'cel']) ?? '').trim(),
+        abono:         Number(String(get(['abono']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        valorCurso:    Number(String(get(['valor curso', 'valor_curso']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        valorPagado:   Number(String(get(['valor pagado', 'valor_pagado', 'pagado']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        total:         Number(String(get(['total']) ?? '').replace(/[^0-9.]/g, '')) || undefined,
+        metodoPago:    String(get(['método', 'metodo', 'método pago', 'metodo pago']) ?? '').trim(),
+        referencia:    String(get(['referencia', 'ref']) ?? '').trim(),
+        fechaPago:     get(['fecha pago', 'fecha_pago']) as any,
+        estado:        String(get(['estado']) ?? '').trim(),
+        agregado:      (() => { const v = norm(get(['agregado'])); return v === 'si' || v === 'sí' || v === '1' || v === 'true' || v === 'x' })(),
       }
     }).filter(r => r.nombre.length >= 2)   // descartar filas vacías
 
@@ -496,7 +503,7 @@ export async function importar(req: Request, res: Response) {
     grouped.get(key)!.push(row)
   }
 
-  const resultados: { nombre: string; accion: 'creado' | 'existente'; pagos: number; error?: string }[] = []
+  const resultados: { nombre: string; accion: 'creado' | 'actualizado' | 'existente'; pagos: number; error?: string }[] = []
 
   // 5. Procesar cada estudiante
   for (const [, studentRows] of grouped) {
@@ -520,29 +527,45 @@ export async function importar(req: Request, res: Response) {
         },
       })
 
-      let accion: 'creado' | 'existente' = 'existente'
+      let accion: 'creado' | 'actualizado' | 'existente' = 'existente'
+
+      // Datos comunes para crear o actualizar
+      const datosEstudiante = {
+        nombre:        first.nombre,
+        telefono:      first.telefono || '0000000000',
+        ...(first.email         && { email:         first.email }),
+        ...(first.tipoDocumento && { tipoDocumento: first.tipoDocumento }),
+        ...(first.documento     && { documento:     first.documento }),
+        ...(asesorObj           && { asesorId:      asesorObj.id }),
+        ...(first.linea         && { lineaAutorizada: first.linea }),
+        ...(first.agregado !== undefined && { agregado: first.agregado }),
+      }
 
       if (!estudiante) {
         accion = 'creado'
         estudiante = await prisma.estudiante.create({
           data: {
-            nombre:          first.nombre,
-            email:           emailFallback,
-            telefono:        first.telefono || '0000000000',
-            fechaNacimiento: new Date('2000-01-01'),  // placeholder
-            tipoDocumento:   'CC',
-            ...(asesorObj     && { asesorId: asesorObj.id }),
-            ...(first.linea   && { lineaAutorizada: first.linea }),
-            ...(first.agregado !== undefined && { agregado: first.agregado }),
+            ...datosEstudiante,
+            email:           first.email || emailFallback,
+            fechaNacimiento: new Date('2000-01-01'),
+            tipoDocumento:   first.tipoDocumento || 'CC',
           },
         })
+      } else {
+        accion = 'actualizado'
+        estudiante = await prisma.estudiante.update({
+          where: { id: estudiante.id },
+          data:  datosEstudiante,
+        })
+      }
 
-        // Vincular curso
-        if (cursoObj) {
-          await prisma.cursoEstudiante.create({
-            data: { estudianteId: estudiante.id, cursoId: cursoObj.id, descuentoPorcentaje: 0 },
-          })
-        }
+      // Vincular o actualizar curso
+      if (cursoObj) {
+        await prisma.cursoEstudiante.upsert({
+          where:  { estudianteId_cursoId: { estudianteId: estudiante.id, cursoId: cursoObj.id } },
+          update: {},
+          create: { estudianteId: estudiante.id, cursoId: cursoObj.id, descuentoPorcentaje: 0 },
+        })
       }
 
       // 6. Crear pagos para filas con abono > 0
@@ -585,15 +608,15 @@ export async function importar(req: Request, res: Response) {
     }
   }
 
-  const creados   = resultados.filter(r => r.accion === 'creado' && !r.error).length
-  const existentes = resultados.filter(r => r.accion === 'existente').length
-  const errores   = resultados.filter(r => r.error).length
-  const totalPagos = resultados.reduce((s, r) => s + r.pagos, 0)
+  const creados      = resultados.filter(r => r.accion === 'creado'      && !r.error).length
+  const actualizados = resultados.filter(r => r.accion === 'actualizado' && !r.error).length
+  const errores      = resultados.filter(r => r.error).length
+  const totalPagos   = resultados.reduce((s, r) => s + r.pagos, 0)
 
   broadcast('estudiante-asignado', { tipo: 'importacion-masiva' })
 
   return ApiResponse.success(res, {
-    resumen: { totalFilas: rows.length, estudiantesCreados: creados, estudiantesExistentes: existentes, pagosCreados: totalPagos, errores },
+    resumen: { totalFilas: rows.length, estudiantesCreados: creados, estudiantesActualizados: actualizados, pagosCreados: totalPagos, errores },
     detalles: resultados,
   })
 }
