@@ -444,7 +444,14 @@ export async function importar(req: Request, res: Response) {
   const normalize = (rows: Record<string, unknown>[]): ImportRow[] =>
     rows.map(r => {
       const get = (keys: string[]) => {
-        for (const k of Object.keys(r)) {
+        const rKeys = Object.keys(r)
+        // 1er pase: coincidencia exacta (evita que "número documento" matchee "número")
+        for (const key of keys) {
+          const match = rKeys.find(k => norm(k) === norm(key))
+          if (match !== undefined) return r[match]
+        }
+        // 2do pase: contains como fallback para columnas con nombres alternativos
+        for (const k of rKeys) {
           if (keys.some(key => norm(k).includes(norm(key)))) return r[k]
         }
         return ''
@@ -484,7 +491,9 @@ export async function importar(req: Request, res: Response) {
   ])
 
   const findCurso = (name: string) =>
-    cursosDB.find(c => norm(c.nombre) === norm(name) || norm(c.nombre).includes(norm(name)))
+    // Primero coincidencia exacta, luego parcial como fallback
+    cursosDB.find(c => norm(c.nombre) === norm(name)) ??
+    cursosDB.find(c => norm(c.nombre).includes(norm(name)))
 
   const findAsesor = (name: string) =>
     asesoresDB.find(a => norm(a.nombre) === norm(name) || norm(a.nombre).includes(norm(name)))
