@@ -371,10 +371,11 @@ function parseExcelDate(val: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d
 }
 
-// Retorna el método de pago tal cual viene del Excel (string libre)
+// Normaliza el método de pago a los valores válidos del sistema
+const METODOS_VALIDOS = ['Bancolombia', 'Bre-B', 'Nequi']
 function parseMetodo(val: unknown): string {
   const v = String(val ?? '').trim()
-  return v || 'Otro'
+  return METODOS_VALIDOS.find(m => m.toLowerCase() === v.toLowerCase()) ?? 'Otro'
 }
 
 interface ImportRow {
