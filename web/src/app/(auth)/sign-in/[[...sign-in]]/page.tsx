@@ -132,7 +132,7 @@ export default function SignInPage() {
         alt=""
         width={420}
         height={560}
-        className="absolute bottom-[45%] md:bottom-[43%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
+        className="absolute bottom-[35%] md:bottom-[33%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
         priority
         aria-hidden
       />
@@ -141,7 +141,7 @@ export default function SignInPage() {
       <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-sm px-4">
 
       {/* Espaciador */}
-      <div className="h-48" />
+      <div className="h-28" />
 
       {/* Título */}
       <div className="text-center">
