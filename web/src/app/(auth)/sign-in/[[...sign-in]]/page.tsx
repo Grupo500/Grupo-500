@@ -126,22 +126,25 @@ export default function SignInPage() {
       className="relative h-dvh w-full overflow-y-auto overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4"
       style={{ background: '#21b9f7' }}
     >
-      {/* Todo el contenido centrado en una sola columna */}
-      <div className="relative z-10 flex flex-col items-center w-full max-w-sm px-4">
-
-      {/* Imagen decorativa equipo */}
+      {/* Imagen decorativa — absoluta, detrás del contenido */}
       <Image
         src="/equipo-login.png"
         alt=""
         width={420}
         height={560}
-        className="w-64 sm:w-72 object-contain pointer-events-none select-none mb-[-1rem]"
+        className="absolute bottom-[45%] md:bottom-[43%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
         priority
         aria-hidden
       />
 
+      {/* Contenido encima */}
+      <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-sm px-4">
+
+      {/* Espaciador */}
+      <div className="h-48" />
+
       {/* Título */}
-      <div className="text-center mb-1">
+      <div className="text-center">
         <p className={`${poppins.className} text-xl font-bold text-white tracking-tight`}>Grupo 500</p>
         <p className="text-sm text-white/80 font-medium">Pre-ICFES</p>
       </div>
@@ -264,7 +267,7 @@ export default function SignInPage() {
 
         </div>
       </div>
-      </div>{/* fin columna centrada */}
+      </div>{/* fin contenido */}
 
       {/* Créditos */}
       <p className="text-[11px] text-white/60 text-center z-10 relative">
