@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
-import { extraerResultadosDePDF, matchearConDB } from '../services/simulacro.service'
+import { extraerResultadosDePDF, extraerResultadosDeExcel, matchearConDB } from '../services/simulacro.service'
 import fetch from 'node-fetch'
 
 export async function listar(req: Request, res: Response) {
@@ -75,16 +75,19 @@ export async function analizar(req: Request, res: Response) {
     return res.status(413).json({ error: 'El archivo PDF supera el límite de 50 MB' })
   }
   const buffer = Buffer.from(await pdfRes.arrayBuffer())
-  console.log(`[analizar] PDF descargado, tamaño: ${buffer.length} bytes`)
+  console.log(`[analizar] Archivo descargado, tamaño: ${buffer.length} bytes`)
 
-  // ── 2. Parsear PDF y matchear contra estudiantes en DB ───────────────────
+  // ── 2. Parsear archivo y matchear contra estudiantes en DB ───────────────
+  const esExcel = /\.(xlsx|xls)$/i.test(simulacro.archivoUrl)
   let resultadosBrutos
   try {
-    resultadosBrutos = await extraerResultadosDePDF(buffer)
-    console.log(`[analizar] Resultados extraídos del PDF: ${resultadosBrutos.length}`)
+    resultadosBrutos = esExcel
+      ? extraerResultadosDeExcel(buffer)
+      : await extraerResultadosDePDF(buffer)
+    console.log(`[analizar] Resultados extraídos (${esExcel ? 'Excel' : 'PDF'}): ${resultadosBrutos.length}`)
   } catch (err) {
-    console.error('[analizar] Error parseando PDF:', err)
-    return res.status(500).json({ error: 'Error al procesar el PDF', detalle: String(err) })
+    console.error('[analizar] Error parseando archivo:', err)
+    return res.status(500).json({ error: 'Error al procesar el archivo', detalle: String(err) })
   }
 
   if (resultadosBrutos.length === 0) {

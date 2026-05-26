@@ -294,6 +294,66 @@ export async function extraerResultadosDePDF(buffer: Buffer): Promise<ResultadoE
   return resultados
 }
 
+// ── Parser Excel (xlsx) ────────────────────────────────────────────────────
+export function extraerResultadosDeExcel(buffer: Buffer): ResultadoEstudiante[] {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const XLSX = require('xlsx')
+  const wb   = XLSX.read(buffer, { type: 'buffer' })
+  const ws   = wb.Sheets[wb.SheetNames[0]]
+  const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: '' })
+
+  const resultados: ResultadoEstudiante[] = []
+
+  for (const row of rows) {
+    // Normalizar claves
+    const get = (keys: string[]) => {
+      for (const k of Object.keys(row)) {
+        if (keys.some(key => k.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(key.toLowerCase()))) {
+          return row[k]
+        }
+      }
+      return ''
+    }
+
+    const nombre  = String(get(['nombre']) ?? '').trim()
+    const celular = String(get(['celular']) ?? '').trim()
+
+    if (!nombre || nombre === '-') continue
+
+    const puntajeGlobal = parseFloat(get(['global'])) || 0
+    const matematicas   = parseFloat(get(['matem'])) || 0
+    const lecturaC      = parseFloat(get(['lectura'])) || 0
+    const sociales      = parseFloat(get(['social'])) || 0
+    const ciencias      = parseFloat(get(['ciencia'])) || 0
+    const ingles        = parseFloat(get(['ingl'])) || 0
+
+    const areas: Record<string, number> = {}
+    if (matematicas) areas['Matemáticas']          = matematicas
+    if (lecturaC)    areas['Lectura Crítica']       = lecturaC
+    if (sociales)    areas['Sociales y Ciudadanas'] = sociales
+    if (ciencias)    areas['Ciencias Naturales']    = ciencias
+    if (ingles)      areas['Inglés']                = ingles
+
+    const puntajeTotal       = puntajeGlobal || Object.values(areas).reduce((s, v) => s + v, 0)
+    const porcentajeAciertos = Math.round((puntajeTotal / 500) * 100)
+    const areasDebiles       = calcularAreasDebiles(areas)
+    const estado             = clasificar(puntajeTotal)
+
+    resultados.push({
+      nombre,
+      telefono: celular.replace(/^\+57/, ''),
+      areas,
+      puntajeTotal,
+      porcentajeAciertos,
+      areasDebiles,
+      estado,
+      requiereIntensivo: estado === 'BAJO',
+    })
+  }
+
+  return resultados
+}
+
 // ── Matching de nombres contra DB ──────────────────────────────────────────
 function similitud(a: string, b: string): number {
   const normalize = (s: string) =>

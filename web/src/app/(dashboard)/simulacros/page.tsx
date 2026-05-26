@@ -84,12 +84,14 @@ export default function SimulacrosPage() {
     queryFn: () => fetcher<any>(`/simulacros?page=${page}&limit=20${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}`),
   })
 
-  // Subir PDF a Cloudinary vía API
+  // Subir archivo (PDF o Excel) a Cloudinary vía API
   const handleArchivoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.type !== 'application/pdf') {
-      setError('Solo se permiten archivos PDF')
+    const esExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+    const esPdf   = file.type === 'application/pdf'
+    if (!esExcel && !esPdf) {
+      setError('Solo se permiten archivos PDF o Excel (.xlsx)')
       return
     }
     setArchivo(file)
@@ -399,11 +401,11 @@ export default function SimulacrosPage() {
 
             {/* Zona de upload */}
             <div>
-              <label className={labelCls}>Archivo PDF</label>
+              <label className={labelCls}>Archivo (PDF o Excel)</label>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf"
+                accept="application/pdf,.xlsx,.xls"
                 className="hidden"
                 onChange={handleArchivoChange}
               />
@@ -415,8 +417,8 @@ export default function SimulacrosPage() {
                   className="w-full flex flex-col items-center gap-2 px-4 py-6 rounded-xl border-2 border-dashed border-outline-variant bg-surface-high hover:border-primary/40 hover:bg-primary/5 transition-colors text-on-surface-variant hover:text-primary group"
                 >
                   <Upload className="w-7 h-7 transition-transform group-hover:scale-110" />
-                  <span className="text-sm font-medium">Seleccionar PDF</span>
-                  <span className="text-xs opacity-60">Máximo 20 MB</span>
+                  <span className="text-sm font-medium">Seleccionar PDF o Excel</span>
+                  <span className="text-xs opacity-60">PDF o .xlsx — Máximo 20 MB</span>
                 </button>
               )}
 
