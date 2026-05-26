@@ -82,9 +82,15 @@ function clasificar(puntaje: number): 'BAJO' | 'MEDIO' | 'ALTO' {
 }
 
 function calcularAreasDebiles(areas: Record<string, number>): string[] {
-  // Umbral: área con puntaje < 50 sobre 100 se considera débil
+  const valores = Object.values(areas)
+  if (valores.length === 0) return []
+
+  // Para ICFES: débil si < 60 (escala 0-100 por área)
+  // O si está más de 10 puntos por debajo del promedio del estudiante
+  const promedio = valores.reduce((s, v) => s + v, 0) / valores.length
+
   return Object.entries(areas)
-    .filter(([, v]) => v < 50)
+    .filter(([, v]) => v < 60 || v < promedio - 10)
     .map(([k]) => k)
 }
 
