@@ -132,7 +132,8 @@ export default function SignInPage() {
         alt=""
         width={420}
         height={560}
-        className="absolute bottom-[50%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
+        className="absolute bottom-[40%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
+
         priority
         aria-hidden
       />
@@ -140,21 +141,6 @@ export default function SignInPage() {
       {/* Contenido — encima de la imagen decorativa */}
       <div className="relative z-10 flex flex-col items-center gap-4 w-full px-0">
 
-      {/* Logo */}
-      <div className="flex flex-col items-center gap-2">
-        <Image
-          src="/logo-grupo500.png"
-          alt="Grupo 500"
-          width={120}
-          height={120}
-          className="rounded-full object-cover w-36 h-36 md:w-32 md:h-32 lg:w-28 lg:h-28"
-          priority
-        />
-        <p className={`${poppins.className} text-xl md:text-lg lg:text-base font-bold tracking-tight text-on-surface mt-0.5`}>
-          Grupo 500
-        </p>
-        <p className="text-sm md:text-xs font-medium text-on-surface-variant -mt-1">Pre-ICFES</p>
-      </div>
 
       {/* Botón instalar PWA */}
       <PWAInstallButton />
