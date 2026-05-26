@@ -109,46 +109,76 @@ router.post('/register/finish', authenticate, asyncHandler(async (req, res) => {
 }))
 
 // ── Autenticación: generar opciones (sin sesión requerida) ────────────────────
+// Soporta dos modos:
+//   - Discoverable (sin email): allowCredentials vacío, el dispositivo elige la passkey
+//   - Email-based (con email): busca las passkeys del usuario específico
 router.post('/auth/start', asyncHandler(async (req, res) => {
   const { email } = req.body
-  if (!email) return res.status(400).json({ error: 'Email requerido' })
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: { passkeys: true },
-  })
-  if (!user || user.passkeys.length === 0) {
-    return res.status(404).json({ error: 'Sin passkeys registradas para este usuario' })
+  if (email) {
+    // Flujo con email: buscar passkeys del usuario específico
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { passkeys: true },
+    })
+    if (!user || user.passkeys.length === 0) {
+      return res.status(404).json({ error: 'Sin passkeys registradas para este usuario' })
+    }
+    const options = await generateAuthenticationOptions({
+      rpID: RP_ID,
+      allowCredentials: user.passkeys.map(pk => ({
+        id: pk.credentialId,
+        transports: pk.transports as any,
+      })),
+      userVerification: 'required',
+    })
+    challengeStore.set(user.id, options.challenge)
+    return ApiResponse.success(res, { ...options, userId: user.id })
   }
 
+  // Flujo discoverable: sin email, el dispositivo muestra las passkeys disponibles
   const options = await generateAuthenticationOptions({
     rpID: RP_ID,
-    allowCredentials: user.passkeys.map(pk => ({
-      id: pk.credentialId,
-      transports: pk.transports as any,
-    })),
-    userVerification: 'preferred',
+    allowCredentials: [],
+    userVerification: 'required',
   })
-
-  challengeStore.set(user.id, options.challenge)
-  return ApiResponse.success(res, { ...options, userId: user.id })
+  challengeStore.set('__discoverable__', options.challenge)
+  return ApiResponse.success(res, { ...options, userId: null })
 }))
 
 // ── Autenticación: verificar y emitir JWT ─────────────────────────────────────
 router.post('/auth/finish', asyncHandler(async (req, res) => {
-  const body: any & { userId: string } = req.body
-  if (!body.userId) return res.status(400).json({ error: 'userId requerido' })
+  const body: any & { userId?: string | null } = req.body
 
-  const user = await prisma.user.findUnique({
-    where: { id: body.userId },
-    include: { passkeys: true },
-  })
+  let user: any
+  let expectedChallenge: string | undefined
+
+  if (body.userId) {
+    // Flujo con email: buscar por userId conocido
+    user = await prisma.user.findUnique({
+      where: { id: body.userId },
+      include: { passkeys: true },
+    })
+    expectedChallenge = challengeStore.get(body.userId)
+  } else {
+    // Flujo discoverable: extraer userId del userHandle que devuelve el dispositivo
+    const userHandle = body.response?.userHandle
+    if (!userHandle) return res.status(400).json({ error: 'No se pudo identificar el usuario' })
+    // Durante el registro se usó Buffer.from(user.id) como userID
+    const userId = Buffer.from(userHandle, 'base64url').toString('utf8')
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { passkeys: true },
+    })
+    expectedChallenge = challengeStore.get('__discoverable__')
+    if (expectedChallenge) challengeStore.delete('__discoverable__')
+  }
+
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
 
-  const passkey = user.passkeys.find(pk => pk.credentialId === body.id)
+  const passkey = user.passkeys.find((pk: any) => pk.credentialId === body.id)
   if (!passkey) return res.status(400).json({ error: 'Passkey no encontrada' })
 
-  const expectedChallenge = challengeStore.get(user.id)
   if (!expectedChallenge) return res.status(400).json({ error: 'Challenge expirado' })
 
   const verification = await verifyAuthenticationResponse({

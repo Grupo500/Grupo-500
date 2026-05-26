@@ -53,31 +53,26 @@ export default function SignInPage() {
   }
 
   async function handleFaceId() {
-    if (!email.trim()) {
-      setError('Escribe tu correo electrónico primero')
-      return
-    }
     setFaceLoading(true)
     setError('')
 
     try {
-      // 1. Obtener opciones del servidor
+      // 1. Obtener opciones del servidor (discoverable: sin email)
       const startRes = await fetch(`${API}/passkeys/auth/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({}),
       })
 
       if (!startRes.ok) {
         const err = await startRes.json()
-        throw new Error(err.error ?? 'Sin passkeys registradas para este correo')
+        throw new Error(err.error ?? 'Error al iniciar autenticación')
       }
 
       const startData = await startRes.json()
       const { userId, ...authOptions } = startData.data
 
-      // 2. Ejecutar autenticación biométrica en el dispositivo
-      // Asegurar que el challenge y allowCredentials tienen el formato base64url correcto
+      // 2. El dispositivo muestra Face ID / Huella — el usuario no escribe nada
       const credential = await startAuthentication({
         optionsJSON: {
           ...authOptions,
@@ -89,11 +84,11 @@ export default function SignInPage() {
         },
       })
 
-      // 3. Verificar en el servidor y obtener token
+      // 3. Verificar en el servidor (userId puede ser null en flujo discoverable)
       const finishRes = await fetch(`${API}/passkeys/auth/finish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...credential, userId }),
+        body: JSON.stringify({ ...credential, ...(userId ? { userId } : {}) }),
       })
 
       if (!finishRes.ok) {
@@ -263,11 +258,6 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {supportsWebAuthn && (
-            <p className="text-[11px] text-center text-[#5a74a8]">
-              Face ID requiere correo y huella previamente registrada
-            </p>
-          )}
         </div>
       </div>
 
