@@ -34,7 +34,7 @@ function multerHandler(upload: import('multer').Multer) {
 router.post('/pdf', checkCloudinary, multerHandler(uploadPdf), (req: Request, res: Response) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió ningún archivo' })
   const file = req.file as Express.Multer.File & { path: string; filename: string }
-  return ApiResponse.success(res, { url: file.path, filename: file.filename })
+  return ApiResponse.success(res, { url: file.path, filename: file.filename, tipo: 'pdf' })
 })
 
 // Upload de Excel (simulacros) — sube a Cloudinary como raw
@@ -45,7 +45,7 @@ router.post('/excel', checkCloudinary, multerHandler(uploadExcel), async (req: R
     { folder: 'grupo500/simulacros', resource_type: 'raw', use_filename: true, unique_filename: true },
     (err, result) => {
       if (err || !result) return res.status(500).json({ success: false, error: 'Error al subir a Cloudinary' })
-      return ApiResponse.success(res, { url: result.secure_url, filename: result.original_filename })
+      return ApiResponse.success(res, { url: result.secure_url, filename: result.original_filename, tipo: 'excel' })
     }
   )
   result.end(req.file.buffer)

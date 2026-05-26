@@ -265,12 +265,13 @@ model Certificado {
 }
 
 model Simulacro {
-  id          String                @id @default(cuid())
-  nombre      String
-  archivoUrl  String
-  procesado   Boolean               @default(false)
-  createdAt   DateTime              @default(now())
-  estudiantes SimulacroEstudiante[]
+  id           String                @id @default(cuid())
+  nombre       String
+  archivoUrl   String
+  tipoArchivo  String                @default("pdf")
+  procesado    Boolean               @default(false)
+  createdAt    DateTime              @default(now())
+  estudiantes  SimulacroEstudiante[]
 }
 
 model SimulacroEstudiante {
