@@ -153,10 +153,9 @@ export async function analizar(req: Request, res: Response) {
   await prisma.simulacro.update({ where: { id }, data: { procesado: true } })
 
   return ApiResponse.success(res, {
-    totalEncontrados:  resultados.length,
+    totalEncontrados: resultados.length,
     guardados,
     sinMatch,
-    sinMatchNombres:   resultados.filter(r => !r.estudianteId).map(r => r.nombre),
   })
 }
 

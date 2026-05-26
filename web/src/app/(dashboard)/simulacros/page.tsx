@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
 import {
   FileBarChart2, Loader2, TrendingUp, TrendingDown, Minus,
-  ExternalLink, X, Upload, CheckCircle2, Sparkles, AlertCircle, Search,
+  ExternalLink, X, Upload, CheckCircle2, Sparkles, Search,
   ChevronLeft, ChevronRight, Trash2,
 } from 'lucide-react'
 
@@ -67,7 +67,7 @@ export default function SimulacrosPage() {
   const [modalSubir, setModalSubir] = useState(false)
   const [analizando, setAnalizando]   = useState<string | null>(null)
   const [eliminando, setEliminando]   = useState<string | null>(null)
-  const [resultadoAnalisis, setResultadoAnalisis] = useState<{ id: string; guardados: number; sinMatch: number; sinMatchNombres: string[] } | null>(null)
+  const [resultadoAnalisis, setResultadoAnalisis] = useState<{ id: string; guardados: number } | null>(null)
   const [nombre, setNombre] = useState('')
   const [archivo, setArchivo] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'done'>('idle')
@@ -127,7 +127,7 @@ export default function SimulacrosPage() {
     setResultadoAnalisis(null)
     try {
       const res = await fetcher<any>(`/simulacros/${id}/analizar`, { method: 'POST' })
-      setResultadoAnalisis({ id, ...res.data })
+      setResultadoAnalisis({ id, guardados: res.data.guardados })
       queryClient.invalidateQueries({ queryKey: ['simulacros'] })
     } catch (err: any) {
       alert(err?.message ?? 'Error al analizar el simulacro')
