@@ -141,6 +141,8 @@ export default function SignInPage() {
       {/* Contenido — encima de la imagen decorativa */}
       <div className="relative z-10 flex flex-col items-center gap-4 w-full px-0">
 
+      {/* Espaciador para mantener la tarjeta en su posición original */}
+      <div className="h-36" />
 
       {/* Botón instalar PWA */}
       <PWAInstallButton />
