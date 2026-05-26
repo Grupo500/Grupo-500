@@ -8,7 +8,7 @@ import { formatDate, cn } from '@/lib/utils'
 import {
   FileBarChart2, Loader2, TrendingUp, TrendingDown, Minus,
   ExternalLink, X, Upload, CheckCircle2, Sparkles, AlertCircle, Search,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Trash2,
 } from 'lucide-react'
 
 interface SimulacroEstudiante {
@@ -64,7 +64,8 @@ export default function SimulacrosPage() {
     return () => clearTimeout(t)
   }, [busquedaInput])
   const [modalSubir, setModalSubir] = useState(false)
-  const [analizando, setAnalizando] = useState<string | null>(null)   // id del simulacro en análisis
+  const [analizando, setAnalizando]   = useState<string | null>(null)
+  const [eliminando, setEliminando]   = useState<string | null>(null)
   const [resultadoAnalisis, setResultadoAnalisis] = useState<{ id: string; guardados: number; sinMatch: number; sinMatchNombres: string[] } | null>(null)
   const [nombre, setNombre] = useState('')
   const [archivo, setArchivo] = useState<File | null>(null)
@@ -126,6 +127,19 @@ export default function SimulacrosPage() {
       alert(err?.message ?? 'Error al analizar el simulacro')
     } finally {
       setAnalizando(null)
+    }
+  }
+
+  const eliminarSimulacro = async (id: string, nombre: string) => {
+    if (!confirm(`¿Eliminar el simulacro "${nombre}"? Esta acción no se puede deshacer.`)) return
+    setEliminando(id)
+    try {
+      await fetcher(`/simulacros/${id}`, { method: 'DELETE' })
+      queryClient.invalidateQueries({ queryKey: ['simulacros'] })
+    } catch (err: any) {
+      alert(err?.message ?? 'Error al eliminar el simulacro')
+    } finally {
+      setEliminando(null)
     }
   }
 
@@ -224,7 +238,7 @@ export default function SimulacrosPage() {
                       </a>
                       <button
                         onClick={() => analizarSimulacro(s.id)}
-                        disabled={analizando === s.id}
+                        disabled={analizando === s.id || eliminando === s.id}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-primary hover:bg-primary/20 disabled:opacity-50 transition-colors"
                       >
                         {analizando === s.id
@@ -235,6 +249,17 @@ export default function SimulacrosPage() {
                       </button>
                     </>
                   )}
+                  <button
+                    onClick={() => eliminarSimulacro(s.id, s.nombre)}
+                    disabled={eliminando === s.id || analizando === s.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50 transition-colors dark:bg-red-950/20 dark:border-red-800 dark:text-red-400"
+                  >
+                    {eliminando === s.id
+                      ? <Loader2 className="w-3 h-3 animate-spin" />
+                      : <Trash2 className="w-3 h-3" />
+                    }
+                    {eliminando === s.id ? 'Eliminando...' : 'Eliminar'}
+                  </button>
                 </div>
               </div>
 

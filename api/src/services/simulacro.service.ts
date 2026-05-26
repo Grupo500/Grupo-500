@@ -26,7 +26,8 @@
  */
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>
+const pdfParseModule = require('pdf-parse')
+const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = pdfParseModule.default ?? pdfParseModule
 import { prisma } from '../config/prisma'
 
 export interface ResultadoEstudiante {

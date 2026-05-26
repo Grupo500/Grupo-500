@@ -145,3 +145,15 @@ export async function resultados(req: Request, res: Response) {
   })
   return ApiResponse.success(res, resultados)
 }
+
+export async function eliminar(req: Request, res: Response) {
+  const { id } = req.params
+  const simulacro = await prisma.simulacro.findUnique({ where: { id } })
+  if (!simulacro) throw new NotFoundError('Simulacro no encontrado')
+
+  // Eliminar resultados de estudiantes y luego el simulacro
+  await prisma.simulacroEstudiante.deleteMany({ where: { simulacroId: id } })
+  await prisma.simulacro.delete({ where: { id } })
+
+  return ApiResponse.success(res, { message: 'Simulacro eliminado correctamente' })
+}
