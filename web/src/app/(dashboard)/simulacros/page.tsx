@@ -72,6 +72,7 @@ export default function SimulacrosPage() {
   const [archivo, setArchivo] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'done'>('idle')
   const [archivoUrl, setArchivoUrl] = useState('')
+  const [tipoArchivo, setTipoArchivo] = useState<'pdf' | 'excel'>('pdf')
   const [error, setError] = useState('')
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
@@ -112,6 +113,7 @@ export default function SimulacrosPage() {
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error ?? 'Error al subir archivo')
       setArchivoUrl(json.data.url)
+      setTipoArchivo(esExcel ? 'excel' : 'pdf')
       setUploadProgress('done')
     } catch (err: any) {
       setError(err.message ?? 'Error al subir el archivo')
@@ -150,7 +152,7 @@ export default function SimulacrosPage() {
   const registrarMutation = useMutation({
     mutationFn: () => fetcher('/simulacros', {
       method: 'POST',
-      body: JSON.stringify({ nombre, archivoUrl }),
+      body: JSON.stringify({ nombre, archivoUrl, tipoArchivo }),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['simulacros'] })
@@ -166,6 +168,7 @@ export default function SimulacrosPage() {
     setNombre('')
     setArchivo(null)
     setArchivoUrl('')
+    setTipoArchivo('pdf')
     setUploadProgress('idle')
     setError('')
   }
@@ -238,7 +241,7 @@ export default function SimulacrosPage() {
                     <>
                       <a href={s.archivoUrl} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-high border border-outline-variant text-xs text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors">
-                        <ExternalLink className="w-3 h-3" />Ver PDF
+                        <ExternalLink className="w-3 h-3" />Ver archivo
                       </a>
                       <button
                         onClick={() => analizarSimulacro(s.id)}
@@ -249,7 +252,7 @@ export default function SimulacrosPage() {
                           ? <Loader2 className="w-3 h-3 animate-spin" />
                           : <Sparkles className="w-3 h-3" />
                         }
-                        {analizando === s.id ? 'Analizando...' : 'Analizar PDF'}
+                        {analizando === s.id ? 'Analizando...' : 'Analizar'}
                       </button>
                     </>
                   )}

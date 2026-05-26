@@ -33,11 +33,11 @@ export async function listar(req: Request, res: Response) {
 }
 
 export async function subir(req: Request, res: Response) {
-  const { nombre, archivoUrl } = req.body
+  const { nombre, archivoUrl, tipoArchivo } = req.body
   if (!nombre) return res.status(400).json({ error: 'El nombre es requerido' })
 
   const simulacro = await prisma.simulacro.create({
-    data: { nombre, archivoUrl: archivoUrl ?? '' },
+    data: { nombre, archivoUrl: archivoUrl ?? '', tipoArchivo: tipoArchivo ?? 'pdf' },
   })
 
   return ApiResponse.created(res, simulacro)
@@ -78,7 +78,11 @@ export async function analizar(req: Request, res: Response) {
   console.log(`[analizar] Archivo descargado, tamaño: ${buffer.length} bytes`)
 
   // ── 2. Parsear archivo y matchear contra estudiantes en DB ───────────────
-  const esExcel = /\.(xlsx|xls)$/i.test(simulacro.archivoUrl)
+  const contentType = pdfRes.headers.get('content-type') ?? ''
+  const esExcel = simulacro.tipoArchivo === 'excel'
+    || /\.(xlsx|xls)$/i.test(simulacro.archivoUrl)
+    || contentType.includes('spreadsheetml')
+    || contentType.includes('ms-excel')
   let resultadosBrutos
   try {
     resultadosBrutos = esExcel
