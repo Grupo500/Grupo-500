@@ -14,13 +14,16 @@ export function formatCOP(amount: number): string {
   }).format(amount)
 }
 
-export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
+export function formatDate(date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions): string {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '—'
   return new Intl.DateTimeFormat('es-CO', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
     ...options,
-  }).format(new Date(date))
+  }).format(d)
 }
 
 export function formatRelative(date: string | Date): string {
