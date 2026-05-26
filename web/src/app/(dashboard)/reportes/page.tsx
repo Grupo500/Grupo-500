@@ -74,17 +74,40 @@ const COLORES_MKT  = ['#e11d48','#7c3aed','#0ea5e9','#16a34a','#f59e0b','#0d9488
 // Demografía — paleta multi-hue categórica (colores bien separados en el espectro)
 const COLORES_DEMO = ['#2563eb','#dc2626','#16a34a','#9333ea','#f97316','#0891b2','#ca8a04','#be185d','#047857']
 // Colores fijos por departamento (prevalecen sobre el índice del array)
+// Cada departamento tiene un color único — sin repetidos
 const COLOR_DEPT: Record<string, string> = {
-  'Santander':          '#FFCC00', // amarillo pollo
-  'Norte de Santander': '#FFD700', // amarillo pollo vivo
-  'Tolima':             '#92400e', // marrón
-  'Cundinamarca':       '#2563eb', // azul
   'Antioquia':          '#16a34a', // verde
-  'Boyacá':             '#16a34a', // verde
+  'Cundinamarca':       '#2563eb', // azul
   'Valle del Cauca':    '#9333ea', // violeta
-  'Cauca':              '#0891b2', // cyan
   'Atlántico':          '#f97316', // naranja
+  'Santander':          '#FFCC00', // amarillo
   'Bolívar':            '#be185d', // rosa
+  'Tolima':             '#92400e', // marrón
+  'Cauca':              '#0891b2', // cyan
+  'Boyacá':             '#e11d48', // rojo carmesí
+  'Norte de Santander': '#0d9488', // verde azulado (teal)
+  'Nariño':             '#7c3aed', // púrpura
+  'Córdoba':            '#ea580c', // naranja quemado
+  'Huila':              '#65a30d', // verde lima
+  'Meta':               '#0284c7', // azul cielo
+  'Risaralda':          '#d97706', // ámbar
+  'Caldas':             '#dc2626', // rojo
+  'Quindío':            '#059669', // esmeralda
+  'Magdalena':          '#7e22ce', // uva
+  'Cesar':              '#b45309', // café
+  'Sucre':              '#0369a1', // azul marino
+  'Chocó':              '#15803d', // verde oscuro
+  'La Guajira':         '#c2410c', // terracota
+  'Putumayo':           '#4f46e5', // índigo
+  'Caquetá':            '#a21caf', // fucsia
+  'Arauca':             '#84cc16', // amarillo verde
+  'Vichada':            '#06b6d4', // turquesa
+  'Guainía':            '#f43f5e', // coral
+  'Vaupés':             '#8b5cf6', // lavanda
+  'Amazonas':           '#10b981', // menta
+  'San Andrés':         '#fb923c', // melocotón
+  'Casanare':           '#6366f1', // periwinkle
+  'Guaviare':           '#84cc16', // chartreuse
 }
 function colorDept(nombre: string, idx: number): string {
   return COLOR_DEPT[nombre] ?? COLORES_DEMO[idx % COLORES_DEMO.length]
