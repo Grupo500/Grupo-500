@@ -132,7 +132,7 @@ export default function SignInPage() {
         alt=""
         width={420}
         height={560}
-        className="absolute bottom-[40%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
+        className="absolute bottom-[45%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
 
         priority
         aria-hidden
@@ -144,12 +144,18 @@ export default function SignInPage() {
       {/* Espaciador para mantener la tarjeta en su posición original */}
       <div className="h-36" />
 
+      {/* Título */}
+      <div className="text-center">
+        <p className={`${poppins.className} text-xl font-bold text-white tracking-tight`}>Grupo 500</p>
+        <p className="text-sm text-white/80 font-medium">Pre-ICFES</p>
+      </div>
+
       {/* Botón instalar PWA */}
       <PWAInstallButton />
 
       {/* Card de login */}
       <div className="w-full max-w-sm">
-        <p className="text-[13px] font-semibold text-on-surface-variant mb-2 text-center">
+        <p className="text-[13px] font-semibold text-white mb-2 text-center">
           Inicia sesión con:
         </p>
 
