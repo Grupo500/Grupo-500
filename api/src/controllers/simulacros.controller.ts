@@ -84,11 +84,27 @@ export async function analizar(req: Request, res: Response) {
     || contentType.includes('spreadsheetml')
     || contentType.includes('ms-excel')
   let resultadosBrutos
+  let modoReal = esExcel ? 'Excel' : 'PDF'
   try {
-    resultadosBrutos = esExcel
-      ? extraerResultadosDeExcel(buffer)
-      : await extraerResultadosDePDF(buffer)
-    console.log(`[analizar] Resultados extraídos (${esExcel ? 'Excel' : 'PDF'}): ${resultadosBrutos.length}`)
+    if (esExcel) {
+      resultadosBrutos = extraerResultadosDeExcel(buffer)
+    } else {
+      try {
+        resultadosBrutos = await extraerResultadosDePDF(buffer)
+      } catch (pdfErr: any) {
+        // Si pdf2json falla con error de cabecera, el archivo es probablemente Excel
+        if (/XRef|Invalid|stream header/i.test(String(pdfErr))) {
+          console.log('[analizar] PDF falló con error de cabecera, reintentando como Excel...')
+          resultadosBrutos = extraerResultadosDeExcel(buffer)
+          modoReal = 'Excel (auto-detectado)'
+          // Actualizar tipoArchivo en DB para futuros análisis
+          await prisma.simulacro.update({ where: { id }, data: { tipoArchivo: 'excel' } })
+        } else {
+          throw pdfErr
+        }
+      }
+    }
+    console.log(`[analizar] Resultados extraídos (${modoReal}): ${resultadosBrutos.length}`)
   } catch (err) {
     console.error('[analizar] Error parseando archivo:', err)
     return res.status(500).json({ error: 'Error al procesar el archivo', detalle: String(err) })
