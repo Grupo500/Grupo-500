@@ -25,9 +25,16 @@
  *   ALTO  ≥ 350
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParseModule = require('pdf-parse')
-const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = pdfParseModule.default ?? pdfParseModule
+async function parsePdf(buffer: Buffer): Promise<{ text: string }> {
+  // Dynamic import para compatibilidad CJS/ESM en Railway
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod = require('pdf-parse')
+  const fn: (b: Buffer) => Promise<{ text: string }> =
+    typeof mod === 'function' ? mod :
+    typeof mod.default === 'function' ? mod.default :
+    Object.values(mod).find((v): v is (b: Buffer) => Promise<{ text: string }> => typeof v === 'function')!
+  return fn(buffer)
+}
 import { prisma } from '../config/prisma'
 
 export interface ResultadoEstudiante {
@@ -194,7 +201,7 @@ function parsearFormatoTabla(texto: string): ResultadoEstudiante[] {
 
 // ── Extractor principal ────────────────────────────────────────────────────
 export async function extraerResultadosDePDF(buffer: Buffer): Promise<ResultadoEstudiante[]> {
-  const { text } = await pdfParse(buffer)
+  const { text } = await parsePdf(buffer)
 
   let resultados = parsearFormatoBloque(text)
   if (resultados.length === 0) resultados = parsearFormatoTabla(text)
