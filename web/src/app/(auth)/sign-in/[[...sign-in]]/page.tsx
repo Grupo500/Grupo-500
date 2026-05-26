@@ -132,10 +132,13 @@ export default function SignInPage() {
         alt=""
         width={420}
         height={560}
-        className="absolute bottom-20 left-1/2 -translate-x-1/2 w-96 sm:w-[32rem] object-contain pointer-events-none select-none"
+        className="absolute bottom-40 left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
         priority
         aria-hidden
       />
+
+      {/* Contenido — encima de la imagen decorativa */}
+      <div className="relative z-10 flex flex-col items-center gap-4 w-full px-0">
 
       {/* Logo */}
       <div className="flex flex-col items-center gap-2">
@@ -271,9 +274,10 @@ export default function SignInPage() {
 
         </div>
       </div>
+      </div>{/* fin z-10 wrapper */}
 
       {/* Créditos */}
-      <p className="text-[11px] text-white/60 text-center">
+      <p className="text-[11px] text-white/60 text-center z-10 relative">
         Desarrollado por{' '}
         <span className="text-white/80 font-semibold">NexCode97</span>
       </p>
