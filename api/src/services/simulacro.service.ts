@@ -26,14 +26,23 @@
  */
 
 async function parsePdf(buffer: Buffer): Promise<{ text: string }> {
-  // Dynamic import para compatibilidad CJS/ESM en Railway
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('pdf-parse')
-  const fn: (b: Buffer) => Promise<{ text: string }> =
-    typeof mod === 'function' ? mod :
-    typeof mod.default === 'function' ? mod.default :
-    Object.values(mod).find((v): v is (b: Buffer) => Promise<{ text: string }> => typeof v === 'function')!
-  return fn(buffer)
+  const PDFParser = require('pdf2json')
+  return new Promise((resolve, reject) => {
+    const parser = new PDFParser()
+    parser.on('pdfParser_dataError', (err: any) => reject(new Error(err?.parserError ?? 'Error parsing PDF')))
+    parser.on('pdfParser_dataReady', (data: any) => {
+      // Extraer texto plano de todas las páginas
+      const text = (data?.Pages ?? [])
+        .flatMap((page: any) => page?.Texts ?? [])
+        .map((t: any) => decodeURIComponent(t?.R?.[0]?.T ?? ''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+      resolve({ text })
+    })
+    parser.parseBuffer(buffer)
+  })
 }
 import { prisma } from '../config/prisma'
 
