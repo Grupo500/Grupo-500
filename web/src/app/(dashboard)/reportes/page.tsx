@@ -79,7 +79,7 @@ const COLOR_DEPT: Record<string, string> = {
   'Norte de Santander': '#FFD700', // amarillo pollo vivo
   'Tolima':             '#92400e', // marrón
   'Cundinamarca':       '#2563eb', // azul
-  'Antioquia':          '#dc2626', // rojo
+  'Antioquia':          '#16a34a', // verde
   'Boyacá':             '#16a34a', // verde
   'Valle del Cauca':    '#9333ea', // violeta
   'Cauca':              '#0891b2', // cyan
