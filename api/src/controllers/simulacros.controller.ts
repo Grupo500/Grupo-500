@@ -56,17 +56,18 @@ export async function analizar(req: Request, res: Response) {
   }
 
   // ── 1. Descargar PDF desde Cloudinary ────────────────────────────────────
-  // Validar que la URL sea de Cloudinary (prevención SSRF)
   const parsedUrl = new URL(simulacro.archivoUrl)
   const allowedHosts = ['res.cloudinary.com', 'api.cloudinary.com']
   if (!allowedHosts.some(h => parsedUrl.hostname === h || parsedUrl.hostname.endsWith(`.${h}`))) {
     return res.status(400).json({ error: 'URL de archivo no permitida' })
   }
 
+  console.log(`[analizar] Descargando PDF: ${simulacro.archivoUrl}`)
   const pdfRes = await fetch(simulacro.archivoUrl, {
-    signal: AbortSignal.timeout(15_000),   // 15 s máximo
+    signal: AbortSignal.timeout(15_000),
   })
   if (!pdfRes.ok) {
+    console.error(`[analizar] Error descargando PDF: ${pdfRes.status} ${pdfRes.statusText}`)
     return res.status(502).json({ error: 'No se pudo descargar el PDF desde Cloudinary' })
   }
   const contentLength = Number(pdfRes.headers.get('content-length') ?? 0)
@@ -74,9 +75,18 @@ export async function analizar(req: Request, res: Response) {
     return res.status(413).json({ error: 'El archivo PDF supera el límite de 50 MB' })
   }
   const buffer = Buffer.from(await pdfRes.arrayBuffer())
+  console.log(`[analizar] PDF descargado, tamaño: ${buffer.length} bytes`)
 
   // ── 2. Parsear PDF y matchear contra estudiantes en DB ───────────────────
-  const resultadosBrutos = await extraerResultadosDePDF(buffer)
+  let resultadosBrutos
+  try {
+    resultadosBrutos = await extraerResultadosDePDF(buffer)
+    console.log(`[analizar] Resultados extraídos del PDF: ${resultadosBrutos.length}`)
+  } catch (err) {
+    console.error('[analizar] Error parseando PDF:', err)
+    return res.status(500).json({ error: 'Error al procesar el PDF', detalle: String(err) })
+  }
+
   if (resultadosBrutos.length === 0) {
     return res.status(422).json({
       error: 'No se encontraron resultados en el PDF. Verifica que el formato sea compatible.',
