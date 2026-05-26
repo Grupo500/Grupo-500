@@ -132,16 +132,16 @@ export default function SignInPage() {
         alt=""
         width={420}
         height={560}
-        className="absolute bottom-[45%] md:bottom-[43%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
+        className="absolute bottom-[45%] md:bottom-[41%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
         priority
         aria-hidden
       />
 
       {/* Contenido encima */}
-      <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-sm px-4">
+      <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-sm px-4 my-auto">
 
-      {/* Espaciador */}
-      <div className="h-48 md:h-28" />
+      {/* Espaciador superior para que la imagen quede encima */}
+      <div className="h-48 md:h-36" />
 
       {/* Título */}
       <div className="text-center">
