@@ -271,12 +271,6 @@ export default function SimulacrosPage() {
                   <div className="text-xs text-on-surface-variant">
                     <span className="text-secondary font-semibold">Análisis completado. </span>
                     {resultadoAnalisis.guardados} resultados guardados.
-                    {resultadoAnalisis.sinMatch > 0 && (
-                      <span className="block mt-1 text-yellow-500 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3 inline" />
-                        {resultadoAnalisis.sinMatch} sin coincidencia en BD: {resultadoAnalisis.sinMatchNombres.join(', ')}
-                      </span>
-                    )}
                   </div>
                 </div>
               )}
