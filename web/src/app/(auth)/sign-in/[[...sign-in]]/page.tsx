@@ -132,7 +132,7 @@ export default function SignInPage() {
         alt=""
         width={420}
         height={560}
-        className="absolute bottom-40 left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
+        className="absolute bottom-[70%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
         priority
         aria-hidden
       />
