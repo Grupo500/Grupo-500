@@ -212,6 +212,9 @@ function parsearFormatoTabla(texto: string): ResultadoEstudiante[] {
 export async function extraerResultadosDePDF(buffer: Buffer): Promise<ResultadoEstudiante[]> {
   const { text } = await parsePdf(buffer)
 
+  // LOG TEMPORAL — ver cómo viene el texto del PDF
+  console.log('[PDF_TEXT_SAMPLE]', text.slice(0, 1000))
+
   let resultados = parsearFormatoBloque(text)
   if (resultados.length === 0) resultados = parsearFormatoTabla(text)
 
