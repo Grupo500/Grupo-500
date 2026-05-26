@@ -103,7 +103,8 @@ export default function SimulacrosPage() {
       const formData = new FormData()
       formData.append('file', file)
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/pdf`, {
+      const endpoint = esExcel ? 'excel' : 'pdf'
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/${endpoint}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
