@@ -15,7 +15,8 @@ interface SimulacroEstudiante {
   id: string
   puntajeTotal: number
   porcentajeAciertos: number
-  estado: 'BAJO' | 'MEDIO' | 'ALTO'
+  rendimiento: 'BAJO' | 'MEDIO' | 'ALTO'
+  estado?: 'BAJO' | 'MEDIO' | 'ALTO'
   areasDebiles: string[]
   requiereIntensivo: boolean
   fechaAnalisis: string
@@ -284,7 +285,7 @@ export default function SimulacrosPage() {
                 {/* Mobile: tarjetas */}
                 <div className="md:hidden divide-y divide-outline-variant/30">
                   {s.estudiantes.map(r => {
-                    const { label, color, icon: Icon } = RENDIMIENTO[r.estado]
+                    const { label, color, icon: Icon } = RENDIMIENTO[r.rendimiento ?? r.estado ?? 'MEDIO']
                     return (
                       <div key={r.id} className="px-4 py-3 space-y-2">
                         <div className="flex items-center justify-between gap-2">
@@ -325,7 +326,7 @@ export default function SimulacrosPage() {
                   </thead>
                   <tbody className="divide-y divide-outline-variant/30">
                     {s.estudiantes.map(r => {
-                      const { label, color, icon: Icon } = RENDIMIENTO[r.estado]
+                      const { label, color, icon: Icon } = RENDIMIENTO[r.rendimiento ?? r.estado ?? 'MEDIO']
                       return (
                         <tr key={r.id} className="hover:bg-surface-low/30 transition-colors">
                           <td className="px-4 py-3 text-sm text-on-surface">{r.estudiante.nombre}</td>
