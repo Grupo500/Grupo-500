@@ -123,9 +123,20 @@ export default function SignInPage() {
 
   return (
     <div
-      className="h-dvh w-full overflow-y-auto overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4"
+      className="relative h-dvh w-full overflow-y-auto overflow-x-hidden flex flex-col items-center justify-center gap-4 px-4 py-4"
       style={{ background: '#21b9f7' }}
     >
+      {/* Imagen decorativa equipo */}
+      <Image
+        src="/equipo-login.png"
+        alt=""
+        width={420}
+        height={560}
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none opacity-20"
+        priority
+        aria-hidden
+      />
+
       {/* Logo */}
       <div className="flex flex-col items-center gap-2">
         <Image
