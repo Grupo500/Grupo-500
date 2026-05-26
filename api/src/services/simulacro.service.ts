@@ -49,13 +49,14 @@ import { prisma } from '../config/prisma'
 export interface ResultadoEstudiante {
   nombre: string
   documento?: string
-  areas: Record<string, number>    // Ej: { 'Lectura Crítica': 65, 'Matemáticas': 58 }
+  telefono?: string
+  areas: Record<string, number>
   puntajeTotal: number
-  porcentajeAciertos: number       // puntajeTotal / 500 * 100
+  porcentajeAciertos: number
   areasDebiles: string[]
   estado: 'BAJO' | 'MEDIO' | 'ALTO'
   requiereIntensivo: boolean
-  estudianteId?: string            // match en DB
+  estudianteId?: string
 }
 
 // ── Áreas del ICFES y sus variantes de nombre ──────────────────────────────
@@ -208,14 +209,86 @@ function parsearFormatoTabla(texto: string): ResultadoEstudiante[] {
   return resultados
 }
 
+// ── Parser formato Grupo 500 (columnas separadas por espacios) ─────────────
+// Formato: NOMBRE | CELULAR | GRUPO WPP | PUNTAJE ENTREGADO | PUNTAJE GLOBAL | PUNTAJE MATEMÁTICA
+function parsearFormatoGrupo500(texto: string): ResultadoEstudiante[] {
+  // Solo aplica si el texto contiene las columnas características
+  if (!/puntaje\s+global/i.test(texto)) return []
+
+  const resultados: ResultadoEstudiante[] = []
+
+  // Los teléfonos son anclas confiables: +57XXXXXXXXXX o 57XXXXXXXXXX o 3XXXXXXXXX
+  const phoneRegex = /(\+57\d{9,10}|\+570{9,10}|\d{10})/g
+
+  // Obtener posición del primer teléfono para saber dónde empieza la data
+  const headerMatch = /puntaje\s+matem[aá]tica/i.exec(texto)
+  if (!headerMatch) return []
+  const dataText = texto.slice(headerMatch.index + headerMatch[0].length).trim()
+
+  // Encontrar todos los teléfonos y sus posiciones en dataText
+  const phones: { phone: string; index: number }[] = []
+  let m: RegExpExecArray | null
+  const re = new RegExp(phoneRegex.source, 'g')
+  while ((m = re.exec(dataText)) !== null) {
+    phones.push({ phone: m[0], index: m.index })
+  }
+
+  for (let i = 0; i < phones.length; i++) {
+    const { phone, index } = phones[i]
+
+    // Nombre = texto desde el final del teléfono anterior (o inicio) hasta este teléfono
+    const prevEnd = i === 0 ? 0 : phones[i - 1].index + phones[i - 1].phone.length
+    const nombre = dataText.slice(prevEnd, index).trim()
+    if (!nombre || nombre.length < 2) continue
+
+    // Texto después del teléfono hasta el siguiente teléfono (o fin)
+    const nextIndex = i + 1 < phones.length ? phones[i + 1].index : dataText.length
+    const afterPhone = dataText.slice(index + phone.length, nextIndex).trim()
+
+    // afterPhone: "Grupo 500 - CAL A.2 2024 SÍ 429 80"
+    // Extraer SÍ/NO, y los dos últimos números
+    const siNo = /\b(SÍ|SI|NO)\b/i.exec(afterPhone)
+    if (!siNo) continue
+
+    const afterSiNo = afterPhone.slice(siNo.index + siNo[0].length).trim()
+    const nums = afterSiNo.match(/\d+(\.\d+)?/g)
+    if (!nums || nums.length < 2) continue
+
+    const puntajeGlobal = parseFloat(nums[0])
+    const puntajeMatematica = parseFloat(nums[1])
+
+    if (isNaN(puntajeGlobal)) continue
+
+    const areas: Record<string, number> = {
+      'Global':      puntajeGlobal,
+      'Matemáticas': puntajeMatematica,
+    }
+
+    const areasDebiles = puntajeMatematica < 50 ? ['Matemáticas'] : []
+    const estado = clasificar(puntajeGlobal)
+
+    resultados.push({
+      nombre: nombre.replace(/\s+/g, ' ').trim(),
+      documento: '',
+      telefono: phone.replace(/^\+/, '').replace(/^57/, ''),
+      areas,
+      puntajeTotal:       puntajeGlobal,
+      porcentajeAciertos: Math.round((puntajeGlobal / 500) * 100),
+      areasDebiles,
+      estado,
+      requiereIntensivo: estado === 'BAJO',
+    })
+  }
+
+  return resultados
+}
+
 // ── Extractor principal ────────────────────────────────────────────────────
 export async function extraerResultadosDePDF(buffer: Buffer): Promise<ResultadoEstudiante[]> {
   const { text } = await parsePdf(buffer)
 
-  // LOG TEMPORAL — ver cómo viene el texto del PDF
-  console.log('[PDF_TEXT_SAMPLE]', text.slice(0, 1000))
-
-  let resultados = parsearFormatoBloque(text)
+  let resultados = parsearFormatoGrupo500(text)
+  if (resultados.length === 0) resultados = parsearFormatoBloque(text)
   if (resultados.length === 0) resultados = parsearFormatoTabla(text)
 
   return resultados
@@ -239,20 +312,27 @@ export async function matchearConDB(
   resultados: ResultadoEstudiante[],
 ): Promise<ResultadoEstudiante[]> {
   const estudiantes = await prisma.estudiante.findMany({
-    select: { id: true, nombre: true, documento: true },
+    select: { id: true, nombre: true, documento: true, telefono: true },
   })
 
   return resultados.map(r => {
-    // 1. Match exacto por número de documento (más confiable)
+    // 1. Match por documento
     if (r.documento) {
       const docLimpio = r.documento.replace(/\D/g, '')
-      const porDoc = estudiantes.find(
-        e => e.documento && e.documento.replace(/\D/g, '') === docLimpio,
-      )
-      if (porDoc) return { ...r, estudianteId: porDoc.id }
+      if (docLimpio) {
+        const porDoc = estudiantes.find(e => e.documento && e.documento.replace(/\D/g, '') === docLimpio)
+        if (porDoc) return { ...r, estudianteId: porDoc.id }
+      }
     }
 
-    // 2. Fallback: similitud de nombre (umbral 0.7)
+    // 2. Match por teléfono
+    if (r.telefono) {
+      const telLimpio = r.telefono.replace(/\D/g, '').slice(-10)
+      const porTel = estudiantes.find(e => e.telefono && e.telefono.replace(/\D/g, '').slice(-10) === telLimpio)
+      if (porTel) return { ...r, estudianteId: porTel.id }
+    }
+
+    // 3. Fallback: similitud de nombre (umbral 0.7)
     let mejor: { id: string; score: number } | null = null
     for (const e of estudiantes) {
       const score = similitud(r.nombre, e.nombre)
