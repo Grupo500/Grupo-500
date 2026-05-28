@@ -188,7 +188,7 @@ router.post('/crear-formulario', authenticate, requireRole('ADMIN'), asyncHandle
 }))
 
 // ── Formulario activo ─────────────────────────────────────────────────────────
-router.get('/formulario-activo', authenticate, asyncHandler(async (_req, res) => {
+router.get('/formulario-activo', asyncHandler(async (_req, res) => {
   const [cfgUrl, cfgGuid, cfgPortal] = await Promise.all([
     prisma.configApp.findUnique({ where: { clave: 'hubspot_form_url'  } }),
     prisma.configApp.findUnique({ where: { clave: 'hubspot_form_guid' } }),
