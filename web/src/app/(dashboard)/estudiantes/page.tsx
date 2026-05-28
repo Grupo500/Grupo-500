@@ -12,7 +12,7 @@ import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
   CheckCircle, Clock, ChevronRight as Arrow, Link2, Copy, Check, ExternalLink,
-  Upload, FileSpreadsheet, X, AlertCircle, Download,
+  Upload, FileSpreadsheet, X, AlertCircle, Download, CheckSquare, Square,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -200,6 +200,11 @@ export default function EstudiantesPage() {
   const [importFile, setImportFile]           = useState<File | null>(null)
   const [importResult, setImportResult]       = useState<any | null>(null)
 
+  // ── Selección múltiple ──────────────────────────────────────────────────────
+  const [modoSeleccion,    setModoSeleccion]    = useState(false)
+  const [seleccionados,    setSeleccionados]    = useState<Set<string>>(new Set())
+  const [confirmBulkElim,  setConfirmBulkElim]  = useState(false)
+
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getClientToken()
     return createClientFetcher(token ?? '')<T>(path, opts)
@@ -301,6 +306,21 @@ export default function EstudiantesPage() {
       setConfirmEliminar(null)
     },
     onError: () => setConfirmEliminar(null),
+  })
+
+  const eliminarBulkMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map(id => fetcher(`/estudiantes/${id}`, { method: 'DELETE' })))
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
+      queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
+      setSeleccionados(new Set())
+      setModoSeleccion(false)
+      setConfirmBulkElim(false)
+    },
+    onError: () => setConfirmBulkElim(false),
   })
 
   const crearTypeform = useMutation({
@@ -451,6 +471,18 @@ export default function EstudiantesPage() {
                 <span className="hidden sm:inline">Importar</span>
               </button>
             )}
+            <button
+              onClick={() => { setModoSeleccion(m => !m); setSeleccionados(new Set()) }}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer border',
+                modoSeleccion
+                  ? 'bg-primary/10 border-primary/40 text-primary'
+                  : 'bg-surface-high border-outline-variant text-on-surface hover:bg-surface-lowest',
+              )}
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">{modoSeleccion ? 'Cancelar' : 'Seleccionar'}</span>
+            </button>
             <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setCuotasDetalle([]); setFormError('') }}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
               <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo</span>
@@ -510,19 +542,51 @@ export default function EstudiantesPage() {
             const badge = BADGE[fin.estado]
             const curso = e.cursos?.[0]?.curso
             const tieneDeuda = fin.totalGeneral > 0
+            const estaSeleccionado = seleccionados.has(e.id)
+
+            const toggleSeleccion = () => {
+              setSeleccionados(prev => {
+                const next = new Set(prev)
+                next.has(e.id) ? next.delete(e.id) : next.add(e.id)
+                return next
+              })
+            }
+
+            const CardWrapper = modoSeleccion ? 'div' : Link
+            const wrapperProps = modoSeleccion
+              ? { onClick: toggleSeleccion }
+              : { href: `/estudiantes/${e.id}` }
 
             return (
-              <Link key={e.id}
-                href={`/estudiantes/${e.id}`}
-                className="group rounded-2xl border border-outline-variant bg-surface-lowest p-4 hover:border-primary/40 hover:shadow-md active:scale-[0.98] active:border-primary/60 active:bg-surface-high transition-all duration-200 cursor-pointer flex flex-col gap-3 select-none">
+              <CardWrapper key={e.id}
+                {...(wrapperProps as any)}
+                className={cn(
+                  'group rounded-2xl border bg-surface-lowest p-4 transition-all duration-200 cursor-pointer flex flex-col gap-3 select-none',
+                  modoSeleccion && estaSeleccionado
+                    ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30'
+                    : modoSeleccion
+                    ? 'border-outline-variant hover:border-primary/30 hover:bg-surface-high'
+                    : 'border-outline-variant hover:border-primary/40 hover:shadow-md active:scale-[0.98] active:border-primary/60 active:bg-surface-high',
+                )}>
 
                 {/* Header: avatar + nombre + badge */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
+                    {/* Checkbox o avatar */}
+                    {modoSeleccion ? (
+                      <div className={cn('w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors',
+                        estaSeleccionado ? 'bg-primary text-white' : 'bg-surface-high text-on-surface-variant border-2 border-outline-variant')}>
+                        {estaSeleccionado
+                          ? <Check className="w-5 h-5" />
+                          : <Square className="w-4 h-4 opacity-40" />
+                        }
+                      </div>
+                    ) : (
                     <div className={cn('w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold',
                       fin.estado === 'mora' ? 'bg-[#dc2626]/15 text-[#dc2626]' : 'bg-primary/10 text-primary')}>
                       {e.nombre[0]?.toUpperCase()}
                     </div>
+                    )}
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-on-surface truncate">{e.nombre}</p>
                       <div className="flex items-center gap-1 mt-0.5">
@@ -588,10 +652,12 @@ export default function EstudiantesPage() {
                 )}
 
                 {/* Arrow indicator */}
-                <div className="flex justify-end -mt-1">
-                  <Arrow className="w-3.5 h-3.5 text-on-surface-variant opacity-0 group-hover:opacity-50 transition-opacity" />
-                </div>
-              </Link>
+                {!modoSeleccion && (
+                  <div className="flex justify-end -mt-1">
+                    <Arrow className="w-3.5 h-3.5 text-on-surface-variant opacity-0 group-hover:opacity-50 transition-opacity" />
+                  </div>
+                )}
+              </CardWrapper>
             )
           })}
         </div>
@@ -1001,6 +1067,82 @@ export default function EstudiantesPage() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Barra flotante de selección múltiple ── */}
+      {modoSeleccion && (
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
+          <div className="bg-[var(--surface-lowest)] border border-outline-variant rounded-2xl shadow-float px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              {/* Seleccionar todo / ninguno */}
+              <button
+                onClick={() => {
+                  const todosIds = estudiantesFiltrados.map(e => e.id)
+                  const todosSeleccionados = todosIds.every(id => seleccionados.has(id))
+                  setSeleccionados(todosSeleccionados ? new Set() : new Set(todosIds))
+                }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-high transition-colors cursor-pointer"
+                title="Seleccionar / deseleccionar todos"
+              >
+                {estudiantesFiltrados.length > 0 && estudiantesFiltrados.every(e => seleccionados.has(e.id))
+                  ? <CheckSquare className="w-4 h-4 text-primary" />
+                  : <Square className="w-4 h-4 text-on-surface-variant" />
+                }
+              </button>
+              <div>
+                <p className="text-sm font-semibold text-on-surface">
+                  {seleccionados.size === 0 ? 'Selecciona estudiantes' : `${seleccionados.size} seleccionado${seleccionados.size !== 1 ? 's' : ''}`}
+                </p>
+                {seleccionados.size > 0 && (
+                  <p className="text-[10px] text-on-surface-variant">Toca las tarjetas para seleccionar</p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {seleccionados.size > 0 && (
+                <button
+                  onClick={() => setConfirmBulkElim(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--error)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Eliminar
+                </button>
+              )}
+              <button
+                onClick={() => { setModoSeleccion(false); setSeleccionados(new Set()) }}
+                className="p-1.5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm eliminar en lote */}
+      {confirmBulkElim && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmBulkElim(false)} />
+          <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--error-container)' }}>
+                <Trash2 className="w-5 h-5" style={{ color: 'var(--error)' }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-on-surface">¿Eliminar {seleccionados.size} estudiante{seleccionados.size !== 1 ? 's' : ''}?</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">Esta acción no se puede deshacer.</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setConfirmBulkElim(false)} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">Cancelar</button>
+              <button onClick={() => eliminarBulkMutation.mutate(Array.from(seleccionados))} disabled={eliminarBulkMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--error)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer">
+                {eliminarBulkMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Eliminar
+              </button>
             </div>
           </div>
         </div>
