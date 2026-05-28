@@ -523,8 +523,8 @@ export default function EstudiantesPage() {
           <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
             {([
               { val: 'todos',   label: 'Todos' },
-              { val: 'nuevo',   label: '🆕 Nuevo' },
-              { val: 'antiguo', label: '🔄 Antiguo' },
+              { val: 'nuevo',   label: 'Nuevo' },
+              { val: 'antiguo', label: 'Antiguo' },
             ] as const).map(({ val, label }) => (
               <button key={val} onClick={() => setFiltroTipo(val)}
                 className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer',
