@@ -179,6 +179,7 @@ export default function EstudiantesPage() {
   const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
+  const [filtroTipo,   setFiltroTipo]   = useState<'todos' | 'nuevo' | 'antiguo'>('todos')
 
   useEffect(() => {
     const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
@@ -417,10 +418,14 @@ export default function EstudiantesPage() {
   const totalPages  = data?.pagination?.totalPages ?? 1
   const totalCount  = data?.pagination?.total ?? 0
 
-  // Filtro cliente por estado financiero
-  const estudiantesFiltrados = filtroEstado === 'todos'
-    ? estudiantes
-    : estudiantes.filter(e => calcFinanciero(e).estado === filtroEstado)
+  // Filtros cliente
+  const estudiantesFiltrados = estudiantes
+    .filter(e => filtroEstado === 'todos' || calcFinanciero(e).estado === filtroEstado)
+    .filter(e => {
+      if (filtroTipo === 'nuevo')   return (e.cursos?.length ?? 0) <= 1
+      if (filtroTipo === 'antiguo') return (e.cursos?.length ?? 0) > 1
+      return true
+    })
 
   const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
   const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
@@ -492,21 +497,48 @@ export default function EstudiantesPage() {
       />
 
       {/* ── Filtros ── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-          <input type="text" placeholder="Buscar por nombre..." value={busquedaInput}
-            onChange={e => setBusquedaInput(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-surface-lowest border border-outline-variant rounded-xl text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50" />
+      <div className="flex flex-col gap-2.5">
+        {/* Búsqueda + filtro estado */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <input type="text" placeholder="Buscar por nombre..." value={busquedaInput}
+              onChange={e => setBusquedaInput(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-surface-lowest border border-outline-variant rounded-xl text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50" />
+          </div>
+          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
+            {(['todos', 'mora', 'pendiente', 'al-dia'] as const).map(f => (
+              <button key={f} onClick={() => setFiltroEstado(f)}
+                className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer',
+                  filtroEstado === f ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
+                {f === 'todos' ? 'Todos' : f === 'mora' ? 'En mora' : f === 'pendiente' ? 'Pendiente' : 'Al día'}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
-          {(['todos', 'mora', 'pendiente', 'al-dia'] as const).map(f => (
-            <button key={f} onClick={() => setFiltroEstado(f)}
-              className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer',
-                filtroEstado === f ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
-              {f === 'todos' ? 'Todos' : f === 'mora' ? 'En mora' : f === 'pendiente' ? 'Pendiente' : 'Al día'}
+
+        {/* Filtro tipo: nuevo / antiguo */}
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-on-surface-variant font-medium">Tipo:</span>
+          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
+            {([
+              { val: 'todos',   label: 'Todos' },
+              { val: 'nuevo',   label: '🆕 Nuevo' },
+              { val: 'antiguo', label: '🔄 Antiguo' },
+            ] as const).map(({ val, label }) => (
+              <button key={val} onClick={() => setFiltroTipo(val)}
+                className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer',
+                  filtroTipo === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {filtroTipo !== 'todos' && (
+            <button onClick={() => setFiltroTipo('todos')}
+              className="text-[11px] text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer underline">
+              Limpiar
             </button>
-          ))}
+          )}
         </div>
       </div>
 
