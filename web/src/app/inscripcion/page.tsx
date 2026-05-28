@@ -65,6 +65,14 @@ export default function InscripcionPage() {
       portalId: portal,
       formId:   guid,
       target:   '#hubspot-form-container',
+      onFormSubmitted: () => {
+        // Notificar al backend para procesar la inscripción en tiempo real
+        fetch(`${API}/api/hubspot/procesar-respuestas`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer public' },
+          body:    JSON.stringify({ formGuid: guid }),
+        }).catch(() => {/* silencioso — HubSpot ya guardó los datos */})
+      },
     })
   }
 
