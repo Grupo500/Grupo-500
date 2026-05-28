@@ -226,9 +226,9 @@ export default function EstudiantesPage() {
 
   // ── Formulario Typeform activo ─────────────────────────────────────────────
   const { data: formActivoData, refetch: refetchFormActivo } = useQuery({
-    queryKey: ['typeform-activo'],
-    queryFn:  () => fetcher<{ data: { url: string | null } }>('/typeform/formulario-activo'),
-    staleTime: 5 * 60_000, // 5 min — la URL del form no cambia seguido
+    queryKey: ['hubspot-activo'],
+    queryFn:  () => fetcher<{ data: { url: string | null; formGuid: string | null } }>('/hubspot/formulario-activo'),
+    staleTime: 5 * 60_000,
   })
   const formActivoUrl = formActivoData?.data?.url ?? null
   const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
@@ -325,36 +325,30 @@ export default function EstudiantesPage() {
   })
 
   const crearTypeform = useMutation({
-    mutationFn: () => fetcher<{ data: { url: string } }>('/typeform/crear-formulario', { method: 'POST' }),
+    mutationFn: () => fetcher<{ data: { url: string } }>('/hubspot/crear-formulario', { method: 'POST' }),
     onSuccess: (res: any) => {
       const url = res.data?.url ?? res.url
       setTypeformUrl(url)
       setModalTypeform(true)
-      refetchFormActivo()  // actualiza el estado del botón inmediatamente
+      refetchFormActivo()
     },
-    onError: () => alert('Error al crear el formulario. Intenta de nuevo.'),
+    onError: () => alert('Error al crear el formulario en HubSpot. Intenta de nuevo.'),
   })
 
   const resetFormActivo = useMutation({
-    mutationFn: () => fetcher('/typeform/formulario-activo', { method: 'DELETE' }),
+    mutationFn: () => fetcher('/hubspot/formulario-activo', { method: 'DELETE' }),
     onSuccess: () => { setConfirmarReset(false); refetchFormActivo() },
     onError:   () => alert('Error al eliminar el formulario activo.'),
   })
 
-  const activarWebhook = useMutation({
-    mutationFn: () => fetcher<{ data: { mensaje: string } }>('/typeform/webhook/activar', { method: 'POST' }),
-    onSuccess: (data) => alert(`✅ ${data?.data?.mensaje ?? 'Webhook activado correctamente'}`),
-    onError:   () => alert('❌ Error al activar el webhook. Revisa los logs de Railway.'),
-  })
-
   const procesarRespuestas = useMutation({
-    mutationFn: () => fetcher<{ data: { total: number; procesados: number; omitidos: number } }>('/typeform/procesar-respuestas', { method: 'POST' }),
+    mutationFn: () => fetcher<{ data: { total: number; procesados: number; omitidos: number } }>('/hubspot/procesar-respuestas', { method: 'POST' }),
     onSuccess: (data) => {
       const d = data?.data
       alert(`✅ Listo:\n• ${d?.procesados ?? 0} estudiante(s) nuevos creados\n• ${d?.omitidos ?? 0} ya existían`)
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
     },
-    onError: () => alert('❌ Error al procesar respuestas.'),
+    onError: () => alert('❌ Error al procesar respuestas de HubSpot.'),
   })
 
   async function descargarPlantilla() {
