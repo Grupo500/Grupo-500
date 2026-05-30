@@ -526,9 +526,9 @@ function UploadTCSection() {
               </button>
             </div>
           </div>
-          {/* PDF embed */}
+          {/* PDF embed via Google Docs viewer (evita bloqueo X-Frame-Options de Cloudinary) */}
           <iframe
-            src={`${tcUrl}#toolbar=1&view=FitH`}
+            src={`https://docs.google.com/viewer?url=${encodeURIComponent(tcUrl)}&embedded=true`}
             className="flex-1 w-full border-0"
             title="Términos y Condiciones"
           />
