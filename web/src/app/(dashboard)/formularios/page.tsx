@@ -415,9 +415,10 @@ function FormCard({ form, index, onEdit, onDelete, onToggleActivo, onToggleLandi
 // ── Sección T&C ───────────────────────────────────────────────────────────────
 function UploadTCSection() {
   const queryClient = useQueryClient()
-  const [uploading, setUploading] = useState(false)
-  const [tcUrl,     setTcUrl]     = useState('')
-  const [msg,       setMsg]       = useState('')
+  const [uploading,   setUploading]   = useState(false)
+  const [tcUrl,       setTcUrl]       = useState('')
+  const [msg,         setMsg]         = useState('')
+  const [lightbox,    setLightbox]    = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const { data } = useQuery({
@@ -466,11 +467,11 @@ function UploadTCSection() {
             PDF oficial que los estudiantes deben aceptar. Aplica a todos los formularios.
           </p>
           {tcUrl && (
-            <a href={tcUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 mt-2 text-xs text-amber-600 hover:text-amber-700 font-semibold hover:underline transition-colors">
+            <button onClick={() => setLightbox(true)}
+              className="inline-flex items-center gap-1 mt-2 text-xs text-amber-600 hover:text-amber-700 font-semibold hover:underline transition-colors cursor-pointer">
               <ExternalLink className="w-3 h-3" />
               Ver documento actual
-            </a>
+            </button>
           )}
           {msg && (
             <p className={`text-xs mt-1.5 font-medium ${msg.startsWith('Error') ? 'text-red-500' : 'text-emerald-600'}`}>
@@ -490,6 +491,49 @@ function UploadTCSection() {
         </button>
       </div>
     </div>
+
+    {/* ── Lightbox PDF ──────────────────────────────────────────────────────── */}
+    {lightbox && tcUrl && (
+      <div
+        onClick={() => setLightbox(false)}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        style={{ animation: 'fadeIn 0.2s ease-out both' }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          className="relative w-full max-w-4xl h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          style={{ animation: 'slideInUp 0.25s cubic-bezier(0.23,1,0.32,1) both' }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant bg-surface-lowest shrink-0">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-amber-500" />
+              <p className="text-sm font-bold text-on-surface">Términos y Condiciones</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <a href={tcUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                  text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-all">
+                <ExternalLink className="w-3.5 h-3.5" />
+                Abrir en nueva pestaña
+              </a>
+              <button onClick={() => setLightbox(false)}
+                className="w-8 h-8 rounded-xl bg-surface-high flex items-center justify-center
+                  text-on-surface-variant hover:text-on-surface hover:bg-surface-highest
+                  transition-all active:scale-[0.95] cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          {/* PDF embed */}
+          <iframe
+            src={`${tcUrl}#toolbar=1&view=FitH`}
+            className="flex-1 w-full border-0"
+            title="Términos y Condiciones"
+          />
+        </div>
+      </div>
+    )}
   )
 }
 
