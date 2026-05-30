@@ -697,14 +697,16 @@ export default function FormBuilderPage() {
   const [descripcion, setDescripcion] = useState('')
   const [campos,      setCampos]      = useState<Campo[]>([])
   const [meta,        setMeta]        = useState<FormMeta>({ colorPrimario: '#21b9f7', icono: 'check' })
-  const [selected,    setSelected]    = useState<string | null>(null)
-  const [showApariencia, setShowApariencia] = useState(false)
-  const [preview,     setPreview]     = useState(false)
-  const [saved,       setSaved]       = useState(false)
-  const [dragId,      setDragId]      = useState<string | null>(null)
-  const [dragOverId,  setDragOverId]  = useState<string | null>(null)
-  const [editingName, setEditingName] = useState(false)
-  const nameRef = useRef<HTMLInputElement>(null)
+  const [selected,       setSelected]       = useState<string | null>(null)
+  const [showApariencia, setShowApariencia]  = useState(false)
+  const [preview,        setPreview]         = useState(false)
+  const [saveStatus,     setSaveStatus]      = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [dragId,         setDragId]          = useState<string | null>(null)
+  const [dragOverId,     setDragOverId]      = useState<string | null>(null)
+  const [editingName,    setEditingName]     = useState(false)
+  const [initialized,    setInitialized]     = useState(false)
+  const nameRef    = useRef<HTMLInputElement>(null)
+  const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Cargar formulario existente ──────────────────────────────────────────────
   const { data, isLoading } = useQuery({
@@ -719,8 +721,24 @@ export default function FormBuilderPage() {
       setDescripcion(data.data.descripcion ?? '')
       setCampos((data.data.campos as Campo[]) ?? [])
       if (data.data.meta) setMeta(data.data.meta as FormMeta)
+      setTimeout(() => setInitialized(true), 100) // evitar autosave en la carga inicial
     }
   }, [data?.data?.id])
+
+  useEffect(() => {
+    if (isNew) { setInitialized(true) }
+  }, [isNew])
+
+  // ── Autosave con debounce ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!initialized || isNew) return // no autosave en formularios nuevos (requieren POST)
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current)
+    setSaveStatus('idle')
+    autoSaveRef.current = setTimeout(() => {
+      saveMutation.mutate()
+    }, 1500)
+    return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current) }
+  }, [campos, nombre, descripcion, meta, initialized])
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const saveMutation = useMutation({
@@ -738,11 +756,16 @@ export default function FormBuilderPage() {
       if (!res.ok) throw new Error(json.error ?? 'Error al guardar')
       return json.data
     },
+    onMutate: () => setSaveStatus('saving'),
     onSuccess: (data) => {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2500)
       queryClient.invalidateQueries({ queryKey: ['formularios'] })
       if (isNew && data?.id) router.replace(`/formularios/builder/${data.id}`)
+    },
+    onError: () => {
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus('idle'), 3000)
     },
   })
 
@@ -881,24 +904,39 @@ export default function FormBuilderPage() {
           <span className="hidden sm:inline">{preview ? 'Editar' : 'Vista previa'}</span>
         </button>
 
-        {/* Guardar */}
+        {/* Status autosave + botón guardar manual */}
+        {!isNew && (
+          <div className={cn(
+            'hidden sm:flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300',
+            saveStatus === 'saving' && 'text-on-surface-variant',
+            saveStatus === 'saved'  && 'text-emerald-600 bg-emerald-50',
+            saveStatus === 'error'  && 'text-red-500 bg-red-50',
+            saveStatus === 'idle'   && 'text-on-surface-variant/50',
+          )}>
+            {saveStatus === 'saving' && <><Loader2 className="w-3 h-3 animate-spin" /> Guardando...</>}
+            {saveStatus === 'saved'  && <><Check className="w-3 h-3" /> Guardado</>}
+            {saveStatus === 'error'  && <>⚠ Error al guardar</>}
+            {saveStatus === 'idle'   && <>Autoguardado activo</>}
+          </div>
+        )}
+
         <button
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.97] cursor-pointer disabled:opacity-60',
-            saved
+            saveStatus === 'saved'
               ? 'bg-emerald-500 text-white'
               : 'bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20',
           )}>
           {saveMutation.isPending
             ? <Loader2 className="w-4 h-4 animate-spin" />
-            : saved
+            : saveStatus === 'saved'
               ? <Check className="w-4 h-4" />
               : <Save className="w-4 h-4" />
           }
           <span className="hidden sm:inline">
-            {saveMutation.isPending ? 'Guardando...' : saved ? 'Guardado' : 'Guardar'}
+            {saveMutation.isPending ? 'Guardando...' : saveStatus === 'saved' ? 'Guardado' : 'Guardar'}
           </span>
         </button>
       </header>
