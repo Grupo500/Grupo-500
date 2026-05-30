@@ -8,7 +8,6 @@ import { asyncHandler } from '../middleware/errorHandler'
 import { ApiResponse } from '../utils/response'
 import { broadcast } from '../utils/sseManager'
 import { logger } from '../utils/logger'
-import { syncEstudianteHubspot } from './hubspot'
 
 const router = Router()
 
@@ -428,16 +427,11 @@ router.post('/publica', asyncHandler(async (req, res) => {
     })
   }
 
-  // ── 8. HubSpot CRM (best-effort, no bloquea) ──────────────────────────────
-  syncEstudianteHubspot({
-    id:          estudiante.id,
-    nombre:      estudiante.nombre,
-    email:       estudiante.email,
-    telefono:    estudiante.telefono,
-    ciudad:      estudiante.ciudad,
-    departamento: estudiante.departamento,
-    cursos:      cursoNombre ? [{ curso: { nombre: cursoNombre, precio: monto } }] : [],
-  }).catch((err) => logger.warn({ err }, '[HubSpot] Error sincronizando (inscripción pública)'))
+  // ── 8. HubSpot — NO se sincroniza desde el formulario de matriculación ───────
+  // Los leads llegan a HubSpot por redes sociales (Meta/Instagram).
+  // Este formulario es post-pago: solo crea el estudiante en la app.
+  // syncEstudianteHubspot() se reserva para cuando el asesor crea
+  // el estudiante manualmente desde el panel admin.
 
   // ── 9. Broadcast SSE ───────────────────────────────────────────────────────
   broadcast('nuevo-estudiante', { id: estudiante.id, nombre: estudiante.nombre, email: estudiante.email })
