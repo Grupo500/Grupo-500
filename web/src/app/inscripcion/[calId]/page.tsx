@@ -733,7 +733,7 @@ export default function FormularioPage() {
                 <p className="text-xs text-slate-500 leading-relaxed">
                   Lee los términos y condiciones antes de inscribirte.{' '}
                   <a
-                    href="https://drive.google.com/file/d/11uAceAG_244vinKAA4WWZL8ng49q8v11/view"
+                    href="https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#1a7de0] underline font-medium"
