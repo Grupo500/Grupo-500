@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Poppins } from 'next/font/google'
 import { ChevronLeft, Loader2, Check, Upload, ArrowLeft, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { DEPARTAMENTOS_MUNICIPIOS } from '@/data/municipios'
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
@@ -30,11 +31,12 @@ interface Formulario {
 }
 
 // ── Componentes de campo ──────────────────────────────────────────────────────
-function FieldInput({ campo, value, onChange, error }: {
+function FieldInput({ campo, value, onChange, error, valores }: {
   campo: Campo
   value: any
   onChange: (v: any) => void
   error?: string
+  valores?: Record<string, any>
 }) {
   const base = `w-full px-4 py-3 rounded-xl border-2 text-slate-800 text-sm bg-white
     focus:outline-none transition-all duration-150 placeholder:text-slate-400
@@ -56,6 +58,30 @@ function FieldInput({ campo, value, onChange, error }: {
   if (campo.tipo === 'textarea') {
     return <textarea className={`${base} resize-none`} rows={3} value={value ?? ''}
       onChange={e => onChange(e.target.value)} placeholder={campo.placeholder} />
+  }
+
+  // ── Caso especial: municipio filtrado por departamento ────────────────────
+  if (campo.id === 'municipio' || campo.id === 'ciudad_municipio') {
+    const depSeleccionado = valores?.['departamento'] ?? ''
+    const municipios: string[] = depSeleccionado
+      ? (DEPARTAMENTOS_MUNICIPIOS[depSeleccionado] ?? [])
+      : []
+
+    if (!depSeleccionado) {
+      return (
+        <div className={`${base} flex items-center text-slate-400 cursor-not-allowed bg-slate-50`}>
+          Primero selecciona un departamento
+        </div>
+      )
+    }
+
+    return (
+      <select className={`${base} cursor-pointer`} value={value ?? ''}
+        onChange={e => onChange(e.target.value)}>
+        <option value="">Selecciona tu municipio</option>
+        {municipios.map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
+    )
   }
 
   if (campo.tipo === 'select') {
@@ -261,8 +287,19 @@ export default function FormularioDinamico() {
                   )}
                 </div>
               )}
-              <FieldInput campo={campo} value={valores[campo.id]}
-                onChange={v => set(campo.id, v)} error={errors[campo.id]} />
+              <FieldInput
+                campo={campo}
+                value={valores[campo.id]}
+                onChange={v => {
+                  set(campo.id, v)
+                  // Si cambia el departamento, resetear municipio
+                  if (campo.id === 'departamento') {
+                    setValores(prev => ({ ...prev, municipio: '', ciudad_municipio: '' }))
+                  }
+                }}
+                error={errors[campo.id]}
+                valores={valores}
+              />
               {errors[campo.id] && (
                 <p className="text-xs text-red-500 font-medium mt-1">{errors[campo.id]}</p>
               )}
