@@ -245,12 +245,21 @@ export default function FormularioPage() {
   const [submitting, setSubmitting] = useState(false)
   const [exito,   setExito]   = useState(false)
   const [errorGlobal, setErrorGlobal] = useState('')
+  const [terminosUrl, setTerminosUrl] = useState('https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf')
 
   // Pre-llenar asesorId desde query param
   useEffect(() => {
     const asesorId = searchParams.get('asesor')
     if (asesorId) setForm(f => ({ ...f, asesorId } as any))
   }, [searchParams])
+
+  // Cargar URL de T&C
+  useEffect(() => {
+    fetch(`${API}/inscripcion/terminos`)
+      .then(r => r.json())
+      .then(d => { if (d.success && d.data?.url) setTerminosUrl(d.data.url) })
+      .catch(() => {})
+  }, [])
 
   // Cargar datos del curso
   useEffect(() => {

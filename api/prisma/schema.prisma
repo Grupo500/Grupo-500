@@ -188,6 +188,18 @@ model Curso {
   estudiantes       CursoEstudiante[]
 }
 
+model Formulario {
+  id               String    @id @default(cuid())
+  nombre           String
+  descripcion      String?
+  campos           Json      // FieldSchema[]
+  activo           Boolean   @default(false)
+  visibleEnLanding Boolean   @default(false)
+  cursoId          String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
 model CursoEstudiante {
   id                  String     @id @default(cuid())
   estudianteId        String

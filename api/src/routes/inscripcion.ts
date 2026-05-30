@@ -146,6 +146,15 @@ const inscripcionSchema = z.object({
   asesorId:         z.string().optional(),
 })
 
+// ── GET /api/inscripcion/terminos ─────────────────────────────────────────────
+// Público — URL del PDF de T&C vigente
+router.get('/terminos', asyncHandler(async (_req, res) => {
+  const cfg = await prisma.configApp.findUnique({ where: { clave: 'terminos_url' } })
+  return ApiResponse.success(res, {
+    url: cfg?.valor ?? 'https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf',
+  })
+}))
+
 // ── GET /api/inscripcion/calendarios-activos ──────────────────────────────────
 // Público — para la landing page y el hub de inscripciones
 router.get('/calendarios-activos', asyncHandler(async (_req, res) => {

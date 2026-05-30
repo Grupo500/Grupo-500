@@ -13,7 +13,7 @@ export const authConfig: NextAuthConfig = {
       const isAuthPage       = request.nextUrl.pathname.startsWith('/sign-in')
       const isPublicPage     = [
         '/sign-in', '/sign-up', '/no-autorizado', '/verificando',
-        '/inscripcion', // Hub de inscripciones y formulario público
+        '/inscripcion', // Hub de inscripciones, formularios públicos y builder forms
       ].some(p => request.nextUrl.pathname.startsWith(p))
         || request.nextUrl.pathname === '/' // Landing page
 

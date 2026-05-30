@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/calendario',      label: 'Calendario',      icon: CalendarDays,    adminOnly: false },
   { type: 'section', label: 'Académico',                                                        adminOnly: false },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
-  { type: 'link',    href: '/calendarios',     label: 'Calendarios',     icon: Globe,           adminOnly: true  },
+  { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: Globe,           adminOnly: true  },
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
   { type: 'link',    href: '/certificados',    label: 'Certificados',    icon: Award,           adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
