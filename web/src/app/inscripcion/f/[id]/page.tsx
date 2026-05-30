@@ -180,13 +180,75 @@ export default function FormularioDinamico() {
     setSubmitting(true)
     setErrorGlobal('')
     try {
-      // Construir payload con los valores
-      const payload: Record<string, any> = { formularioId: id, campos: {} }
-      form.campos.forEach(c => {
-        if (c.tipo !== 'seccion') payload.campos[c.id] = { label: c.label, valor: valores[c.id] }
+      const v = valores
+
+      // ── 1. Subir archivos a Cloudinary si los hay ────────────────────────────
+      let comprobanteUrl = ''
+      let comprobantePublicId = ''
+      let documentoUrl = ''
+
+      if (v['comprobante'] instanceof File) {
+        const fd = new FormData()
+        fd.append('file', v['comprobante'])
+        const r = await fetch(`${API}/inscripcion/upload-comprobante`, { method: 'POST', body: fd })
+        const d = await r.json()
+        if (d.success) { comprobanteUrl = d.data.url; comprobantePublicId = d.data.publicId }
+      }
+      if (v['doc_identidad'] instanceof File) {
+        const fd = new FormData()
+        fd.append('file', v['doc_identidad'])
+        const r = await fetch(`${API}/inscripcion/upload-documento`, { method: 'POST', body: fd })
+        const d = await r.json()
+        if (d.success) documentoUrl = d.data.url
+      }
+
+      // ── 2. Parsear monto ────────────────────────────────────────────────────
+      const montoRaw = v['monto_consig'] ?? v['valor_curso'] ?? ''
+      const montoNum = parseInt(String(montoRaw).replace(/\D/g, ''), 10) || 0
+
+      // ── 3. Construir payload para POST /api/inscripcion/publica ─────────────
+      const payload = {
+        // Paso 1 — Estudiante
+        nombre:          v['nombre']       ?? '',
+        email:           v['email']        ?? '',
+        telefono:        v['telefono']     ?? '',
+        tipoDocumento:   v['tipo_doc']     ?? 'TI',
+        documento:       v['num_doc']      ?? '',
+        // Paso 2 — Ubicación
+        fechaNacimiento: v['fecha_nac']    ?? '',
+        departamento:    v['departamento'] ?? '',
+        ciudad:          v['municipio']    ?? '',
+        colegio:         v['colegio']      ?? '',
+        grado:           v['grado']        ?? '',
+        // Paso 3 — Acudiente
+        acudienteNombre:          v['nom_acudiente']  ?? '',
+        acudienteParentesco:      v['parentesco']     ?? '',
+        acudienteTelefono:        v['cel_acudiente']  ?? '',
+        acudienteTipoDocumento:   v['tip_doc_acud']   ?? 'CC',
+        acudienteNumeroDocumento: v['num_doc_acud']   ?? '',
+        // Paso 4 — Académico
+        primerIcfes:     v['primer_icfes'] === 'Sí' || v['primer_icfes'] === true,
+        puntajeAnterior: v['puntaje_ant']  ?? '',
+        carreraInteres:  'N/A',
+        // Paso 5 — Pago
+        cuentaPago:      v['cuenta_pago']  ?? '',
+        montoDeclarado:  montoNum,
+        comprobanteUrl,
+        comprobantePublicId,
+        documentoUrl,
+        // Paso 6 — Marketing + T&C
+        fuenteContacto:  v['como_conocio'] ?? '',
+        aceptaTerminos:  !!v['__terminos'],
+      }
+
+      const res = await fetch(`${API}/inscripcion/publica`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
       })
-      // Por ahora simula el envío (en una fase futura conectar con BD)
-      await new Promise(r => setTimeout(r, 1200))
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error ?? 'Error al procesar tu inscripción.')
+
       setExito(true)
     } catch (err: any) {
       setErrorGlobal(err.message ?? 'Error al enviar. Intenta de nuevo.')

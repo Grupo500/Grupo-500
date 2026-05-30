@@ -18,13 +18,13 @@ cloudinary.config({
 })
 const tcStorage = new CloudinaryStorage({
   cloudinary,
-  params: {
+  params: async (_req: any, _file: any) => ({
     folder:          'grupo500/documentos',
     resource_type:   'raw',
     use_filename:    false,
     public_id:       'terminos-condiciones-grupo500',
     overwrite:       true,
-  } as any,
+  }),
 })
 const uploadTC = multer({ storage: tcStorage, limits: { fileSize: 20 * 1024 * 1024 } })
 
