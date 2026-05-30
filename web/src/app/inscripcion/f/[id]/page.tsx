@@ -473,7 +473,7 @@ export default function FormularioDinamico() {
             </div>
             {/* PDF */}
             <iframe
-              src={`https://docs.google.com/viewer?url=${encodeURIComponent(terminosUrl)}&embedded=true`}
+              src={`/api/pdf-proxy?url=${encodeURIComponent(terminosUrl)}`}
               className="flex-1 w-full border-0"
               title="Términos y Condiciones"
             />
