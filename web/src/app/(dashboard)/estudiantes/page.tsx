@@ -452,32 +452,6 @@ export default function EstudiantesPage() {
         subtitle={`${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`}
         actions={
           <div className="flex items-center gap-2">
-            {formActivoUrl ? (
-              /* Ya existe un formulario activo → Ver enlace */
-              <button
-                onClick={() => { setTypeformUrl(formActivoUrl); setModalTypeform(true) }}
-                title="Ver enlace del formulario activo"
-                className="flex items-center gap-2 px-4 py-2 bg-[#16a34a]/10 border border-[#16a34a]/30 text-[#16a34a] rounded-xl text-sm font-semibold hover:bg-[#16a34a]/20 transition-colors cursor-pointer"
-              >
-                <Link2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Ver enlace</span>
-              </button>
-            ) : (
-              /* Sin formulario activo → Generar */
-              <button
-                onClick={() => crearTypeform.mutate()}
-                disabled={crearTypeform.isPending}
-                title="Generar formulario de inscripción"
-                className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-lowest transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {crearTypeform.isPending
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <Link2 className="w-4 h-4" />}
-                <span className="hidden sm:inline">
-                  {crearTypeform.isPending ? 'Generando...' : 'Formulario'}
-                </span>
-              </button>
-            )}
             {isAdmin && (
               <button
                 onClick={() => { setModalImport(true); setImportFile(null); setImportResult(null) }}
@@ -1042,98 +1016,6 @@ export default function EstudiantesPage() {
         isPending={eliminarMutation.isPending}
       />
 
-      {/* Modal formulario Typeform */}
-      {modalTypeform && typeformUrl && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalTypeform(false)} />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-md p-6 space-y-5">
-              {/* Header */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Link2 className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-on-surface">Enlace del formulario</p>
-                  <p className="text-xs text-on-surface-variant mt-0.5">Comparte este enlace con tus estudiantes</p>
-                </div>
-              </div>
-
-              {/* Link */}
-              <div className="flex items-center gap-2 bg-surface-high border border-outline-variant rounded-lg px-3 py-2.5">
-                <p className="flex-1 text-xs text-on-surface truncate font-mono">{typeformUrl}</p>
-                <button
-                  onClick={copiarLink}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors flex-shrink-0"
-                >
-                  {typeformCopiado
-                    ? <><Check className="w-3.5 h-3.5" /> Copiado</>
-                    : <><Copy className="w-3.5 h-3.5" /> Copiar</>
-                  }
-                </button>
-              </div>
-
-              {/* Solo admins ven el botón de ver formulario y el texto informativo */}
-              {isAdmin && (
-                <>
-                  <a
-                    href={typeformUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border border-outline-variant rounded-xl text-sm font-medium text-on-surface hover:bg-surface-high transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Ver formulario
-                  </a>
-                  <p className="text-xs text-on-surface-variant text-center leading-relaxed">
-                    Cuando un estudiante complete el formulario, sus datos se guardarán automáticamente.
-                  </p>
-                </>
-              )}
-
-              <button
-                onClick={() => setModalTypeform(false)}
-                className="w-full px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors"
-              >
-                Cerrar
-              </button>
-
-              {/* Solo admins pueden regenerar el formulario */}
-              {isAdmin && (
-                <div className="pt-2 border-t border-outline-variant/30">
-                  {!confirmarReset ? (
-                    <button
-                      onClick={() => setConfirmarReset(true)}
-                      className="w-full text-xs text-on-surface-variant/50 hover:text-[#dc2626] transition-colors py-1 cursor-pointer"
-                    >
-                      Regenerar formulario (crea uno nuevo)
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-[11px] text-center text-[#dc2626] font-medium">
-                        ¿Seguro? Se eliminará el enlace actual y se generará uno nuevo.
-                      </p>
-                      <div className="flex gap-2">
-                        <button onClick={() => setConfirmarReset(false)}
-                          className="flex-1 py-1.5 text-xs text-on-surface-variant border border-outline-variant rounded-lg hover:bg-surface-high transition-colors cursor-pointer">
-                          Cancelar
-                        </button>
-                        <button
-                          onClick={() => resetFormActivo.mutate()}
-                          disabled={resetFormActivo.isPending}
-                          className="flex-1 py-1.5 text-xs text-white bg-[#dc2626] rounded-lg hover:bg-[#b91c1c] disabled:opacity-50 transition-colors cursor-pointer"
-                        >
-                          {resetFormActivo.isPending ? 'Eliminando...' : 'Sí, regenerar'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Barra flotante de selección múltiple ── */}
       {modoSeleccion && (
