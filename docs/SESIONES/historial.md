@@ -400,3 +400,53 @@ Actualmente la pregunta "¿En qué ciudad y departamento vives?" es texto libre.
 ### Pendiente
 - Twilio WhatsApp real
 - Exportar reportes CSV/PDF
+
+---
+
+## Sesión 009 — 2026-05-30
+
+**Objetivo:** Construir plataforma pública: landing page, hub de inscripciones y formulario propio Cal A.
+
+### Lo que se hizo
+
+**Plataforma pública (3 capas):**
+- `grupo-500.vercel.app/` → Landing page pública con hero, estadísticas, beneficios del curso, calendarios activos dinámicos, testimonios y CTA final
+- `grupo-500.vercel.app/inscripcion` → Hub de inscripciones: muestra calendarios con `visibleEnLanding=true`, precio general, promos, cupos, inscritos
+- `grupo-500.vercel.app/inscripcion/[calId]` → Formulario propio multi-paso Cal A
+
+**Formulario propio (6 pasos optimizados):**
+1. Datos del estudiante (nombre, email, celular, tipo doc, número doc)
+2. Ubicación: selector departamento → municipio filtrado dinámico (33 departamentos, ~1100 municipios de Colombia), fecha nacimiento, dirección, colegio, grado
+3. Acudiente (nombre, parentesco, celular, doc)
+4. Info académica adaptativa (primer ICFES, puntaje, carrera, interés salud, premédico, universidad)
+5. Pago: curso precargado, cuenta, monto (opciones con precios general + promo + 50%), upload comprobante + documento identidad a Cloudinary
+6. Marketing + T&C con checkbox de aceptación
+
+**Backend:**
+- `POST /api/inscripcion/publica` — crea estudiante + acudiente + pago + curso + fuente marketing en BD y sincroniza a HubSpot CRM en paralelo
+- `GET /api/inscripcion/calendarios-activos` — cursos visibles en landing con precios desde ConfigApp
+- `GET /api/inscripcion/cursos/:calId` — datos del curso con precios para el formulario
+- `POST /api/inscripcion/upload-comprobante` + `upload-documento` — uploads públicos a Cloudinary
+- OCR del comprobante con Cloudinary AI (best-effort, guarda nota con resultado en `Pago.notas`)
+- `PATCH /api/config/precios` — admin configura precio general, promos y cupos por curso
+
+**Módulo admin `/dashboard/calendarios`:**
+- Toggle `visibleEnLanding` por curso (activa/desactiva la card en la plataforma pública)
+- Modal de precios: precio general, precios promo (coma-separados), cupos disponibles
+- Descuentos calculados automáticamente al inscribirse: `((precioGeneral - montoConsignado) / precioGeneral) * 100`
+
+**Schema Prisma — migración `20260530135201_add_landing_fields`:**
+- `Estudiante`: +`documentoUrl`, +`direccion`
+- `Curso`: +`visibleEnLanding Boolean @default(false)`, +`cuposDisponibles Int?`
+
+**Otros:**
+- `auth.config.ts`: rutas `/inscripcion*` y `/` marcadas como públicas (sin login)
+- Sidebar + BottomNav: ítem "Calendarios" agregado (solo ADMIN)
+- `tsconfig.json`: `declaration: false` (elimina TS2742 pre-existente en toda la API)
+- `web/src/data/municipios.ts`: JSON de 33 departamentos con todos sus municipios
+
+### Pendiente
+- PDF de T&C: el usuario lo pasará para subir a Cloudinary y actualizar el link en el formulario
+- Formularios Cal B y Cal C (misma estructura, diferente calendario)
+- Twilio WhatsApp real
+- Exportar reportes CSV/PDF
