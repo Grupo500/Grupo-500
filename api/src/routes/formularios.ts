@@ -39,10 +39,19 @@ const campoSchema = z.object({
   }).optional(),
 })
 
+const metaSchema = z.object({
+  colorPrimario:     z.string().optional(),
+  colorSecundario:   z.string().optional(),
+  mensajeBienvenida: z.string().optional(),
+  mensajeExito:      z.string().optional(),
+  icono:             z.enum(['check', 'star', 'trophy', 'heart', 'rocket']).optional(),
+}).optional()
+
 const formularioSchema = z.object({
   nombre:          z.string().min(2),
   descripcion:     z.string().optional(),
   campos:          z.array(campoSchema).default([]),
+  meta:            metaSchema,
   activo:          z.boolean().optional(),
   visibleEnLanding: z.boolean().optional(),
   cursoId:         z.string().optional().nullable(),
@@ -75,7 +84,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // ── POST /api/formularios — crear ─────────────────────────────────────────────
 router.post('/', requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const data = formularioSchema.parse(req.body)
-  const form = await prisma.formulario.create({ data: { ...data, campos: data.campos as any } })
+  const form = await prisma.formulario.create({ data: { ...data, campos: data.campos as any, meta: data.meta as any ?? undefined } })
   return ApiResponse.created(res, form)
 }))
 
@@ -84,7 +93,7 @@ router.patch('/:id', requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const data = formularioSchema.partial().parse(req.body)
   const form = await prisma.formulario.update({
     where: { id: req.params.id },
-    data:  { ...data, ...(data.campos ? { campos: data.campos as any } : {}) },
+    data:  { ...data, ...(data.campos ? { campos: data.campos as any } : {}), ...(data.meta !== undefined ? { meta: data.meta as any } : {}) },
   })
   return ApiResponse.success(res, form)
 }))

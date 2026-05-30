@@ -11,6 +11,7 @@ import {
   Paperclip, Minus, FileText, Loader2, Check, X,
   ChevronDown, ChevronUp, Settings2, MousePointerClick,
   AlertCircle, Smartphone, Monitor, SplitSquareVertical,
+  Palette, Trophy, Heart, Rocket, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +44,148 @@ interface Campo {
   contenido?: string
   url?: string
   logica?: LogicaCondicional
+}
+
+interface FormMeta {
+  colorPrimario?:     string
+  colorSecundario?:   string
+  mensajeBienvenida?: string
+  mensajeExito?:      string
+  icono?:             'check' | 'star' | 'trophy' | 'heart' | 'rocket'
+}
+
+const COLORES_PRESET = [
+  { label: 'Azul Grupo 500', value: '#21b9f7' },
+  { label: 'Azul oscuro',    value: '#1a7de0' },
+  { label: 'Verde',          value: '#10b981' },
+  { label: 'Naranja',        value: '#f97316' },
+  { label: 'Morado',         value: '#8b5cf6' },
+  { label: 'Rosa',           value: '#ec4899' },
+]
+
+const ICONOS_EXITO: { id: FormMeta['icono']; icon: React.ElementType; label: string }[] = [
+  { id: 'check',  icon: Check,   label: 'Confirmado' },
+  { id: 'star',   icon: Star,    label: 'Estrella'   },
+  { id: 'trophy', icon: Trophy,  label: 'Trofeo'     },
+  { id: 'heart',  icon: Heart,   label: 'Corazón'    },
+  { id: 'rocket', icon: Rocket,  label: 'Cohete'     },
+]
+
+// ── Panel de Apariencia ────────────────────────────────────────────────────────
+function AparienciaPanel({ meta, onUpdate, onClose }: {
+  meta: FormMeta
+  onUpdate: (m: FormMeta) => void
+  onClose: () => void
+}) {
+  const upd = (patch: Partial<FormMeta>) => onUpdate({ ...meta, ...patch })
+  const inputCls = 'w-full px-3 py-2 rounded-xl border border-outline-variant bg-surface-lowest text-sm text-on-surface focus:outline-none focus:border-primary transition-colors'
+  const labelCls = 'text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5 block'
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
+            <Palette className="w-4 h-4 text-violet-600" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-on-surface">Apariencia</p>
+            <p className="text-xs text-on-surface-variant">Personaliza el formulario</p>
+          </div>
+        </div>
+        <button onClick={onClose}
+          className="w-8 h-8 rounded-xl hover:bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all cursor-pointer">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+
+        {/* Color primario */}
+        <div>
+          <label className={labelCls}>Color primario</label>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {COLORES_PRESET.map(c => (
+              <button key={c.value} onClick={() => upd({ colorPrimario: c.value })}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-xs font-medium transition-all active:scale-[0.97] cursor-pointer',
+                  meta.colorPrimario === c.value
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-outline-variant text-on-surface-variant hover:border-outline',
+                )}>
+                <div className="w-4 h-4 rounded-full shrink-0" style={{ background: c.value }} />
+                <span className="truncate">{c.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-on-surface-variant">Personalizado:</label>
+            <div className="flex items-center gap-2 flex-1">
+              <input type="color" value={meta.colorPrimario ?? '#21b9f7'}
+                onChange={e => upd({ colorPrimario: e.target.value })}
+                className="w-9 h-9 rounded-lg border border-outline-variant cursor-pointer" />
+              <input className={cn(inputCls, 'flex-1 font-mono text-xs')}
+                value={meta.colorPrimario ?? '#21b9f7'}
+                onChange={e => upd({ colorPrimario: e.target.value })}
+                placeholder="#21b9f7" />
+            </div>
+          </div>
+        </div>
+
+        {/* Preview color */}
+        <div className="rounded-2xl overflow-hidden shadow-sm border border-outline-variant">
+          <div className="h-10 w-full" style={{ background: `linear-gradient(135deg, ${meta.colorPrimario ?? '#21b9f7'}, ${meta.colorPrimario ?? '#21b9f7'}dd)` }} />
+          <div className="px-4 py-3 bg-surface-lowest">
+            <p className="text-xs text-on-surface-variant">Vista previa del color</p>
+            <div className="flex gap-2 mt-2">
+              <div className="h-8 flex-1 rounded-lg border-2" style={{ borderColor: meta.colorPrimario ?? '#21b9f7' }} />
+              <div className="h-8 px-4 rounded-lg text-white text-xs font-bold flex items-center" style={{ background: meta.colorPrimario ?? '#21b9f7' }}>Botón</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mensaje de bienvenida */}
+        <div>
+          <label className={labelCls}>Mensaje de bienvenida</label>
+          <textarea className={cn(inputCls, 'resize-none')} rows={3}
+            value={meta.mensajeBienvenida ?? ''}
+            onChange={e => upd({ mensajeBienvenida: e.target.value })}
+            placeholder="Ej: Gracias por tu interés en Grupo 500. Completa el formulario y te contactaremos pronto." />
+          <p className="text-xs text-on-surface-variant mt-1">Se muestra al inicio del formulario</p>
+        </div>
+
+        {/* Mensaje de éxito */}
+        <div>
+          <label className={labelCls}>Mensaje de éxito</label>
+          <textarea className={cn(inputCls, 'resize-none')} rows={3}
+            value={meta.mensajeExito ?? ''}
+            onChange={e => upd({ mensajeExito: e.target.value })}
+            placeholder="Ej: ¡Inscripción recibida! En menos de 24 horas un asesor se comunicará contigo." />
+          <p className="text-xs text-on-surface-variant mt-1">Se muestra al completar el formulario</p>
+        </div>
+
+        {/* Icono de éxito */}
+        <div>
+          <label className={labelCls}>Icono de éxito</label>
+          <div className="grid grid-cols-5 gap-2">
+            {ICONOS_EXITO.map(({ id, icon: Icon, label }) => (
+              <button key={id} onClick={() => upd({ icono: id })}
+                title={label}
+                className={cn(
+                  'flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all active:scale-[0.97] cursor-pointer',
+                  meta.icono === id || (!meta.icono && id === 'check')
+                    ? 'border-primary bg-primary/5'
+                    : 'border-outline-variant hover:border-outline',
+                )}>
+                <Icon className={cn('w-5 h-5', meta.icono === id || (!meta.icono && id === 'check') ? 'text-primary' : 'text-on-surface-variant')} />
+                <span className="text-[9px] text-on-surface-variant">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── Config visual por tipo ─────────────────────────────────────────────────────
@@ -553,7 +696,9 @@ export default function FormBuilderPage() {
   const [nombre,      setNombre]      = useState('Nuevo formulario')
   const [descripcion, setDescripcion] = useState('')
   const [campos,      setCampos]      = useState<Campo[]>([])
+  const [meta,        setMeta]        = useState<FormMeta>({ colorPrimario: '#21b9f7', icono: 'check' })
   const [selected,    setSelected]    = useState<string | null>(null)
+  const [showApariencia, setShowApariencia] = useState(false)
   const [preview,     setPreview]     = useState(false)
   const [saved,       setSaved]       = useState(false)
   const [dragId,      setDragId]      = useState<string | null>(null)
@@ -573,6 +718,7 @@ export default function FormBuilderPage() {
       setNombre(data.data.nombre ?? '')
       setDescripcion(data.data.descripcion ?? '')
       setCampos((data.data.campos as Campo[]) ?? [])
+      if (data.data.meta) setMeta(data.data.meta as FormMeta)
     }
   }, [data?.data?.id])
 
@@ -586,7 +732,7 @@ export default function FormBuilderPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ nombre, descripcion, campos }),
+        body: JSON.stringify({ nombre, descripcion, campos, meta }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Error al guardar')
@@ -710,6 +856,18 @@ export default function FormBuilderPage() {
         <span className="text-xs text-on-surface-variant hidden sm:block">
           {campos.length} campo{campos.length !== 1 ? 's' : ''}
         </span>
+
+        {/* Apariencia */}
+        <button onClick={() => { setShowApariencia(!showApariencia); setSelected(null) }}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] cursor-pointer',
+            showApariencia
+              ? 'bg-violet-100 text-violet-700'
+              : 'bg-surface-high text-on-surface-variant hover:text-on-surface hover:bg-surface-highest',
+          )}>
+          <Palette className="w-4 h-4" />
+          <span className="hidden sm:inline">Apariencia</span>
+        </button>
 
         {/* Preview toggle */}
         <button onClick={() => setPreview(!preview)}
@@ -879,12 +1037,19 @@ export default function FormBuilderPage() {
             </div>
           </main>
 
-          {/* ── Panel derecho: Settings ──────────────────────────────────────── */}
+          {/* ── Panel derecho: Settings / Apariencia ─────────────────────── */}
           <aside className={cn(
             'shrink-0 border-l border-outline-variant bg-surface-lowest transition-all duration-300 overflow-hidden',
-            selectedCampo ? 'w-[300px]' : 'w-0',
+            (selectedCampo || showApariencia) ? 'w-[300px]' : 'w-0',
           )}>
-            {selectedCampo && (
+            {showApariencia && (
+              <AparienciaPanel
+                meta={meta}
+                onUpdate={setMeta}
+                onClose={() => setShowApariencia(false)}
+              />
+            )}
+            {selectedCampo && !showApariencia && (
               <SettingsPanel
                 campo={selectedCampo}
                 campos={campos}

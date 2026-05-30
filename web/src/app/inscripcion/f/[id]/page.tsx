@@ -23,12 +23,34 @@ interface Campo {
   opciones?: string[]
 }
 
+interface FormMeta {
+  colorPrimario?:     string
+  mensajeBienvenida?: string
+  mensajeExito?:      string
+  icono?:             'check' | 'star' | 'trophy' | 'heart' | 'rocket'
+}
+
 interface Formulario {
   id: string
   nombre: string
   descripcion?: string
   campos: Campo[]
+  meta?: FormMeta
   activo: boolean
+}
+
+// ── Evaluar lógica condicional ─────────────────────────────────────────────────
+function evaluarLogica(logica: any, valores: Record<string, any>): boolean {
+  if (!logica) return true
+  const val = valores[logica.campoId]
+  const valStr = Array.isArray(val) ? val.join(',') : String(val ?? '')
+  switch (logica.operador) {
+    case 'igual':    return valStr === String(logica.valor)
+    case 'no_igual': return valStr !== String(logica.valor)
+    case 'contiene': return valStr.toLowerCase().includes(String(logica.valor).toLowerCase())
+    case 'no_vacio': return val !== undefined && val !== null && val !== '' && !(Array.isArray(val) && val.length === 0)
+    default:         return true
+  }
 }
 
 // ── Componentes de campo ──────────────────────────────────────────────────────
@@ -315,6 +337,7 @@ export default function FormularioDinamico() {
   const router    = useRouter()
 
   const [form,        setForm]      = useState<Formulario | null>(null)
+  const [meta,        setMeta]      = useState<FormMeta>({})
   const [terminosUrl, setTerminos]  = useState('https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf')
   const [loading,     setLoading]   = useState(true)
   const [notFound,    setNotFound]  = useState(false)
@@ -332,6 +355,7 @@ export default function FormularioDinamico() {
     ]).then(([fData, tData]) => {
       if (!fData.success || !fData.data?.activo) { setNotFound(true); return }
       setForm(fData.data)
+      if (fData.data.meta) setMeta(fData.data.meta)
       if (tData.success && tData.data?.url) setTerminos(tData.data.url)
     }).catch(() => setNotFound(true))
       .finally(() => setLoading(false))
@@ -470,20 +494,47 @@ export default function FormularioDinamico() {
     </div>
   )
 
+  const color    = meta.colorPrimario ?? '#21b9f7'
+  const colorDark = meta.colorPrimario ?? '#1a7de0'
+
+  // Iconos de éxito
+  const IconoExito = () => {
+    const cls = 'w-10 h-10'
+    switch (meta.icono) {
+      case 'star':   return <svg className={cls} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      case 'trophy': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 9H4.5a2.5 2.5 0 010-5H6m12 5h1.5a2.5 2.5 0 000-5H18M6 9a6 6 0 0012 0M6 9V4h12v5M8 21h8m-4-4v4"/></svg>
+      case 'heart':  return <svg className={cls} viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.593c-.524-.247-7.653-4.44-9.538-8.19-2.177-4.265-.563-8.33 2.906-9.54 2.233-.789 4.753-.148 6.632 1.726 1.88-1.874 4.4-2.515 6.633-1.726 3.469 1.21 5.083 5.275 2.906 9.54-1.885 3.75-9.013 7.943-9.539 8.19z"/></svg>
+      case 'rocket': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7l-.149-.149c-1.045-1.044-1.36-2.571-.78-3.896m1.36 1.72a3.544 3.544 0 010-5.011"/></svg>
+      default:       return <Check className={cls} strokeWidth={2.5} />
+    }
+  }
+
   // ── Éxito ──
   if (exito) return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#21b9f7] to-[#1a7de0] flex items-center justify-center px-4">
+    <div className="min-h-dvh flex items-center justify-center px-4"
+      style={{ background: `linear-gradient(135deg, ${color}, ${colorDark})` }}>
       <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full"
-        style={{ animation: 'scaleIn 0.3s cubic-bezier(0.23,1,0.32,1) both' }}>
-        <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5">
-          <Check className="w-10 h-10 text-emerald-500" strokeWidth={2.5} />
+        style={{ animation: 'scaleIn 0.4s cubic-bezier(0.23,1,0.32,1) both' }}>
+        {/* Círculo icono animado */}
+        <div className="relative mx-auto mb-6 w-24 h-24">
+          <div className="absolute inset-0 rounded-full animate-ping opacity-20"
+            style={{ background: color }} />
+          <div className="relative w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ background: `${color}18` }}>
+            <div style={{ color }}>
+              <IconoExito />
+            </div>
+          </div>
         </div>
-        <h2 className={`${poppins.className} font-bold text-slate-800 text-2xl mb-2`}>¡Listo!</h2>
-        <p className="text-slate-500 text-sm mb-6">
-          Tu formulario fue enviado exitosamente. En breve nos ponemos en contacto contigo.
+        <h2 className={`${poppins.className} font-extrabold text-slate-800 text-2xl mb-2`}>
+          ¡Formulario enviado!
+        </h2>
+        <p className="text-slate-500 text-sm leading-relaxed mb-6">
+          {meta.mensajeExito || 'Tu información fue recibida exitosamente. En breve nos ponemos en contacto contigo.'}
         </p>
         <a href="https://wa.me/573168819037" target="_blank" rel="noopener noreferrer"
-          className="block w-full py-3 rounded-xl bg-[#25D366] text-white font-bold text-sm mb-3">
+          className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-[#25D366] text-white font-bold text-sm mb-3 hover:bg-[#1ebe5d] transition-all active:scale-[0.98]">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 17.562c-.726.726-1.603 1.12-2.596 1.171-2.082.105-5.144-.967-7.305-3.127-2.161-2.161-3.232-5.223-3.127-7.305.051-.993.445-1.87 1.171-2.596.727-.726 1.604-1.12 2.597-1.17.426-.021.838.058 1.218.231l1.462 2.924c.173.346.13.754-.111 1.058l-.834.975c.37.848.966 1.618 1.755 2.407.789.789 1.559 1.385 2.407 1.755l.975-.834c.304-.241.712-.284 1.058-.111l2.924 1.462c.173.38.252.792.231 1.218-.05.993-.444 1.87-1.17 2.597z"/></svg>
           Escribir por WhatsApp
         </a>
         <button onClick={() => router.push('/')}
@@ -491,15 +542,21 @@ export default function FormularioDinamico() {
           Volver al inicio
         </button>
       </div>
-      <style>{`@keyframes scaleIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }`}</style>
+      <style>{`
+        @keyframes scaleIn { from { opacity:0; transform:scale(0.88) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
+      `}</style>
     </div>
   )
 
   // ── Formulario ──
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#21b9f7] to-[#1a7de0] flex flex-col">
+    <div className="min-h-dvh flex flex-col"
+      style={{ background: `linear-gradient(160deg, ${color} 0%, ${colorDark} 100%)` }}>
       <style>{`
-        @keyframes slideInUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideInUp  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn     { from { opacity:0; } to { opacity:1; } }
+        @keyframes condShow   { from { opacity:0; transform:translateY(-8px) scaleY(0.95); max-height:0; } to { opacity:1; transform:translateY(0) scaleY(1); max-height:600px; } }
+        @keyframes condHide   { from { opacity:1; max-height:600px; } to { opacity:0; max-height:0; margin:0; padding:0; } }
       `}</style>
 
       {/* Header */}
@@ -515,11 +572,31 @@ export default function FormularioDinamico() {
       </header>
 
       <main className="flex-1 px-4 pb-10">
-        <div className="bg-white rounded-3xl shadow-2xl p-6 space-y-5 max-w-xl mx-auto"
-          style={{ animation: 'slideInUp 0.3s cubic-bezier(0.23,1,0.32,1) both' }}>
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-xl mx-auto"
+          style={{ animation: 'slideInUp 0.35s cubic-bezier(0.23,1,0.32,1) both' }}>
 
-          {form.campos.map((campo, i) => (
-            <div key={campo.id} style={{ animation: `slideInUp 0.25s cubic-bezier(0.23,1,0.32,1) ${i * 40}ms both` }}>
+          {/* Mensaje de bienvenida */}
+          {meta.mensajeBienvenida && (
+            <div className="px-6 py-4 border-b border-slate-100"
+              style={{ background: `${color}0d`, borderLeft: `4px solid ${color}` }}>
+              <p className="text-sm text-slate-700 leading-relaxed">{meta.mensajeBienvenida}</p>
+            </div>
+          )}
+
+          <div className="p-6 space-y-5">
+          {form.campos.map((campo, i) => {
+            const visible = evaluarLogica((campo as any).logica, valores)
+            return (
+            <div key={campo.id}
+              style={{
+                animation:      visible ? `slideInUp 0.25s cubic-bezier(0.23,1,0.32,1) ${i * 30}ms both` : undefined,
+                overflow:       'hidden',
+                maxHeight:      visible ? '800px' : '0',
+                opacity:        visible ? 1 : 0,
+                marginBottom:   visible ? undefined : '0',
+                transition:     'max-height 0.3s cubic-bezier(0.23,1,0.32,1), opacity 0.25s ease-out, margin 0.3s ease',
+                pointerEvents:  visible ? 'auto' : 'none',
+              }}>
               {!['seccion', 'checkbox', 'header_image', 'parrafo'].includes(campo.tipo as string) && (
                 <div className="mb-1.5">
                   <label className="text-sm font-semibold text-slate-700">
@@ -548,7 +625,8 @@ export default function FormularioDinamico() {
                 <p className="text-xs text-red-500 font-medium mt-1">{errors[campo.id]}</p>
               )}
             </div>
-          ))}
+            )
+          })}
 
           {/* T&C */}
           <div className={`rounded-2xl border-2 p-4 space-y-3 transition-all duration-200
@@ -591,15 +669,17 @@ export default function FormularioDinamico() {
 
           <button onClick={enviar} disabled={submitting || !valores['__terminos']}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl
-              bg-[#F97316] text-white font-bold text-sm shadow-lg cursor-pointer
+              text-white font-bold text-sm shadow-lg cursor-pointer
               hover:shadow-xl hover:scale-[1.01] transition-all active:scale-[0.99]
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100">
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+            style={{ background: submitting || !valores['__terminos'] ? '#F97316' : '#F97316' }}>
             {submitting
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
               : <><Check className="w-4 h-4" /> Enviar formulario</>
             }
           </button>
-        </div>
+          </div>{/* cierre p-6 */}
+        </div>{/* cierre card */}
         <p className="text-center text-white/40 text-xs mt-6">
           Desarrollado por <span className="text-white/60 font-semibold">NexCode97</span>
         </p>
@@ -650,8 +730,9 @@ export default function FormularioDinamico() {
             <div className="px-5 py-4 border-t border-slate-100 bg-white shrink-0">
               <button
                 onClick={() => { set('__terminos', true); setTcOpen(false) }}
-                className="w-full py-3.5 rounded-2xl bg-[#21b9f7] text-white font-bold text-sm
-                  hover:bg-[#1a9fd8] active:scale-[0.98] transition-all cursor-pointer shadow-md"
+                className="w-full py-3.5 rounded-2xl text-white font-bold text-sm
+                  active:scale-[0.98] transition-all cursor-pointer shadow-md"
+                style={{ background: color }}
               >
                 ✓ Acepto los términos y condiciones
               </button>

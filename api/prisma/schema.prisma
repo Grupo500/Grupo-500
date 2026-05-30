@@ -193,6 +193,7 @@ model Formulario {
   nombre           String
   descripcion      String?
   campos           Json      // FieldSchema[]
+  meta             Json?     // { colorPrimario, mensajeBienvenida, mensajeExito, icono }
   activo           Boolean   @default(false)
   visibleEnLanding Boolean   @default(false)
   cursoId          String?
