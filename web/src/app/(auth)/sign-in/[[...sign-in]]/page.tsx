@@ -149,9 +149,6 @@ export default function SignInPage() {
         <p className="text-sm text-white/80 font-medium">Pre-ICFES</p>
       </div>
 
-      {/* Botón instalar PWA */}
-      <PWAInstallButton />
-
       {/* Card de login */}
       <div className="w-full">
         <p className="text-[13px] font-semibold text-white mb-2 text-center">
