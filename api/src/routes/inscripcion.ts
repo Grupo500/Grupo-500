@@ -143,6 +143,7 @@ const inscripcionSchema = z.object({
   aceptaTerminos:   z.boolean(),
   // Hidden
   asesorId:         z.string().optional(),
+  formularioId:     z.string().optional(),
 })
 
 // ── GET /api/inscripcion/formularios-activos ──────────────────────────────────
@@ -395,7 +396,7 @@ router.post('/publica', asyncHandler(async (req, res) => {
       data: {
         estudianteId: estudiante.id,
         fuente:       data.fuenteContacto,
-        formId:       'formulario-propio',
+        formId:       data.formularioId ?? 'formulario-propio',
         respondedAt:  new Date(),
       },
     }).catch(() => {})

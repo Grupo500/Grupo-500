@@ -33,7 +33,16 @@ router.get('/', asyncHandler(async (_req, res) => {
   const formularios = await prisma.formulario.findMany({
     orderBy: { createdAt: 'desc' },
   })
-  return ApiResponse.success(res, formularios)
+
+  // Agregar conteo de respuestas (registros en FuenteContacto con ese formId)
+  const conRespuestas = await Promise.all(formularios.map(async (f) => {
+    const respuestas = await prisma.fuenteContacto.count({
+      where: { formId: f.id },
+    })
+    return { ...f, respuestas }
+  }))
+
+  return ApiResponse.success(res, conRespuestas)
 }))
 
 // ── GET /api/formularios/:id ──────────────────────────────────────────────────

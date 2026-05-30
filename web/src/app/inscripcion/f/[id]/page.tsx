@@ -252,6 +252,7 @@ export default function FormularioDinamico() {
         // Paso 6 — Marketing + T&C
         fuenteContacto:  v['como_conocio'] ?? '',
         aceptaTerminos:  !!v['__terminos'],
+        formularioId:    id,
       }
 
       const res = await fetch(`${API}/inscripcion/publica`, {
