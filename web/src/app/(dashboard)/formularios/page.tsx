@@ -187,6 +187,13 @@ function FormBuilder({ inicial, onSave, onClose }: {
   const [campos,      setCampos]      = useState<Campo[]>((inicial?.campos as Campo[]) ?? [])
   const [saving,      setSaving]      = useState(false)
 
+  // Sincronizar cuando se abre el editor con un formulario diferente
+  useEffect(() => {
+    setNombre(inicial?.nombre ?? '')
+    setDescripcion(inicial?.descripcion ?? '')
+    setCampos((inicial?.campos as Campo[]) ?? [])
+  }, [inicial?.id])
+
   function agregar(tipo: TipoCampo) {
     setCampos(p => [...p, { id: uid(), tipo, label: getTipoConfig(tipo).label, requerido: false, ...(tipo === 'select' ? { opciones: [] } : {}) }])
   }
