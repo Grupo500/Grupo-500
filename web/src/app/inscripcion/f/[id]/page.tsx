@@ -202,9 +202,8 @@ export default function FormularioDinamico() {
         if (d.success) documentoUrl = d.data.url
       }
 
-      // ── 2. Parsear monto ────────────────────────────────────────────────────
-      const montoRaw = v['monto_consig'] ?? v['valor_curso'] ?? ''
-      const montoNum = parseInt(String(montoRaw).replace(/\D/g, ''), 10) || 0
+      // ── 2. Monto: el OCR del comprobante lo extrae en el backend ────────────
+      const montoNum = 0
 
       // ── 3. Construir payload para POST /api/inscripcion/publica ─────────────
       const payload = {

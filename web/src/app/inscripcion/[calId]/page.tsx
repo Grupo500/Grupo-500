@@ -312,7 +312,6 @@ export default function FormularioPage() {
       if (!form.carreraInteres.trim()) e.carreraInteres = 'Escribe la carrera de tu interés'
     }
     if (p === 4) {
-      if (form.montoDeclarado <= 0) e.montoDeclarado = 'Selecciona cuánto consignaste'
     }
     if (p === 5) {
       if (!form.fuenteContacto) e.fuenteContacto = '¿Cómo nos conociste?'
@@ -360,7 +359,7 @@ export default function FormularioPage() {
         universidadInteres: form.universidadInteres === 'Otra' ? form.universidadOtro : form.universidadInteres,
         cursoId:          form.cursoId || calId,
         cuentaPago:       form.cuentaPago,
-        montoDeclarado:   form.montoDeclarado,
+        montoDeclarado:   0, // El monto se extrae del comprobante via OCR
         comprobanteUrl:   form.comprobanteUrl || undefined,
         comprobantePublicId: form.comprobantePublicId || undefined,
         documentoUrl:     form.documentoUrl || undefined,
@@ -680,17 +679,7 @@ export default function FormularioPage() {
                   <option value="Otra">Otra cuenta</option>
                 </Select>
               </Field>
-              <Field label="¿Cuánto dinero consignaste?" error={errors.montoDeclarado as string}>
-                <Select
-                  value={form.montoDeclarado || ''}
-                  onChange={e => set('montoDeclarado', parseFloat(e.target.value) || 0)}
-                >
-                  <option value="">Selecciona el valor</option>
-                  {opcionesMontoBase.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </Select>
-              </Field>
+
               <UploadField
                 label="Comprobante de pago"
                 hint="Sube la foto o PDF de tu transferencia (opcional pero recomendado)"
