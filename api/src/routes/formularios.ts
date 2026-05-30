@@ -11,12 +11,32 @@ router.use(authenticate)
 // ── Schema de campos ──────────────────────────────────────────────────────────
 const campoSchema = z.object({
   id:          z.string(),
-  tipo:        z.enum(['texto', 'textarea', 'email', 'telefono', 'fecha', 'select', 'checkbox', 'archivo', 'seccion', 'numero']),
+  tipo:        z.enum([
+    'texto', 'textarea', 'email', 'telefono', 'fecha', 'numero',
+    'select', 'radio', 'checkbox_multi', 'si_no',
+    'escala', 'nps', 'archivo', 'seccion', 'parrafo',
+    // internos
+    'checkbox', 'header_image',
+  ]),
   label:       z.string().min(1),
   placeholder: z.string().optional(),
   descripcion: z.string().optional(),
   requerido:   z.boolean().default(false),
   opciones:    z.array(z.string()).optional(),
+  // Nuevos campos
+  minLength:   z.number().optional(),
+  maxLength:   z.number().optional(),
+  min:         z.number().optional(),
+  max:         z.number().optional(),
+  escalaMax:   z.union([z.literal(5), z.literal(10)]).optional(),
+  aceptar:     z.string().optional(),
+  contenido:   z.string().optional(),
+  url:         z.string().optional(),
+  logica: z.object({
+    campoId:  z.string(),
+    operador: z.enum(['igual', 'no_igual', 'contiene', 'no_vacio']),
+    valor:    z.string(),
+  }).optional(),
 })
 
 const formularioSchema = z.object({

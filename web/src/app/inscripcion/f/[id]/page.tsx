@@ -11,6 +11,7 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['400', '600', '700', '800
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
 
 type TipoCampo = 'texto' | 'textarea' | 'email' | 'telefono' | 'fecha' | 'select' | 'checkbox' | 'archivo' | 'seccion' | 'numero'
+  | 'radio' | 'checkbox_multi' | 'si_no' | 'escala' | 'nps' | 'parrafo' | 'header_image'
 
 interface Campo {
   id: string
@@ -94,6 +95,112 @@ function FieldInput({ campo, value, onChange, error, valores }: {
         <option value="">Selecciona tu municipio</option>
         {municipios.map(m => <option key={m} value={m}>{m}</option>)}
       </select>
+    )
+  }
+
+  // ── Párrafo informativo ──────────────────────────────────────────────────────
+  if (campo.tipo === 'parrafo') {
+    return <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">{(campo as any).contenido || campo.label}</p>
+  }
+
+  // ── Selección única (radio visual) ───────────────────────────────────────────
+  if (campo.tipo === 'radio') {
+    return (
+      <div className="space-y-2">
+        {(campo.opciones ?? []).map(op => (
+          <label key={op} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all
+            ${value === op ? 'border-[#21b9f7] bg-[#21b9f7]/5' : 'border-slate-200 hover:border-slate-300'}`}>
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
+              ${value === op ? 'border-[#21b9f7]' : 'border-slate-300'}`}>
+              {value === op && <div className="w-2.5 h-2.5 rounded-full bg-[#21b9f7]" />}
+            </div>
+            <input type="radio" className="hidden" checked={value === op} onChange={() => onChange(op)} />
+            <span className="text-sm text-slate-700">{op}</span>
+          </label>
+        ))}
+      </div>
+    )
+  }
+
+  // ── Selección múltiple (checkbox multi) ──────────────────────────────────────
+  if (campo.tipo === 'checkbox_multi') {
+    const selected: string[] = Array.isArray(value) ? value : []
+    const toggle = (op: string) => {
+      const next = selected.includes(op) ? selected.filter(v => v !== op) : [...selected, op]
+      onChange(next)
+    }
+    return (
+      <div className="space-y-2">
+        {(campo.opciones ?? []).map(op => (
+          <label key={op} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all
+            ${selected.includes(op) ? 'border-[#21b9f7] bg-[#21b9f7]/5' : 'border-slate-200 hover:border-slate-300'}`}
+            onClick={() => toggle(op)}>
+            <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all
+              ${selected.includes(op) ? 'border-[#21b9f7] bg-[#21b9f7]' : 'border-slate-300'}`}>
+              {selected.includes(op) && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+            </div>
+            <span className="text-sm text-slate-700">{op}</span>
+          </label>
+        ))}
+      </div>
+    )
+  }
+
+  // ── Sí / No ──────────────────────────────────────────────────────────────────
+  if (campo.tipo === 'si_no') {
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        {['Sí', 'No'].map(op => (
+          <button key={op} type="button" onClick={() => onChange(op)}
+            className={`py-3.5 rounded-xl border-2 text-sm font-bold transition-all active:scale-[0.97] cursor-pointer
+              ${value === op
+                ? op === 'Sí' ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-red-300 bg-red-50 text-red-600'
+                : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}>
+            {op === 'Sí' ? '👍  Sí' : '👎  No'}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  // ── Escala de valoración ─────────────────────────────────────────────────────
+  if (campo.tipo === 'escala') {
+    const max = (campo as any).escalaMax ?? 5
+    return (
+      <div className="flex gap-2 flex-wrap">
+        {Array.from({ length: max }, (_, i) => i + 1).map(n => (
+          <button key={n} type="button" onClick={() => onChange(n)}
+            className={`w-11 h-11 rounded-xl border-2 text-sm font-bold transition-all active:scale-[0.97] cursor-pointer
+              ${value === n
+                ? 'border-[#21b9f7] bg-[#21b9f7] text-white shadow-md shadow-[#21b9f7]/30'
+                : 'border-slate-200 text-slate-600 hover:border-[#21b9f7] hover:text-[#21b9f7]'}`}>
+            {n}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  // ── NPS (0-10) ───────────────────────────────────────────────────────────────
+  if (campo.tipo === 'nps') {
+    return (
+      <div>
+        <div className="flex gap-1.5 flex-wrap mb-2">
+          {Array.from({ length: 11 }, (_, i) => i).map(n => (
+            <button key={n} type="button" onClick={() => onChange(n)}
+              className={`w-[42px] h-10 rounded-xl border-2 text-xs font-bold transition-all active:scale-[0.97] cursor-pointer
+                ${value === n
+                  ? 'border-[#21b9f7] bg-[#21b9f7] text-white'
+                  : 'border-slate-200 text-slate-600 hover:border-[#21b9f7]'}`}>
+              {n}
+            </button>
+          ))}
+        </div>
+        <div className="flex justify-between text-xs text-slate-400 px-1">
+          <span>Muy improbable</span>
+          <span>Muy probable</span>
+        </div>
+      </div>
     )
   }
 
@@ -239,8 +346,12 @@ export default function FormularioDinamico() {
     if (!form) return false
     const errs: Record<string, string> = {}
     form.campos.forEach(c => {
-      if (c.tipo === 'seccion') return
-      if (c.requerido && !valores[c.id]) errs[c.id] = 'Este campo es requerido'
+      if (['seccion', 'parrafo', 'header_image'].includes(c.tipo)) return
+      if (c.requerido) {
+        const val = valores[c.id]
+        const vacio = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)
+        if (vacio) errs[c.id] = 'Este campo es requerido'
+      }
     })
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -409,7 +520,7 @@ export default function FormularioDinamico() {
 
           {form.campos.map((campo, i) => (
             <div key={campo.id} style={{ animation: `slideInUp 0.25s cubic-bezier(0.23,1,0.32,1) ${i * 40}ms both` }}>
-              {campo.tipo !== 'seccion' && campo.tipo !== 'checkbox' && (campo as any).tipo !== 'header_image' && (
+              {!['seccion', 'checkbox', 'header_image', 'parrafo'].includes(campo.tipo as string) && (
                 <div className="mb-1.5">
                   <label className="text-sm font-semibold text-slate-700">
                     {campo.label}

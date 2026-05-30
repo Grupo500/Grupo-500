@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch, getClientToken } from '@/lib/api'
 import {
@@ -560,6 +561,7 @@ function UploadTCSection() {
 export default function FormulariosPage() {
   const queryClient = useQueryClient()
   const { msg: toastMsg, show: showToast } = useToast()
+  const router = useRouter()
   const [builder,    setBuilder]    = useState<'new' | Formulario | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
@@ -623,7 +625,7 @@ export default function FormulariosPage() {
               Crea y gestiona los formularios de inscripción públicos
             </p>
           </div>
-          <button onClick={() => setBuilder('new')}
+          <button onClick={() => router.push('/formularios/builder/nuevo')}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-on-primary
               text-sm font-bold cursor-pointer hover:opacity-90 transition-all active:scale-[0.97]
               shadow-lg shadow-primary/25">
@@ -669,7 +671,7 @@ export default function FormulariosPage() {
               <p className="text-sm text-on-surface-variant mb-6 max-w-xs">
                 Crea tu primer formulario de inscripción con el constructor visual
               </p>
-              <button onClick={() => setBuilder('new')}
+              <button onClick={() => router.push('/formularios/builder/nuevo')}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary
                   text-sm font-bold cursor-pointer hover:opacity-90 transition-all active:scale-[0.97]
                   shadow-lg shadow-primary/25">
@@ -685,7 +687,7 @@ export default function FormulariosPage() {
               {formularios.map((form, i) => (
                 <FormCard key={form.id} form={form} index={i}
                   toggling={togglingId === form.id}
-                  onEdit={() => setBuilder(form)}
+                  onEdit={() => router.push(`/formularios/builder/${form.id}`)}
                   onDelete={() => setConfirmDel(form.id)}
                   onCopyLink={() => handleCopyLink(form.id)}
                   onToggleActivo={() => { setTogglingId(form.id); toggle.mutate({ id: form.id, field: 'activo', value: !form.activo }) }}
