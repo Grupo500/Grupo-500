@@ -32,6 +32,7 @@ import negociacionesRoutes from './routes/negociaciones'
 import hubspotRoutes  from './routes/hubspot'
 import eventosRoutes from './routes/eventos'
 import passkeysRoutes from './routes/passkeys'
+import inscripcionRoutes from './routes/inscripcion'
 
 const app = express()
 
@@ -157,6 +158,7 @@ app.use('/api/reportes', reportesRoutes)
 app.use('/api/upload',  uploadRoutes)
 app.use('/api/config',       configRoutes)
 app.use('/api/negociaciones', negociacionesRoutes)
+app.use('/api/inscripcion',  inscripcionRoutes)
 app.use('/api/hubspot',      hubspotRoutes)
 app.use('/api/eventos',     eventosRoutes)
 app.use('/api/passkeys',    passkeysRoutes)

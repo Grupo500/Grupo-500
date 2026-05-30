@@ -11,9 +11,11 @@ export const authConfig: NextAuthConfig = {
     authorized({ auth, request }) {
       const isLoggedIn       = !!auth?.user
       const isAuthPage       = request.nextUrl.pathname.startsWith('/sign-in')
-      const isPublicPage     = ['/sign-in', '/sign-up', '/no-autorizado', '/verificando'].some(p =>
-        request.nextUrl.pathname.startsWith(p)
-      )
+      const isPublicPage     = [
+        '/sign-in', '/sign-up', '/no-autorizado', '/verificando',
+        '/inscripcion', // Hub de inscripciones y formulario público
+      ].some(p => request.nextUrl.pathname.startsWith(p))
+        || request.nextUrl.pathname === '/' // Landing page
 
       if (isLoggedIn && isAuthPage) {
         return NextResponse.redirect(new URL('/dashboard', request.nextUrl))

@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   Award, FileBarChart2, BarChart3,
-  ShieldCheck, Sun, Moon,
+  ShieldCheck, Sun, Moon, Globe,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,6 +27,7 @@ const moreItems: NavItem[] = [
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
+  { href: '/calendarios',     label: 'Calendarios',      icon: Globe,         adminOnly: true  },
   { href: '/reportes',        label: 'Reportes',         icon: BarChart3,     adminOnly: true  },
 ]
 

@@ -38,14 +38,16 @@ export async function obtener(req: Request, res: Response) {
 }
 
 const actualizarSchema = z.object({
-  nombre:       z.string().min(2).optional(),
-  descripcion:  z.string().optional(),
-  precio:       z.number().positive().optional(),
-  duracionHoras: z.number().int().positive().optional(),
-  calendario:   z.enum(['A', 'B']).optional(),
-  fechaInicio:  z.string().datetime().optional().nullable(),
-  fechaFin:     z.string().datetime().optional().nullable(),
-  activo:       z.boolean().optional(),
+  nombre:           z.string().min(2).optional(),
+  descripcion:      z.string().optional(),
+  precio:           z.number().positive().optional(),
+  duracionHoras:    z.number().int().positive().optional(),
+  calendario:       z.enum(['A', 'B']).optional(),
+  fechaInicio:      z.string().datetime().optional().nullable(),
+  fechaFin:         z.string().datetime().optional().nullable(),
+  activo:           z.boolean().optional(),
+  visibleEnLanding: z.boolean().optional(),
+  cuposDisponibles: z.number().int().min(0).optional().nullable(),
 })
 
 export async function actualizar(req: Request, res: Response) {

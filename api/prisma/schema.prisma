@@ -123,6 +123,8 @@ model Estudiante {
   universidadInteres String?
   lineaAutorizada    Int?
   agregado           Boolean               @default(false)
+  documentoUrl       String?
+  direccion          String?
   acudiente          Acudiente?
   certificados       Certificado[]
   cursos             CursoEstudiante[]
@@ -170,18 +172,20 @@ model FuenteContacto {
 }
 
 model Curso {
-  id            String            @id @default(cuid())
-  nombre        String
-  descripcion   String?
-  precio        Float
-  duracionHoras Int
-  activo        Boolean           @default(true)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  calendario    CalendarioCurso   @default(A)
-  fechaFin      DateTime?
-  fechaInicio   DateTime?
-  estudiantes   CursoEstudiante[]
+  id                String            @id @default(cuid())
+  nombre            String
+  descripcion       String?
+  precio            Float
+  duracionHoras     Int
+  activo            Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  calendario        CalendarioCurso   @default(A)
+  fechaFin          DateTime?
+  fechaInicio       DateTime?
+  visibleEnLanding  Boolean           @default(false)
+  cuposDisponibles  Int?
+  estudiantes       CursoEstudiante[]
 }
 
 model CursoEstudiante {
