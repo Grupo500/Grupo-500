@@ -96,7 +96,7 @@ export default async function LandingPage() {
             className="text-xs font-semibold text-slate-600 hover:text-[#1a7de0] transition-colors px-4 py-2
               rounded-xl border border-slate-200 hover:border-[#21b9f7]/50 hover:bg-blue-50 transition-all"
           >
-            Ingresar al panel
+Iniciar sesión
           </Link>
         </div>
       </nav>
