@@ -137,15 +137,16 @@ export default function FormularioDinamico() {
   const { id }    = useParams<{ id: string }>()
   const router    = useRouter()
 
-  const [form,      setForm]      = useState<Formulario | null>(null)
-  const [terminosUrl, setTerminos] = useState('https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf')
-  const [loading,   setLoading]   = useState(true)
-  const [notFound,  setNotFound]  = useState(false)
-  const [valores,   setValores]   = useState<Record<string, any>>({})
-  const [errors,    setErrors]    = useState<Record<string, string>>({})
-  const [submitting, setSubmitting] = useState(false)
-  const [exito,     setExito]     = useState(false)
+  const [form,        setForm]      = useState<Formulario | null>(null)
+  const [terminosUrl, setTerminos]  = useState('https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf')
+  const [loading,     setLoading]   = useState(true)
+  const [notFound,    setNotFound]  = useState(false)
+  const [valores,     setValores]   = useState<Record<string, any>>({})
+  const [errors,      setErrors]    = useState<Record<string, string>>({})
+  const [submitting,  setSubmitting] = useState(false)
+  const [exito,       setExito]     = useState(false)
   const [errorGlobal, setErrorGlobal] = useState('')
+  const [tcOpen,      setTcOpen]    = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -368,24 +369,36 @@ export default function FormularioDinamico() {
           ))}
 
           {/* T&C */}
-          <div className="rounded-2xl border-2 border-slate-200 p-4 space-y-2">
-            <p className="text-sm font-semibold text-slate-700">Términos y condiciones</p>
-            <p className="text-xs text-slate-500">
-              Lee los términos antes de enviar.{' '}
-              <a href={terminosUrl} target="_blank" rel="noopener noreferrer"
-                className="text-[#1a7de0] underline font-medium">
-                Ver documento
-              </a>
-            </p>
-            <label className={`flex items-start gap-3 cursor-pointer p-3 rounded-xl transition-all
-              ${valores['__terminos'] ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50'}`}>
+          <div className={`rounded-2xl border-2 p-4 space-y-3 transition-all duration-200
+            ${valores['__terminos'] ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-bold text-slate-700">Términos y condiciones <span className="text-red-400">*</span></p>
+              <button
+                type="button"
+                onClick={() => setTcOpen(true)}
+                className="flex items-center gap-1 text-xs font-semibold text-[#1a7de0] hover:text-[#21b9f7]
+                  bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Leer documento
+              </button>
+            </div>
+            <label className={`flex items-start gap-3 cursor-pointer p-3 rounded-xl border transition-all
+              ${valores['__terminos'] ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}>
               <input type="checkbox" checked={!!valores['__terminos']}
                 onChange={e => set('__terminos', e.target.checked)}
                 className="mt-0.5 w-5 h-5 accent-[#21b9f7] cursor-pointer shrink-0" />
               <span className="text-sm text-slate-700">
-                Acepto los términos y condiciones del curso.
+                He leído y acepto los <strong>términos y condiciones</strong> del curso Pre-ICFES Grupo 500.
               </span>
             </label>
+            {!valores['__terminos'] && (
+              <p className="text-xs text-amber-600 font-medium">
+                ⚠️ Debes aceptar los términos para poder enviar el formulario.
+              </p>
+            )}
           </div>
 
           {errorGlobal && (
@@ -409,6 +422,66 @@ export default function FormularioDinamico() {
           Desarrollado por <span className="text-white/60 font-semibold">NexCode97</span>
         </p>
       </main>
+
+      {/* ── Lightbox T&C ──────────────────────────────────────────────────────── */}
+      {tcOpen && (
+        <div
+          onClick={() => setTcOpen(false)}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/70 backdrop-blur-sm"
+          style={{ animation: 'fadeInBg 0.2s ease-out both' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="relative w-full sm:max-w-2xl bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
+            style={{ height: '90dvh', animation: 'slideUp 0.3s cubic-bezier(0.23,1,0.32,1) both' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#21b9f7]/10 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#1a7de0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className={`${poppins.className} text-slate-800 font-bold text-sm`}>Términos y Condiciones</p>
+                  <p className="text-slate-400 text-xs">Pre-ICFES Grupo 500</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setTcOpen(false)}
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center
+                  text-slate-500 hover:text-slate-700 transition-all active:scale-[0.95] cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* PDF */}
+            <iframe
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(terminosUrl)}&embedded=true`}
+              className="flex-1 w-full border-0"
+              title="Términos y Condiciones"
+            />
+            {/* Footer — aceptar desde aquí */}
+            <div className="px-5 py-4 border-t border-slate-100 bg-white shrink-0">
+              <button
+                onClick={() => { set('__terminos', true); setTcOpen(false) }}
+                className="w-full py-3.5 rounded-2xl bg-[#21b9f7] text-white font-bold text-sm
+                  hover:bg-[#1a9fd8] active:scale-[0.98] transition-all cursor-pointer shadow-md"
+              >
+                ✓ Acepto los términos y condiciones
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInBg { from { opacity:0 } to { opacity:1 } }
+        @keyframes slideUp  { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
+      `}</style>
     </div>
   )
 }
