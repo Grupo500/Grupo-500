@@ -35,7 +35,6 @@ interface FormData {
   fechaNacimiento: string
   departamento: string
   ciudad: string
-  direccion: string
   colegio: string
   grado: string
   // Paso 3
@@ -68,7 +67,7 @@ interface FormData {
 
 const INITIAL: FormData = {
   nombre: '', email: '', telefono: '', tipoDocumento: 'TI', documento: '',
-  fechaNacimiento: '', departamento: '', ciudad: '', direccion: '', colegio: '', grado: '',
+  fechaNacimiento: '', departamento: '', ciudad: '', colegio: '', grado: '',
   acudienteNombre: '', acudienteParentesco: 'Mamá', acudienteParentescoOtro: '',
   acudienteTelefono: '', acudienteTipoDocumento: 'CC', acudienteNumeroDocumento: '',
   primerIcfes: true, puntajeAnterior: '', carreraInteres: '', interesSalud: false,
@@ -301,7 +300,6 @@ export default function FormularioPage() {
       if (!form.fechaNacimiento)    e.fechaNacimiento = 'Fecha de nacimiento requerida'
       if (!form.departamento)       e.departamento = 'Selecciona tu departamento'
       if (!form.ciudad)             e.ciudad = 'Selecciona tu municipio'
-      if (!form.direccion.trim())   e.direccion = 'Dirección requerida'
       if (!form.colegio.trim())     e.colegio = 'Colegio requerido'
       if (!form.grado)              e.grado = 'Selecciona tu grado'
     }
@@ -348,7 +346,6 @@ export default function FormularioPage() {
         fechaNacimiento: form.fechaNacimiento,
         departamento:    form.departamento,
         ciudad:          form.ciudad,
-        direccion:       form.direccion.trim(),
         colegio:         form.colegio.trim(),
         grado:           form.grado,
         acudienteNombre:          form.acudienteNombre.trim(),
@@ -551,10 +548,6 @@ export default function FormularioPage() {
                   </option>
                   {municipios.map(m => <option key={m} value={m}>{m}</option>)}
                 </Select>
-              </Field>
-              <Field label="Dirección de residencia" error={errors.direccion}>
-                <Input value={form.direccion} onChange={e => set('direccion', e.target.value)}
-                  placeholder="Ej: Cra 15 #32-45, Barrio La Esperanza" />
               </Field>
               <Field label="¿En qué colegio estudias o estudiaste?" error={errors.colegio}>
                 <Input value={form.colegio} onChange={e => set('colegio', e.target.value)}
