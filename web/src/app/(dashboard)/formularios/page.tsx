@@ -453,6 +453,7 @@ function UploadTCSection() {
   }
 
   return (
+    <>
     <div className="bg-surface-lowest border border-outline-variant rounded-2xl p-5
       transition-all duration-200 hover:border-amber-300/50 hover:shadow-sm"
       style={{ animation: 'slideInUp 0.3s cubic-bezier(0.23,1,0.32,1) 0.1s both' }}>
@@ -534,6 +535,7 @@ function UploadTCSection() {
         </div>
       </div>
     )}
+    </>
   )
 }
 
