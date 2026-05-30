@@ -146,6 +146,16 @@ const inscripcionSchema = z.object({
   asesorId:         z.string().optional(),
 })
 
+// ── GET /api/inscripcion/formularios/:id ─────────────────────────────────────
+// Público — leer un formulario activo por ID (sin autenticación)
+router.get('/formularios/:id', asyncHandler(async (req, res) => {
+  const form = await prisma.formulario.findUnique({ where: { id: req.params.id } })
+  if (!form || !form.activo) {
+    return res.status(404).json({ success: false, error: 'Formulario no encontrado o no activo' })
+  }
+  return ApiResponse.success(res, form)
+}))
+
 // ── GET /api/inscripcion/terminos ─────────────────────────────────────────────
 // Público — URL del PDF de T&C vigente
 router.get('/terminos', asyncHandler(async (_req, res) => {

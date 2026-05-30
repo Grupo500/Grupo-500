@@ -123,7 +123,7 @@ export default function FormularioDinamico() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/formularios/${id}`).then(r => r.json()),
+      fetch(`${API}/inscripcion/formularios/${id}`).then(r => r.json()),
       fetch(`${API}/inscripcion/terminos`).then(r => r.json()),
     ]).then(([fData, tData]) => {
       if (!fData.success || !fData.data?.activo) { setNotFound(true); return }
