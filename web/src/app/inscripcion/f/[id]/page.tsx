@@ -42,6 +42,19 @@ function FieldInput({ campo, value, onChange, error, valores }: {
     focus:outline-none transition-all duration-150 placeholder:text-slate-400
     ${error ? 'border-red-300 focus:border-red-400' : 'border-slate-200 focus:border-[#21b9f7]'}`
 
+  if ((campo as any).tipo === 'header_image') {
+    return (
+      <div className="-mx-6 -mt-6 mb-2 overflow-hidden rounded-t-3xl">
+        <img
+          src={(campo as any).url}
+          alt="Header del formulario"
+          className="w-full object-cover"
+          style={{ maxHeight: '160px' }}
+        />
+      </div>
+    )
+  }
+
   if (campo.tipo === 'seccion') {
     return (
       <div className="pt-2 pb-1">
@@ -338,7 +351,7 @@ export default function FormularioDinamico() {
 
           {form.campos.map((campo, i) => (
             <div key={campo.id} style={{ animation: `slideInUp 0.25s cubic-bezier(0.23,1,0.32,1) ${i * 40}ms both` }}>
-              {campo.tipo !== 'seccion' && campo.tipo !== 'checkbox' && (
+              {campo.tipo !== 'seccion' && campo.tipo !== 'checkbox' && (campo as any).tipo !== 'header_image' && (
                 <div className="mb-1.5">
                   <label className="text-sm font-semibold text-slate-700">
                     {campo.label}
