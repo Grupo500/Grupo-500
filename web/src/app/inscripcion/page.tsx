@@ -78,7 +78,7 @@ export default function InscripcionHub() {
           <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
             <p className="text-slate-600 text-sm mb-4">{error}</p>
             <a
-              href="https://wa.me/573164134212"
+              href="https://wa.me/573168819037"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#25D366] text-white text-sm font-bold"
@@ -97,7 +97,7 @@ export default function InscripcionHub() {
               En este momento no hay inscripciones abiertas. Contáctanos para más información.
             </p>
             <a
-              href="https://wa.me/573164134212"
+              href="https://wa.me/573168819037"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#25D366] text-white text-sm font-bold"
@@ -184,7 +184,7 @@ export default function InscripcionHub() {
                   </Link>
                 ) : (
                   <a
-                    href="https://wa.me/573164134212"
+                    href="https://wa.me/573168819037"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl

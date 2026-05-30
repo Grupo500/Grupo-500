@@ -411,7 +411,7 @@ export default function FormularioPage() {
             <p className="text-sm text-slate-600">3. Te agregaremos al grupo de WhatsApp del curso</p>
           </div>
           <a
-            href="https://wa.me/573164134212"
+            href="https://wa.me/573168819037"
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full py-3 rounded-xl bg-[#25D366] text-white text-sm font-bold text-center cursor-pointer hover:opacity-90 transition-opacity"

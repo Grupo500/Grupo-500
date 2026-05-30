@@ -274,7 +274,7 @@ Iniciar sesión
             <ChevronRight className="w-4 h-4" />
           </Link>
           <a
-            href="https://wa.me/573164134212"
+            href="https://wa.me/573168819037"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 bg-white/20 text-white font-bold
@@ -295,8 +295,8 @@ Iniciar sesión
           <span className="text-white font-bold text-sm">Grupo 500</span>
         </div>
         <p className="text-slate-500 text-xs mb-2">Pre-ICFES · Prueba Saber 11 · Bucaramanga, Colombia</p>
-        <a href="https://wa.me/573164134212" className="text-[#21b9f7] text-xs hover:underline">
-          +57 316 413 4212
+        <a href="https://wa.me/573168819037" className="text-[#21b9f7] text-xs hover:underline">
+          +57 316 881 9037
         </a>
         <p className="text-slate-600 text-xs mt-4">
           Desarrollado por{' '}
