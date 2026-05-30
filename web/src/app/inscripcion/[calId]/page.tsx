@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { Poppins } from 'next/font/google'
 import {
@@ -177,19 +177,27 @@ function Toggle({ value, onChange, labelSi = 'Sí', labelNo = 'No' }: {
 }
 
 // ── Upload campo ──────────────────────────────────────────────────────────────
-function UploadField({ label, hint, endpoint, onSuccess, uploaded }: {
+function UploadField({ label, hint, endpoint, onSuccess, onRemove, uploaded, uploadedUrl }: {
   label: string; hint?: string; endpoint: string
   onSuccess: (url: string, publicId: string) => void
+  onRemove: () => void
   uploaded: boolean
+  uploadedUrl?: string
 }) {
   const [uploading, setUploading] = useState(false)
-  const [error, setError]         = useState('')
+  const [error,     setError]     = useState('')
+  const [localFile, setLocalFile] = useState<File | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const isImage    = localFile ? localFile.type.startsWith('image/') : uploadedUrl ? /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(uploadedUrl) : false
+  const previewUrl = localFile && isImage ? URL.createObjectURL(localFile) : isImage ? uploadedUrl : null
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setError('')
     setUploading(true)
+    setLocalFile(file)
     try {
       const fd = new FormData()
       fd.append('file', file)
@@ -199,31 +207,83 @@ function UploadField({ label, hint, endpoint, onSuccess, uploaded }: {
       onSuccess(json.data.url, json.data.publicId ?? json.data.filename ?? '')
     } catch (err: any) {
       setError(err.message ?? 'Error al subir el archivo')
+      setLocalFile(null)
     } finally {
       setUploading(false)
     }
   }
 
+  function handleRemove() {
+    setLocalFile(null)
+    setError('')
+    onRemove()
+    if (inputRef.current) inputRef.current.value = ''
+  }
+
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <label className="text-sm font-semibold text-slate-700">{label}</label>
       {hint && <p className="text-xs text-slate-500">{hint}</p>}
-      <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all
-        ${uploaded
-          ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-          : 'border-dashed border-slate-300 bg-slate-50 text-slate-500 hover:border-[#21b9f7] hover:bg-blue-50'
-        }`}>
-        {uploading
-          ? <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-          : uploaded
-            ? <Check className="w-5 h-5 shrink-0" />
+
+      {uploaded ? (
+        <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50 overflow-hidden">
+          {/* Preview imagen */}
+          {previewUrl && (
+            <div className="w-full bg-slate-100" style={{ maxHeight: '160px', overflow: 'hidden' }}>
+              <img src={previewUrl} alt="Vista previa" className="w-full object-contain" style={{ maxHeight: '160px' }} />
+            </div>
+          )}
+          <div className="flex items-center gap-3 px-4 py-3">
+            <Check className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-emerald-700 truncate">
+                {localFile?.name ?? 'Archivo cargado'}
+              </p>
+              <p className="text-xs text-emerald-600">Listo para enviar</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Ver */}
+              {(previewUrl || uploadedUrl) && (
+                <a href={previewUrl ?? uploadedUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs font-semibold text-[#1a7de0]
+                    bg-white border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-all">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Ver
+                </a>
+              )}
+              {/* Eliminar */}
+              <button type="button" onClick={handleRemove}
+                className="flex items-center gap-1 text-xs font-semibold text-red-500
+                  bg-white border border-red-200 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-all active:scale-[0.97] cursor-pointer">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all
+          ${uploading
+            ? 'border-[#21b9f7] bg-blue-50 text-[#1a7de0]'
+            : 'border-dashed border-slate-300 bg-slate-50 text-slate-500 hover:border-[#21b9f7] hover:bg-blue-50/30'
+          }`}>
+          {uploading
+            ? <Loader2 className="w-5 h-5 animate-spin shrink-0" />
             : <Upload className="w-5 h-5 shrink-0" />
-        }
-        <span className="text-sm font-medium">
-          {uploading ? 'Subiendo...' : uploaded ? 'Archivo cargado ✓' : 'Toca para seleccionar'}
-        </span>
-        <input type="file" accept="image/*,application/pdf" onChange={handleFile} className="hidden" disabled={uploading} />
-      </label>
+          }
+          <div>
+            <p className="text-sm font-medium">{uploading ? 'Subiendo...' : 'Toca para seleccionar'}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Imagen o PDF — máx. 10 MB</p>
+          </div>
+          <input ref={inputRef} type="file" accept="image/*,application/pdf"
+            onChange={handleFile} className="hidden" disabled={uploading} />
+        </label>
+      )}
       {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
     </div>
   )
@@ -685,17 +745,21 @@ export default function FormularioPage() {
                 hint="Sube la foto o PDF de tu transferencia (opcional pero recomendado)"
                 endpoint="inscripcion/upload-comprobante"
                 uploaded={!!form.comprobanteUrl}
+                uploadedUrl={form.comprobanteUrl}
                 onSuccess={(url, publicId) => {
                   set('comprobanteUrl', url)
                   set('comprobantePublicId', publicId)
                 }}
+                onRemove={() => { set('comprobanteUrl', ''); set('comprobantePublicId', '') }}
               />
               <UploadField
                 label="Documento de identidad"
                 hint="Foto de tu cédula o tarjeta de identidad (opcional)"
                 endpoint="inscripcion/upload-documento"
                 uploaded={!!form.documentoUrl}
+                uploadedUrl={form.documentoUrl}
                 onSuccess={(url) => set('documentoUrl', url)}
+                onRemove={() => set('documentoUrl', '')}
               />
             </>
           )}
