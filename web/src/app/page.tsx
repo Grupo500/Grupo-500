@@ -7,12 +7,12 @@ import {
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
-// ── Server component: carga calendarios activos ───────────────────────────────
-async function getCalendariosActivos() {
+// ── Server component: carga formularios activos de la landing ─────────────────
+async function getFormulariosActivos() {
   const API = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? 'http://localhost:3001/api'
   try {
-    const res = await fetch(`${API}/inscripcion/calendarios-activos`, {
-      next: { revalidate: 60 }, // revalidar cada minuto
+    const res = await fetch(`${API}/inscripcion/formularios-activos`, {
+      next: { revalidate: 60 },
     })
     if (!res.ok) return []
     const data = await res.json()
@@ -76,7 +76,7 @@ function TestimonioCard({ nombre, puntaje, texto, universidad }: {
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default async function LandingPage() {
-  const calendarios = await getCalendariosActivos()
+  const formularios = await getFormulariosActivos()
 
   return (
     <div className={`${poppins.className} bg-[#F8FAFC] min-h-dvh`}>
@@ -116,14 +116,14 @@ Iniciar sesión
             El curso de preparación para el ICFES más completo de Santander.
             Simulacros reales, clases en vivo y acompañamiento personalizado.
           </p>
-          <Link
-            href="/inscripcion"
+          <a
+            href="#inscribirse"
             className="inline-flex items-center gap-2 bg-[#F97316] text-white font-bold text-base
               px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all"
           >
             ¡Quiero inscribirme!
             <ChevronRight className="w-5 h-5" />
-          </Link>
+          </a>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mt-10">
@@ -168,64 +168,67 @@ Iniciar sesión
         </div>
       </section>
 
-      {/* ── Calendarios activos ───────────────────────────────────────────────── */}
-      {calendarios.length > 0 && (
-        <section className="bg-gradient-to-b from-slate-50 to-white px-5 py-10">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-slate-800 font-bold text-xl text-center mb-2">
-              Calendarios disponibles
-            </h2>
-            <p className="text-slate-500 text-sm text-center mb-6">
-              Elige el calendario que más se ajusta a tu prueba
-            </p>
+      {/* ── Formularios de inscripción activos ───────────────────────────────── */}
+      <section className="bg-gradient-to-b from-slate-50 to-white px-5 py-10" id="inscribirse">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-slate-800 font-bold text-xl text-center mb-2">
+            Inscríbete ahora
+          </h2>
+          <p className="text-slate-500 text-sm text-center mb-6">
+            Completa el formulario y en menos de 24 horas te contactamos
+          </p>
+
+          {formularios.length === 0 ? (
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 text-center">
+              <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 text-sm font-medium mb-1">No hay inscripciones abiertas</p>
+              <p className="text-slate-400 text-xs mb-5">Próximamente abriremos nuevas fechas. Escríbenos para más info.</p>
+              <a
+                href="https://wa.me/573168819037"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#25D366] text-white font-bold text-sm
+                  px-6 py-3 rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Escribir por WhatsApp
+              </a>
+            </div>
+          ) : (
             <div className="space-y-4">
-              {calendarios.map((cal: any) => (
-                <div key={cal.id} className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
-                  <div className="bg-gradient-to-r from-[#21b9f7] to-[#1a7de0] px-5 py-3 flex items-center justify-between">
-                    <span className="text-white font-bold text-sm">Calendario {cal.calendario}</span>
-                    {cal.cuposRestantes != null && cal.cuposRestantes > 0 && (
-                      <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        {cal.cuposRestantes} cupos
-                      </span>
-                    )}
+              {formularios.map((form: any) => (
+                <div key={form.id}
+                  className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden
+                    hover:shadow-xl hover:border-[#21b9f7]/30 transition-all duration-300">
+                  <div className="bg-gradient-to-r from-[#21b9f7] to-[#1a7de0] px-5 py-3 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                    <span className="text-white font-bold text-sm">Inscripciones abiertas</span>
                   </div>
                   <div className="p-5">
-                    <h3 className="text-slate-800 font-bold text-base mb-3">{cal.nombre}</h3>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className="text-xs text-slate-400">Desde</span>
-                        <p className="text-[#1a7de0] font-bold text-lg">
-                          ${cal.precioGeneral.toLocaleString('es-CO')}
-                        </p>
-                        {cal.preciosPromo.length > 0 && (
-                          <p className="text-emerald-600 text-xs font-medium">
-                            Promoción: ${cal.preciosPromo[0].toLocaleString('es-CO')}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-slate-400 text-xs">
-                          <Users className="w-3.5 h-3.5" />
-                          {cal.inscritos.toLocaleString('es-CO')} inscritos
-                        </div>
-                      </div>
+                    <h3 className="text-slate-800 font-bold text-base mb-1">{form.nombre}</h3>
+                    {form.descripcion && (
+                      <p className="text-slate-500 text-xs leading-relaxed mb-4">{form.descripcion}</p>
+                    )}
+                    <div className="flex items-center gap-2 mb-5">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="text-slate-600 text-xs">Proceso 100% en línea — sin filas, sin papelería</span>
                     </div>
                     <Link
-                      href={`/inscripcion/${cal.id}`}
+                      href={`/inscripcion/f/${form.id}`}
                       className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl
                         bg-[#F97316] text-white font-bold text-sm shadow-md
-                        hover:shadow-lg hover:scale-[1.01] transition-all"
+                        hover:shadow-lg hover:scale-[1.01] active:scale-[0.98] transition-all"
                     >
-                      Inscribirme en este calendario
+                      ¡Quiero inscribirme!
                       <ChevronRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {/* ── Testimonios ──────────────────────────────────────────────────────── */}
       <section className="py-10 px-5 max-w-2xl mx-auto">
@@ -265,14 +268,14 @@ Iniciar sesión
           Únete a los miles de estudiantes que ya confiaron en Grupo 500
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/inscripcion"
+          <a
+            href="#inscribirse"
             className="inline-flex items-center justify-center gap-2 bg-[#F97316] text-white font-bold
               px-7 py-3.5 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
           >
             ¡Inscribirme ahora!
             <ChevronRight className="w-4 h-4" />
-          </Link>
+          </a>
           <a
             href="https://wa.me/573168819037"
             target="_blank"

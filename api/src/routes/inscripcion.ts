@@ -146,6 +146,22 @@ const inscripcionSchema = z.object({
   asesorId:         z.string().optional(),
 })
 
+// ── GET /api/inscripcion/formularios-activos ──────────────────────────────────
+// Público — formularios activos y visibles en landing
+router.get('/formularios-activos', asyncHandler(async (_req, res) => {
+  const formularios = await prisma.formulario.findMany({
+    where:   { activo: true, visibleEnLanding: true },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id:          true,
+      nombre:      true,
+      descripcion: true,
+      createdAt:   true,
+    },
+  })
+  return ApiResponse.success(res, formularios)
+}))
+
 // ── GET /api/inscripcion/formularios/:id ─────────────────────────────────────
 // Público — leer un formulario activo por ID (sin autenticación)
 router.get('/formularios/:id', asyncHandler(async (req, res) => {
