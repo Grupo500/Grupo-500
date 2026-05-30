@@ -27,6 +27,7 @@ const crearSchema = z.object({
   numeroCuotas: z.number().int().min(1).max(24).optional(),
   fechaPrimeraCuota: z.string().optional(),
   lineaAutorizada: z.number().int().min(1).max(6).optional(),
+  documentoUrl: z.string().url().optional().or(z.literal('')),
   acudiente: z.object({
     nombre: z.string().min(2),
     email: z.string().email(),
@@ -92,6 +93,7 @@ export async function crear(req: Request, res: Response) {
         ...(data.ciudad       && { ciudad:       data.ciudad }),
         ...(data.colegioId    && { colegioId:    data.colegioId }),
         ...(req.asesorId      && { asesorId:     req.asesorId }),
+        ...(data.documentoUrl && { documentoUrl: data.documentoUrl }),
         ...(data.acudiente    && { acudiente: { create: data.acudiente } }),
       },
       include: { acudiente: true, colegio: true },

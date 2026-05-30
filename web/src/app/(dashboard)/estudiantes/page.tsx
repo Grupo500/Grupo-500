@@ -116,6 +116,7 @@ const FORM_EMPTY = {
   email: '', telefono: '', fechaNacimiento: '',
   departamento: '', ciudad: '', colegioId: '', asesorId: '',
   lineaAutorizada: '',
+  documentoUrl: '',
   cursoId: '', descuentoValor: '0',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
   formaPago: 'CONTADO' as 'CONTADO' | 'FINANCIADO',
@@ -192,7 +193,8 @@ export default function EstudiantesPage() {
   const [formError, setFormError] = useState('')
   const [form, setForm] = useState(FORM_EMPTY)
   const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
-  const [subiendoComprobante, setSubiendoComprobante] = useState(false)
+  const [subiendoComprobante,  setSubiendoComprobante]  = useState(false)
+  const [subiendoDocumento,    setSubiendoDocumento]    = useState(false)
   const [modalTypeform, setModalTypeform]     = useState(false)
   const [typeformUrl, setTypeformUrl]         = useState<string | null>(null)
   const [typeformCopiado, setTypeformCopiado] = useState(false)
@@ -259,7 +261,8 @@ export default function EstudiantesPage() {
 
       const payload: any = {
         nombre: form.nombre.trim(), tipoDocumento: form.tipoDocumento,
-        ...(form.documento.trim() && { documento: form.documento.trim() }),
+        ...(form.documento.trim()   && { documento:    form.documento.trim() }),
+        ...(form.documentoUrl       && { documentoUrl: form.documentoUrl }),
         email: form.email.trim(), telefono: form.telefono.trim(),
         fechaNacimiento: form.fechaNacimiento,
         ...(form.departamento && { departamento: form.departamento }),
@@ -404,8 +407,23 @@ export default function EstudiantesPage() {
       setForm(p => ({ ...p, comprobante: json.data.url }))
     } catch (e: any) {
       setFormError(e?.message ?? 'Error al subir comprobante')
-    } finally {
-      setSubiendoComprobante(false) }
+    } finally { setSubiendoComprobante(false) }
+  }
+
+  const subirDocumento = async (file: File) => {
+    setSubiendoDocumento(true)
+    try {
+      const token = await getClientToken()
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
+      })
+      const json = await res.json()
+      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
+      setForm(p => ({ ...p, documentoUrl: json.data.url }))
+    } catch (e: any) {
+      setFormError(e?.message ?? 'Error al subir documento')
+    } finally { setSubiendoDocumento(false) }
   }
 
   const estudiantes = data?.data ?? []
@@ -740,6 +758,25 @@ export default function EstudiantesPage() {
                   <div>
                     <label className={labelCls}>Número de documento</label>
                     <input className={inputCls} value={form.documento} onChange={e => setForm(p => ({ ...p, documento: e.target.value }))} placeholder="Opcional" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className={labelCls}>Documento de identidad (opcional)</label>
+                    <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-highest transition-colors">
+                      <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoDocumento}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) subirDocumento(f); e.target.value = '' }} />
+                      {subiendoDocumento
+                        ? <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        : <span className="text-sm">📄</span>}
+                      <span className="text-sm text-on-surface-variant">
+                        {subiendoDocumento ? 'Subiendo...' : form.documentoUrl ? '✓ Documento adjunto' : 'Adjuntar foto/PDF del documento'}
+                      </span>
+                    </label>
+                    {form.documentoUrl && (
+                      <a href={form.documentoUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline mt-1 inline-flex items-center gap-1">
+                        Ver documento adjunto →
+                      </a>
+                    )}
                   </div>
                   <div>
                     <label className={labelCls}>Email *</label>

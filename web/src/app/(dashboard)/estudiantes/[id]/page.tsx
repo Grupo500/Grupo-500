@@ -42,7 +42,7 @@ interface HistorialItem {
 }
 interface EstudianteDetalle {
   id: string; nombre: string
-  tipoDocumento?: string; documento?: string
+  tipoDocumento?: string; documento?: string; documentoUrl?: string | null
   email: string; telefono: string; fechaNacimiento: string
   departamento?: string; ciudad?: string
   colegio?: { id: string; nombre: string }
@@ -586,6 +586,23 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
               </div>
             </div>
           ))}
+
+          {/* Documento de identidad adjunto */}
+          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60 col-span-2">
+            <svg className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] text-on-surface-variant">Documento de identidad</p>
+              {e.documentoUrl
+                ? <a href={e.documentoUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-[13px] font-medium text-primary hover:underline inline-flex items-center gap-1">
+                    Ver documento adjunto →
+                  </a>
+                : <p className="text-[13px] font-medium text-on-surface-variant">No adjuntado</p>
+              }
+            </div>
+          </div>
         </div>
 
       </section>
