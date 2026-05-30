@@ -446,7 +446,74 @@ Actualmente la pregunta "¿En qué ciudad y departamento vives?" es texto libre.
 - `web/src/data/municipios.ts`: JSON de 33 departamentos con todos sus municipios
 
 ### Pendiente
-- PDF de T&C: el usuario lo pasará para subir a Cloudinary y actualizar el link en el formulario
 - Formularios Cal B y Cal C (misma estructura, diferente calendario)
 - Twilio WhatsApp real
 - Exportar reportes CSV/PDF
+
+---
+
+## Sesión 010 — 2026-05-30
+
+**Objetivo:** Completar plataforma pública — formulario dinámico Cal A funcional, módulo Formularios en la app, correcciones de flujo y UX.
+
+### Lo que se hizo
+
+**Módulo Formularios (`/dashboard/formularios`):**
+- Reemplazó el módulo Calendarios por Formularios (icono `ClipboardList`)
+- Constructor visual de formularios con paleta de 10 tipos de campo y canvas drag-free
+- Sección "Términos y Condiciones" con upload de PDF a Cloudinary y lightbox con proxy propio
+- FormCard: badges ACTIVO/LANDING con dot pulsante, toggle activo/landing, copiar link, editar, eliminar
+- Formulario Cal A sembrado en BD: 28 campos en 6 secciones, activo, visibleEnLanding=true
+
+**Formulario dinámico público (`/inscripcion/f/[id]`):**
+- Renderer genérico que carga cualquier formulario activo desde la BD
+- Municipio filtrado dinámicamente según departamento seleccionado (DEPARTAMENTOS_MUNICIPIOS)
+- Campo `header_image` especial: muestra banner al ancho completo del card
+- Header del Cal A: imagen `Header - Formulario Cal A.webp` subida a Cloudinary
+- T&C con lightbox propio (proxy `/api/pdf-proxy`) — botón "Acepto" marca checkbox desde el modal
+- Envío real: `POST /api/inscripcion/publica` → crea estudiante en BD, sube archivos a Cloudinary
+
+**Backend:**
+- `GET /api/inscripcion/formularios-activos` — formularios con `activo=true` y `visibleEnLanding=true`
+- `GET /api/inscripcion/formularios/:id` — leer formulario activo sin auth (público)
+- `GET /api/config/terminos` — URL del PDF de T&C
+- `POST /api/config/terminos` — upload PDF T&C a Cloudinary (fix: `public_id` como función async)
+- Rutas CRUD de formularios (`/api/formularios`) — autenticadas, ADMIN para escritura
+
+**Landing page:**
+- Ahora muestra formularios activos (`visibleEnLanding=true`) en lugar de cursos
+- Cada card enlaza a `/inscripcion/f/<id>`
+- Botones Hero y CTA final apuntan al anchor `#inscribirse`
+
+**Proxy PDF (`/api/pdf-proxy`):**
+- Route handler en Next.js que descarga PDF de Cloudinary y lo sirve desde el mismo origen
+- Evita bloqueo `X-Frame-Options: DENY` de Cloudinary en iframes
+- CSP actualizado: `frame-src 'self'` agregado para permitir iframe mismo origen
+
+**Correcciones de flujo:**
+- `syncEstudianteHubspot()` removido de `POST /api/inscripcion/publica`
+  → Los leads llegan a HubSpot vía redes sociales (Meta/Instagram), no por el formulario
+  → El formulario Cal A es post-pago: solo crea el estudiante en la app
+- Fecha de nacimiento movida al Paso 1 (Datos personales) del formulario multi-paso
+- Campo "Dirección de residencia" eliminado de ambos formularios (dinámico y hardcodeado)
+- Campo "¿Cuánto dinero consignaste?" eliminado — monto extraído por OCR del comprobante
+- `municipio` actualizado en BD de `tipo: 'texto'` a `tipo: 'select'`
+
+**Errores registrados (nuevos):**
+- `multer-storage-cloudinary`: `public_id` debe ser función async, no string literal → error "public_id is not a function"
+- Cloudinary raw + Google Docs viewer bloquean iframe → solución: proxy Next.js desde mismo origen
+- JSX con dos elementos en paralelo sin fragmento `<>` → error de compilación en Vercel
+
+### Flujo de negocio confirmado
+1. Lead llega a HubSpot vía redes sociales (Meta/Instagram)
+2. Asesor contacta, convence y cobra
+3. Asesor envía link del formulario Cal A al estudiante
+4. Estudiante llena formulario → se crea en la app (BD) + notificación SSE en tiempo real
+5. Admin ve el nuevo estudiante y confirma el pago
+
+### Pendiente
+- Formularios Cal B y Cal C
+- Reestructurar landing: formulario corto de captación (leads → HubSpot) separado del formulario completo de matriculación
+- Twilio WhatsApp real
+- Exportar reportes CSV/PDF
+- PDF T&C: verificar que el lightbox muestre correctamente en producción
