@@ -295,9 +295,9 @@ export default function FormularioPage() {
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Email inválido'
       if (!form.telefono.trim())    e.telefono = 'Celular requerido'
       if (!form.documento.trim())   e.documento = 'Número de documento requerido'
+      if (!form.fechaNacimiento)    e.fechaNacimiento = 'Fecha de nacimiento requerida'
     }
     if (p === 1) {
-      if (!form.fechaNacimiento)    e.fechaNacimiento = 'Fecha de nacimiento requerida'
       if (!form.departamento)       e.departamento = 'Selecciona tu departamento'
       if (!form.ciudad)             e.ciudad = 'Selecciona tu municipio'
       if (!form.colegio.trim())     e.colegio = 'Colegio requerido'
@@ -518,6 +518,10 @@ export default function FormularioPage() {
                     placeholder="Número" inputMode="numeric" />
                 </Field>
               </div>
+              <Field label="Fecha de nacimiento" error={errors.fechaNacimiento}>
+                <Input type="date" value={form.fechaNacimiento} onChange={e => set('fechaNacimiento', e.target.value)}
+                  max={new Date().toISOString().split('T')[0]} />
+              </Field>
             </>
           )}
 
@@ -527,10 +531,6 @@ export default function FormularioPage() {
               <h2 className={`${poppins.className} text-lg font-bold text-slate-800`}>
                 ¿Dónde vives?
               </h2>
-              <Field label="Fecha de nacimiento" error={errors.fechaNacimiento}>
-                <Input type="date" value={form.fechaNacimiento} onChange={e => set('fechaNacimiento', e.target.value)}
-                  max={new Date().toISOString().split('T')[0]} />
-              </Field>
               <Field label="Departamento" error={errors.departamento}>
                 <Select value={form.departamento} onChange={e => {
                   set('departamento', e.target.value)
