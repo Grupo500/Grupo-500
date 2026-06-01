@@ -183,8 +183,9 @@ function CursoCard({
               Combo
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-on-surface-variant/50">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border bg-primary/8 text-primary border-primary/15">
               <BookOpen className="w-2.5 h-2.5" />
+              Individual
             </span>
           )}
 
