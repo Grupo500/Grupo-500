@@ -420,7 +420,7 @@ export default function FormularioDinamico() {
       fetch(`${API}/inscripcion/formularios/${id}`).then(r => r.json()),
       fetch(`${API}/inscripcion/terminos`).then(r => r.json()),
       fetch(`${API}/inscripcion/cursos-activos`).then(r => r.json()),
-      asesorParam ? fetch(`${API}/inscripcion/asesor/${asesorParam}`).then(r => r.json()) : Promise.resolve(null),
+      asesorParam ? fetch(`${API}/inscripcion/asesor/${asesorParam}`).then(r => r.json()).catch(() => ({ success: false })) : Promise.resolve(null),
     ]).then(([fData, tData, cData, aData]) => {
       if (!fData.success || !fData.data?.activo) { setNotFound(true); return }
       setForm(fData.data)
@@ -448,6 +448,8 @@ export default function FormularioDinamico() {
     const errs: Record<string, string> = {}
     form.campos.forEach(c => {
       if (['seccion', 'parrafo', 'header_image'].includes(c.tipo)) return
+      // No validar campos ocultos por lógica condicional
+      if (!evaluarLogica((c as any).logica, valores)) return
       if (c.requerido) {
         const val = valores[c.id]
         const vacio = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)
@@ -475,7 +477,11 @@ export default function FormularioDinamico() {
         fd.append('file', v['comprobante'])
         const r = await fetch(`${API}/inscripcion/upload-comprobante`, { method: 'POST', body: fd })
         const d = await r.json()
-        if (d.success) { comprobanteUrl = d.data.url; comprobantePublicId = d.data.publicId }
+        if (!d.success) throw new Error('No se pudo subir el comprobante. Intenta de nuevo.')
+        comprobanteUrl = d.data.url
+        comprobantePublicId = d.data.publicId
+      } else {
+        throw new Error('Debes adjuntar el comprobante de pago para continuar.')
       }
       if (v['doc_identidad'] instanceof File) {
         const fd = new FormData()
@@ -507,7 +513,7 @@ export default function FormularioDinamico() {
         cursoId:         v['curso_seleccionado']  ?? '',
         metodoPago:      v['metodo_pago']         ?? '',
         referenciaPago:  v['referencia_pago']     ?? '',
-        comprobanteUrl:  comprobanteUrl           || v['comprobante'] as string || '',
+        comprobanteUrl,
         comprobantePublicId,
         documentoUrl,
         fuenteContacto:  v['como_conocio']        ?? '',

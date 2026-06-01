@@ -749,7 +749,7 @@ export default function FormulariosPage() {
               <p className="text-sm text-on-surface-variant mb-6 max-w-xs">
                 Crea tu primer formulario de inscripción con el constructor visual
               </p>
-              <button onClick={() => router.push('/formularios/builder/nuevo')}
+              <button onClick={() => setBuilder('new')}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary
                   text-sm font-bold cursor-pointer hover:opacity-90 transition-all active:scale-[0.97]
                   shadow-lg shadow-primary/25">
