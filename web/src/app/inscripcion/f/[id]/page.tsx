@@ -181,9 +181,11 @@ function CustomDate({
     }
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     const onScroll = (e: Event) => {
-      const dropdown = document.getElementById('custom-date-dropdown')
-      if (dropdown && dropdown.contains(e.target as Node)) return
-      setOpen(false)
+      const t = e.target as Node
+      // Solo cerrar si el scroll ocurre en el documento (página), no dentro del calendario
+      if (t === document || t === document.documentElement || t === document.body) {
+        setOpen(false)
+      }
     }
     document.addEventListener('mousedown', onClick)
     document.addEventListener('keydown', onEsc)
