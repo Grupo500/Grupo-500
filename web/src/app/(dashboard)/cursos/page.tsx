@@ -177,14 +177,16 @@ function CursoCard({
 
         {/* Fila: tipo + acciones admin */}
         <div className="flex items-center justify-between gap-2">
-          <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border ${
-            isCombo
-              ? 'bg-amber-50 text-amber-600 border-amber-200/70'
-              : 'bg-primary/8 text-primary border-primary/15'
-          }`}>
-            {isCombo ? <Package className="w-2.5 h-2.5" /> : <BookOpen className="w-2.5 h-2.5" />}
-            {isCombo ? 'Combo' : 'Individual'}
-          </span>
+          {isCombo ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border bg-amber-50 text-amber-600 border-amber-200/70">
+              <Package className="w-2.5 h-2.5" />
+              Combo
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-on-surface-variant/50">
+              <BookOpen className="w-2.5 h-2.5" />
+            </span>
+          )}
 
           {isAdmin && (
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
@@ -380,26 +382,18 @@ export default function CursosPage() {
 
         {/* Segmented control con indicador deslizante */}
         <div className="relative flex p-1 bg-surface-high rounded-xl border border-outline-variant self-start shrink-0">
-          {/* Indicador */}
-          <div
-            className="absolute top-1 bottom-1 rounded-lg bg-surface-lowest shadow-sm transition-all duration-200 ease-out pointer-events-none"
-            style={{
-              left:  filtroActivo === 'activos'   ? '4px'
-                   : filtroActivo === 'inactivos' ? 'calc(33.33% + 2px)'
-                   : 'calc(66.66% + 0px)',
-              width: 'calc(33.33% - 3px)',
-            }}
-          />
-          {(['activos', 'inactivos', 'todos'] as const).map(f => (
+            {(['activos', 'inactivos', 'todos'] as const).map(f => (
             <button
               key={f}
               onClick={() => setFiltroActivo(f)}
-              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer min-w-[96px] justify-center ${
-                filtroActivo === f ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface'
+              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+                filtroActivo === f
+                  ? 'bg-surface-lowest text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               {f === 'activos' ? 'Habilitados' : f === 'inactivos' ? 'Deshabilitados' : 'Todos'}
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors duration-150 ${
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors duration-150 shrink-0 ${
                 filtroActivo === f ? 'bg-primary/15 text-primary' : 'bg-outline-variant/20 text-on-surface-variant'
               }`}>
                 {counts[f]}
