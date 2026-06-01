@@ -54,6 +54,200 @@ function evaluarLogica(logica: any, valores: Record<string, any>): boolean {
   }
 }
 
+// ── Países con indicativo ─────────────────────────────────────────────────────
+const PAISES = [
+  { code: 'CO', name: 'Colombia',              dial: '+57',  flag: '🇨🇴' },
+  { code: 'US', name: 'Estados Unidos',         dial: '+1',   flag: '🇺🇸' },
+  { code: 'MX', name: 'México',                 dial: '+52',  flag: '🇲🇽' },
+  { code: 'AR', name: 'Argentina',              dial: '+54',  flag: '🇦🇷' },
+  { code: 'CL', name: 'Chile',                  dial: '+56',  flag: '🇨🇱' },
+  { code: 'PE', name: 'Perú',                   dial: '+51',  flag: '🇵🇪' },
+  { code: 'EC', name: 'Ecuador',                dial: '+593', flag: '🇪🇨' },
+  { code: 'VE', name: 'Venezuela',              dial: '+58',  flag: '🇻🇪' },
+  { code: 'BO', name: 'Bolivia',                dial: '+591', flag: '🇧🇴' },
+  { code: 'PY', name: 'Paraguay',               dial: '+595', flag: '🇵🇾' },
+  { code: 'UY', name: 'Uruguay',                dial: '+598', flag: '🇺🇾' },
+  { code: 'BR', name: 'Brasil',                 dial: '+55',  flag: '🇧🇷' },
+  { code: 'PA', name: 'Panamá',                 dial: '+507', flag: '🇵🇦' },
+  { code: 'CR', name: 'Costa Rica',             dial: '+506', flag: '🇨🇷' },
+  { code: 'GT', name: 'Guatemala',              dial: '+502', flag: '🇬🇹' },
+  { code: 'HN', name: 'Honduras',               dial: '+504', flag: '🇭🇳' },
+  { code: 'SV', name: 'El Salvador',            dial: '+503', flag: '🇸🇻' },
+  { code: 'NI', name: 'Nicaragua',              dial: '+505', flag: '🇳🇮' },
+  { code: 'CU', name: 'Cuba',                   dial: '+53',  flag: '🇨🇺' },
+  { code: 'DO', name: 'Rep. Dominicana',        dial: '+1809',flag: '🇩🇴' },
+  { code: 'PR', name: 'Puerto Rico',            dial: '+1787',flag: '🇵🇷' },
+  { code: 'ES', name: 'España',                 dial: '+34',  flag: '🇪🇸' },
+  { code: 'GB', name: 'Reino Unido',            dial: '+44',  flag: '🇬🇧' },
+  { code: 'FR', name: 'Francia',                dial: '+33',  flag: '🇫🇷' },
+  { code: 'DE', name: 'Alemania',               dial: '+49',  flag: '🇩🇪' },
+  { code: 'IT', name: 'Italia',                 dial: '+39',  flag: '🇮🇹' },
+  { code: 'PT', name: 'Portugal',               dial: '+351', flag: '🇵🇹' },
+  { code: 'NL', name: 'Países Bajos',           dial: '+31',  flag: '🇳🇱' },
+  { code: 'BE', name: 'Bélgica',                dial: '+32',  flag: '🇧🇪' },
+  { code: 'CH', name: 'Suiza',                  dial: '+41',  flag: '🇨🇭' },
+  { code: 'AT', name: 'Austria',                dial: '+43',  flag: '🇦🇹' },
+  { code: 'SE', name: 'Suecia',                 dial: '+46',  flag: '🇸🇪' },
+  { code: 'NO', name: 'Noruega',                dial: '+47',  flag: '🇳🇴' },
+  { code: 'DK', name: 'Dinamarca',              dial: '+45',  flag: '🇩🇰' },
+  { code: 'FI', name: 'Finlandia',              dial: '+358', flag: '🇫🇮' },
+  { code: 'PL', name: 'Polonia',                dial: '+48',  flag: '🇵🇱' },
+  { code: 'RU', name: 'Rusia',                  dial: '+7',   flag: '🇷🇺' },
+  { code: 'UA', name: 'Ucrania',                dial: '+380', flag: '🇺🇦' },
+  { code: 'CA', name: 'Canadá',                 dial: '+1',   flag: '🇨🇦' },
+  { code: 'AU', name: 'Australia',              dial: '+61',  flag: '🇦🇺' },
+  { code: 'NZ', name: 'Nueva Zelanda',          dial: '+64',  flag: '🇳🇿' },
+  { code: 'JP', name: 'Japón',                  dial: '+81',  flag: '🇯🇵' },
+  { code: 'CN', name: 'China',                  dial: '+86',  flag: '🇨🇳' },
+  { code: 'KR', name: 'Corea del Sur',          dial: '+82',  flag: '🇰🇷' },
+  { code: 'IN', name: 'India',                  dial: '+91',  flag: '🇮🇳' },
+  { code: 'SA', name: 'Arabia Saudita',         dial: '+966', flag: '🇸🇦' },
+  { code: 'AE', name: 'Emiratos Árabes',        dial: '+971', flag: '🇦🇪' },
+  { code: 'TR', name: 'Turquía',                dial: '+90',  flag: '🇹🇷' },
+  { code: 'IL', name: 'Israel',                 dial: '+972', flag: '🇮🇱' },
+  { code: 'ZA', name: 'Sudáfrica',              dial: '+27',  flag: '🇿🇦' },
+  { code: 'NG', name: 'Nigeria',                dial: '+234', flag: '🇳🇬' },
+  { code: 'EG', name: 'Egipto',                 dial: '+20',  flag: '🇪🇬' },
+  { code: 'MA', name: 'Marruecos',              dial: '+212', flag: '🇲🇦' },
+]
+
+// ── Input de teléfono con indicativo ─────────────────────────────────────────
+function PhoneInput({
+  value, onChange, placeholder, error,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  error?: boolean
+}) {
+  // value formato: "+57|3001234567"
+  const [dialCode, setDialCode] = useState(() => {
+    if (value?.includes('|')) return value.split('|')[0]
+    return '+57'
+  })
+  const [numero, setNumero] = useState(() => {
+    if (value?.includes('|')) return value.split('|')[1]
+    return value ?? ''
+  })
+  const [open, setOpen] = useState(false)
+  const [busq, setBusq] = useState('')
+  const [rect, setRect] = useState<DOMRect | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const searchRef  = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const pais = dialCode
+    const num  = numero
+    onChange(num ? `${pais}|${num}` : '')
+  }, [dialCode, numero])
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (!triggerRef.current?.contains(t) && !(document.getElementById('phone-dial-dropdown')?.contains(t))) {
+        setOpen(false); setBusq('')
+      }
+    }
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); setBusq('') } }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onEsc)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onEsc)
+    }
+  }, [])
+
+  const handleOpenDial = () => {
+    if (triggerRef.current) setRect(triggerRef.current.getBoundingClientRect())
+    setOpen(o => !o)
+    if (!open) setTimeout(() => searchRef.current?.focus(), 50)
+  }
+
+  const paisActual = PAISES.find(p => p.dial === dialCode) ?? PAISES[0]
+  const paisesFiltrados = busq
+    ? PAISES.filter(p => p.name.toLowerCase().includes(busq.toLowerCase()) || p.dial.includes(busq))
+    : PAISES
+
+  const borderCls = error
+    ? 'border-red-300'
+    : open
+    ? 'border-[#21b9f7] ring-4 ring-[#21b9f7]/10'
+    : 'border-slate-200 hover:border-slate-300'
+
+  return (
+    <div className={`flex rounded-xl border-2 bg-white overflow-hidden transition-all duration-150 ${borderCls}`}>
+      {/* Selector indicativo */}
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={handleOpenDial}
+        className="flex items-center gap-1.5 px-3 py-3 border-r border-slate-200 shrink-0 hover:bg-slate-50 transition-colors cursor-pointer"
+      >
+        <span className="text-lg leading-none">{paisActual.flag}</span>
+        <span className="text-sm font-semibold text-slate-700">{paisActual.dial}</span>
+        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Input número */}
+      <input
+        type="tel"
+        inputMode="tel"
+        placeholder={placeholder ?? '3001234567'}
+        value={numero}
+        onChange={e => setNumero(e.target.value.replace(/\D/g, ''))}
+        className="flex-1 px-3 py-3 text-sm text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none"
+      />
+
+      {/* Dropdown de países via portal */}
+      {open && rect && typeof document !== 'undefined' && createPortal(
+        <div
+          id="phone-dial-dropdown"
+          style={{
+            position: 'fixed',
+            top: rect.bottom + 4,
+            left: rect.left,
+            width: Math.max(rect.width, 260),
+            zIndex: 9999,
+            animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both',
+          }}
+          className="bg-white border border-slate-200 rounded-xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.25)] overflow-hidden"
+        >
+          {/* Buscador */}
+          <div className="p-2 border-b border-slate-100">
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Buscar país..."
+              value={busq}
+              onChange={e => setBusq(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-[#21b9f7] placeholder:text-slate-400"
+            />
+          </div>
+          {/* Lista */}
+          <div className="max-h-52 overflow-y-auto py-1">
+            {paisesFiltrados.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-slate-400">Sin resultados</div>
+            ) : paisesFiltrados.map(p => (
+              <button
+                key={p.code}
+                type="button"
+                onClick={() => { setDialCode(p.dial); setOpen(false); setBusq('') }}
+                className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 transition-colors duration-100 cursor-pointer
+                  ${p.dial === dialCode ? 'bg-[#21b9f7]/8 text-[#21b9f7] font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
+              >
+                <span className="text-base leading-none">{p.flag}</span>
+                <span className="flex-1 truncate">{p.name}</span>
+                <span className="text-xs text-slate-400 shrink-0">{p.dial}</span>
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
+
 // ── Select personalizado ──────────────────────────────────────────────────────
 function CustomSelect({
   value, onChange, options, placeholder, error,
@@ -740,8 +934,11 @@ function FieldInput({ campo, value, onChange, error, valores }: {
     return <CustomDate value={value ?? ''} onChange={onChange} error={!!error} />
   }
 
+  if (campo.tipo === 'telefono') {
+    return <PhoneInput value={value ?? ''} onChange={onChange} placeholder={campo.placeholder} error={!!error} />
+  }
+
   const inputType = campo.tipo === 'email' ? 'email'
-    : campo.tipo === 'telefono' ? 'tel'
     : campo.tipo === 'numero' ? 'number'
     : 'text'
 
@@ -749,7 +946,7 @@ function FieldInput({ campo, value, onChange, error, valores }: {
     <input type={inputType} className={base} value={value ?? ''}
       onChange={e => onChange(e.target.value)}
       placeholder={campo.placeholder}
-      inputMode={campo.tipo === 'telefono' ? 'tel' : campo.tipo === 'numero' ? 'numeric' : undefined} />
+      inputMode={campo.tipo === 'numero' ? 'numeric' : undefined} />
   )
 }
 
@@ -876,7 +1073,7 @@ export default function FormularioDinamico() {
       const payload = {
         nombre:          v['nombre']              ?? '',
         email:           v['email']               ?? '',
-        telefono:        v['telefono']            ?? '',
+        telefono:        (() => { const t = v['telefono'] ?? ''; if (t.includes('|')) { const [d,n] = t.split('|'); return `${d} ${n}` } return t })(),
         tipoDocumento:   mapTipoDoc(v['tipo_doc']),
         documento:       v['num_doc']             ?? '',
         fechaNacimiento: v['fecha_nac']           ?? '',
@@ -887,7 +1084,7 @@ export default function FormularioDinamico() {
         acudienteNombre:          v['nom_acudiente']  ?? '',
         acudienteParentesco:      v['parentesco']     ?? '',
         acudienteEmail:           v['email_acudiente'] ?? '',
-        acudienteTelefono:        v['cel_acudiente']  ?? '',
+        acudienteTelefono:        (() => { const t = v['cel_acudiente'] ?? ''; if (t.includes('|')) { const [d,n] = t.split('|'); return `${d} ${n}` } return t })(),
         acudienteTipoDocumento:   mapTipoDoc(v['tip_doc_acud']),
         acudienteNumeroDocumento: v['num_doc_acud']   ?? '',
         primerIcfes:     v['primer_icfes'] === 'Sí' || v['primer_icfes'] === true,
