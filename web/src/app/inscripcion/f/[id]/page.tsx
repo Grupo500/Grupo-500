@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Poppins } from 'next/font/google'
-import { ChevronLeft, Loader2, Check, Upload, ArrowLeft, AlertCircle, Calendar, Clock, BookOpen, Target } from 'lucide-react'
+import { ChevronLeft, ChevronDown, ChevronRight, Loader2, Check, Upload, ArrowLeft, AlertCircle, Calendar, Clock, BookOpen, Target } from 'lucide-react'
 import Link from 'next/link'
 import { DEPARTAMENTOS_MUNICIPIOS } from '@/data/municipios'
 
@@ -51,6 +51,230 @@ function evaluarLogica(logica: any, valores: Record<string, any>): boolean {
     case 'no_vacio': return val !== undefined && val !== null && val !== '' && !(Array.isArray(val) && val.length === 0)
     default:         return true
   }
+}
+
+// ── Select personalizado ──────────────────────────────────────────────────────
+function CustomSelect({
+  value, onChange, options, placeholder, error,
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder?: string
+  error?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onEsc)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onEsc)
+    }
+  }, [])
+
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`w-full px-4 py-3 rounded-xl border-2 text-left text-sm bg-white
+          flex items-center justify-between gap-2 transition-all duration-150
+          ${error ? 'border-red-300' : open ? 'border-[#21b9f7] ring-4 ring-[#21b9f7]/10' : 'border-slate-200 hover:border-slate-300'}
+        `}
+      >
+        <span className={selected ? 'text-slate-800' : 'text-slate-400'}>
+          {selected ? selected.label : (placeholder ?? 'Selecciona una opción')}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-[#21b9f7]' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute z-50 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.2)] overflow-hidden"
+          style={{ animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both', transformOrigin: 'top' }}
+        >
+          <div className="max-h-64 overflow-y-auto py-1">
+            {options.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-slate-400">Sin opciones</div>
+            ) : options.map((op, idx) => {
+              const isSel = op.value === value
+              return (
+                <button
+                  key={op.value}
+                  type="button"
+                  onClick={() => { onChange(op.value); setOpen(false) }}
+                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between gap-2 transition-colors duration-100
+                    ${isSel ? 'bg-[#21b9f7]/8 text-[#21b9f7] font-semibold' : 'text-slate-700 hover:bg-slate-50'}
+                  `}
+                  style={{ animation: `slideInUp 0.2s ease-out ${idx * 18}ms both` }}
+                >
+                  <span>{op.label}</span>
+                  {isSel && <Check className="w-4 h-4 shrink-0" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Date picker personalizado ─────────────────────────────────────────────────
+function CustomDate({
+  value, onChange, error,
+}: {
+  value: string
+  onChange: (v: string) => void
+  error?: boolean
+}) {
+  const [open,  setOpen]  = useState(false)
+  const [mes,   setMes]   = useState(() => value ? new Date(value + 'T00:00:00') : new Date())
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onEsc)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onEsc)
+    }
+  }, [])
+
+  const fmtVisible = (s: string) => {
+    if (!s) return ''
+    const d = new Date(s + 'T00:00:00')
+    return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+  }
+
+  const toISODate = (d: Date) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${dd}`
+  }
+
+  const año = mes.getFullYear()
+  const mesIdx = mes.getMonth()
+  const primerDia = new Date(año, mesIdx, 1).getDay()
+  const diasMes  = new Date(año, mesIdx + 1, 0).getDate()
+  const diasPrev = new Date(año, mesIdx, 0).getDate()
+
+  const dias: { d: number; mes: 'prev' | 'curr' | 'next'; date: Date }[] = []
+  for (let i = primerDia - 1; i >= 0; i--) dias.push({ d: diasPrev - i, mes: 'prev', date: new Date(año, mesIdx - 1, diasPrev - i) })
+  for (let i = 1; i <= diasMes; i++)        dias.push({ d: i,            mes: 'curr', date: new Date(año, mesIdx, i) })
+  while (dias.length < 42)                  dias.push({ d: dias.length - primerDia - diasMes + 1, mes: 'next', date: new Date(año, mesIdx + 1, dias.length - primerDia - diasMes + 1) })
+
+  const hoy   = new Date(); hoy.setHours(0,0,0,0)
+  const valDate = value ? new Date(value + 'T00:00:00') : null
+
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+  const DIAS  = ['D','L','M','X','J','V','S']
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`w-full px-4 py-3 rounded-xl border-2 text-left text-sm bg-white
+          flex items-center justify-between gap-2 transition-all duration-150
+          ${error ? 'border-red-300' : open ? 'border-[#21b9f7] ring-4 ring-[#21b9f7]/10' : 'border-slate-200 hover:border-slate-300'}
+        `}
+      >
+        <span className={value ? 'text-slate-800' : 'text-slate-400'}>
+          {value ? fmtVisible(value) : 'dd / mm / aaaa'}
+        </span>
+        <Calendar className={`w-4 h-4 shrink-0 transition-colors duration-200 ${open ? 'text-[#21b9f7]' : 'text-slate-400'}`} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute z-50 left-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.25)] p-4 w-[300px]"
+          style={{ animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both', transformOrigin: 'top' }}
+        >
+          {/* Header navegación mes */}
+          <div className="flex items-center justify-between mb-3">
+            <button type="button"
+              onClick={() => setMes(new Date(año, mesIdx - 1, 1))}
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="text-sm font-bold text-slate-700">
+              {MESES[mesIdx]} <span className="text-slate-400 font-medium">{año}</span>
+            </div>
+            <button type="button"
+              onClick={() => setMes(new Date(año, mesIdx + 1, 1))}
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Días de la semana */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {DIAS.map((d, i) => (
+              <div key={i} className="text-center text-[10px] font-bold text-slate-400 uppercase py-1">{d}</div>
+            ))}
+          </div>
+
+          {/* Días del mes */}
+          <div className="grid grid-cols-7 gap-1">
+            {dias.map((d, i) => {
+              const isCurr = d.mes === 'curr'
+              const isSel  = valDate && d.date.getTime() === valDate.getTime()
+              const isHoy  = d.date.getTime() === hoy.getTime()
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { onChange(toISODate(d.date)); setOpen(false) }}
+                  className={`
+                    aspect-square rounded-lg text-sm font-medium transition-all duration-100 cursor-pointer
+                    active:scale-95
+                    ${isSel
+                      ? 'bg-[#21b9f7] text-white font-bold shadow-md shadow-[#21b9f7]/30'
+                      : isHoy && isCurr
+                      ? 'bg-[#21b9f7]/10 text-[#21b9f7] font-bold ring-1 ring-[#21b9f7]/30'
+                      : isCurr
+                      ? 'text-slate-700 hover:bg-slate-100'
+                      : 'text-slate-300 hover:bg-slate-50'}
+                  `}
+                >
+                  {d.d}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+            <button type="button"
+              onClick={() => { onChange(''); setOpen(false) }}
+              className="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors">
+              Borrar
+            </button>
+            <button type="button"
+              onClick={() => { const t = new Date(); t.setHours(0,0,0,0); onChange(toISODate(t)); setMes(t); setOpen(false) }}
+              className="text-xs font-bold text-[#21b9f7] hover:text-[#1ca0d8] transition-colors">
+              Hoy
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ── Componentes de campo ──────────────────────────────────────────────────────
@@ -112,11 +336,13 @@ function FieldInput({ campo, value, onChange, error, valores }: {
     }
 
     return (
-      <select className={`${base} cursor-pointer`} value={value ?? ''}
-        onChange={e => onChange(e.target.value)}>
-        <option value="">Selecciona tu municipio</option>
-        {municipios.map(m => <option key={m} value={m}>{m}</option>)}
-      </select>
+      <CustomSelect
+        value={value ?? ''}
+        onChange={onChange}
+        options={municipios.map(m => ({ value: m, label: m }))}
+        placeholder="Selecciona tu municipio"
+        error={!!error}
+      />
     )
   }
 
@@ -148,13 +374,13 @@ function FieldInput({ campo, value, onChange, error, valores }: {
             ))}
           </div>
         )}
-        <select className={`${base} cursor-pointer`} value={value ?? ''}
-          onChange={e => onChange(e.target.value)}>
-          <option value="">{tipoCurso === 'COMBO' ? 'Selecciona tu combo...' : 'Selecciona tu curso...'}</option>
-          {cursosVisibles.map((c: any) => (
-            <option key={c.id} value={c.id}>{c.nombre}</option>
-          ))}
-        </select>
+        <CustomSelect
+          value={value ?? ''}
+          onChange={onChange}
+          options={cursosVisibles.map((c: any) => ({ value: c.id, label: c.nombre }))}
+          placeholder={tipoCurso === 'COMBO' ? 'Selecciona tu combo...' : 'Selecciona tu curso...'}
+          error={!!error}
+        />
         {cursoSelec && (
           <div className={`rounded-2xl border-2 p-4 space-y-2.5 ${
             cursoSelec.tipoCurso === 'COMBO'
@@ -309,11 +535,13 @@ function FieldInput({ campo, value, onChange, error, valores }: {
 
   if (campo.tipo === 'select') {
     return (
-      <select className={`${base} cursor-pointer`} value={value ?? ''}
-        onChange={e => onChange(e.target.value)}>
-        <option value="">Selecciona una opción</option>
-        {(campo.opciones ?? []).map(op => <option key={op} value={op}>{op}</option>)}
-      </select>
+      <CustomSelect
+        value={value ?? ''}
+        onChange={onChange}
+        options={(campo.opciones ?? []).map(op => ({ value: op, label: op }))}
+        placeholder="Selecciona una opción"
+        error={!!error}
+      />
     )
   }
 
@@ -398,9 +626,12 @@ function FieldInput({ campo, value, onChange, error, valores }: {
     )
   }
 
+  if (campo.tipo === 'fecha') {
+    return <CustomDate value={value ?? ''} onChange={onChange} error={!!error} />
+  }
+
   const inputType = campo.tipo === 'email' ? 'email'
     : campo.tipo === 'telefono' ? 'tel'
-    : campo.tipo === 'fecha' ? 'date'
     : campo.tipo === 'numero' ? 'number'
     : 'text'
 
