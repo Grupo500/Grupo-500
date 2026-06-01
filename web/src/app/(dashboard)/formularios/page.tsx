@@ -6,7 +6,7 @@ import { apiFetch, getClientToken } from '@/lib/api'
 import {
   Plus, X, Trash2, Copy, ExternalLink, Eye, EyeOff,
   Loader2, Check, Upload, Globe, Link2,
-  FileText, Calendar, LayoutTemplate,
+  FileText, Calendar, LayoutTemplate, Pencil, Save,
 } from 'lucide-react'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -37,9 +37,9 @@ function useToast() {
 }
 
 // ── Card de formulario ────────────────────────────────────────────────────────
-function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCopyLink, toggling }: {
+function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCopyLink, onEditNombre, toggling }: {
   form: Formulario; index: number; toggling: boolean
-  onDelete: () => void; onCopyLink: () => void
+  onDelete: () => void; onCopyLink: () => void; onEditNombre: () => void
   onToggleActivo: () => void; onToggleLanding: () => void
 }) {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://grupo-500.vercel.app'
@@ -75,7 +75,15 @@ function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCo
               </span>
             )}
           </div>
-          <h3 className="font-bold text-on-surface truncate">{form.nombre}</h3>
+          <div className="flex items-start gap-1.5 group/title">
+            <h3 className="font-bold text-on-surface truncate flex-1">{form.nombre}</h3>
+            <button onClick={onEditNombre}
+              title="Editar nombre"
+              className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 rounded-lg
+                text-on-surface-variant hover:text-primary hover:bg-primary/5 cursor-pointer active:scale-[0.95] shrink-0">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          </div>
           {form.descripcion && (
             <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-1">{form.descripcion}</p>
           )}
@@ -364,6 +372,8 @@ export default function FormulariosPage() {
   const { msg: toastMsg, show: showToast } = useToast()
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
+  const [editNombre, setEditNombre] = useState<Formulario | null>(null)
+  const [nuevoNombre, setNuevoNombre] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['formularios'],
@@ -380,6 +390,16 @@ export default function FormulariosPage() {
       apiFetch(`/formularios/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: value }) }),
     onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['formularios'] }),
     onSettled:  () => setTogglingId(null),
+  })
+
+  const renombrar = useMutation({
+    mutationFn: ({ id, nombre }: { id: string; nombre: string }) =>
+      apiFetch(`/formularios/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre }) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['formularios'] })
+      setEditNombre(null)
+      showToast('Nombre actualizado')
+    },
   })
 
   function handleCopyLink(id: string) {
@@ -455,6 +475,7 @@ export default function FormulariosPage() {
                   toggling={togglingId === form.id}
                   onDelete={() => setConfirmDel(form.id)}
                   onCopyLink={() => handleCopyLink(form.id)}
+                  onEditNombre={() => { setEditNombre(form); setNuevoNombre(form.nombre) }}
                   onToggleActivo={() => { setTogglingId(form.id); toggle.mutate({ id: form.id, field: 'activo', value: !form.activo }) }}
                   onToggleLanding={() => { setTogglingId(form.id); toggle.mutate({ id: form.id, field: 'visibleEnLanding', value: !form.visibleEnLanding }) }}
                 />
@@ -463,6 +484,67 @@ export default function FormulariosPage() {
           )}
         </div>
       </div>
+
+      {/* Modal editar nombre */}
+      {editNombre && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ animation: 'fadeIn 0.15s ease-out both' }}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditNombre(null)} />
+          <div className="relative bg-surface-lowest rounded-2xl shadow-2xl p-6 w-full max-w-md"
+            style={{ animation: 'slideInUp 0.2s cubic-bezier(0.23,1,0.32,1) both' }}>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Pencil className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-bold text-on-surface text-sm">Editar nombre del formulario</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">Se actualizará en todas las vistas (landing, panel y enlaces existentes)</p>
+              </div>
+            </div>
+
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+              Nombre
+            </label>
+            <input
+              autoFocus
+              value={nuevoNombre}
+              onChange={e => setNuevoNombre(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && nuevoNombre.trim().length >= 2 && nuevoNombre !== editNombre.nombre) {
+                  renombrar.mutate({ id: editNombre.id, nombre: nuevoNombre.trim() })
+                }
+                if (e.key === 'Escape') setEditNombre(null)
+              }}
+              placeholder="Nombre del formulario..."
+              className="w-full px-4 py-3 rounded-xl border-2 border-outline-variant bg-surface-lowest text-on-surface
+                focus:outline-none focus:border-primary transition-all"
+            />
+            {nuevoNombre.trim().length > 0 && nuevoNombre.trim().length < 2 && (
+              <p className="text-xs text-red-500 mt-1.5 font-medium">El nombre debe tener al menos 2 caracteres</p>
+            )}
+
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setEditNombre(null)}
+                className="flex-1 py-2.5 rounded-xl border border-outline-variant text-on-surface-variant
+                  text-sm font-semibold cursor-pointer hover:bg-surface-high transition-colors active:scale-[0.97]">
+                Cancelar
+              </button>
+              <button
+                onClick={() => renombrar.mutate({ id: editNombre.id, nombre: nuevoNombre.trim() })}
+                disabled={renombrar.isPending || nuevoNombre.trim().length < 2 || nuevoNombre.trim() === editNombre.nombre}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-on-primary
+                  text-sm font-bold cursor-pointer hover:opacity-90 transition-all active:scale-[0.97]
+                  disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-primary/20">
+                {renombrar.isPending
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Save className="w-4 h-4" />
+                }
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirm delete */}
       {confirmDel && (
