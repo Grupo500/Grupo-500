@@ -181,6 +181,7 @@ export default function EstudiantesPage() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
   const [filtroTipo,   setFiltroTipo]   = useState<'todos' | 'nuevo' | 'antiguo'>('todos')
+  const [soloMios,     setSoloMios]     = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
@@ -236,8 +237,8 @@ export default function EstudiantesPage() {
   const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
 
   const { data, isLoading } = useQuery({
-    queryKey: ['estudiantes', page, busqueda],
-    queryFn: () => fetcher<PaginatedResponse>(`/estudiantes?page=${page}&limit=15${busqueda ? `&nombre=${busqueda}` : ''}`),
+    queryKey: ['estudiantes', page, busqueda, soloMios],
+    queryFn: () => fetcher<PaginatedResponse>(`/estudiantes?page=${page}&limit=15${busqueda ? `&nombre=${busqueda}` : ''}${soloMios ? '&soloMios=true' : ''}`),
   })
 
   const crearMutation = useMutation({
@@ -525,6 +526,20 @@ export default function EstudiantesPage() {
               Limpiar
             </button>
           )}
+
+          {/* Toggle Solo asignados a mí */}
+          <button
+            onClick={() => { setSoloMios(s => !s); setPage(1) }}
+            className={cn(
+              'ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer active:scale-[0.97]',
+              soloMios
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'border-outline-variant text-on-surface-variant hover:text-on-surface hover:border-outline',
+            )}
+          >
+            <span className={cn('w-1.5 h-1.5 rounded-full', soloMios ? 'bg-primary animate-pulse' : 'bg-on-surface-variant/40')} />
+            {soloMios ? 'Mostrando solo asignados a mí' : 'Solo asignados a mí'}
+          </button>
         </div>
       </div>
 

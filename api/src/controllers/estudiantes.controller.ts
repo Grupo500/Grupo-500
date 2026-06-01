@@ -37,14 +37,17 @@ const crearSchema = z.object({
 })
 
 export async function listar(req: Request, res: Response) {
-  const { nombre, colegioId, asesorId } = req.query
+  const { nombre, colegioId, asesorId, soloMios } = req.query
   const { page, limit, skip } = parsePagination(req.query)
   const isAdmin = req.userRole === 'ADMIN'
 
+  // TODOS los usuarios (admin y vendedor) ven TODOS los estudiantes por defecto.
+  // El vendedor puede activar el filtro "soloMios" para ver solo los asignados a él.
+  const filtrarSoloMios = soloMios === 'true' && req.asesorId
+
   const where = {
-    // VENDEDOR solo ve sus propios estudiantes; ADMIN puede ver todos y filtrar por asesor
-    ...(!isAdmin && req.asesorId ? { asesorId: req.asesorId } : {}),
-    ...(isAdmin && asesorId    ? { asesorId: String(asesorId) } : {}),
+    ...(filtrarSoloMios                ? { asesorId: req.asesorId } : {}),
+    ...(isAdmin && asesorId            ? { asesorId: String(asesorId) } : {}),
     ...(nombre    && { nombre:    { contains: String(nombre),    mode: 'insensitive' as const } }),
     ...(colegioId && { colegioId: String(colegioId) }),
   }
