@@ -11,6 +11,7 @@ import {
   Phone, Mail, MapPin, School, Users, CreditCard, History,
   Wallet, CheckCircle, AlertTriangle, Paperclip,
   Save, Calendar, ChevronDown, ChevronUp, MessageCircle,
+  ShieldCheck, ShieldX,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -50,6 +51,9 @@ interface EstudianteDetalle {
   asesor?: { id: string; nombre: string }
   lineaAutorizada?: number | null
   agregado?: boolean
+  verificado?: boolean
+  verificadoPor?: string | null
+  verificadoAt?: string | null
   cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: Pago[]
   financiamientos?: Financiamiento[]
@@ -1508,6 +1512,79 @@ function TabHistorial({ estudianteId, fetcher }: {
   )
 }
 
+// ── Botón Confirmar matrícula ──────────────────────────────────────────────────
+function ConfirmarMatriculaBtn({ estudianteId, verificado, verificadoPor, verificadoAt }: {
+  estudianteId: string
+  verificado: boolean
+  verificadoPor?: string | null
+  verificadoAt?: string | null
+}) {
+  const queryClient = useQueryClient()
+  const [confirm, setConfirm] = useState(false)
+
+  const mutation = useMutation({
+    mutationFn: async (nuevoEstado: boolean) => {
+      const token = await getClientToken()
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
+      const res = await fetch(`${apiUrl}/estudiantes/${estudianteId}/verificar`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ verificado: nuevoEstado }),
+      })
+      if (!res.ok) throw new Error('Error al actualizar')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estudiante', estudianteId] })
+      setConfirm(false)
+    },
+  })
+
+  if (verificado) {
+    return (
+      <div className="relative group">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold cursor-default">
+          <ShieldCheck className="w-4 h-4" />
+          <span>Verificado</span>
+        </div>
+        {/* Tooltip con info */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-800 text-white text-xs rounded-xl px-3 py-2.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-xl text-center">
+          {verificadoPor && <p className="font-semibold">{verificadoPor}</p>}
+          {verificadoAt && <p className="text-slate-400 mt-0.5">{new Date(verificadoAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
+          <button onClick={() => mutation.mutate(false)} className="mt-2 text-red-400 hover:text-red-300 text-xs cursor-pointer">
+            Desmarcar verificación
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (confirm) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-on-surface-variant">¿Confirmar?</span>
+        <button onClick={() => mutation.mutate(true)} disabled={mutation.isPending}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-all active:scale-[0.97] cursor-pointer disabled:opacity-60">
+          {mutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+          Sí
+        </button>
+        <button onClick={() => setConfirm(false)}
+          className="px-2 py-1.5 rounded-xl border border-outline-variant text-xs text-on-surface-variant hover:bg-surface-high transition-all cursor-pointer">
+          No
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button onClick={() => setConfirm(true)}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-outline-variant text-xs font-semibold text-on-surface-variant hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 transition-all active:scale-[0.97] cursor-pointer">
+      <ShieldCheck className="w-4 h-4" />
+      Confirmar matrícula
+    </button>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 // PÁGINA PRINCIPAL
 // ══════════════════════════════════════════════════════════════════════════
@@ -1639,12 +1716,16 @@ export default function EstudianteDetallePage() {
                 )}
               </div>
             </div>
-            {isAdmin && (
-              <button onClick={() => setConfirmEliminar(true)}
-                className="flex-shrink-0 p-2 rounded-xl border border-[#dc2626]/30 text-[#dc2626] hover:bg-[#dc2626]/8 transition-colors cursor-pointer">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Botón Confirmar matrícula */}
+              <ConfirmarMatriculaBtn estudianteId={e.id} verificado={!!e.verificado} verificadoPor={e.verificadoPor} verificadoAt={e.verificadoAt} />
+              {isAdmin && (
+                <button onClick={() => setConfirmEliminar(true)}
+                  className="p-2 rounded-xl border border-[#dc2626]/30 text-[#dc2626] hover:bg-[#dc2626]/8 transition-colors cursor-pointer">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

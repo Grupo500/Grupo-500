@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch, getClientToken } from '@/lib/api'
 import {
@@ -416,7 +415,8 @@ function FormCard({ form, index, onEdit, onDelete, onToggleActivo, onToggleLandi
           </button>
           <a href={`${origin}/inscripcion/f/${form.id}`} target="_blank" rel="noopener noreferrer"
             className="p-2 rounded-xl border border-outline-variant text-on-surface-variant
-              hover:bg-surface-high cursor-pointer transition-all active:scale-[0.97]">
+              hover:bg-surface-high cursor-pointer transition-all active:scale-[0.97]"
+            title="Abrir formulario">
             <ExternalLink className="w-4 h-4" />
           </a>
           <button onClick={onDelete}
@@ -425,7 +425,86 @@ function FormCard({ form, index, onEdit, onDelete, onToggleActivo, onToggleLandi
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Botón generar enlace por asesor */}
+        <EnlaceAsesorBtn formId={form.id} />
       </div>
+    </div>
+  )
+}
+
+// ── Botón generar enlace por asesor ──────────────────────────────────────────
+function EnlaceAsesorBtn({ formId }: { formId: string }) {
+  const [open, setOpen]       = useState(false)
+  const [asesores, setAsesores] = useState<{ id: string; nombre: string }[]>([])
+  const [loading, setLoading] = useState(false)
+  const [copiado, setCopiado] = useState<string | null>(null)
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+
+  async function cargarAsesores() {
+    if (asesores.length > 0) { setOpen(true); return }
+    setLoading(true)
+    try {
+      const token = await getClientToken()
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
+      const res = await fetch(`${apiUrl}/asesores`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      const json = await res.json()
+      setAsesores(json.data ?? [])
+      setOpen(true)
+    } finally { setLoading(false) }
+  }
+
+  function copiar(asesorId: string) {
+    const url = `${origin}/inscripcion/f/${formId}?asesor=${asesorId}`
+    navigator.clipboard.writeText(url)
+    setCopiado(asesorId)
+    setTimeout(() => setCopiado(null), 2000)
+  }
+
+  return (
+    <div className="relative">
+      <button onClick={cargarAsesores} disabled={loading}
+        className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-primary/30
+          text-xs font-semibold text-primary hover:bg-primary/5 transition-all active:scale-[0.97]
+          cursor-pointer disabled:opacity-50 mt-2">
+        {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />}
+        Generar enlace por asesor
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-surface-lowest border border-outline-variant
+            rounded-2xl shadow-2xl overflow-hidden"
+            style={{ animation: 'slideInUp 0.2s cubic-bezier(0.23,1,0.32,1) both' }}>
+            <div className="px-4 py-3 border-b border-outline-variant flex items-center justify-between">
+              <p className="text-xs font-bold text-on-surface">Enlace personalizado por asesor</p>
+              <button onClick={() => setOpen(false)} className="text-on-surface-variant hover:text-on-surface cursor-pointer">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="max-h-48 overflow-y-auto divide-y divide-outline-variant/30">
+              {asesores.length === 0
+                ? <p className="text-xs text-on-surface-variant text-center py-4">No hay asesores registrados</p>
+                : asesores.map(a => (
+                  <div key={a.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-surface-high">
+                    <div>
+                      <p className="text-xs font-semibold text-on-surface">{a.nombre}</p>
+                      <p className="text-[10px] text-on-surface-variant font-mono truncate max-w-[160px]">
+                        ?asesor={a.id}
+                      </p>
+                    </div>
+                    <button onClick={() => copiar(a.id)}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer active:scale-[0.95]
+                        ${copiado === a.id ? 'bg-emerald-100 text-emerald-700' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}>
+                      {copiado === a.id ? <><Check className="w-3 h-3" /> Copiado</> : <><Copy className="w-3 h-3" /> Copiar</>}
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -561,7 +640,6 @@ function UploadTCSection() {
 export default function FormulariosPage() {
   const queryClient = useQueryClient()
   const { msg: toastMsg, show: showToast } = useToast()
-  const router = useRouter()
   const [builder,    setBuilder]    = useState<'new' | Formulario | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
@@ -625,7 +703,7 @@ export default function FormulariosPage() {
               Crea y gestiona los formularios de inscripción públicos
             </p>
           </div>
-          <button onClick={() => router.push('/formularios/builder/nuevo')}
+          <button onClick={() => setBuilder('new')}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-on-primary
               text-sm font-bold cursor-pointer hover:opacity-90 transition-all active:scale-[0.97]
               shadow-lg shadow-primary/25">
@@ -687,7 +765,7 @@ export default function FormulariosPage() {
               {formularios.map((form, i) => (
                 <FormCard key={form.id} form={form} index={i}
                   toggling={togglingId === form.id}
-                  onEdit={() => router.push(`/formularios/builder/${form.id}`)}
+                  onEdit={() => setBuilder(form)}
                   onDelete={() => setConfirmDel(form.id)}
                   onCopyLink={() => handleCopyLink(form.id)}
                   onToggleActivo={() => { setTogglingId(form.id); toggle.mutate({ id: form.id, field: 'activo', value: !form.activo }) }}

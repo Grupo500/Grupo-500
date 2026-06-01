@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Poppins } from 'next/font/google'
-import { ChevronLeft, Loader2, Check, Upload, ArrowLeft, AlertCircle } from 'lucide-react'
+import { ChevronLeft, Loader2, Check, Upload, ArrowLeft, AlertCircle, Calendar, Clock, BookOpen, Target } from 'lucide-react'
 import Link from 'next/link'
 import { DEPARTAMENTOS_MUNICIPIOS } from '@/data/municipios'
 
@@ -117,6 +117,57 @@ function FieldInput({ campo, value, onChange, error, valores }: {
         <option value="">Selecciona tu municipio</option>
         {municipios.map(m => <option key={m} value={m}>{m}</option>)}
       </select>
+    )
+  }
+
+  // ── Selector de curso con tarjeta info ──────────────────────────────────────
+  if (campo.id === 'curso_seleccionado') {
+    const cursos: any[] = (valores as any).__cursos ?? []
+    const cursoSelec = cursos.find((c: any) => c.id === value)
+    const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+    return (
+      <div className="space-y-3">
+        <select className={`${base} cursor-pointer`} value={value ?? ''}
+          onChange={e => onChange(e.target.value)}>
+          <option value="">Selecciona tu curso...</option>
+          {cursos.map((c: any) => (
+            <option key={c.id} value={c.id}>{c.nombre}</option>
+          ))}
+        </select>
+        {cursoSelec && (
+          <div className="rounded-2xl border-2 border-[#21b9f7]/30 bg-[#21b9f7]/5 p-4 space-y-2.5"
+            style={{ animation: 'slideInUp 0.2s cubic-bezier(0.23,1,0.32,1) both' }}>
+            <p className="text-sm font-bold text-slate-700">{cursoSelec.nombre}</p>
+            {cursoSelec.descripcion && <p className="text-xs text-slate-500">{cursoSelec.descripcion}</p>}
+            <div className="grid grid-cols-2 gap-2">
+              {cursoSelec.fechaInicio && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <Calendar className="w-3.5 h-3.5 text-[#21b9f7] shrink-0" />
+                  <span><strong>Inicio:</strong> {fmt(cursoSelec.fechaInicio)}</span>
+                </div>
+              )}
+              {cursoSelec.fechaIcfes && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <Target className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                  <span><strong>ICFES:</strong> {fmt(cursoSelec.fechaIcfes)}</span>
+                </div>
+              )}
+              {cursoSelec.duracionHoras && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span><strong>Horas:</strong> {cursoSelec.duracionHoras}h</span>
+                </div>
+              )}
+              {cursoSelec.simulacros && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <BookOpen className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                  <span><strong>Simulacros:</strong> {cursoSelec.simulacros}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -332,15 +383,31 @@ function FieldInput({ campo, value, onChange, error, valores }: {
 }
 
 // ── Página ────────────────────────────────────────────────────────────────────
+const METODOS_PAGO_INFO: Record<string, { hint: string }> = {
+  'Bancolombia':   { hint: 'Ingresa el número de referencia de la transferencia Bancolombia.' },
+  'Interbancario': { hint: 'Ingresa el número de referencia del pago interbancario (PSE).' },
+  'Nequi':         { hint: 'Ingresa los últimos 10 dígitos del número de confirmación Nequi.' },
+  'Bre-B':         { hint: 'Ingresa el código de transacción de tu pago Bre-B.' },
+  'Addi':          { hint: 'Ingresa el código de aprobación de crédito que te generó Addi.' },
+  'Sistecredito':  { hint: 'Ingresa el número de aprobación de tu crédito Sistecredito.' },
+  'Otro':          { hint: 'Ingresa el número o código de tu referencia de pago.' },
+}
+
 export default function FormularioDinamico() {
-  const { id }    = useParams<{ id: string }>()
-  const router    = useRouter()
+  const { id }       = useParams<{ id: string }>()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const asesorParam  = searchParams.get('asesor')
 
   const [form,        setForm]      = useState<Formulario | null>(null)
   const [meta,        setMeta]      = useState<FormMeta>({})
   const [terminosUrl, setTerminos]  = useState('https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf')
   const [loading,     setLoading]   = useState(true)
   const [notFound,    setNotFound]  = useState(false)
+  const [asesorNombre, setAsesorNombre] = useState<string | null>(null)
+  const [asesorError,  setAsesorError]  = useState(false)
+  const [cursos,      setCursos]    = useState<any[]>([])
+  const [cursoInfo,   setCursoInfo] = useState<any | null>(null)
   const [valores,     setValores]   = useState<Record<string, any>>({})
   const [errors,      setErrors]    = useState<Record<string, string>>({})
   const [submitting,  setSubmitting] = useState(false)
@@ -352,11 +419,21 @@ export default function FormularioDinamico() {
     Promise.all([
       fetch(`${API}/inscripcion/formularios/${id}`).then(r => r.json()),
       fetch(`${API}/inscripcion/terminos`).then(r => r.json()),
-    ]).then(([fData, tData]) => {
+      fetch(`${API}/inscripcion/cursos-activos`).then(r => r.json()),
+      asesorParam ? fetch(`${API}/inscripcion/asesor/${asesorParam}`).then(r => r.json()) : Promise.resolve(null),
+    ]).then(([fData, tData, cData, aData]) => {
       if (!fData.success || !fData.data?.activo) { setNotFound(true); return }
       setForm(fData.data)
       if (fData.data.meta) setMeta(fData.data.meta)
       if (tData.success && tData.data?.url) setTerminos(tData.data.url)
+      if (cData?.success) {
+        setCursos(cData.data)
+        setValores(v => ({ ...v, __cursos: cData.data }))
+      }
+      if (aData !== null) {
+        if (aData.success) setAsesorNombre(aData.data.nombre)
+        else setAsesorError(true)
+      }
     }).catch(() => setNotFound(true))
       .finally(() => setLoading(false))
   }, [id])
@@ -408,43 +485,35 @@ export default function FormularioDinamico() {
         if (d.success) documentoUrl = d.data.url
       }
 
-      // ── 2. Monto: el OCR del comprobante lo extrae en el backend ────────────
-      const montoNum = 0
-
-      // ── 3. Construir payload para POST /api/inscripcion/publica ─────────────
+      // ── 2. Construir payload para POST /api/inscripcion/publica ─────────────
       const payload = {
-        // Paso 1 — Estudiante
-        nombre:          v['nombre']       ?? '',
-        email:           v['email']        ?? '',
-        telefono:        v['telefono']     ?? '',
-        tipoDocumento:   v['tipo_doc']     ?? 'TI',
-        documento:       v['num_doc']      ?? '',
-        // Paso 2 — Ubicación
-        fechaNacimiento: v['fecha_nac']    ?? '',
-        departamento:    v['departamento'] ?? '',
-        ciudad:          v['municipio']    ?? '',
-        colegio:         v['colegio']      ?? '',
-        grado:           v['grado']        ?? '',
-        // Paso 3 — Acudiente
+        nombre:          v['nombre']              ?? '',
+        email:           v['email']               ?? '',
+        telefono:        v['telefono']            ?? '',
+        tipoDocumento:   v['tipo_doc']            ?? 'TI',
+        documento:       v['num_doc']             ?? '',
+        fechaNacimiento: v['fecha_nac']           ?? '',
+        departamento:    v['departamento']        ?? '',
+        ciudad:          v['municipio']           ?? '',
+        colegio:         v['colegio']             ?? '',
+        grado:           v['grado']               ?? '',
         acudienteNombre:          v['nom_acudiente']  ?? '',
         acudienteParentesco:      v['parentesco']     ?? '',
         acudienteTelefono:        v['cel_acudiente']  ?? '',
         acudienteTipoDocumento:   v['tip_doc_acud']   ?? 'CC',
         acudienteNumeroDocumento: v['num_doc_acud']   ?? '',
-        // Paso 4 — Académico
         primerIcfes:     v['primer_icfes'] === 'Sí' || v['primer_icfes'] === true,
-        puntajeAnterior: v['puntaje_ant']  ?? '',
-        carreraInteres:  'N/A',
-        // Paso 5 — Pago
-        cuentaPago:      v['cuenta_pago']  ?? '',
-        montoDeclarado:  montoNum,
-        comprobanteUrl,
+        puntajeAnterior: v['puntaje_ant']         ?? '',
+        cursoId:         v['curso_seleccionado']  ?? '',
+        metodoPago:      v['metodo_pago']         ?? '',
+        referenciaPago:  v['referencia_pago']     ?? '',
+        comprobanteUrl:  comprobanteUrl           || v['comprobante'] as string || '',
         comprobantePublicId,
         documentoUrl,
-        // Paso 6 — Marketing + T&C
-        fuenteContacto:  v['como_conocio'] ?? '',
+        fuenteContacto:  v['como_conocio']        ?? '',
         aceptaTerminos:  !!v['__terminos'],
         formularioId:    id,
+        asesorId:        asesorParam              ?? undefined,
       }
 
       const res = await fetch(`${API}/inscripcion/publica`, {
@@ -469,6 +538,27 @@ export default function FormularioDinamico() {
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="w-10 h-10 text-white animate-spin" />
         <p className="text-white/80 text-sm font-medium">Cargando formulario...</p>
+      </div>
+    </div>
+  )
+
+  // ── Asesor inválido ──
+  if (asesorError) return (
+    <div className="min-h-dvh bg-gradient-to-b from-[#21b9f7] to-[#1a7de0] flex items-center justify-center px-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
+        <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="w-8 h-8 text-amber-400" />
+        </div>
+        <h2 className={`${poppins.className} font-bold text-slate-800 text-lg mb-2`}>
+          Enlace no válido
+        </h2>
+        <p className="text-slate-500 text-sm mb-5">
+          Este enlace de inscripción no es válido. Solicita un nuevo enlace a tu asesor.
+        </p>
+        <a href="https://wa.me/573168819037"
+          className="block w-full py-3 rounded-xl bg-[#25D366] text-white font-bold text-sm text-center">
+          Contactar a Grupo 500
+        </a>
       </div>
     </div>
   )
@@ -568,6 +658,12 @@ export default function FormularioDinamico() {
         <div>
           <p className={`${poppins.className} text-white font-bold text-base leading-tight`}>{form.nombre}</p>
           {form.descripcion && <p className="text-white/70 text-xs mt-0.5">{form.descripcion}</p>}
+          {asesorNombre && (
+            <p className="text-white/80 text-xs mt-1 flex items-center gap-1">
+              <span className="w-4 h-4 rounded-full bg-white/20 inline-flex items-center justify-center text-[9px] font-bold">{asesorNombre[0]}</span>
+              Asesor: <strong>{asesorNombre}</strong>
+            </p>
+          )}
         </div>
       </header>
 
@@ -621,6 +717,12 @@ export default function FormularioDinamico() {
                 error={errors[campo.id]}
                 valores={valores}
               />
+              {/* Hint dinámico para referencia de pago según método seleccionado */}
+              {campo.id === 'referencia_pago' && valores['metodo_pago'] && (
+                <p className="text-xs text-[#1a7de0] bg-blue-50 rounded-lg px-3 py-2 mt-1.5 font-medium">
+                  💡 {METODOS_PAGO_INFO[valores['metodo_pago']]?.hint ?? 'Ingresa tu referencia de pago.'}
+                </p>
+              )}
               {errors[campo.id] && (
                 <p className="text-xs text-red-500 font-medium mt-1">{errors[campo.id]}</p>
               )}

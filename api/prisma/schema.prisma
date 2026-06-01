@@ -125,6 +125,9 @@ model Estudiante {
   agregado           Boolean               @default(false)
   documentoUrl       String?
   direccion          String?
+  verificado         Boolean               @default(false)
+  verificadoPor      String?
+  verificadoAt       DateTime?
   acudiente          Acudiente?
   certificados       Certificado[]
   cursos             CursoEstudiante[]
@@ -183,6 +186,8 @@ model Curso {
   calendario        CalendarioCurso   @default(A)
   fechaFin          DateTime?
   fechaInicio       DateTime?
+  fechaIcfes        DateTime?
+  simulacros        Int?
   visibleEnLanding  Boolean           @default(false)
   cuposDisponibles  Int?
   estudiantes       CursoEstudiante[]
@@ -223,6 +228,8 @@ model Pago {
   fechaVencimiento DateTime
   fechaPago        DateTime?
   comprobante      String?
+  referenciaPago   String?
+  comprobanteAt    DateTime?
   notas            String?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt

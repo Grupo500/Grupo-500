@@ -45,6 +45,8 @@ const actualizarSchema = z.object({
   calendario:       z.enum(['A', 'B']).optional(),
   fechaInicio:      z.string().datetime().optional().nullable(),
   fechaFin:         z.string().datetime().optional().nullable(),
+  fechaIcfes:       z.string().datetime().optional().nullable(),
+  simulacros:       z.number().int().min(0).optional().nullable(),
   activo:           z.boolean().optional(),
   visibleEnLanding: z.boolean().optional(),
   cuposDisponibles: z.number().int().min(0).optional().nullable(),

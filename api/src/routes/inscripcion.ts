@@ -105,6 +105,8 @@ function parseMonto(raw: unknown): number {
 }
 
 // ── Zod schema de inscripción ─────────────────────────────────────────────────
+const METODOS_PAGO = ['Bancolombia', 'Interbancario', 'Nequi', 'Bre-B', 'Addi', 'Sistecredito', 'Otro'] as const
+
 const inscripcionSchema = z.object({
   // Paso 1 — Estudiante
   nombre:          z.string().min(3),
@@ -116,7 +118,6 @@ const inscripcionSchema = z.object({
   fechaNacimiento: z.string(),
   departamento:    z.string().min(2),
   ciudad:          z.string().min(2),
-  direccion:       z.string().min(4),
   colegio:         z.string().min(2),
   grado:           z.string(),
   // Paso 3 — Acudiente
@@ -126,24 +127,22 @@ const inscripcionSchema = z.object({
   acudienteTipoDocumento:   z.string().optional(),
   acudienteNumeroDocumento: z.string().optional(),
   // Paso 4 — Académico
-  primerIcfes:       z.boolean(),
-  puntajeAnterior:   z.string().optional(),
-  carreraInteres:    z.string().min(2),
-  interesPremedico:  z.string().optional(),
-  universidadInteres: z.string().optional(),
-  // Paso 5 — Pago
-  cursoId:          z.string().optional(),
-  cuentaPago:       z.string().optional(),
-  montoDeclarado:   z.number().min(0).optional(),
-  comprobanteUrl:   z.string().url().optional().or(z.literal('')),
+  primerIcfes:     z.boolean(),
+  puntajeAnterior: z.string().optional(),
+  carreraInteres:  z.string().optional(),
+  // Paso 5 — Curso + Pago
+  cursoId:         z.string().min(1, 'Selecciona un curso'),
+  metodoPago:      z.enum(METODOS_PAGO),
+  referenciaPago:  z.string().min(1, 'Ingresa la referencia de pago'),
+  comprobanteUrl:  z.string().url('El comprobante es obligatorio'),
   comprobantePublicId: z.string().optional(),
-  documentoUrl:     z.string().url().optional().or(z.literal('')),
+  documentoUrl:    z.string().url().optional().or(z.literal('')),
   // Paso 6 — Marketing + T&C
-  fuenteContacto:   z.string().optional(),
-  aceptaTerminos:   z.boolean(),
-  // Hidden
-  asesorId:         z.string().optional(),
-  formularioId:     z.string().optional(),
+  fuenteContacto:  z.string().optional(),
+  aceptaTerminos:  z.boolean(),
+  // Hidden / automáticos
+  asesorId:        z.string().optional(),
+  formularioId:    z.string().optional(),
 })
 
 // ── GET /api/inscripcion/formularios-activos ──────────────────────────────────
@@ -283,7 +282,21 @@ router.post('/publica', asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, error: 'Debes aceptar los términos y condiciones.' })
   }
 
-  // ── 1. Buscar/crear colegio ────────────────────────────────────────────────
+  // ── 1. Validar asesor si viene en el payload ───────────────────────────────
+  if (data.asesorId) {
+    const asesorExiste = await prisma.asesor.findUnique({ where: { id: data.asesorId } })
+    if (!asesorExiste) {
+      return res.status(400).json({ success: false, error: 'El enlace del asesor no es válido.' })
+    }
+  }
+
+  // ── 2. Validar curso ───────────────────────────────────────────────────────
+  const curso = await prisma.curso.findUnique({ where: { id: data.cursoId } })
+  if (!curso || !curso.activo) {
+    return res.status(400).json({ success: false, error: 'El curso seleccionado no está disponible.' })
+  }
+
+  // ── 3. Buscar/crear colegio ────────────────────────────────────────────────
   let colegioId: string | undefined
   if (data.colegio) {
     let colegio = await prisma.colegio.findFirst({
@@ -297,39 +310,18 @@ router.post('/publica', asyncHandler(async (req, res) => {
     colegioId = colegio.id
   }
 
-  // ── 2. Idempotencia por email ──────────────────────────────────────────────
+  // ── 4. Idempotencia por email ──────────────────────────────────────────────
   const existente = await prisma.estudiante.findFirst({ where: { email: data.email } })
   if (existente) {
-    const monto = data.montoDeclarado ?? 0
-    if (monto > 0) {
-      let notaOCR = ''
-      if (data.comprobanteUrl && data.comprobantePublicId) {
-        notaOCR = await intentarOCR(data.comprobantePublicId, monto)
-      }
-      await prisma.pago.create({
-        data: {
-          estudianteId:     existente.id,
-          monto,
-          estado:           'PENDIENTE',
-          fechaVencimiento: new Date(),
-          metodo:           'Bancolombia',
-          comprobante:      data.comprobanteUrl || null,
-          notas:            ['Pago adicional vía formulario propio.', notaOCR].filter(Boolean).join(' '),
-        },
-      })
-    }
     return res.status(200).json({
-      success:        true,
-      message:        'Ya estás inscrito. Pago adicional registrado.',
-      estudianteId:   existente.id,
-      yaExistia:      true,
+      success:      true,
+      message:      'Este correo ya está registrado. Contacta a tu asesor.',
+      estudianteId: existente.id,
+      yaExistia:    true,
     })
   }
 
-  // ── 3. Calcular fecha nacimiento ───────────────────────────────────────────
-  const fechaNacimiento = new Date(data.fechaNacimiento)
-
-  // ── 4. Crear estudiante ────────────────────────────────────────────────────
+  // ── 5. Crear estudiante ────────────────────────────────────────────────────
   const estudiante = await prisma.estudiante.create({
     data: {
       nombre:            data.nombre,
@@ -337,17 +329,14 @@ router.post('/publica', asyncHandler(async (req, res) => {
       telefono:          data.telefono,
       tipoDocumento:     data.tipoDocumento,
       documento:         data.documento,
-      fechaNacimiento,
+      fechaNacimiento:   new Date(data.fechaNacimiento),
       departamento:      data.departamento,
       ciudad:            data.ciudad,
-      direccion:         data.direccion,
       colegioId,
       grado:             data.grado,
       primerIcfes:       data.primerIcfes,
-      puntajeAnterior:   data.puntajeAnterior || 'N/A',
-      carreraInteres:    data.carreraInteres,
-      interesPremedico:  data.interesPremedico || '',
-      universidadInteres: data.universidadInteres || '',
+      puntajeAnterior:   data.puntajeAnterior || null,
+      carreraInteres:    data.carreraInteres || null,
       documentoUrl:      data.documentoUrl || null,
       asesorId:          data.asesorId || null,
       acudiente: {
@@ -363,34 +352,19 @@ router.post('/publica', asyncHandler(async (req, res) => {
     include: { acudiente: true },
   })
 
-  // ── 5. Asignar curso ───────────────────────────────────────────────────────
-  let cursoNombre = ''
-  if (data.cursoId) {
-    const curso = await prisma.curso.findUnique({ where: { id: data.cursoId } })
-    if (curso) {
-      const cfgGeneral = await prisma.configApp.findUnique({ where: { clave: `precio_general_${curso.id}` } })
-      const precioGeneral = cfgGeneral?.valor ? parseFloat(cfgGeneral.valor) : curso.precio
-      const monto = data.montoDeclarado ?? 0
-      const descuento = monto > 0 && precioGeneral > 0
-        ? Math.round(((precioGeneral - monto) / precioGeneral) * 100 * 100) / 100
-        : 0
+  // ── 6. Asignar curso ───────────────────────────────────────────────────────
+  const cfgGeneral = await prisma.configApp.findUnique({ where: { clave: `precio_general_${curso.id}` } })
+  const precioGeneral = cfgGeneral?.valor ? parseFloat(cfgGeneral.valor) : curso.precio
 
-      await prisma.cursoEstudiante.create({
-        data: { estudianteId: estudiante.id, cursoId: data.cursoId, descuentoPorcentaje: Math.max(0, descuento) },
-      })
-      cursoNombre = curso.nombre
+  await prisma.cursoEstudiante.create({
+    data: { estudianteId: estudiante.id, cursoId: curso.id, descuentoPorcentaje: 0 },
+  })
 
-      // Decrementar cupos si está configurado
-      if (curso.cuposDisponibles != null && curso.cuposDisponibles > 0) {
-        await prisma.curso.update({
-          where: { id: curso.id },
-          data:  { cuposDisponibles: { decrement: 1 } },
-        })
-      }
-    }
+  if (curso.cuposDisponibles != null && curso.cuposDisponibles > 0) {
+    await prisma.curso.update({ where: { id: curso.id }, data: { cuposDisponibles: { decrement: 1 } } })
   }
 
-  // ── 6. Fuente de contacto ──────────────────────────────────────────────────
+  // ── 7. Fuente de contacto ──────────────────────────────────────────────────
   if (data.fuenteContacto) {
     await prisma.fuenteContacto.create({
       data: {
@@ -402,31 +376,24 @@ router.post('/publica', asyncHandler(async (req, res) => {
     }).catch(() => {})
   }
 
-  // ── 7. Registrar pago + OCR ────────────────────────────────────────────────
-  const monto = data.montoDeclarado ?? 0
-  if (monto > 0) {
-    let notaOCR = ''
-    if (data.comprobanteUrl && data.comprobantePublicId) {
-      notaOCR = await intentarOCR(data.comprobantePublicId, monto)
-    }
-
-    await prisma.pago.create({
-      data: {
-        estudianteId:     estudiante.id,
-        monto,
-        estado:           'PENDIENTE',
-        fechaVencimiento: new Date(),
-        metodo:           'Bancolombia',
-        comprobante:      data.comprobanteUrl || null,
-        notas: [
-          'Inscripción vía formulario propio.',
-          data.cuentaPago ? `Cuenta: ${data.cuentaPago}.` : '',
-          cursoNombre     ? `Curso: ${cursoNombre}.`       : '',
-          notaOCR,
-        ].filter(Boolean).join(' '),
-      },
-    })
-  }
+  // ── 8. Registrar pago con método, referencia y timestamp comprobante ───────
+  const ahora = new Date()
+  await prisma.pago.create({
+    data: {
+      estudianteId:     estudiante.id,
+      monto:            precioGeneral,
+      estado:           'PENDIENTE',
+      fechaVencimiento: ahora,
+      metodo:           data.metodoPago,
+      comprobante:      data.comprobanteUrl,
+      referenciaPago:   data.referenciaPago,
+      comprobanteAt:    ahora, // timestamp de recepción en nuestra plataforma
+      notas: [
+        `Inscripción vía formulario. Curso: ${curso.nombre}.`,
+        `Método: ${data.metodoPago}. Referencia: ${data.referenciaPago}.`,
+      ].join(' '),
+    },
+  })
 
   // ── 8. HubSpot — NO se sincroniza desde el formulario de matriculación ───────
   // Los leads llegan a HubSpot por redes sociales (Meta/Instagram).
@@ -434,8 +401,14 @@ router.post('/publica', asyncHandler(async (req, res) => {
   // syncEstudianteHubspot() se reserva para cuando el asesor crea
   // el estudiante manualmente desde el panel admin.
 
-  // ── 9. Broadcast SSE ───────────────────────────────────────────────────────
-  broadcast('nuevo-estudiante', { id: estudiante.id, nombre: estudiante.nombre, email: estudiante.email })
+  // ── 9. Broadcast SSE — notifica al asesor si aplica ──────────────────────
+  broadcast('nuevo-estudiante', {
+    id:       estudiante.id,
+    nombre:   estudiante.nombre,
+    email:    estudiante.email,
+    asesorId: data.asesorId ?? null,
+    curso:    curso.nombre,
+  })
 
   logger.info(`[Inscripción pública] Estudiante creado: ${estudiante.id} — ${estudiante.nombre}`)
 
@@ -444,6 +417,41 @@ router.post('/publica', asyncHandler(async (req, res) => {
     nombre:       estudiante.nombre,
     mensaje:      '¡Inscripción recibida! En breve te contactamos.',
   })
+}))
+
+// ── GET /api/inscripcion/asesor/:asesorId ─────────────────────────────────────
+// Público — validar que el asesor existe y obtener su nombre
+router.get('/asesor/:asesorId', asyncHandler(async (req, res) => {
+  const asesor = await prisma.asesor.findUnique({
+    where: { id: req.params.asesorId },
+    select: { id: true, nombre: true },
+  })
+  if (!asesor) return res.status(404).json({ success: false, error: 'Asesor no encontrado' })
+  return ApiResponse.success(res, asesor)
+}))
+
+// ── GET /api/inscripcion/cursos-activos ───────────────────────────────────────
+// Público — cursos activos para el selector del formulario
+router.get('/cursos-activos', asyncHandler(async (_req, res) => {
+  const cursos = await prisma.curso.findMany({
+    where:   { activo: true },
+    orderBy: { nombre: 'asc' },
+    select: {
+      id:           true,
+      nombre:       true,
+      descripcion:  true,
+      precio:       true,
+      duracionHoras: true,
+      fechaInicio:  true,
+      fechaFin:     true,
+      fechaIcfes:   true,
+      simulacros:   true,
+      calendario:   true,
+      cuposDisponibles: true,
+      _count: { select: { estudiantes: true } },
+    },
+  })
+  return ApiResponse.success(res, cursos)
 }))
 
 export default router
