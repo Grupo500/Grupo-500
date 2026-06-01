@@ -515,6 +515,7 @@ export default function FormularioDinamico() {
         grado:           v['grado']               ?? '',
         acudienteNombre:          v['nom_acudiente']  ?? '',
         acudienteParentesco:      v['parentesco']     ?? '',
+        acudienteEmail:           v['email_acudiente'] ?? '',
         acudienteTelefono:        v['cel_acudiente']  ?? '',
         acudienteTipoDocumento:   mapTipoDoc(v['tip_doc_acud']),
         acudienteNumeroDocumento: v['num_doc_acud']   ?? '',

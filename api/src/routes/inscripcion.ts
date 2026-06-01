@@ -123,6 +123,7 @@ const inscripcionSchema = z.object({
   // Paso 3 — Acudiente
   acudienteNombre:          z.string().min(3),
   acudienteParentesco:      z.string().min(2),
+  acudienteEmail:           z.string().email().optional(),
   acudienteTelefono:        z.string().min(7),
   acudienteTipoDocumento:   z.string().optional(),
   acudienteNumeroDocumento: z.string().optional(),
@@ -342,6 +343,7 @@ router.post('/publica', asyncHandler(async (req, res) => {
       acudiente: {
         create: {
           nombre:          data.acudienteNombre,
+          email:           data.acudienteEmail || null,
           telefono:        data.acudienteTelefono,
           relacion:        data.acudienteParentesco,
           tipoDocumento:   data.acudienteTipoDocumento || 'CC',
