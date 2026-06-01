@@ -64,28 +64,41 @@ function CustomSelect({
   error?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [rect, setRect] = useState<DOMRect | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (!triggerRef.current?.contains(t) && !(document.getElementById('custom-select-dropdown')?.contains(t))) {
+        setOpen(false)
+      }
     }
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const onScroll = () => setOpen(false)
     document.addEventListener('mousedown', onClick)
     document.addEventListener('keydown', onEsc)
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       document.removeEventListener('mousedown', onClick)
       document.removeEventListener('keydown', onEsc)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [])
+
+  const handleOpen = () => {
+    if (triggerRef.current) setRect(triggerRef.current.getBoundingClientRect())
+    setOpen(o => !o)
+  }
 
   const selected = options.find(o => o.value === value)
 
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={handleOpen}
         className={`w-full px-4 py-3 rounded-xl border-2 text-left text-sm bg-white
           flex items-center justify-between gap-2 transition-all duration-150
           ${error ? 'border-red-300' : open ? 'border-[#21b9f7] ring-4 ring-[#21b9f7]/10' : 'border-slate-200 hover:border-slate-300'}
@@ -97,10 +110,18 @@ function CustomSelect({
         <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-[#21b9f7]' : ''}`} />
       </button>
 
-      {open && (
+      {open && rect && (
         <div
-          className="absolute z-50 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.2)] overflow-hidden"
-          style={{ animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both', transformOrigin: 'top' }}
+          id="custom-select-dropdown"
+          style={{
+            position: 'fixed',
+            top: rect.bottom + 6,
+            left: rect.left,
+            width: rect.width,
+            zIndex: 9999,
+            animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both',
+          }}
+          className="bg-white border border-slate-200 rounded-xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.25)]"
         >
           <div className="max-h-64 overflow-y-auto py-1">
             {options.length === 0 ? (
@@ -138,21 +159,33 @@ function CustomDate({
   error?: boolean
 }) {
   const [open,  setOpen]  = useState(false)
+  const [rect,  setRect]  = useState<DOMRect | null>(null)
   const [mes,   setMes]   = useState(() => value ? new Date(value + 'T00:00:00') : new Date())
-  const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (!triggerRef.current?.contains(t) && !(document.getElementById('custom-date-dropdown')?.contains(t))) {
+        setOpen(false)
+      }
     }
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const onScroll = () => setOpen(false)
     document.addEventListener('mousedown', onClick)
     document.addEventListener('keydown', onEsc)
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       document.removeEventListener('mousedown', onClick)
       document.removeEventListener('keydown', onEsc)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [])
+
+  const handleOpen = () => {
+    if (triggerRef.current) setRect(triggerRef.current.getBoundingClientRect())
+    setOpen(o => !o)
+  }
 
   const fmtVisible = (s: string) => {
     if (!s) return ''
@@ -185,10 +218,11 @@ function CustomDate({
   const DIAS  = ['D','L','M','X','J','V','S']
 
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={handleOpen}
         className={`w-full px-4 py-3 rounded-xl border-2 text-left text-sm bg-white
           flex items-center justify-between gap-2 transition-all duration-150
           ${error ? 'border-red-300' : open ? 'border-[#21b9f7] ring-4 ring-[#21b9f7]/10' : 'border-slate-200 hover:border-slate-300'}
@@ -200,10 +234,18 @@ function CustomDate({
         <Calendar className={`w-4 h-4 shrink-0 transition-colors duration-200 ${open ? 'text-[#21b9f7]' : 'text-slate-400'}`} />
       </button>
 
-      {open && (
+      {open && rect && (
         <div
-          className="absolute z-50 left-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.25)] p-4 w-[300px]"
-          style={{ animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both', transformOrigin: 'top' }}
+          id="custom-date-dropdown"
+          style={{
+            position: 'fixed',
+            top: rect.bottom + 6,
+            left: Math.min(rect.left, window.innerWidth - 316),
+            width: 300,
+            zIndex: 9999,
+            animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both',
+          }}
+          className="bg-white border border-slate-200 rounded-2xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.25)] p-4"
         >
           {/* Header navegación mes */}
           <div className="flex items-center justify-between mb-3">
