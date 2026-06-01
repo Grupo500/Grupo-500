@@ -951,7 +951,7 @@ export default function FormularioDinamico() {
       </header>
 
       <main className="flex-1 px-4 pb-10">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-xl mx-auto"
+        <div className="bg-white rounded-3xl shadow-2xl max-w-xl mx-auto"
           style={{ animation: 'slideInUp 0.35s cubic-bezier(0.23,1,0.32,1) both' }}>
 
           {/* Mensaje de bienvenida */}
@@ -969,7 +969,7 @@ export default function FormularioDinamico() {
             <div key={campo.id}
               style={{
                 animation:      visible ? `slideInUp 0.25s cubic-bezier(0.23,1,0.32,1) ${i * 30}ms both` : undefined,
-                overflow:       'hidden',
+                overflow:       visible ? 'visible' : 'hidden',
                 maxHeight:      visible ? '800px' : '0',
                 opacity:        visible ? 1 : 0,
                 marginBottom:   visible ? undefined : '0',
