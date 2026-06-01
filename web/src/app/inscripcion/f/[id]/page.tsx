@@ -54,62 +54,156 @@ function evaluarLogica(logica: any, valores: Record<string, any>): boolean {
   }
 }
 
-// ── Países con indicativo ─────────────────────────────────────────────────────
+// ── Países con indicativo (imagen via flagcdn.com) ───────────────────────────
 const PAISES = [
-  { code: 'CO', name: 'Colombia',              dial: '+57',  flag: '🇨🇴' },
-  { code: 'US', name: 'Estados Unidos',         dial: '+1',   flag: '🇺🇸' },
-  { code: 'MX', name: 'México',                 dial: '+52',  flag: '🇲🇽' },
-  { code: 'AR', name: 'Argentina',              dial: '+54',  flag: '🇦🇷' },
-  { code: 'CL', name: 'Chile',                  dial: '+56',  flag: '🇨🇱' },
-  { code: 'PE', name: 'Perú',                   dial: '+51',  flag: '🇵🇪' },
-  { code: 'EC', name: 'Ecuador',                dial: '+593', flag: '🇪🇨' },
-  { code: 'VE', name: 'Venezuela',              dial: '+58',  flag: '🇻🇪' },
-  { code: 'BO', name: 'Bolivia',                dial: '+591', flag: '🇧🇴' },
-  { code: 'PY', name: 'Paraguay',               dial: '+595', flag: '🇵🇾' },
-  { code: 'UY', name: 'Uruguay',                dial: '+598', flag: '🇺🇾' },
-  { code: 'BR', name: 'Brasil',                 dial: '+55',  flag: '🇧🇷' },
-  { code: 'PA', name: 'Panamá',                 dial: '+507', flag: '🇵🇦' },
-  { code: 'CR', name: 'Costa Rica',             dial: '+506', flag: '🇨🇷' },
-  { code: 'GT', name: 'Guatemala',              dial: '+502', flag: '🇬🇹' },
-  { code: 'HN', name: 'Honduras',               dial: '+504', flag: '🇭🇳' },
-  { code: 'SV', name: 'El Salvador',            dial: '+503', flag: '🇸🇻' },
-  { code: 'NI', name: 'Nicaragua',              dial: '+505', flag: '🇳🇮' },
-  { code: 'CU', name: 'Cuba',                   dial: '+53',  flag: '🇨🇺' },
-  { code: 'DO', name: 'Rep. Dominicana',        dial: '+1809',flag: '🇩🇴' },
-  { code: 'PR', name: 'Puerto Rico',            dial: '+1787',flag: '🇵🇷' },
-  { code: 'ES', name: 'España',                 dial: '+34',  flag: '🇪🇸' },
-  { code: 'GB', name: 'Reino Unido',            dial: '+44',  flag: '🇬🇧' },
-  { code: 'FR', name: 'Francia',                dial: '+33',  flag: '🇫🇷' },
-  { code: 'DE', name: 'Alemania',               dial: '+49',  flag: '🇩🇪' },
-  { code: 'IT', name: 'Italia',                 dial: '+39',  flag: '🇮🇹' },
-  { code: 'PT', name: 'Portugal',               dial: '+351', flag: '🇵🇹' },
-  { code: 'NL', name: 'Países Bajos',           dial: '+31',  flag: '🇳🇱' },
-  { code: 'BE', name: 'Bélgica',                dial: '+32',  flag: '🇧🇪' },
-  { code: 'CH', name: 'Suiza',                  dial: '+41',  flag: '🇨🇭' },
-  { code: 'AT', name: 'Austria',                dial: '+43',  flag: '🇦🇹' },
-  { code: 'SE', name: 'Suecia',                 dial: '+46',  flag: '🇸🇪' },
-  { code: 'NO', name: 'Noruega',                dial: '+47',  flag: '🇳🇴' },
-  { code: 'DK', name: 'Dinamarca',              dial: '+45',  flag: '🇩🇰' },
-  { code: 'FI', name: 'Finlandia',              dial: '+358', flag: '🇫🇮' },
-  { code: 'PL', name: 'Polonia',                dial: '+48',  flag: '🇵🇱' },
-  { code: 'RU', name: 'Rusia',                  dial: '+7',   flag: '🇷🇺' },
-  { code: 'UA', name: 'Ucrania',                dial: '+380', flag: '🇺🇦' },
-  { code: 'CA', name: 'Canadá',                 dial: '+1',   flag: '🇨🇦' },
-  { code: 'AU', name: 'Australia',              dial: '+61',  flag: '🇦🇺' },
-  { code: 'NZ', name: 'Nueva Zelanda',          dial: '+64',  flag: '🇳🇿' },
-  { code: 'JP', name: 'Japón',                  dial: '+81',  flag: '🇯🇵' },
-  { code: 'CN', name: 'China',                  dial: '+86',  flag: '🇨🇳' },
-  { code: 'KR', name: 'Corea del Sur',          dial: '+82',  flag: '🇰🇷' },
-  { code: 'IN', name: 'India',                  dial: '+91',  flag: '🇮🇳' },
-  { code: 'SA', name: 'Arabia Saudita',         dial: '+966', flag: '🇸🇦' },
-  { code: 'AE', name: 'Emiratos Árabes',        dial: '+971', flag: '🇦🇪' },
-  { code: 'TR', name: 'Turquía',                dial: '+90',  flag: '🇹🇷' },
-  { code: 'IL', name: 'Israel',                 dial: '+972', flag: '🇮🇱' },
-  { code: 'ZA', name: 'Sudáfrica',              dial: '+27',  flag: '🇿🇦' },
-  { code: 'NG', name: 'Nigeria',                dial: '+234', flag: '🇳🇬' },
-  { code: 'EG', name: 'Egipto',                 dial: '+20',  flag: '🇪🇬' },
-  { code: 'MA', name: 'Marruecos',              dial: '+212', flag: '🇲🇦' },
+  // América Latina — primero
+  { code: 'co', name: 'Colombia',              dial: '+57'  },
+  { code: 'mx', name: 'México',                dial: '+52'  },
+  { code: 'ar', name: 'Argentina',             dial: '+54'  },
+  { code: 'cl', name: 'Chile',                 dial: '+56'  },
+  { code: 'pe', name: 'Perú',                  dial: '+51'  },
+  { code: 'ec', name: 'Ecuador',               dial: '+593' },
+  { code: 've', name: 'Venezuela',             dial: '+58'  },
+  { code: 'bo', name: 'Bolivia',               dial: '+591' },
+  { code: 'py', name: 'Paraguay',              dial: '+595' },
+  { code: 'uy', name: 'Uruguay',               dial: '+598' },
+  { code: 'br', name: 'Brasil',                dial: '+55'  },
+  { code: 'pa', name: 'Panamá',                dial: '+507' },
+  { code: 'cr', name: 'Costa Rica',            dial: '+506' },
+  { code: 'gt', name: 'Guatemala',             dial: '+502' },
+  { code: 'hn', name: 'Honduras',              dial: '+504' },
+  { code: 'sv', name: 'El Salvador',           dial: '+503' },
+  { code: 'ni', name: 'Nicaragua',             dial: '+505' },
+  { code: 'cu', name: 'Cuba',                  dial: '+53'  },
+  { code: 'do', name: 'Rep. Dominicana',       dial: '+1'   },
+  { code: 'pr', name: 'Puerto Rico',           dial: '+1'   },
+  { code: 'ht', name: 'Haití',                 dial: '+509' },
+  { code: 'jm', name: 'Jamaica',               dial: '+1'   },
+  { code: 'tt', name: 'Trinidad y Tobago',     dial: '+1'   },
+  { code: 'bb', name: 'Barbados',              dial: '+1'   },
+  { code: 'bz', name: 'Belice',                dial: '+501' },
+  { code: 'gy', name: 'Guyana',                dial: '+592' },
+  { code: 'sr', name: 'Surinam',               dial: '+597' },
+  // América del Norte
+  { code: 'us', name: 'Estados Unidos',        dial: '+1'   },
+  { code: 'ca', name: 'Canadá',                dial: '+1'   },
+  // Europa
+  { code: 'es', name: 'España',                dial: '+34'  },
+  { code: 'gb', name: 'Reino Unido',           dial: '+44'  },
+  { code: 'fr', name: 'Francia',               dial: '+33'  },
+  { code: 'de', name: 'Alemania',              dial: '+49'  },
+  { code: 'it', name: 'Italia',                dial: '+39'  },
+  { code: 'pt', name: 'Portugal',              dial: '+351' },
+  { code: 'nl', name: 'Países Bajos',          dial: '+31'  },
+  { code: 'be', name: 'Bélgica',               dial: '+32'  },
+  { code: 'ch', name: 'Suiza',                 dial: '+41'  },
+  { code: 'at', name: 'Austria',               dial: '+43'  },
+  { code: 'se', name: 'Suecia',                dial: '+46'  },
+  { code: 'no', name: 'Noruega',               dial: '+47'  },
+  { code: 'dk', name: 'Dinamarca',             dial: '+45'  },
+  { code: 'fi', name: 'Finlandia',             dial: '+358' },
+  { code: 'pl', name: 'Polonia',               dial: '+48'  },
+  { code: 'ru', name: 'Rusia',                 dial: '+7'   },
+  { code: 'ua', name: 'Ucrania',               dial: '+380' },
+  { code: 'ro', name: 'Rumania',               dial: '+40'  },
+  { code: 'hu', name: 'Hungría',               dial: '+36'  },
+  { code: 'cz', name: 'República Checa',       dial: '+420' },
+  { code: 'sk', name: 'Eslovaquia',            dial: '+421' },
+  { code: 'bg', name: 'Bulgaria',              dial: '+359' },
+  { code: 'hr', name: 'Croacia',               dial: '+385' },
+  { code: 'rs', name: 'Serbia',                dial: '+381' },
+  { code: 'gr', name: 'Grecia',                dial: '+30'  },
+  { code: 'ie', name: 'Irlanda',               dial: '+353' },
+  { code: 'is', name: 'Islandia',              dial: '+354' },
+  { code: 'lu', name: 'Luxemburgo',            dial: '+352' },
+  { code: 'ee', name: 'Estonia',               dial: '+372' },
+  { code: 'lv', name: 'Letonia',               dial: '+371' },
+  { code: 'lt', name: 'Lituania',              dial: '+370' },
+  { code: 'si', name: 'Eslovenia',             dial: '+386' },
+  { code: 'mk', name: 'Macedonia del Norte',   dial: '+389' },
+  { code: 'al', name: 'Albania',               dial: '+355' },
+  { code: 'ba', name: 'Bosnia y Herzegovina',  dial: '+387' },
+  { code: 'me', name: 'Montenegro',            dial: '+382' },
+  { code: 'md', name: 'Moldavia',              dial: '+373' },
+  { code: 'by', name: 'Bielorrusia',           dial: '+375' },
+  // Asia
+  { code: 'jp', name: 'Japón',                 dial: '+81'  },
+  { code: 'cn', name: 'China',                 dial: '+86'  },
+  { code: 'kr', name: 'Corea del Sur',         dial: '+82'  },
+  { code: 'kp', name: 'Corea del Norte',       dial: '+850' },
+  { code: 'in', name: 'India',                 dial: '+91'  },
+  { code: 'pk', name: 'Pakistán',              dial: '+92'  },
+  { code: 'bd', name: 'Bangladesh',            dial: '+880' },
+  { code: 'lk', name: 'Sri Lanka',             dial: '+94'  },
+  { code: 'np', name: 'Nepal',                 dial: '+977' },
+  { code: 'sa', name: 'Arabia Saudita',        dial: '+966' },
+  { code: 'ae', name: 'Emiratos Árabes',       dial: '+971' },
+  { code: 'tr', name: 'Turquía',               dial: '+90'  },
+  { code: 'il', name: 'Israel',                dial: '+972' },
+  { code: 'ir', name: 'Irán',                  dial: '+98'  },
+  { code: 'iq', name: 'Irak',                  dial: '+964' },
+  { code: 'sy', name: 'Siria',                 dial: '+963' },
+  { code: 'jo', name: 'Jordania',              dial: '+962' },
+  { code: 'lb', name: 'Líbano',                dial: '+961' },
+  { code: 'kw', name: 'Kuwait',                dial: '+965' },
+  { code: 'qa', name: 'Catar',                 dial: '+974' },
+  { code: 'bh', name: 'Baréin',                dial: '+973' },
+  { code: 'om', name: 'Omán',                  dial: '+968' },
+  { code: 'ye', name: 'Yemen',                 dial: '+967' },
+  { code: 'af', name: 'Afganistán',            dial: '+93'  },
+  { code: 'id', name: 'Indonesia',             dial: '+62'  },
+  { code: 'my', name: 'Malasia',               dial: '+60'  },
+  { code: 'th', name: 'Tailandia',             dial: '+66'  },
+  { code: 'vn', name: 'Vietnam',               dial: '+84'  },
+  { code: 'ph', name: 'Filipinas',             dial: '+63'  },
+  { code: 'sg', name: 'Singapur',              dial: '+65'  },
+  { code: 'mm', name: 'Myanmar',               dial: '+95'  },
+  { code: 'kh', name: 'Camboya',               dial: '+855' },
+  { code: 'la', name: 'Laos',                  dial: '+856' },
+  { code: 'mn', name: 'Mongolia',              dial: '+976' },
+  { code: 'ge', name: 'Georgia',               dial: '+995' },
+  { code: 'am', name: 'Armenia',               dial: '+374' },
+  { code: 'az', name: 'Azerbaiyán',            dial: '+994' },
+  { code: 'kz', name: 'Kazajistán',            dial: '+7'   },
+  { code: 'uz', name: 'Uzbekistán',            dial: '+998' },
+  // Oceanía
+  { code: 'au', name: 'Australia',             dial: '+61'  },
+  { code: 'nz', name: 'Nueva Zelanda',         dial: '+64'  },
+  { code: 'fj', name: 'Fiyi',                  dial: '+679' },
+  { code: 'pg', name: 'Papúa Nueva Guinea',    dial: '+675' },
+  // África
+  { code: 'za', name: 'Sudáfrica',             dial: '+27'  },
+  { code: 'ng', name: 'Nigeria',               dial: '+234' },
+  { code: 'eg', name: 'Egipto',                dial: '+20'  },
+  { code: 'ma', name: 'Marruecos',             dial: '+212' },
+  { code: 'dz', name: 'Argelia',               dial: '+213' },
+  { code: 'tn', name: 'Túnez',                 dial: '+216' },
+  { code: 'gh', name: 'Ghana',                 dial: '+233' },
+  { code: 'ke', name: 'Kenia',                 dial: '+254' },
+  { code: 'tz', name: 'Tanzania',              dial: '+255' },
+  { code: 'et', name: 'Etiopía',               dial: '+251' },
+  { code: 'ug', name: 'Uganda',                dial: '+256' },
+  { code: 'sn', name: 'Senegal',               dial: '+221' },
+  { code: 'ci', name: 'Costa de Marfil',       dial: '+225' },
+  { code: 'cm', name: 'Camerún',               dial: '+237' },
+  { code: 'ao', name: 'Angola',                dial: '+244' },
+  { code: 'mz', name: 'Mozambique',            dial: '+258' },
+  { code: 'mg', name: 'Madagascar',            dial: '+261' },
+  { code: 'rw', name: 'Ruanda',                dial: '+250' },
+  { code: 'sd', name: 'Sudán',                 dial: '+249' },
+  { code: 'ly', name: 'Libia',                 dial: '+218' },
 ]
+
+const FlagImg = ({ code, size = 20 }: { code: string; size?: number }) => (
+  <img
+    src={`https://flagcdn.com/${size}x${Math.round(size * 0.75)}/${code.toLowerCase()}.png`}
+    width={size}
+    height={Math.round(size * 0.75)}
+    alt={code}
+    className="rounded-sm object-cover shrink-0"
+    style={{ minWidth: size }}
+  />
+)
 
 // ── Input de teléfono con indicativo ─────────────────────────────────────────
 function PhoneInput({
@@ -183,7 +277,7 @@ function PhoneInput({
         onClick={handleOpenDial}
         className="flex items-center gap-1.5 px-3 py-3 border-r border-slate-200 shrink-0 hover:bg-slate-50 transition-colors cursor-pointer"
       >
-        <span className="text-lg leading-none">{paisActual.flag}</span>
+        <FlagImg code={paisActual.code} size={20} />
         <span className="text-sm font-semibold text-slate-700">{paisActual.dial}</span>
         <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -233,9 +327,9 @@ function PhoneInput({
                 type="button"
                 onClick={() => { setDialCode(p.dial); setOpen(false); setBusq('') }}
                 className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2.5 transition-colors duration-100 cursor-pointer
-                  ${p.dial === dialCode ? 'bg-[#21b9f7]/8 text-[#21b9f7] font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
+                  ${p.code === paisActual.code ? 'bg-[#21b9f7]/8 text-[#21b9f7] font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
               >
-                <span className="text-base leading-none">{p.flag}</span>
+                <FlagImg code={p.code} size={18} />
                 <span className="flex-1 truncate">{p.name}</span>
                 <span className="text-xs text-slate-400 shrink-0">{p.dial}</span>
               </button>
