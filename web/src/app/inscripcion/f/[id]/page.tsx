@@ -96,7 +96,8 @@ function CustomSelect({
     setOpen(o => !o)
   }
 
-  const selected = options.find(o => o.value === value)
+  const effectiveValue = value?.startsWith('Otro: ') ? 'Otro' : value
+  const selected = options.find(o => o.value === effectiveValue)
 
   return (
     <div className="relative">
@@ -113,6 +114,7 @@ function CustomSelect({
           {selected ? selected.label : (placeholder ?? 'Selecciona una opción')}
         </span>
         <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-[#21b9f7]' : ''}`} />
+
       </button>
 
       {open && rect && typeof document !== 'undefined' && createPortal(
@@ -167,6 +169,7 @@ function CustomDate({
   const [open,  setOpen]  = useState(false)
   const [rect,  setRect]  = useState<DOMRect | null>(null)
   const [mes,   setMes]   = useState(() => value ? new Date(value + 'T00:00:00') : new Date())
+  const [vista, setVista] = useState<'dias' | 'meses' | 'años'>('dias')
   const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -257,58 +260,93 @@ function CustomDate({
           }}
           className="bg-white border border-slate-200 rounded-2xl shadow-[0_10px_40px_-10px_rgba(15,23,42,0.25)] p-4"
         >
-          {/* Header navegación mes */}
+          {/* Header navegación */}
           <div className="flex items-center justify-between mb-3">
             <button type="button"
-              onClick={() => setMes(new Date(año, mesIdx - 1, 1))}
+              onClick={() => {
+                if (vista === 'dias')  setMes(new Date(año, mesIdx - 1, 1))
+                if (vista === 'meses') setMes(new Date(año - 1, mesIdx, 1))
+                if (vista === 'años')  setMes(new Date(año - 12, mesIdx, 1))
+              }}
               className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="text-sm font-bold text-slate-700">
-              {MESES[mesIdx]} <span className="text-slate-400 font-medium">{año}</span>
-            </div>
             <button type="button"
-              onClick={() => setMes(new Date(año, mesIdx + 1, 1))}
+              onClick={() => setVista(v => v === 'dias' ? 'meses' : v === 'meses' ? 'años' : 'dias')}
+              className="flex items-center gap-1 text-sm font-bold text-slate-700 hover:text-[#21b9f7] transition-colors px-2 py-1 rounded-lg hover:bg-[#21b9f7]/5">
+              {vista === 'dias'  && <>{MESES[mesIdx]} <span className="text-slate-400 font-medium">{año}</span></>}
+              {vista === 'meses' && <span>{año}</span>}
+              {vista === 'años'  && <span>{año - 5} — {año + 6}</span>}
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${vista !== 'dias' ? 'rotate-180' : ''}`} />
+            </button>
+            <button type="button"
+              onClick={() => {
+                if (vista === 'dias')  setMes(new Date(año, mesIdx + 1, 1))
+                if (vista === 'meses') setMes(new Date(año + 1, mesIdx, 1))
+                if (vista === 'años')  setMes(new Date(año + 12, mesIdx, 1))
+              }}
               className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Días de la semana */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {DIAS.map((d, i) => (
-              <div key={i} className="text-center text-[10px] font-bold text-slate-400 uppercase py-1">{d}</div>
-            ))}
-          </div>
-
-          {/* Días del mes */}
-          <div className="grid grid-cols-7 gap-1">
-            {dias.map((d, i) => {
-              const isCurr = d.mes === 'curr'
-              const isSel  = valDate && d.date.getTime() === valDate.getTime()
-              const isHoy  = d.date.getTime() === hoy.getTime()
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => { onChange(toISODate(d.date)); setOpen(false) }}
-                  className={`
-                    aspect-square rounded-lg text-sm font-medium transition-all duration-100 cursor-pointer
-                    active:scale-95
-                    ${isSel
-                      ? 'bg-[#21b9f7] text-white font-bold shadow-md shadow-[#21b9f7]/30'
-                      : isHoy && isCurr
-                      ? 'bg-[#21b9f7]/10 text-[#21b9f7] font-bold ring-1 ring-[#21b9f7]/30'
-                      : isCurr
-                      ? 'text-slate-700 hover:bg-slate-100'
-                      : 'text-slate-300 hover:bg-slate-50'}
-                  `}
-                >
-                  {d.d}
+          {/* Vista: selector de meses */}
+          {vista === 'meses' && (
+            <div className="grid grid-cols-3 gap-1.5 mb-1">
+              {MESES.map((m, i) => (
+                <button key={m} type="button"
+                  onClick={() => { setMes(new Date(año, i, 1)); setVista('dias') }}
+                  className={`py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer
+                    ${i === mesIdx ? 'bg-[#21b9f7] text-white' : 'text-slate-700 hover:bg-slate-100'}`}>
+                  {m.slice(0, 3)}
                 </button>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {/* Vista: selector de años */}
+          {vista === 'años' && (
+            <div className="grid grid-cols-3 gap-1.5 mb-1">
+              {Array.from({ length: 12 }, (_, i) => año - 5 + i).map(y => (
+                <button key={y} type="button"
+                  onClick={() => { setMes(new Date(y, mesIdx, 1)); setVista('meses') }}
+                  className={`py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer
+                    ${y === año ? 'bg-[#21b9f7] text-white' : 'text-slate-700 hover:bg-slate-100'}`}>
+                  {y}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Vista: días del mes */}
+          {vista === 'dias' && (<>
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {DIAS.map((d, i) => (
+                <div key={i} className="text-center text-[10px] font-bold text-slate-400 uppercase py-1">{d}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {dias.map((d, i) => {
+                const isCurr = d.mes === 'curr'
+                const isSel  = valDate && d.date.getTime() === valDate.getTime()
+                const isHoy  = d.date.getTime() === hoy.getTime()
+                return (
+                  <button key={i} type="button"
+                    onClick={() => { onChange(toISODate(d.date)); setOpen(false) }}
+                    className={`aspect-square rounded-lg text-sm font-medium transition-all duration-100 cursor-pointer active:scale-95
+                      ${isSel
+                        ? 'bg-[#21b9f7] text-white font-bold shadow-md shadow-[#21b9f7]/30'
+                        : isHoy && isCurr
+                        ? 'bg-[#21b9f7]/10 text-[#21b9f7] font-bold ring-1 ring-[#21b9f7]/30'
+                        : isCurr
+                        ? 'text-slate-700 hover:bg-slate-100'
+                        : 'text-slate-300 hover:bg-slate-50'}`}>
+                    {d.d}
+                  </button>
+                )
+              })}
+            </div>
+          </>)}
 
           {/* Footer */}
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
@@ -587,14 +625,31 @@ function FieldInput({ campo, value, onChange, error, valores }: {
   }
 
   if (campo.tipo === 'select') {
+    const tieneOtro = (campo.opciones ?? []).some(op => op.toLowerCase() === 'otro')
+    const esOtro = tieneOtro && value === 'Otro'
     return (
-      <CustomSelect
-        value={value ?? ''}
-        onChange={onChange}
-        options={(campo.opciones ?? []).map(op => ({ value: op, label: op }))}
-        placeholder="Selecciona una opción"
-        error={!!error}
-      />
+      <div className="space-y-2">
+        <CustomSelect
+          value={value ?? ''}
+          onChange={onChange}
+          options={(campo.opciones ?? []).map(op => ({ value: op, label: op }))}
+          placeholder="Selecciona una opción"
+          error={!!error}
+        />
+        {esOtro && (
+          <input
+            type="text"
+            autoFocus
+            placeholder="Escribe tu respuesta..."
+            className={`w-full px-4 py-3 rounded-xl border-2 text-slate-800 text-sm bg-white
+              focus:outline-none transition-all duration-150 placeholder:text-slate-400
+              border-[#21b9f7] focus:ring-4 focus:ring-[#21b9f7]/10`}
+            style={{ animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both' }}
+            onChange={e => onChange(`Otro: ${e.target.value}`)}
+            value={value?.startsWith('Otro: ') ? value.slice(6) : ''}
+          />
+        )}
+      </div>
     )
   }
 
