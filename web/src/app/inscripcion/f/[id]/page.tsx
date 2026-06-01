@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Poppins } from 'next/font/google'
 import { ChevronLeft, ChevronDown, ChevronRight, Loader2, Check, Upload, ArrowLeft, AlertCircle, Calendar, Clock, BookOpen, Target } from 'lucide-react'
@@ -110,7 +111,7 @@ function CustomSelect({
         <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-[#21b9f7]' : ''}`} />
       </button>
 
-      {open && rect && (
+      {open && rect && typeof document !== 'undefined' && createPortal(
         <div
           id="custom-select-dropdown"
           style={{
@@ -144,7 +145,8 @@ function CustomSelect({
               )
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
@@ -234,7 +236,7 @@ function CustomDate({
         <Calendar className={`w-4 h-4 shrink-0 transition-colors duration-200 ${open ? 'text-[#21b9f7]' : 'text-slate-400'}`} />
       </button>
 
-      {open && rect && (
+      {open && rect && typeof document !== 'undefined' && createPortal(
         <div
           id="custom-date-dropdown"
           style={{
@@ -313,7 +315,8 @@ function CustomDate({
               Hoy
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
