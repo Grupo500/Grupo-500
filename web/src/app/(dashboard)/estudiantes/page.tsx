@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
-import { getClientToken } from '@/lib/api'
+import { getClientToken, apiFetch } from '@/lib/api'
 import Link from 'next/link'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -167,6 +167,52 @@ function ConfirmDialog({ open, nombre, onConfirm, onCancel, isPending }: {
         </div>
       </div>
     </div>
+  )
+}
+
+// ── Botón Mi enlace (solo VENDEDOR) ───────────────────────────────────────
+function MiEnlaceBtn() {
+  const [copiado, setCopiado] = useState(false)
+  const [enlace,  setEnlace]  = useState<string | null>(null)
+  const [error,   setError]   = useState(false)
+
+  const generarEnlace = async () => {
+    if (enlace) { copiar(); return }
+    try {
+      const [asesorRes, formsRes] = await Promise.all([
+        apiFetch('/asesores/me') as Promise<any>,
+        apiFetch('/formularios') as Promise<any>,
+      ])
+      const asesorId = asesorRes?.data?.id
+      const formActivo = formsRes?.data?.find((f: any) => f.activo)
+      if (!asesorId || !formActivo) { setError(true); return }
+      const base = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin
+      setEnlace(`${base}/inscripcion/f/${formActivo.id}?asesor=${asesorId}`)
+      setTimeout(() => copiar(`${base}/inscripcion/f/${formActivo.id}?asesor=${asesorId}`), 0)
+    } catch { setError(true) }
+  }
+
+  const copiar = (url?: string) => {
+    navigator.clipboard.writeText(url ?? enlace ?? '')
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
+
+  return (
+    <button
+      onClick={generarEnlace}
+      title="Copiar mi enlace de inscripción"
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors cursor-pointer ${
+        error
+          ? 'bg-[var(--error)]/10 border-[var(--error)]/30 text-[var(--error)]'
+          : copiado
+          ? 'bg-secondary/10 border-secondary/30 text-secondary'
+          : 'bg-surface-high border-outline-variant text-on-surface hover:bg-surface-lowest'
+      }`}
+    >
+      {copiado ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+      <span className="hidden sm:inline">{error ? 'Sin formulario' : copiado ? '¡Copiado!' : 'Mi enlace'}</span>
+    </button>
   )
 }
 
@@ -463,6 +509,7 @@ export default function EstudiantesPage() {
                 <span className="hidden sm:inline">Importar</span>
               </button>
             )}
+            {!isAdmin && <MiEnlaceBtn />}
             <button
               onClick={() => { setModoSeleccion(m => !m); setSeleccionados(new Set()) }}
               className={cn(

@@ -70,6 +70,16 @@ export async function estadisticas(req: Request, res: Response) {
   })
 }
 
+export async function me(req: Request, res: Response) {
+  if (!req.asesorId) return res.status(404).json({ success: false, error: 'No encontrado' })
+  const asesor = await prisma.asesor.findUnique({
+    where: { id: req.asesorId },
+    select: { id: true, nombre: true },
+  })
+  if (!asesor) return res.status(404).json({ success: false, error: 'Asesor no encontrado' })
+  return ApiResponse.success(res, asesor)
+}
+
 export async function misEstadisticas(req: Request, res: Response) {
   if (!req.asesorId) return ApiResponse.success(res, null)
   req.params.id = req.asesorId

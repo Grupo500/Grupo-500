@@ -162,6 +162,7 @@ export default function CursosPage() {
   const queryClient = useQueryClient()
 
   const [busqueda, setBusqueda] = useState('')
+  const [filtroActivo, setFiltroActivo] = useState<'todos' | 'activos' | 'inactivos'>('activos')
   const [modalCrear, setModalCrear] = useState(false)
   const [editCurso, setEditCurso] = useState<Curso | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
@@ -233,9 +234,12 @@ export default function CursosPage() {
   }
 
   const cursosTodos: Curso[] = data?.data ?? []
-  const cursos = cursosTodos.filter(c =>
-    !busqueda || c.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  )
+  const cursos = cursosTodos.filter(c => {
+    if (filtroActivo === 'activos'   && !c.activo) return false
+    if (filtroActivo === 'inactivos' &&  c.activo) return false
+    if (busqueda && !c.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false
+    return true
+  })
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -249,8 +253,20 @@ export default function CursosPage() {
         }
       />
 
-      {/* Búsqueda */}
-      <div className="flex gap-2">
+      {/* Búsqueda + filtro */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex gap-1 p-1 bg-surface-high rounded-xl border border-outline-variant self-start">
+          {(['activos', 'inactivos', 'todos'] as const).map(f => (
+            <button key={f} onClick={() => setFiltroActivo(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                filtroActivo === f
+                  ? 'bg-surface-lowest text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}>
+              {f === 'activos' ? 'Habilitados' : f === 'inactivos' ? 'Deshabilitados' : 'Todos'}
+            </button>
+          ))}
+        </div>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
           <input
