@@ -9,15 +9,15 @@ const schema = z.object({
   descripcion:  z.string().optional(),
   precio:       z.number().positive(),
   duracionHoras: z.number().int().positive(),
+  tipoCurso:    z.enum(['INDIVIDUAL', 'COMBO']).optional(),
   fechaInicio:  z.string().datetime().optional().nullable(),
   fechaFin:     z.string().datetime().optional().nullable(),
 })
 
 export async function listar(_req: Request, res: Response) {
   const cursos = await prisma.curso.findMany({
-    where: { activo: true },
     include: { _count: { select: { estudiantes: true } } },
-    orderBy: { nombre: 'asc' },
+    orderBy: [{ activo: 'desc' }, { nombre: 'asc' }],
   })
   return ApiResponse.success(res, cursos)
 }
@@ -48,6 +48,7 @@ const actualizarSchema = z.object({
   fechaIcfes:       z.string().datetime().optional().nullable(),
   simulacros:       z.number().int().min(0).optional().nullable(),
   activo:           z.boolean().optional(),
+  tipoCurso:        z.enum(['INDIVIDUAL', 'COMBO']).optional(),
   visibleEnLanding: z.boolean().optional(),
   cuposDisponibles: z.number().int().min(0).optional().nullable(),
 })

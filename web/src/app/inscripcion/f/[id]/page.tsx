@@ -123,21 +123,51 @@ function FieldInput({ campo, value, onChange, error, valores }: {
   // ── Selector de curso con tarjeta info ──────────────────────────────────────
   if (campo.id === 'curso_seleccionado') {
     const cursos: any[] = (valores as any).__cursos ?? []
+    const individuales = cursos.filter((c: any) => c.tipoCurso !== 'COMBO')
+    const combos = cursos.filter((c: any) => c.tipoCurso === 'COMBO')
+    const tipoCurso = (valores as any).__tipoCurso ?? 'INDIVIDUAL'
+    const cursosVisibles = tipoCurso === 'COMBO' ? combos : individuales
     const cursoSelec = cursos.find((c: any) => c.id === value)
     const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
     return (
       <div className="space-y-3">
+        {/* Selector tipo: Individual o Combo */}
+        {combos.length > 0 && (
+          <div className="flex gap-2">
+            {(['INDIVIDUAL', 'COMBO'] as const).map(t => (
+              <button key={t} type="button"
+                onClick={() => onChange(`__tipo:${t}`)}
+                className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold border-2 transition-all ${
+                  tipoCurso === t
+                    ? 'border-[#21b9f7] bg-[#21b9f7]/10 text-[#21b9f7]'
+                    : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                {t === 'INDIVIDUAL' ? 'Curso individual' : 'Combo'}
+              </button>
+            ))}
+          </div>
+        )}
         <select className={`${base} cursor-pointer`} value={value ?? ''}
           onChange={e => onChange(e.target.value)}>
-          <option value="">Selecciona tu curso...</option>
-          {cursos.map((c: any) => (
+          <option value="">{tipoCurso === 'COMBO' ? 'Selecciona tu combo...' : 'Selecciona tu curso...'}</option>
+          {cursosVisibles.map((c: any) => (
             <option key={c.id} value={c.id}>{c.nombre}</option>
           ))}
         </select>
         {cursoSelec && (
-          <div className="rounded-2xl border-2 border-[#21b9f7]/30 bg-[#21b9f7]/5 p-4 space-y-2.5"
+          <div className={`rounded-2xl border-2 p-4 space-y-2.5 ${
+            cursoSelec.tipoCurso === 'COMBO'
+              ? 'border-emerald-400/30 bg-emerald-50/50'
+              : 'border-[#21b9f7]/30 bg-[#21b9f7]/5'
+          }`}
             style={{ animation: 'slideInUp 0.2s cubic-bezier(0.23,1,0.32,1) both' }}>
-            <p className="text-sm font-bold text-slate-700">{cursoSelec.nombre}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-slate-700">{cursoSelec.nombre}</p>
+              {cursoSelec.tipoCurso === 'COMBO' && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 uppercase">Combo</span>
+              )}
+            </div>
             {cursoSelec.descripcion && <p className="text-xs text-slate-500">{cursoSelec.descripcion}</p>}
             <div className="grid grid-cols-2 gap-2">
               {cursoSelec.fechaInicio && (
@@ -428,7 +458,7 @@ export default function FormularioDinamico() {
       if (tData.success && tData.data?.url) setTerminos(tData.data.url)
       if (cData?.success) {
         setCursos(cData.data)
-        setValores(v => ({ ...v, __cursos: cData.data }))
+        setValores(v => ({ ...v, __cursos: cData.data, __tipoCurso: 'INDIVIDUAL' }))
       }
       if (aData !== null) {
         if (aData.success) setAsesorNombre(aData.data.nombre)
@@ -730,8 +760,12 @@ export default function FormularioDinamico() {
                 campo={campo}
                 value={valores[campo.id]}
                 onChange={v => {
+                  if (typeof v === 'string' && v.startsWith('__tipo:')) {
+                    const tipo = v.replace('__tipo:', '')
+                    setValores(prev => ({ ...prev, __tipoCurso: tipo, [campo.id]: '' }))
+                    return
+                  }
                   set(campo.id, v)
-                  // Si cambia el departamento, resetear municipio
                   if (campo.id === 'departamento') {
                     setValores(prev => ({ ...prev, municipio: '', ciudad_municipio: '' }))
                   }

@@ -181,6 +181,7 @@ model Curso {
   precio            Float
   duracionHoras     Int
   activo            Boolean           @default(true)
+  tipoCurso         TipoCurso         @default(INDIVIDUAL)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   calendario        CalendarioCurso   @default(A)
@@ -368,6 +369,11 @@ enum RendimientoEstudiante {
 enum CalendarioCurso {
   A
   B
+}
+
+enum TipoCurso {
+  INDIVIDUAL
+  COMBO
 }
 
 enum EtapaNegociacion {

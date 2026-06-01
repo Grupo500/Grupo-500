@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Trash2, Search, CalendarDays, CalendarCheck } from 'lucide-react'
+import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Trash2, Search, CalendarDays, CalendarCheck, Power, Package } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -13,6 +13,8 @@ interface Curso {
   descripcion?: string
   precio: number
   duracionHoras: number
+  activo: boolean
+  tipoCurso: 'INDIVIDUAL' | 'COMBO'
   fechaInicio?: string | null
   fechaFin?: string | null
   _count?: { estudiantes: number }
@@ -22,11 +24,12 @@ type FormState = {
   nombre: string
   precio: string
   duracionHoras: string
+  tipoCurso: 'INDIVIDUAL' | 'COMBO'
   fechaInicio: string
   fechaFin: string
 }
 
-const emptyForm: FormState = { nombre: '', precio: '', duracionHoras: '100', fechaInicio: '', fechaFin: '' }
+const emptyForm: FormState = { nombre: '', precio: '', duracionHoras: '100', tipoCurso: 'INDIVIDUAL', fechaInicio: '', fechaFin: '' }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null
@@ -101,6 +104,13 @@ function FormFields({ f, setF }: { f: FormState; setF: React.Dispatch<React.SetS
           <input className={inputCls} type="number" value={f.duracionHoras} onChange={e => setF(p => ({ ...p, duracionHoras: e.target.value }))} />
         </div>
       </div>
+      <div>
+        <label className={labelCls}>Tipo de curso</label>
+        <select className={inputCls} value={f.tipoCurso} onChange={e => setF(p => ({ ...p, tipoCurso: e.target.value as 'INDIVIDUAL' | 'COMBO' }))}>
+          <option value="INDIVIDUAL">Individual</option>
+          <option value="COMBO">Combo</option>
+        </select>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Fecha de inicio</label>
@@ -171,6 +181,7 @@ export default function CursosPage() {
     nombre:        f.nombre,
     precio:        Number(f.precio),
     duracionHoras: Number(f.duracionHoras),
+    tipoCurso:     f.tipoCurso,
     fechaInicio:   toISO(f.fechaInicio),
     fechaFin:      toISO(f.fechaFin),
   })
@@ -204,12 +215,23 @@ export default function CursosPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
   })
 
+  const toggleActivoMutation = useMutation({
+    mutationFn: ({ id, activo }: { id: string; activo: boolean }) =>
+      fetcher(`/cursos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activo }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
+  })
+
   const abrirEditar = (c: Curso) => {
     setEditCurso(c)
     setEditForm({
       nombre:        c.nombre,
       precio:        String(c.precio),
       duracionHoras: String(c.duracionHoras),
+      tipoCurso:     c.tipoCurso ?? 'INDIVIDUAL',
       fechaInicio:   toDateInput(c.fechaInicio),
       fechaFin:      toDateInput(c.fechaFin),
     })
@@ -261,15 +283,32 @@ export default function CursosPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {cursos.map(c => (
-            <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 sm:p-5 hover:border-primary/30 transition-colors group flex flex-col">
+            <div key={c.id} className={`bg-surface-lowest border rounded-xl p-3 sm:p-5 hover:border-primary/30 transition-colors group flex flex-col ${c.activo ? 'border-outline-variant' : 'border-outline-variant/40 opacity-60'}`}>
 
               {/* Fila superior: ícono — nombre — acciones */}
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-4 h-4 text-primary" />
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${c.tipoCurso === 'COMBO' ? 'bg-secondary/10 border-secondary/20' : 'bg-primary/10 border-primary/20'}`}>
+                  {c.tipoCurso === 'COMBO' ? <Package className="w-4 h-4 text-secondary" /> : <BookOpen className="w-4 h-4 text-primary" />}
                 </div>
-                <p className="text-sm font-semibold text-on-surface flex-1 leading-tight">{c.nombre}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-on-surface leading-tight truncate">{c.nombre}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {c.tipoCurso === 'COMBO' && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-secondary/10 text-secondary uppercase">Combo</span>
+                    )}
+                    {!c.activo && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--error)]/10 text-[var(--error)] uppercase">Deshabilitado</span>
+                    )}
+                  </div>
+                </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => toggleActivoMutation.mutate({ id: c.id, activo: !c.activo })}
+                    className={`p-1.5 rounded-md transition-colors ${c.activo ? 'text-secondary hover:text-[var(--error)] hover:bg-[var(--error)]/10' : 'text-on-surface-variant hover:text-secondary hover:bg-secondary/10'}`}
+                    title={c.activo ? 'Deshabilitar curso' : 'Habilitar curso'}
+                  >
+                    <Power className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={() => abrirEditar(c)}
                     className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-[var(--primary-container)] transition-colors"

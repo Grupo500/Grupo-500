@@ -449,6 +449,7 @@ router.get('/cursos-activos', asyncHandler(async (_req, res) => {
       fechaIcfes:   true,
       simulacros:   true,
       calendario:   true,
+      tipoCurso:    true,
       cuposDisponibles: true,
       _count: { select: { estudiantes: true } },
     },
