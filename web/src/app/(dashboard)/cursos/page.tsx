@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Trash2, Search, CalendarDays, CalendarCheck, Power, Package } from 'lucide-react'
+import { BookOpen, Plus, X, Loader2, Clock, Users, Pencil, Search, CalendarDays, CalendarCheck, Power, Package } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -210,11 +210,6 @@ export default function CursosPage() {
     },
   })
 
-  const eliminarMutation = useMutation({
-    mutationFn: (id: string) => fetcher(`/cursos/${id}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
-  })
-
   const toggleActivoMutation = useMutation({
     mutationFn: ({ id, activo }: { id: string; activo: boolean }) =>
       fetcher(`/cursos/${id}`, {
@@ -315,17 +310,6 @@ export default function CursosPage() {
                     title="Editar curso"
                   >
                     <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm(`¿Eliminar "${c.nombre}"? Esta acción no se puede deshacer.`))
-                        eliminarMutation.mutate(c.id)
-                    }}
-                    disabled={eliminarMutation.isPending}
-                    className="p-1.5 rounded-md text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors"
-                    title="Eliminar curso"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
