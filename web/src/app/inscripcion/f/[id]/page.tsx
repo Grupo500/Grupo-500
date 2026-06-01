@@ -196,12 +196,12 @@ const PAISES = [
 
 const FlagImg = ({ code, size = 20 }: { code: string; size?: number }) => (
   <img
-    src={`https://flagcdn.com/${size}x${Math.round(size * 0.75)}/${code.toLowerCase()}.png`}
+    src={`https://flagcdn.com/w${size * 2}/${code.toLowerCase()}.png`}
     width={size}
     height={Math.round(size * 0.75)}
-    alt={code}
-    className="rounded-sm object-cover shrink-0"
-    style={{ minWidth: size }}
+    alt=""
+    className="rounded-sm object-cover shrink-0 inline-block"
+    style={{ minWidth: size, maxWidth: size }}
   />
 )
 
@@ -269,17 +269,17 @@ function PhoneInput({
     : 'border-slate-200 hover:border-slate-300'
 
   return (
-    <div className={`flex rounded-xl border-2 bg-white overflow-hidden transition-all duration-150 ${borderCls}`}>
+    <div className={`flex flex-row items-center rounded-xl border-2 bg-white overflow-hidden transition-all duration-150 ${borderCls}`}>
       {/* Selector indicativo */}
       <button
         ref={triggerRef}
         type="button"
         onClick={handleOpenDial}
-        className="flex items-center gap-1.5 px-3 py-3 border-r border-slate-200 shrink-0 hover:bg-slate-50 transition-colors cursor-pointer"
+        className="flex flex-row items-center gap-1.5 px-3 border-r border-slate-200 shrink-0 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap h-full"
       >
         <FlagImg code={paisActual.code} size={20} />
-        <span className="text-sm font-semibold text-slate-700">{paisActual.dial}</span>
-        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        <span className="text-sm font-semibold text-slate-700 leading-none">{paisActual.dial}</span>
+        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-150 shrink-0 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Input número */}
