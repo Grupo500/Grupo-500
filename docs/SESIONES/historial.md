@@ -517,3 +517,152 @@ Actualmente la pregunta "¿En qué ciudad y departamento vives?" es texto libre.
 - Twilio WhatsApp real
 - Exportar reportes CSV/PDF
 - PDF T&C: verificar que el lightbox muestre correctamente en producción
+
+---
+
+## Sesión 011 — 2026-05-31
+
+**Objetivo:** Anexos completos al formulario Cal A (selector de curso, asesor por URL, métodos de pago, verificación de matrícula), eliminación del constructor visual, mejoras al módulo Estudiantes.
+
+### Lo que se hizo
+
+**Schema Prisma — migración `add_form_annexes`:**
+- `Curso`: +`fechaIcfes DateTime?`, +`simulacros Int?`
+- `Estudiante`: +`verificado Boolean @default(false)`, +`verificadoPor String?`, +`verificadoAt DateTime?`
+- `Pago`: +`referenciaPago String?`, +`comprobanteAt DateTime?` (timestamp de recepción en plataforma)
+
+**Backend (`api/src/routes/inscripcion.ts`):**
+- `POST /api/inscripcion/publica` reescrito completo:
+  - Valida asesorId si viene en payload (bloquea si inválido)
+  - Valida cursoId (bloquea si no existe o no está activo)
+  - Acepta `metodoPago` enum (Bancolombia, Interbancario, Nequi, Bre-B, Addi, Sistecredito, Otro)
+  - `referenciaPago` obligatorio
+  - `comprobanteUrl` obligatorio (validación `.url()` en zod)
+  - Idempotencia por email: si ya existe NO crea pago adicional, retorna `yaExistia: true`
+  - Crea Pago con método, referencia y `comprobanteAt = ahora` (timestamp interno)
+  - Broadcast SSE incluye `asesorId` y nombre del curso
+- `GET /api/inscripcion/asesor/:id` — endpoint público para validar asesor y obtener nombre
+- `GET /api/inscripcion/cursos-activos` — endpoint público para selector dinámico de cursos
+- Eliminado el campo `direccion` del schema (no se pide más)
+- Eliminado mapeo `cuentaPago`, `montoDeclarado` del schema
+
+**Endpoint verificación (`api/src/routes/estudiantes.ts`):**
+- `PATCH /api/estudiantes/:id/verificar` — confirma matrícula
+- Guarda `verificadoPor` (nombre del admin) y `verificadoAt` (timestamp)
+- Audit trail incluido
+
+**Formulario Cal A (BD - 31 campos finales):**
+- Eliminados: `direccion`, `cuenta_pago`, `valor_curso`, `monto_consig` + 3 campos residuales del builder
+- Agregados al PRINCIPIO del formulario (después del header):
+  - Sección "Curso a adquirir"
+  - `curso_seleccionado` (select) con tarjeta info dinámica
+- Agregados en sección de pago:
+  - `metodo_pago` (radio con 7 opciones)
+  - `referencia_pago` (texto)
+- `comprobante` ahora marcado como **obligatorio**
+- Orden final: Header → Curso → Datos estudiante → Ubicación → Acudiente → Académico → Pago → Marketing
+
+**Frontend renderer (`/inscripcion/f/[id]`):**
+- Detección automática de asesor por URL `?asesor=ID`
+- Pantalla de bloqueo si asesor inválido (no se puede inscribir sin link válido)
+- Muestra nombre del asesor en el header del formulario
+- Selector de curso con tarjeta info dinámica:
+  - Fecha de inicio
+  - Fecha del ICFES
+  - Horas de duración
+  - Cantidad de simulacros
+- Hint dinámico debajo de `referencia_pago` según método seleccionado
+- `mapTipoDoc()` mapea opciones legibles → enum del backend ('TI', 'CC', 'CE', 'PA', 'Otro')
+- Payload actualizado: `cursoId`, `metodoPago`, `referenciaPago`, `asesorId`
+- Validación NO incluye campos ocultos por lógica condicional
+- Error específico cuando email ya existe
+
+**App — perfil estudiante (`/dashboard/estudiantes/[id]`):**
+- Nuevo componente `ConfirmarMatriculaBtn`:
+  - Estado idle: botón outlined gris
+  - Estado confirmando: Sí/No
+  - Estado verificado: badge verde + tooltip con quién/cuándo + opción desmarcar
+- Visible en header del perfil junto al botón eliminar
+
+**App — módulo Formularios (`/dashboard/formularios`):**
+- **ELIMINADO COMPLETAMENTE el constructor visual** (FormBuilder + CampoEditor)
+  - Ruta dedicada `/builder/[id]` eliminada en sesión 010
+  - Componentes inline FormBuilder y CampoEditor también eliminados ahora
+  - Empty state actualizado: "se gestionan directamente desde la BD"
+- Botones "Nuevo formulario" y "Editar" eliminados
+- Mantiene: lista, toggle activo/landing, copiar link, abrir, eliminar
+- Nuevo componente `EnlaceAsesorBtn` por cada FormCard:
+  - Botón "Generar enlace por asesor"
+  - Lista todos los asesores con link copiable `?asesor=ID`
+  - Animación slide-up al abrir
+- Nuevo botón **"Editar nombre"** (icono lápiz aparece al hover):
+  - Modal centrado con input enfocado
+  - Enter para guardar, Esc para cancelar
+  - Validación min 2 chars
+  - Toast verde de confirmación
+  - PATCH invalida queries — se actualiza en panel, formulario público y landing
+
+**App — módulo Estudiantes — cambio crítico de UX:**
+- **TODOS los usuarios** ahora ven **TODOS los estudiantes** por defecto
+- Antes: VENDEDOR solo veía sus propios estudiantes (filtro forzado)
+- Ahora: vista global compartida, asesor asignado queda como info interna
+- Nuevo toggle "Solo asignados a mí" en barra de filtros con dot pulsante azul
+- Backend: parámetro de query `?soloMios=true`
+- Razón: vendedores nuevos no veían nada al login porque ningún estudiante tenía su `asesorId`
+
+### Bugs corregidos durante la sesión
+
+1. **🔴 `tipoDocumento` enum mismatch:** el formulario enviaba "Tarjeta de Identidad" pero el backend espera `'TI'` → 400 forever. Agregado `mapTipoDoc()`.
+2. **🔴 Validación con lógica condicional:** campos ocultos requeridos hacían imposible enviar el formulario.
+3. **🟠 Comprobante:** si fallaba el upload silenciosamente, enviaba File casteado a string.
+4. **🟠 Email duplicado:** mostraba pantalla de éxito falsa en lugar del mensaje real.
+5. **🟡 Error de red en GET asesor:** mostraba "formulario no disponible" en vez de "asesor inválido".
+6. **🟡 Builder JSX residual:** `router.push('/formularios/builder/...')` apuntaba a ruta eliminada (TypeScript fail).
+7. **🟡 Lightbox PDF Cloudinary:** Cloudinary raw bloquea iframe por X-Frame-Options. Solución: proxy `/api/pdf-proxy` que descarga el PDF y lo sirve desde mismo origen.
+
+### Errores nuevos registrados en `~/.claude/CLAUDE.md`
+- `tipoDocumento` debe mapearse de texto legible a enum del backend
+- Cloudinary raw + Google Docs viewer ambos bloquean iframe → proxy propio
+- JSX con dos elementos en paralelo sin fragmento `<>` rompe el build
+
+### Estado final de la sesión 011
+- **Backend:** ✅ Migración aplicada en producción (Neon)
+- **Frontend:** ✅ TypeScript sin errores
+- **Constructor visual:** ❌ Completamente eliminado (los formularios se editan vía scripts en BD)
+- **Formulario Cal A:** ✅ 31 campos, con selector de curso, métodos de pago, asesor por URL
+- **Verificación de matrícula:** ✅ Botón funcional en perfil de estudiante con auditoría
+- **Vista de estudiantes:** ✅ Compartida + filtro opcional "soloMios"
+
+### Flujo final del formulario (post-sesión 011)
+```
+Asesor genera su link personalizado (1 sola vez)
+        ↓
+Comparte: grupo-500.vercel.app/inscripcion/f/<formId>?asesor=<asesorId>
+        ↓
+Estudiante abre → ve nombre del asesor en header
+        ↓
+Selecciona curso → ve tarjeta info dinámica
+        ↓
+Llena datos + sube comprobante obligatorio
+        ↓
+POST /inscripcion/publica → valida + crea estudiante + Pago con método/ref
+        ↓
+Notificación SSE (broadcast con asesorId + curso)
+        ↓
+Admin/Asesor revisa → presiona "Confirmar matrícula" → ✓ Verificado
+```
+
+### Pendientes para próxima sesión
+- **Imágenes instructivas por método de pago** (cuando el usuario las comparta) — agregar imagen visible debajo del select de método
+- **Separar "otros ingresos" de "anticipos"** en el módulo financiero (estaban mezclados)
+- **Notificación SSE específica al asesor** (actualmente broadcast global, todos reciben)
+- **Configurar `fechaIcfes` y `simulacros`** para los cursos existentes desde el módulo de Cursos (UI de edición)
+- **Formularios Cal B y Cal C** (mismo flujo, calendario diferente)
+- **Twilio WhatsApp real** (reemplazar stub)
+- **Exportar reportes CSV/PDF**
+- **Cambio de modelo activo:** Claude Opus 4.6 requiere usage credits — actualmente se está usando Opus 4.7 o Sonnet 4.6
+
+### Notas técnicas importantes
+- Constructor de formularios fue eliminado a petición del usuario porque los formularios se gestionan vía scripts directos en BD
+- La vista compartida de estudiantes responde a: "el asesor asignado es solo informativo, no debe limitar visibilidad"
+- Los enlaces por asesor cuentan como **un mismo formulario** (todas las respuestas suman al mismo `formId`), pero cada estudiante queda registrado con su `asesorId` específico para tracking individual
