@@ -76,7 +76,11 @@ function CustomSelect({
       }
     }
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-    const onScroll = () => setOpen(false)
+    const onScroll = (e: Event) => {
+      const dropdown = document.getElementById('custom-select-dropdown')
+      if (dropdown && dropdown.contains(e.target as Node)) return
+      setOpen(false)
+    }
     document.addEventListener('mousedown', onClick)
     document.addEventListener('keydown', onEsc)
     window.addEventListener('scroll', onScroll, true)
@@ -173,7 +177,11 @@ function CustomDate({
       }
     }
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-    const onScroll = () => setOpen(false)
+    const onScroll = (e: Event) => {
+      const dropdown = document.getElementById('custom-date-dropdown')
+      if (dropdown && dropdown.contains(e.target as Node)) return
+      setOpen(false)
+    }
     document.addEventListener('mousedown', onClick)
     document.addEventListener('keydown', onEsc)
     window.addEventListener('scroll', onScroll, true)
