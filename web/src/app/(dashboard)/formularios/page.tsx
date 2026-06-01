@@ -5,23 +5,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch, getClientToken } from '@/lib/api'
 import {
   Plus, X, Trash2, Copy, ExternalLink, Eye, EyeOff,
-  Loader2, Check, Upload, ChevronDown, ChevronUp,
-  FileText, Settings, Globe, Link2, Type, Mail, Phone,
-  Calendar, List, CheckSquare, Paperclip, Minus, Hash,
-  AlignLeft, LayoutTemplate, Pencil, Save, ArrowLeft,
+  Loader2, Check, Upload, Globe, Link2,
+  FileText, Calendar, LayoutTemplate,
 } from 'lucide-react'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
-type TipoCampo = 'texto' | 'textarea' | 'email' | 'telefono' | 'fecha' | 'select' | 'checkbox' | 'archivo' | 'seccion' | 'numero'
-
 interface Campo {
   id: string
-  tipo: TipoCampo
+  tipo: string
   label: string
-  placeholder?: string
-  descripcion?: string
   requerido: boolean
-  opciones?: string[]
 }
 
 interface Formulario {
@@ -36,25 +29,6 @@ interface Formulario {
   respuestas?: number
 }
 
-// ── Config tipos de campo ─────────────────────────────────────────────────────
-const TIPOS: { tipo: TipoCampo; label: string; icon: React.ElementType; color: string }[] = [
-  { tipo: 'texto',    label: 'Texto corto',   icon: Type,        color: 'bg-blue-100 text-blue-600' },
-  { tipo: 'textarea', label: 'Texto largo',   icon: AlignLeft,   color: 'bg-indigo-100 text-indigo-600' },
-  { tipo: 'email',    label: 'Email',         icon: Mail,        color: 'bg-violet-100 text-violet-600' },
-  { tipo: 'telefono', label: 'Teléfono',      icon: Phone,       color: 'bg-purple-100 text-purple-600' },
-  { tipo: 'fecha',    label: 'Fecha',         icon: Calendar,    color: 'bg-rose-100 text-rose-600' },
-  { tipo: 'numero',   label: 'Número',        icon: Hash,        color: 'bg-orange-100 text-orange-600' },
-  { tipo: 'select',   label: 'Selección',     icon: List,        color: 'bg-amber-100 text-amber-600' },
-  { tipo: 'checkbox', label: 'Casilla',       icon: CheckSquare, color: 'bg-emerald-100 text-emerald-600' },
-  { tipo: 'archivo',  label: 'Archivo',       icon: Paperclip,   color: 'bg-teal-100 text-teal-600' },
-  { tipo: 'seccion',  label: 'Sección',       icon: Minus,       color: 'bg-slate-100 text-slate-600' },
-]
-const getTipoConfig = (tipo: TipoCampo) => TIPOS.find(t => t.tipo === tipo) ?? TIPOS[0]
-const uid = () => Math.random().toString(36).slice(2, 10)
-
-const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10 transition-all duration-150'
-const labelCls = 'block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1'
-
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function useToast() {
   const [msg, setMsg] = useState('')
@@ -62,255 +36,10 @@ function useToast() {
   return { msg, show }
 }
 
-// ── CampoEditor ───────────────────────────────────────────────────────────────
-function CampoEditor({ campo, index, total, onChange, onDelete, onMoveUp, onMoveDown }: {
-  campo: Campo; index: number; total: number
-  onChange: (c: Campo) => void; onDelete: () => void
-  onMoveUp: () => void; onMoveDown: () => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [opcionInput, setOpcionInput] = useState('')
-  const cfg = getTipoConfig(campo.tipo)
-  const Icon = cfg.icon
-
-  return (
-    <div className={`group relative bg-surface-lowest border rounded-xl overflow-hidden
-      transition-all duration-200 ease-out
-      ${open ? 'border-primary/40 shadow-lg shadow-primary/5' : 'border-outline-variant hover:border-outline hover:shadow-sm'}`}
-      style={{ animation: 'slideIn 0.2s cubic-bezier(0.23,1,0.32,1) both' }}>
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${cfg.color.split(' ')[0]}`} />
-      <div className="flex items-center gap-3 px-4 py-3 pl-5">
-        <div className={`flex items-center justify-center w-7 h-7 rounded-lg shrink-0 ${cfg.color}`}>
-          <Icon className="w-3.5 h-3.5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-on-surface truncate">{campo.label || 'Sin nombre'}</p>
-          <p className="text-xs text-on-surface-variant">{cfg.label}{campo.requerido ? ' · Requerido' : ' · Opcional'}</p>
-        </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-          <button onClick={onMoveUp} disabled={index === 0}
-            className="p-1.5 rounded-lg hover:bg-surface-high disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-all active:scale-[0.97]">
-            <ChevronUp className="w-3.5 h-3.5 text-on-surface-variant" />
-          </button>
-          <button onClick={onMoveDown} disabled={index === total - 1}
-            className="p-1.5 rounded-lg hover:bg-surface-high disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-all active:scale-[0.97]">
-            <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant" />
-          </button>
-          <button onClick={() => setOpen(o => !o)}
-            className="p-1.5 rounded-lg hover:bg-surface-high cursor-pointer transition-all active:scale-[0.97]">
-            <Settings className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-90 text-primary' : 'text-on-surface-variant'}`} />
-          </button>
-          <button onClick={onDelete}
-            className="p-1.5 rounded-lg hover:bg-red-50 cursor-pointer transition-all active:scale-[0.97] group/del">
-            <Trash2 className="w-3.5 h-3.5 text-on-surface-variant group-hover/del:text-red-500 transition-colors" />
-          </button>
-        </div>
-      </div>
-      {open && (
-        <div className="px-5 pb-4 pt-2 border-t border-outline-variant space-y-3 bg-surface-high/30"
-          style={{ animation: 'fadeDown 0.15s ease-out both' }}>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Etiqueta *</label>
-              <input className={inputCls} value={campo.label}
-                onChange={e => onChange({ ...campo, label: e.target.value })} placeholder="Ej: Nombre completo" />
-            </div>
-            <div>
-              <label className={labelCls}>Placeholder</label>
-              <input className={inputCls} value={campo.placeholder ?? ''}
-                onChange={e => onChange({ ...campo, placeholder: e.target.value })} placeholder="Texto de ayuda..." />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Descripción</label>
-            <input className={inputCls} value={campo.descripcion ?? ''}
-              onChange={e => onChange({ ...campo, descripcion: e.target.value })} placeholder="Instrucción adicional..." />
-          </div>
-          <div className="flex items-center justify-between py-1">
-            <span className={labelCls + ' mb-0'}>Requerido</span>
-            <button onClick={() => onChange({ ...campo, requerido: !campo.requerido })}
-              className={`relative w-10 h-5 rounded-full transition-all duration-200 cursor-pointer focus:outline-none
-                ${campo.requerido ? 'bg-primary' : 'bg-outline-variant'}`}>
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200
-                ${campo.requerido ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
-          </div>
-          {campo.tipo === 'select' && (
-            <div>
-              <label className={labelCls}>Opciones</label>
-              <div className="space-y-1.5 mb-2">
-                {(campo.opciones ?? []).map((op, i) => (
-                  <div key={i} className="flex items-center gap-2" style={{ animation: 'slideIn 0.15s ease-out both' }}>
-                    <div className="flex-1 px-3 py-1.5 bg-surface-high rounded-lg text-sm text-on-surface border border-outline-variant">{op}</div>
-                    <button onClick={() => onChange({ ...campo, opciones: (campo.opciones ?? []).filter((_, j) => j !== i) })}
-                      className="p-1 rounded-lg hover:bg-red-50 cursor-pointer transition-colors active:scale-[0.97]">
-                      <X className="w-3.5 h-3.5 text-on-surface-variant hover:text-red-500 transition-colors" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input className={`${inputCls} flex-1`} value={opcionInput}
-                  onChange={e => setOpcionInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && opcionInput.trim()) {
-                      onChange({ ...campo, opciones: [...(campo.opciones ?? []), opcionInput.trim()] })
-                      setOpcionInput('')
-                    }
-                  }}
-                  placeholder="Nueva opción... (Enter para agregar)" />
-                <button onClick={() => {
-                  if (opcionInput.trim()) {
-                    onChange({ ...campo, opciones: [...(campo.opciones ?? []), opcionInput.trim()] })
-                    setOpcionInput('')
-                  }
-                }} className="px-3 py-2 rounded-lg bg-primary text-on-primary text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity active:scale-[0.97]">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Form Builder Panel ────────────────────────────────────────────────────────
-function FormBuilder({ inicial, onSave, onClose }: {
-  inicial?: Formulario | null
-  onSave: (d: { nombre: string; descripcion: string; campos: Campo[] }) => Promise<void>
-  onClose: () => void
-}) {
-  const [nombre,      setNombre]      = useState(inicial?.nombre ?? '')
-  const [descripcion, setDescripcion] = useState(inicial?.descripcion ?? '')
-  const [campos,      setCampos]      = useState<Campo[]>((inicial?.campos as Campo[]) ?? [])
-  const [saving,      setSaving]      = useState(false)
-
-  // Sincronizar cuando se abre el editor con un formulario diferente
-  useEffect(() => {
-    setNombre(inicial?.nombre ?? '')
-    setDescripcion(inicial?.descripcion ?? '')
-    setCampos((inicial?.campos as Campo[]) ?? [])
-  }, [inicial?.id])
-
-  function agregar(tipo: TipoCampo) {
-    setCampos(p => [...p, { id: uid(), tipo, label: getTipoConfig(tipo).label, requerido: false, ...(tipo === 'select' ? { opciones: [] } : {}) }])
-  }
-  function actualizar(id: string, c: Campo) { setCampos(p => p.map(x => x.id === id ? c : x)) }
-  function eliminar(id: string)             { setCampos(p => p.filter(x => x.id !== id)) }
-  function moverArriba(i: number) {
-    setCampos(p => { const a = [...p]; if (i > 0) [a[i-1], a[i]] = [a[i], a[i-1]]; return a })
-  }
-  function moverAbajo(i: number) {
-    setCampos(p => { const a = [...p]; if (i < a.length-1) [a[i], a[i+1]] = [a[i+1], a[i]]; return a })
-  }
-  async function handleSave() {
-    if (!nombre.trim()) return
-    setSaving(true)
-    try { await onSave({ nombre: nombre.trim(), descripcion: descripcion.trim(), campos }) }
-    finally { setSaving(false) }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex" style={{ animation: 'fadeIn 0.15s ease-out both' }}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative ml-auto h-full w-full max-w-4xl bg-surface-lowest shadow-2xl flex flex-col"
-        style={{ animation: 'slideInRight 0.25s cubic-bezier(0.23,1,0.32,1) both' }}>
-
-        {/* Header builder */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-outline-variant shrink-0
-          bg-gradient-to-r from-surface-lowest to-surface-high/20">
-          <button onClick={onClose}
-            className="p-2 rounded-xl hover:bg-surface-high cursor-pointer transition-all active:scale-[0.97]">
-            <ArrowLeft className="w-5 h-5 text-on-surface-variant" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <input value={nombre} onChange={e => setNombre(e.target.value)}
-              placeholder="Nombre del formulario..."
-              className="w-full bg-transparent font-bold text-lg text-on-surface focus:outline-none placeholder-on-surface-variant/40" />
-            <input value={descripcion} onChange={e => setDescripcion(e.target.value)}
-              placeholder="Descripción opcional..."
-              className="w-full bg-transparent text-sm text-on-surface-variant focus:outline-none placeholder-on-surface-variant/30 mt-0.5" />
-          </div>
-          <button onClick={handleSave} disabled={saving || !nombre.trim()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary
-              text-sm font-bold cursor-pointer hover:opacity-90 disabled:opacity-40
-              disabled:cursor-not-allowed transition-all active:scale-[0.97] shadow-lg shadow-primary/25">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {inicial ? 'Guardar' : 'Crear formulario'}
-          </button>
-        </div>
-
-        {/* Body: paleta + canvas */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Paleta */}
-          <div className="w-60 shrink-0 border-r border-outline-variant bg-surface-high/30 p-4 overflow-y-auto">
-            <p className={labelCls + ' mb-3 px-1'}>Tipos de campo</p>
-            <div className="space-y-1">
-              {TIPOS.map(({ tipo, label, icon: Icon, color }) => (
-                <button key={tipo} onClick={() => agregar(tipo)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer
-                    hover:bg-surface-lowest transition-all duration-150 active:scale-[0.97] group text-left
-                    border border-transparent hover:border-outline-variant hover:shadow-sm">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${color}
-                    group-hover:scale-110 transition-transform duration-150`}>
-                    <Icon className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-sm font-medium text-on-surface">{label}</span>
-                  <Plus className="w-3 h-3 text-on-surface-variant ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              ))}
-            </div>
-            <div className="mt-5 p-3 rounded-xl bg-primary/5 border border-primary/10">
-              <p className="text-xs text-on-surface-variant leading-relaxed">
-                Clic para agregar. Usa las flechas para reordenar campos.
-              </p>
-            </div>
-          </div>
-
-          {/* Canvas */}
-          <div className="flex-1 overflow-y-auto p-5">
-            {campos.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center"
-                style={{ animation: 'fadeIn 0.3s ease-out both' }}>
-                <div className="w-16 h-16 rounded-2xl bg-surface-high flex items-center justify-center mb-4">
-                  <LayoutTemplate className="w-8 h-8 text-on-surface-variant/30" />
-                </div>
-                <p className="font-semibold text-on-surface-variant text-sm">Formulario vacío</p>
-                <p className="text-xs text-on-surface-variant/60 mt-1">
-                  Selecciona un tipo de campo para comenzar
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2.5 max-w-2xl">
-                <div className="flex items-center justify-between mb-4">
-                  <p className={labelCls + ' mb-0'}>{campos.length} campo{campos.length !== 1 ? 's' : ''}</p>
-                  <button onClick={() => setCampos([])}
-                    className="text-xs text-red-400 hover:text-red-600 transition-colors cursor-pointer">
-                    Limpiar todo
-                  </button>
-                </div>
-                {campos.map((c, i) => (
-                  <CampoEditor key={c.id} campo={c} index={i} total={campos.length}
-                    onChange={nc => actualizar(c.id, nc)}
-                    onDelete={() => eliminar(c.id)}
-                    onMoveUp={() => moverArriba(i)}
-                    onMoveDown={() => moverAbajo(i)} />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ── Card de formulario ────────────────────────────────────────────────────────
-function FormCard({ form, index, onEdit, onDelete, onToggleActivo, onToggleLanding, onCopyLink, toggling }: {
+function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCopyLink, toggling }: {
   form: Formulario; index: number; toggling: boolean
-  onEdit: () => void; onDelete: () => void; onCopyLink: () => void
+  onDelete: () => void; onCopyLink: () => void
   onToggleActivo: () => void; onToggleLanding: () => void
 }) {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://grupo-500.vercel.app'
@@ -386,11 +115,6 @@ function FormCard({ form, index, onEdit, onDelete, onToggleActivo, onToggleLandi
 
         {/* Acciones */}
         <div className="flex items-center gap-2">
-          <button onClick={onEdit}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-outline-variant
-              text-xs font-semibold text-on-surface hover:bg-surface-high cursor-pointer transition-all active:scale-[0.97]">
-            <Pencil className="w-3.5 h-3.5" />Editar
-          </button>
           <button onClick={onToggleActivo} disabled={toggling}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl
               text-xs font-semibold cursor-pointer transition-all active:scale-[0.97] disabled:opacity-50 ${
@@ -435,10 +159,10 @@ function FormCard({ form, index, onEdit, onDelete, onToggleActivo, onToggleLandi
 
 // ── Botón generar enlace por asesor ──────────────────────────────────────────
 function EnlaceAsesorBtn({ formId }: { formId: string }) {
-  const [open, setOpen]       = useState(false)
+  const [open, setOpen]         = useState(false)
   const [asesores, setAsesores] = useState<{ id: string; nombre: string }[]>([])
-  const [loading, setLoading] = useState(false)
-  const [copiado, setCopiado] = useState<string | null>(null)
+  const [loading, setLoading]   = useState(false)
+  const [copiado, setCopiado]   = useState<string | null>(null)
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   async function cargarAsesores() {
@@ -590,7 +314,7 @@ function UploadTCSection() {
       </div>
     </div>
 
-    {/* ── Lightbox PDF ──────────────────────────────────────────────────────── */}
+    {/* Lightbox PDF */}
     {lightbox && tcUrl && (
       <div
         onClick={() => setLightbox(false)}
@@ -602,7 +326,6 @@ function UploadTCSection() {
           className="relative w-full max-w-4xl h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
           style={{ animation: 'slideInUp 0.25s cubic-bezier(0.23,1,0.32,1) both' }}
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant bg-surface-lowest shrink-0">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-amber-500" />
@@ -623,7 +346,6 @@ function UploadTCSection() {
               </button>
             </div>
           </div>
-          {/* PDF embed via Google Docs viewer (evita bloqueo X-Frame-Options de Cloudinary) */}
           <iframe
             src={`/api/pdf-proxy?url=${encodeURIComponent(tcUrl)}`}
             className="flex-1 w-full border-0"
@@ -640,7 +362,6 @@ function UploadTCSection() {
 export default function FormulariosPage() {
   const queryClient = useQueryClient()
   const { msg: toastMsg, show: showToast } = useToast()
-  const [builder,    setBuilder]    = useState<'new' | Formulario | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
 
@@ -650,14 +371,6 @@ export default function FormulariosPage() {
   })
   const formularios: Formulario[] = (data as any)?.data ?? []
 
-  const crear = useMutation({
-    mutationFn: (b: any) => apiFetch('/formularios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }),
-    onSuccess:  () => { queryClient.invalidateQueries({ queryKey: ['formularios'] }); setBuilder(null) },
-  })
-  const actualizar = useMutation({
-    mutationFn: ({ id, ...b }: any) => apiFetch(`/formularios/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }),
-    onSuccess:  () => { queryClient.invalidateQueries({ queryKey: ['formularios'] }); setBuilder(null) },
-  })
   const eliminar = useMutation({
     mutationFn: (id: string) => apiFetch(`/formularios/${id}`, { method: 'DELETE' }),
     onSuccess:  () => { queryClient.invalidateQueries({ queryKey: ['formularios'] }); setConfirmDel(null) },
@@ -669,14 +382,6 @@ export default function FormulariosPage() {
     onSettled:  () => setTogglingId(null),
   })
 
-  async function handleSave(d: { nombre: string; descripcion: string; campos: Campo[] }) {
-    if (typeof builder === 'object' && builder && (builder as Formulario).id) {
-      await actualizar.mutateAsync({ id: (builder as Formulario).id, ...d })
-    } else {
-      await crear.mutateAsync(d)
-    }
-  }
-
   function handleCopyLink(id: string) {
     const url = `${window.location.origin}/inscripcion/f/${id}`
     navigator.clipboard.writeText(url).then(() => showToast('Link copiado al portapapeles'))
@@ -685,11 +390,8 @@ export default function FormulariosPage() {
   return (
     <>
       <style>{`
-        @keyframes slideInUp    { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes slideInRight { from { opacity:0; transform:translateX(48px); } to { opacity:1; transform:translateX(0); } }
-        @keyframes slideIn      { from { opacity:0; transform:translateY(8px);  } to { opacity:1; transform:translateY(0); } }
-        @keyframes fadeIn       { from { opacity:0; } to { opacity:1; } }
-        @keyframes fadeDown     { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn    { from { opacity:0; } to { opacity:1; } }
         @media (prefers-reduced-motion: reduce) { * { animation-duration:0.01ms !important; } }
       `}</style>
 
@@ -700,16 +402,9 @@ export default function FormulariosPage() {
           <div>
             <h1 className="text-[22px] font-bold text-on-surface tracking-tight">Formularios</h1>
             <p className="text-[13px] text-on-surface-variant mt-0.5">
-              Crea y gestiona los formularios de inscripción públicos
+              Gestiona los formularios de inscripción públicos
             </p>
           </div>
-          <button onClick={() => setBuilder('new')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-on-primary
-              text-sm font-bold cursor-pointer hover:opacity-90 transition-all active:scale-[0.97]
-              shadow-lg shadow-primary/25">
-            <Plus className="w-4 h-4" />
-            Nuevo formulario
-          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
@@ -745,17 +440,10 @@ export default function FormulariosPage() {
                   <FileText className="w-9 h-9 text-on-surface-variant/30" />
                 </div>
               </div>
-              <p className="font-bold text-on-surface text-base mb-1">Sin formularios aún</p>
-              <p className="text-sm text-on-surface-variant mb-6 max-w-xs">
-                Crea tu primer formulario de inscripción con el constructor visual
+              <p className="font-bold text-on-surface text-base mb-1">Sin formularios disponibles</p>
+              <p className="text-sm text-on-surface-variant max-w-xs">
+                Los formularios se gestionan directamente desde la base de datos.
               </p>
-              <button onClick={() => setBuilder('new')}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary
-                  text-sm font-bold cursor-pointer hover:opacity-90 transition-all active:scale-[0.97]
-                  shadow-lg shadow-primary/25">
-                <Plus className="w-4 h-4" />
-                Crear primer formulario
-              </button>
             </div>
           )}
 
@@ -765,7 +453,6 @@ export default function FormulariosPage() {
               {formularios.map((form, i) => (
                 <FormCard key={form.id} form={form} index={i}
                   toggling={togglingId === form.id}
-                  onEdit={() => setBuilder(form)}
                   onDelete={() => setConfirmDel(form.id)}
                   onCopyLink={() => handleCopyLink(form.id)}
                   onToggleActivo={() => { setTogglingId(form.id); toggle.mutate({ id: form.id, field: 'activo', value: !form.activo }) }}
@@ -776,15 +463,6 @@ export default function FormulariosPage() {
           )}
         </div>
       </div>
-
-      {/* Builder panel */}
-      {builder !== null && (
-        <FormBuilder
-          inicial={typeof builder === 'object' && (builder as Formulario).id ? builder as Formulario : null}
-          onSave={handleSave}
-          onClose={() => setBuilder(null)}
-        />
-      )}
 
       {/* Confirm delete */}
       {confirmDel && (
