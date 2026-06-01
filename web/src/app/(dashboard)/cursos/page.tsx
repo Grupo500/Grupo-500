@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
@@ -160,6 +161,8 @@ function EstadoBadge({ fechaInicio, fechaFin }: { fechaInicio?: string | null; f
 
 export default function CursosPage() {
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroActivo, setFiltroActivo] = useState<'todos' | 'activos' | 'inactivos'>('activos')
@@ -246,11 +249,11 @@ export default function CursosPage() {
       <PageHeader
         title="Cursos"
         subtitle={`${cursos.length} cursos disponibles`}
-        actions={
+        actions={isAdmin ? (
           <button onClick={() => setModalCrear(true)} className="flex items-center gap-2 px-2.5 py-2.5 sm:px-4 sm:py-2 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo curso</span>
           </button>
-        }
+        ) : undefined}
       />
 
       {/* Búsqueda + filtro */}
@@ -312,6 +315,7 @@ export default function CursosPage() {
                     )}
                   </div>
                 </div>
+                {isAdmin && (
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => toggleActivoMutation.mutate({ id: c.id, activo: !c.activo })}
@@ -328,6 +332,7 @@ export default function CursosPage() {
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 </div>
+                )}
               </div>
 
               {/* Precio + badge estado */}
