@@ -491,12 +491,22 @@ export default function FormularioDinamico() {
         if (d.success) documentoUrl = d.data.url
       }
 
+      // ── Mapeo de tipos de documento legibles → códigos del backend ──────────
+      const mapTipoDoc = (s: string): 'CC' | 'TI' | 'CE' | 'PA' | 'Otro' => {
+        const txt = (s ?? '').toLowerCase()
+        if (txt.includes('tarjeta'))   return 'TI'
+        if (txt.includes('ciudadan'))  return 'CC'
+        if (txt.includes('extranj'))   return 'CE'
+        if (txt.includes('pasaporte')) return 'PA'
+        return 'Otro'
+      }
+
       // ── 2. Construir payload para POST /api/inscripcion/publica ─────────────
       const payload = {
         nombre:          v['nombre']              ?? '',
         email:           v['email']               ?? '',
         telefono:        v['telefono']            ?? '',
-        tipoDocumento:   v['tipo_doc']            ?? 'TI',
+        tipoDocumento:   mapTipoDoc(v['tipo_doc']),
         documento:       v['num_doc']             ?? '',
         fechaNacimiento: v['fecha_nac']           ?? '',
         departamento:    v['departamento']        ?? '',
@@ -506,7 +516,7 @@ export default function FormularioDinamico() {
         acudienteNombre:          v['nom_acudiente']  ?? '',
         acudienteParentesco:      v['parentesco']     ?? '',
         acudienteTelefono:        v['cel_acudiente']  ?? '',
-        acudienteTipoDocumento:   v['tip_doc_acud']   ?? 'CC',
+        acudienteTipoDocumento:   mapTipoDoc(v['tip_doc_acud']),
         acudienteNumeroDocumento: v['num_doc_acud']   ?? '',
         primerIcfes:     v['primer_icfes'] === 'Sí' || v['primer_icfes'] === true,
         puntajeAnterior: v['puntaje_ant']         ?? '',
@@ -529,6 +539,11 @@ export default function FormularioDinamico() {
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error ?? 'Error al procesar tu inscripción.')
+
+      // Si el correo ya existía, mostrar mensaje específico
+      if (data.data?.yaExistia || data.yaExistia) {
+        throw new Error(data.message ?? data.data?.message ?? 'Este correo ya está registrado. Contacta a tu asesor.')
+      }
 
       setExito(true)
     } catch (err: any) {
