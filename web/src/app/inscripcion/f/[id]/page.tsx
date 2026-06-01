@@ -196,9 +196,9 @@ const PAISES = [
 
 const FlagImg = ({ code, size = 20 }: { code: string; size?: number }) => (
   <img
-    src={`https://flagcdn.com/w${size * 2}/${code.toLowerCase()}.png`}
+    src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${code.toUpperCase()}.svg`}
     width={size}
-    height={Math.round(size * 0.75)}
+    height={Math.round(size * 0.667)}
     alt=""
     className="rounded-sm object-cover shrink-0 inline-block"
     style={{ minWidth: size, maxWidth: size }}
