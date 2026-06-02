@@ -11,8 +11,8 @@ import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { DEPARTAMENTOS_MUNICIPIOS } from '@/data/municipios'
 
-// Worker de PDF.js via CDN (evita problemas de bundling en Next.js)
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+// Worker de PDF.js servido desde el mismo origen (evita bloqueos CSP)
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
@@ -1066,11 +1066,82 @@ const METODOS_PAGO_INFO: Record<string, { hint: string }> = {
   'Otro':          { hint: 'Ingresa el número o código de tu referencia de pago.' },
 }
 
+// ── DevTools flotante (debug móvil) ───────────────────────────────────────────
+const devLogs: string[] = []
+function pushLog(msg: string) {
+  const ts = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  devLogs.unshift(`[${ts}] ${msg}`)
+  if (devLogs.length > 60) devLogs.length = 60
+}
+
+// Interceptar console.error / console.warn globalmente una sola vez
+if (typeof window !== 'undefined' && !(window as any).__devToolsPatched) {
+  ;(window as any).__devToolsPatched = true
+  const origError = console.error.bind(console)
+  const origWarn  = console.warn.bind(console)
+  console.error = (...args: any[]) => { pushLog('❌ ' + args.map(String).join(' ')); origError(...args) }
+  console.warn  = (...args: any[]) => { pushLog('⚠️ ' + args.map(String).join(' ')); origWarn(...args)  }
+  window.addEventListener('unhandledrejection', (e) => pushLog('🔴 Unhandled: ' + String(e.reason)))
+  window.addEventListener('error', (e) => pushLog('🔴 ' + e.message + (e.filename ? ` (${e.filename}:${e.lineno})` : '')))
+}
+
+function FloatingDevTools() {
+  const [open, setOpen]   = useState(false)
+  const [, forceRender]   = useState(0)
+
+  const refresh = () => forceRender(n => n + 1)
+
+  return (
+    <>
+      {/* Botón flotante */}
+      <button
+        onClick={() => { setOpen(o => !o); refresh() }}
+        className="fixed bottom-24 right-4 z-[9999] w-11 h-11 rounded-full shadow-lg
+          bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center
+          active:scale-95 transition-transform"
+        title="DevTools"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </button>
+
+      {/* Panel */}
+      {open && (
+        <div className="fixed bottom-0 left-0 right-0 z-[9998] bg-slate-900 text-green-400
+          font-mono text-[11px] flex flex-col"
+          style={{ height: '50dvh' }}
+        >
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700 shrink-0">
+            <span className="text-white font-bold text-xs">DevTools — {devLogs.length} logs</span>
+            <div className="flex gap-2">
+              <button onClick={refresh} className="text-slate-400 hover:text-white text-xs px-2 py-0.5 rounded bg-slate-700">↻</button>
+              <button onClick={() => { devLogs.length = 0; refresh() }} className="text-slate-400 hover:text-white text-xs px-2 py-0.5 rounded bg-slate-700">Limpiar</button>
+              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white text-xs px-2 py-0.5 rounded bg-slate-700">✕</button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+            {devLogs.length === 0
+              ? <p className="text-slate-500 text-xs italic">Sin logs aún. Reproduce el error y toca ↻</p>
+              : devLogs.map((log, i) => (
+                  <p key={i} className="leading-relaxed break-all whitespace-pre-wrap
+                    text-[10px] border-b border-slate-800 pb-1">{log}</p>
+                ))
+            }
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 // ── Visor PDF con react-pdf ────────────────────────────────────────────────────
 function PdfViewer({ url }: { url: string }) {
   const [numPages, setNumPages]   = useState<number | null>(null)
   const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState(false)
+  const [errorMsg, setErrorMsg]   = useState<string | null>(null)
   const containerRef              = useRef<HTMLDivElement>(null)
   const [width, setWidth]         = useState(320)
 
@@ -1084,13 +1155,16 @@ function PdfViewer({ url }: { url: string }) {
   }, [])
 
   const onLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    pushLog(`✅ PDF cargado: ${numPages} páginas`)
     setNumPages(numPages)
     setLoading(false)
   }, [])
 
-  const onLoadError = useCallback(() => {
+  const onLoadError = useCallback((err: Error) => {
+    const msg = err?.message ?? String(err)
+    pushLog(`❌ PDF error: ${msg}`)
+    setErrorMsg(msg)
     setLoading(false)
-    setError(true)
   }, [])
 
   return (
@@ -1101,10 +1175,11 @@ function PdfViewer({ url }: { url: string }) {
           Cargando documento…
         </div>
       )}
-      {error && (
+      {errorMsg && (
         <div className="flex flex-col items-center justify-center h-40 gap-3 px-6 text-center">
           <AlertCircle className="w-8 h-8 text-amber-400" />
           <p className="text-slate-600 text-sm font-medium">No se pudo cargar el documento.</p>
+          <p className="text-slate-400 text-xs break-all">{errorMsg}</p>
           <a href={url} target="_blank" rel="noopener noreferrer"
             className="text-[#1a7de0] text-sm font-semibold underline underline-offset-2">
             Abrir en nueva pestaña
