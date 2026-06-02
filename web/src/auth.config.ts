@@ -30,10 +30,12 @@ export const authConfig: NextAuthConfig = {
         token.id    = user.id ?? token.sub ?? ''
         token.role  = (user as any).role ?? 'VENDEDOR'
         token.image = user.image ?? null
+        if (user.name) token.name = user.name
       }
-      // Google OAuth: tomar foto del perfil de Google si no tenemos una
+      // Google OAuth: tomar foto y nombre del perfil de Google
       if (account?.provider === 'google' && profile) {
         token.image = (profile as any).picture ?? token.image ?? null
+        if ((profile as any).name && !token.name) token.name = (profile as any).name
       }
       return token
     },
@@ -42,6 +44,7 @@ export const authConfig: NextAuthConfig = {
         session.user.id    = token.id    as string
         session.user.role  = token.role  as 'ADMIN' | 'VENDEDOR'
         session.user.image = token.image as string | null
+        if (token.name) session.user.name = token.name as string
       }
       return session
     },

@@ -39,12 +39,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.image = (profile as any).picture ?? token.image ?? null
       }
       // Sesión activa sin imagen: leer de la DB para no forzar re-login
-      if (!token.image && token.sub) {
+      if ((!token.image || !token.name) && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where:  { id: token.sub },
-          select: { image: true },
+          select: { image: true, nombre: true },
         })
-        if (dbUser?.image) token.image = dbUser.image
+        if (dbUser?.image  && !token.image) token.image = dbUser.image
+        if (dbUser?.nombre && !token.name)  token.name  = dbUser.nombre
       }
       return token
     },
