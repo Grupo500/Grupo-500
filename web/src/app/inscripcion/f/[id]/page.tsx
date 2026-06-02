@@ -670,10 +670,11 @@ function CustomDate({
 }
 
 // ── Componentes de campo ──────────────────────────────────────────────────────
-function FieldInput({ campo, value, onChange, error, valores }: {
+function FieldInput({ campo, value, onChange, onChange2, error, valores }: {
   campo: Campo
   value: any
   onChange: (v: any) => void
+  onChange2?: (id: string, v: any) => void
   error?: string
   valores?: Record<string, any>
 }) {
@@ -826,6 +827,11 @@ function FieldInput({ campo, value, onChange, error, valores }: {
 
   // ── Selección única (radio visual) ───────────────────────────────────────────
   if (campo.tipo === 'radio') {
+    // Etiquetas personalizadas para algunas opciones
+    const etiqueta = (op: string) => {
+      if (op === 'Interbancario') return 'Interbancario (transferencia diferente a Bancolombia)'
+      return op
+    }
     return (
       <div className="space-y-2">
         {(campo.opciones ?? []).map(op => (
@@ -836,9 +842,20 @@ function FieldInput({ campo, value, onChange, error, valores }: {
               {value === op && <div className="w-2.5 h-2.5 rounded-full bg-[#21b9f7]" />}
             </div>
             <input type="radio" className="hidden" checked={value === op} onChange={() => onChange(op)} />
-            <span className="text-sm text-slate-700">{op}</span>
+            <span className="text-sm text-slate-700">{etiqueta(op)}</span>
           </label>
         ))}
+        {/* Campo extra cuando selecciona "Otro" */}
+        {value === 'Otro' && campo.id === 'metodo_pago' && (
+          <input
+            type="text"
+            placeholder="Escribe el nombre del banco u otro método..."
+            value={typeof valores?.['metodo_pago_otro'] === 'string' ? valores['metodo_pago_otro'] : ''}
+            onChange={e => onChange2?.('metodo_pago_otro', e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border-2 border-[#21b9f7] bg-[#21b9f7]/5
+              text-sm text-slate-700 placeholder-slate-400 focus:outline-none"
+          />
+        )}
       </div>
     )
   }
@@ -1337,7 +1354,9 @@ export default function FormularioDinamico() {
         primerIcfes:     v['primer_icfes'] === 'Sí' || v['primer_icfes'] === true,
         puntajeAnterior: v['puntaje_ant']         ?? '',
         cursoId:         v['curso_seleccionado']  ?? '',
-        metodoPago:      v['metodo_pago']         ?? '',
+        metodoPago:      v['metodo_pago'] === 'Otro' && v['metodo_pago_otro']
+                           ? `Otro: ${v['metodo_pago_otro']}`
+                           : (v['metodo_pago'] ?? ''),
         referenciaPago:  v['referencia_pago']     ?? '',
         comprobanteUrl,
         comprobantePublicId,
@@ -1557,6 +1576,7 @@ export default function FormularioDinamico() {
                 }}
                 error={errors[campo.id]}
                 valores={valores}
+                onChange2={(id, v) => set(id, v)}
               />
               {/* Hint dinámico para referencia de pago según método seleccionado */}
               {campo.id === 'referencia_pago' && valores['metodo_pago'] && (
