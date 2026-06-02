@@ -543,61 +543,66 @@ export default function EstudiantesPage() {
             className="w-full pl-9 pr-4 py-2 bg-surface-lowest border border-outline-variant rounded-xl text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50" />
         </div>
 
-        {/* Fila 2: todos los filtros en una sola línea con scroll horizontal en móvil */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden">
+        {/* Fila 2: todos los filtros con título, una sola línea, scroll en móvil */}
+        <div className="flex items-center gap-3 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden">
 
           {/* Matrícula */}
-          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40 flex-shrink-0">
-            {([
-              { val: 'todos',    label: 'Todos'     },
-              { val: 'activo',   label: 'Activos'   },
-              { val: 'inactivo', label: 'Inactivos' },
-            ] as const).map(({ val, label }) => (
-              <button key={val} onClick={() => setFiltroConfirm(val)}
-                className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
-                  filtroConfirm === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
-                {label}
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-[11px] text-on-surface-variant font-medium whitespace-nowrap">Matrícula:</span>
+            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
+              {([
+                { val: 'todos',    label: 'Todos'     },
+                { val: 'activo',   label: 'Activos'   },
+                { val: 'inactivo', label: 'Inactivos' },
+              ] as const).map(({ val, label }) => (
+                <button key={val} onClick={() => setFiltroConfirm(val)}
+                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
+                    filtroConfirm === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Separador */}
           <div className="w-px h-5 bg-outline-variant/40 flex-shrink-0" />
 
-          {/* Pago */}
-          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40 flex-shrink-0">
-            {(['todos', 'mora', 'pendiente', 'al-dia'] as const).map(f => (
-              <button key={f} onClick={() => setFiltroEstado(f)}
-                className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
-                  filtroEstado === f ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
-                {f === 'todos' ? 'Cobros' : f === 'mora' ? 'En mora' : f === 'pendiente' ? 'Pendiente' : 'Al día'}
-              </button>
-            ))}
+          {/* Cobros */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-[11px] text-on-surface-variant font-medium whitespace-nowrap">Cobros:</span>
+            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
+              {(['todos', 'mora', 'pendiente', 'al-dia'] as const).map(f => (
+                <button key={f} onClick={() => setFiltroEstado(f)}
+                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
+                    filtroEstado === f ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
+                  {f === 'todos' ? 'Todos' : f === 'mora' ? 'En mora' : f === 'pendiente' ? 'Pendiente' : 'Al día'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Separador */}
           <div className="w-px h-5 bg-outline-variant/40 flex-shrink-0" />
 
           {/* Tipo */}
-          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40 flex-shrink-0">
-            {([
-              { val: 'todos',   label: 'Tipo'    },
-              { val: 'nuevo',   label: 'Nuevo'   },
-              { val: 'antiguo', label: 'Antiguo' },
-            ] as const).map(({ val, label }) => (
-              <button key={val} onClick={() => setFiltroTipo(val)}
-                className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
-                  filtroTipo === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
-                {label}
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-[11px] text-on-surface-variant font-medium whitespace-nowrap">Tipo:</span>
+            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
+              {([
+                { val: 'todos',   label: 'Todos'   },
+                { val: 'nuevo',   label: 'Nuevo'   },
+                { val: 'antiguo', label: 'Antiguo' },
+              ] as const).map(({ val, label }) => (
+                <button key={val} onClick={() => setFiltroTipo(val)}
+                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
+                    filtroTipo === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Toggle Solo asignados a mí */}
-          {/* Separador */}
           <div className="w-px h-5 bg-outline-variant/40 flex-shrink-0" />
 
-          {/* Toggle Solo asignados a mí */}
+          {/* Solo míos */}
           <button
             onClick={() => { setSoloMios(s => !s); setPage(1) }}
             className={cn(
@@ -608,7 +613,7 @@ export default function EstudiantesPage() {
             )}
           >
             <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', soloMios ? 'bg-primary animate-pulse' : 'bg-on-surface-variant/40')} />
-            {soloMios ? 'Solo míos' : 'Solo míos'}
+            Solo míos
           </button>
         </div>
       </div>
