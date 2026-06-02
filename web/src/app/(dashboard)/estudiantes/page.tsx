@@ -59,6 +59,7 @@ interface Estudiante {
   cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: PagoMin[]
   financiamientos?: { montoTotal: number; estado: string; cuotas: CuotaMin[] }[]
+  verificado?: boolean
   createdAt: string
 }
 
