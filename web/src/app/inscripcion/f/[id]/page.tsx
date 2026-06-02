@@ -1515,12 +1515,38 @@ export default function FormularioDinamico() {
                 </svg>
               </button>
             </div>
-            {/* PDF — Google Docs Viewer para compatibilidad iOS/Android */}
-            <iframe
-              src={`https://docs.google.com/viewer?url=${encodeURIComponent(terminosUrl)}&embedded=true`}
-              className="flex-1 w-full border-0"
-              title="Términos y Condiciones"
-            />
+            {/* PDF — iframe en desktop, botón en móvil (iOS Safari no soporta PDF en iframe) */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <iframe
+                src={`/api/pdf-proxy?url=${encodeURIComponent(terminosUrl)}`}
+                className="flex-1 w-full border-0 hidden sm:block"
+                title="Términos y Condiciones"
+              />
+              {/* Móvil: botón para abrir en nueva pestaña */}
+              <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6 sm:hidden">
+                <div className="w-20 h-20 rounded-3xl bg-[#21b9f7]/10 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-[#1a7de0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className={`${poppins.className} text-slate-800 font-bold text-base mb-1`}>Documento adjunto</p>
+                  <p className="text-slate-500 text-sm">Toca el botón para leer los términos y condiciones completos</p>
+                </div>
+                <a
+                  href={terminosUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm text-white active:scale-[0.97] transition-all"
+                  style={{ background: color }}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                  Abrir documento
+                </a>
+              </div>
+            </div>
             {/* Footer — aceptar desde aquí */}
             <div className="px-5 py-4 border-t border-slate-100 bg-white shrink-0">
               <button
