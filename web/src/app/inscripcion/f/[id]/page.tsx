@@ -288,7 +288,12 @@ function PhoneInput({
         inputMode="tel"
         placeholder={placeholder ?? '3001234567'}
         value={numero}
-        onChange={e => setNumero(e.target.value.replace(/\D/g, ''))}
+        maxLength={dialCode === '+57' ? 10 : 15}
+        onChange={e => {
+          const val = e.target.value.replace(/\D/g, '')
+          const max = dialCode === '+57' ? 10 : 15
+          setNumero(val.slice(0, max))
+        }}
         className="flex-1 px-3 py-3 text-sm text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none"
       />
 
