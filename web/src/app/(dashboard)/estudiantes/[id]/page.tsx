@@ -1057,18 +1057,18 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
             <NumericInput value={editMonto} onChange={setEditMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
           </div>
         </div>
-        <div>
-          <label className={labelCls}>Fecha vencimiento</label>
-          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={editFechaVenc} onChange={e => setEditFechaVenc(e.target.value)} />
-        </div>
+        {pagado ? (
+          <div>
+            <label className={labelCls}>Fecha de pago</label>
+            <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={editFechaPago} onChange={e => setEditFechaPago(e.target.value)} />
+          </div>
+        ) : (
+          <div>
+            <label className={labelCls}>Fecha de vencimiento</label>
+            <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={editFechaVenc} onChange={e => setEditFechaVenc(e.target.value)} />
+          </div>
+        )}
       </div>
-
-      {pagado && (
-        <div>
-          <label className={labelCls}>Fecha de pago</label>
-          <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={editFechaPago} onChange={e => setEditFechaPago(e.target.value)} />
-        </div>
-      )}
 
       <div>
         <label className={labelCls}>Método de pago</label>
@@ -1218,14 +1218,16 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
   const precioConDescuento = precioBase - descuentoMonto
 
   const [editDescuento, setEditDescuento] = useState(false)
-  const [descuentoInput, setDescuentoInput] = useState(String(descuentoMonto))
+  const [precioFinalInput, setPrecioFinalInput] = useState(String(precioConDescuento))
   const [savingDescuento, setSavingDescuento] = useState(false)
+
+  const descuentoCalculado = Math.max(0, precioBase - Number(precioFinalInput.replace(/\./g, '') || precioConDescuento))
 
   async function guardarDescuento() {
     if (!cursoEst) return
     setSavingDescuento(true)
-    const nuevoMonto = Number(descuentoInput.replace(/\./g, ''))
-    const descPct = precioBase > 0 ? Math.min(100, (nuevoMonto / precioBase) * 100) : 0
+    const precioFinal = Number(precioFinalInput.replace(/\./g, ''))
+    const descPct = precioBase > 0 ? Math.min(100, Math.max(0, ((precioBase - precioFinal) / precioBase) * 100)) : 0
     try {
       await fetcher(`/estudiantes/${e.id}`, {
         method: 'PATCH',
@@ -1282,34 +1284,43 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
             </div>
             {!editDescuento && (
               <button
-                onClick={() => { setDescuentoInput(String(descuentoMonto)); setEditDescuento(true) }}
+                onClick={() => { setPrecioFinalInput(String(precioConDescuento)); setEditDescuento(true) }}
                 className="text-[11px] text-primary hover:underline cursor-pointer flex items-center gap-1"
               >
-                <Pencil className="w-3 h-3" />Descuento
+                <Pencil className="w-3 h-3" />Precio final
               </button>
             )}
           </div>
 
           {/* Fila de descuento */}
           {editDescuento ? (
-            <div className="flex items-center gap-2 bg-surface-high rounded-xl px-3 py-2">
-              <span className="text-[12px] text-on-surface-variant flex-1">Descuento en pesos:</span>
-              <span className="text-sm text-on-surface-variant">$</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={fmtNum(descuentoInput)}
-                onChange={e => setDescuentoInput(e.target.value.replace(/\./g, '').replace(/[^0-9]/g, ''))}
-                className="w-28 border border-outline-variant rounded-lg px-2 py-1 text-[13px] text-on-surface bg-surface-lowest focus:outline-none focus:border-primary/50 text-right"
-              />
-              <button onClick={guardarDescuento} disabled={savingDescuento}
-                className="px-3 py-1 rounded-lg bg-primary text-white text-[11px] font-semibold disabled:opacity-60 cursor-pointer">
-                {savingDescuento ? '...' : 'Guardar'}
-              </button>
-              <button onClick={() => setEditDescuento(false)}
-                className="text-[11px] text-on-surface-variant hover:text-on-surface cursor-pointer">
-                Cancelar
-              </button>
+            <div className="bg-surface-high rounded-xl px-3 py-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-on-surface-variant flex-1">Precio final:</span>
+                <span className="text-sm text-on-surface-variant">$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={fmtNum(precioFinalInput)}
+                  onChange={e => setPrecioFinalInput(e.target.value.replace(/\./g, '').replace(/[^0-9]/g, ''))}
+                  className="w-32 border border-outline-variant rounded-lg px-2 py-1 text-[13px] text-on-surface bg-surface-lowest focus:outline-none focus:border-primary/50 text-right"
+                />
+              </div>
+              {descuentoCalculado > 0 && (
+                <p className="text-[11px] text-[#16a34a]">
+                  Descuento automático: −{formatCOP(descuentoCalculado)} ({Math.round((descuentoCalculado / precioBase) * 100)}%)
+                </p>
+              )}
+              <div className="flex items-center gap-2 justify-end">
+                <button onClick={() => setEditDescuento(false)}
+                  className="text-[11px] text-on-surface-variant hover:text-on-surface cursor-pointer">
+                  Cancelar
+                </button>
+                <button onClick={guardarDescuento} disabled={savingDescuento}
+                  className="px-3 py-1 rounded-lg bg-primary text-white text-[11px] font-semibold disabled:opacity-60 cursor-pointer">
+                  {savingDescuento ? '...' : 'Guardar'}
+                </button>
+              </div>
             </div>
           ) : descuentoMonto > 0 ? (
             <div className="flex items-center justify-between bg-[#16a34a]/8 rounded-xl px-3 py-2">
@@ -1318,13 +1329,11 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
             </div>
           ) : null}
 
-          {/* Precio final */}
-          {descuentoMonto > 0 && (
-            <div className="flex items-center justify-between border-t border-outline-variant/40 pt-2">
-              <span className="text-[12px] font-semibold text-on-surface">Precio final</span>
-              <span className="text-[15px] font-bold text-on-surface tabular-nums">{formatCOP(precioConDescuento)}</span>
-            </div>
-          )}
+          {/* Precio final — siempre visible */}
+          <div className="flex items-center justify-between border-t border-outline-variant/40 pt-2">
+            <span className="text-[12px] font-semibold text-on-surface">Precio final</span>
+            <span className="text-[15px] font-bold text-on-surface tabular-nums">{formatCOP(precioConDescuento)}</span>
+          </div>
         </div>
       )}
 
