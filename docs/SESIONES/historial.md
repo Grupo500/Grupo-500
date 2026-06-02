@@ -660,9 +660,67 @@ Admin/Asesor revisa → presiona "Confirmar matrícula" → ✓ Verificado
 - **Formularios Cal B y Cal C** (mismo flujo, calendario diferente)
 - **Twilio WhatsApp real** (reemplazar stub)
 - **Exportar reportes CSV/PDF**
-- **Cambio de modelo activo:** Claude Opus 4.6 requiere usage credits — actualmente se está usando Opus 4.7 o Sonnet 4.6
 
 ### Notas técnicas importantes
 - Constructor de formularios fue eliminado a petición del usuario porque los formularios se gestionan vía scripts directos en BD
 - La vista compartida de estudiantes responde a: "el asesor asignado es solo informativo, no debe limitar visibilidad"
 - Los enlaces por asesor cuentan como **un mismo formulario** (todas las respuestas suman al mismo `formId`), pero cada estudiante queda registrado con su `asesorId` específico para tracking individual
+
+---
+
+## Sesión 012 — 2026-06-02
+
+**Objetivo:** Mejoras de UX en formulario Cal A, perfil estudiante, dashboard asesor y visor de PDF T&C en móvil.
+
+### Lo que se hizo
+
+**Formulario Cal A (`/inscripcion/f/[id]`):**
+- **CustomSelect / CustomDate con portal:** dropdowns usaban `position: fixed` + `getBoundingClientRect` pero seguían siendo atrapados por animaciones CSS que crean stacking contexts. Solución final: `createPortal(jsx, document.body)` — los dropdowns renderizan fuera del árbol DOM.
+- **Scroll interno de dropdowns:** `window.addEventListener('scroll', ..., true)` capturaba todos los eventos de scroll y cerraba los dropdowns. Fix: solo cerrar si el scroll ocurre en `document`, `documentElement` o `body`.
+- **CustomDate — selector de mes/año:** agregado estado `vista` ('dias' | 'meses' | 'años') para navegar en el calendario sin solo poder elegir el día.
+- **Opción "Otro" en selects:** cuando el valor es 'Otro', muestra input de texto libre. Se guarda como `Otro: [texto]` en el payload.
+- **PhoneInput con bandera e indicativo:** componente con 120+ países, imagen de bandera via `purecatamphetamine.github.io` (flag SVGs), default Colombia (+57), máximo 10 dígitos para +57. Layout `flex flex-row items-center`.
+- **CSP para imágenes de banderas:** `next.config.ts` — agregado `https://purecatamphetamine.github.io` y `https://flagcdn.com` a `img-src`.
+- **"Leer documento" en una sola línea:** `whitespace-nowrap` en el botón. Movido debajo del título T&C con layout `flex-col gap-1.5`.
+- **Label T&C + botón en misma fila (sm+):** `flex flex-col sm:flex-row sm:items-center sm:justify-between`.
+- **Parentesco:** reordenado — Papá primero, luego Mamá.
+- **Visor PDF T&C en móvil:** instalado `react-pdf` (v10). Worker cargado desde `/pdf.worker.min.mjs` (archivo local en `public/`) para evitar bloqueo CSP. Proxy `/api/pdf-proxy` sirve el PDF con header `Access-Control-Allow-Origin: *` para que PDF.js pueda leer el buffer. Funciona en iOS Safari, Android Chrome y desktop.
+
+**Perfil estudiante (`/dashboard/estudiantes/[id]`):**
+- **Campo `nombreGrupo`:** aparece condicionalmente cuando `agregado === 'si'`. Migración `add_nombre_grupo` aplicada en Neon.
+- **Tab Observaciones:** CRUD completo — textarea + lista, eliminar al hover (solo admin), ícono `MessageSquarePlus`. Modelo `Observacion` en Prisma + migración `add_observaciones` + 3 endpoints en API.
+- **Pagos PAGADOS:** en edición muestra "Fecha de pago" (no "Fecha de vencimiento"). Los pagos pagados nunca muestran campo de vencimiento.
+- **Precio final editable:** input toma el precio final, calcula `descuento = precioBase - precioFinal` en tiempo real.
+- **Tooltip "Verificado" con portal:** tooltip y botón "Desmarcar" ya no quedan cortados por `overflow: hidden` del contenedor — renderizado con `createPortal`.
+
+**Dashboard asesor:**
+- **ProximosCobros clickeable:** cada fila navega a `/estudiantes/:id` al hacer clic.
+- **Tarjeta "Cursos disponibles" eliminada:** removida del panel del asesor.
+- **Saludo con nombre real:** `session.user.name` (primer nombre) en vez del email. Fix en `auth.config.ts` y `auth.ts` para propagar `token.name` desde la DB/Google profile.
+
+**Módulo Cursos:**
+- **Badge "Individual":** cursos individuales muestran badge azul (igual que el amber de "Combo").
+- **Segmented control:** eliminado sliding indicator (rompía con botones de ancho desigual). Active state aplicado directamente con clases CSS.
+- **Script `fix-tipo-curso.ts`:** marca cursos con "combo"/"+" en el nombre como `TipoCurso.COMBO` en la BD.
+
+**Módulo Formularios:**
+- **Tarjeta T&C responsive:** `flex-col` en móvil (ícono+texto arriba, botón "Subir PDF" abajo ancho completo), `flex-row` en `sm+`.
+
+**Otros:**
+- **`@import` Google Fonts:** movido al inicio de `globals.css` (antes de `@tailwind`) para eliminar warning del navegador.
+
+### Errores registrados
+| # | Contexto | Error | Solución |
+|---|----------|-------|----------|
+| 013 | react-pdf + CSP | Worker cargado desde `unpkg.com` bloqueado por `script-src` | Copiar `pdf.worker.min.mjs` a `public/` y apuntar workerSrc a `/pdf.worker.min.mjs` |
+| 014 | react-pdf + Cloudinary | PDF.js no puede fetch directo a Cloudinary (CORS en raw uploads) | Usar `/api/pdf-proxy` que sirve el PDF con `Access-Control-Allow-Origin: *` |
+| 015 | CSS globals.css | `@import` después de `@tailwind` genera warning del navegador | `@import` siempre debe ir ANTES de cualquier otra regla en el CSS |
+
+### Pendientes
+- Imágenes instructivas por método de pago
+- Separar "otros ingresos" de "anticipos" en módulo financiero
+- Notificación SSE específica al asesor
+- Configurar `fechaIcfes` y `simulacros` desde UI de cursos
+- Formularios Cal B y Cal C
+- Twilio WhatsApp real
+- Exportar reportes CSV/PDF
