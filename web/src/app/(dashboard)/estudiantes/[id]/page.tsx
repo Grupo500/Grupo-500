@@ -11,7 +11,7 @@ import {
   Phone, Mail, MapPin, School, Users, CreditCard, History,
   Wallet, CheckCircle, AlertTriangle, Paperclip,
   Save, Calendar, ChevronDown, ChevronUp, MessageCircle,
-  ShieldCheck, ShieldX,
+  ShieldCheck, ShieldX, MessageSquarePlus, Trash2 as Trash,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -90,11 +90,12 @@ function NumericInput({ value, onChange, placeholder, className }: {
   )
 }
 
-type Tab = 'perfil' | 'financiero' | 'historial'
+type Tab = 'perfil' | 'financiero' | 'historial' | 'observaciones'
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: 'perfil',     label: 'Perfil',     icon: User    },
-  { key: 'financiero', label: 'Financiero', icon: Wallet  },
-  { key: 'historial',  label: 'Historial',  icon: History },
+  { key: 'perfil',         label: 'Perfil',         icon: User               },
+  { key: 'financiero',     label: 'Financiero',     icon: Wallet             },
+  { key: 'historial',      label: 'Historial',      icon: History            },
+  { key: 'observaciones',  label: 'Observaciones',  icon: MessageSquarePlus  },
 ]
 
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
@@ -1595,6 +1596,102 @@ function ConfirmarMatriculaBtn({ estudianteId, verificado, verificadoPor, verifi
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// TAB OBSERVACIONES
+// ══════════════════════════════════════════════════════════════════════════
+function TabObservaciones({ estudianteId, fetcher, isAdmin }: {
+  estudianteId: string
+  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+  isAdmin: boolean
+}) {
+  const queryClient = useQueryClient()
+  const [texto, setTexto] = useState('')
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['observaciones', estudianteId],
+    queryFn: () => fetcher<{ data: { id: string; texto: string; autor: string; createdAt: string }[] }>(`/estudiantes/${estudianteId}/observaciones`),
+  })
+
+  const crearMutation = useMutation({
+    mutationFn: () => fetcher(`/estudiantes/${estudianteId}/observaciones`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['observaciones', estudianteId] })
+      setTexto('')
+    },
+  })
+
+  const eliminarMutation = useMutation({
+    mutationFn: (obsId: string) => fetcher(`/estudiantes/${estudianteId}/observaciones/${obsId}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['observaciones', estudianteId] }),
+  })
+
+  const obs = data?.data ?? []
+
+  return (
+    <div className="space-y-4">
+      {/* Input nueva observación */}
+      <div className="bg-surface-lowest border border-outline-variant rounded-2xl p-4 space-y-3">
+        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Nueva observación</p>
+        <textarea
+          rows={3}
+          placeholder="Escribe una observación sobre este estudiante..."
+          value={texto}
+          onChange={e => setTexto(e.target.value)}
+          className="w-full bg-surface-high border border-outline-variant rounded-xl px-3 py-2.5 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 resize-none"
+        />
+        <div className="flex justify-end">
+          <button
+            onClick={() => texto.trim() && crearMutation.mutate()}
+            disabled={!texto.trim() || crearMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {crearMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquarePlus className="w-4 h-4" />}
+            Agregar
+          </button>
+        </div>
+      </div>
+
+      {/* Lista de observaciones */}
+      {isLoading ? (
+        <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-on-surface-variant" /></div>
+      ) : obs.length === 0 ? (
+        <div className="text-center py-10 text-on-surface-variant text-sm">
+          <MessageSquarePlus className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          Sin observaciones registradas
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {obs.map(o => (
+            <div key={o.id} className="bg-surface-lowest border border-outline-variant rounded-2xl p-4 group">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm text-on-surface leading-relaxed flex-1">{o.texto}</p>
+                {isAdmin && (
+                  <button
+                    onClick={() => eliminarMutation.mutate(o.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-all cursor-pointer shrink-0"
+                  >
+                    <Trash className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[11px] font-semibold text-primary">{o.autor}</span>
+                <span className="text-[11px] text-on-surface-variant">
+                  {new Date(o.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // PÁGINA PRINCIPAL
 // ══════════════════════════════════════════════════════════════════════════
 export default function EstudianteDetallePage() {
@@ -1768,6 +1865,9 @@ export default function EstudianteDetallePage() {
         )}
         {tab === 'historial' && (
           <TabHistorial estudianteId={e.id} fetcher={fetcher} />
+        )}
+        {tab === 'observaciones' && (
+          <TabObservaciones estudianteId={e.id} fetcher={fetcher} isAdmin={isAdmin} />
         )}
       </div>
 

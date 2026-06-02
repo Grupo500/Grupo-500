@@ -137,6 +137,7 @@ model Estudiante {
   financiamientos    Financiamiento[]
   fuenteContacto     FuenteContacto?
   historial          HistorialEstudiante[]
+  observaciones      Observacion[]
   pagos              Pago[]
   simulacros         SimulacroEstudiante[]
 }
@@ -150,6 +151,16 @@ model HistorialEstudiante {
   realizadoPor String
   userId       String
   createdAt    DateTime   @default(now())
+  estudiante   Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+}
+
+model Observacion {
+  id           String     @id @default(cuid())
+  estudianteId String
+  texto        String
+  autor        String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   estudiante   Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
 }
 
