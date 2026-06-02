@@ -39,8 +39,9 @@ export async function dashboard(req: Request, res: Response) {
   ] = await Promise.all([
     prisma.estudiante.count({ where: filtroAsesor ? { asesorId: filtroAsesor } : {} }),
     prisma.estudiante.count({ where: { createdAt: { gte: inicioMes }, ...(filtroAsesor && { asesorId: filtroAsesor }) } }),
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', createdAt: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoy }, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
+    // Mora = estado VENCIDO OR estado PENDIENTE con fechaVencimiento ya pasada
+    prisma.pago.aggregate({ where: { estado: { in: ['VENCIDO', 'PENDIENTE'] }, fechaVencimiento: { lt: hoy }, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
     prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
     prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoy > inicioPeriodo ? hoy : inicioPeriodo }, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),
     prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt: hoy, gte: inicioPeriodo }, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),

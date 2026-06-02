@@ -123,10 +123,12 @@ export function SaldosPendientes() {
             return (
               <div key={e.estudianteId}
                 onClick={() => router.push(`/estudiantes/${e.estudianteId}`)}
+                onMouseEnter={e2 => { if (tienesMora) (e2.currentTarget as HTMLDivElement).style.backgroundColor = 'rgba(220,38,38,0.1)' }}
+                onMouseLeave={e2 => { if (tienesMora) (e2.currentTarget as HTMLDivElement).style.backgroundColor = 'rgba(220,38,38,0.04)' }}
+                style={tienesMora ? { backgroundColor: 'rgba(220,38,38,0.04)' } : undefined}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors group cursor-pointer',
-                  'hover:bg-surface-high',
-                  tienesMora && 'bg-[#dc2626]/4 hover:bg-[#dc2626]/8',
+                  !tienesMora && 'hover:bg-surface-high',
                 )}>
                 {/* Avatar */}
                 <div className={cn(
