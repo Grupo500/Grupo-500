@@ -1515,9 +1515,9 @@ export default function FormularioDinamico() {
                 </svg>
               </button>
             </div>
-            {/* PDF */}
+            {/* PDF — Google Docs Viewer para compatibilidad iOS/Android */}
             <iframe
-              src={`/api/pdf-proxy?url=${encodeURIComponent(terminosUrl)}`}
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(terminosUrl)}&embedded=true`}
               className="flex-1 w-full border-0"
               title="Términos y Condiciones"
             />
