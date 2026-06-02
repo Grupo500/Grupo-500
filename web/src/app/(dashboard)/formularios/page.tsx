@@ -286,36 +286,40 @@ function UploadTCSection() {
     <div className="bg-surface-lowest border border-outline-variant rounded-2xl p-5
       transition-all duration-200 hover:border-amber-300/50 hover:shadow-sm"
       style={{ animation: 'slideInUp 0.3s cubic-bezier(0.23,1,0.32,1) 0.1s both' }}>
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-400
-          flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
-          <FileText className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-on-surface text-sm">Términos y Condiciones</p>
-          <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">
-            PDF oficial que los estudiantes deben aceptar. Aplica a todos los formularios.
-          </p>
-          {tcUrl && (
-            <button onClick={() => setLightbox(true)}
-              className="inline-flex items-center gap-1 mt-2 text-xs text-amber-600 hover:text-amber-700 font-semibold hover:underline transition-colors cursor-pointer">
-              <ExternalLink className="w-3 h-3" />
-              Ver documento actual
-            </button>
-          )}
-          {msg && (
-            <p className={`text-xs mt-1.5 font-medium ${msg.startsWith('Error') ? 'text-red-500' : 'text-emerald-600'}`}>
-              {msg}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        {/* Ícono + info */}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-400
+            flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
+            <FileText className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-on-surface text-sm">Términos y Condiciones</p>
+            <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+              PDF oficial que los estudiantes deben aceptar. Aplica a todos los formularios.
             </p>
-          )}
+            {tcUrl && (
+              <button onClick={() => setLightbox(true)}
+                className="inline-flex items-center gap-1 mt-2 text-xs text-amber-600 hover:text-amber-700 font-semibold hover:underline transition-colors cursor-pointer">
+                <ExternalLink className="w-3 h-3" />
+                Ver documento actual
+              </button>
+            )}
+            {msg && (
+              <p className={`text-xs mt-1.5 font-medium ${msg.startsWith('Error') ? 'text-red-500' : 'text-emerald-600'}`}>
+                {msg}
+              </p>
+            )}
+          </div>
         </div>
+        {/* Botón subir */}
         <input ref={inputRef} type="file" accept=".pdf" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = '' }} />
         <button onClick={() => inputRef.current?.click()} disabled={uploading}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold
             text-white cursor-pointer transition-all active:scale-[0.97] disabled:opacity-50 shrink-0
             bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600
-            shadow-md shadow-amber-200">
+            shadow-md shadow-amber-200 w-full sm:w-auto">
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
           {uploading ? 'Subiendo...' : 'Subir PDF'}
         </button>
