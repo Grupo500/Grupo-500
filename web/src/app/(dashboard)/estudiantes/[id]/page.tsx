@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
@@ -1531,6 +1532,63 @@ function TabHistorial({ estudianteId, fetcher }: {
   )
 }
 
+// ── Tooltip Verificado con portal ────────────────────────────────────────────
+function VerificadoBtn({ verificadoPor, verificadoAt, onDesmarcar, loading }: {
+  verificadoPor?: string | null
+  verificadoAt?: string | null
+  onDesmarcar: () => void
+  loading: boolean
+}) {
+  const [hover, setHover] = useState(false)
+  const [rect, setRect]   = useState<DOMRect | null>(null)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const handleMouseEnter = () => {
+    if (ref.current) setRect(ref.current.getBoundingClientRect())
+    setHover(true)
+  }
+
+  return (
+    <div ref={ref} onMouseEnter={handleMouseEnter} onMouseLeave={() => setHover(false)} className="relative">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold cursor-default select-none">
+        <ShieldCheck className="w-4 h-4" />
+        <span>Verificado</span>
+      </div>
+      {hover && rect && typeof document !== 'undefined' && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: rect.top - 8,
+            left: rect.left + rect.width / 2,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 9999,
+          }}
+          className="w-48 bg-slate-800 text-white text-xs rounded-xl px-3 py-2.5 shadow-xl text-center pointer-events-auto"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+        >
+          {verificadoPor && <p className="font-semibold">{verificadoPor}</p>}
+          {verificadoAt && (
+            <p className="text-slate-400 mt-0.5">
+              {new Date(verificadoAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+          <button
+            onClick={onDesmarcar}
+            disabled={loading}
+            className="mt-2 text-red-400 hover:text-red-300 text-xs cursor-pointer disabled:opacity-60"
+          >
+            {loading ? 'Guardando...' : 'Desmarcar verificación'}
+          </button>
+          {/* Flecha hacia abajo */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0" style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '6px solid #1e293b' }} />
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
+
 // ── Botón Confirmar matrícula ──────────────────────────────────────────────────
 function ConfirmarMatriculaBtn({ estudianteId, verificado, verificadoPor, verificadoAt }: {
   estudianteId: string
@@ -1560,22 +1618,7 @@ function ConfirmarMatriculaBtn({ estudianteId, verificado, verificadoPor, verifi
   })
 
   if (verificado) {
-    return (
-      <div className="relative group">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold cursor-default">
-          <ShieldCheck className="w-4 h-4" />
-          <span>Verificado</span>
-        </div>
-        {/* Tooltip con info */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-800 text-white text-xs rounded-xl px-3 py-2.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-xl text-center">
-          {verificadoPor && <p className="font-semibold">{verificadoPor}</p>}
-          {verificadoAt && <p className="text-slate-400 mt-0.5">{new Date(verificadoAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
-          <button onClick={() => mutation.mutate(false)} className="mt-2 text-red-400 hover:text-red-300 text-xs cursor-pointer">
-            Desmarcar verificación
-          </button>
-        </div>
-      </div>
-    )
+    return <VerificadoBtn verificadoPor={verificadoPor} verificadoAt={verificadoAt} onDesmarcar={() => mutation.mutate(false)} loading={mutation.isPending} />
   }
 
   if (confirm) {
