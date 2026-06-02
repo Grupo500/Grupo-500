@@ -1548,6 +1548,10 @@ function VerificadoBtn({ verificadoPor, verificadoAt, onDesmarcar, loading }: {
     setHover(true)
   }
 
+  // Decidir si el tooltip va arriba o abajo según espacio disponible
+  const TOOLTIP_H = 130 // altura estimada del tooltip en px
+  const showBelow = rect ? rect.top < TOOLTIP_H + 16 : false
+
   return (
     <div ref={ref} onMouseEnter={handleMouseEnter} onMouseLeave={() => setHover(false)} className="relative">
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold cursor-default select-none">
@@ -1558,15 +1562,20 @@ function VerificadoBtn({ verificadoPor, verificadoAt, onDesmarcar, loading }: {
         <div
           style={{
             position: 'fixed',
-            top: rect.top - 8,
+            top:  showBelow ? rect.bottom + 8 : rect.top - 8,
             left: rect.left + rect.width / 2,
-            transform: 'translate(-50%, -100%)',
+            transform: showBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
             zIndex: 9999,
           }}
           className="w-48 bg-slate-800 text-white text-xs rounded-xl px-3 py-2.5 shadow-xl text-center pointer-events-auto"
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
         >
+          {/* Flecha — arriba del tooltip si va abajo, abajo del tooltip si va arriba */}
+          {showBelow
+            ? <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0 h-0" style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderBottom: '6px solid #1e293b' }} />
+            : <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0"    style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop:    '6px solid #1e293b' }} />
+          }
           {verificadoPor && <p className="font-semibold">{verificadoPor}</p>}
           {verificadoAt && (
             <p className="text-slate-400 mt-0.5">
@@ -1580,8 +1589,6 @@ function VerificadoBtn({ verificadoPor, verificadoAt, onDesmarcar, loading }: {
           >
             {loading ? 'Guardando...' : 'Desmarcar verificación'}
           </button>
-          {/* Flecha hacia abajo */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0" style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '6px solid #1e293b' }} />
         </div>,
         document.body
       )}
