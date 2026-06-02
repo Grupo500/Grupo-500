@@ -1426,12 +1426,12 @@ export default function FormularioDinamico() {
           {/* T&C */}
           <div className={`rounded-2xl border-2 p-4 space-y-3 transition-all duration-200
             ${valores['__terminos'] ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-1.5">
               <p className="text-sm font-bold text-slate-700">Términos y condiciones <span className="text-red-400">*</span></p>
               <button
                 type="button"
                 onClick={() => setTcOpen(true)}
-                className="flex items-center gap-1 text-xs font-semibold text-[#1a7de0] hover:text-[#21b9f7]
+                className="self-start flex items-center gap-1 text-xs font-semibold text-[#1a7de0] hover:text-[#21b9f7]
                   bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] cursor-pointer whitespace-nowrap"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
