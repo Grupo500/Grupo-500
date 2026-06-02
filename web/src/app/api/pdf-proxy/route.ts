@@ -33,10 +33,10 @@ export async function GET(request: NextRequest) {
 
     return new NextResponse(buffer, {
       headers: {
-        'Content-Type':        'application/pdf',
-        'Content-Disposition': 'inline',
-        'Cache-Control':       'public, max-age=3600',
-        // Sin X-Frame-Options → permite el iframe desde el mismo origen
+        'Content-Type':                'application/pdf',
+        'Content-Disposition':         'inline',
+        'Cache-Control':               'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',   // necesario para PDF.js (react-pdf)
       },
     })
   } catch {

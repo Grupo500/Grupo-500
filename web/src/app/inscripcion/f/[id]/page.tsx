@@ -1589,7 +1589,7 @@ export default function FormularioDinamico() {
               </button>
             </div>
             {/* PDF — react-pdf: renderiza como canvas, funciona en iOS Safari, Android y desktop */}
-            <PdfViewer url={terminosUrl} />
+            <PdfViewer url={`/api/pdf-proxy?url=${encodeURIComponent(terminosUrl)}`} />
             {/* Footer — aceptar desde aquí */}
             <div className="px-5 py-4 border-t border-slate-100 bg-white shrink-0">
               <button
