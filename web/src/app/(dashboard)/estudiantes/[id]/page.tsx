@@ -51,6 +51,7 @@ interface EstudianteDetalle {
   asesor?: { id: string; nombre: string }
   lineaAutorizada?: number | null
   agregado?: boolean
+  nombreGrupo?: string | null
   verificado?: boolean
   verificadoPor?: string | null
   verificadoAt?: string | null
@@ -517,6 +518,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
     colegioId: e.colegio?.id ?? '', asesorId: e.asesor?.id ?? '',
     lineaAutorizada: e.lineaAutorizada ? String(e.lineaAutorizada) : '',
     agregado: e.agregado ? 'si' : 'no',
+    nombreGrupo: e.nombreGrupo ?? '',
     cursoId: cursoActivo?.cursoId ?? '',
     acudienteNombre: e.acudiente?.nombre ?? '', acudienteEmail: e.acudiente?.email ?? '',
     acudienteTelefono: e.acudiente?.telefono ?? '', acudienteRelacion: e.acudiente?.relacion ?? 'Padre',
@@ -544,6 +546,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           departamento: form.departamento || null, ciudad: form.ciudad || null,
           colegioId: form.colegioId || null,
           agregado: form.agregado === 'si',
+          nombreGrupo: form.agregado === 'si' ? (form.nombreGrupo.trim() || null) : null,
           ...(isAdmin && {
             asesorId: form.asesorId || null,
             cursoId: form.cursoId || null,
@@ -580,7 +583,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             { icon: Calendar,   label: 'Nacimiento', value: e.fechaNacimiento ? fmtFecha(e.fechaNacimiento) : '—' },
             { icon: Users,      label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
             ...(isAdmin ? [{ icon: Phone, label: 'Línea autorizada', value: e.lineaAutorizada ? `Línea ${e.lineaAutorizada}` : '—' }] : []),
-            { icon: MessageCircle, label: 'Agregado', value: e.agregado ? 'Sí' : 'No' },
+            { icon: MessageCircle, label: 'Agregado', value: e.agregado ? `Sí${e.nombreGrupo ? ` — ${e.nombreGrupo}` : ''}` : 'No' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
               <Icon className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" />
@@ -724,6 +727,12 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
                 <option value="si">Sí</option>
               </select>
             </div>
+            {form.agregado === 'si' && (
+              <div>
+                <label className={labelCls}>Nombre del grupo</label>
+                <input className={inputCls} placeholder="Ej: Grupo WhatsApp A" value={form.nombreGrupo} onChange={e => f('nombreGrupo')(e.target.value)} />
+              </div>
+            )}
             <div>
               <label className={labelCls}>Curso</label>
               <select className={inputCls} value={form.cursoId} onChange={e => f('cursoId')(e.target.value)}>

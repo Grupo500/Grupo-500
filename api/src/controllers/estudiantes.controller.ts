@@ -224,6 +224,7 @@ const actualizarSchema = z.object({
   descuentoPorcentaje: z.number().min(0).max(101).optional(), // 101 para tolerar fp
   lineaAutorizada:     z.number().int().min(1).max(6).nullable().optional(),
   agregado:            z.boolean().optional(),
+  nombreGrupo:         z.string().optional().nullable(),
   // Acudiente (opcional, se actualiza si se envían los campos)
   acudiente: z.object({
     nombre:   z.string().min(2),
@@ -254,7 +255,8 @@ export async function actualizar(req: Request, res: Response) {
       // Solo ADMIN puede reasignar el asesor de un estudiante
       ...(isAdmin && data.asesorId !== undefined && { asesorId: data.asesorId }),
       ...(isAdmin && data.lineaAutorizada !== undefined && { lineaAutorizada: data.lineaAutorizada }),
-      ...(data.agregado !== undefined && { agregado: data.agregado }),
+      ...(data.agregado    !== undefined && { agregado:    data.agregado }),
+      ...(data.nombreGrupo !== undefined && { nombreGrupo: data.nombreGrupo }),
     },
     include: { colegio: true, acudiente: true, asesor: true, cursos: { include: { curso: true } } },
   })

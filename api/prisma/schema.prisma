@@ -123,6 +123,7 @@ model Estudiante {
   universidadInteres String?
   lineaAutorizada    Int?
   agregado           Boolean               @default(false)
+  nombreGrupo        String?
   documentoUrl       String?
   direccion          String?
   verificado         Boolean               @default(false)
