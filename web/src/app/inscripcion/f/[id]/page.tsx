@@ -1,12 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Poppins } from 'next/font/google'
-import { ChevronLeft, ChevronDown, ChevronRight, Loader2, Check, Upload, ArrowLeft, AlertCircle, Calendar, Clock, BookOpen, Target } from 'lucide-react'
+import { ChevronLeft, ChevronDown, ChevronRight, Loader2, Check, Upload, ArrowLeft, AlertCircle, Calendar, Clock, BookOpen, Target, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
+import { Document, Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css'
+import 'react-pdf/dist/Page/TextLayer.css'
 import { DEPARTAMENTOS_MUNICIPIOS } from '@/data/municipios'
+
+// Worker de PDF.js via CDN (evita problemas de bundling en Next.js)
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
@@ -1060,6 +1066,73 @@ const METODOS_PAGO_INFO: Record<string, { hint: string }> = {
   'Otro':          { hint: 'Ingresa el número o código de tu referencia de pago.' },
 }
 
+// ── Visor PDF con react-pdf ────────────────────────────────────────────────────
+function PdfViewer({ url }: { url: string }) {
+  const [numPages, setNumPages]   = useState<number | null>(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState(false)
+  const containerRef              = useRef<HTMLDivElement>(null)
+  const [width, setWidth]         = useState(320)
+
+  // Ajustar ancho al contenedor
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width))
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  const onLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    setNumPages(numPages)
+    setLoading(false)
+  }, [])
+
+  const onLoadError = useCallback(() => {
+    setLoading(false)
+    setError(true)
+  }, [])
+
+  return (
+    <div ref={containerRef} className="flex-1 overflow-y-auto bg-slate-100">
+      {loading && (
+        <div className="flex items-center justify-center h-40 gap-2 text-slate-400 text-sm">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Cargando documento…
+        </div>
+      )}
+      {error && (
+        <div className="flex flex-col items-center justify-center h-40 gap-3 px-6 text-center">
+          <AlertCircle className="w-8 h-8 text-amber-400" />
+          <p className="text-slate-600 text-sm font-medium">No se pudo cargar el documento.</p>
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="text-[#1a7de0] text-sm font-semibold underline underline-offset-2">
+            Abrir en nueva pestaña
+          </a>
+        </div>
+      )}
+      <Document
+        file={url}
+        onLoadSuccess={onLoadSuccess}
+        onLoadError={onLoadError}
+        loading={null}
+        className="flex flex-col items-center gap-2 py-3"
+      >
+        {numPages && Array.from({ length: numPages }, (_, i) => (
+          <Page
+            key={i + 1}
+            pageNumber={i + 1}
+            width={width > 0 ? width - 16 : 300}
+            renderTextLayer={false}
+            renderAnnotationLayer={false}
+            className="shadow-md"
+          />
+        ))}
+      </Document>
+    </div>
+  )
+}
+
 export default function FormularioDinamico() {
   const { id }       = useParams<{ id: string }>()
   const router       = useRouter()
@@ -1515,14 +1588,8 @@ export default function FormularioDinamico() {
                 </svg>
               </button>
             </div>
-            {/* PDF — Google Docs Viewer: funciona en iOS Safari, Android y desktop sin abrir nueva pestaña */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <iframe
-                src={`https://docs.google.com/gview?url=${encodeURIComponent(terminosUrl)}&embedded=true`}
-                className="flex-1 w-full border-0"
-                title="Términos y Condiciones"
-              />
-            </div>
+            {/* PDF — react-pdf: renderiza como canvas, funciona en iOS Safari, Android y desktop */}
+            <PdfViewer url={terminosUrl} />
             {/* Footer — aceptar desde aquí */}
             <div className="px-5 py-4 border-t border-slate-100 bg-white shrink-0">
               <button
