@@ -127,14 +127,6 @@ export function AsesorDashboard() {
           variant={cobranza.vencida.cantidad > 0 ? 'warning' : 'default'}
           isLoading={isLoading}
         />
-        <KpiCard
-          title="Cursos disponibles"
-          value={cursosActivos.toString()}
-          subtitle="Cursos activos en plataforma"
-          icon="BookOpen"
-          variant="success"
-          isLoading={isLoading}
-        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
