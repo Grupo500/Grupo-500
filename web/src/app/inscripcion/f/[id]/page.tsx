@@ -829,7 +829,7 @@ function FieldInput({ campo, value, onChange, onChange2, error, valores }: {
   if (campo.tipo === 'radio') {
     // Etiquetas personalizadas para algunas opciones
     const etiqueta = (op: string) => {
-      if (op === 'Interbancario') return 'Interbancario (transferencia diferente a Bancolombia)'
+      if (op === 'Interbancario') return 'Interbancario (Transferencia diferente a Bancolombia)'
       return op
     }
     return (
