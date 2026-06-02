@@ -9,7 +9,7 @@ import { formatDate, cn } from '@/lib/utils'
 import {
   School, Plus, X, Loader2, MapPin, Users,
   Handshake, User, Calendar, ChevronRight, Search,
-  Eye, Mail, Phone, FileText, Download, MessageCircle, Send,
+  Eye, Mail, Phone, FileText, Download, MessageCircle, Send, Trash2,
 } from 'lucide-react'
 
 // ── Interfaces ─────────────────────────────────────────────────────────────
@@ -762,11 +762,21 @@ export default function ColegiosPage() {
     }),
     onSuccess: (res: any) => {
       queryClient.invalidateQueries({ queryKey: ['colegios'] })
-      // Actualizar colegioDetalle si es el mismo que se editó
       if (colegioDetalle?.id === modalEditarColegio?.id) setColegioDetalle(res?.data ?? null)
       setModalEditarColegio(null)
     },
     onError: (e: any) => alert(e?.message ?? 'Error al guardar'),
+  })
+
+  const [confirmEliminar, setConfirmEliminar] = useState<string | null>(null) // id del colegio a eliminar
+
+  const eliminarColegioMutation = useMutation({
+    mutationFn: (id: string) => fetcher(`/colegios/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['colegios'] })
+      setConfirmEliminar(null)
+    },
+    onError: (e: any) => { alert(e?.message ?? 'Error al eliminar'); setConfirmEliminar(null) },
   })
 
   const abrirEditarColegio = (c: Colegio) => {
@@ -1053,6 +1063,32 @@ export default function ColegiosPage() {
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </button>
+                    {/* Eliminar con confirmación inline */}
+                    {confirmEliminar === c.id ? (
+                      <div className="flex items-center gap-1 ml-1">
+                        <button
+                          onClick={() => eliminarColegioMutation.mutate(c.id)}
+                          disabled={eliminarColegioMutation.isPending}
+                          className="px-2 py-1 rounded-lg bg-red-500 text-white text-[10px] font-bold hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-60"
+                        >
+                          {eliminarColegioMutation.isPending ? '...' : 'Sí'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmEliminar(null)}
+                          className="px-2 py-1 rounded-lg bg-surface-high text-on-surface-variant text-[10px] font-bold hover:bg-outline-variant/40 transition-colors cursor-pointer"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmEliminar(c.id)}
+                        title="Eliminar colegio"
+                        className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
