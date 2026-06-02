@@ -1541,9 +1541,14 @@ function VerificadoBtn({ verificadoPor, verificadoAt, onDesmarcar, loading }: {
 }) {
   const [hover, setHover] = useState(false)
   const [rect, setRect]   = useState<DOMRect | null>(null)
-  const ref = useRef<HTMLDivElement>(null)
+  const ref       = useRef<HTMLDivElement>(null)
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const cancelLeave = () => { if (leaveTimer.current) clearTimeout(leaveTimer.current) }
+  const scheduleLeave = () => { leaveTimer.current = setTimeout(() => setHover(false), 120) }
 
   const handleMouseEnter = () => {
+    cancelLeave()
     if (ref.current) setRect(ref.current.getBoundingClientRect())
     setHover(true)
   }
@@ -1553,7 +1558,7 @@ function VerificadoBtn({ verificadoPor, verificadoAt, onDesmarcar, loading }: {
   const showBelow = rect ? rect.top < TOOLTIP_H + 16 : false
 
   return (
-    <div ref={ref} onMouseEnter={handleMouseEnter} onMouseLeave={() => setHover(false)} className="relative">
+    <div ref={ref} onMouseEnter={handleMouseEnter} onMouseLeave={scheduleLeave} className="relative">
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold cursor-default select-none">
         <ShieldCheck className="w-4 h-4" />
         <span>Verificado</span>
@@ -1568,8 +1573,8 @@ function VerificadoBtn({ verificadoPor, verificadoAt, onDesmarcar, loading }: {
             zIndex: 9999,
           }}
           className="w-48 bg-slate-800 text-white text-xs rounded-xl px-3 py-2.5 shadow-xl text-center pointer-events-auto"
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
+          onMouseEnter={cancelLeave}
+          onMouseLeave={scheduleLeave}
         >
           {/* Flecha — arriba del tooltip si va abajo, abajo del tooltip si va arriba */}
           {showBelow
