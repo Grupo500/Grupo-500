@@ -225,9 +225,10 @@ export default function EstudiantesPage() {
   const [page, setPage] = useState(1)
   const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
-  const [filtroEstado, setFiltroEstado] = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
-  const [filtroTipo,   setFiltroTipo]   = useState<'todos' | 'nuevo' | 'antiguo'>('todos')
-  const [soloMios,     setSoloMios]     = useState(false)
+  const [filtroEstado,   setFiltroEstado]   = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
+  const [filtroTipo,     setFiltroTipo]     = useState<'todos' | 'nuevo' | 'antiguo'>('todos')
+  const [filtroConfirm,  setFiltroConfirm]  = useState<'todos' | 'activo' | 'inactivo'>('todos')
+  const [soloMios,       setSoloMios]       = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => { setBusqueda(busquedaInput); setPage(1) }, 200)
@@ -479,7 +480,8 @@ export default function EstudiantesPage() {
 
   // Filtros cliente
   const estudiantesFiltrados = estudiantes
-    .filter(e => filtroEstado === 'todos' || calcFinanciero(e).estado === filtroEstado)
+    .filter(e => filtroEstado  === 'todos' || calcFinanciero(e).estado === filtroEstado)
+    .filter(e => filtroConfirm === 'todos' || (filtroConfirm === 'activo' ? e.verificado : !e.verificado))
     .filter(e => {
       if (filtroTipo === 'nuevo')   return (e.cursos?.length ?? 0) <= 1
       if (filtroTipo === 'antiguo') return (e.cursos?.length ?? 0) > 1
@@ -546,6 +548,24 @@ export default function EstudiantesPage() {
                 className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer',
                   filtroEstado === f ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
                 {f === 'todos' ? 'Todos' : f === 'mora' ? 'En mora' : f === 'pendiente' ? 'Pendiente' : 'Al día'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Filtro confirmación: activo / inactivo */}
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-on-surface-variant font-medium">Estado:</span>
+          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
+            {([
+              { val: 'todos',    label: 'Todos'    },
+              { val: 'activo',   label: 'Activos'  },
+              { val: 'inactivo', label: 'Inactivos'},
+            ] as const).map(({ val, label }) => (
+              <button key={val} onClick={() => setFiltroConfirm(val)}
+                className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer',
+                  filtroConfirm === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
+                {label}
               </button>
             ))}
           </div>
