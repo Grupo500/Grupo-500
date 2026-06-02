@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { formatCOP, formatRelative } from '@/lib/utils'
 import { CalendarClock, ChevronRight } from 'lucide-react'
@@ -12,6 +13,7 @@ interface CuotaProxima {
   fechaVencimiento: string
   financiamiento: {
     estudiante: {
+      id: string
       nombre: string
       acudiente?: { nombre: string } | null
     }
@@ -41,6 +43,7 @@ const DIAS_LABEL: Record<Periodo, { dias: number; label: string }> = {
 
 export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { dias, label } = DIAS_LABEL[periodo]
+  const router = useRouter()
 
   const { data, isLoading } = useQuery({
     queryKey: ['cobros-proximos', periodo],
@@ -77,10 +80,12 @@ export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
         ) : (
           cobros.slice(0, 6).map((c) => {
             const nombre   = c.financiamiento.estudiante.nombre
+            const estId    = c.financiamiento.estudiante.id
             const isUrgent = new Date(c.fechaVencimiento).getTime() - Date.now() < 2 * 86400000
             return (
               <div
                 key={c.id}
+                onClick={() => router.push(`/estudiantes/${estId}`)}
                 className={cn(
                   'flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors',
                   'hover:bg-[var(--surface-high)] group cursor-pointer',
