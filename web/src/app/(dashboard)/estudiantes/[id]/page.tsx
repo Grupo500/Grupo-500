@@ -95,8 +95,8 @@ type Tab = 'perfil' | 'financiero' | 'historial' | 'observaciones'
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: 'perfil',         label: 'Perfil',         icon: User               },
   { key: 'financiero',     label: 'Financiero',     icon: Wallet             },
-  { key: 'historial',      label: 'Historial',      icon: History            },
   { key: 'observaciones',  label: 'Observaciones',  icon: MessageSquarePlus  },
+  { key: 'historial',      label: 'Historial',      icon: History            },
 ]
 
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
