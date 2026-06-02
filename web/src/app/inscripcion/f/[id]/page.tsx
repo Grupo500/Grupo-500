@@ -1574,7 +1574,7 @@ export default function FormularioDinamico() {
           {/* T&C */}
           <div className={`rounded-2xl border-2 p-4 space-y-3 transition-all duration-200
             ${valores['__terminos'] ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
               <p className="text-sm font-bold text-slate-700">Términos y condiciones <span className="text-red-400">*</span></p>
               <button
                 type="button"
