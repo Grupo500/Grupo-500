@@ -46,6 +46,7 @@ const NAME_MAP: Record<string, string> = {
 
 export function ColombiaMap({ departamentos, totalDep }: Props) {
   const [tooltip, setTooltip] = useState<{ nombre: string; cantidad: number; porcentaje: number } | null>(null)
+  const [hoveredRaw, setHoveredRaw] = useState<string | null>(null)
 
   const maxCantidad = Math.max(...departamentos.map(d => d.cantidad), 1)
   const dataMap = Object.fromEntries(departamentos.map(d => [d.nombre, d]))
@@ -56,11 +57,6 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
     if (!d || d.cantidad === 0) return '#dce8f5'
     const ratio = d.cantidad / maxCantidad
     return `rgba(32, 148, 255, ${0.2 + ratio * 0.75})`
-  }
-
-  function getStroke(rawName: string, hovered: boolean): string {
-    if (hovered) return '#2094ff'
-    return '#b0cce8'
   }
 
   return (
@@ -89,32 +85,26 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
         <Geographies geography={colombiaGeo as never}>
           {({ geographies }) =>
             geographies.map((geo) => {
-              const rawName = geo.properties.NOMBRE_DPT as string
-              const nombre  = NAME_MAP[rawName] ?? rawName
-              const d       = dataMap[nombre]
+              const rawName  = geo.properties.NOMBRE_DPT as string
+              const nombre   = NAME_MAP[rawName] ?? rawName
+              const d        = dataMap[nombre]
+              const isHovered = hoveredRaw === rawName
+              const hasData   = !!(d && d.cantidad > 0)
               return (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  onMouseEnter={() => setTooltip({ nombre, cantidad: d?.cantidad ?? 0, porcentaje: d?.porcentaje ?? 0 })}
-                  onMouseLeave={() => setTooltip(null)}
-                  style={{
-                    default: {
-                      fill:          getFill(rawName),
-                      stroke:        getStroke(rawName, false),
-                      strokeWidth:   0.8,
-                      outline:       'none',
-                      transition:    'fill 200ms',
-                    },
-                    hover: {
-                      fill:          d && d.cantidad > 0 ? getFill(rawName) : 'var(--surface-high)',
-                      stroke:        getStroke(rawName, true),
-                      strokeWidth:   1.5,
-                      outline:       'none',
-                      filter:        d && d.cantidad > 0 ? 'brightness(0.92)' : 'none',
-                      cursor:        'pointer',
-                    },
-                    pressed: { outline: 'none' },
+                  fill={isHovered && !hasData ? '#e2edf7' : getFill(rawName)}
+                  stroke={isHovered ? '#2094ff' : '#b0cce8'}
+                  strokeWidth={isHovered ? 1.5 : 0.8}
+                  style={{ outline: 'none', transition: 'fill 150ms', cursor: hasData ? 'pointer' : 'default' }}
+                  onMouseEnter={() => {
+                    setHoveredRaw(rawName)
+                    setTooltip({ nombre, cantidad: d?.cantidad ?? 0, porcentaje: d?.porcentaje ?? 0 })
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredRaw(null)
+                    setTooltip(null)
                   }}
                 />
               )
@@ -122,7 +112,7 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
           }
         </Geographies>
 
-        {/* Marcador San Andrés — texto indicativo ya que las islas quedan fuera */}
+        {/* Marcador San Andrés — islas quedan fuera del extent continental */}
         <Marker coordinates={[-81.7, 12.55]}>
           <circle r={4} fill="rgba(32,148,255,0.3)" stroke="rgba(32,148,255,0.6)" strokeWidth={1} />
           <text fontSize={7} textAnchor="middle" y={-7} fill="var(--on-surface-variant)" style={{ fontFamily: 'Inter, sans-serif' }}>
