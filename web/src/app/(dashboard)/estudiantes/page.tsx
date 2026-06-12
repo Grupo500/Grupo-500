@@ -244,10 +244,6 @@ export default function EstudiantesPage() {
   const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
   const [subiendoComprobante,  setSubiendoComprobante]  = useState(false)
   const [subiendoDocumento,    setSubiendoDocumento]    = useState(false)
-  const [modalTypeform, setModalTypeform]     = useState(false)
-  const [typeformUrl, setTypeformUrl]         = useState<string | null>(null)
-  const [typeformCopiado, setTypeformCopiado] = useState(false)
-  const [confirmarReset, setConfirmarReset]   = useState(false)
   const [modalImport, setModalImport]         = useState(false)
   const [importFile, setImportFile]           = useState<File | null>(null)
   const [importResult, setImportResult]       = useState<any | null>(null)
@@ -275,14 +271,7 @@ export default function EstudiantesPage() {
 
   const { data: cursosData } = useQuery({ queryKey: ['cursos-select'], queryFn: () => fetcher<any>('/cursos?limit=100'), staleTime: 5 * 60_000 })
 
-  // ── Formulario Typeform activo ─────────────────────────────────────────────
-  const { data: formActivoData, refetch: refetchFormActivo } = useQuery({
-    queryKey: ['hubspot-activo'],
-    queryFn:  () => fetcher<{ data: { url: string | null; formGuid: string | null } }>('/hubspot/formulario-activo'),
-    staleTime: 5 * 60_000,
-  })
-  const formActivoUrl = formActivoData?.data?.url ?? null
-  const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
+const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
 
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda, soloMios],
@@ -376,34 +365,7 @@ export default function EstudiantesPage() {
     onError: () => setConfirmBulkElim(false),
   })
 
-  const crearTypeform = useMutation({
-    mutationFn: () => fetcher<{ data: { url: string } }>('/hubspot/crear-formulario', { method: 'POST' }),
-    onSuccess: (res: any) => {
-      const url = res.data?.url ?? res.url
-      setTypeformUrl(url)
-      setModalTypeform(true)
-      refetchFormActivo()
-    },
-    onError: () => alert('Error al crear el formulario en HubSpot. Intenta de nuevo.'),
-  })
-
-  const resetFormActivo = useMutation({
-    mutationFn: () => fetcher('/hubspot/formulario-activo', { method: 'DELETE' }),
-    onSuccess: () => { setConfirmarReset(false); refetchFormActivo() },
-    onError:   () => alert('Error al eliminar el formulario activo.'),
-  })
-
-  const procesarRespuestas = useMutation({
-    mutationFn: () => fetcher<{ data: { total: number; procesados: number; omitidos: number } }>('/hubspot/procesar-respuestas', { method: 'POST' }),
-    onSuccess: (data) => {
-      const d = data?.data
-      alert(`✅ Listo:\n• ${d?.procesados ?? 0} estudiante(s) nuevos creados\n• ${d?.omitidos ?? 0} ya existían`)
-      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-    },
-    onError: () => alert('❌ Error al procesar respuestas de HubSpot.'),
-  })
-
-  async function descargarPlantilla() {
+async function descargarPlantilla() {
     const token = await getClientToken()
     const res   = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/plantilla`, {
       headers: { Authorization: `Bearer ${token ?? ''}` },
@@ -436,14 +398,7 @@ export default function EstudiantesPage() {
     onError: (e: any) => setImportResult({ error: e.message ?? 'Error al importar' }),
   })
 
-  const copiarLink = async () => {
-    if (!typeformUrl) return
-    await navigator.clipboard.writeText(typeformUrl)
-    setTypeformCopiado(true)
-    setTimeout(() => setTypeformCopiado(false), 2000)
-  }
-
-  const subirComprobante = async (file: File) => {
+const subirComprobante = async (file: File) => {
     setSubiendoComprobante(true)
     try {
       const token = await getClientToken()

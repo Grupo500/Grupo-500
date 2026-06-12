@@ -33,7 +33,6 @@ import webhookRoutes from './routes/webhooks'
 import uploadRoutes from './routes/upload'
 import configRoutes from './routes/config'
 import negociacionesRoutes from './routes/negociaciones'
-import hubspotRoutes  from './routes/hubspot'
 import eventosRoutes from './routes/eventos'
 import passkeysRoutes from './routes/passkeys'
 import inscripcionRoutes from './routes/inscripcion'
@@ -188,7 +187,6 @@ app.use('/api/config',       configRoutes)
 app.use('/api/negociaciones', negociacionesRoutes)
 app.use('/api/inscripcion',   inscripcionRoutes)
 app.use('/api/formularios',  formulariosRoutes)
-app.use('/api/hubspot',      hubspotRoutes)
 app.use('/api/eventos',     eventosRoutes)
 app.use('/api/passkeys',    passkeysRoutes)
 app.use('/api/hotmart',     hotmartRoutes)
