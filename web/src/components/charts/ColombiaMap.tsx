@@ -114,7 +114,12 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
                   fill={isHovered && !hasData ? '#e2edf7' : getFill(rawName)}
                   stroke={isHovered ? '#2094ff' : '#b0cce8'}
                   strokeWidth={isHovered ? 1.5 : 0.8}
-                  style={{ default: { outline: 'none', transition: 'fill 150ms', cursor: hasData ? 'pointer' : 'default' } }}
+                  tabIndex={-1}
+                  style={{
+                    default: { outline: 'none', transition: 'fill 150ms', cursor: hasData ? 'pointer' : 'default' },
+                    hover:   { outline: 'none' },
+                    pressed: { outline: 'none' },
+                  }}
                   onMouseEnter={() => {
                     setHoveredRaw(rawName)
                     setTooltip({ nombre, cantidad: d?.cantidad ?? 0, porcentaje: d?.porcentaje ?? 0 })
@@ -154,7 +159,7 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
             <div className="relative" style={{ width: 112, height: 96 }}>
               <ComposableMap
                 projection="geoMercator"
-                projectionConfig={{ center: [-81.715, 12.55], scale: 46000 }}
+                projectionConfig={{ center: [-81.717, 12.55], scale: 41000 }}
                 width={58}
                 height={96}
                 style={{ position: 'absolute', left: 2, top: 0, width: 58, height: 96 }}
