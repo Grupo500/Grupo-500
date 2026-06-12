@@ -1,94 +1,142 @@
 'use client'
 
 import { useState } from 'react'
-import { COLOMBIA_PATHS } from './colombia-paths'
+import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
+
+const GEO_URL = '/colombia.geo.json'
 
 interface DeptData { nombre: string; cantidad: number; porcentaje: number }
+interface Props { departamentos: DeptData[]; totalDep: number }
 
-interface Props {
-  departamentos: DeptData[]
-  totalDep: number
+// Normalizar nombre del GeoJSON → nombre del backend
+const NAME_MAP: Record<string, string> = {
+  'ANTIOQUIA':           'Antioquia',
+  'ATLANTICO':           'Atlántico',
+  'SANTAFE DE BOGOTA D.C': 'Bogotá D.C.',
+  'BOLIVAR':             'Bolívar',
+  'BOYACA':              'Boyacá',
+  'CALDAS':              'Caldas',
+  'CAQUETA':             'Caquetá',
+  'CAUCA':               'Cauca',
+  'CESAR':               'Cesar',
+  'CORDOBA':             'Córdoba',
+  'CUNDINAMARCA':        'Cundinamarca',
+  'CHOCO':               'Chocó',
+  'HUILA':               'Huila',
+  'LA GUAJIRA':          'La Guajira',
+  'MAGDALENA':           'Magdalena',
+  'META':                'Meta',
+  'NARIÑO':              'Nariño',
+  'NORTE DE SANTANDER':  'Norte de Santander',
+  'QUINDIO':             'Quindío',
+  'RISARALDA':           'Risaralda',
+  'SANTANDER':           'Santander',
+  'SUCRE':               'Sucre',
+  'TOLIMA':              'Tolima',
+  'VALLE DEL CAUCA':     'Valle del Cauca',
+  'ARAUCA':              'Arauca',
+  'CASANARE':            'Casanare',
+  'PUTUMAYO':            'Putumayo',
+  'AMAZONAS':            'Amazonas',
+  'GUAINIA':             'Guainía',
+  'GUAVIARE':            'Guaviare',
+  'VAUPES':              'Vaupés',
+  'VICHADA':             'Vichada',
+  'ARCHIPIELAGO DE SAN ANDRES PROVIDENCIA Y SANTA CATALINA': 'San Andrés',
 }
 
 export function ColombiaMap({ departamentos, totalDep }: Props) {
-  const [hovered, setHovered] = useState<string | null>(null)
+  const [tooltip, setTooltip] = useState<{ nombre: string; cantidad: number; porcentaje: number } | null>(null)
 
   const maxCantidad = Math.max(...departamentos.map(d => d.cantidad), 1)
   const dataMap = Object.fromEntries(departamentos.map(d => [d.nombre, d]))
 
-  function getDeptFill(nombre: string): string {
+  function getFill(rawName: string): string {
+    const nombre = NAME_MAP[rawName] ?? rawName
     const d = dataMap[nombre]
     if (!d || d.cantidad === 0) return 'var(--surface-high)'
     const ratio = d.cantidad / maxCantidad
     return `rgba(32, 148, 255, ${0.15 + ratio * 0.8})`
   }
 
-  const hoveredPath = hovered ? COLOMBIA_PATHS.find(p => p.nombre === hovered) : null
-  const hoveredData = hovered ? dataMap[hovered] : null
+  function getStroke(rawName: string, hovered: boolean): string {
+    const nombre = NAME_MAP[rawName] ?? rawName
+    const d = dataMap[nombre]
+    if (hovered) return '#2094ff'
+    return d && d.cantidad > 0 ? 'rgba(32,148,255,0.5)' : 'var(--outline-variant)'
+  }
 
   return (
     <div className="relative w-full">
-      <svg
-        viewBox="0 0 500 600"
-        className="w-full h-auto"
-        style={{ maxHeight: 440 }}
-        onMouseLeave={() => setHovered(null)}
+      {/* Tooltip */}
+      {tooltip && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 pointer-events-none
+          bg-surface-lowest border border-outline-variant rounded-xl shadow-float
+          px-3 py-2 text-center min-w-[140px]">
+          <p className="text-[12px] font-semibold text-on-surface">{tooltip.nombre}</p>
+          <p className="text-[11px] text-on-surface-variant mt-0.5">
+            {tooltip.cantidad > 0
+              ? `${tooltip.cantidad} estudiante${tooltip.cantidad !== 1 ? 's' : ''} · ${tooltip.porcentaje}%`
+              : 'Sin estudiantes'}
+          </p>
+        </div>
+      )}
+
+      <ComposableMap
+        projection="geoMercator"
+        projectionConfig={{ center: [-74, 4], scale: 1350 }}
+        width={400}
+        height={460}
+        style={{ width: '100%', height: 'auto' }}
       >
-        {COLOMBIA_PATHS.map(({ nombre, d }) => {
-          const data    = dataMap[nombre]
-          const hasData = !!data && data.cantidad > 0
-          const isHovered = hovered === nombre
-          return (
-            <path
-              key={nombre}
-              d={d}
-              fill={getDeptFill(nombre)}
-              stroke={isHovered ? '#2094ff' : hasData ? 'rgba(32,148,255,0.6)' : 'var(--outline-variant)'}
-              strokeWidth={isHovered ? 2 : 0.8}
-              className="cursor-pointer"
-              style={{
-                transition: 'fill 200ms, stroke 150ms',
-                filter: isHovered ? 'drop-shadow(0 2px 6px rgba(32,148,255,0.4))' : 'none',
-              }}
-              onMouseEnter={() => setHovered(nombre)}
-            />
-          )
-        })}
+        <Geographies geography={GEO_URL}>
+          {({ geographies }) =>
+            geographies.map((geo) => {
+              const rawName = geo.properties.NOMBRE_DPT as string
+              const nombre  = NAME_MAP[rawName] ?? rawName
+              const d       = dataMap[nombre]
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  onMouseEnter={() => setTooltip({ nombre, cantidad: d?.cantidad ?? 0, porcentaje: d?.porcentaje ?? 0 })}
+                  onMouseLeave={() => setTooltip(null)}
+                  style={{
+                    default: {
+                      fill:          getFill(rawName),
+                      stroke:        getStroke(rawName, false),
+                      strokeWidth:   0.8,
+                      outline:       'none',
+                      transition:    'fill 200ms',
+                    },
+                    hover: {
+                      fill:          d && d.cantidad > 0 ? getFill(rawName) : 'var(--surface-high)',
+                      stroke:        getStroke(rawName, true),
+                      strokeWidth:   1.5,
+                      outline:       'none',
+                      filter:        d && d.cantidad > 0 ? 'brightness(0.92)' : 'none',
+                      cursor:        'pointer',
+                    },
+                    pressed: { outline: 'none' },
+                  }}
+                />
+              )
+            })
+          }
+        </Geographies>
 
-        {/* Etiqueta del recuadro de San Andrés */}
-        <text x={44} y={102} fontSize={8} textAnchor="middle" fill="var(--on-surface-variant)" style={{ fontFamily: 'Inter, sans-serif' }}>
-          San Andrés
-        </text>
+        {/* Marcador San Andrés — texto indicativo ya que las islas quedan fuera */}
+        <Marker coordinates={[-81.7, 12.55]}>
+          <circle r={4} fill="rgba(32,148,255,0.3)" stroke="rgba(32,148,255,0.6)" strokeWidth={1} />
+          <text fontSize={7} textAnchor="middle" y={-7} fill="var(--on-surface-variant)" style={{ fontFamily: 'Inter, sans-serif' }}>
+            San Andrés
+          </text>
+        </Marker>
+      </ComposableMap>
 
-        {/* Tooltip */}
-        {hoveredPath && (
-          (() => {
-            const tx = Math.max(8, Math.min(hoveredPath.cx - 60, 372))
-            const ty = Math.max(8, hoveredPath.cy - 56)
-            return (
-              <g style={{ pointerEvents: 'none' }}>
-                <rect x={tx} y={ty} width={128} height={36} rx={6}
-                  fill="var(--surface-lowest)" stroke="var(--outline-variant)" strokeWidth={1}
-                  style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.18))' }} />
-                <text x={tx + 8} y={ty + 15} fontSize={10.5} fontWeight={600}
-                  fill="var(--on-surface)" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  {hoveredPath.nombre}
-                </text>
-                <text x={tx + 8} y={ty + 28} fontSize={9.5}
-                  fill="var(--on-surface-variant)" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  {hoveredData && hoveredData.cantidad > 0
-                    ? `${hoveredData.cantidad} estudiante${hoveredData.cantidad !== 1 ? 's' : ''} · ${hoveredData.porcentaje}%`
-                    : 'Sin estudiantes'}
-                </text>
-              </g>
-            )
-          })()
-        )}
-      </svg>
-
-      {/* Leyenda de escala */}
+      {/* Leyenda escala */}
       {totalDep > 0 && (
-        <div className="flex items-center gap-2 mt-2 justify-center">
+        <div className="flex items-center gap-2 mt-1 justify-center">
           <span className="text-[10px] text-on-surface-variant">Menos</span>
           <div className="flex h-2 w-24 rounded-full overflow-hidden">
             {[0.15, 0.29, 0.43, 0.57, 0.71, 0.85, 0.95].map((o, i) => (
