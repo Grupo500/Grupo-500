@@ -4,8 +4,11 @@ packages:
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
+  '@sentry/cli': true
   core-js: true
   esbuild: true
   prisma: true
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - eslint-plugin-security@4.0.1
