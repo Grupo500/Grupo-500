@@ -1,0 +1,1 @@
+ALTER TABLE "Asesor" ADD COLUMN "codigosHotmart" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

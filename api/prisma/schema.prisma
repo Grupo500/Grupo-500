@@ -80,6 +80,8 @@ model Asesor {
   nombre        String
   email         String
   telefono      String
+  // Códigos de rastreo Hotmart (src/sck de sus links) + email de afiliado
+  codigosHotmart String[]     @default([])
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)

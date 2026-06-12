@@ -21,6 +21,8 @@ interface HotmartPurchase {
   price: { value: number; currencyValue: string }
   payment?: { type?: string }
   approved_date?: number
+  // Códigos de rastreo del link usado en la compra (?src= y ?sck=)
+  origin?: { xcod?: string; sck?: string; src?: string }
 }
 
 interface HotmartProduct {
@@ -131,26 +133,42 @@ export async function webhook(req: Request, res: Response) {
     logger.info(`[Hotmart] Estudiante creado: ${estudiante.id} (${buyer.email})`)
   }
 
-  // Identificar asesor por el afiliado de Hotmart
+  // Identificar asesor: por email de afiliado o por código de rastreo del link
   let asesorId: string | undefined
   const affiliateEmail = affiliates?.[0]?.affiliate_email
-  if (affiliateEmail) {
-    const asesor = await prisma.asesor.findFirst({
-      where: { email: { equals: affiliateEmail, mode: 'insensitive' } },
+  const codigosVenta = [
+    purchase.origin?.src,
+    purchase.origin?.sck,
+    purchase.origin?.xcod,
+    affiliates?.[0]?.affiliate_code,
+  ].filter((c): c is string => Boolean(c))
+
+  let asesor = affiliateEmail
+    ? await prisma.asesor.findFirst({
+        where: { email: { equals: affiliateEmail, mode: 'insensitive' } },
+      })
+    : null
+
+  if (!asesor && codigosVenta.length) {
+    asesor = await prisma.asesor.findFirst({
+      where: { codigosHotmart: { hasSome: codigosVenta } },
     })
-    if (asesor) {
-      asesorId = asesor.id
-      logger.info(`[Hotmart] Asesor identificado: ${asesor.nombre} (${affiliateEmail})`)
-      // Asignar al estudiante si aún no tiene asesor
-      if (!estudiante.asesorId) {
-        await prisma.estudiante.update({
-          where: { id: estudiante.id },
-          data: { asesorId },
-        })
-      }
-    } else {
-      logger.warn(`[Hotmart] Afiliado ${affiliateEmail} no encontrado como asesor en la app`)
+  }
+
+  if (asesor) {
+    asesorId = asesor.id
+    logger.info(`[Hotmart] Asesor identificado: ${asesor.nombre}`)
+    // Asignar al estudiante si aún no tiene asesor
+    if (!estudiante.asesorId) {
+      await prisma.estudiante.update({
+        where: { id: estudiante.id },
+        data: { asesorId },
+      })
     }
+  } else if (affiliateEmail || codigosVenta.length) {
+    logger.warn(
+      `[Hotmart] Venta con rastreo sin asesor vinculado — email: ${affiliateEmail ?? '-'}, códigos: ${codigosVenta.join(', ') || '-'}`
+    )
   }
 
   // Matricular al curso si no está ya matriculado

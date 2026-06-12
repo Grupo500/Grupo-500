@@ -88,7 +88,7 @@ export async function misEstadisticas(req: Request, res: Response) {
 
 export async function actualizar(req: Request, res: Response) {
   const { id } = req.params
-  const { nombre, telefono, email } = req.body
+  const { nombre, telefono, email, codigosHotmart } = req.body
 
   const asesor = await prisma.asesor.update({
     where: { id },
@@ -96,9 +96,10 @@ export async function actualizar(req: Request, res: Response) {
       ...(nombre   && { nombre:   nombre.trim() }),
       ...(telefono && { telefono: telefono.trim() }),
       ...(email    && { email:    email.trim() }),
+      ...(Array.isArray(codigosHotmart) && { codigosHotmart: codigosHotmart.map((c: string) => String(c).trim()).filter(Boolean) }),
     },
   })
 
-  auditLog(req, 'UPDATE', 'asesor', id, { cambios: { nombre, telefono, email } })
+  auditLog(req, 'UPDATE', 'asesor', id, { cambios: { nombre, telefono, email, codigosHotmart } })
   return ApiResponse.success(res, asesor)
 }
