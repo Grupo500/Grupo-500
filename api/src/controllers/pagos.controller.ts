@@ -91,7 +91,7 @@ const actualizarSchema = z.object({
   estado:          z.enum(['PENDIENTE', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
   fechaVencimiento: z.string().optional(),
   fechaPago:       z.string().optional(),   // fecha real del pago (no auto-now)
-  comprobante:     z.string().nullable().optional(),  // URL o texto libre (Typeform permite texto)
+  comprobante:     z.string().nullable().optional(),
   notas:           z.string().max(500).nullable().optional(),
 })
 

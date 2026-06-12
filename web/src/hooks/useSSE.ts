@@ -38,7 +38,7 @@ export function useSSE() {
         })
       })
 
-      // ── Nuevo estudiante via Typeform ────────────────────────────────────
+      // ── Nuevo estudiante via Hotmart ─────────────────────────────────────
       es.addEventListener('nuevo-estudiante', () => {
         startTransition(() => {
           queryClient.invalidateQueries({ queryKey: ['estudiantes'] })

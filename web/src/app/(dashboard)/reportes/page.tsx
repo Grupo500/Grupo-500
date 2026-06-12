@@ -281,7 +281,7 @@ export default function ReportesPage() {
         ) : fuentes.length === 0 ? (
           <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-8 flex flex-col items-center justify-center text-on-surface-variant">
             <p className="text-sm">Sin datos de fuentes de contacto aún</p>
-            <p className="text-xs mt-1 opacity-60">Se registran automáticamente al completar el formulario Typeform</p>
+            <p className="text-xs mt-1 opacity-60">Se registran automáticamente con cada compra en Hotmart</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
