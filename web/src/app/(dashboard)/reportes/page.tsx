@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -8,119 +9,38 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { formatCOP, cn } from '@/lib/utils'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts'
+import { ColombiaMap } from '@/components/charts/ColombiaMap'
+import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
-type Periodo = 'diario' | 'semanal' | 'mensual'
+// ── Helpers fecha ─────────────────────────────────────────────────────────────
+function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
+function getRangeFromMonth(month: string | null): { desde: string; hasta: string } {
+  const base = month ? new Date(month + '-15') : new Date()
+  return { desde: toISO(startOfMonth(base)), hasta: toISO(endOfMonth(base)) }
+}
 
-const PERIODOS: { key: Periodo; label: string }[] = [
-  { key: 'diario',   label: 'Diario'   },
-  { key: 'semanal',  label: 'Semanal'  },
-  { key: 'mensual',  label: 'Mensual'  },
-]
-
+interface FuenteItem { fuente: string; cantidad: number; porcentaje: number }
+interface MarketingData { total: number; fuentes: FuenteItem[] }
+interface MedioPagoItem { metodo: string; cantidad: number; monto: number; porcentajeMonto: number; porcentajeCantidad: number }
+interface MediosPagoData { total: number; totalCantidad: number; metodos: MedioPagoItem[]; periodo: string }
+interface DemografiaItem { nombre: string; departamento?: string | null; cantidad: number; porcentaje: number }
+interface DemografiaData { departamentos: DemografiaItem[]; ciudades: DemografiaItem[]; totalDep: number; totalCiu: number }
 interface DashboardData {
   estudiantes: { total: number; nuevosMes: number }
-  cobranza: {
-    porCobrar: { monto: number; cantidad: number }
-    vencida:   { monto: number; cantidad: number }
-    cobrado:   { monto: number; cantidad: number }
-    pendiente: { monto: number; cantidad: number }
-  }
-}
-
-interface FuenteItem {
-  fuente:     string
-  cantidad:   number
-  porcentaje: number
-}
-
-interface MarketingData {
-  total:   number
-  fuentes: FuenteItem[]
-}
-
-interface MedioPagoItem {
-  metodo:             string
-  cantidad:           number
-  monto:              number
-  porcentajeMonto:    number
-  porcentajeCantidad: number
-}
-
-interface MediosPagoData {
-  total:         number
-  totalCantidad: number
-  metodos:       MedioPagoItem[]
-  periodo:       string
-}
-
-interface DemografiaItem {
-  nombre:        string
-  departamento?: string | null
-  cantidad:      number
-  porcentaje:    number
-}
-
-interface DemografiaData {
-  departamentos: DemografiaItem[]
-  ciudades:      DemografiaItem[]
-  totalDep:      number
-  totalCiu:      number
+  cobranza: { porCobrar: { monto: number; cantidad: number }; vencida: { monto: number; cantidad: number }; cobrado: { monto: number; cantidad: number }; pendiente: { monto: number; cantidad: number } }
 }
 
 const COLORES      = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
-// Marketing — paleta multi-hue categórica (cada color en familia de tono diferente)
 const COLORES_MKT  = ['#e11d48','#7c3aed','#0ea5e9','#16a34a','#f59e0b','#0d9488','#db2777','#65a30d','#ea580c']
-// Demografía — paleta multi-hue categórica (colores bien separados en el espectro)
-const COLORES_DEMO = ['#2563eb','#dc2626','#16a34a','#9333ea','#f97316','#0891b2','#ca8a04','#be185d','#047857']
-// Colores fijos por departamento (prevalecen sobre el índice del array)
-// Cada departamento tiene un color único — sin repetidos
-const COLOR_DEPT: Record<string, string> = {
-  'Antioquia':          '#16a34a', // verde
-  'Cundinamarca':       '#2563eb', // azul
-  'Valle del Cauca':    '#9333ea', // violeta
-  'Atlántico':          '#f97316', // naranja
-  'Santander':          '#FFCC00', // amarillo
-  'Bolívar':            '#be185d', // rosa
-  'Tolima':             '#92400e', // marrón
-  'Cauca':              '#0891b2', // cyan
-  'Boyacá':             '#e11d48', // rojo carmesí
-  'Norte de Santander': '#0d9488', // verde azulado (teal)
-  'Nariño':             '#7c3aed', // púrpura
-  'Córdoba':            '#ea580c', // naranja quemado
-  'Huila':              '#65a30d', // verde lima
-  'Meta':               '#0284c7', // azul cielo
-  'Risaralda':          '#d97706', // ámbar
-  'Caldas':             '#dc2626', // rojo
-  'Quindío':            '#059669', // esmeralda
-  'Magdalena':          '#7e22ce', // uva
-  'Cesar':              '#b45309', // café
-  'Sucre':              '#0369a1', // azul marino
-  'Chocó':              '#15803d', // verde oscuro
-  'La Guajira':         '#c2410c', // terracota
-  'Putumayo':           '#4f46e5', // índigo
-  'Caquetá':            '#a21caf', // fucsia
-  'Arauca':             '#84cc16', // amarillo verde
-  'Vichada':            '#06b6d4', // turquesa
-  'Guainía':            '#f43f5e', // coral
-  'Vaupés':             '#8b5cf6', // lavanda
-  'Amazonas':           '#10b981', // menta
-  'San Andrés':         '#fb923c', // melocotón
-  'Casanare':           '#6366f1', // periwinkle
-  'Guaviare':           '#84cc16', // chartreuse
-}
-function colorDept(nombre: string, idx: number): string {
-  return COLOR_DEPT[nombre] ?? COLORES_DEMO[idx % COLORES_DEMO.length]
-}
 
-// Colores de marca por canal — se aplican por substring para cubrir todas las variantes
 const COLOR_CANAL: Array<{ match: string; color: string }> = [
-  { match: 'Instagram', color: '#C13584' }, // Instagram magenta
-  { match: 'TikTok',    color: '#010101' }, // TikTok negro
-  { match: 'YouTube',   color: '#FF0000' }, // YouTube rojo
-  { match: 'Facebook',  color: '#1877F2' }, // Facebook azul
-  { match: 'Google',    color: '#4285F4' }, // Google azul
-  { match: 'Referido',  color: '#16a34a' }, // Referido verde
+  { match: 'Instagram', color: '#C13584' },
+  { match: 'TikTok',    color: '#010101' },
+  { match: 'YouTube',   color: '#FF0000' },
+  { match: 'Facebook',  color: '#1877F2' },
+  { match: 'Google',    color: '#4285F4' },
+  { match: 'Referido',  color: '#16a34a' },
 ]
 function colorCanal(fuente: string, idx: number): string {
   const match = COLOR_CANAL.find(c => fuente.includes(c.match))
@@ -142,20 +62,29 @@ function etiquetaCorta(fuente: string): string {
   return m[fuente] ?? fuente.slice(0, 14)
 }
 
-// Etiquetas dinámicas según período
-const labelNuevos: Record<Periodo, string> = {
-  diario:  'Nuevos hoy',
-  semanal: 'Nuevos esta semana',
-  mensual: 'Nuevos este mes',
-}
-const labelRecaudado: Record<Periodo, string> = {
-  diario:  'Recaudado hoy',
-  semanal: 'Recaudado esta semana',
-  mensual: 'Recaudado este mes',
-}
-
 export default function ReportesPage() {
-  const [periodo, setPeriodo] = useState<Periodo>('mensual')
+  const now = new Date()
+  const currentMonth = format(now, 'yyyy-MM')
+
+  const [month,     setMonth]     = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange | null>(null)
+
+  function handleChange(m: string | null, r: DateRange | null) {
+    setMonth(m)
+    setDateRange(r)
+  }
+
+  const { desde, hasta } = dateRange
+    ? { desde: toISO(dateRange.start), hasta: toISO(dateRange.end) }
+    : getRangeFromMonth(month)
+
+  const fmt = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+  const fmtShort = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })
+  const periodoLabel = desde === hasta
+    ? fmt(desde)
+    : desde.slice(0, 4) === hasta.slice(0, 4)
+      ? `${fmtShort(desde)} – ${fmt(hasta)}`
+      : `${fmt(desde)} – ${fmt(hasta)}`
 
   const fetcher = async () => {
     const token = await getClientToken()
@@ -163,8 +92,8 @@ export default function ReportesPage() {
   }
 
   const { data: dashData, isLoading } = useQuery({
-    queryKey: ['reportes-dashboard', periodo],
-    queryFn: async () => (await fetcher())<{ data: DashboardData }>(`/reportes/dashboard?periodo=${periodo}`),
+    queryKey: ['reportes-dashboard', desde, hasta],
+    queryFn: async () => (await fetcher())<{ data: DashboardData }>(`/reportes/dashboard?desde=${desde}&hasta=${hasta}`),
     staleTime: 30_000,
   })
 
@@ -175,8 +104,8 @@ export default function ReportesPage() {
   })
 
   const { data: mediosData, isLoading: mediosLoading } = useQuery({
-    queryKey: ['reportes-medios-pago', periodo],
-    queryFn: async () => (await fetcher())<{ data: MediosPagoData }>(`/reportes/medios-pago?periodo=${periodo}`),
+    queryKey: ['reportes-medios-pago', desde, hasta],
+    queryFn: async () => (await fetcher())<{ data: MediosPagoData }>(`/reportes/medios-pago?desde=${desde}&hasta=${hasta}`),
     staleTime: 30_000,
   })
 
@@ -196,18 +125,25 @@ export default function ReportesPage() {
   const medios  = mediosData?.data
   const metodos = medios?.metodos ?? []
 
-  // metodo es String libre desde la migración del enum → String
-  // Los valores reales son: 'Bancolombia', 'Bre-B', 'Nequi', 'Tarjeta', 'Otro'
-  // Se muestra directamente m.metodo sin mapeo
-
   const demografia    = demografiaData?.data
   const departamentos = demografia?.departamentos ?? []
   const ciudades      = demografia?.ciudades      ?? []
 
-  // Mapa dinámico departamento → color (cubre cualquier departamento, presente o futuro)
-  const deptColorMap = Object.fromEntries(
-    departamentos.map((dep, i) => [dep.nombre, colorDept(dep.nombre, i)])
-  )
+  const COLOR_DEPT: Record<string, string> = {
+    'Antioquia':'#16a34a','Cundinamarca':'#2563eb','Valle del Cauca':'#9333ea','Atlántico':'#f97316',
+    'Santander':'#FFCC00','Bolívar':'#be185d','Tolima':'#92400e','Cauca':'#0891b2','Boyacá':'#e11d48',
+    'Norte de Santander':'#0d9488','Nariño':'#7c3aed','Córdoba':'#ea580c','Huila':'#65a30d',
+    'Meta':'#0284c7','Risaralda':'#d97706','Caldas':'#dc2626','Quindío':'#059669','Magdalena':'#7e22ce',
+    'Cesar':'#b45309','Sucre':'#0369a1','Chocó':'#15803d','La Guajira':'#c2410c','Putumayo':'#4f46e5',
+    'Caquetá':'#a21caf','Arauca':'#84cc16','Vichada':'#06b6d4','Guainía':'#f43f5e','Vaupés':'#8b5cf6',
+    'Amazonas':'#10b981','San Andrés':'#fb923c','Casanare':'#6366f1','Guaviare':'#84cc16',
+  }
+  const COLORES_DEMO = ['#2563eb','#dc2626','#16a34a','#9333ea','#f97316','#0891b2','#ca8a04','#be185d','#047857']
+  function colorDept(nombre: string, idx: number): string {
+    return COLOR_DEPT[nombre] ?? COLORES_DEMO[idx % COLORES_DEMO.length]
+  }
+
+  const deptColorMap = Object.fromEntries(departamentos.map((dep, i) => [dep.nombre, colorDept(dep.nombre, i)]))
   function colorCiudad(departamento: string | null | undefined, idx: number): string {
     if (departamento && deptColorMap[departamento]) return deptColorMap[departamento]
     return COLORES_DEMO[idx % COLORES_DEMO.length]
@@ -215,24 +151,18 @@ export default function ReportesPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
-
-      {/* ── Tabs de período ─────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40 w-fit">
-        {PERIODOS.map(p => (
-          <button
-            key={p.key}
-            onClick={() => setPeriodo(p.key)}
-            className={cn(
-              'px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
-              periodo === p.key
-                ? 'bg-surface-lowest text-on-surface shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface'
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <MonthPicker
+            value={month}
+            currentMonth={currentMonth}
+            dateRange={dateRange}
+            onChange={handleChange}
+            alignRight
+          />
+          <p className="text-[11px] text-on-surface-variant capitalize">{periodoLabel}</p>
+        </div>
       </div>
 
       {/* ── Estudiantes ────────────────────────────────────────────── */}
@@ -241,7 +171,7 @@ export default function ReportesPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <KpiCard title="Total registrados" value={est.total.toLocaleString('es-CO')}
             rawValue={est.total} icon="Users" variant="default" isLoading={isLoading} />
-          <KpiCard title={labelNuevos[periodo]} value={`+${est.nuevosMes}`}
+          <KpiCard title="Nuevos en el período" value={`+${est.nuevosMes}`}
             rawValue={est.nuevosMes} icon="UserPlus" variant="success" isLoading={isLoading} />
         </div>
       </section>
@@ -250,7 +180,7 @@ export default function ReportesPage() {
       <section className="space-y-3">
         <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Cobranza</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard title={labelRecaudado[periodo]} value={formatCOP(cobranza.cobrado.monto)}
+          <KpiCard title="Recaudado en el período" value={formatCOP(cobranza.cobrado.monto)}
             rawValue={cobranza.cobrado.monto}   formatValue={formatCOP}
             subtitle={`${cobranza.cobrado.cantidad} cobros`}
             icon="TrendingUp" variant="success" isLoading={isLoading} />
@@ -258,7 +188,7 @@ export default function ReportesPage() {
             rawValue={cobranza.porCobrar.monto} formatValue={formatCOP}
             subtitle={`${cobranza.porCobrar.cantidad} pendientes`}
             icon="Wallet" variant="warning" isLoading={isLoading} />
-          <KpiCard title="En mora"    value={formatCOP(cobranza.vencida.monto)}
+          <KpiCard title="En mora" value={formatCOP(cobranza.vencida.monto)}
             rawValue={cobranza.vencida.monto}   formatValue={formatCOP}
             subtitle={`${cobranza.vencida.cantidad} vencidos`}
             icon="AlertTriangle" variant="error" isLoading={isLoading} />
@@ -267,7 +197,7 @@ export default function ReportesPage() {
 
       {/* ── Gráficas de ingresos y asesores ───────────────────────── */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <IngresosMensualesChart periodo={periodo} />
+        <IngresosMensualesChart periodo="mensual" />
         <RankingAsesores />
       </section>
 
@@ -290,24 +220,17 @@ export default function ReportesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Gráfica de barras por monto */}
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
               <p className="text-[12px] font-semibold text-on-surface mb-4">Recaudo por medio de pago</p>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart
-                  data={metodos.map((m, i) => ({
-                    name:  m.metodo,
-                    monto: m.monto,
-                    color: COLORES[i % COLORES.length],
-                  }))}
+                  data={metodos.map((m, i) => ({ name: m.metodo, monto: m.monto, color: COLORES[i % COLORES.length] }))}
                   margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
                 >
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `$${(v / 1_000_000).toFixed(1)}M`} />
-                  <Tooltip
-                    formatter={(v: number) => [formatCOP(v), 'Recaudo']}
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
-                  />
+                  <Tooltip formatter={(v: number) => [formatCOP(v), 'Recaudo']}
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }} />
                   <Bar dataKey="monto" radius={[4, 4, 0, 0]}>
                     {metodos.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
                   </Bar>
@@ -315,7 +238,6 @@ export default function ReportesPage() {
               </ResponsiveContainer>
             </div>
 
-            {/* Lista detallada */}
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-2">
               <p className="text-[12px] font-semibold text-on-surface mb-3">Detalle por medio</p>
               <div className="space-y-3">
@@ -370,10 +292,8 @@ export default function ReportesPage() {
                   margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip
-                    formatter={(v: number) => [v, 'Estudiantes']}
-                    contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
-                  />
+                  <Tooltip formatter={(v: number) => [v, 'Estudiantes']}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--outline-variant)' }} />
                   <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
                     {fuentes.map((f, i) => <Cell key={i} fill={colorCanal(f.fuente, i)} />)}
                   </Bar>
@@ -432,60 +352,25 @@ export default function ReportesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            {/* Donut — Departamentos */}
+            {/* Mapa coroplético de Colombia */}
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
-              <p className="text-[12px] font-semibold text-on-surface mb-4">Por departamento</p>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={departamentos}
-                    dataKey="cantidad"
-                    nameKey="nombre"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={2}
-                  >
-                    {departamentos.map((d, i) => (
-                      <Cell key={i} fill={colorDept(d.nombre, i)} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v: number, name: string) => [`${v} estudiantes`, name]}
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
-                  />
-                  <Legend
-                    formatter={(value) => <span style={{ fontSize: 11 }}>{value}</span>}
-                    iconSize={8}
-                    iconType="circle"
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <p className="text-[12px] font-semibold text-on-surface mb-3">Por departamento</p>
+              <ColombiaMap departamentos={departamentos} totalDep={demografia?.totalDep ?? 0} />
             </div>
 
-            {/* Horizontal bar — Top 10 ciudades */}
+            {/* Top 10 ciudades */}
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
               <p className="text-[12px] font-semibold text-on-surface mb-4">Top 10 ciudades</p>
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={260}>
                 <BarChart
                   layout="vertical"
                   data={ciudades}
                   margin={{ left: 8, right: 24, top: 0, bottom: 0 }}
                 >
                   <XAxis type="number" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="nombre"
-                    tick={{ fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={false}
-                    width={90}
-                  />
-                  <Tooltip
-                    formatter={(v: number) => [`${v} estudiantes`, 'Cantidad']}
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }}
-                  />
+                  <YAxis type="category" dataKey="nombre" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={90} />
+                  <Tooltip formatter={(v: number) => [`${v} estudiantes`, 'Cantidad']}
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }} />
                   <Bar dataKey="cantidad" radius={[0, 4, 4, 0]}>
                     {ciudades.map((c, i) => (
                       <Cell key={i} fill={colorCiudad(c.departamento, i)} />

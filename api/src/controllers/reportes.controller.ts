@@ -6,20 +6,29 @@ export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
   const periodo = (req.query.periodo as string) ?? 'mensual'
 
-  // Si el usuario es VENDEDOR, filtrar todo por su asesorId
-  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId
-    ? req.asesorId : undefined
+  // Soporte desde/hasta explícito (MonthPicker) o fallback al periodo legacy
+  const desdeQ = req.query.desde as string | undefined
+  const hastaQ = req.query.hasta as string | undefined
 
-  // Calcular inicio del período seleccionado
   const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
   const inicioDia    = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
 
-  const inicioPeriodo = periodo === 'diario' ? inicioDia
+  const inicioPeriodo = desdeQ
+    ? new Date(desdeQ + 'T00:00:00')
+    : periodo === 'diario' ? inicioDia
     : periodo === 'semanal' ? inicioSemana
     : inicioMes
 
-  const filtroPeriodo = { gte: inicioPeriodo }
+  const finPeriodo = hastaQ
+    ? new Date(hastaQ + 'T23:59:59')
+    : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
+
+  // Si el usuario es VENDEDOR, filtrar todo por su asesorId
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId
+    ? req.asesorId : undefined
+
+  const filtroPeriodo = { gte: inicioPeriodo, lte: finPeriodo }
 
   // Filtro de estudiante para pagos/cuotas vía relación
   const filtroEstPago    = filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}
@@ -38,7 +47,7 @@ export async function dashboard(req: Request, res: Response) {
     cursosActivos,
   ] = await Promise.all([
     prisma.estudiante.count({ where: filtroAsesor ? { asesorId: filtroAsesor } : {} }),
-    prisma.estudiante.count({ where: { createdAt: { gte: inicioMes }, ...(filtroAsesor && { asesorId: filtroAsesor }) } }),
+    prisma.estudiante.count({ where: { createdAt: { gte: inicioPeriodo, lte: finPeriodo }, ...(filtroAsesor && { asesorId: filtroAsesor }) } }),
     prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoy }, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
     // Mora = estado VENCIDO OR estado PENDIENTE con fechaVencimiento ya pasada
     prisma.pago.aggregate({ where: { estado: { in: ['VENCIDO', 'PENDIENTE'] }, fechaVencimiento: { lt: hoy }, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
@@ -499,25 +508,34 @@ export async function mediosPago(req: Request, res: Response) {
   const periodo = String(req.query.periodo ?? 'mensual')
   const hoy = new Date()
 
+  const desdeQ = req.query.desde as string | undefined
+  const hastaQ = req.query.hasta as string | undefined
+
   const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
   const inicioDia    = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
 
-  const desde = periodo === 'diario' ? inicioDia
+  const desde = desdeQ
+    ? new Date(desdeQ + 'T00:00:00')
+    : periodo === 'diario' ? inicioDia
     : periodo === 'semanal' ? inicioSemana
     : inicioMes
+
+  const hasta = hastaQ
+    ? new Date(hastaQ + 'T23:59:59')
+    : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
 
   // Agrupar pagos pagados por método de pago
   const [porMetodo, cuotasPorMedio] = await Promise.all([
     prisma.pago.groupBy({
       by: ['metodo'],
-      where: { estado: 'PAGADO', fechaPago: { gte: desde } },
+      where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } },
       _count: { metodo: true },
       _sum:   { monto: true },
     }),
     prisma.cuota.groupBy({
       by: ['medioPago'],
-      where: { pagado: true, fechaPago: { gte: desde }, medioPago: { not: null } },
+      where: { pagado: true, fechaPago: { gte: desde, lte: hasta }, medioPago: { not: null } },
       _count: { medioPago: true },
       _sum:   { monto: true },
     }),
