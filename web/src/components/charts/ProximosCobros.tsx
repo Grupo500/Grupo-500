@@ -33,20 +33,16 @@ function Skeleton() {
   )
 }
 
-type Periodo = 'diario' | 'semanal' | 'mensual'
-
-const DIAS_LABEL: Record<Periodo, { dias: number; label: string }> = {
-  diario:  { dias: 1,  label: 'Hoy'        },
-  semanal: { dias: 7,  label: '7 días'     },
-  mensual: { dias: 30, label: '30 días'    },
-}
-
-export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
-  const { dias, label } = DIAS_LABEL[periodo]
+export function ProximosCobros({ desde, hasta }: { desde: string; hasta: string }) {
   const router = useRouter()
 
+  // Calcular días entre desde y hasta para el endpoint
+  const dias = Math.max(1, Math.round(
+    (new Date(hasta + 'T00:00:00').getTime() - new Date(desde + 'T00:00:00').getTime()) / 86400000
+  ) + 1)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['cobros-proximos', periodo],
+    queryKey: ['cobros-proximos', desde, hasta],
     queryFn: async () => {
       return apiFetch(`/cobros/proximos?dias=${dias}`) as Promise<{ data: CuotaProxima[] }>
     },
@@ -57,6 +53,7 @@ export function ProximosCobros({ periodo = 'mensual' }: { periodo?: Periodo }) {
 
   const cobros = data?.data ?? []
   const total  = cobros.reduce((s, c) => s + c.monto, 0)
+  const label  = dias === 1 ? 'Hoy' : `${dias} días`
 
   return (
     <div className="card p-5 flex flex-col h-72">

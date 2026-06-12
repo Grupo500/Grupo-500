@@ -1,60 +1,67 @@
 'use client'
 
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { FinancieroSection } from './FinancieroSection'
 import { ProximosCobros } from './ProximosCobros'
 import { CursosVendidosChart } from './CursosVendidosChart'
 import { SaldosPendientes } from './SaldosPendientes'
 
-type Periodo = 'diario' | 'semanal' | 'mensual'
+function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
-const TABS: { key: Periodo; label: string }[] = [
-  { key: 'diario',   label: 'Diario'   },
-  { key: 'semanal',  label: 'Semanal'  },
-  { key: 'mensual',  label: 'Mensual'  },
-]
+function getRangeFromMonth(month: string | null): { desde: string; hasta: string } {
+  const base = month ? new Date(month + '-15') : new Date()
+  return {
+    desde: toISO(startOfMonth(base)),
+    hasta: toISO(endOfMonth(base)),
+  }
+}
 
 export function DashboardAnalytics() {
-  const [periodo, setPeriodo] = useState<Periodo>('mensual')
+  const now          = new Date()
+  const currentMonth = format(now, 'yyyy-MM')
+
+  const [month,     setMonth]     = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange | null>(null)
+
+  function handleChange(m: string | null, r: DateRange | null) {
+    setMonth(m)
+    setDateRange(r)
+  }
+
+  // Calcular desde/hasta según selección
+  const { desde, hasta } = dateRange
+    ? { desde: toISO(dateRange.start), hasta: toISO(dateRange.end) }
+    : getRangeFromMonth(month)
 
   return (
     <div className="space-y-5">
 
-      {/* ── Selector de período global ──────────────────────────────────── */}
+      {/* ── Selector de período global ── */}
       <div className="flex items-center justify-between">
         <p className="text-[13px] font-semibold text-on-surface-variant">Período de análisis</p>
-        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-surface-high border border-outline-variant/40">
-          {TABS.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setPeriodo(t.key)}
-              className={cn(
-                'px-4 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200',
-                periodo === t.key
-                  ? 'bg-surface-lowest text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <MonthPicker
+          value={month}
+          currentMonth={currentMonth}
+          dateRange={dateRange}
+          onChange={handleChange}
+          alignRight
+        />
       </div>
 
-      {/* ── Financiero: Total facturado · Recaudado · Por cobrar · En mora */}
-      <FinancieroSection periodo={periodo} />
+      {/* ── Financiero ── */}
+      <FinancieroSection desde={desde} hasta={hasta} />
 
-      {/* ── Próximos cobros + Cursos más vendidos ──────────────────────── */}
+      {/* ── Próximos cobros + Cursos más vendidos ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProximosCobros periodo={periodo} />
-        <CursosVendidosChart periodo={periodo} />
+        <ProximosCobros desde={desde} hasta={hasta} />
+        <CursosVendidosChart desde={desde} hasta={hasta} />
       </div>
 
-      {/* ── Saldos pendientes por cobrar ────────────────────────────────── */}
+      {/* ── Saldos pendientes ── */}
       <SaldosPendientes />
 
     </div>
   )
 }
-

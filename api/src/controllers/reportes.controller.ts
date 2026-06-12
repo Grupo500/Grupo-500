@@ -146,94 +146,154 @@ export async function rankingAsesores(_req: Request, res: Response) {
 }
 
 export async function cursosMasVendidos(req: Request, res: Response) {
-  const hoy     = new Date()
-  const periodo = String(req.query.periodo ?? 'mensual')
+  const hoy = new Date()
+  const { desde: desdeQ, hasta: hastaQ, periodo } = req.query
 
-  const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-  const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
-  const inicioDia    = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+  let desdeDate: Date
+  let hastaDate: Date
 
-  const desde = periodo === 'diario' ? inicioDia
-    : periodo === 'semanal' ? inicioSemana
-    : inicioMes
+  if (desdeQ && hastaQ) {
+    desdeDate = new Date(String(desdeQ) + 'T00:00:00')
+    hastaDate = new Date(String(hastaQ) + 'T23:59:59')
+  } else {
+    const p = String(periodo ?? 'mensual')
+    const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+    const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - 7)
+    const inicioDia    = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+    desdeDate = p === 'diario' ? inicioDia : p === 'semanal' ? inicioSemana : inicioMes
+    hastaDate = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+  }
 
-  // Contar estudiantes cuya fechaCompra esté dentro del período
   const cursos = await prisma.curso.findMany({
     where: { activo: true },
     include: {
       _count: {
         select: {
-          estudiantes: { where: { fechaCompra: { gte: desde } } },
+          estudiantes: { where: { fechaCompra: { gte: desdeDate, lte: hastaDate } } },
         },
       },
     },
     orderBy: { nombre: 'asc' },
   })
 
-  // Ordenar por más vendidos en el período
   const ordenados = [...cursos].sort((a, b) => b._count.estudiantes - a._count.estudiantes)
   return ApiResponse.success(res, ordenados)
 }
 
 // Financiero por período: totales del período activo + serie temporal
 export async function financieroPeriodo(req: Request, res: Response) {
-  const periodo = String(req.query.periodo ?? 'mensual')
   const hoy = new Date()
+  const { desde: desdeQ, hasta: hastaQ, periodo } = req.query
 
   // ── Rango para totales (período actual y anterior) ──────────────────────
   let desdeTotales: Date
+  let hastaTotales: Date
   let desdeAnterior: Date
   let hastaAnterior: Date
 
-  if (periodo === 'diario') {
-    desdeTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0)
-    desdeAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1, 0, 0, 0)
-    hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1, 23, 59, 59)
-  } else if (periodo === 'semanal') {
-    const inicioEsta = new Date(hoy)
-    inicioEsta.setDate(hoy.getDate() - hoy.getDay() + 1)
-    inicioEsta.setHours(0, 0, 0, 0)
-    desdeTotales  = inicioEsta
-    desdeAnterior = new Date(inicioEsta); desdeAnterior.setDate(inicioEsta.getDate() - 7)
-    hastaAnterior = new Date(inicioEsta); hastaAnterior.setDate(inicioEsta.getDate() - 1); hastaAnterior.setHours(23, 59, 59)
+  if (desdeQ && hastaQ) {
+    desdeTotales  = new Date(String(desdeQ) + 'T00:00:00')
+    hastaTotales  = new Date(String(hastaQ) + 'T23:59:59')
+    const duracionMs = hastaTotales.getTime() - desdeTotales.getTime()
+    desdeAnterior = new Date(desdeTotales.getTime() - duracionMs - 86400000)
+    hastaAnterior = new Date(desdeTotales.getTime() - 1)
   } else {
-    desdeTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-    desdeAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
-    hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+    const p = String(periodo ?? 'mensual')
+    if (p === 'diario') {
+      desdeTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0)
+      hastaTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+      desdeAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1, 0, 0, 0)
+      hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1, 23, 59, 59)
+    } else if (p === 'semanal') {
+      const inicioEsta = new Date(hoy)
+      inicioEsta.setDate(hoy.getDate() - hoy.getDay() + 1)
+      inicioEsta.setHours(0, 0, 0, 0)
+      desdeTotales  = inicioEsta
+      hastaTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+      desdeAnterior = new Date(inicioEsta); desdeAnterior.setDate(inicioEsta.getDate() - 7)
+      hastaAnterior = new Date(inicioEsta); hastaAnterior.setDate(inicioEsta.getDate() - 1); hastaAnterior.setHours(23, 59, 59)
+    } else {
+      desdeTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+      hastaTotales  = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
+      desdeAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
+      hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+    }
   }
 
   // ── Puntos para la serie temporal ───────────────────────────────────────
   type Punto = { label: string; desde: Date; hasta: Date }
   const puntos: Punto[] = []
 
-  if (periodo === 'diario') {
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(hoy)
-      d.setDate(hoy.getDate() - i)
-      puntos.push({
-        label: d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
-        desde: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0),
-        hasta: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
-      })
-    }
-  } else if (periodo === 'semanal') {
-    for (let i = 7; i >= 0; i--) {
-      const ini = new Date(hoy)
-      ini.setDate(hoy.getDate() - i * 7 - hoy.getDay() + 1)
-      ini.setHours(0, 0, 0, 0)
-      const fin = new Date(ini)
-      fin.setDate(ini.getDate() + 6)
-      fin.setHours(23, 59, 59, 999)
-      puntos.push({ label: `${ini.getDate()}/${ini.getMonth() + 1}`, desde: ini, hasta: fin })
+  const diasRango = Math.round((hastaTotales.getTime() - desdeTotales.getTime()) / 86400000) + 1
+
+  if (desdeQ && hastaQ) {
+    if (diasRango <= 14) {
+      // Rango corto: punto por día
+      for (let i = 0; i < diasRango; i++) {
+        const d = new Date(desdeTotales)
+        d.setDate(desdeTotales.getDate() + i)
+        puntos.push({
+          label: d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+          desde: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0),
+          hasta: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
+        })
+      }
+    } else if (diasRango <= 60) {
+      // Rango mediano: punto por semana
+      let cursor = new Date(desdeTotales)
+      while (cursor <= hastaTotales) {
+        const finSem = new Date(cursor)
+        finSem.setDate(cursor.getDate() + 6)
+        if (finSem > hastaTotales) finSem.setTime(hastaTotales.getTime())
+        finSem.setHours(23, 59, 59)
+        puntos.push({ label: `${cursor.getDate()}/${cursor.getMonth() + 1}`, desde: new Date(cursor), hasta: new Date(finSem) })
+        cursor.setDate(cursor.getDate() + 7)
+      }
+    } else {
+      // Rango largo: punto por mes
+      let cursor = new Date(desdeTotales.getFullYear(), desdeTotales.getMonth(), 1)
+      while (cursor <= hastaTotales) {
+        const finMes = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59)
+        const hasta  = finMes > hastaTotales ? hastaTotales : finMes
+        puntos.push({
+          label: cursor.toLocaleDateString('es-CO', { month: 'short' }),
+          desde: new Date(cursor),
+          hasta: new Date(hasta),
+        })
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+      }
     }
   } else {
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)
-      puntos.push({
-        label: d.toLocaleDateString('es-CO', { month: 'short' }),
-        desde: new Date(d.getFullYear(), d.getMonth(), 1),
-        hasta: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59),
-      })
+    const p = String(periodo ?? 'mensual')
+    if (p === 'diario') {
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(hoy)
+        d.setDate(hoy.getDate() - i)
+        puntos.push({
+          label: d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+          desde: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0),
+          hasta: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
+        })
+      }
+    } else if (p === 'semanal') {
+      for (let i = 7; i >= 0; i--) {
+        const ini = new Date(hoy)
+        ini.setDate(hoy.getDate() - i * 7 - hoy.getDay() + 1)
+        ini.setHours(0, 0, 0, 0)
+        const fin = new Date(ini)
+        fin.setDate(ini.getDate() + 6)
+        fin.setHours(23, 59, 59, 999)
+        puntos.push({ label: `${ini.getDate()}/${ini.getMonth() + 1}`, desde: ini, hasta: fin })
+      }
+    } else {
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)
+        puntos.push({
+          label: d.toLocaleDateString('es-CO', { month: 'short' }),
+          desde: new Date(d.getFullYear(), d.getMonth(), 1),
+          hasta: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59),
+        })
+      }
     }
   }
 
@@ -249,15 +309,15 @@ export async function financieroPeriodo(req: Request, res: Response) {
     serie,
   ] = await Promise.all([
     // ── Período actual — Pagos únicos ──────────────────────────────────────
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoyInicio } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { lt:  hoyInicio, gte: desdeTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoyInicio,    lte: hastaTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { lt:  hoyInicio,    gte: desdeTotales } }, _sum: { monto: true } }),
     // ── Período actual — Cuotas ────────────────────────────────────────────
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoyInicio } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoyInicio, gte: desdeTotales } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoyInicio,    lte: hastaTotales } }, _sum: { monto: true } }),
+    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoyInicio,    gte: desdeTotales } }, _sum: { monto: true } }),
     // ── Período anterior — Pagos únicos ───────────────────────────────────
     prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
     prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),

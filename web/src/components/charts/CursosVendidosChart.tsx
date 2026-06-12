@@ -42,9 +42,7 @@ function truncar(nombre: string, max = 22) {
   return nombre.length > max ? nombre.slice(0, max - 1) + '…' : nombre
 }
 
-type Periodo = 'diario' | 'semanal' | 'mensual'
-
-export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
+export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: string }) {
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
@@ -57,9 +55,9 @@ export function CursosVendidosChart({ periodo = 'mensual' }: { periodo?: Periodo
   const labelColor    = isDark ? '#d6eaff' : '#001d3d'
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['cursos-vendidos', periodo],
+    queryKey: ['cursos-vendidos', desde, hasta],
     queryFn: async () => {
-      return apiFetch(`/reportes/cursos?periodo=${periodo}`) as Promise<{ data: CursoData[] }>
+      return apiFetch(`/reportes/cursos?desde=${desde}&hasta=${hasta}`) as Promise<{ data: CursoData[] }>
     },
     staleTime: 30_000,
   })

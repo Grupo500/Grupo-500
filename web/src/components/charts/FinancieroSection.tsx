@@ -13,12 +13,11 @@ import { TrendingUp, Wallet, Clock, AlertTriangle } from 'lucide-react'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 type Metrica = 'ventaTotal' | 'recaudo' | 'porCobrar' | 'mora'
-type Periodo = 'diario' | 'semanal' | 'mensual'
 
 interface Punto       { label: string; ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
 interface Totales     { ventaTotal: number; recaudo: number; porCobrar: number; mora: number }
 interface Variaciones { ventaTotal: number | null; recaudo: number | null; porCobrar: number | null; mora: number | null }
-interface Props       { periodo: Periodo }
+interface Props       { desde: string; hasta: string }
 
 // ── Config de métricas ──────────────────────────────────────────────────────
 const METRICS = [
@@ -77,16 +76,16 @@ function CustomTooltip({ active, payload, label, color }: any) {
 }
 
 // ── Componente principal ────────────────────────────────────────────────────
-export function FinancieroSection({ periodo }: Props) {
+export function FinancieroSection({ desde, hasta }: Props) {
   const [selected, setSelected] = useState<Metrica>('ventaTotal')
   const { resolvedTheme: theme } = useTheme()
   const isDark                   = theme === 'dark'
   const temaListo                = theme !== undefined
 
   const { data, isLoading } = useQuery({
-    queryKey: ['financiero-periodo', periodo],
+    queryKey: ['financiero-periodo', desde, hasta],
     queryFn: async () => {
-      return apiFetch(`/reportes/financiero-periodo?periodo=${periodo}`) as Promise<{
+      return apiFetch(`/reportes/financiero-periodo?desde=${desde}&hasta=${hasta}`) as Promise<{
         data: { totales: Totales; variaciones: Variaciones; puntos: Punto[] }
       }>
     },
@@ -101,12 +100,10 @@ export function FinancieroSection({ periodo }: Props) {
   const color  = isDark ? metric.colorDark : metric.colorLight
 
   // Label del período
-  const now = new Date()
-  const periodoLabel = periodo === 'diario'
-    ? `Hoy, ${now.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}`
-    : periodo === 'semanal'
-    ? 'Esta semana'
-    : now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+  const fmt = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })
+  const periodoLabel = desde === hasta
+    ? fmt(desde)
+    : `${fmt(desde)} – ${fmt(hasta)}`
 
   return (
     <div className="space-y-3">
