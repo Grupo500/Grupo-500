@@ -150,13 +150,6 @@ app.use('/api', rateLimit({
   message: { success: false, error: 'Límite por minuto alcanzado.' },
 }))
 
-// Rate limiting estricto en auth — contar TODOS los intentos (exitosos y fallidos)
-app.use('/api/auth', rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
-  skipSuccessfulRequests: false,
-  message: { success: false, error: 'Demasiados intentos de autenticación.' }
-}))
 
 // Health check profundo — valida DB antes de retornar 200
 app.get('/health', async (_req, res) => {
