@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Loader2, Clock, Users, Search, CalendarDays, Power, Package, RefreshCw, X } from 'lucide-react'
+import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -179,7 +179,6 @@ export default function CursosPage() {
 
   const [busqueda,     setBusqueda]     = useState('')
   const [filtroActivo, setFiltroActivo] = useState<'todos' | 'activos' | 'inactivos'>('activos')
-  const [syncResult,   setSyncResult]   = useState<{ total: number; creados: number; actualizados: number } | null>(null)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getClientToken()
@@ -204,12 +203,14 @@ export default function CursosPage() {
 
   const sincronizarMutation = useMutation({
     mutationFn: () => fetcher<any>('/hotmart/sincronizar', { method: 'POST' }),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['cursos'] })
-      setSyncResult(res.data)
-    },
-    onError: (e: Error) => alert(e.message || 'Error al sincronizar con Hotmart'),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
   })
+
+  // Sincronización automática al montar la página (solo admin)
+  useEffect(() => {
+    if (isAdmin) sincronizarMutation.mutate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin])
 
   const cursosTodos: Curso[] = data?.data ?? []
   const cursos = cursosTodos.filter(c => {
@@ -229,34 +230,12 @@ export default function CursosPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Cursos"
-        subtitle={`${cursos.length} curso${cursos.length !== 1 ? 's' : ''}`}
-        actions={isAdmin ? (
-          <button
-            onClick={() => { setSyncResult(null); sincronizarMutation.mutate() }}
-            disabled={sincronizarMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] disabled:opacity-50 transition-all duration-150 cursor-pointer"
-          >
-            <RefreshCw className={`w-4 h-4 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">
-              {sincronizarMutation.isPending ? 'Sincronizando...' : 'Sincronizar Hotmart'}
-            </span>
-          </button>
-        ) : undefined}
+        subtitle={
+          sincronizarMutation.isPending
+            ? 'Actualizando desde Hotmart...'
+            : `${cursos.length} curso${cursos.length !== 1 ? 's' : ''}`
+        }
       />
-
-      {/* Resultado de sincronización */}
-      {syncResult && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 bg-secondary/8 border border-secondary/20 rounded-xl text-sm text-on-surface">
-          <span>
-            Sincronización completa — <strong>{syncResult.creados}</strong> nuevos,{' '}
-            <strong>{syncResult.actualizados}</strong> actualizados,{' '}
-            <strong>{syncResult.total}</strong> en total.
-          </span>
-          <button onClick={() => setSyncResult(null)} className="p-1 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
 
       {/* Barra de filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
