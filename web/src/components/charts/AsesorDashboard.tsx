@@ -130,7 +130,7 @@ export function AsesorDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProximosCobros />
+        <ProximosCobros desde={new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)} hasta={new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10)} />
       </div>
     </div>
   )
