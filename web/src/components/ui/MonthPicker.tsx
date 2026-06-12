@@ -21,6 +21,7 @@ interface Props {
   dateRange: DateRange | null
   onChange: (month: string | null, range: DateRange | null) => void
   alignRight?: boolean
+  iconOnly?: boolean
 }
 
 function buildDays(base: Date): Date[] {
@@ -32,7 +33,7 @@ function buildDays(base: Date): Date[] {
   return days
 }
 
-export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRight = false }: Props) {
+export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRight = false, iconOnly = false }: Props) {
   const [open,     setOpen]     = useState(false)
   const [step,     setStep]     = useState<'month' | 'days'>('month')
   const [viewYear, setViewYear] = useState(() => {
@@ -120,17 +121,27 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
   return (
     <div ref={ref} className="relative">
       {/* Trigger */}
-      <button
-        onClick={() => setOpen(p => !p)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-high)] hover:border-[var(--primary)] text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] text-xs font-medium transition-all duration-150 focus:outline-none"
-      >
-        <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-        <span className="hidden sm:inline capitalize">{triggerLabel}</span>
-        {value === null && !dateRange && (
-          <span className="hidden sm:inline text-[var(--on-surface-variant)] opacity-60">(actual)</span>
-        )}
-        <ChevronRight className={`w-3 h-3 shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
-      </button>
+      {iconOnly ? (
+        <button
+          onClick={() => setOpen(p => !p)}
+          aria-label="Seleccionar período"
+          className={`w-9 h-9 rounded-xl bg-surface-high flex items-center justify-center transition-colors focus:outline-none ${open ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface'}`}
+        >
+          <CalendarDays className="w-4 h-4" />
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(p => !p)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-high)] hover:border-[var(--primary)] text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] text-xs font-medium transition-all duration-150 focus:outline-none"
+        >
+          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden sm:inline capitalize">{triggerLabel}</span>
+          {value === null && !dateRange && (
+            <span className="hidden sm:inline text-[var(--on-surface-variant)] opacity-60">(actual)</span>
+          )}
+          <ChevronRight className={`w-3 h-3 shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
+        </button>
+      )}
 
       {/* Popover */}
       {open && (

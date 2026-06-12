@@ -22,7 +22,6 @@ export default async function DashboardPage() {
     <DashboardWrapper
       firstName={firstName}
       saludo={saludo}
-      userImage={session?.user?.image ?? null}
     />
   )
 }

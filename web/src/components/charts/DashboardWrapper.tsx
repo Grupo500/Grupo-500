@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
-import Image from 'next/image'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { FinancieroSection } from './FinancieroSection'
 import { EstudiantesMes } from './EstudiantesMes'
@@ -24,10 +23,9 @@ function getRangeFromMonth(month: string | null): { desde: string; hasta: string
 interface Props {
   firstName: string
   saludo: string
-  userImage?: string | null
 }
 
-export function DashboardWrapper({ firstName, saludo, userImage }: Props) {
+export function DashboardWrapper({ firstName, saludo }: Props) {
   const now          = new Date()
   const currentMonth = format(now, 'yyyy-MM')
 
@@ -55,38 +53,28 @@ export function DashboardWrapper({ firstName, saludo, userImage }: Props) {
     <div className="space-y-3 animate-fade-in">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          {userImage && (
-            <Image
-              src={userImage}
-              alt={firstName}
-              width={46}
-              height={46}
-              className="rounded-full md:hidden flex-shrink-0 ring-2 ring-[#2094ff]/25"
-            />
-          )}
-          <div>
-            <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
-              <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
-              <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
-            </h1>
-            <div className="mt-0.5">
-              <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Período de análisis</p>
-              <p className="text-[13px] font-semibold text-on-surface capitalize leading-tight">{periodoLabel}</p>
-            </div>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+            <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
+            <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
+          </h1>
+          <div className="mt-2">
+            <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Período de análisis</p>
+            <p className="text-[13px] font-semibold text-on-surface capitalize leading-tight mt-0.5">{periodoLabel}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 pt-1">
           <MonthPicker
             value={month}
             currentMonth={currentMonth}
             dateRange={dateRange}
             onChange={handleChange}
             alignRight
+            iconOnly
           />
-          <button className="w-9 h-9 rounded-xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors relative">
+          <button className="w-9 h-9 rounded-xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
             <Bell className="w-4 h-4" />
           </button>
           <RefreshButton />
