@@ -358,26 +358,42 @@ export default function ReportesPage() {
               <ColombiaMap departamentos={departamentos} totalDep={demografia?.totalDep ?? 0} />
             </div>
 
-            {/* Top 10 ciudades */}
+            {/* Top 10 ciudades — ranking con barras de progreso */}
             <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
               <p className="text-[12px] font-semibold text-on-surface mb-4">Top 10 ciudades</p>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart
-                  layout="vertical"
-                  data={ciudades}
-                  margin={{ left: 8, right: 24, top: 0, bottom: 0 }}
-                >
-                  <XAxis type="number" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis type="category" dataKey="nombre" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={90} />
-                  <Tooltip formatter={(v: number) => [`${v} estudiantes`, 'Cantidad']}
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }} />
-                  <Bar dataKey="cantidad" radius={[0, 4, 4, 0]}>
-                    {ciudades.map((c, i) => (
-                      <Cell key={i} fill={colorCiudad(c.departamento, i)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="space-y-3">
+                {(() => {
+                  const maxCiudad = Math.max(...ciudades.map(c => c.cantidad), 1)
+                  return ciudades.map((c, i) => {
+                    const color = colorCiudad(c.departamento, i)
+                    return (
+                      <div key={c.nombre} className="flex items-center gap-3">
+                        <span className="text-[11px] font-bold tabular-nums text-on-surface-variant w-5 text-right flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[12px] font-medium text-on-surface truncate">{c.nombre}</span>
+                            <span className="text-[11px] text-on-surface-variant flex-shrink-0">
+                              <span className="font-bold text-on-surface">{c.cantidad}</span>
+                              {' '}estudiante{c.cantidad !== 1 ? 's' : ''} · {c.porcentaje}%
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-surface-high overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${Math.max((c.cantidad / maxCiudad) * 100, 4)}%`, background: color }} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                })()}
+              </div>
+              {ciudades.length > 0 && ciudades[0].departamento !== undefined && (
+                <p className="text-[10px] text-on-surface-variant/60 mt-4">
+                  El color de cada ciudad corresponde a su departamento
+                </p>
+              )}
             </div>
 
           </div>
