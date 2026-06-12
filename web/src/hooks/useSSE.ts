@@ -42,6 +42,7 @@ export function useSSE() {
       es.addEventListener('nuevo-estudiante', () => {
         startTransition(() => {
           queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+          queryClient.invalidateQueries({ queryKey: ['cursos'] })
           queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
           queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
           queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })

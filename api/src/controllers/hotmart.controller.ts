@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 import { logger } from '../utils/logger'
 import { auditLog } from '../utils/auditLogger'
+import { broadcast } from '../utils/sseManager'
 
 // ---------------------------------------------------------------------------
 // Tipos del payload de Hotmart
@@ -181,6 +182,8 @@ export async function webhook(req: Request, res: Response) {
   })
 
   logger.info(`[Hotmart] Pago registrado: ${pago.id} — $${monto} ${purchase.price.currencyValue}`)
+  broadcast('nuevo-estudiante', { estudianteId: estudiante.id, cursoId: curso.id })
+  broadcast('pago-registrado', { pagoId: pago.id, estudianteId: estudiante.id })
   auditLog(
     req as any,
     'CREATE',
