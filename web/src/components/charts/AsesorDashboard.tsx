@@ -129,9 +129,16 @@ export function AsesorDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProximosCobros desde={new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)} hasta={new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10)} />
-      </div>
+      {(() => {
+        const hoy   = new Date()
+        const desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10)
+        const hasta  = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10)
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ProximosCobros desde={desde} hasta={hasta} />
+          </div>
+        )
+      })()}
     </div>
   )
 }
