@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
-
-const GEO_URL = '/colombia.geo.json'
+import colombiaGeo from './colombia.geo.json'
 
 interface DeptData { nombre: string; cantidad: number; porcentaje: number }
 interface Props { departamentos: DeptData[]; totalDep: number }
@@ -54,16 +53,14 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
   function getFill(rawName: string): string {
     const nombre = NAME_MAP[rawName] ?? rawName
     const d = dataMap[nombre]
-    if (!d || d.cantidad === 0) return 'var(--surface-high)'
+    if (!d || d.cantidad === 0) return '#dce8f5'
     const ratio = d.cantidad / maxCantidad
-    return `rgba(32, 148, 255, ${0.15 + ratio * 0.8})`
+    return `rgba(32, 148, 255, ${0.2 + ratio * 0.75})`
   }
 
   function getStroke(rawName: string, hovered: boolean): string {
-    const nombre = NAME_MAP[rawName] ?? rawName
-    const d = dataMap[nombre]
     if (hovered) return '#2094ff'
-    return d && d.cantidad > 0 ? 'rgba(32,148,255,0.5)' : 'var(--outline-variant)'
+    return '#b0cce8'
   }
 
   return (
@@ -89,7 +86,7 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
         height={460}
         style={{ width: '100%', height: 'auto' }}
       >
-        <Geographies geography={GEO_URL}>
+        <Geographies geography={colombiaGeo as never}>
           {({ geographies }) =>
             geographies.map((geo) => {
               const rawName = geo.properties.NOMBRE_DPT as string
