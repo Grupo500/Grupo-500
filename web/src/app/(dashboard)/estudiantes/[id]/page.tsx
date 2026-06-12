@@ -1627,6 +1627,7 @@ function ConfirmarMatriculaBtn({ estudianteId, verificado, verificadoPor, verifi
       queryClient.invalidateQueries({ queryKey: ['estudiante', estudianteId] })
       setConfirm(false)
     },
+    onError: (e: Error) => { alert(e.message || 'Error al actualizar la verificación'); setConfirm(false) },
   })
 
   if (verificado) {
@@ -1685,11 +1686,13 @@ function TabObservaciones({ estudianteId, fetcher, isAdmin }: {
       queryClient.invalidateQueries({ queryKey: ['observaciones', estudianteId] })
       setTexto('')
     },
+    onError: (e: Error) => alert(e.message || 'Error al guardar la observación'),
   })
 
   const eliminarMutation = useMutation({
     mutationFn: (obsId: string) => fetcher(`/estudiantes/${estudianteId}/observaciones/${obsId}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['observaciones', estudianteId] }),
+    onError: (e: Error) => alert(e.message || 'Error al eliminar la observación'),
   })
 
   const obs = data?.data ?? []
@@ -1795,6 +1798,7 @@ export default function EstudianteDetallePage() {
       queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
       router.push('/estudiantes')
     },
+    onError: (e: Error) => alert(e.message || 'Error al eliminar el estudiante'),
   })
 
   const handleRefresh = () => {

@@ -388,11 +388,13 @@ export default function FormulariosPage() {
   const eliminar = useMutation({
     mutationFn: (id: string) => apiFetch(`/formularios/${id}`, { method: 'DELETE' }),
     onSuccess:  () => { queryClient.invalidateQueries({ queryKey: ['formularios'] }); setConfirmDel(null) },
+    onError:    (e: Error) => { showToast(e.message || 'Error al eliminar el formulario'); setConfirmDel(null) },
   })
   const toggle = useMutation({
     mutationFn: ({ id, field, value }: { id: string; field: string; value: boolean }) =>
       apiFetch(`/formularios/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: value }) }),
     onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['formularios'] }),
+    onError:    (e: Error) => showToast(e.message || 'Error al actualizar el formulario'),
     onSettled:  () => setTogglingId(null),
   })
 
@@ -404,6 +406,7 @@ export default function FormulariosPage() {
       setEditNombre(null)
       showToast('Nombre actualizado')
     },
+    onError: (e: Error) => showToast(e.message || 'Error al renombrar el formulario'),
   })
 
   function handleCopyLink(id: string) {

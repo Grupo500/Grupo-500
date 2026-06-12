@@ -312,6 +312,7 @@ export default function CursosPage() {
       setModalCrear(false)
       setForm(emptyForm)
     },
+    onError: (e: Error) => alert(e.message || 'Error al crear el curso'),
   })
 
   const editarMutation = useMutation({
@@ -324,6 +325,7 @@ export default function CursosPage() {
       queryClient.invalidateQueries({ queryKey: ['cursos'] })
       setEditCurso(null)
     },
+    onError: (e: Error) => alert(e.message || 'Error al guardar el curso'),
   })
 
   const toggleActivoMutation = useMutation({
@@ -334,6 +336,7 @@ export default function CursosPage() {
         body: JSON.stringify({ activo }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
+    onError: (e: Error) => alert(e.message || 'Error al cambiar el estado del curso'),
   })
 
   const abrirEditar = (c: Curso) => {

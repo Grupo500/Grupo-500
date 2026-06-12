@@ -16,10 +16,7 @@ export function ThemeColorSync() {
   const { resolvedTheme } = useTheme()
 
   useEffect(() => {
-    if (!resolvedTheme) {
-      console.log('[ThemeColorSync] resolvedTheme es undefined, saliendo')
-      return
-    }
+    if (!resolvedTheme) return
 
     const color = resolvedTheme === 'dark' ? THEME_COLORS.dark : THEME_COLORS.light
 

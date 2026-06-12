@@ -754,6 +754,7 @@ export default function ColegiosPage() {
       setModalCrearColegio(false)
       setFormColegio({ nombre: '', ciudad: '', contactoNombre: '', contactoEmail: '', contactoTelefono: '' })
     },
+    onError: (e: Error) => alert(e.message || 'Error al crear el colegio'),
   })
 
   const editarColegioMutation = useMutation({
@@ -809,6 +810,7 @@ export default function ColegiosPage() {
   const eliminarNegMutation = useMutation({
     mutationFn: (id: string) => fetcher(`/negociaciones/${id}`, { method: 'DELETE' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['negociaciones'] }); setModalEditarNeg(null) },
+    onError: (e: Error) => alert(e.message || 'Error al eliminar la negociación'),
   })
 
   const abrirEditarNeg = (neg: Negociacion) => {

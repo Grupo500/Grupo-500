@@ -51,12 +51,14 @@ export default function UsuariosPage() {
         body: JSON.stringify({ role }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
+    onError: (e: Error) => alert(e.message || 'Error al cambiar el rol'),
   })
 
   const eliminar = useMutation({
     mutationFn: (id: string) =>
       fetcher(`/auth/usuarios/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
+    onError: (e: Error) => alert(e.message || 'Error al eliminar el usuario'),
   })
 
   const guardarAsesor = useMutation({
