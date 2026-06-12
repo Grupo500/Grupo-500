@@ -258,13 +258,26 @@ export async function sincronizarProductos(_req: Request, res: Response) {
       `https://developers.hotmart.com/products/api/v1/product?${params}`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
+    const rawText = await apiRes.text()
+    logger.info(`[Hotmart] Productos API status: ${apiRes.status} body: ${rawText.slice(0, 300)}`)
+
     if (!apiRes.ok) {
-      const text = await apiRes.text()
-      logger.error(`[Hotmart] Error al obtener productos: ${apiRes.status} ${text}`)
+      logger.error(`[Hotmart] Error al obtener productos: ${apiRes.status} ${rawText}`)
       return res.status(apiRes.status).json({ success: false, error: 'Error al obtener productos de Hotmart' })
     }
+    if (!rawText) {
+      logger.warn('[Hotmart] La API de productos devolvió body vacío')
+      break
+    }
 
-    const json = await apiRes.json() as { items?: any[]; page_info?: { next_page_token?: string } }
+    let json: { items?: any[]; page_info?: { next_page_token?: string } }
+    try {
+      json = JSON.parse(rawText)
+    } catch {
+      logger.error(`[Hotmart] Respuesta no-JSON de productos: ${rawText.slice(0, 300)}`)
+      return res.status(500).json({ success: false, error: 'Respuesta inválida de Hotmart' })
+    }
+
     allItems = allItems.concat(json.items ?? [])
     pageToken = json.page_info?.next_page_token
   } while (pageToken)
