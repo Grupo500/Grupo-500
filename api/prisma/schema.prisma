@@ -203,6 +203,7 @@ model Curso {
   simulacros        Int?
   visibleEnLanding  Boolean           @default(false)
   cuposDisponibles  Int?
+  hotmartProductId  String?           @unique
   estudiantes       CursoEstudiante[]
 }
 

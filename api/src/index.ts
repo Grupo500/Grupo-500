@@ -38,6 +38,7 @@ import eventosRoutes from './routes/eventos'
 import passkeysRoutes from './routes/passkeys'
 import inscripcionRoutes from './routes/inscripcion'
 import formulariosRoutes from './routes/formularios'
+import hotmartRoutes from './routes/hotmart'
 
 const app = express()
 
@@ -107,8 +108,9 @@ app.use(cors({
 // Responder preflight OPTIONS en todas las rutas
 app.options('*', cors())
 
-// ⚠️ Webhooks de Clerk ANTES del JSON middleware — necesita raw body para verificar firma
+// ⚠️ Webhooks ANTES del JSON middleware — necesitan raw body para verificar firma
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes)
+app.use('/api/hotmart/webhook', express.raw({ type: 'application/json' }))
 
 // Compresión y body parsing (para el resto de rutas)
 app.use(compression())
@@ -189,6 +191,7 @@ app.use('/api/formularios',  formulariosRoutes)
 app.use('/api/hubspot',      hubspotRoutes)
 app.use('/api/eventos',     eventosRoutes)
 app.use('/api/passkeys',    passkeysRoutes)
+app.use('/api/hotmart',     hotmartRoutes)
 
 // Sentry error handler — debe ir ANTES del errorHandler custom y DESPUÉS de todas las rutas
 if (process.env.SENTRY_DSN) {
