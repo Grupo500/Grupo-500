@@ -90,12 +90,24 @@ export async function webhook(req: Request, res: Response) {
     return res.status(200).json({ success: true, message: 'Ya procesado' })
   }
 
-  // Buscar el curso por hotmartProductId
-  const curso = await prisma.curso.findFirst({
-    where: { hotmartProductId: String(product.id) },
+  // Buscar o crear el curso por hotmartProductId
+  const productId = String(product.id)
+  let curso = await prisma.curso.findFirst({
+    where: { hotmartProductId: productId },
   })
   if (!curso) {
-    logger.warn(`[Hotmart] Producto ${product.id} (${product.name}) no tiene curso vinculado`)
+    const tipoCurso = /combo/i.test(product.name) ? 'COMBO' : 'INDIVIDUAL'
+    curso = await prisma.curso.create({
+      data: {
+        nombre: product.name,
+        precio: purchase.price.value,
+        tipoCurso,
+        activo: true,
+        duracionHoras: 0,
+        hotmartProductId: productId,
+      },
+    })
+    logger.info(`[Hotmart] Curso creado automáticamente: ${product.name} (ID: ${productId})`)
   }
 
   // Buscar o crear estudiante
