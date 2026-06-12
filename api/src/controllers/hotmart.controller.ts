@@ -27,6 +27,12 @@ interface HotmartProduct {
   name: string
 }
 
+interface HotmartAffiliate {
+  affiliate_name: string
+  affiliate_email?: string
+  affiliate_code?: string
+}
+
 interface HotmartPayload {
   event: string
   hottok?: string
@@ -34,6 +40,7 @@ interface HotmartPayload {
     buyer: HotmartBuyer
     purchase: HotmartPurchase
     product: HotmartProduct
+    affiliates?: HotmartAffiliate[]
   }
 }
 
@@ -69,7 +76,7 @@ export async function webhook(req: Request, res: Response) {
     return res.status(200).json({ success: true, message: 'Evento ignorado' })
   }
 
-  const { buyer, purchase, product } = data
+  const { buyer, purchase, product, affiliates } = data
   const transaccion = purchase.transaction
 
   logger.info(`[Hotmart] Procesando compra ${transaccion} de ${buyer.email}`)
@@ -111,6 +118,28 @@ export async function webhook(req: Request, res: Response) {
     logger.info(`[Hotmart] Estudiante creado: ${estudiante.id} (${buyer.email})`)
   }
 
+  // Identificar asesor por el afiliado de Hotmart
+  let asesorId: string | undefined
+  const affiliateEmail = affiliates?.[0]?.affiliate_email
+  if (affiliateEmail) {
+    const asesor = await prisma.asesor.findFirst({
+      where: { email: { equals: affiliateEmail, mode: 'insensitive' } },
+    })
+    if (asesor) {
+      asesorId = asesor.id
+      logger.info(`[Hotmart] Asesor identificado: ${asesor.nombre} (${affiliateEmail})`)
+      // Asignar al estudiante si aún no tiene asesor
+      if (!estudiante.asesorId) {
+        await prisma.estudiante.update({
+          where: { id: estudiante.id },
+          data: { asesorId },
+        })
+      }
+    } else {
+      logger.warn(`[Hotmart] Afiliado ${affiliateEmail} no encontrado como asesor en la app`)
+    }
+  }
+
   // Matricular al curso si no está ya matriculado
   if (curso) {
     await prisma.cursoEstudiante.upsert({
@@ -135,6 +164,7 @@ export async function webhook(req: Request, res: Response) {
       fechaVencimiento: fechaPago,
       fechaPago,
       notas: `Compra Hotmart — Producto: ${product.name} (ID: ${product.id})`,
+      ...(asesorId && { asesorId }),
     },
   })
 
