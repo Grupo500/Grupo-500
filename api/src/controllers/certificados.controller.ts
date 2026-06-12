@@ -20,7 +20,13 @@ export async function listar(req: Request, res: Response) {
   const { nombre, page = '1', limit = '20' } = req.query
   const skip = (Number(page) - 1) * Number(limit)
 
+  // VENDEDOR solo ve certificados de sus propios estudiantes
+  const asesorFilter = req.userRole === 'VENDEDOR' && req.asesorId
+    ? { estudiante: { asesorId: req.asesorId } }
+    : {}
+
   const where = {
+    ...asesorFilter,
     ...(nombre && { estudiante: { nombre: { contains: String(nombre), mode: 'insensitive' as const } } }),
   }
 

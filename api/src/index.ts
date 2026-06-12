@@ -1,15 +1,27 @@
+import * as Sentry from '@sentry/node'
 import express, { Request, Response, NextFunction } from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
 import compression from 'compression'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
+import crypto from 'crypto'
 import { errorHandler } from './middleware/errorHandler'
 import { logger } from './utils/logger'
 import { validateEnv } from './utils/validateEnv'
+import { prisma } from './config/prisma'
 
 // Falla rápido si faltan variables críticas — antes de cualquier otra inicialización
 validateEnv()
+
+// Sentry — inicializar antes de todo lo demás para capturar errores desde el arranque
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 0.2,
+  })
+}
 
 // Routes
 import authRoutes from './routes/auth'
@@ -41,6 +53,12 @@ const PORT = process.env.PORT || 3001
 
 // Railway y proxies inversos envían X-Forwarded-For — necesario para rate-limit y HTTPS
 app.set('trust proxy', 1)
+
+// Correlation ID — agrega reqId único a cada request para trazabilidad en logs
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  (req as Request & { reqId: string }).reqId = crypto.randomUUID()
+  next()
+})
 
 // Timeout por request — evita que queries lentas bloqueen workers indefinidamente
 app.use((_req: Request, res: Response, next: NextFunction) => {
@@ -105,10 +123,20 @@ app.use(compression())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Logging HTTP
+// Logging HTTP con reqId para trazabilidad
 app.use(morgan('combined', {
-  stream: { write: (msg) => logger.info(msg.trim()) }
+  stream: {
+    write: (msg) => {
+      logger.info(msg.trim())
+    }
+  }
 }))
+
+// Loguear reqId en cada request entrante
+app.use((req: Request & { reqId?: string }, _res: Response, next: NextFunction) => {
+  logger.info({ reqId: req.reqId, method: req.method, url: req.url })
+  next()
+})
 
 // Rate limiting global
 app.use('/api', rateLimit({
@@ -137,9 +165,14 @@ app.use('/api/auth', rateLimit({
   message: { success: false, error: 'Demasiados intentos de autenticación.' }
 }))
 
-// Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+// Health check profundo — valida DB antes de retornar 200
+app.get('/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ status: 'ok', db: 'ok', timestamp: new Date().toISOString() })
+  } catch {
+    res.status(503).json({ status: 'error', db: 'unreachable', timestamp: new Date().toISOString() })
+  }
 })
 
 // Rutas

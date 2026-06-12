@@ -37,6 +37,8 @@ const securityHeaders = [
       "worker-src 'self' blob:",
       // Manifest PWA
       "manifest-src 'self'",
+      // Impide que la app sea embebida en iframes externos (clickjacking)
+      "frame-ancestors 'none'",
     ].join('; '),
   },
 ]
