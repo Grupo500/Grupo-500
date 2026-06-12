@@ -192,11 +192,25 @@ export async function financieroPeriodo(req: Request, res: Response) {
   let hastaAnterior: Date
 
   if (desdeQ && hastaQ) {
-    desdeTotales  = new Date(String(desdeQ) + 'T00:00:00')
-    hastaTotales  = new Date(String(hastaQ) + 'T23:59:59')
-    const duracionMs = hastaTotales.getTime() - desdeTotales.getTime()
-    desdeAnterior = new Date(desdeTotales.getTime() - duracionMs - 86400000)
-    hastaAnterior = new Date(desdeTotales.getTime() - 1)
+    desdeTotales = new Date(String(desdeQ) + 'T00:00:00')
+    hastaTotales = new Date(String(hastaQ) + 'T23:59:59')
+
+    // Si el período aún está en curso (hasta > hoy), comparar solo los días
+    // transcurridos: junio 1–12 vs mayo 1–12, no junio 1–30 vs mayo 1–31
+    const hoyFin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+    const efectivoHasta = hastaTotales > hoyFin ? hoyFin : hastaTotales
+
+    // Usar efectivoHasta para queries actuales (no contar días futuros sin datos)
+    hastaTotales = efectivoHasta
+
+    const diasTranscurridos = Math.round((efectivoHasta.getTime() - desdeTotales.getTime()) / 86400000)
+    const duracionTotal     = Math.round((new Date(String(hastaQ) + 'T23:59:59').getTime() - desdeTotales.getTime()) / 86400000) + 1
+
+    desdeAnterior = new Date(desdeTotales)
+    desdeAnterior.setDate(desdeTotales.getDate() - duracionTotal)
+    hastaAnterior = new Date(desdeAnterior)
+    hastaAnterior.setDate(desdeAnterior.getDate() + diasTranscurridos)
+    hastaAnterior.setHours(23, 59, 59)
   } else {
     const p = String(periodo ?? 'mensual')
     if (p === 'diario') {
