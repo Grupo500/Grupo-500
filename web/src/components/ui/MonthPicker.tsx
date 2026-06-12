@@ -65,6 +65,14 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
 
   const selected = value ?? currentMonth
 
+  function handleSelectYear() {
+    const start = new Date(viewYear, 0, 1)
+    const end   = new Date(viewYear, 11, 31)
+    setRangeStart(start); setRangeEnd(end)
+    onChange(null, { start, end })
+    setOpen(false); setStep('month')
+  }
+
   function handleSelectMonth(monthKey: string) {
     const [y, m] = monthKey.split('-').map(Number)
     setCalBase(new Date(y, m - 1, 1))
@@ -95,8 +103,15 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
   const labelDate = selected ? new Date(selected + '-15') : now
   const monthLabel = format(labelDate, 'MMM yyyy', { locale: es })
 
+  const isFullYear = dateRange?.start && dateRange?.end
+    && dateRange.start.getMonth() === 0 && dateRange.start.getDate() === 1
+    && dateRange.end.getMonth() === 11 && dateRange.end.getDate() === 31
+    && dateRange.start.getFullYear() === dateRange.end.getFullYear()
+
   let triggerLabel = monthLabel
-  if (dateRange?.start && dateRange?.end) {
+  if (isFullYear) {
+    triggerLabel = `${dateRange!.start.getFullYear()}`
+  } else if (dateRange?.start && dateRange?.end) {
     const s = format(dateRange.start, "d MMM", { locale: es })
     const e = format(dateRange.end,   "d MMM", { locale: es })
     triggerLabel = `${monthLabel} · ${s}–${e}`
@@ -134,7 +149,13 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                <span className="text-[var(--on-surface)] text-sm font-semibold">{viewYear}</span>
+                <button
+                  onClick={handleSelectYear}
+                  title="Seleccionar año completo"
+                  className="text-[var(--on-surface)] text-sm font-semibold hover:text-[var(--primary)] transition-colors px-1 rounded"
+                >
+                  {viewYear}
+                </button>
                 <button
                   onClick={() => setViewYear(y => y + 1)}
                   disabled={viewYear >= now.getFullYear()}

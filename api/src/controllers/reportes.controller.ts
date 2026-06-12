@@ -593,32 +593,72 @@ export async function demografia(_req: Request, res: Response) {
   })
 }
 
-// ── Estudiantes por mes: ingresos del año en curso ──────────────────────────
-export async function estudiantesPorMes(_req: Request, res: Response) {
-  const hoy  = new Date()
-  const anio = hoy.getFullYear()
+// ── Estudiantes por período: adapta granularidad según rango ─────────────────
+export async function estudiantesPorMes(req: Request, res: Response) {
+  const hoy = new Date()
+  const { desde: desdeQ, hasta: hastaQ } = req.query
 
-  const meses = Array.from({ length: 12 }, (_, i) => {
-    const desde = new Date(anio, i, 1)
-    const hasta = new Date(anio, i + 1, 0, 23, 59, 59)
-    return { mes: i, desde, hasta }
-  })
+  let desdeDate: Date
+  let hastaDate: Date
+
+  if (desdeQ && hastaQ) {
+    desdeDate = new Date(String(desdeQ) + 'T00:00:00')
+    hastaDate = new Date(String(hastaQ) + 'T23:59:59')
+  } else {
+    desdeDate = new Date(hoy.getFullYear(), 0, 1)
+    hastaDate = new Date(hoy.getFullYear(), 11, 31, 23, 59, 59)
+  }
+
+  const diasRango = Math.round((hastaDate.getTime() - desdeDate.getTime()) / 86400000) + 1
+
+  type Punto = { label: string; desde: Date; hasta: Date }
+  const puntos: Punto[] = []
+
+  if (diasRango <= 14) {
+    for (let i = 0; i < diasRango; i++) {
+      const d = new Date(desdeDate)
+      d.setDate(desdeDate.getDate() + i)
+      puntos.push({
+        label: d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+        desde: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0),
+        hasta: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
+      })
+    }
+  } else if (diasRango <= 60) {
+    let cursor = new Date(desdeDate)
+    while (cursor <= hastaDate) {
+      const finSem = new Date(cursor)
+      finSem.setDate(cursor.getDate() + 6)
+      if (finSem > hastaDate) finSem.setTime(hastaDate.getTime())
+      finSem.setHours(23, 59, 59)
+      puntos.push({ label: `${cursor.getDate()}/${cursor.getMonth() + 1}`, desde: new Date(cursor), hasta: new Date(finSem) })
+      cursor.setDate(cursor.getDate() + 7)
+    }
+  } else {
+    let cursor = new Date(desdeDate.getFullYear(), desdeDate.getMonth(), 1)
+    while (cursor <= hastaDate) {
+      const finMes = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59)
+      const hasta  = finMes > hastaDate ? hastaDate : finMes
+      puntos.push({
+        label: cursor.toLocaleDateString('es-CO', { month: 'short' }),
+        desde: new Date(cursor),
+        hasta: new Date(hasta),
+      })
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+    }
+  }
 
   const resultados = await Promise.all(
-    meses.map(async ({ mes, desde, hasta }) => {
-      const count = await prisma.estudiante.count({
+    puntos.map(async ({ label, desde, hasta }) => {
+      const cantidad = await prisma.estudiante.count({
         where: { createdAt: { gte: desde, lte: hasta } },
       })
-      return {
-        label: desde.toLocaleDateString('es-CO', { month: 'short' }),
-        mes,
-        cantidad: count,
-      }
+      return { label, cantidad }
     })
   )
 
   const total = resultados.reduce((s, r) => s + r.cantidad, 0)
-  return ApiResponse.success(res, { meses: resultados, total, anio })
+  return ApiResponse.success(res, { puntos: resultados, total })
 }
 
 // ── Marketing: fuentes de contacto ──────────────────────────────────────────

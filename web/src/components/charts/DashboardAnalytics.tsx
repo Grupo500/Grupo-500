@@ -55,7 +55,7 @@ export function DashboardAnalytics() {
 
       {/* ── Estudiantes por mes + Cursos más vendidos ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <EstudiantesMes />
+        <EstudiantesMes desde={desde} hasta={hasta} />
         <CursosVendidosChart desde={desde} hasta={hasta} />
       </div>
 
