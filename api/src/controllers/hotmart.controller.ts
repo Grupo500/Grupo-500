@@ -203,12 +203,21 @@ async function getAccessToken(): Promise<string> {
     body: 'grant_type=client_credentials',
   })
 
+  const text = await res.text()
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`[Hotmart] Error al obtener token: ${res.status} ${text}`)
+    throw new Error(`[Hotmart] Error al obtener token: ${res.status} — ${text}`)
+  }
+  if (!text) {
+    throw new Error(`[Hotmart] Respuesta vacía al obtener token (status ${res.status})`)
   }
 
-  const json = await res.json() as { access_token: string; expires_in: number }
+  let json: { access_token: string; expires_in: number }
+  try {
+    json = JSON.parse(text)
+  } catch {
+    throw new Error(`[Hotmart] Respuesta no-JSON al obtener token: ${text.slice(0, 200)}`)
+  }
+
   cachedToken = {
     token: json.access_token,
     expiresAt: Date.now() + json.expires_in * 1000,
@@ -223,10 +232,19 @@ export async function sincronizarProductos(_req: Request, res: Response) {
   const clientId     = process.env.HOTMART_CLIENT_ID
   const clientSecret = process.env.HOTMART_CLIENT_SECRET
   if (!clientId || !clientSecret) {
+    logger.error('[Hotmart] Variables HOTMART_CLIENT_ID o HOTMART_CLIENT_SECRET no configuradas')
     return res.status(503).json({ success: false, error: 'Hotmart API no configurada' })
   }
 
-  const token = await getAccessToken()
+  logger.info('[Hotmart] Iniciando sincronización de productos...')
+  let token: string
+  try {
+    token = await getAccessToken()
+    logger.info('[Hotmart] Token OAuth obtenido correctamente')
+  } catch (e: any) {
+    logger.error(`[Hotmart] Error al obtener token OAuth: ${e?.message}`)
+    return res.status(500).json({ success: false, error: `Error de autenticación Hotmart: ${e?.message}` })
+  }
 
   // Paginación: Hotmart devuelve max 50 por página
   let allItems: any[] = []
