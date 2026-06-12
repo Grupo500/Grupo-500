@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X } from 'lucide-react'
+import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X, RefreshCw } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -204,6 +204,7 @@ export default function CursosPage() {
   const sincronizarMutation = useMutation({
     mutationFn: () => fetcher<any>('/hotmart/sincronizar', { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
+    onError: (e: Error) => alert(`Error al sincronizar con Hotmart: ${e.message}`),
   })
 
   // Sincronización automática al montar la página (solo admin)
@@ -228,14 +229,26 @@ export default function CursosPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title="Cursos"
-        subtitle={
-          sincronizarMutation.isPending
-            ? 'Actualizando desde Hotmart...'
-            : `${cursos.length} curso${cursos.length !== 1 ? 's' : ''}`
-        }
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          title="Cursos"
+          subtitle={
+            sincronizarMutation.isPending
+              ? 'Actualizando desde Hotmart...'
+              : `${cursos.length} curso${cursos.length !== 1 ? 's' : ''}`
+          }
+        />
+        {isAdmin && (
+          <button
+            onClick={() => sincronizarMutation.mutate()}
+            disabled={sincronizarMutation.isPending}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
+            Sincronizar Hotmart
+          </button>
+        )}
+      </div>
 
       {/* Barra de filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
