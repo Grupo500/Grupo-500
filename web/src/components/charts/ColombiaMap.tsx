@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps'
 import colombiaGeo from './colombia.geo.json'
 
 interface DeptData { nombre: string; cantidad: number; porcentaje: number }
@@ -44,6 +44,15 @@ const NAME_MAP: Record<string, string> = {
   'ARCHIPIELAGO DE SAN ANDRES PROVIDENCIA Y SANTA CATALINA': 'San Andrés',
 }
 
+const SAN_ANDRES_RAW = 'ARCHIPIELAGO DE SAN ANDRES PROVIDENCIA Y SANTA CATALINA'
+
+// FeatureCollection solo con el archipiélago, para el inset con zoom
+const sanAndresGeo = {
+  type: 'FeatureCollection',
+  features: (colombiaGeo as { features: Array<{ properties: { NOMBRE_DPT: string } }> }).features
+    .filter(f => f.properties.NOMBRE_DPT === SAN_ANDRES_RAW),
+}
+
 export function ColombiaMap({ departamentos, totalDep }: Props) {
   const [tooltip, setTooltip] = useState<{ nombre: string; cantidad: number; porcentaje: number } | null>(null)
   const [hoveredRaw, setHoveredRaw] = useState<string | null>(null)
@@ -84,12 +93,14 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
       >
         <Geographies geography={colombiaGeo as never}>
           {({ geographies }) => {
+            // San Andrés se excluye del mapa principal: se muestra en el inset.
             // El departamento hovereado se dibuja al final para que su borde
             // no quede tapado por los paths vecinos
+            const continental = geographies.filter(g => g.properties.NOMBRE_DPT !== SAN_ANDRES_RAW)
             const ordered = hoveredRaw
-              ? [...geographies].sort((a, b) =>
+              ? [...continental].sort((a, b) =>
                   (a.properties.NOMBRE_DPT === hoveredRaw ? 1 : 0) - (b.properties.NOMBRE_DPT === hoveredRaw ? 1 : 0))
-              : geographies
+              : continental
             return ordered.map((geo) => {
               const rawName  = geo.properties.NOMBRE_DPT as string
               const nombre   = NAME_MAP[rawName] ?? rawName
@@ -118,39 +129,52 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
           }}
         </Geographies>
 
-        {/* Marcador San Andrés — islas quedan fuera del extent continental */}
-        {(() => {
-          const dSA = dataMap['San Andrés']
-          const hasSA = !!(dSA && dSA.cantidad > 0)
-          const isHoveredSA = hoveredRaw === '__SAN_ANDRES__'
-          return (
-            <Marker coordinates={[-77.5, 11.6]}>
-              <g
-                style={{ cursor: hasSA ? 'pointer' : 'default' }}
-                onMouseEnter={() => {
-                  setHoveredRaw('__SAN_ANDRES__')
-                  setTooltip({ nombre: 'San Andrés', cantidad: dSA?.cantidad ?? 0, porcentaje: dSA?.porcentaje ?? 0 })
-                }}
-                onMouseLeave={() => {
-                  setHoveredRaw(null)
-                  setTooltip(null)
-                }}
-              >
-                <circle
-                  r={8}
-                  fill={hasSA ? getFill('ARCHIPIELAGO DE SAN ANDRES PROVIDENCIA Y SANTA CATALINA') : '#dce8f5'}
-                  stroke={isHoveredSA ? '#2094ff' : '#b0cce8'}
-                  strokeWidth={isHoveredSA ? 1.5 : 0.8}
-                  style={{ transition: 'fill 150ms' }}
-                />
-                <text fontSize={9} textAnchor="middle" y={-13} fill="var(--on-surface-variant)" fontWeight={600} style={{ fontFamily: 'Inter, sans-serif' }}>
-                  San Andrés
-                </text>
-              </g>
-            </Marker>
-          )
-        })()}
       </ComposableMap>
+
+      {/* Inset San Andrés — recuadro con zoom a la isla (queda fuera del extent continental) */}
+      {(() => {
+        const dSA = dataMap['San Andrés']
+        const hasSA = !!(dSA && dSA.cantidad > 0)
+        const isHoveredSA = hoveredRaw === SAN_ANDRES_RAW
+        return (
+          <div
+            className={`absolute top-2 left-2 rounded-xl border bg-surface-lowest/80 backdrop-blur-sm overflow-hidden transition-colors ${isHoveredSA ? 'border-[#2094ff]' : 'border-[#b0cce8]'}`}
+            style={{ cursor: hasSA ? 'pointer' : 'default' }}
+            onMouseEnter={() => {
+              setHoveredRaw(SAN_ANDRES_RAW)
+              setTooltip({ nombre: 'San Andrés', cantidad: dSA?.cantidad ?? 0, porcentaje: dSA?.porcentaje ?? 0 })
+            }}
+            onMouseLeave={() => {
+              setHoveredRaw(null)
+              setTooltip(null)
+            }}
+          >
+            <ComposableMap
+              projection="geoMercator"
+              projectionConfig={{ center: [-81.713, 12.55], scale: 42000 }}
+              width={76}
+              height={76}
+              style={{ width: 76, height: 76, display: 'block' }}
+            >
+              <Geographies geography={sanAndresGeo as never}>
+                {({ geographies }) =>
+                  geographies.map((geo) => (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill={hasSA ? getFill(SAN_ANDRES_RAW) : '#dce8f5'}
+                      stroke={isHoveredSA ? '#2094ff' : '#b0cce8'}
+                      strokeWidth={isHoveredSA ? 1.5 : 0.8}
+                      style={{ default: { outline: 'none', transition: 'fill 150ms', pointerEvents: 'none' } }}
+                    />
+                  ))
+                }
+              </Geographies>
+            </ComposableMap>
+            <p className="text-[9px] font-semibold text-on-surface-variant text-center pb-1 -mt-1">San Andrés</p>
+          </div>
+        )
+      })()}
 
       {/* Leyenda escala */}
       {totalDep > 0 && (
