@@ -83,8 +83,14 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
         style={{ width: '100%', height: 'auto' }}
       >
         <Geographies geography={colombiaGeo as never}>
-          {({ geographies }) =>
-            geographies.map((geo) => {
+          {({ geographies }) => {
+            // El departamento hovereado se dibuja al final para que su borde
+            // no quede tapado por los paths vecinos
+            const ordered = hoveredRaw
+              ? [...geographies].sort((a, b) =>
+                  (a.properties.NOMBRE_DPT === hoveredRaw ? 1 : 0) - (b.properties.NOMBRE_DPT === hoveredRaw ? 1 : 0))
+              : geographies
+            return ordered.map((geo) => {
               const rawName  = geo.properties.NOMBRE_DPT as string
               const nombre   = NAME_MAP[rawName] ?? rawName
               const d        = dataMap[nombre]
@@ -109,16 +115,41 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
                 />
               )
             })
-          }
+          }}
         </Geographies>
 
         {/* Marcador San Andrés — islas quedan fuera del extent continental */}
-        <Marker coordinates={[-81.7, 12.55]}>
-          <circle r={4} fill="rgba(32,148,255,0.3)" stroke="rgba(32,148,255,0.6)" strokeWidth={1} />
-          <text fontSize={7} textAnchor="middle" y={-7} fill="var(--on-surface-variant)" style={{ fontFamily: 'Inter, sans-serif' }}>
-            San Andrés
-          </text>
-        </Marker>
+        {(() => {
+          const dSA = dataMap['San Andrés']
+          const hasSA = !!(dSA && dSA.cantidad > 0)
+          const isHoveredSA = hoveredRaw === '__SAN_ANDRES__'
+          return (
+            <Marker coordinates={[-77.5, 11.6]}>
+              <g
+                style={{ cursor: hasSA ? 'pointer' : 'default' }}
+                onMouseEnter={() => {
+                  setHoveredRaw('__SAN_ANDRES__')
+                  setTooltip({ nombre: 'San Andrés', cantidad: dSA?.cantidad ?? 0, porcentaje: dSA?.porcentaje ?? 0 })
+                }}
+                onMouseLeave={() => {
+                  setHoveredRaw(null)
+                  setTooltip(null)
+                }}
+              >
+                <circle
+                  r={8}
+                  fill={hasSA ? getFill('ARCHIPIELAGO DE SAN ANDRES PROVIDENCIA Y SANTA CATALINA') : '#dce8f5'}
+                  stroke={isHoveredSA ? '#2094ff' : '#b0cce8'}
+                  strokeWidth={isHoveredSA ? 1.5 : 0.8}
+                  style={{ transition: 'fill 150ms' }}
+                />
+                <text fontSize={9} textAnchor="middle" y={-13} fill="var(--on-surface-variant)" fontWeight={600} style={{ fontFamily: 'Inter, sans-serif' }}>
+                  San Andrés
+                </text>
+              </g>
+            </Marker>
+          )
+        })()}
       </ComposableMap>
 
       {/* Leyenda escala */}
