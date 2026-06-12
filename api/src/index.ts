@@ -1,3 +1,4 @@
+import './instrument'
 import * as Sentry from '@sentry/node'
 import express, { Request, Response, NextFunction } from 'express'
 import helmet from 'helmet'
@@ -13,15 +14,6 @@ import { prisma } from './config/prisma'
 
 // Falla rápido si faltan variables críticas — antes de cualquier otra inicialización
 validateEnv()
-
-// Sentry — inicializar antes de todo lo demás para capturar errores desde el arranque
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'development',
-    tracesSampleRate: 0.2,
-  })
-}
 
 // Routes
 import authRoutes from './routes/auth'
@@ -197,6 +189,11 @@ app.use('/api/formularios',  formulariosRoutes)
 app.use('/api/hubspot',      hubspotRoutes)
 app.use('/api/eventos',     eventosRoutes)
 app.use('/api/passkeys',    passkeysRoutes)
+
+// Sentry error handler — debe ir ANTES del errorHandler custom y DESPUÉS de todas las rutas
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app)
+}
 
 // Error handler global (siempre al final)
 app.use(errorHandler)
