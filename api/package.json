@@ -12,7 +12,6 @@
     "db:seed": "tsx prisma/seed.ts",
     "lint": "eslint src/"
   },
-  "type": "module",
   "dependencies": {
     "@prisma/client": "^5.0.0",
     "@sentry/node": "^10.57.0",

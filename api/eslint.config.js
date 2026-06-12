@@ -1,11 +1,10 @@
-import security from 'eslint-plugin-security'
+const security = require('eslint-plugin-security')
 
-export default [
+module.exports = [
   security.configs.recommended,
   {
     files: ['src/**/*.ts'],
     rules: {
-      // Detecta uso de eval, setTimeout con strings, regex inseguros, etc.
       'security/detect-object-injection':        'warn',
       'security/detect-non-literal-regexp':      'warn',
       'security/detect-non-literal-fs-filename': 'warn',
