@@ -149,28 +149,54 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
               setTooltip(null)
             }}
           >
-            <ComposableMap
-              projection="geoMercator"
-              projectionConfig={{ center: [-81.545, 12.95], scale: 7600 }}
-              width={76}
-              height={132}
-              style={{ width: 76, height: 132, display: 'block' }}
-            >
-              <Geographies geography={sanAndresGeo as never}>
-                {({ geographies }) =>
-                  geographies.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={hasSA ? getFill(SAN_ANDRES_RAW) : '#dce8f5'}
-                      stroke={isHoveredSA ? '#2094ff' : '#b0cce8'}
-                      strokeWidth={isHoveredSA ? 1.2 : 0.8}
-                      style={{ default: { outline: 'none', transition: 'fill 150ms', pointerEvents: 'none' } }}
-                    />
-                  ))
-                }
-              </Geographies>
-            </ComposableMap>
+            {/* San Andrés a la izquierda + Providencia arriba a la derecha,
+                cada una con su propio zoom (distancia real comprimida) */}
+            <div className="relative" style={{ width: 112, height: 96 }}>
+              <ComposableMap
+                projection="geoMercator"
+                projectionConfig={{ center: [-81.715, 12.55], scale: 46000 }}
+                width={58}
+                height={96}
+                style={{ position: 'absolute', left: 2, top: 0, width: 58, height: 96 }}
+              >
+                <Geographies geography={sanAndresGeo as never}>
+                  {({ geographies }) =>
+                    geographies.map((geo) => (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill={hasSA ? getFill(SAN_ANDRES_RAW) : '#dce8f5'}
+                        stroke={isHoveredSA ? '#2094ff' : '#b0cce8'}
+                        strokeWidth={isHoveredSA ? 1.2 : 0.8}
+                        style={{ default: { outline: 'none', transition: 'fill 150ms', pointerEvents: 'none' } }}
+                      />
+                    ))
+                  }
+                </Geographies>
+              </ComposableMap>
+              <ComposableMap
+                projection="geoMercator"
+                projectionConfig={{ center: [-81.373, 13.355], scale: 40000 }}
+                width={50}
+                height={62}
+                style={{ position: 'absolute', right: 2, top: 4, width: 50, height: 62 }}
+              >
+                <Geographies geography={sanAndresGeo as never}>
+                  {({ geographies }) =>
+                    geographies.map((geo) => (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill={hasSA ? getFill(SAN_ANDRES_RAW) : '#dce8f5'}
+                        stroke={isHoveredSA ? '#2094ff' : '#b0cce8'}
+                        strokeWidth={isHoveredSA ? 1.2 : 0.8}
+                        style={{ default: { outline: 'none', transition: 'fill 150ms', pointerEvents: 'none' } }}
+                      />
+                    ))
+                  }
+                </Geographies>
+              </ComposableMap>
+            </div>
             <p className="text-[9px] font-semibold text-on-surface-variant text-center pt-1 pb-1.5 px-1.5 leading-tight">San Andrés y Providencia</p>
           </div>
         )
