@@ -99,22 +99,8 @@ export function FinancieroSection({ desde, hasta }: Props) {
   const metric = METRICS.find(m => m.key === selected)!
   const color  = isDark ? metric.colorDark : metric.colorLight
 
-  // Label del período
-  const fmt = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })
-  const periodoLabel = desde === hasta
-    ? fmt(desde)
-    : `${fmt(desde)} – ${fmt(hasta)}`
-
   return (
     <div className="space-y-3">
-
-      {/* Label período */}
-      <div className="flex items-center justify-between px-0.5">
-        <p className="text-[12px] font-semibold text-on-surface uppercase tracking-wide">
-          {periodoLabel}
-        </p>
-        <span className="text-[11px] text-on-surface-variant">Período en curso</span>
-      </div>
 
       {/* ── 4 tarjetas — snapshot del período ──────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">

@@ -35,19 +35,30 @@ export function DashboardAnalytics() {
     ? { desde: toISO(dateRange.start), hasta: toISO(dateRange.end) }
     : getRangeFromMonth(month)
 
+  // Label de fechas para mostrar debajo del picker
+  const fmt = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+  const fmtShort = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })
+  const periodoLabel = desde === hasta
+    ? fmt(desde)
+    : desde.slice(0, 4) === hasta.slice(0, 4)
+      ? `${fmtShort(desde)} – ${fmt(hasta)}`
+      : `${fmt(desde)} – ${fmt(hasta)}`
+
   return (
     <div className="space-y-5">
 
       {/* ── Selector de período global ── */}
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-on-surface-variant">Período de análisis</p>
+      <div>
         <MonthPicker
           value={month}
           currentMonth={currentMonth}
           dateRange={dateRange}
           onChange={handleChange}
-          alignRight
         />
+        <div className="mt-1.5">
+          <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Período de análisis</p>
+          <p className="text-[15px] font-semibold text-on-surface capitalize leading-tight">{periodoLabel}</p>
+        </div>
       </div>
 
       {/* ── Financiero ── */}
