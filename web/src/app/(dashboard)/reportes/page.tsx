@@ -359,9 +359,9 @@ export default function ReportesPage() {
             </div>
 
             {/* Top 10 ciudades — ranking con barras de progreso */}
-            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
+            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 flex flex-col">
               <p className="text-[12px] font-semibold text-on-surface mb-4">Top 10 ciudades</p>
-              <div className="space-y-3">
+              <div className="flex-1 flex flex-col justify-end space-y-3">
                 {(() => {
                   const maxCiudad = Math.max(...ciudades.map(c => c.cantidad), 1)
                   return ciudades.map((c, i) => {
