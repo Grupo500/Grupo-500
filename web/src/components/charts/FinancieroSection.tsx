@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import {
-  AreaChart, Area, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
@@ -71,6 +71,77 @@ function CustomTooltip({ active, payload, label, color }: any) {
     <div className="bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-xl shadow-float px-4 py-2.5 text-[12px]">
       <p className="font-semibold text-on-surface mb-1">{label}</p>
       <p className="font-bold" style={{ color }}>{formatCOP(payload[0]?.value ?? 0)}</p>
+    </div>
+  )
+}
+
+// ── Vista anual — siempre muestra los 12 meses del año en curso ────────────
+function AnualChart({ selected, isDark, temaListo }: { selected: Metrica; isDark: boolean; temaListo: boolean }) {
+  const anio = new Date().getFullYear()
+  const mesActual = new Date().getMonth()
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['financiero-anual', anio, selected],
+    queryFn: () => apiFetch(
+      `/reportes/financiero-periodo?desde=${anio}-01-01&hasta=${anio}-12-31`
+    ) as Promise<{ data: { puntos: Punto[] } }>,
+    staleTime: 300_000,
+  })
+
+  const metric = METRICS.find(m => m.key === selected)!
+  const color  = isDark ? metric.colorDark : metric.colorLight
+  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+  const tickColor = isDark ? '#95c8f0' : '#2a4172'
+
+  const puntos = data?.data?.puntos ?? []
+  const totalAnual = puntos.reduce((s, p) => s + (p[selected] ?? 0), 0)
+
+  return (
+    <div className="rounded-2xl p-4"
+      style={{
+        border:     `1.5px solid ${color}20`,
+        background: isDark ? 'var(--surface-lowest)' : '#fff',
+        boxShadow:  `0 2px 20px ${color}12`,
+      }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[13px] font-semibold text-on-surface">
+          Año {anio} · <span style={{ color }}>{metric.label}</span>
+        </p>
+        {!isLoading && totalAnual > 0 && (
+          <span className="text-[13px] font-bold tabular-nums" style={{ color }}>
+            {totalAnual >= 1_000_000 ? `$${(totalAnual/1_000_000).toFixed(1)}M` : totalAnual >= 1_000 ? `$${Math.round(totalAnual/1_000)}K` : `$${totalAnual}`}
+          </span>
+        )}
+      </div>
+      {!temaListo || isLoading ? <ChartSkeleton /> : puntos.length === 0 ? (
+        <div className="h-44 flex items-center justify-center text-[13px] text-on-surface-variant">Sin datos</div>
+      ) : (
+        <ResponsiveContainer width="100%" height={176}>
+          <BarChart data={puntos} margin={{ top: 4, right: 4, left: -12, bottom: 0 }} barSize={16}>
+            <defs>
+              <linearGradient id="grad-anual" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={color} stopOpacity={0.9} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.5} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: tickColor, fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
+              tickFormatter={v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
+            <Tooltip content={<CustomTooltip color={color} />} />
+            <Bar dataKey={selected} radius={[4, 4, 0, 0]}>
+              {puntos.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={i === mesActual ? color : `${color}70`}
+                  opacity={i > mesActual ? 0.35 : 1}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
     </div>
   )
 }
@@ -178,43 +249,46 @@ export function FinancieroSection({ desde, hasta }: Props) {
         })}
       </div>
 
-      {/* ── Gráfica de tendencia ────────────────────────────────────────────── */}
-      <div className="rounded-2xl p-4"
-        style={{
-          border:     `1.5px solid ${color}20`,
-          background: isDark ? 'var(--surface-lowest)' : '#fff',
-          boxShadow:  `0 2px 20px ${color}12`,
-          transition: 'border-color 300ms, box-shadow 300ms',
-        }}
-      >
-        {/* Header simplificado — solo label de la métrica activa */}
-        <p className="text-[13px] font-semibold text-on-surface mb-3"
-          style={{ transition: 'color 300ms' }}>
-          Tendencia · <span style={{ color }}>{metric.label}</span>
-        </p>
+      {/* ── Gráficas: tendencia + vista anual ──────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
 
-        {/* Chart */}
-        {!temaListo || isLoading ? <ChartSkeleton /> : puntos.length === 0 ? (
-          <div className="h-44 flex items-center justify-center text-[13px] text-on-surface-variant">Sin datos</div>
-        ) : (
-          <ResponsiveContainer width="100%" height={176}>
-            <AreaChart data={puntos} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
-              <defs>
-                <linearGradient id="grad-fin" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={color} stopOpacity={0.22} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0}    />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
-                tickFormatter={v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
-              <Tooltip content={<CustomTooltip color={color} />} />
-              <Area key={selected} type="monotone" dataKey={selected} stroke={color} strokeWidth={2.5}
-                fill="url(#grad-fin)" dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
+        {/* Tendencia del período seleccionado */}
+        <div className="rounded-2xl p-4"
+          style={{
+            border:     `1.5px solid ${color}20`,
+            background: isDark ? 'var(--surface-lowest)' : '#fff',
+            boxShadow:  `0 2px 20px ${color}12`,
+            transition: 'border-color 300ms, box-shadow 300ms',
+          }}
+        >
+          <p className="text-[13px] font-semibold text-on-surface mb-3" style={{ transition: 'color 300ms' }}>
+            Tendencia · <span style={{ color }}>{metric.label}</span>
+          </p>
+          {!temaListo || isLoading ? <ChartSkeleton /> : puntos.length === 0 ? (
+            <div className="h-44 flex items-center justify-center text-[13px] text-on-surface-variant">Sin datos</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={176}>
+              <AreaChart data={puntos} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="grad-fin" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={color} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0}    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} vertical={false} />
+                <XAxis dataKey="label" tick={{ fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
+                  tickFormatter={v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
+                <Tooltip content={<CustomTooltip color={color} />} />
+                <Area key={selected} type="monotone" dataKey={selected} stroke={color} strokeWidth={2.5}
+                  fill="url(#grad-fin)" dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Vista anual — 12 meses fijos del año en curso */}
+        <AnualChart selected={selected} isDark={isDark} temaListo={temaListo} />
       </div>
     </div>
   )

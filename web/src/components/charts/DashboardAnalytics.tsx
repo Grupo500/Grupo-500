@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { FinancieroSection } from './FinancieroSection'
-import { ProximosCobros } from './ProximosCobros'
+import { EstudiantesMes } from './EstudiantesMes'
 import { CursosVendidosChart } from './CursosVendidosChart'
 import { SaldosPendientes } from './SaldosPendientes'
 
@@ -53,9 +53,9 @@ export function DashboardAnalytics() {
       {/* ── Financiero ── */}
       <FinancieroSection desde={desde} hasta={hasta} />
 
-      {/* ── Próximos cobros + Cursos más vendidos ── */}
+      {/* ── Estudiantes por mes + Cursos más vendidos ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProximosCobros desde={desde} hasta={hasta} />
+        <EstudiantesMes />
         <CursosVendidosChart desde={desde} hasta={hasta} />
       </div>
 

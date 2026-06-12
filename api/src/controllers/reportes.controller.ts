@@ -593,6 +593,34 @@ export async function demografia(_req: Request, res: Response) {
   })
 }
 
+// ── Estudiantes por mes: ingresos del año en curso ──────────────────────────
+export async function estudiantesPorMes(_req: Request, res: Response) {
+  const hoy  = new Date()
+  const anio = hoy.getFullYear()
+
+  const meses = Array.from({ length: 12 }, (_, i) => {
+    const desde = new Date(anio, i, 1)
+    const hasta = new Date(anio, i + 1, 0, 23, 59, 59)
+    return { mes: i, desde, hasta }
+  })
+
+  const resultados = await Promise.all(
+    meses.map(async ({ mes, desde, hasta }) => {
+      const count = await prisma.estudiante.count({
+        where: { createdAt: { gte: desde, lte: hasta } },
+      })
+      return {
+        label: desde.toLocaleDateString('es-CO', { month: 'short' }),
+        mes,
+        cantidad: count,
+      }
+    })
+  )
+
+  const total = resultados.reduce((s, r) => s + r.cantidad, 0)
+  return ApiResponse.success(res, { meses: resultados, total, anio })
+}
+
 // ── Marketing: fuentes de contacto ──────────────────────────────────────────
 export async function marketing(_req: Request, res: Response) {
   const fuentes = await prisma.fuenteContacto.groupBy({
