@@ -151,10 +151,10 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
           >
             <ComposableMap
               projection="geoMercator"
-              projectionConfig={{ center: [-81.713, 12.55], scale: 42000 }}
+              projectionConfig={{ center: [-81.713, 12.55], scale: 38000 }}
               width={76}
-              height={76}
-              style={{ width: 76, height: 76, display: 'block' }}
+              height={68}
+              style={{ width: 76, height: 68, display: 'block' }}
             >
               <Geographies geography={sanAndresGeo as never}>
                 {({ geographies }) =>
@@ -171,7 +171,33 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
                 }
               </Geographies>
             </ComposableMap>
-            <p className="text-[9px] font-semibold text-on-surface-variant text-center pb-1 -mt-1">San Andrés</p>
+            <p className="text-[9px] font-semibold text-on-surface-variant text-center pt-1.5 pb-1.5">San Andrés</p>
+
+            <div className="border-t border-[#b0cce8]/50" />
+
+            <ComposableMap
+              projection="geoMercator"
+              projectionConfig={{ center: [-81.374, 13.357], scale: 52000 }}
+              width={76}
+              height={56}
+              style={{ width: 76, height: 56, display: 'block', marginTop: 4 }}
+            >
+              <Geographies geography={sanAndresGeo as never}>
+                {({ geographies }) =>
+                  geographies.map((geo) => (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill={hasSA ? getFill(SAN_ANDRES_RAW) : '#dce8f5'}
+                      stroke={isHoveredSA ? '#2094ff' : '#b0cce8'}
+                      strokeWidth={isHoveredSA ? 1.5 : 0.8}
+                      style={{ default: { outline: 'none', transition: 'fill 150ms', pointerEvents: 'none' } }}
+                    />
+                  ))
+                }
+              </Geographies>
+            </ComposableMap>
+            <p className="text-[9px] font-semibold text-on-surface-variant text-center pt-1.5 pb-1.5">Providencia</p>
           </div>
         )
       })()}
