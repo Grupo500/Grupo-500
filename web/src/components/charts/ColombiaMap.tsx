@@ -159,7 +159,7 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
             <div className="relative" style={{ width: 112, height: 96 }}>
               <ComposableMap
                 projection="geoMercator"
-                projectionConfig={{ center: [-81.717, 12.55], scale: 41000 }}
+                projectionConfig={{ center: [-81.7146, 12.5401], scale: 40000 }}
                 width={58}
                 height={96}
                 style={{ position: 'absolute', left: 2, top: 0, width: 58, height: 96 }}
