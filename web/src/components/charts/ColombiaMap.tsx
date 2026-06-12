@@ -97,7 +97,7 @@ export function ColombiaMap({ departamentos, totalDep }: Props) {
                   fill={isHovered && !hasData ? '#e2edf7' : getFill(rawName)}
                   stroke={isHovered ? '#2094ff' : '#b0cce8'}
                   strokeWidth={isHovered ? 1.5 : 0.8}
-                  style={{ outline: 'none', transition: 'fill 150ms', cursor: hasData ? 'pointer' : 'default' }}
+                  style={{ default: { outline: 'none', transition: 'fill 150ms', cursor: hasData ? 'pointer' : 'default' } }}
                   onMouseEnter={() => {
                     setHoveredRaw(rawName)
                     setTooltip({ nombre, cantidad: d?.cantidad ?? 0, porcentaje: d?.porcentaje ?? 0 })
