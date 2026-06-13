@@ -228,6 +228,9 @@ model CursoEstudiante {
   cursoId             String
   fechaCompra         DateTime   @default(now())
   descuentoPorcentaje Float      @default(0)
+  // Total real acordado con este estudiante (precio Hotmart con descuento).
+  // Si es null, se usa el precio de lista del curso.
+  precioAcordado      Float?
   curso               Curso      @relation(fields: [cursoId], references: [id])
   estudiante          Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
 

@@ -56,7 +56,7 @@ interface EstudianteDetalle {
   verificado?: boolean
   verificadoPor?: string | null
   verificadoAt?: string | null
-  cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; curso: { id: string; nombre: string; precio: number } }[]
+  cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; precioAcordado?: number | null; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: Pago[]
   financiamientos?: Financiamiento[]
   createdAt: string
@@ -625,7 +625,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-on-surface">{cursoActivo.curso.nombre}</p>
-              <p className="text-[11px] text-on-surface-variant">Precio: {formatCOP(cursoActivo.curso.precio)}</p>
+              <p className="text-[11px] text-on-surface-variant">Precio: {formatCOP(cursoActivo.precioAcordado ?? cursoActivo.curso.precio)}</p>
             </div>
           </div>
         </section>
@@ -1213,9 +1213,9 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
   const cursoEst = e.cursos?.[0]
 
   // ── Descuento ────────────────────────────────────────────────────────────
-  const precioBase      = cursoEst ? cursoEst.curso.precio : 0
+  const precioBase      = cursoEst ? (cursoEst.precioAcordado ?? cursoEst.curso.precio) : 0
   const descuentoMonto  = cursoEst
-    ? Math.round(cursoEst.curso.precio * cursoEst.descuentoPorcentaje / 100) : 0
+    ? Math.round(precioBase * cursoEst.descuentoPorcentaje / 100) : 0
   const precioConDescuento = precioBase - descuentoMonto
 
   const [editDescuento, setEditDescuento] = useState(false)
@@ -1828,7 +1828,7 @@ export default function EstudianteDetallePage() {
 
   // ── Cálculo de estado financiero real ──────────────────────────────────
   const cursoEst      = e.cursos?.[0]
-  const precioBase    = cursoEst ? cursoEst.curso.precio : 0
+  const precioBase    = cursoEst ? (cursoEst.precioAcordado ?? cursoEst.curso.precio) : 0
   const totalGeneral  = cursoEst
     ? precioBase
     : financiamientos.reduce((s, f) => s + f.montoTotal, 0) +

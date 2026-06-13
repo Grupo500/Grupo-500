@@ -58,9 +58,9 @@ export async function registrar(req: Request, res: Response) {
   })
   if (est?.cursos.length) {
     const ce = est.cursos[0]
-    // Usar precio base sin aplicar descuento — el descuento es informativo y
-    // lo gestiona el admin. Evita que descuentoPorcentaje=100 bloquee pagos.
-    const precioBase = ce.curso.precio
+    // precioAcordado (Hotmart con descuento) tiene prioridad; si no existe,
+    // precio de lista sin aplicar descuentoPorcentaje (informativo).
+    const precioBase = (ce as any).precioAcordado ?? ce.curso.precio
     // Solo contar pagos no cancelados contra el tope
     const yaRegistrado =
       est.financiamientos.reduce((s, f) => s + f.montoTotal, 0) +

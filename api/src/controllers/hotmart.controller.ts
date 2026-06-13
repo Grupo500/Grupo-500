@@ -171,11 +171,13 @@ export async function webhook(req: Request, res: Response) {
     )
   }
 
-  // Matricular al curso si no está ya matriculado
+  // Matricular al curso si no está ya matriculado.
+  // precioAcordado = precio real de la oferta (con descuento si aplica) —
+  // así el saldo se calcula contra lo que esta persona acordó pagar.
   if (curso) {
     await prisma.cursoEstudiante.upsert({
       where: { estudianteId_cursoId: { estudianteId: estudiante.id, cursoId: curso.id } },
-      create: { estudianteId: estudiante.id, cursoId: curso.id },
+      create: { estudianteId: estudiante.id, cursoId: curso.id, precioAcordado: purchase.price.value },
       update: {},
     })
   }

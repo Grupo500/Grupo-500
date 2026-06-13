@@ -56,7 +56,7 @@ interface Estudiante {
   acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
   asesorId?: string
   asesor?: { id: string; nombre: string }
-  cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; curso: { id: string; nombre: string; precio: number } }[]
+  cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; precioAcordado?: number | null; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: PagoMin[]
   financiamientos?: { montoTotal: number; estado: string; cuotas: CuotaMin[] }[]
   verificado?: boolean
@@ -72,12 +72,11 @@ interface PaginatedResponse {
 function calcFinanciero(e: Estudiante) {
   const hoy = new Date()
 
-  // Total = precio base del curso (SIN aplicar descuento) para evitar
-  // que un descuentoPorcentaje erróneo oculte la deuda real.
-  // El descuento es informativo; lo que importa es si hay pagos registrados.
+  // Total = precioAcordado (precio real de Hotmart, con descuento) si existe;
+  // si no, precio de lista del curso SIN aplicar descuentoPorcentaje.
   const cursoEst     = e.cursos?.[0]
   const totalGeneral = cursoEst
-    ? cursoEst.curso.precio                                                                   // precio sin descuento
+    ? (cursoEst.precioAcordado ?? cursoEst.curso.precio)
     : (e.financiamientos?.reduce((s, f) => s + f.montoTotal, 0) ?? 0)
     + (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
 
