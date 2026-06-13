@@ -198,7 +198,7 @@ export default function ReportesPage() {
       {/* ── Gráficas de ingresos y asesores ───────────────────────── */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <IngresosMensualesChart periodo="mensual" />
-        <RankingAsesores />
+        <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
       </section>
 
       {/* ── Medios de pago ─────────────────────────────────────────── */}

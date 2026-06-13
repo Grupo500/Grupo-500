@@ -14,12 +14,19 @@ interface Asesor {
   variacion: number
 }
 
-export function RankingAsesores() {
+interface RankingAsesoresProps {
+  desde?: string
+  hasta?: string
+  periodoLabel?: string
+}
+
+export function RankingAsesores({ desde, hasta, periodoLabel }: RankingAsesoresProps) {
 
   const { data, isLoading } = useQuery({
-    queryKey: ['ranking-asesores'],
+    queryKey: ['ranking-asesores', desde, hasta],
     queryFn: async () => {
-            return apiFetch<{ data: Asesor[] }>('/reportes/asesores')
+      const params = desde && hasta ? `?desde=${desde}&hasta=${hasta}` : ''
+      return apiFetch<{ data: Asesor[] }>(`/reportes/asesores${params}`)
     },
     staleTime: 30_000,
   })
@@ -30,7 +37,7 @@ export function RankingAsesores() {
     <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-[13px] font-semibold text-on-surface">Ranking asesores</p>
-        <span className="text-[11px] text-on-surface-variant">Mes actual</span>
+        <span className="text-[11px] text-on-surface-variant capitalize">{periodoLabel ?? 'Mes actual'}</span>
       </div>
 
       {isLoading ? (
@@ -44,7 +51,7 @@ export function RankingAsesores() {
           ))}
         </div>
       ) : asesores.length === 0 ? (
-        <p className="text-[13px] text-on-surface-variant text-center py-6">Sin datos este mes</p>
+        <p className="text-[13px] text-on-surface-variant text-center py-6">Sin datos en este período</p>
       ) : (
         <div className="space-y-1">
           {asesores.slice(0, 6).map((a, i) => {

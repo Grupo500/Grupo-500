@@ -106,13 +106,29 @@ export async function ingresos(req: Request, res: Response) {
   return ApiResponse.success(res, { pagos, total })
 }
 
-export async function rankingAsesores(_req: Request, res: Response) {
+export async function rankingAsesores(req: Request, res: Response) {
+  const { desde, hasta } = req.query
   const hoy = new Date()
 
-  const inicioMesActual   = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-  const finMesActual      = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
-  const inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
-  const finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+  let inicioMesActual: Date
+  let finMesActual: Date
+  let inicioMesAnterior: Date
+  let finMesAnterior: Date
+
+  if (desde && hasta) {
+    // Rango del datepicker; el período anterior es de igual duración, justo antes
+    inicioMesActual = new Date(String(desde))
+    finMesActual    = new Date(String(hasta))
+    finMesActual.setHours(23, 59, 59, 999)
+    const duracionMs   = finMesActual.getTime() - inicioMesActual.getTime()
+    finMesAnterior     = new Date(inicioMesActual.getTime() - 1)
+    inicioMesAnterior  = new Date(finMesAnterior.getTime() - duracionMs)
+  } else {
+    inicioMesActual   = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+    finMesActual      = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
+    inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
+    finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+  }
 
   // Traer asesores + pagos de ambos meses en 3 queries paralelas
   const [asesores, pagosActual, pagosAnterior] = await Promise.all([
