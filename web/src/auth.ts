@@ -69,8 +69,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!parsed.success) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email },
+        // Comparación de email insensible a mayúsculas
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: parsed.data.email.trim(), mode: 'insensitive' } },
         })
 
         if (!user?.hashedPassword) return null

@@ -33,7 +33,7 @@ router.get('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async (
 }))
 
 const crearSchema = z.object({
-  email:    z.string().email(),
+  email:    z.string().email().transform(e => e.toLowerCase().trim()),
   password: z.string().min(8),
   nombre:   z.string().min(2),
   telefono: z.string().min(7).optional(),
@@ -44,7 +44,10 @@ const crearSchema = z.object({
 router.post('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const data = crearSchema.parse(req.body)
 
-  const existe = await prisma.user.findFirst({ where: { email: data.email } })
+  // Email ya normalizado a minúsculas por el schema; buscar insensible por si acaso
+  const existe = await prisma.user.findFirst({
+    where: { email: { equals: data.email, mode: 'insensitive' } },
+  })
   if (existe) return res.status(409).json({ error: 'El usuario ya está registrado' })
 
   const hashedPassword = await bcrypt.hash(data.password, 12)
