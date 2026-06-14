@@ -266,8 +266,8 @@ export async function financieroPeriodo(req: Request, res: Response) {
   const diasRango = Math.round((hastaTotales.getTime() - desdeTotales.getTime()) / 86400000) + 1
 
   if (desdeQ && hastaQ) {
-    if (diasRango <= 14) {
-      // Rango corto: punto por día
+    if (diasRango <= 31) {
+      // Rango corto/mensual: punto por día — muestra picos y caídas diarias
       for (let i = 0; i < diasRango; i++) {
         const d = new Date(desdeTotales)
         d.setDate(desdeTotales.getDate() + i)
@@ -277,8 +277,8 @@ export async function financieroPeriodo(req: Request, res: Response) {
           hasta: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
         })
       }
-    } else if (diasRango <= 60) {
-      // Rango mediano: punto por semana
+    } else if (diasRango <= 92) {
+      // Rango mediano (2–3 meses): punto por semana
       let cursor = new Date(desdeTotales)
       while (cursor <= hastaTotales) {
         const finSem = new Date(cursor)
