@@ -95,7 +95,7 @@ export async function actualizar(req: Request, res: Response) {
     data: {
       ...(nombre   && { nombre:   nombre.trim() }),
       ...(telefono && { telefono: telefono.trim() }),
-      ...(email    && { email:    email.trim() }),
+      ...(email    && { email:    String(email).toLowerCase().trim() }),
       ...(Array.isArray(codigosHotmart) && { codigosHotmart: codigosHotmart.map((c: string) => String(c).trim()).filter(Boolean) }),
     },
   })

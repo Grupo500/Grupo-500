@@ -110,7 +110,7 @@ const METODOS_PAGO = ['Bancolombia', 'Interbancario', 'Nequi', 'Bre-B', 'Addi', 
 const inscripcionSchema = z.object({
   // Paso 1 — Estudiante
   nombre:          z.string().min(3),
-  email:           z.string().email(),
+  email:           z.string().email().transform(e => e.toLowerCase().trim()),
   telefono:        z.string().min(7),
   tipoDocumento:   z.enum(['CC', 'TI', 'CE', 'PA', 'Otro']).default('TI'),
   documento:       z.string().min(4),
@@ -123,7 +123,7 @@ const inscripcionSchema = z.object({
   // Paso 3 — Acudiente
   acudienteNombre:          z.string().min(3),
   acudienteParentesco:      z.string().min(2),
-  acudienteEmail:           z.string().email().optional(),
+  acudienteEmail:           z.string().email().transform(e => e.toLowerCase().trim()).optional(),
   acudienteTelefono:        z.string().min(7),
   acudienteTipoDocumento:   z.string().optional(),
   acudienteNumeroDocumento: z.string().optional(),

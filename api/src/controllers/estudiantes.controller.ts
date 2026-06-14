@@ -11,7 +11,7 @@ const crearSchema = z.object({
   nombre: z.string().min(2),
   tipoDocumento: z.enum(['CC', 'TI', 'CE', 'PA', 'RC']).optional(),
   documento: z.string().optional(),
-  email: z.string().email(),
+  email: z.string().email().transform(e => e.toLowerCase().trim()),
   telefono: z.string().min(7),
   fechaNacimiento: z.string(),
   departamento: z.string().optional(),
@@ -30,7 +30,7 @@ const crearSchema = z.object({
   documentoUrl: z.string().url().optional().or(z.literal('')),
   acudiente: z.object({
     nombre: z.string().min(2),
-    email: z.string().email(),
+    email: z.string().email().transform(e => e.toLowerCase().trim()),
     telefono: z.string().min(7),
     relacion: z.string(),
   }).optional(),
@@ -212,7 +212,7 @@ const actualizarSchema = z.object({
   nombre:              z.string().min(2).optional(),
   tipoDocumento:       tipoDocSchema.optional(),
   documento:           z.string().nullable().optional(),
-  email:               z.string().email().optional(),
+  email:               z.string().email().transform(e => e.toLowerCase().trim()).optional(),
   telefono:            z.string().min(7).optional(),
   fechaNacimiento:     z.string().optional(),
   departamento:        z.string().nullable().optional(),
@@ -228,7 +228,7 @@ const actualizarSchema = z.object({
   // Acudiente (opcional, se actualiza si se envían los campos)
   acudiente: z.object({
     nombre:   z.string().min(2),
-    email:    z.string().email().optional().nullable(),
+    email:    z.string().email().transform(e => e.toLowerCase().trim()).optional().nullable(),
     telefono: z.string().min(7),
     relacion: z.string(),
   }).optional(),

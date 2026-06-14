@@ -20,7 +20,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const picture = (profile as any).picture as string | undefined
         if (picture) {
           await prisma.user.updateMany({
-            where: { email: user.email },
+            // Email insensible a mayúsculas
+            where: { email: { equals: user.email.trim(), mode: 'insensitive' } },
             data:  { image: picture },
           })
         }
