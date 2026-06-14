@@ -10,6 +10,7 @@ import {
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { TrendingUp, Wallet, Clock, AlertTriangle } from 'lucide-react'
+import { ScrollableChartFrame, niceScale, AXIS_WIDTH, XAXIS_HEIGHT } from './ScrollableChartFrame'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 type Metrica = 'ventaTotal' | 'recaudo' | 'porCobrar' | 'mora'
@@ -99,6 +100,49 @@ export function FinancieroSection({ desde, hasta }: Props) {
   const metric = METRICS.find(m => m.key === selected)!
   const color  = isDark ? metric.colorDark : metric.colorLight
 
+  // Escala compartida entre el eje Y fijo y el área scrolleable
+  const scale    = niceScale(Math.max(1, ...puntos.map(p => Number(p[selected]) || 0)))
+  const tickFill = { fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }
+  const yFmt     = (v: number) => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`
+
+  // Construye la gráfica de área según el modo (completa / solo eje / solo datos)
+  const areaChart = (mode: 'full' | 'axis' | 'plot', width: number) => {
+    const gradId = `grad-fin-${mode}`
+    const chart = (
+      <AreaChart
+        data={puntos}
+        width={mode === 'full' ? undefined : width}
+        height={mode === 'full' ? undefined : 176}
+        margin={{ top: 4, right: mode === 'axis' ? 0 : 4, left: mode === 'plot' ? 0 : -12, bottom: 0 }}
+      >
+        {mode !== 'axis' && (
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor={color} stopOpacity={0.22} />
+              <stop offset="100%" stopColor={color} stopOpacity={0}    />
+            </linearGradient>
+          </defs>
+        )}
+        {mode !== 'axis' && (
+          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} vertical={false} />
+        )}
+        <XAxis dataKey="label" height={XAXIS_HEIGHT} interval={mode === 'plot' ? 0 : 'preserveStartEnd'}
+          tick={mode === 'axis' ? false : tickFill} axisLine={false} tickLine={false} />
+        <YAxis domain={[0, scale.max]} ticks={scale.ticks} hide={mode === 'plot'} width={AXIS_WIDTH}
+          tick={tickFill} axisLine={false} tickLine={false} tickFormatter={yFmt} />
+        {mode !== 'axis' && <Tooltip content={<CustomTooltip color={color} />} />}
+        {mode !== 'axis' && (
+          <Area key={selected} type="monotone" dataKey={selected} stroke={color} strokeWidth={2.5}
+            fill={`url(#${gradId})`} dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
+        )}
+      </AreaChart>
+    )
+    if (mode === 'full') {
+      return <ResponsiveContainer width="100%" height={176}>{chart}</ResponsiveContainer>
+    }
+    return chart
+  }
+
   return (
     <div className="space-y-3">
 
@@ -179,23 +223,13 @@ export function FinancieroSection({ desde, hasta }: Props) {
         {!temaListo || isLoading ? <ChartSkeleton /> : puntos.length === 0 ? (
           <div className="h-44 flex items-center justify-center text-[13px] text-on-surface-variant">Sin datos</div>
         ) : (
-          <ResponsiveContainer width="100%" height={176}>
-            <AreaChart data={puntos} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
-              <defs>
-                <linearGradient id="grad-fin" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={color} stopOpacity={0.22} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0}    />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
-                tickFormatter={v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
-              <Tooltip content={<CustomTooltip color={color} />} />
-              <Area key={selected} type="monotone" dataKey={selected} stroke={color} strokeWidth={2.5}
-                fill="url(#grad-fin)" dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <ScrollableChartFrame
+            count={puntos.length}
+            height={176}
+            fullChart={areaChart('full', 0)}
+            axisChart={areaChart('axis', AXIS_WIDTH)}
+            plotChart={(w) => areaChart('plot', w)}
+          />
         )}
       </div>
     </div>

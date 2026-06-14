@@ -9,6 +9,9 @@ import {
 } from 'recharts'
 import { apiFetch } from '@/lib/api'
 import { Users } from 'lucide-react'
+import { ScrollableChartFrame, niceScale, AXIS_WIDTH, XAXIS_HEIGHT } from './ScrollableChartFrame'
+
+const CHART_HEIGHT = 190
 
 interface PuntoData { label: string; cantidad: number }
 
@@ -66,6 +69,40 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
   const esAnual   = diasRango >= 365
   const mesActual = new Date().getMonth()
 
+  // Escala compartida entre el eje Y fijo y el área scrolleable
+  const scale    = niceScale(Math.max(1, ...puntos.map(p => p.cantidad)))
+  const tickFill = { fill: tickColor, fontSize: 10, fontFamily: 'Inter' }
+
+  const barChart = (mode: 'full' | 'axis' | 'plot', width: number) => {
+    const chart = (
+      <BarChart
+        data={puntos}
+        width={mode === 'full' ? undefined : width}
+        height={mode === 'full' ? undefined : CHART_HEIGHT}
+        margin={{ top: 0, right: mode === 'axis' ? 0 : 4, left: mode === 'plot' ? 0 : -12, bottom: 0 }}
+        barSize={esAnual ? 14 : 10}
+      >
+        {mode !== 'axis' && <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />}
+        <XAxis dataKey="label" height={XAXIS_HEIGHT} interval={mode === 'plot' ? 0 : 'preserveStartEnd'}
+          tick={mode === 'axis' ? false : tickFill} axisLine={false} tickLine={false} />
+        <YAxis domain={[0, scale.max]} ticks={scale.ticks} hide={mode === 'plot'} width={AXIS_WIDTH}
+          tick={tickFill} axisLine={false} tickLine={false} allowDecimals={false} />
+        {mode !== 'axis' && (
+          <Tooltip content={<CustomTooltip color={color} />} cursor={{ fill: isDark ? 'rgba(149,218,255,0.04)' : 'rgba(0,48,96,0.04)' }} />
+        )}
+        {mode !== 'axis' && (
+          <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
+            {puntos.map((_, i) => (
+              <Cell key={i} fill={esAnual && i === mesActual ? colorActual : color} opacity={esAnual && i > mesActual ? 0.3 : 1} />
+            ))}
+          </Bar>
+        )}
+      </BarChart>
+    )
+    if (mode === 'full') return <ResponsiveContainer width="100%" height={CHART_HEIGHT}>{chart}</ResponsiveContainer>
+    return chart
+  }
+
   return (
     <div className="card p-5 h-72">
       <div className="flex items-start justify-between mb-4">
@@ -84,23 +121,13 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
       {puntos.length === 0 ? (
         <div className="flex items-center justify-center h-[72%] text-[13px] text-on-surface-variant">Sin datos</div>
       ) : (
-        <ResponsiveContainer width="100%" height="72%">
-          <BarChart data={puntos} margin={{ top: 0, right: 4, left: -20, bottom: 0 }} barSize={esAnual ? 14 : 10}>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: tickColor, fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip content={<CustomTooltip color={color} />} cursor={{ fill: isDark ? 'rgba(149,218,255,0.04)' : 'rgba(0,48,96,0.04)' }} />
-            <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
-              {puntos.map((_, i) => (
-                <Cell
-                  key={i}
-                  fill={esAnual && i === mesActual ? colorActual : color}
-                  opacity={esAnual && i > mesActual ? 0.3 : 1}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <ScrollableChartFrame
+          count={puntos.length}
+          height={CHART_HEIGHT}
+          fullChart={barChart('full', 0)}
+          axisChart={barChart('axis', AXIS_WIDTH)}
+          plotChart={(w) => barChart('plot', w)}
+        />
       )}
     </div>
   )

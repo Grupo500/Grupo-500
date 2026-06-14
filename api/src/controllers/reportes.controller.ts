@@ -648,7 +648,7 @@ export async function estudiantesPorMes(req: Request, res: Response) {
   type Punto = { label: string; desde: Date; hasta: Date }
   const puntos: Punto[] = []
 
-  if (diasRango <= 14) {
+  if (diasRango <= 31) {
     for (let i = 0; i < diasRango; i++) {
       const d = new Date(desdeDate)
       d.setDate(desdeDate.getDate() + i)
@@ -658,7 +658,7 @@ export async function estudiantesPorMes(req: Request, res: Response) {
         hasta: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
       })
     }
-  } else if (diasRango <= 60) {
+  } else if (diasRango <= 92) {
     let cursor = new Date(desdeDate)
     while (cursor <= hastaDate) {
       const finSem = new Date(cursor)
