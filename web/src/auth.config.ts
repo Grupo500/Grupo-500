@@ -15,7 +15,6 @@ export const authConfig: NextAuthConfig = {
         '/sign-in', '/sign-up', '/no-autorizado', '/verificando',
         '/inscripcion', // Hub de inscripciones, formularios públicos y builder forms
       ].some(p => request.nextUrl.pathname.startsWith(p))
-        || request.nextUrl.pathname === '/' // Landing page
 
       if (isLoggedIn && isAuthPage) {
         return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
