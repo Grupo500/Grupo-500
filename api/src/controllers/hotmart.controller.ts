@@ -220,7 +220,7 @@ export async function webhook(req: Request, res: Response) {
 // ---------------------------------------------------------------------------
 let cachedToken: { token: string; expiresAt: number } | null = null
 
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt - 30_000) {
     return cachedToken.token
   }

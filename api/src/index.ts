@@ -1,3 +1,4 @@
+import './setTz'
 import './instrument'
 import * as Sentry from '@sentry/node'
 import express, { Request, Response, NextFunction } from 'express'
@@ -38,6 +39,7 @@ import passkeysRoutes from './routes/passkeys'
 import inscripcionRoutes from './routes/inscripcion'
 import formulariosRoutes from './routes/formularios'
 import hotmartRoutes from './routes/hotmart'
+import { reconciliarAsesores } from './jobs/reconciliarAsesores'
 
 const app = express()
 
@@ -194,6 +196,12 @@ app.use(errorHandler)
 
 app.listen(PORT, () => {
   logger.info(`🚀 Servidor Grupo 500 corriendo en puerto ${PORT}`)
+
+  // Reconciliación automática de asesores: una corrida inicial a los 2 min
+  // y luego cada 6 horas. Red de seguridad si el webhook no captura el afiliado.
+  const SEIS_HORAS = 6 * 60 * 60 * 1000
+  setTimeout(() => { void reconciliarAsesores() }, 2 * 60 * 1000)
+  setInterval(() => { void reconciliarAsesores() }, SEIS_HORAS)
 })
 
 export default app
