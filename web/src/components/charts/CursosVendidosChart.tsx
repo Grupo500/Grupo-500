@@ -27,10 +27,6 @@ function Skeleton() {
 const COLORS_LIGHT = ['#1a7de0', '#2e9e6b', '#d97706', '#7c3aed', '#dc2626', '#0891b2']
 const COLORS_DARK  = ['#95daff', '#6ee7b7', '#fbbf24', '#c4b5fd', '#fca5a5', '#67e8f9']
 
-function truncar(nombre: string, max = 20) {
-  return nombre.length > max ? nombre.slice(0, max - 1) + '…' : nombre
-}
-
 export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: string }) {
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
@@ -52,7 +48,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
   const cursos = (data?.data ?? [])
     .map(c => ({ nombre: c.nombre, vendidos: c._count.estudiantes }))
     .filter(c => c.vendidos > 0)
-    .slice(0, 6)
+    .slice(0, 5)
 
   const total = cursos.reduce((s, c) => s + c.vendidos, 0)
 
@@ -102,13 +98,13 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
             </div>
           </div>
 
-          {/* Leyenda debajo */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4">
+          {/* Leyenda debajo — una fila por curso, nombre completo */}
+          <div className="space-y-2 mt-4">
             {cursos.map((c, i) => (
-              <div key={c.nombre} className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colors[i % colors.length] }} />
-                <span className="text-[11px] text-on-surface truncate flex-1" title={c.nombre}>{truncar(c.nombre, 16)}</span>
-                <span className="text-[11px] font-bold text-on-surface tabular-nums flex-shrink-0">{c.vendidos}</span>
+              <div key={c.nombre} className="flex items-start gap-2">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-[3px]" style={{ background: colors[i % colors.length] }} />
+                <span className="text-[12px] text-on-surface flex-1 leading-snug">{c.nombre}</span>
+                <span className="text-[12px] font-bold text-on-surface tabular-nums flex-shrink-0">{c.vendidos}</span>
               </div>
             ))}
           </div>
