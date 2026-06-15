@@ -27,14 +27,14 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:flex lg:flex-col gap-3 lg:h-full">
+    <div className="grid grid-cols-2 md:flex md:flex-col gap-3 md:h-full">
       {cards.map(({ label, valor, color, bg, border, Icon, negativo }, i) => {
         const esNeto = i === 2
         return (
           <div key={label}
-            className={`rounded-2xl p-4 flex flex-col justify-center items-center text-center lg:items-stretch lg:text-left lg:flex-1 ${esNeto ? 'col-span-2 lg:col-span-1' : ''}`}
+            className={`rounded-2xl p-4 flex flex-col justify-center items-center text-center md:items-stretch md:text-left md:flex-1 ${esNeto ? 'col-span-2 md:col-span-1' : ''}`}
             style={{ border: `1.5px solid ${border}`, background: bg }}>
-            <div className="flex items-center gap-2 mb-2 justify-center lg:justify-start">
+            <div className="flex items-center gap-2 mb-2 justify-center md:justify-start">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}26` }}>
                 <Icon className="w-3.5 h-3.5" style={{ color }} />
               </div>
