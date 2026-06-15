@@ -41,14 +41,22 @@ export async function dashboard(req: Request, res: Response) {
   ] = await Promise.all([
     prisma.estudiante.count({ where: filtroAsesor ? { asesorId: filtroAsesor } : {} }),
     prisma.estudiante.count({ where: { createdAt: { gte: inicioPeriodo, lte: finPeriodo }, ...(filtroAsesor && { asesorId: filtroAsesor }) } }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true, montoNeto: true, comisionHotmart: true, comisionAsesor: true }, _count: true }),
     prisma.curso.count({ where: { activo: true } }),
   ])
 
+  const s = pagosCobrados._sum
   return ApiResponse.success(res, {
     estudiantes: { total: totalEstudiantes, nuevosMes: estudiantesNuevosMes },
     cobranza: {
-      cobrado: { monto: pagosCobrados._sum.monto ?? 0, cantidad: pagosCobrados._count },
+      cobrado: { monto: s.monto ?? 0, cantidad: pagosCobrados._count },
+    },
+    // Desglose de comisiones del período (en COP)
+    desglose: {
+      bruto:           s.monto ?? 0,
+      comisionHotmart: s.comisionHotmart ?? 0,
+      comisionAsesor:  s.comisionAsesor ?? 0,
+      neto:            s.montoNeto ?? 0,
     },
     cursosActivos,
     periodo,
@@ -103,7 +111,7 @@ export async function rankingAsesores(req: Request, res: Response) {
     prisma.asesor.findMany({ select: { id: true, nombre: true, user: { select: { image: true } } } }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
-      select: { asesorId: true, monto: true, estudianteId: true },
+      select: { asesorId: true, monto: true, estudianteId: true, comisionAsesor: true },
     }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesAnterior, lte: finMesAnterior } },
@@ -123,6 +131,7 @@ export async function rankingAsesores(req: Request, res: Response) {
       const variacion      = ventasAnterior > 0 ? Math.round(((ventasActual - ventasAnterior) / ventasAnterior) * 100) : 0
       // Estudiantes distintos con venta DENTRO del período (no histórico)
       const estudiantesPeriodo = new Set(pagosDelAsesor.map(p => p.estudianteId)).size
+      const comisionGanada = pagosDelAsesor.reduce((s, p) => s + (p.comisionAsesor ?? 0), 0)
       return {
         id: a.id,
         nombre: a.nombre,
@@ -131,6 +140,7 @@ export async function rankingAsesores(req: Request, res: Response) {
         cobrado: ventasActual,
         cantidadPagos: pagosDelAsesor.length,
         totalEstudiantes: estudiantesPeriodo,
+        comisionGanada,
         variacion,
         ventasAnterior,
       }

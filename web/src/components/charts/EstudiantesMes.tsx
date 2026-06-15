@@ -17,6 +17,7 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
 
   const verde = isDark ? '#6ee7b7' : '#16a34a'
   const rojo  = isDark ? '#f87171' : '#dc2626'
+  const primary = isDark ? '#95daff' : '#1a7de0'
 
   // Mes anterior (para variación) derivado de `desde`
   const base      = new Date(desde + 'T00:00:00')
@@ -58,10 +59,32 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
               <span className="text-[12px] font-semibold flex items-center gap-0.5"
                 style={{ color: variacion >= 0 ? verde : rojo }}>
                 {variacion >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                {variacion >= 0 ? '+' : ''}{variacion}% vs mes anterior
+                {variacion >= 0 ? '+' : ''}{variacion}%
               </span>
             )}
           </div>
+
+          {/* Comparación con el mes anterior */}
+          {(() => {
+            const max = Math.max(total, totalAnt, 1)
+            const Barra = ({ label, valor, color }: { label: string; valor: number; color: string }) => (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] text-on-surface-variant">{label}</span>
+                  <span className="text-[11px] font-bold text-on-surface tabular-nums">{valor}</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-surface-high overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(valor / max) * 100}%`, background: color }} />
+                </div>
+              </div>
+            )
+            return (
+              <div className="mt-5 space-y-3">
+                <Barra label="Este mes" valor={total} color={primary} />
+                <Barra label="Mes anterior" valor={totalAnt} color={isDark ? '#4a6fa0' : '#9bb3d4'} />
+              </div>
+            )
+          })()}
         </>
       )}
     </div>

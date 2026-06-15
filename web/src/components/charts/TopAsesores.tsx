@@ -13,6 +13,7 @@ interface Asesor {
   totalVentas: number
   cantidadPagos: number
   totalEstudiantes: number
+  comisionGanada: number
   variacion: number
 }
 
@@ -73,6 +74,12 @@ export function TopAsesores() {
                 <p className="text-[10px] text-on-surface-variant flex items-center gap-1 mt-0.5">
                   <Users className="w-3 h-3" /> {a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}
                 </p>
+                {/* Comisión ganada */}
+                {a.comisionGanada > 0 && (
+                  <p className="text-[10px] mt-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                    Comisión {formatCOP(a.comisionGanada)}
+                  </p>
+                )}
                 {/* Variación */}
                 {a.variacion !== 0 && (
                   <p className="text-[10px] font-semibold flex items-center gap-0.5 mt-1"

@@ -38,3 +38,12 @@ export function formatRelative(date: string | Date): string {
   if (days > 0) return `En ${days} días`
   return `Hace ${Math.abs(days)} días`
 }
+
+// Convierte un nombre de curso de MAYÚSCULAS a Tipo Título (genérico).
+// Ej: "PREICFES CALENDARIO A S-3" → "Preicfes Calendario A S-3"
+export function formatCurso(nombre: string): string {
+  return nombre
+    .split(' ')
+    .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w))
+    .join(' ')
+}

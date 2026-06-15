@@ -24,6 +24,7 @@ interface MediosPagoData { total: number; totalCantidad: number; metodos: MedioP
 interface DashboardData {
   estudiantes: { total: number; nuevosMes: number }
   cobranza: { cobrado: { monto: number; cantidad: number } }
+  desglose?: { bruto: number; comisionHotmart: number; comisionAsesor: number; neto: number }
 }
 
 const COLORES = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
@@ -72,6 +73,7 @@ export default function ReportesPage() {
   const d = dashData?.data
   const est      = d?.estudiantes ?? { total: 0, nuevosMes: 0 }
   const cobranza = d?.cobranza   ?? { cobrado: { monto: 0, cantidad: 0 } }
+  const desglose = d?.desglose   ?? { bruto: 0, comisionHotmart: 0, comisionAsesor: 0, neto: 0 }
 
   const medios  = mediosData?.data
   const metodos = medios?.metodos ?? []
@@ -113,6 +115,34 @@ export default function ReportesPage() {
             icon="TrendingUp" variant="success" isLoading={isLoading} />
         </div>
       </section>
+
+      {/* ── Desglose de comisiones ─────────────────────────────────── */}
+      {desglose.bruto > 0 && (
+        <section className="space-y-3">
+          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Desglose financiero</p>
+          <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-5 max-w-md">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] text-on-surface">Facturación bruta</span>
+                <span className="text-[14px] font-bold text-on-surface tabular-nums">{formatCOP(desglose.bruto)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] text-on-surface-variant">− Comisión Hotmart</span>
+                <span className="text-[13px] font-semibold text-on-surface-variant tabular-nums">−{formatCOP(desglose.comisionHotmart)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] text-on-surface-variant">− Comisión asesores</span>
+                <span className="text-[13px] font-semibold text-on-surface-variant tabular-nums">−{formatCOP(desglose.comisionAsesor)}</span>
+              </div>
+              <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-on-surface">Neto recibido</span>
+                <span className="text-[18px] font-bold text-primary tabular-nums">{formatCOP(desglose.neto)}</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-on-surface-variant/70 mt-3">Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.</p>
+          </div>
+        </section>
+      )}
 
       {/* ── Gráficas de ingresos y asesores ───────────────────────── */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">

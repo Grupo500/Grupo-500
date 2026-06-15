@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { apiFetch } from '@/lib/api'
+import { formatCurso } from '@/lib/utils'
 import { BookOpen } from 'lucide-react'
 
 interface CursoData {
@@ -103,7 +104,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
             {cursos.map((c, i) => (
               <div key={c.nombre} className="flex items-start gap-2">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-[3px]" style={{ background: colors[i % colors.length] }} />
-                <span className="text-[12px] text-on-surface flex-1 leading-snug">{c.nombre}</span>
+                <span className="text-[12px] text-on-surface flex-1 leading-snug">{formatCurso(c.nombre)}</span>
                 <span className="text-[12px] font-bold text-on-surface tabular-nums flex-shrink-0">{c.vendidos}</span>
               </div>
             ))}
