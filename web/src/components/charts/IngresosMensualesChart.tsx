@@ -22,6 +22,24 @@ const titulos: Record<Periodo, string> = {
   mensual: 'Ingresos mensuales',
 }
 
+function fmtCompact(n: number) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1).replace('.', ',')}M`
+  if (n >= 1_000)     return `$${Math.round(n / 1_000)}K`
+  return `$${Math.round(n)}`
+}
+
+function Kpi({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wide truncate">{label}</p>
+      <p className="text-[15px] font-bold tabular-nums leading-tight mt-0.5 truncate" style={color ? { color } : undefined}>
+        {value}
+      </p>
+      {sub && <p className="text-[10px] text-on-surface-variant capitalize truncate">{sub}</p>}
+    </div>
+  )
+}
+
 export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
   const { resolvedTheme } = useTheme()
   const isDark            = resolvedTheme === 'dark'
@@ -39,6 +57,15 @@ export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Peri
   const primary   = isDark ? '#95daff' : '#1a7de0'
   const gridColor = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
   const tickColor = isDark ? '#95c8f0' : '#2a4172'
+
+  // ── KPIs derivados de la serie ──────────────────────────────────────────
+  const total        = puntos.reduce((s, p) => s + p.ingresos, 0)
+  const mejor        = puntos.reduce((m, p) => (p.ingresos > m.ingresos ? p : m), puntos[0] ?? { label: '—', ingresos: 0, pagos: 0 })
+  const mesesActivos = puntos.filter(p => p.ingresos > 0).length
+  const promedio     = mesesActivos > 0 ? total / mesesActivos : 0
+  const crecimiento  = data?.data?.variacion ?? 0
+  const verde        = isDark ? '#6ee7b7' : '#16a34a'
+  const rojo         = isDark ? '#f87171' : '#dc2626'
 
   return (
     <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-3">
@@ -78,6 +105,20 @@ export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Peri
               fill="url(#gradIngresosMensuales)" dot={false} activeDot={{ r: 5, fill: primary, strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
+      )}
+
+      {/* ── Mini-KPIs ───────────────────────────────────────────────────── */}
+      {temaListo && !isLoading && puntos.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-outline-variant">
+          <Kpi label="Total 6 meses"     value={fmtCompact(total)} />
+          <Kpi label="Mejor mes"         value={fmtCompact(mejor.ingresos)} sub={mejor.label} />
+          <Kpi label="Promedio mensual"  value={fmtCompact(promedio)} />
+          <Kpi
+            label="Crecimiento"
+            value={`${crecimiento > 0 ? '▲ +' : crecimiento < 0 ? '▼ ' : ''}${crecimiento}%`}
+            color={crecimiento > 0 ? verde : crecimiento < 0 ? rojo : undefined}
+          />
+        </div>
       )}
     </div>
   )

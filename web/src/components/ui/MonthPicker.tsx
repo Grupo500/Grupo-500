@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   format, addMonths, subMonths,
   startOfMonth, endOfMonth,
@@ -44,19 +45,49 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
   const [rangeStart, setRangeStart] = useState<Date | null>(null)
   const [rangeEnd,   setRangeEnd]   = useState<Date | null>(null)
   const [hoverDay,   setHoverDay]   = useState<Date | null>(null)
-  const ref = useRef<HTMLDivElement>(null)
+  const ref    = useRef<HTMLDivElement>(null)   // contenedor del trigger (medición + clic fuera)
+  const popRef = useRef<HTMLDivElement>(null)   // panel flotante (portal)
 
-  // Cerrar al clic fuera
+  const [mounted, setMounted] = useState(false)
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
+
+  useEffect(() => setMounted(true), [])
+
+  // Cerrar al clic fuera (considera trigger Y panel, porque el panel vive en un portal)
   useEffect(() => {
     function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-        setStep('month')
-      }
+      const t = e.target as Node
+      if (ref.current?.contains(t)) return
+      if (popRef.current?.contains(t)) return
+      setOpen(false)
+      setStep('month')
     }
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [])
+
+  // Posicionar el panel pegado al trigger, ajustado para no salirse de la pantalla
+  useLayoutEffect(() => {
+    if (!open) return
+    function compute() {
+      const el = ref.current
+      if (!el) return
+      const r      = el.getBoundingClientRect()
+      const margin = 12
+      const width  = Math.min(288, window.innerWidth - margin * 2)
+      let left     = alignRight ? r.right - width : r.left
+      // Clamp horizontal: nunca fuera de la pantalla
+      left = Math.max(margin, Math.min(left, window.innerWidth - width - margin))
+      setPos({ top: r.bottom + 8, left, width })
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    window.addEventListener('scroll', compute, true)
+    return () => {
+      window.removeEventListener('resize', compute)
+      window.removeEventListener('scroll', compute, true)
+    }
+  }, [open, alignRight])
 
   // Sincronizar rango externo
   useEffect(() => {
@@ -143,11 +174,12 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
         </button>
       )}
 
-      {/* Popover */}
-      {open && (
+      {/* Popover — en portal y posición fixed para no ser recortado por overflow del <main> */}
+      {open && mounted && pos && createPortal(
         <div
-          className={`absolute top-10 z-50 bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.18)] p-4 w-72 ${alignRight ? 'right-0' : 'left-0'}`}
-          style={{ animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both' }}
+          ref={popRef}
+          className="z-[60] bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.18)] p-4"
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, animation: 'slideInUp 0.18s cubic-bezier(0.23,1,0.32,1) both' }}
         >
 
           {/* ── PASO 1: Selección de mes ── */}
@@ -315,7 +347,8 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
