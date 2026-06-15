@@ -1,10 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { TrendingUp, TrendingDown, Users } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, ChevronRight } from 'lucide-react'
 
 interface Asesor {
   id: string
@@ -36,8 +37,10 @@ export function TopAsesores() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <p className="text-[13px] font-semibold text-on-surface">Top 5 asesores</p>
-        <span className="text-[11px] text-on-surface-variant">Este mes</span>
+        <p className="text-[13px] font-semibold text-on-surface">Top 5 asesores · <span className="text-on-surface-variant font-normal">Este mes</span></p>
+        <Link href="/reportes" className="flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline">
+          Ver todo <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {isLoading ? (

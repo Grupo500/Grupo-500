@@ -2,10 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { formatCurso } from '@/lib/utils'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, ChevronRight } from 'lucide-react'
 
 interface CursoData {
   id: string
@@ -33,10 +34,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
 
-  const colors        = isDark ? COLORS_DARK : COLORS_LIGHT
-  const tooltipBg     = isDark ? '#0f1e35' : '#ffffff'
-  const tooltipBorder = isDark ? 'rgba(149,218,255,0.12)' : 'rgba(0,48,96,0.10)'
-  const labelColor    = isDark ? '#d6eaff' : '#001d3d'
+  const colors = isDark ? COLORS_DARK : COLORS_LIGHT
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['cursos-vendidos', desde, hasta],
@@ -76,7 +74,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
       ) : (
         <>
           {/* Dona delgada con puntas redondeadas y total al centro */}
-          <div className="relative mx-auto" style={{ width: 150, height: 150 }}>
+          <div className="relative mx-auto" style={{ width: 124, height: 124 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -93,11 +91,6 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
                 >
                   {slices.map((s, i) => <Cell key={i} fill={s.nombre === 'Otros' ? grisOtros : colors[i % colors.length]} />)}
                 </Pie>
-                <Tooltip
-                  contentStyle={{ background: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: 10, padding: '6px 12px' }}
-                  labelStyle={{ color: labelColor, fontWeight: 600, fontSize: 12 }}
-                  formatter={(v: number) => [`${v} venta${v !== 1 ? 's' : ''}`, '']}
-                />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -106,16 +99,24 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
             </div>
           </div>
 
-          {/* Leyenda debajo — una fila por curso, nombre completo */}
-          <div className="space-y-2 mt-4">
-            {cursos.map((c, i) => (
-              <div key={c.nombre} className="flex items-start gap-2">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-[3px]" style={{ background: colors[i % colors.length] }} />
-                <span className="text-[12px] text-on-surface flex-1 leading-snug">{formatCurso(c.nombre)}</span>
-                <span className="text-[12px] font-bold text-on-surface tabular-nums flex-shrink-0">{c.vendidos}</span>
-              </div>
-            ))}
+          {/* Leyenda debajo — top 5 + Otros, nombre completo */}
+          <div className="space-y-1.5 mt-3">
+            {slices.map((c, i) => {
+              const esOtros = c.nombre === 'Otros'
+              return (
+                <div key={c.nombre} className="flex items-start gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-[3px]" style={{ background: esOtros ? grisOtros : colors[i % colors.length] }} />
+                  <span className={`text-[12px] flex-1 leading-snug ${esOtros ? 'text-on-surface-variant' : 'text-on-surface'}`}>{esOtros ? 'Otros' : formatCurso(c.nombre)}</span>
+                  <span className={`text-[12px] font-bold tabular-nums flex-shrink-0 ${esOtros ? 'text-on-surface-variant' : 'text-on-surface'}`}>{c.vendidos}</span>
+                </div>
+              )
+            })}
           </div>
+
+          {/* Ver todo */}
+          <Link href="/cursos" className="mt-3 flex items-center justify-center gap-1 text-[12px] font-semibold text-primary hover:underline">
+            Ver todo <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
         </>
       )}
     </div>
