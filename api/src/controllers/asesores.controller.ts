@@ -100,6 +100,16 @@ export async function actualizar(req: Request, res: Response) {
     },
   })
 
+  // Sincronizar el Usuario vinculado: nombre y email deben coincidir en toda la
+  // app (la lista de Usuarios muestra user.nombre; el login usa user.email).
+  const userData = {
+    ...(nombre && { nombre: nombre.trim() }),
+    ...(email  && { email:  String(email).toLowerCase().trim() }),
+  }
+  if (Object.keys(userData).length > 0) {
+    await prisma.user.update({ where: { id: asesor.userId }, data: userData }).catch(() => {})
+  }
+
   auditLog(req, 'UPDATE', 'asesor', id, { cambios: { nombre, telefono, email, codigosHotmart } })
   return ApiResponse.success(res, asesor)
 }

@@ -111,7 +111,7 @@ export function FacturadoMensual() {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} vertical={false} />
-            <XAxis dataKey="label" tick={tickFill} axisLine={false} tickLine={false} interval={4} />
+            <XAxis dataKey="label" tick={tickFill} axisLine={false} tickLine={false} interval={1} minTickGap={4} />
             <YAxis tick={tickFill} axisLine={false} tickLine={false}
               tickFormatter={(v: number) => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
             <Tooltip
