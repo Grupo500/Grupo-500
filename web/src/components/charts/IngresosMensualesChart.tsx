@@ -30,7 +30,7 @@ function fmtCompact(n: number) {
 
 function Kpi({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 px-4 first:pl-0 last:pr-0">
       <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wide truncate">{label}</p>
       <p className="text-[15px] font-bold tabular-nums leading-tight mt-0.5 truncate" style={color ? { color } : undefined}>
         {value}
@@ -109,7 +109,7 @@ export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Peri
 
       {/* ── Mini-KPIs ───────────────────────────────────────────────────── */}
       {temaListo && !isLoading && puntos.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-outline-variant">
+        <div className="grid grid-cols-4 gap-0 pt-3 border-t border-outline-variant divide-x divide-outline-variant">
           <Kpi label="Total 6 meses"     value={fmtCompact(total)} />
           <Kpi label="Mejor mes"         value={fmtCompact(mejor.ingresos)} sub={mejor.label} />
           <Kpi label="Promedio mensual"  value={fmtCompact(promedio)} />
