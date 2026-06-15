@@ -10,6 +10,7 @@ import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesCha
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { CursosVendidosRanked } from '@/components/charts/CursosVendidosRanked'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts'
 import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet } from 'lucide-react'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
@@ -53,26 +54,6 @@ function useCountUp(target: number, duration = 900) {
   return value
 }
 
-// ── Barra animada ─────────────────────────────────────────────────────────────
-function BarraMedia({ pct, color, delay, vertical = false }: { pct: number; color: string; delay: number; vertical?: boolean }) {
-  const [val, setVal] = useState(0)
-  useEffect(() => {
-    const t = setTimeout(() => setVal(pct), delay)
-    return () => clearTimeout(t)
-  }, [pct, delay])
-
-  if (vertical) {
-    return (
-      <div className="absolute bottom-0 left-0 right-0 rounded-lg"
-        style={{ height: `${val}%`, background: color, transition: 'height 600ms cubic-bezier(0.23,1,0.32,1)' }} />
-    )
-  }
-  return (
-    <div className="h-1.5 rounded-full bg-surface-high overflow-hidden">
-      <div className="h-full rounded-full" style={{ width: `${val}%`, background: color, transition: 'width 600ms cubic-bezier(0.23,1,0.32,1)' }} />
-    </div>
-  )
-}
 
 export default function ReportesPage() {
   const now = new Date()
@@ -270,59 +251,86 @@ export default function ReportesPage() {
       {/* ── FILA 3: Cursos más vendidos (burbujas) ────────────────── */}
       <CursosVendidosRanked desde={desde} hasta={hasta} />
 
-      {/* ── FILA 4: Medios de pago ─────────────────────────────────── */}
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-          <p className="text-[13px] font-semibold text-on-surface">Medios de pago</p>
+      {/* ── FILA 4: Medios de pago (50%) + Ranking asesores (50%) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
+
+        {/* Medios de pago — bar chart */}
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+            <p className="text-[13px] font-semibold text-on-surface">Medios de pago</p>
+            {medios && (
+              <span className="text-[11px] text-on-surface-variant">
+                {medios.totalCantidad} transacción{medios.totalCantidad !== 1 ? 'es' : ''}
+              </span>
+            )}
+          </div>
           {medios && (
-            <span className="text-[11px] text-on-surface-variant">
-              {medios.totalCantidad} transacción{medios.totalCantidad !== 1 ? 'es' : ''} · {formatCOP(medios.total)}
-            </span>
+            <p className="text-[11px] text-on-surface-variant mb-4">{formatCOP(medios.total)}</p>
+          )}
+
+          {mediosLoading ? (
+            <div className="h-52 rounded-xl bg-surface-high animate-pulse" />
+          ) : metodos.length === 0 ? (
+            <p className="text-[13px] text-on-surface-variant text-center py-6">Sin pagos registrados en este período</p>
+          ) : (
+            <div className="animate-fade-in">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart
+                  data={metodos.map(m => ({ ...m, pct: Math.round(m.porcentajeMonto) }))}
+                  margin={{ top: 6, right: 4, left: -16, bottom: 32 }}
+                  barSize={22}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--outline-variant)" />
+                  <XAxis
+                    dataKey="metodo"
+                    tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={0}
+                    angle={-35}
+                    textAnchor="end"
+                    dy={6}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={v => `${v}%`}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => [`${v}%`, 'Participación']}
+                    labelStyle={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface)' }}
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)', background: 'var(--surface-lowest)' }}
+                    itemStyle={{ color: 'var(--on-surface)' }}
+                  />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Bar dataKey="pct" radius={[6, 6, 0, 0]} background={{ radius: 6, fill: 'var(--surface-high)' } as any}>
+                    {metodos.map((m, i) => (
+                      <Cell key={m.metodo} fill={COLORES[i % COLORES.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+
+              {/* Leyenda vertical */}
+              <div className="flex flex-col gap-1.5 mt-1">
+                {metodos.map((m, i) => (
+                  <div key={m.metodo} className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: COLORES[i % COLORES.length] }} />
+                    <span className="text-[11px] text-on-surface flex-1">{m.metodo}</span>
+                    <span className="text-[11px] font-semibold text-on-surface tabular-nums">{Math.round(m.porcentajeMonto)}%</span>
+                    <span className="text-[10px] text-on-surface-variant tabular-nums">{m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
-        {mediosLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-surface-high animate-pulse" />)}
-          </div>
-        ) : metodos.length === 0 ? (
-          <p className="text-[13px] text-on-surface-variant text-center py-6">Sin pagos registrados en este período</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 animate-fade-in">
-            {metodos.map((m, i) => {
-              const color = COLORES[i % COLORES.length]
-              return (
-                <div key={m.metodo} className="flex flex-col gap-2">
-                  {/* Barra doble */}
-                  <div className="relative h-20 flex items-end gap-2">
-                    {/* Barra fondo (total máximo) */}
-                    <div className="relative flex-1 h-full rounded-lg bg-surface-high overflow-hidden">
-                      {/* Barra coloreada proporcional */}
-                      <BarraMedia pct={m.porcentajeMonto} color={color} delay={80 + i * 60} vertical />
-                    </div>
-                  </div>
-                  {/* Nombre + dato */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-                    <span className="text-[11px] font-medium text-on-surface truncate">{m.metodo}</span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-1">
-                    <span className="text-[13px] font-bold text-on-surface tabular-nums">
-                      {Math.round(m.porcentajeMonto)}%
-                    </span>
-                    <span className="text-[10px] text-on-surface-variant tabular-nums">
-                      {m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+        {/* Ranking asesores */}
+        <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
       </div>
-
-      {/* ── FILA 5: Ranking completo de asesores ──────────────────── */}
-      <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
     </div>
   )
 }
