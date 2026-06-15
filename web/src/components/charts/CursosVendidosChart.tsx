@@ -57,7 +57,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
   const total = cursos.reduce((s, c) => s + c.vendidos, 0)
 
   return (
-    <div className="card p-5 h-72 flex flex-col">
+    <div className="card p-5 flex flex-col">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
           <BookOpen className="w-3.5 h-3.5 text-primary" />
@@ -66,23 +66,26 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
       </div>
 
       {isError || cursos.length === 0 ? (
-        <div className="flex items-center justify-center flex-1 text-[13px] text-on-surface-variant">
+        <div className="flex items-center justify-center h-40 text-[13px] text-on-surface-variant">
           Sin datos disponibles
         </div>
       ) : (
-        <div className="flex-1 flex items-center gap-3 min-h-0">
-          {/* Dona con total al centro */}
-          <div className="relative flex-shrink-0" style={{ width: 130, height: 130 }}>
+        <>
+          {/* Dona delgada con puntas redondeadas y total al centro */}
+          <div className="relative mx-auto" style={{ width: 150, height: 150 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={cursos}
                   dataKey="vendidos"
                   nameKey="nombre"
-                  innerRadius="62%"
+                  innerRadius="82%"
                   outerRadius="100%"
-                  paddingAngle={2}
+                  paddingAngle={3}
+                  cornerRadius={10}
                   stroke="none"
+                  startAngle={90}
+                  endAngle={-270}
                 >
                   {cursos.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
                 </Pie>
@@ -94,22 +97,22 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[20px] font-bold text-on-surface tabular-nums leading-none">{total}</span>
-              <span className="text-[10px] text-on-surface-variant">ventas</span>
+              <span className="text-[24px] font-bold text-on-surface tabular-nums leading-none">{total}</span>
+              <span className="text-[11px] text-on-surface-variant mt-0.5">ventas</span>
             </div>
           </div>
 
-          {/* Leyenda */}
-          <div className="flex-1 min-w-0 space-y-1.5 overflow-y-auto">
+          {/* Leyenda debajo */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4">
             {cursos.map((c, i) => (
               <div key={c.nombre} className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: colors[i % colors.length] }} />
-                <span className="text-[11px] text-on-surface truncate flex-1" title={c.nombre}>{truncar(c.nombre)}</span>
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colors[i % colors.length] }} />
+                <span className="text-[11px] text-on-surface truncate flex-1" title={c.nombre}>{truncar(c.nombre, 16)}</span>
                 <span className="text-[11px] font-bold text-on-surface tabular-nums flex-shrink-0">{c.vendidos}</span>
               </div>
             ))}
           </div>
-        </div>
+        </>
       )}
     </div>
   )

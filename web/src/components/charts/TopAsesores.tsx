@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Users } from 'lucide-react'
 interface Asesor {
   id: string
   nombre: string
+  image: string | null
   totalVentas: number
   cantidadPagos: number
   totalEstudiantes: number
@@ -32,38 +33,43 @@ export function TopAsesores() {
   const top = (data?.data ?? []).slice(0, 5)
 
   return (
-    <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 sm:p-5 space-y-3">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-1">
         <p className="text-[13px] font-semibold text-on-surface">Top 5 asesores</p>
         <span className="text-[11px] text-on-surface-variant">Este mes</span>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
-          {[0, 1, 2, 3, 4].map(i => <div key={i} className="h-40 rounded-xl bg-surface-high animate-pulse" />)}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {[0, 1, 2, 3, 4].map(i => <div key={i} className="card h-44 animate-pulse" />)}
         </div>
       ) : top.length === 0 ? (
-        <p className="text-[13px] text-on-surface-variant text-center py-8">Sin ventas de asesores este mes</p>
+        <div className="card p-8 text-center text-[13px] text-on-surface-variant">Sin ventas de asesores este mes</div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {top.map((a, i) => {
             const iniciales = a.nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
             return (
               <div key={a.id}
-                className="flex flex-col items-center text-center rounded-xl bg-surface-high/50 p-3 transition-colors duration-200 hover:bg-surface-high">
+                className="card p-4 flex flex-col items-center text-center transition-shadow duration-200 hover:shadow-[var(--shadow-float)]">
                 {/* Posición */}
-                <span className="text-[16px] leading-none mb-2 h-5 flex items-center">
+                <span className="text-[16px] leading-none h-5 flex items-center">
                   {i < 3 ? MEDALLAS[i] : <span className="text-[13px] font-bold text-on-surface-variant">{i + 1}</span>}
                 </span>
-                {/* Avatar inicial */}
-                <div className="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center mb-2">
-                  <span className="text-[13px] font-bold text-primary">{iniciales}</span>
+                {/* Avatar: foto o iniciales */}
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center my-2 ring-2 ring-primary/10">
+                  {a.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.image} alt={a.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className="text-[13px] font-bold text-primary">{iniciales}</span>
+                  )}
                 </div>
                 {/* Nombre */}
                 <p className="text-[12px] font-semibold text-on-surface leading-tight line-clamp-2 min-h-[2.2em]" title={a.nombre}>{a.nombre}</p>
                 {/* Ventas */}
-                <p className="text-[13px] font-bold text-on-surface tabular-nums mt-1.5">{formatCOP(a.totalVentas)}</p>
-                {/* Estudiantes */}
+                <p className="text-[14px] font-bold text-on-surface tabular-nums mt-1.5">{formatCOP(a.totalVentas)}</p>
+                {/* Ventas / estudiantes */}
                 <p className="text-[10px] text-on-surface-variant flex items-center gap-1 mt-0.5">
                   <Users className="w-3 h-3" /> {a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}
                 </p>
