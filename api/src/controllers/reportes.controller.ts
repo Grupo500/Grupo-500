@@ -100,10 +100,11 @@ export async function rankingAsesores(req: Request, res: Response) {
     finMesAnterior     = new Date(inicioMesActual.getTime() - 1)
     inicioMesAnterior  = new Date(finMesAnterior.getTime() - duracionMs)
   } else {
+    // Sin filtro: comparar desde inicio de mes hasta HOY vs mismo corte del mes anterior
     inicioMesActual   = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-    finMesActual      = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
+    finMesActual      = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
     inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
-    finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+    finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate(), 23, 59, 59)
   }
 
   // Traer asesores + pagos de ambos períodos en 3 queries paralelas

@@ -35,7 +35,7 @@ export function TopAsesores() {
   const top = (data?.data ?? []).slice(0, 5)
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col h-full gap-3">
       <div className="flex items-center justify-between px-1">
         <p className="text-[13px] font-semibold text-on-surface">Top 5 asesores · <span className="text-on-surface-variant font-normal">Este mes</span></p>
         <Link href="/reportes" className="flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline">
@@ -50,12 +50,12 @@ export function TopAsesores() {
       ) : top.length === 0 ? (
         <div className="card p-8 text-center text-[13px] text-on-surface-variant">Sin ventas de asesores este mes</div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 flex-1">
           {top.map((a, i) => {
             const iniciales = a.nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
             return (
               <div key={a.id}
-                className="card p-4 flex flex-col items-center text-center transition-shadow duration-200 hover:shadow-[var(--shadow-float)]">
+                className="card p-4 flex flex-col items-center text-center transition-shadow duration-200 hover:shadow-[var(--shadow-float)] h-full">
                 {/* Posición */}
                 <span className="text-[16px] leading-none h-5 flex items-center">
                   {i < 3 ? MEDALLAS[i] : <span className="text-[13px] font-bold text-on-surface-variant">{i + 1}</span>}
@@ -77,18 +77,17 @@ export function TopAsesores() {
                 <p className="text-[10px] text-on-surface-variant flex items-center gap-1 mt-0.5">
                   <Users className="w-3 h-3" /> {a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}
                 </p>
-                {/* Comisión ganada */}
+                {/* Comisión ganada + variación */}
                 {a.comisionGanada > 0 && (
                   <p className="text-[10px] mt-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
                     Comisión {formatCOP(a.comisionGanada)}
                   </p>
                 )}
-                {/* Variación */}
                 {a.variacion !== 0 && (
                   <p className="text-[10px] font-semibold flex items-center gap-0.5 mt-1"
                     style={{ color: a.variacion > 0 ? verde : rojo }}>
                     {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {a.variacion > 0 ? '+' : ''}{a.variacion}%
+                    {a.variacion > 0 ? '+' : ''}{a.variacion}% vs mismo período
                   </p>
                 )}
               </div>

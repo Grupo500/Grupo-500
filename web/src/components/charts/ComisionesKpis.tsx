@@ -22,7 +22,7 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
 
   const cards = [
     { label: 'Comisión Hotmart',  valor: d.comisionHotmart, color: isDark ? '#fbbf24' : '#d97706', Icon: Landmark, negativo: true },
-    { label: 'Comisión asesores', valor: d.comisionAsesor,  color: isDark ? '#c4b5fd' : '#7c3aed', Icon: Users,    negativo: true },
+    { label: 'Comisión asesores', valor: d.comisionAsesor,  color: isDark ? '#f87171' : '#dc2626', Icon: Users,    negativo: true },
     { label: 'Neto recibido',     valor: d.neto,            color: isDark ? '#6ee7b7' : '#16a34a', Icon: Wallet,   negativo: false },
   ]
 
@@ -30,7 +30,7 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
     <div className="flex flex-col gap-3 h-full">
       {cards.map(({ label, valor, color, Icon, negativo }) => (
         <div key={label} className="rounded-2xl p-4 flex-1 flex flex-col justify-center"
-          style={{ border: `1.5px solid ${color}55`, background: 'var(--surface-lowest)' }}>
+          style={{ border: `1.5px solid ${color}66`, background: `${color}22` }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}26` }}>
               <Icon className="w-3.5 h-3.5" style={{ color }} />
