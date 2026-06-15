@@ -75,6 +75,11 @@ export function FacturadoMensual() {
           <p className="text-[13px] font-semibold text-on-surface">Total facturado</p>
           <p className="text-[11px] text-on-surface-variant capitalize">{mesLabel}</p>
         </div>
+        {/* Leyenda — centro del header */}
+        <div className="flex items-center gap-3 text-[10px] text-on-surface-variant self-center">
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} /> Mes actual</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: sombra }} /> Mes anterior</span>
+        </div>
         <div className="text-right">
           {isLoading ? (
             <div className="h-6 w-24 rounded bg-[var(--surface-high)] animate-pulse" />
@@ -91,12 +96,6 @@ export function FacturadoMensual() {
             </>
           )}
         </div>
-      </div>
-
-      {/* Leyenda */}
-      <div className="flex items-center gap-4 mb-2 text-[10px] text-on-surface-variant">
-        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} /> Mes actual</span>
-        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: sombra }} /> Mes anterior</span>
       </div>
 
       {!temaListo || isLoading ? (

@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale'
 import { EstudiantesMes } from './EstudiantesMes'
 import { CursosVendidosChart } from './CursosVendidosChart'
 import { FacturadoMensual } from './FacturadoMensual'
+import { ComisionesKpis } from './ComisionesKpis'
 import { TopAsesores } from './TopAsesores'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 
@@ -54,6 +55,7 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
         {/* Columna principal (70%) */}
         <div className="lg:col-span-7 order-1 lg:order-2 space-y-4">
           <FacturadoMensual />
+          <ComisionesKpis desde={desde} hasta={hasta} />
           <TopAsesores />
         </div>
 
