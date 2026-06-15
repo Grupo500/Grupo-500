@@ -23,12 +23,8 @@ import asesoresRoutes from './routes/asesores'
 import cursosRoutes from './routes/cursos'
 import colegiosRoutes from './routes/colegios'
 import pagosRoutes from './routes/pagos'
-import financiamientosRoutes from './routes/financiamientos'
-import cuotasRoutes from './routes/cuotas'
-import cobrosRoutes from './routes/cobros'
 import certificadosRoutes from './routes/certificados'
 import simulacrosRoutes from './routes/simulacros'
-import whatsappRoutes from './routes/whatsapp'
 import reportesRoutes from './routes/reportes'
 import webhookRoutes from './routes/webhooks'
 import uploadRoutes from './routes/upload'
@@ -171,12 +167,8 @@ app.use('/api/asesores', asesoresRoutes)
 app.use('/api/cursos', cursosRoutes)
 app.use('/api/colegios', colegiosRoutes)
 app.use('/api/pagos', pagosRoutes)
-app.use('/api/financiamientos', financiamientosRoutes)
-app.use('/api/cuotas', cuotasRoutes)
-app.use('/api/cobros', cobrosRoutes)
 app.use('/api/certificados', certificadosRoutes)
 app.use('/api/simulacros', simulacrosRoutes)
-app.use('/api/whatsapp', whatsappRoutes)
 app.use('/api/reportes', reportesRoutes)
 app.use('/api/upload',  uploadRoutes)
 app.use('/api/config',       configRoutes)

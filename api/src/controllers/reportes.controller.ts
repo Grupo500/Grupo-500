@@ -30,59 +30,27 @@ export async function dashboard(req: Request, res: Response) {
 
   const filtroPeriodo = { gte: inicioPeriodo, lte: finPeriodo }
 
-  // Filtro de estudiante para pagos/cuotas vía relación
-  const filtroEstPago    = filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}
-  const filtroEstCuota   = filtroAsesor
-    ? { financiamiento: { estudiante: { asesorId: filtroAsesor } } } : {}
+  // Filtro de estudiante para pagos vía relación
+  const filtroEstPago = filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}
 
   const [
     totalEstudiantes,
     estudiantesNuevosMes,
-    pagosPendientes,
-    pagosVencidos,
     pagosCobrados,
-    cuotasPendientes,
-    cuotasVencidas,
-    cuotasCobradas,
     cursosActivos,
   ] = await Promise.all([
     prisma.estudiante.count({ where: filtroAsesor ? { asesorId: filtroAsesor } : {} }),
     prisma.estudiante.count({ where: { createdAt: { gte: inicioPeriodo, lte: finPeriodo }, ...(filtroAsesor && { asesorId: filtroAsesor }) } }),
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoy }, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
-    // Mora = estado VENCIDO OR estado PENDIENTE con fechaVencimiento ya pasada
-    prisma.pago.aggregate({ where: { estado: { in: ['VENCIDO', 'PENDIENTE'] }, fechaVencimiento: { lt: hoy }, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoy > inicioPeriodo ? hoy : inicioPeriodo }, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt: hoy, gte: inicioPeriodo }, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago: filtroPeriodo, ...filtroEstCuota }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
     prisma.curso.count({ where: { activo: true } }),
   ])
-
-  // Cobrado del mes por el asesor (para la tarjeta de ventas)
-  const cobradoMesAsesor = filtroAsesor
-    ? (await prisma.pago.aggregate({
-        where: { estado: 'PAGADO', fechaPago: { gte: inicioMes }, asesorId: filtroAsesor },
-        _sum: { monto: true },
-      }))._sum.monto ?? 0
-    : 0
-
-  const porCobrarMonto    = (pagosPendientes._sum.monto ?? 0) + (cuotasPendientes._sum.monto ?? 0)
-  const porCobrarCantidad = pagosPendientes._count            + cuotasPendientes._count
-  const vencidoMonto      = (pagosVencidos._sum.monto ?? 0)  + (cuotasVencidas._sum.monto ?? 0)
-  const vencidoCantidad   = pagosVencidos._count              + cuotasVencidas._count
-  const cobradoMonto      = (pagosCobrados._sum.monto ?? 0)  + (cuotasCobradas._sum.monto ?? 0)
-  const cobradoCantidad   = pagosCobrados._count              + cuotasCobradas._count
 
   return ApiResponse.success(res, {
     estudiantes: { total: totalEstudiantes, nuevosMes: estudiantesNuevosMes },
     cobranza: {
-      porCobrar: { monto: porCobrarMonto,  cantidad: porCobrarCantidad },
-      vencida:   { monto: vencidoMonto,    cantidad: vencidoCantidad   },
-      cobrado:   { monto: cobradoMonto,    cantidad: cobradoCantidad   },
-      pendiente: { monto: porCobrarMonto,  cantidad: porCobrarCantidad },
+      cobrado: { monto: pagosCobrados._sum.monto ?? 0, cantidad: pagosCobrados._count },
     },
     cursosActivos,
-    cobradoMes: cobradoMesAsesor,
     periodo,
   })
 }
@@ -337,83 +305,31 @@ export async function financieroPeriodo(req: Request, res: Response) {
     }
   }
 
-  // ── Queries en paralelo ─────────────────────────────────────────────────
-  const hoyInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
-
-  const [
-    totalPagosAgg, recaudoPagosAgg, porCobrarPagosAgg, moraPagosAgg,
-    totalCuotasAgg, recaudoCuotasAgg, porCobrarCuotasAgg, moraCuotasAgg,
-    // Período anterior
-    totalPagosAntAgg, recaudoPagosAntAgg, porCobrarPagosAntAgg, moraPagosAntAgg,
-    totalCuotasAntAgg, recaudoCuotasAntAgg, porCobrarCuotasAntAgg, moraCuotasAntAgg,
-    serie,
-  ] = await Promise.all([
-    // ── Período actual — Pagos únicos ──────────────────────────────────────
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: hoyInicio,    lte: hastaTotales } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { lt:  hoyInicio,    gte: desdeTotales } }, _sum: { monto: true } }),
-    // ── Período actual — Cuotas ────────────────────────────────────────────
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: hoyInicio,    lte: hastaTotales } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { lt:  hoyInicio,    gte: desdeTotales } }, _sum: { monto: true } }),
-    // ── Período anterior — Pagos únicos ───────────────────────────────────
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
-    prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
-    // ── Período anterior — Cuotas ─────────────────────────────────────────
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
-    prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
+  // ── Queries en paralelo (solo pagos PAGADOS; ya no hay cuotas) ───────────
+  const [recaudoActual, recaudoAnterior, serie] = await Promise.all([
+    prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: { gte: desdeTotales, lte: hastaTotales } }, _sum: { monto: true } }),
+    prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: { gte: desdeAnterior, lte: hastaAnterior } }, _sum: { monto: true } }),
     // ── Serie temporal ─────────────────────────────────────────────────────
     Promise.all(puntos.map(async ({ label, desde, hasta }) => {
-      const [r, pc, mo, rc, pcc] = await Promise.all([
-        prisma.pago.aggregate({ where: { estado: 'PAGADO',    fechaPago:        { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-        prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-        prisma.pago.aggregate({ where: { estado: 'VENCIDO',   fechaVencimiento: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-        prisma.cuota.aggregate({ where: { pagado: true,  fechaPago:        { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-        prisma.cuota.aggregate({ where: { pagado: false, fechaVencimiento: { gte: desde, lte: hasta } }, _sum: { monto: true } }),
-      ])
-      const recaudoPunto   = (r._sum.monto  ?? 0) + (rc._sum.monto  ?? 0)
-      const porCobrarPunto = (pc._sum.monto ?? 0) + (pcc._sum.monto ?? 0)
-      const moraPunto      = mo._sum.monto  ?? 0
-      return {
-        label,
-        ventaTotal: recaudoPunto + porCobrarPunto + moraPunto,
-        recaudo:    recaudoPunto,
-        porCobrar:  porCobrarPunto,
-        mora:       moraPunto,
-      }
+      const r = await prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } }, _sum: { monto: true } })
+      const monto = r._sum.monto ?? 0
+      return { label, ventaTotal: monto, recaudo: monto, porCobrar: 0, mora: 0 }
     })),
   ])
 
   const variacion = (actual: number, anterior: number) =>
     anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null
 
-  const totalesActual = {
-    ventaTotal: (totalPagosAgg._sum.monto ?? 0)     + (totalCuotasAgg._sum.monto ?? 0),
-    recaudo:    (recaudoPagosAgg._sum.monto ?? 0)   + (recaudoCuotasAgg._sum.monto ?? 0),
-    porCobrar:  (porCobrarPagosAgg._sum.monto ?? 0) + (porCobrarCuotasAgg._sum.monto ?? 0),
-    mora:       (moraPagosAgg._sum.monto ?? 0)      + (moraCuotasAgg._sum.monto ?? 0),
-  }
-
-  const totalesAnterior = {
-    ventaTotal: (totalPagosAntAgg._sum.monto ?? 0)     + (totalCuotasAntAgg._sum.monto ?? 0),
-    recaudo:    (recaudoPagosAntAgg._sum.monto ?? 0)   + (recaudoCuotasAntAgg._sum.monto ?? 0),
-    porCobrar:  (porCobrarPagosAntAgg._sum.monto ?? 0) + (porCobrarCuotasAntAgg._sum.monto ?? 0),
-    mora:       (moraPagosAntAgg._sum.monto ?? 0)      + (moraCuotasAntAgg._sum.monto ?? 0),
-  }
+  const totalActual   = recaudoActual._sum.monto   ?? 0
+  const totalAnterior = recaudoAnterior._sum.monto ?? 0
 
   return ApiResponse.success(res, {
-    totales: totalesActual,
+    totales: { ventaTotal: totalActual, recaudo: totalActual, porCobrar: 0, mora: 0 },
     variaciones: {
-      ventaTotal: variacion(totalesActual.ventaTotal, totalesAnterior.ventaTotal),
-      recaudo:    variacion(totalesActual.recaudo,    totalesAnterior.recaudo),
-      porCobrar:  variacion(totalesActual.porCobrar,  totalesAnterior.porCobrar),
-      mora:       variacion(totalesActual.mora,        totalesAnterior.mora),
+      ventaTotal: variacion(totalActual, totalAnterior),
+      recaudo:    variacion(totalActual, totalAnterior),
+      porCobrar:  null,
+      mora:       null,
     },
     puntos: serie,
   })
@@ -543,35 +459,19 @@ export async function mediosPago(req: Request, res: Response) {
     : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
 
   // Agrupar pagos pagados por método de pago
-  const [porMetodo, cuotasPorMedio] = await Promise.all([
-    prisma.pago.groupBy({
-      by: ['metodo'],
-      where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } },
-      _count: { metodo: true },
-      _sum:   { monto: true },
-    }),
-    prisma.cuota.groupBy({
-      by: ['medioPago'],
-      where: { pagado: true, fechaPago: { gte: desde, lte: hasta }, medioPago: { not: null } },
-      _count: { medioPago: true },
-      _sum:   { monto: true },
-    }),
-  ])
+  const porMetodo = await prisma.pago.groupBy({
+    by: ['metodo'],
+    where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } },
+    _count: { metodo: true },
+    _sum:   { monto: true },
+  })
 
-  // Unificar pagos únicos + cuotas por mismo método
   const mapa: Record<string, { cantidad: number; monto: number }> = {}
-
   for (const p of porMetodo) {
     const key = p.metodo
     if (!mapa[key]) mapa[key] = { cantidad: 0, monto: 0 }
     mapa[key].cantidad += p._count.metodo
     mapa[key].monto    += p._sum.monto ?? 0
-  }
-  for (const c of cuotasPorMedio) {
-    const key = c.medioPago ?? 'OTRO'
-    if (!mapa[key]) mapa[key] = { cantidad: 0, monto: 0 }
-    mapa[key].cantidad += c._count.medioPago
-    mapa[key].monto    += c._sum.monto ?? 0
   }
 
   const totalMonto    = Object.values(mapa).reduce((s, v) => s + v.monto, 0)
@@ -588,44 +488,6 @@ export async function mediosPago(req: Request, res: Response) {
     .sort((a, b) => b.monto - a.monto)
 
   return ApiResponse.success(res, { total: totalMonto, totalCantidad, metodos: data, periodo })
-}
-
-// ── Demografía: distribución por departamento y ciudad ───────────────────────
-export async function demografia(_req: Request, res: Response) {
-  const [porDepartamento, porCiudad] = await Promise.all([
-    prisma.estudiante.groupBy({
-      by:      ['departamento'],
-      where:   { departamento: { not: null } },
-      _count:  { departamento: true },
-      orderBy: { _count: { departamento: 'desc' } },
-    }),
-    prisma.estudiante.groupBy({
-      by:      ['ciudad', 'departamento'],
-      where:   { ciudad: { not: null } },
-      _count:  { ciudad: true },
-      orderBy: { _count: { ciudad: 'desc' } },
-      take:    10,
-    }),
-  ])
-
-  const totalDep  = porDepartamento.reduce((s, r) => s + r._count.departamento, 0)
-  const totalCiu  = porCiudad.reduce((s, r) => s + r._count.ciudad, 0)
-
-  return ApiResponse.success(res, {
-    departamentos: porDepartamento.map(r => ({
-      nombre:     r.departamento ?? 'Sin dato',
-      cantidad:   r._count.departamento,
-      porcentaje: totalDep > 0 ? Math.round((r._count.departamento / totalDep) * 100) : 0,
-    })),
-    ciudades: porCiudad.map(r => ({
-      nombre:       r.ciudad       ?? 'Sin dato',
-      departamento: r.departamento ?? null,
-      cantidad:     r._count.ciudad,
-      porcentaje:   totalCiu > 0 ? Math.round((r._count.ciudad / totalCiu) * 100) : 0,
-    })),
-    totalDep,
-    totalCiu,
-  })
 }
 
 // ── Estudiantes por período: adapta granularidad según rango ─────────────────
@@ -694,23 +556,4 @@ export async function estudiantesPorMes(req: Request, res: Response) {
 
   const total = resultados.reduce((s, r) => s + r.cantidad, 0)
   return ApiResponse.success(res, { puntos: resultados, total })
-}
-
-// ── Marketing: fuentes de contacto ──────────────────────────────────────────
-export async function marketing(_req: Request, res: Response) {
-  const fuentes = await prisma.fuenteContacto.groupBy({
-    by: ['fuente'],
-    _count: { fuente: true },
-    orderBy: { _count: { fuente: 'desc' } },
-  })
-
-  const total = fuentes.reduce((s, f) => s + f._count.fuente, 0)
-
-  const data = fuentes.map(f => ({
-    fuente:     f.fuente,
-    cantidad:   f._count.fuente,
-    porcentaje: total > 0 ? Math.round((f._count.fuente / total) * 100) : 0,
-  }))
-
-  return ApiResponse.success(res, { total, fuentes: data })
 }

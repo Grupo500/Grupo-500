@@ -52,7 +52,6 @@ export async function registrar(req: Request, res: Response) {
     where: { id: data.estudianteId },
     include: {
       cursos: { include: { curso: true } },
-      financiamientos: { select: { montoTotal: true } },
       pagos: { select: { monto: true, estado: true } },
     },
   })
@@ -63,7 +62,6 @@ export async function registrar(req: Request, res: Response) {
     const precioBase = (ce as any).precioAcordado ?? ce.curso.precio
     // Solo contar pagos no cancelados contra el tope
     const yaRegistrado =
-      est.financiamientos.reduce((s, f) => s + f.montoTotal, 0) +
       est.pagos.filter(p => (p as any).estado !== 'CANCELADO').reduce((s, p) => s + p.monto, 0)
     if (yaRegistrado + data.monto > precioBase + 1)
       throw new ValidationError(

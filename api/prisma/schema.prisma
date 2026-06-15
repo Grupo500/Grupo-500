@@ -136,7 +136,6 @@ model Estudiante {
   cursos             CursoEstudiante[]
   asesor             Asesor?               @relation(fields: [asesorId], references: [id])
   colegio            Colegio?              @relation(fields: [colegioId], references: [id])
-  financiamientos    Financiamiento[]
   fuenteContacto     FuenteContacto?
   historial          HistorialEstudiante[]
   observaciones      Observacion[]
@@ -261,46 +260,6 @@ model Pago {
   estudiante       Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
 }
 
-model Financiamiento {
-  id           String               @id @default(cuid())
-  estudianteId String
-  montoTotal   Float
-  estado       EstadoFinanciamiento @default(ACTIVO)
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  cuotas       Cuota[]
-  estudiante   Estudiante           @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
-}
-
-model Cuota {
-  id               String          @id @default(cuid())
-  financiamientoId String
-  numero           Int
-  monto            Float
-  fechaVencimiento DateTime
-  pagado           Boolean         @default(false)
-  fechaPago        DateTime?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  comprobante      String?
-  medioPago        String?
-  notas            String?
-  financiamiento   Financiamiento  @relation(fields: [financiamientoId], references: [id], onDelete: Cascade)
-  reminders        ReminderCobro[]
-}
-
-model ReminderCobro {
-  id              String    @id @default(cuid())
-  cuotaId         String
-  fechaProgramada DateTime
-  enviado         Boolean   @default(false)
-  fechaEnvio      DateTime?
-  numeroIntento   Int       @default(0)
-  mensajeEnviado  String?
-  createdAt       DateTime  @default(now())
-  cuota           Cuota     @relation(fields: [cuotaId], references: [id], onDelete: Cascade)
-}
-
 model Certificado {
   id           String          @id @default(cuid())
   estudianteId String
@@ -369,12 +328,6 @@ enum EstadoPago {
   PENDIENTE
   PAGADO
   VENCIDO
-  CANCELADO
-}
-
-enum EstadoFinanciamiento {
-  ACTIVO
-  COMPLETADO
   CANCELADO
 }
 

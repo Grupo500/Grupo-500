@@ -61,13 +61,6 @@ export async function listar(req: Request, res: Response) {
         asesor: true,
         cursos: { include: { curso: true } },
         pagos: { select: { monto: true, estado: true, fechaVencimiento: true } },
-        financiamientos: {
-          select: {
-            montoTotal: true,
-            estado: true,
-            cuotas: { select: { monto: true, pagado: true, fechaVencimiento: true } },
-          },
-        },
       },
       skip,
       take: Number(limit),
@@ -113,47 +106,27 @@ export async function crear(req: Request, res: Response) {
       })
     }
 
-    // 3. Registrar pago o financiamiento
-    if (data.cursoId && data.formaPago) {
+    // 3. Registrar pago de contado
+    if (data.cursoId && data.formaPago === 'CONTADO') {
       const curso = await tx.curso.findUnique({ where: { id: data.cursoId } })
       if (!curso) throw new Error('Curso no encontrado')
 
       const montoFinal = Number(
         (curso.precio * (1 - (data.descuentoPorcentaje ?? 0) / 100)).toFixed(2)
       )
-
-      if (data.formaPago === 'CONTADO') {
-        const fechaPago = data.fechaPago ? new Date(data.fechaPago) : new Date()
-        await tx.pago.create({
-          data: {
-            estudianteId:    est.id,
-            monto:           montoFinal,
-            estado:          'PAGADO',
-            metodo:          data.metodoPago ?? 'Bancolombia',
-            fechaPago,
-            fechaVencimiento: fechaPago,
-            ...(data.comprobante && { comprobante: data.comprobante }),
-            ...(req.asesorId     && { asesorId:    req.asesorId }),
-          },
-        })
-      } else if (data.formaPago === 'FINANCIADO' && data.numeroCuotas && data.fechaPrimeraCuota) {
-        const montoCuota = Number((montoFinal / data.numeroCuotas).toFixed(2))
-        const fechaBase  = new Date(data.fechaPrimeraCuota)
-
-        await tx.financiamiento.create({
-          data: {
-            estudianteId: est.id,
-            montoTotal:   montoFinal,
-            cuotas: {
-              create: Array.from({ length: data.numeroCuotas }, (_, i) => {
-                const fecha = new Date(fechaBase)
-                fecha.setMonth(fecha.getMonth() + i)
-                return { numero: i + 1, monto: montoCuota, fechaVencimiento: fecha }
-              }),
-            },
-          },
-        })
-      }
+      const fechaPago = data.fechaPago ? new Date(data.fechaPago) : new Date()
+      await tx.pago.create({
+        data: {
+          estudianteId:    est.id,
+          monto:           montoFinal,
+          estado:          'PAGADO',
+          metodo:          data.metodoPago ?? 'Bancolombia',
+          fechaPago,
+          fechaVencimiento: fechaPago,
+          ...(data.comprobante && { comprobante: data.comprobante }),
+          ...(req.asesorId     && { asesorId:    req.asesorId }),
+        },
+      })
     }
 
     return est
@@ -173,25 +146,11 @@ export async function obtener(req: Request, res: Response) {
       asesor: true,
       cursos: { include: { curso: true } },
       pagos: { orderBy: { createdAt: 'desc' } },
-      financiamientos: { include: { cuotas: { orderBy: { numero: 'asc' } } } },
       certificados: true,
     },
   })
 
   if (!estudiante) throw new NotFoundError('Estudiante no encontrado')
-
-  // Auto-corregir financiamientos ACTIVO cuyas cuotas ya están todas pagadas
-  const finSinCerrar = estudiante.financiamientos.filter(
-    f => f.estado === 'ACTIVO' && f.cuotas.length > 0 && f.cuotas.every(c => c.pagado)
-  )
-  if (finSinCerrar.length > 0) {
-    await Promise.all(
-      finSinCerrar.map(f =>
-        prisma.financiamiento.update({ where: { id: f.id }, data: { estado: 'COMPLETADO' } })
-      )
-    )
-    finSinCerrar.forEach(f => { f.estado = 'COMPLETADO' })
-  }
 
   return ApiResponse.success(res, estudiante)
 }
