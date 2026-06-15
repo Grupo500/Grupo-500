@@ -18,7 +18,7 @@ type NavItem = { href: string; label: string; icon: React.ElementType; adminOnly
 const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
-  { href: '/calendario',   label: 'Calendario',  icon: CalendarDays,    adminOnly: false },
+  { href: '/cursos',       label: 'Cursos',      icon: BookOpen,        adminOnly: false },
   { href: '/certificados', label: 'Certificados', icon: Award,         adminOnly: false },
 ]
 

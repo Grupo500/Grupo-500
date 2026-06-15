@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { TrendingUp, Wallet, Clock, AlertTriangle } from 'lucide-react'
+import { TrendingUp, Wallet } from 'lucide-react'
 import { ScrollableChartFrame, niceScale, AXIS_WIDTH, XAXIS_HEIGHT } from './ScrollableChartFrame'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
@@ -24,8 +24,6 @@ interface Props       { desde: string; hasta: string }
 const METRICS = [
   { key: 'ventaTotal' as Metrica, label: 'Total facturado', sublabel: 'Registrado en el período', Icon: TrendingUp,    colorLight: '#1a7de0', colorDark: '#95daff' },
   { key: 'recaudo'    as Metrica, label: 'Recaudado',        sublabel: 'Efectivamente cobrado',    Icon: Wallet,        colorLight: '#16a34a', colorDark: '#6ee7b7' },
-  { key: 'porCobrar'  as Metrica, label: 'Por cobrar',       sublabel: 'Pendiente sin vencer',     Icon: Clock,         colorLight: '#d97706', colorDark: '#fbbf24' },
-  { key: 'mora'       as Metrica, label: 'En mora',          sublabel: 'Vencido sin pagar',        Icon: AlertTriangle, colorLight: '#dc2626', colorDark: '#f87171' },
 ]
 
 function fmtCompact(n: number) {

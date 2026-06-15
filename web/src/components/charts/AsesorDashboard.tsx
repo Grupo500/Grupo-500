@@ -6,7 +6,6 @@ import { useSSE } from '@/hooks/useSSE'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { KpiCard } from '@/components/ui/KpiCard'
-import { ProximosCobros } from '@/components/charts/ProximosCobros'
 import { Target, RefreshCw } from 'lucide-react'
 
 interface DashboardData {
@@ -128,17 +127,6 @@ export function AsesorDashboard() {
           isLoading={isLoading}
         />
       </div>
-
-      {(() => {
-        const hoy   = new Date()
-        const desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10)
-        const hasta  = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10)
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ProximosCobros desde={desde} hasta={hasta} />
-          </div>
-        )
-      })()}
     </div>
   )
 }

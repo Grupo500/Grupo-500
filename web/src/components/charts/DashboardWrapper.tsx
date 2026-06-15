@@ -6,7 +6,6 @@ import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { FinancieroSection } from './FinancieroSection'
 import { EstudiantesMes } from './EstudiantesMes'
 import { CursosVendidosChart } from './CursosVendidosChart'
-import { SaldosPendientes } from './SaldosPendientes'
 import { Bell } from 'lucide-react'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 
@@ -89,9 +88,6 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
         <EstudiantesMes desde={desde} hasta={hasta} />
         <CursosVendidosChart desde={desde} hasta={hasta} />
       </div>
-
-      {/* ── Saldos pendientes ── */}
-      <SaldosPendientes />
     </div>
   )
 }

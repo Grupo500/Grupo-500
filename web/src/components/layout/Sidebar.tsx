@@ -23,8 +23,6 @@ const navItems: NavItem[] = [
   { type: 'section', label: 'Gestión',                                                          adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
-  { type: 'section', label: 'Financiero',                                                       adminOnly: false },
-  { type: 'link',    href: '/calendario',      label: 'Calendario',      icon: CalendarDays,    adminOnly: false },
   { type: 'section', label: 'Académico',                                                        adminOnly: false },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: true  },
