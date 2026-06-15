@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useTheme } from 'next-themes'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Users } from 'lucide-react'
@@ -17,6 +18,11 @@ interface Asesor {
 const MEDALLAS = ['🥇', '🥈', '🥉']
 
 export function TopAsesores() {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+  const verde  = isDark ? '#6ee7b7' : '#16a34a'
+  const rojo   = isDark ? '#f87171' : '#dc2626'
+
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-asesores', 'mes-actual'],
     queryFn: async () => apiFetch<{ data: Asesor[] }>('/reportes/asesores'),
@@ -44,7 +50,7 @@ export function TopAsesores() {
             const iniciales = a.nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
             return (
               <div key={a.id}
-                className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-high/40 p-3 transition-colors hover:bg-surface-high">
+                className="flex items-center gap-3 rounded-xl bg-surface-high/50 p-3 transition-colors duration-200 hover:bg-surface-high">
                 {/* Posición */}
                 <span className="w-6 text-center text-[15px] flex-shrink-0">
                   {i < 3 ? MEDALLAS[i] : <span className="text-[13px] font-bold text-on-surface-variant">{i + 1}</span>}
@@ -64,7 +70,8 @@ export function TopAsesores() {
                 <div className="text-right flex-shrink-0">
                   <p className="text-[14px] font-bold text-on-surface tabular-nums">{formatCOP(a.totalVentas)}</p>
                   {a.variacion !== 0 && (
-                    <p className={`text-[10px] font-semibold flex items-center justify-end gap-0.5 ${a.variacion > 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+                    <p className="text-[10px] font-semibold flex items-center justify-end gap-0.5"
+                      style={{ color: a.variacion > 0 ? verde : rojo }}>
                       {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                       {a.variacion > 0 ? '+' : ''}{a.variacion}%
                     </p>

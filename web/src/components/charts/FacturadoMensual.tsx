@@ -69,8 +69,7 @@ export function FacturadoMensual() {
   const mesLabel = format(now, 'MMMM', { locale: es })
 
   return (
-    <div className="rounded-2xl p-4 sm:p-5"
-      style={{ border: `1.5px solid ${color}20`, background: isDark ? 'var(--surface-lowest)' : '#fff', boxShadow: `0 2px 20px ${color}12` }}>
+    <div className="card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
           <p className="text-[13px] font-semibold text-on-surface">Total facturado</p>
