@@ -30,7 +30,7 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
     <div className="flex flex-col gap-3 h-full">
       {cards.map(({ label, valor, color, Icon }) => (
         <div key={label} className="rounded-2xl p-4 flex-1 flex flex-col justify-center"
-          style={{ border: `1.5px solid ${color}33`, background: `${color}12` }}>
+          style={{ border: `1.5px solid ${color}55`, background: 'var(--surface-lowest)' }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}26` }}>
               <Icon className="w-3.5 h-3.5" style={{ color }} />
