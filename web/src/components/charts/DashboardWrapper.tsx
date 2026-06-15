@@ -47,10 +47,8 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:items-stretch">
 
         {/* Columna lateral (30%) — en móvil va después de la principal */}
-        <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col md:flex-row lg:flex-col gap-4">
-          <div className="md:flex-1 lg:flex-none">
-            <EstudiantesMes desde={desde} hasta={hasta} />
-          </div>
+        <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col gap-4">
+          <EstudiantesMes desde={desde} hasta={hasta} />
           <div className="flex-1">
             <CursosVendidosChart desde={desde} hasta={hasta} />
           </div>

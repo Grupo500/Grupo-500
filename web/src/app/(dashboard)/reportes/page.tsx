@@ -5,14 +5,13 @@ import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { KpiCard } from '@/components/ui/KpiCard'
-import { formatCOP, cn } from '@/lib/utils'
+import { formatCOP } from '@/lib/utils'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
+import { CursosVendidosRanked } from '@/components/charts/CursosVendidosRanked'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet } from 'lucide-react'
 
-// ── Helpers fecha ─────────────────────────────────────────────────────────────
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 function getRangeFromMonth(month: string | null): { desde: string; hasta: string } {
   const base = month ? new Date(month + '-15') : new Date()
@@ -79,7 +78,8 @@ export default function ReportesPage() {
   const metodos = medios?.metodos ?? []
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
         <div className="flex flex-col items-start md:items-end gap-1 flex-shrink-0 w-full md:w-auto">
@@ -94,66 +94,118 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* ── Estudiantes ────────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Estudiantes</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard title="Total registrados" value={est.total.toLocaleString('es-CO')}
-            rawValue={est.total} icon="Users" variant="default" isLoading={isLoading} />
-          <KpiCard title="Nuevos en el período" value={`+${est.nuevosMes}`}
-            rawValue={est.nuevosMes} icon="UserPlus" variant="success" isLoading={isLoading} />
+      {/* ── FILA 1: Estudiantes + Cobranza unificados ─────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Estudiantes */}
+        <div className="card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
+              <Users className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-on-surface-variant">Estudiantes</h3>
+          </div>
+          <div className="grid grid-cols-[1fr_1px_1fr] gap-4 items-center">
+            <div>
+              <p className="text-[11px] text-on-surface-variant mb-1">Total registrados</p>
+              <p className="text-[26px] font-bold text-on-surface tabular-nums leading-none">
+                {isLoading ? '—' : est.total.toLocaleString('es-CO')}
+              </p>
+            </div>
+            <div className="bg-outline-variant h-12" />
+            <div>
+              <p className="text-[11px] text-on-surface-variant mb-1 flex items-center gap-1">
+                <UserPlus className="w-3 h-3" /> Nuevos en el período
+              </p>
+              <p className="text-[26px] font-bold tabular-nums leading-none" style={{ color: '#16a34a' }}>
+                {isLoading ? '—' : `+${est.nuevosMes}`}
+              </p>
+            </div>
+          </div>
         </div>
-      </section>
 
-      {/* ── Cobranza ───────────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Cobranza</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard title="Recaudado en el período" value={formatCOP(cobranza.cobrado.monto)}
-            rawValue={cobranza.cobrado.monto}   formatValue={formatCOP}
-            subtitle={`${cobranza.cobrado.cantidad} cobros`}
-            icon="TrendingUp" variant="success" isLoading={isLoading} />
+        {/* Cobranza */}
+        <div className="card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: '#edfdf4' }}>
+              <TrendingUp className="w-3.5 h-3.5" style={{ color: '#16a34a' }} />
+            </div>
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-on-surface-variant">Cobranza</h3>
+          </div>
+          <div className="grid grid-cols-[1fr_1px_auto] gap-4 items-center">
+            <div>
+              <p className="text-[11px] text-on-surface-variant mb-1">Recaudado en el período</p>
+              <p className="text-[22px] font-bold tabular-nums leading-none" style={{ color: '#16a34a' }}>
+                {isLoading ? '—' : formatCOP(cobranza.cobrado.monto)}
+              </p>
+            </div>
+            <div className="bg-outline-variant h-12" />
+            <div>
+              <p className="text-[11px] text-on-surface-variant mb-1 flex items-center gap-1">
+                <Receipt className="w-3 h-3" /> Transacciones
+              </p>
+              <p className="text-[26px] font-bold text-on-surface tabular-nums leading-none">
+                {isLoading ? '—' : cobranza.cobrado.cantidad}
+              </p>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* ── Desglose de comisiones ─────────────────────────────────── */}
-      {desglose.bruto > 0 && (
-        <section className="space-y-3">
-          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Desglose financiero</p>
-          <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-5 max-w-md">
-            <div className="space-y-3">
+      {/* ── FILA 2: Ingresos mensuales (70%) + Desglose financiero (30%) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:items-stretch">
+        <div className="lg:col-span-7">
+          <IngresosMensualesChart periodo="mensual" />
+        </div>
+        <div className="lg:col-span-3">
+          <div className="card p-5 h-full flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'var(--primary-container)' }}>
+                <Wallet className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <h3 className="text-[13px] font-semibold text-on-surface">Desglose del mes</h3>
+            </div>
+            <div className="space-y-3 flex-1 flex flex-col justify-center">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-on-surface">Facturación bruta</span>
-                <span className="text-[14px] font-bold text-on-surface tabular-nums">{formatCOP(desglose.bruto)}</span>
+                <span className="text-[12px] text-on-surface-variant">Facturación bruta</span>
+                <span className="text-[13px] font-bold text-on-surface tabular-nums">{formatCOP(desglose.bruto)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-on-surface-variant">− Comisión Hotmart</span>
-                <span className="text-[13px] font-semibold text-on-surface-variant tabular-nums">−{formatCOP(desglose.comisionHotmart)}</span>
+                <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+                  <Landmark className="w-3 h-3" /> Comisión Hotmart
+                </span>
+                <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#d97706' }}>
+                  −{formatCOP(desglose.comisionHotmart)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-on-surface-variant">− Comisión asesores</span>
-                <span className="text-[13px] font-semibold text-on-surface-variant tabular-nums">−{formatCOP(desglose.comisionAsesor)}</span>
+                <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+                  <Users className="w-3 h-3" /> Comisión asesores
+                </span>
+                <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#dc2626' }}>
+                  −{formatCOP(desglose.comisionAsesor)}
+                </span>
               </div>
               <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-on-surface">Neto recibido</span>
-                <span className="text-[18px] font-bold text-primary tabular-nums">{formatCOP(desglose.neto)}</span>
+                <span className="text-[18px] font-bold tabular-nums" style={{ color: '#16a34a' }}>
+                  {formatCOP(desglose.neto)}
+                </span>
               </div>
             </div>
-            <p className="text-[10px] text-on-surface-variant/70 mt-3">Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.</p>
+            <p className="text-[9px] text-on-surface-variant/70 mt-3 leading-tight">
+              Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.
+            </p>
           </div>
-        </section>
-      )}
+        </div>
+      </div>
 
-      {/* ── Gráficas de ingresos y asesores ───────────────────────── */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <IngresosMensualesChart periodo="mensual" />
-        <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
-      </section>
+      {/* ── FILA 3: Cursos más vendidos (grid ranked) ─────────────── */}
+      <CursosVendidosRanked desde={desde} hasta={hasta} />
 
-      {/* ── Medios de pago ─────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Medios de pago</p>
+      {/* ── FILA 4: Medios de pago unificados ─────────────────────── */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <p className="text-[13px] font-semibold text-on-surface">Medios de pago</p>
           {medios && (
             <span className="text-[11px] text-on-surface-variant">
               {medios.totalCantidad} transacción{medios.totalCantidad !== 1 ? 'es' : ''} · {formatCOP(medios.total)}
@@ -162,58 +214,40 @@ export default function ReportesPage() {
         </div>
 
         {mediosLoading ? (
-          <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-6 animate-pulse h-40" />
-        ) : metodos.length === 0 ? (
-          <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-8 flex items-center justify-center">
-            <p className="text-sm text-on-surface-variant">Sin pagos registrados en este período</p>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-8 rounded-lg bg-surface-high animate-pulse" />)}
           </div>
+        ) : metodos.length === 0 ? (
+          <p className="text-[13px] text-on-surface-variant text-center py-6">Sin pagos registrados en este período</p>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4">
-              <p className="text-[12px] font-semibold text-on-surface mb-4">Recaudo por medio de pago</p>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart
-                  data={metodos.map((m, i) => ({ name: m.metodo, monto: m.monto, color: COLORES[i % COLORES.length] }))}
-                  margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
-                >
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `$${(v / 1_000_000).toFixed(1)}M`} />
-                  <Tooltip formatter={(v: number) => [formatCOP(v), 'Recaudo']}
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)' }} />
-                  <Bar dataKey="monto" radius={[4, 4, 0, 0]}>
-                    {metodos.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-2">
-              <p className="text-[12px] font-semibold text-on-surface mb-3">Detalle por medio</p>
-              <div className="space-y-3">
-                {metodos.map((m, i) => (
-                  <div key={m.metodo} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORES[i % COLORES.length] }} />
-                        <span className="text-[12px] font-medium text-on-surface">{m.metodo}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[12px] font-bold text-on-surface">{formatCOP(m.monto)}</span>
-                        <span className="text-[10px] text-on-surface-variant ml-2">{m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}</span>
-                      </div>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-surface-high overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${m.porcentajeMonto}%`, background: COLORES[i % COLORES.length] }} />
-                    </div>
+          <div className="space-y-2.5">
+            {metodos.map((m, i) => {
+              const color = COLORES[i % COLORES.length]
+              return (
+                <div key={m.metodo} className="grid grid-cols-[120px_1fr_auto_50px] gap-3 items-center">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+                    <span className="text-[12px] font-medium text-on-surface truncate">{m.metodo}</span>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="h-1.5 rounded-full bg-surface-high overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${m.porcentajeMonto}%`, background: color }}
+                    />
+                  </div>
+                  <span className="text-[12px] font-bold text-on-surface tabular-nums">{formatCOP(m.monto)}</span>
+                  <span className="text-[11px] text-on-surface-variant tabular-nums text-right">
+                    {m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         )}
-      </section>
+      </div>
 
+      {/* ── FILA 5: Ranking completo de asesores ──────────────────── */}
+      <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
     </div>
   )
 }

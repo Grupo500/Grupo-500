@@ -1,26 +1,37 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useTheme } from 'next-themes'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Crown, TrendingUp, TrendingDown } from 'lucide-react'
 
 interface Asesor {
   id: string
   nombre: string
+  image: string | null
   totalVentas: number
   cantidadPagos: number
   totalEstudiantes: number
+  comisionGanada: number
   variacion: number
 }
 
-interface RankingAsesoresProps {
+interface Props {
   desde?: string
   hasta?: string
   periodoLabel?: string
 }
 
-export function RankingAsesores({ desde, hasta, periodoLabel }: RankingAsesoresProps) {
+function iniciales(nombre: string) {
+  return nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
+}
+
+export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+  const verde  = isDark ? '#6ee7b7' : '#16a34a'
+  const rojo   = isDark ? '#f87171' : '#dc2626'
 
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-asesores', desde, hasta],
@@ -32,54 +43,147 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: RankingAsesoresP
   })
 
   const asesores = data?.data ?? []
+  const podium   = asesores.slice(0, 3)
+  const resto    = asesores.slice(3)
+
+  // Reordenar 2-1-3 para el podium visual
+  const podiumOrden = [podium[1], podium[0], podium[2]].filter(Boolean)
 
   return (
-    <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-on-surface">Ranking asesores</p>
-        <span className="text-[11px] text-on-surface-variant capitalize">{periodoLabel ?? 'Mes actual'}</span>
+    <div className="card p-5 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-[13px] font-semibold text-on-surface">Ranking de asesores</p>
+        <span className="text-[11px] text-on-surface-variant">
+          {asesores.length} asesor{asesores.length !== 1 ? 'es' : ''}{periodoLabel ? ` · ${periodoLabel}` : ''}
+        </span>
       </div>
 
       {isLoading ? (
         <div className="space-y-2">
-          {[1,2,3].map(i => (
-            <div key={i} className="flex items-center gap-3 py-2">
-              <div className="w-6 h-6 rounded-full bg-surface-high animate-pulse" />
-              <div className="flex-1 h-3.5 rounded bg-surface-high animate-pulse" />
-              <div className="w-20 h-3.5 rounded bg-surface-high animate-pulse" />
-            </div>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-12 rounded-xl bg-surface-high animate-pulse" />
           ))}
         </div>
       ) : asesores.length === 0 ? (
         <p className="text-[13px] text-on-surface-variant text-center py-6">Sin datos en este período</p>
       ) : (
-        <div className="space-y-1">
-          {asesores.slice(0, 6).map((a, i) => {
-            const medals = ['🥇', '🥈', '🥉']
-            return (
-              <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-high transition-colors">
-                <span className="text-[13px] w-6 text-center flex-shrink-0">
-                  {i < 3 ? medals[i] : <span className="text-on-surface-variant font-semibold">{i + 1}</span>}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-on-surface truncate">{a.nombre}</p>
-                  <p className="text-[11px] text-on-surface-variant">{a.cantidadPagos} pagos · {a.totalEstudiantes} estudiantes</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-[13px] font-bold text-on-surface">{formatCOP(a.totalVentas)}</p>
-                  {a.variacion !== 0 && (
-                    <p className={`text-[10px] font-semibold flex items-center justify-end gap-0.5 ${a.variacion > 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
-                      {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {a.variacion > 0 ? '+' : ''}{a.variacion}%
+        <>
+          {/* ── Podium 2 - 1 - 3 ───────────────────────────────────── */}
+          {podium.length > 0 && (
+            <div className="grid grid-cols-3 gap-3 items-end">
+              {podiumOrden.map((a) => {
+                const pos = podium.indexOf(a) + 1
+                const isFirst  = pos === 1
+                const isSecond = pos === 2
+                const isThird  = pos === 3
+
+                const altura  = isFirst ? 92 : isSecond ? 68 : 50
+                const colorBg = isFirst
+                  ? 'linear-gradient(180deg, #fac775, #ef9f27)'
+                  : isSecond
+                    ? 'linear-gradient(180deg, var(--surface-high), var(--outline-variant))'
+                    : 'linear-gradient(180deg, #f5c4b3, #d85a30)'
+                const badgeBg = isFirst ? '#ef9f27' : isSecond ? 'var(--on-surface-variant)' : '#d85a30'
+                const avatarRing = isFirst ? '#ef9f27' : isSecond ? 'var(--outline-variant)' : '#d85a30'
+                const numColor   = isFirst || isThird ? '#fff' : 'var(--on-surface)'
+
+                return (
+                  <div key={a.id} className="flex flex-col items-center text-center">
+                    {isFirst && <Crown className="w-5 h-5 mb-1" style={{ color: '#ef9f27' }} />}
+                    <div className="relative">
+                      <div
+                        className="rounded-full overflow-hidden flex items-center justify-center font-semibold"
+                        style={{
+                          width:  isFirst ? 56 : 44,
+                          height: isFirst ? 56 : 44,
+                          background: 'var(--primary-container)',
+                          color: 'var(--primary)',
+                          fontSize: isFirst ? 16 : 13,
+                          border: `2px solid ${avatarRing}`,
+                        }}
+                      >
+                        {a.image
+                          ? <img src={a.image} alt={a.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          : iniciales(a.nombre)}
+                      </div>
+                      <div
+                        className="absolute -bottom-1 -right-1 rounded-full flex items-center justify-center text-white font-semibold"
+                        style={{
+                          width: isFirst ? 22 : 18,
+                          height: isFirst ? 22 : 18,
+                          background: badgeBg,
+                          fontSize: isFirst ? 11 : 10,
+                        }}
+                      >
+                        {pos}
+                      </div>
+                    </div>
+                    <p className="text-[11px] font-semibold text-on-surface mt-2 leading-tight truncate w-full px-1" title={a.nombre}>
+                      {a.nombre}
                     </p>
-                  )}
-                </div>
+                    <p className="text-[10px] text-on-surface-variant mt-0.5 tabular-nums">{formatCOP(a.totalVentas)}</p>
+                    {isFirst && (
+                      <p className="text-[10px] text-on-surface-variant tabular-nums">{a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}</p>
+                    )}
+                    <div
+                      className="w-full mt-2 rounded-t-lg flex items-center justify-center font-bold"
+                      style={{
+                        height: altura,
+                        background: colorBg,
+                        color: numColor,
+                        fontSize: isFirst ? 22 : 18,
+                      }}
+                    >
+                      {pos}°
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── Lista del 4° en adelante ───────────────────────────── */}
+          {resto.length > 0 && (
+            <div className="space-y-1.5 pt-2">
+              <div className="grid grid-cols-[32px_36px_1fr_auto_50px] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wide text-on-surface-variant">
+                <span>#</span>
+                <span></span>
+                <span>Asesor</span>
+                <span className="text-right">Ventas</span>
+                <span className="text-right">N°</span>
               </div>
-            )
-          })}
-        </div>
+              {resto.map((a, i) => {
+                const pos = i + 4
+                return (
+                  <div
+                    key={a.id}
+                    className="grid grid-cols-[32px_36px_1fr_auto_50px] gap-2 items-center px-3 py-2 rounded-xl bg-surface-high/40 hover:bg-surface-high transition-colors"
+                  >
+                    <span className="text-[12px] font-semibold text-on-surface-variant">{pos}°</span>
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10">
+                      {a.image
+                        ? <img src={a.image} alt={a.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        : <span className="text-[10px] font-bold text-primary">{iniciales(a.nombre)}</span>}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-semibold text-on-surface truncate" title={a.nombre}>{a.nombre}</p>
+                      {a.variacion !== 0 && (
+                        <span className="text-[10px] font-semibold flex items-center gap-0.5"
+                          style={{ color: a.variacion > 0 ? verde : rojo }}>
+                          {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          {a.variacion > 0 ? '+' : ''}{a.variacion}%
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[12px] font-bold text-on-surface tabular-nums text-right">{formatCOP(a.totalVentas)}</span>
+                    <span className="text-[11px] text-on-surface-variant tabular-nums text-right">{a.cantidadPagos}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
 }
-
