@@ -1,10 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { Crown, TrendingUp, TrendingDown } from 'lucide-react'
+import { Crown, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Asesor {
   id: string
@@ -27,11 +28,14 @@ function iniciales(nombre: string) {
   return nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
 
+const TOP_INICIAL = 10
+
 export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const verde  = isDark ? '#6ee7b7' : '#16a34a'
   const rojo   = isDark ? '#f87171' : '#dc2626'
+  const [verTodos, setVerTodos] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-asesores', desde, hasta],
@@ -42,9 +46,11 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
     staleTime: 30_000,
   })
 
-  const asesores = data?.data ?? []
-  const podium   = asesores.slice(0, 3)
-  const resto    = asesores.slice(3)
+  const asesores    = data?.data ?? []
+  const podium      = asesores.slice(0, 3)
+  const restoTotal  = asesores.slice(3)
+  const resto       = verTodos ? restoTotal : restoTotal.slice(0, TOP_INICIAL - 3)
+  const hayMas      = restoTotal.length > TOP_INICIAL - 3
 
   // Reordenar 2-1-3 para el podium visual
   const podiumOrden = [podium[1], podium[0], podium[2]].filter(Boolean)
@@ -143,7 +149,7 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
           )}
 
           {/* ── Lista del 4° en adelante ───────────────────────────── */}
-          {resto.length > 0 && (
+          {restoTotal.length > 0 && (
             <div className="space-y-1.5 pt-2">
               <div className="grid grid-cols-[32px_36px_1fr_auto_50px] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wide text-on-surface-variant">
                 <span>#</span>
@@ -180,6 +186,18 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                   </div>
                 )
               })}
+
+              {/* Botón ver todos / ver menos */}
+              {hayMas && (
+                <button
+                  onClick={() => setVerTodos(v => !v)}
+                  className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12px] font-semibold text-primary hover:bg-surface-high transition-colors"
+                >
+                  {verTodos
+                    ? <><ChevronUp className="w-3.5 h-3.5" /> Ver menos</>
+                    : <><ChevronDown className="w-3.5 h-3.5" /> Ver todos ({asesores.length} asesores)</>}
+                </button>
+              )}
             </div>
           )}
         </>

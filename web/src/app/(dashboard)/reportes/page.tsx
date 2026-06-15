@@ -53,16 +53,23 @@ function useCountUp(target: number, duration = 900) {
   return value
 }
 
-// ── Barra animada (mismo patrón que EstudiantesMes) ──────────────────────────
-function BarraMedia({ pct, color, delay }: { pct: number; color: string; delay: number }) {
-  const [width, setWidth] = useState(0)
+// ── Barra animada ─────────────────────────────────────────────────────────────
+function BarraMedia({ pct, color, delay, vertical = false }: { pct: number; color: string; delay: number; vertical?: boolean }) {
+  const [val, setVal] = useState(0)
   useEffect(() => {
-    const t = setTimeout(() => setWidth(pct), delay)
+    const t = setTimeout(() => setVal(pct), delay)
     return () => clearTimeout(t)
   }, [pct, delay])
+
+  if (vertical) {
+    return (
+      <div className="absolute bottom-0 left-0 right-0 rounded-lg"
+        style={{ height: `${val}%`, background: color, transition: 'height 600ms cubic-bezier(0.23,1,0.32,1)' }} />
+    )
+  }
   return (
     <div className="h-1.5 rounded-full bg-surface-high overflow-hidden">
-      <div className="h-full rounded-full" style={{ width: `${width}%`, background: color, transition: 'width 600ms cubic-bezier(0.23,1,0.32,1)' }} />
+      <div className="h-full rounded-full" style={{ width: `${val}%`, background: color, transition: 'width 600ms cubic-bezier(0.23,1,0.32,1)' }} />
     </div>
   )
 }
@@ -263,9 +270,9 @@ export default function ReportesPage() {
       {/* ── FILA 3: Cursos más vendidos (burbujas) ────────────────── */}
       <CursosVendidosRanked desde={desde} hasta={hasta} />
 
-      {/* ── FILA 4: Medios de pago unificados ─────────────────────── */}
+      {/* ── FILA 4: Medios de pago ─────────────────────────────────── */}
       <div className="card p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
           <p className="text-[13px] font-semibold text-on-surface">Medios de pago</p>
           {medios && (
             <span className="text-[11px] text-on-surface-variant">
@@ -275,26 +282,38 @@ export default function ReportesPage() {
         </div>
 
         {mediosLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-6 rounded-lg bg-surface-high animate-pulse" />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-surface-high animate-pulse" />)}
           </div>
         ) : metodos.length === 0 ? (
           <p className="text-[13px] text-on-surface-variant text-center py-6">Sin pagos registrados en este período</p>
         ) : (
-          <div className="space-y-2.5 animate-fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 animate-fade-in">
             {metodos.map((m, i) => {
               const color = COLORES[i % COLORES.length]
               return (
-                <div key={m.metodo} className="grid grid-cols-[120px_1fr_auto_60px] gap-3 items-center">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-                    <span className="text-[12px] font-medium text-on-surface truncate">{m.metodo}</span>
+                <div key={m.metodo} className="flex flex-col gap-2">
+                  {/* Barra doble */}
+                  <div className="relative h-20 flex items-end gap-2">
+                    {/* Barra fondo (total máximo) */}
+                    <div className="relative flex-1 h-full rounded-lg bg-surface-high overflow-hidden">
+                      {/* Barra coloreada proporcional */}
+                      <BarraMedia pct={m.porcentajeMonto} color={color} delay={80 + i * 60} vertical />
+                    </div>
                   </div>
-                  <BarraMedia pct={m.porcentajeMonto} color={color} delay={80 + i * 60} />
-                  <span className="text-[12px] font-bold text-on-surface tabular-nums">{formatCOP(m.monto)}</span>
-                  <span className="text-[11px] text-on-surface-variant tabular-nums text-right">
-                    {m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}
-                  </span>
+                  {/* Nombre + dato */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+                    <span className="text-[11px] font-medium text-on-surface truncate">{m.metodo}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className="text-[13px] font-bold text-on-surface tabular-nums">
+                      {Math.round(m.porcentajeMonto)}%
+                    </span>
+                    <span className="text-[10px] text-on-surface-variant tabular-nums">
+                      {m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}
+                    </span>
+                  </div>
                 </div>
               )
             })}
