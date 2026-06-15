@@ -44,16 +44,18 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
       </div>
 
       {/* ── Layout 30 / 70 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:items-stretch">
 
         {/* Columna lateral (30%) — en móvil va después de la principal */}
-        <div className="lg:col-span-3 order-2 lg:order-1 space-y-4">
+        <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col gap-4">
           <EstudiantesMes desde={desde} hasta={hasta} />
-          <CursosVendidosChart desde={desde} hasta={hasta} />
+          <div className="flex-1">
+            <CursosVendidosChart desde={desde} hasta={hasta} />
+          </div>
         </div>
 
         {/* Columna principal (70%) */}
-        <div className="lg:col-span-7 order-1 lg:order-2 space-y-4">
+        <div className="lg:col-span-7 order-1 lg:order-2 flex flex-col gap-4">
           {/* Gráfica + KPIs lado a lado */}
           <div className="flex gap-4 items-stretch">
             <div className="flex-1 min-w-0">
@@ -63,7 +65,9 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
               <ComisionesKpis desde={desde} hasta={hasta} />
             </div>
           </div>
-          <TopAsesores />
+          <div className="flex-1">
+            <TopAsesores />
+          </div>
         </div>
 
       </div>

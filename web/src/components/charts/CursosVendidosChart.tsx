@@ -59,7 +59,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
     : cursos
 
   return (
-    <div className="card p-5 flex flex-col">
+    <div className="card p-5 flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
           <BookOpen className="w-3.5 h-3.5 text-primary" />
