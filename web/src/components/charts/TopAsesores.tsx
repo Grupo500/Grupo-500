@@ -39,44 +39,42 @@ export function TopAsesores() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-2.5">
-          {[0, 1, 2, 3, 4].map(i => <div key={i} className="h-16 rounded-xl bg-surface-high animate-pulse" />)}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
+          {[0, 1, 2, 3, 4].map(i => <div key={i} className="h-40 rounded-xl bg-surface-high animate-pulse" />)}
         </div>
       ) : top.length === 0 ? (
         <p className="text-[13px] text-on-surface-variant text-center py-8">Sin ventas de asesores este mes</p>
       ) : (
-        <div className="space-y-2.5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
           {top.map((a, i) => {
             const iniciales = a.nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
             return (
               <div key={a.id}
-                className="flex items-center gap-3 rounded-xl bg-surface-high/50 p-3 transition-colors duration-200 hover:bg-surface-high">
+                className="flex flex-col items-center text-center rounded-xl bg-surface-high/50 p-3 transition-colors duration-200 hover:bg-surface-high">
                 {/* Posición */}
-                <span className="w-6 text-center text-[15px] flex-shrink-0">
+                <span className="text-[16px] leading-none mb-2 h-5 flex items-center">
                   {i < 3 ? MEDALLAS[i] : <span className="text-[13px] font-bold text-on-surface-variant">{i + 1}</span>}
                 </span>
                 {/* Avatar inicial */}
-                <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[12px] font-bold text-primary">{iniciales}</span>
+                <div className="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center mb-2">
+                  <span className="text-[13px] font-bold text-primary">{iniciales}</span>
                 </div>
-                {/* Nombre + estudiantes */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-on-surface truncate">{a.nombre}</p>
-                  <p className="text-[11px] text-on-surface-variant flex items-center gap-1">
-                    <Users className="w-3 h-3" /> {a.totalEstudiantes} estudiante{a.totalEstudiantes !== 1 ? 's' : ''} · {a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}
+                {/* Nombre */}
+                <p className="text-[12px] font-semibold text-on-surface leading-tight line-clamp-2 min-h-[2.2em]" title={a.nombre}>{a.nombre}</p>
+                {/* Ventas */}
+                <p className="text-[13px] font-bold text-on-surface tabular-nums mt-1.5">{formatCOP(a.totalVentas)}</p>
+                {/* Estudiantes */}
+                <p className="text-[10px] text-on-surface-variant flex items-center gap-1 mt-0.5">
+                  <Users className="w-3 h-3" /> {a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}
+                </p>
+                {/* Variación */}
+                {a.variacion !== 0 && (
+                  <p className="text-[10px] font-semibold flex items-center gap-0.5 mt-1"
+                    style={{ color: a.variacion > 0 ? verde : rojo }}>
+                    {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {a.variacion > 0 ? '+' : ''}{a.variacion}%
                   </p>
-                </div>
-                {/* Ventas + variación */}
-                <div className="text-right flex-shrink-0">
-                  <p className="text-[14px] font-bold text-on-surface tabular-nums">{formatCOP(a.totalVentas)}</p>
-                  {a.variacion !== 0 && (
-                    <p className="text-[10px] font-semibold flex items-center justify-end gap-0.5"
-                      style={{ color: a.variacion > 0 ? verde : rojo }}>
-                      {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {a.variacion > 0 ? '+' : ''}{a.variacion}%
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
             )
           })}
