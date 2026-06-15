@@ -153,7 +153,7 @@ export default function ReportesPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <div className="flex flex-col items-start md:items-end gap-1 flex-shrink-0 w-full md:w-auto">
           <MonthPicker
             value={month}
             currentMonth={currentMonth}
