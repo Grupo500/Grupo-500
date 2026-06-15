@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
@@ -27,6 +27,45 @@ interface DashboardData {
 }
 
 const COLORES = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
+
+// ── Hook count-up (mismo que EstudiantesMes) ──────────────────────────────────
+function useCountUp(target: number, duration = 900) {
+  const [value, setValue] = useState(0)
+  const rafRef   = useRef<number | null>(null)
+  const prevRef  = useRef(0)
+
+  useEffect(() => {
+    if (target === 0) { setValue(0); return }
+    const start     = prevRef.current
+    const startTime = performance.now()
+    const tick = (now: number) => {
+      const elapsed  = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased    = 1 - Math.pow(1 - progress, 3)
+      setValue(Math.round(start + (target - start) * eased))
+      if (progress < 1) rafRef.current = requestAnimationFrame(tick)
+      else prevRef.current = target
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [target, duration])
+
+  return value
+}
+
+// ── Barra animada (mismo patrón que EstudiantesMes) ──────────────────────────
+function BarraMedia({ pct, color, delay }: { pct: number; color: string; delay: number }) {
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), delay)
+    return () => clearTimeout(t)
+  }, [pct, delay])
+  return (
+    <div className="h-1.5 rounded-full bg-surface-high overflow-hidden">
+      <div className="h-full rounded-full" style={{ width: `${width}%`, background: color, transition: 'width 600ms cubic-bezier(0.23,1,0.32,1)' }} />
+    </div>
+  )
+}
 
 export default function ReportesPage() {
   const now = new Date()
@@ -74,6 +113,16 @@ export default function ReportesPage() {
   const cobranza = d?.cobranza   ?? { cobrado: { monto: 0, cantidad: 0 } }
   const desglose = d?.desglose   ?? { bruto: 0, comisionHotmart: 0, comisionAsesor: 0, neto: 0 }
 
+  // Count-up para cada métrica
+  const animTotal      = useCountUp(isLoading ? 0 : est.total)
+  const animNuevos     = useCountUp(isLoading ? 0 : est.nuevosMes)
+  const animMonto      = useCountUp(isLoading ? 0 : cobranza.cobrado.monto)
+  const animTxs        = useCountUp(isLoading ? 0 : cobranza.cobrado.cantidad)
+  const animBruto      = useCountUp(isLoading ? 0 : desglose.bruto)
+  const animHotmart    = useCountUp(isLoading ? 0 : desglose.comisionHotmart)
+  const animAsesor     = useCountUp(isLoading ? 0 : desglose.comisionAsesor)
+  const animNeto       = useCountUp(isLoading ? 0 : desglose.neto)
+
   const medios  = mediosData?.data
   const metodos = medios?.metodos ?? []
 
@@ -107,18 +156,22 @@ export default function ReportesPage() {
           <div className="grid grid-cols-[1fr_1px_1fr] gap-4 items-center">
             <div>
               <p className="text-[11px] text-on-surface-variant mb-1">Total registrados</p>
-              <p className="text-[26px] font-bold text-on-surface tabular-nums leading-none">
-                {isLoading ? '—' : est.total.toLocaleString('es-CO')}
-              </p>
+              {isLoading
+                ? <div className="h-8 w-16 rounded bg-surface-high animate-pulse" />
+                : <p className="text-[26px] font-bold text-on-surface tabular-nums leading-none animate-fade-in">
+                    {animTotal.toLocaleString('es-CO')}
+                  </p>}
             </div>
             <div className="bg-outline-variant h-12" />
             <div>
               <p className="text-[11px] text-on-surface-variant mb-1 flex items-center gap-1">
                 <UserPlus className="w-3 h-3" /> Nuevos en el período
               </p>
-              <p className="text-[26px] font-bold tabular-nums leading-none" style={{ color: '#16a34a' }}>
-                {isLoading ? '—' : `+${est.nuevosMes}`}
-              </p>
+              {isLoading
+                ? <div className="h-8 w-12 rounded bg-surface-high animate-pulse" />
+                : <p className="text-[26px] font-bold tabular-nums leading-none animate-fade-in" style={{ color: '#16a34a' }}>
+                    +{animNuevos}
+                  </p>}
             </div>
           </div>
         </div>
@@ -134,18 +187,22 @@ export default function ReportesPage() {
           <div className="grid grid-cols-[1fr_1px_auto] gap-4 items-center">
             <div>
               <p className="text-[11px] text-on-surface-variant mb-1">Recaudado en el período</p>
-              <p className="text-[22px] font-bold tabular-nums leading-none" style={{ color: '#16a34a' }}>
-                {isLoading ? '—' : formatCOP(cobranza.cobrado.monto)}
-              </p>
+              {isLoading
+                ? <div className="h-7 w-36 rounded bg-surface-high animate-pulse" />
+                : <p className="text-[22px] font-bold tabular-nums leading-none animate-fade-in" style={{ color: '#16a34a' }}>
+                    {formatCOP(animMonto)}
+                  </p>}
             </div>
             <div className="bg-outline-variant h-12" />
             <div>
               <p className="text-[11px] text-on-surface-variant mb-1 flex items-center gap-1">
                 <Receipt className="w-3 h-3" /> Transacciones
               </p>
-              <p className="text-[26px] font-bold text-on-surface tabular-nums leading-none">
-                {isLoading ? '—' : cobranza.cobrado.cantidad}
-              </p>
+              {isLoading
+                ? <div className="h-8 w-10 rounded bg-surface-high animate-pulse" />
+                : <p className="text-[26px] font-bold text-on-surface tabular-nums leading-none animate-fade-in">
+                    {animTxs}
+                  </p>}
             </div>
           </div>
         </div>
@@ -164,34 +221,38 @@ export default function ReportesPage() {
               </div>
               <h3 className="text-[13px] font-semibold text-on-surface">Desglose del mes</h3>
             </div>
-            <div className="space-y-3 flex-1 flex flex-col justify-center">
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] text-on-surface-variant">Facturación bruta</span>
-                <span className="text-[13px] font-bold text-on-surface tabular-nums">{formatCOP(desglose.bruto)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
-                  <Landmark className="w-3 h-3" /> Comisión Hotmart
-                </span>
-                <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#d97706' }}>
-                  −{formatCOP(desglose.comisionHotmart)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
-                  <Users className="w-3 h-3" /> Comisión asesores
-                </span>
-                <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#dc2626' }}>
-                  −{formatCOP(desglose.comisionAsesor)}
-                </span>
-              </div>
-              <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
-                <span className="text-[13px] font-semibold text-on-surface">Neto recibido</span>
-                <span className="text-[18px] font-bold tabular-nums" style={{ color: '#16a34a' }}>
-                  {formatCOP(desglose.neto)}
-                </span>
-              </div>
-            </div>
+            {isLoading
+              ? <div className="space-y-3 flex-1">
+                  {[1,2,3,4].map(i => <div key={i} className="h-5 rounded bg-surface-high animate-pulse" />)}
+                </div>
+              : <div className="space-y-3 flex-1 flex flex-col justify-center animate-fade-in">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] text-on-surface-variant">Facturación bruta</span>
+                    <span className="text-[13px] font-bold text-on-surface tabular-nums">{formatCOP(animBruto)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+                      <Landmark className="w-3 h-3" /> Comisión Hotmart
+                    </span>
+                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#d97706' }}>
+                      −{formatCOP(animHotmart)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+                      <Users className="w-3 h-3" /> Comisión asesores
+                    </span>
+                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#dc2626' }}>
+                      −{formatCOP(animAsesor)}
+                    </span>
+                  </div>
+                  <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
+                    <span className="text-[13px] font-semibold text-on-surface">Neto recibido</span>
+                    <span className="text-[18px] font-bold tabular-nums" style={{ color: '#16a34a' }}>
+                      {formatCOP(animNeto)}
+                    </span>
+                  </div>
+                </div>}
             <p className="text-[9px] text-on-surface-variant/70 mt-3 leading-tight">
               Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.
             </p>
@@ -199,7 +260,7 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* ── FILA 3: Cursos más vendidos (grid ranked) ─────────────── */}
+      {/* ── FILA 3: Cursos más vendidos (burbujas) ────────────────── */}
       <CursosVendidosRanked desde={desde} hasta={hasta} />
 
       {/* ── FILA 4: Medios de pago unificados ─────────────────────── */}
@@ -214,27 +275,22 @@ export default function ReportesPage() {
         </div>
 
         {mediosLoading ? (
-          <div className="space-y-2">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-8 rounded-lg bg-surface-high animate-pulse" />)}
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-6 rounded-lg bg-surface-high animate-pulse" />)}
           </div>
         ) : metodos.length === 0 ? (
           <p className="text-[13px] text-on-surface-variant text-center py-6">Sin pagos registrados en este período</p>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 animate-fade-in">
             {metodos.map((m, i) => {
               const color = COLORES[i % COLORES.length]
               return (
-                <div key={m.metodo} className="grid grid-cols-[120px_1fr_auto_50px] gap-3 items-center">
+                <div key={m.metodo} className="grid grid-cols-[120px_1fr_auto_60px] gap-3 items-center">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
                     <span className="text-[12px] font-medium text-on-surface truncate">{m.metodo}</span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-surface-high overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${m.porcentajeMonto}%`, background: color }}
-                    />
-                  </div>
+                  <BarraMedia pct={m.porcentajeMonto} color={color} delay={80 + i * 60} />
                   <span className="text-[12px] font-bold text-on-surface tabular-nums">{formatCOP(m.monto)}</span>
                   <span className="text-[11px] text-on-surface-variant tabular-nums text-right">
                     {m.cantidad} pago{m.cantidad !== 1 ? 's' : ''}
