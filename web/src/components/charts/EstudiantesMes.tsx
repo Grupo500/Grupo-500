@@ -1,133 +1,106 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
-import {
-  BarChart, Bar, Cell,
-  XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
-} from 'recharts'
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
 import { apiFetch } from '@/lib/api'
-import { Users } from 'lucide-react'
-import { ScrollableChartFrame, niceScale, AXIS_WIDTH, XAXIS_HEIGHT } from './ScrollableChartFrame'
-
-const CHART_HEIGHT = 190
+import { Users, TrendingUp, TrendingDown } from 'lucide-react'
 
 interface PuntoData { label: string; cantidad: number }
+interface Resp { puntos: PuntoData[]; total: number }
 
-function Skeleton() {
-  return (
-    <div className="card p-5 h-72 animate-pulse">
-      <div className="h-4 w-48 bg-[var(--surface-high)] rounded-md mb-2" />
-      <div className="h-3 w-24 bg-[var(--surface-high)] rounded mb-5" />
-      <div className="flex items-end gap-1 h-40 px-2">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="flex-1 bg-[var(--surface-high)] rounded-t" style={{ height: `${30 + (i % 4) * 15}%` }} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function CustomTooltip({ active, payload, label, color }: any) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-[var(--surface-lowest)] border border-[var(--outline-variant)] rounded-xl shadow-float px-4 py-2.5 text-[12px]">
-      <p className="font-semibold text-on-surface mb-1 capitalize">{label}</p>
-      <p className="font-bold" style={{ color }}>{payload[0]?.value} estudiante{payload[0]?.value !== 1 ? 's' : ''}</p>
-    </div>
-  )
-}
+function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
 export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string }) {
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
 
-  const color       = isDark ? '#95daff' : '#1a7de0'
-  const colorActual = isDark ? '#6ee7b7' : '#16a34a'
-  const gridColor   = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
-  const tickColor   = isDark ? '#95c8f0' : '#2a4172'
+  const color = isDark ? '#95daff' : '#1a7de0'
+  const verde = isDark ? '#6ee7b7' : '#16a34a'
+  const rojo  = isDark ? '#f87171' : '#dc2626'
+
+  // Mes anterior (para variación) derivado de `desde`
+  const base       = new Date(desde + 'T00:00:00')
+  const inicioAnt  = toISO(startOfMonth(subMonths(base, 1)))
+  const finAnt     = toISO(endOfMonth(subMonths(base, 1)))
 
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes-por-mes', desde, hasta],
-    queryFn: () => apiFetch(`/reportes/estudiantes-por-mes?desde=${desde}&hasta=${hasta}`) as Promise<{
-      data: { puntos: PuntoData[]; total: number }
-    }>,
+    queryFn: () => apiFetch(`/reportes/estudiantes-por-mes?desde=${desde}&hasta=${hasta}`) as Promise<{ data: Resp }>,
+    staleTime: 60_000,
+  })
+  const { data: antData } = useQuery({
+    queryKey: ['estudiantes-por-mes', inicioAnt, finAnt],
+    queryFn: () => apiFetch(`/reportes/estudiantes-por-mes?desde=${inicioAnt}&hasta=${finAnt}`) as Promise<{ data: Resp }>,
     staleTime: 60_000,
   })
 
-  if (!temaListo || isLoading) return <Skeleton />
+  const total    = data?.data?.total ?? 0
+  const totalAnt = antData?.data?.total ?? 0
+  const variacion = totalAnt > 0 ? Math.round(((total - totalAnt) / totalAnt) * 100) : null
 
-  const puntos  = data?.data?.puntos ?? []
-  const total   = data?.data?.total  ?? 0
-
-  // Detectar si el rango es un año completo para marcar el mes actual
-  const desdeDate = new Date(desde + 'T00:00:00')
-  const hastaDate = new Date(hasta + 'T00:00:00')
-  const diasRango = Math.round((hastaDate.getTime() - desdeDate.getTime()) / 86400000) + 1
-  const esAnual   = diasRango >= 365
-  const mesActual = new Date().getMonth()
-
-  // Escala compartida entre el eje Y fijo y el área scrolleable
-  const scale    = niceScale(Math.max(1, ...puntos.map(p => p.cantidad)))
-  const tickFill = { fill: tickColor, fontSize: 10, fontFamily: 'Inter' }
-
-  const barChart = (mode: 'full' | 'axis' | 'plot', width: number) => {
-    const chart = (
-      <BarChart
-        data={puntos}
-        width={mode === 'full' ? undefined : width}
-        height={mode === 'full' ? undefined : CHART_HEIGHT}
-        margin={{ top: 0, right: mode === 'axis' ? 0 : 4, left: mode === 'plot' ? 0 : -12, bottom: 0 }}
-        barSize={esAnual ? 14 : 10}
-      >
-        {mode !== 'axis' && <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />}
-        <XAxis dataKey="label" height={XAXIS_HEIGHT} interval={mode === 'plot' ? 0 : 'preserveStartEnd'}
-          tick={mode === 'axis' ? false : tickFill} axisLine={false} tickLine={false} />
-        <YAxis domain={[0, scale.max]} ticks={scale.ticks} hide={mode === 'plot'} width={AXIS_WIDTH}
-          tick={tickFill} axisLine={false} tickLine={false} allowDecimals={false} />
-        {mode !== 'axis' && (
-          <Tooltip content={<CustomTooltip color={color} />} cursor={{ fill: isDark ? 'rgba(149,218,255,0.04)' : 'rgba(0,48,96,0.04)' }} />
-        )}
-        {mode !== 'axis' && (
-          <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
-            {puntos.map((_, i) => (
-              <Cell key={i} fill={esAnual && i === mesActual ? colorActual : color} opacity={esAnual && i > mesActual ? 0.3 : 1} />
-            ))}
-          </Bar>
-        )}
-      </BarChart>
-    )
-    if (mode === 'full') return <ResponsiveContainer width="100%" height={CHART_HEIGHT}>{chart}</ResponsiveContainer>
-    return chart
-  }
+  // Sparkline: acumulado del mes (curva suave, sin ejes)
+  const serie = useMemo(() => {
+    const puntos = data?.data?.puntos ?? []
+    let acc = 0
+    return puntos.map(p => { acc += p.cantidad; return { label: p.label, acc } })
+  }, [data])
 
   return (
-    <div className="card p-5 h-72">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
-            <Users className="w-3.5 h-3.5 text-primary" />
-          </div>
-          <h3 className="text-[15px] font-semibold text-on-surface">Ingresos de estudiantes</h3>
+    <div className="card p-5 flex flex-col">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
+          <Users className="w-3.5 h-3.5 text-primary" />
         </div>
-        <div className="text-right">
-          <p className="text-[19px] font-bold text-on-surface tabular leading-tight">{total}</p>
-          <p className="text-[11px] text-on-surface-variant">en el período</p>
-        </div>
+        <h3 className="text-[15px] font-semibold text-on-surface">Nuevos estudiantes</h3>
       </div>
 
-      {puntos.length === 0 ? (
-        <div className="flex items-center justify-center h-[72%] text-[13px] text-on-surface-variant">Sin datos</div>
+      {!temaListo || isLoading ? (
+        <div className="space-y-3">
+          <div className="h-9 w-24 rounded bg-[var(--surface-high)] animate-pulse" />
+          <div className="h-12 rounded bg-[var(--surface-high)] animate-pulse" />
+        </div>
       ) : (
-        <ScrollableChartFrame
-          count={puntos.length}
-          height={CHART_HEIGHT}
-          fullChart={barChart('full', 0)}
-          axisChart={barChart('axis', AXIS_WIDTH)}
-          plotChart={(w) => barChart('plot', w)}
-        />
+        <>
+          {/* KPI */}
+          <div className="flex items-end justify-between gap-2">
+            <div>
+              <p className="text-[34px] font-bold text-on-surface tabular-nums leading-none">{total}</p>
+              <p className="text-[11px] text-on-surface-variant mt-1">este mes</p>
+            </div>
+            {variacion !== null && (
+              <p className="text-[12px] font-semibold flex items-center gap-0.5 mb-1"
+                style={{ color: variacion >= 0 ? verde : rojo }}>
+                {variacion >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                {variacion >= 0 ? '+' : ''}{variacion}%
+              </p>
+            )}
+          </div>
+
+          {/* Sparkline (acumulado, sin ejes) */}
+          <div className="mt-4 -mx-1">
+            <ResponsiveContainer width="100%" height={56}>
+              <AreaChart data={serie} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradEstud" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Tooltip
+                  contentStyle={{ background: isDark ? '#0f1e35' : '#fff', border: `1px solid ${isDark ? 'rgba(149,218,255,0.12)' : 'rgba(0,48,96,0.10)'}`, borderRadius: 8, padding: '4px 10px', fontSize: 11 }}
+                  labelStyle={{ display: 'none' }}
+                  formatter={(v: number) => [`${v} acumulados`, '']}
+                />
+                <Area type="monotone" dataKey="acc" stroke={color} strokeWidth={2} fill="url(#gradEstud)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+            <p className="text-[10px] text-on-surface-variant text-center mt-1">Acumulado del mes</p>
+          </div>
+        </>
       )}
     </div>
   )
