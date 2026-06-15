@@ -46,12 +46,19 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
 
   if (!temaListo || isLoading) return <Skeleton />
 
-  const cursos = (data?.data ?? [])
+  const todos = (data?.data ?? [])
     .map(c => ({ nombre: c.nombre, vendidos: c._count.estudiantes }))
     .filter(c => c.vendidos > 0)
-    .slice(0, 5)
 
-  const total = cursos.reduce((s, c) => s + c.vendidos, 0)
+  const total  = todos.reduce((s, c) => s + c.vendidos, 0)   // total REAL (todos)
+  const cursos = todos.slice(0, 5)                            // top 5 para la leyenda
+  const otros  = total - cursos.reduce((s, c) => s + c.vendidos, 0)
+  const grisOtros = isDark ? '#3a4d6e' : '#c2d4ef'
+
+  // Rebanadas de la dona: top 5 + "Otros" (gris) para que el anillo sea 100%
+  const slices = otros > 0
+    ? [...cursos, { nombre: 'Otros', vendidos: otros }]
+    : cursos
 
   return (
     <div className="card p-5 flex flex-col">
@@ -73,7 +80,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={cursos}
+                  data={slices}
                   dataKey="vendidos"
                   nameKey="nombre"
                   innerRadius="82%"
@@ -84,7 +91,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
                   startAngle={90}
                   endAngle={-270}
                 >
-                  {cursos.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+                  {slices.map((s, i) => <Cell key={i} fill={s.nombre === 'Otros' ? grisOtros : colors[i % colors.length]} />)}
                 </Pie>
                 <Tooltip
                   contentStyle={{ background: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: 10, padding: '6px 12px' }}
