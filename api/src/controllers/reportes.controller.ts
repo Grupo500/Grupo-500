@@ -130,14 +130,12 @@ export async function rankingAsesores(req: Request, res: Response) {
     finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
   }
 
-  // Traer asesores + pagos de ambos meses en 3 queries paralelas
+  // Traer asesores + pagos de ambos períodos en 3 queries paralelas
   const [asesores, pagosActual, pagosAnterior] = await Promise.all([
-    prisma.asesor.findMany({
-      include: { _count: { select: { estudiantes: true } } },
-    }),
+    prisma.asesor.findMany({ select: { id: true, nombre: true } }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
-      select: { asesorId: true, monto: true },
+      select: { asesorId: true, monto: true, estudianteId: true },
     }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesAnterior, lte: finMesAnterior } },
@@ -151,16 +149,19 @@ export async function rankingAsesores(req: Request, res: Response) {
 
   const ranking = asesores
     .map(a => {
-      const ventasActual   = sumar(pagosActual,   a.id)
+      const pagosDelAsesor = pagosActual.filter(p => p.asesorId === a.id)
+      const ventasActual   = pagosDelAsesor.reduce((s, p) => s + p.monto, 0)
       const ventasAnterior = sumar(pagosAnterior, a.id)
       const variacion      = ventasAnterior > 0 ? Math.round(((ventasActual - ventasAnterior) / ventasAnterior) * 100) : 0
+      // Estudiantes distintos con venta DENTRO del período (no histórico)
+      const estudiantesPeriodo = new Set(pagosDelAsesor.map(p => p.estudianteId)).size
       return {
         id: a.id,
         nombre: a.nombre,
         totalVentas: ventasActual,
         cobrado: ventasActual,
-        cantidadPagos: pagosActual.filter(p => p.asesorId === a.id).length,
-        totalEstudiantes: a._count.estudiantes,
+        cantidadPagos: pagosDelAsesor.length,
+        totalEstudiantes: estudiantesPeriodo,
         variacion,
         ventasAnterior,
       }

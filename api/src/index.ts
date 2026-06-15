@@ -40,6 +40,7 @@ import inscripcionRoutes from './routes/inscripcion'
 import formulariosRoutes from './routes/formularios'
 import hotmartRoutes from './routes/hotmart'
 import { reconciliarAsesores } from './jobs/reconciliarAsesores'
+import { backfillComisiones } from './jobs/backfillComisiones'
 
 const app = express()
 
@@ -202,6 +203,11 @@ app.listen(PORT, () => {
   const SEIS_HORAS = 6 * 60 * 60 * 1000
   setTimeout(() => { void reconciliarAsesores() }, 2 * 60 * 1000)
   setInterval(() => { void reconciliarAsesores() }, SEIS_HORAS)
+
+  // Desglose de comisiones: completa los pagos que falten. Corrida inicial a
+  // los 3 min (escalonada tras la reconciliación) y luego cada 6 horas.
+  setTimeout(() => { void backfillComisiones() }, 3 * 60 * 1000)
+  setInterval(() => { void backfillComisiones() }, SEIS_HORAS)
 })
 
 export default app

@@ -250,6 +250,11 @@ model Pago {
   referenciaPago   String?
   comprobanteAt    DateTime?
   notas            String?
+  // Desglose de comisiones (en COP, convertido desde USD con TRM oficial de la fecha)
+  comisionHotmart  Float?     // comisión de la plataforma Hotmart (fee + addon)
+  comisionAsesor   Float?     // comisión del afiliado/asesor
+  montoNeto        Float?     // neto que recibe el productor
+  trm              Float?     // TRM oficial usada para la conversión
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   asesor           Asesor?    @relation(fields: [asesorId], references: [id])
