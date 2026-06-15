@@ -56,12 +56,12 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
 
         {/* Columna principal (70%) */}
         <div className="lg:col-span-7 order-1 lg:order-2 flex flex-col gap-4">
-          {/* Gráfica + KPIs lado a lado */}
-          <div className="flex gap-4 items-stretch">
+          {/* Móvil: apilado · Desktop: gráfica + KPIs lado a lado */}
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-stretch">
             <div className="flex-1 min-w-0">
               <FacturadoMensual />
             </div>
-            <div className="flex-shrink-0 w-44">
+            <div className="lg:flex-shrink-0 lg:w-44">
               <ComisionesKpis desde={desde} hasta={hasta} />
             </div>
           </div>

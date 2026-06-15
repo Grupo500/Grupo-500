@@ -27,21 +27,25 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
   ]
 
   return (
-    <div className="flex flex-col gap-3 h-full">
-      {cards.map(({ label, valor, color, bg, border, Icon, negativo }) => (
-        <div key={label} className="rounded-2xl p-4 flex-1 flex flex-col justify-center"
-          style={{ border: `1.5px solid ${border}`, background: bg }}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}26` }}>
-              <Icon className="w-3.5 h-3.5" style={{ color }} />
+    <div className="grid grid-cols-2 lg:flex lg:flex-col gap-3 lg:h-full">
+      {cards.map(({ label, valor, color, bg, border, Icon, negativo }, i) => {
+        const esNeto = i === 2
+        return (
+          <div key={label}
+            className={`rounded-2xl p-4 flex flex-col justify-center items-center text-center lg:items-stretch lg:text-left lg:flex-1 ${esNeto ? 'col-span-2 lg:col-span-1' : ''}`}
+            style={{ border: `1.5px solid ${border}`, background: bg }}>
+            <div className="flex items-center gap-2 mb-2 justify-center lg:justify-start">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}26` }}>
+                <Icon className="w-3.5 h-3.5" style={{ color }} />
+              </div>
+              <span className="text-[12px] font-medium text-on-surface-variant leading-tight">{label}</span>
             </div>
-            <span className="text-[12px] font-medium text-on-surface-variant leading-tight">{label}</span>
+            {isLoading
+              ? <div className="h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse" />
+              : <p className="text-[18px] font-bold tabular-nums" style={{ color }}>{negativo ? '−' : ''}{formatCOP(valor)}</p>}
           </div>
-          {isLoading
-            ? <div className="h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse" />
-            : <p className="text-[18px] font-bold tabular-nums" style={{ color }}>{negativo ? '−' : ''}{formatCOP(valor)}</p>}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

@@ -55,7 +55,7 @@ export function TopAsesores() {
             const iniciales = a.nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
             return (
               <div key={a.id}
-                className="card p-4 flex flex-col items-center text-center transition-shadow duration-200 hover:shadow-[var(--shadow-float)] h-full">
+                className={`card p-4 flex flex-col items-center text-center transition-shadow duration-200 hover:shadow-[var(--shadow-float)] h-full ${i === 0 ? 'col-span-2 lg:col-span-1' : ''}`}>
                 {/* Posición */}
                 <span className="text-[16px] leading-none h-5 flex items-center">
                   {i < 3 ? MEDALLAS[i] : <span className="text-[13px] font-bold text-on-surface-variant">{i + 1}</span>}
