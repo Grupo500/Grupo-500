@@ -70,17 +70,17 @@ export function FacturadoMensual() {
 
   return (
     <div className="card p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <p className="text-[13px] font-semibold text-on-surface">Total facturado</p>
-          <p className="text-[11px] text-on-surface-variant capitalize">{mesLabel}</p>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        {/* Título + mes */}
+        <p className="text-[13px] font-semibold text-on-surface whitespace-nowrap">Total facturado</p>
+        <p className="text-[11px] text-on-surface-variant capitalize whitespace-nowrap">{mesLabel}</p>
+        {/* Leyenda — centro */}
+        <div className="flex items-center gap-3 text-[10px] text-on-surface-variant flex-1 justify-center">
+          <span className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: color }} /> Mes actual</span>
+          <span className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: sombra }} /> Mes anterior</span>
         </div>
-        {/* Leyenda — centro del header */}
-        <div className="flex items-center gap-3 text-[10px] text-on-surface-variant self-center">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} /> Mes actual</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: sombra }} /> Mes anterior</span>
-        </div>
-        <div className="text-right">
+        {/* Total */}
+        <div className="text-right ml-auto">
           {isLoading ? (
             <div className="h-6 w-24 rounded bg-[var(--surface-high)] animate-pulse" />
           ) : (
