@@ -19,7 +19,8 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
   const now   = new Date()
   const desde = toISO(startOfMonth(now))
   const hasta = toISO(endOfMonth(now))
-  const mesLabel = format(now, "MMMM 'de' yyyy", { locale: es })
+  const mesRaw   = format(now, "MMMM 'de' yyyy", { locale: es })
+  const mesLabel = mesRaw.charAt(0).toUpperCase() + mesRaw.slice(1)
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -32,8 +33,8 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
             <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
           </h1>
           <div className="mt-2">
-            <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Resumen del mes</p>
-            <p className="text-[13px] font-semibold text-on-surface capitalize leading-tight mt-0.5">{mesLabel}</p>
+            <p className="text-[11px] font-semibold text-on-surface-variant tracking-wide">Resumen del mes</p>
+            <p className="text-[13px] font-semibold text-on-surface leading-tight mt-0.5">{mesLabel}</p>
           </div>
         </div>
         <div className="flex-shrink-0 pt-1">
