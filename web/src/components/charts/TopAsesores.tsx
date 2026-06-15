@@ -83,13 +83,11 @@ export function TopAsesores() {
                     Comisión {formatCOP(a.comisionGanada)}
                   </p>
                 )}
-                {a.variacion !== 0 && (
-                  <p className="text-[10px] font-semibold flex items-center gap-0.5 mt-1"
-                    style={{ color: a.variacion > 0 ? verde : rojo }}>
-                    {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {a.variacion > 0 ? '+' : ''}{a.variacion}% vs mismo período
-                  </p>
-                )}
+                <p className="text-[10px] font-semibold flex items-center gap-0.5 mt-1"
+                  style={{ color: a.variacion > 0 ? verde : a.variacion < 0 ? rojo : 'var(--on-surface-variant)' }}>
+                  {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : a.variacion < 0 ? <TrendingDown className="w-3 h-3" /> : null}
+                  {a.variacion > 0 ? '+' : ''}{a.variacion}% vs mes ant.
+                </p>
               </div>
             )
           })}
