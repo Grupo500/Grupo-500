@@ -54,8 +54,15 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
 
         {/* Columna principal (70%) */}
         <div className="lg:col-span-7 order-1 lg:order-2 space-y-4">
-          <FacturadoMensual />
-          <ComisionesKpis desde={desde} hasta={hasta} />
+          {/* Gráfica + KPIs lado a lado */}
+          <div className="flex gap-4 items-stretch">
+            <div className="flex-1 min-w-0">
+              <FacturadoMensual />
+            </div>
+            <div className="flex-shrink-0 w-44">
+              <ComisionesKpis desde={desde} hasta={hasta} />
+            </div>
+          </div>
           <TopAsesores />
         </div>
 
