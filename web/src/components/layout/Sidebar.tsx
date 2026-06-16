@@ -207,7 +207,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       className={cn(
         'relative flex flex-col h-screen transition-all duration-300 z-20',
         // margen derecho extra en comprimido para que el círculo flotante no toque el contenido
-        collapsed ? 'w-[60px] mr-8' : 'w-[220px]',
+        collapsed ? 'w-[60px] mr-5' : 'w-[220px]',
       )}
     >
       {/* ── Fondo oscuro deformable (SVG) ───────────── */}
