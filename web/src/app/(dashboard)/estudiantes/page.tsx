@@ -11,7 +11,7 @@ import { formatCOP } from '@/lib/utils'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
-  CheckCircle, Clock, ChevronRight as Arrow, Link2, Copy, Check, ExternalLink,
+  CheckCircle, Clock, ChevronRight as Arrow, Check,
   X, Download, CheckSquare, Square,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -171,51 +171,6 @@ function ConfirmDialog({ open, nombre, onConfirm, onCancel, isPending }: {
 }
 
 // ── Botón Mi enlace (solo VENDEDOR) ───────────────────────────────────────
-function MiEnlaceBtn() {
-  const [copiado, setCopiado] = useState(false)
-  const [enlace,  setEnlace]  = useState<string | null>(null)
-  const [error,   setError]   = useState(false)
-
-  const generarEnlace = async () => {
-    if (enlace) { copiar(); return }
-    try {
-      const [asesorRes, formsRes] = await Promise.all([
-        apiFetch('/asesores/me') as Promise<any>,
-        apiFetch('/formularios') as Promise<any>,
-      ])
-      const asesorId = asesorRes?.data?.id
-      const formActivo = formsRes?.data?.find((f: any) => f.activo)
-      if (!asesorId || !formActivo) { setError(true); return }
-      const base = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin
-      setEnlace(`${base}/inscripcion/f/${formActivo.id}?asesor=${asesorId}`)
-      setTimeout(() => copiar(`${base}/inscripcion/f/${formActivo.id}?asesor=${asesorId}`), 0)
-    } catch { setError(true) }
-  }
-
-  const copiar = (url?: string) => {
-    navigator.clipboard.writeText(url ?? enlace ?? '')
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 2000)
-  }
-
-  return (
-    <button
-      onClick={generarEnlace}
-      title="Copiar mi enlace de inscripción"
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors cursor-pointer ${
-        error
-          ? 'bg-[var(--error)]/10 border-[var(--error)]/30 text-[var(--error)]'
-          : copiado
-          ? 'bg-secondary/10 border-secondary/30 text-secondary'
-          : 'bg-surface-high border-outline-variant text-on-surface hover:bg-surface-lowest'
-      }`}
-    >
-      {copiado ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
-      <span className="hidden sm:inline">{error ? 'Sin formulario' : copiado ? '¡Copiado!' : 'Mi enlace'}</span>
-    </button>
-  )
-}
-
 // ── Página principal ───────────────────────────────────────────────────────
 export default function EstudiantesPage() {
   const { data: session } = useSession()
@@ -451,7 +406,6 @@ const subirComprobante = async (file: File) => {
                 <span className="hidden sm:inline">{exportando ? 'Exportando…' : 'Exportar'}</span>
               </button>
             )}
-            {!isAdmin && <MiEnlaceBtn />}
             <button
               onClick={() => { setModoSeleccion(m => !m); setSeleccionados(new Set()) }}
               className={cn(
