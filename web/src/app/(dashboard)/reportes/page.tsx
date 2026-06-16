@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
@@ -79,6 +80,9 @@ export default function ReportesPage() {
       ? `${fmtShort(desde)} – ${fmt(hasta)}`
       : `${fmt(desde)} – ${fmt(hasta)}`
 
+  const { data: session } = useSession()
+  const isAsesor = (session?.user as { role?: string } | undefined)?.role === 'VENDEDOR'
+
   const fetcher = async () => {
     const token = await getClientToken()
     return createClientFetcher(token ?? '')
@@ -118,7 +122,10 @@ export default function ReportesPage() {
     <div className="space-y-4 animate-fade-in">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <PageHeader title="Reportes" subtitle="Estadísticas globales de la operación" />
+        <PageHeader
+          title={isAsesor ? 'Mis reportes' : 'Reportes'}
+          subtitle={isAsesor ? 'Estadísticas de tu gestión' : 'Estadísticas globales de la operación'}
+        />
         <div className="flex flex-col items-start md:items-end gap-1 flex-shrink-0 w-full md:w-auto">
           <MonthPicker
             value={month}
@@ -143,7 +150,7 @@ export default function ReportesPage() {
           </div>
           <div className="grid grid-cols-[1fr_1px_1fr] gap-4 items-center">
             <div>
-              <p className="text-[11px] text-on-surface-variant mb-1">Total registrados</p>
+              <p className="text-[11px] text-on-surface-variant mb-1">{isAsesor ? 'Mis estudiantes' : 'Total registrados'}</p>
               {isLoading
                 ? <div className="h-8 w-16 rounded bg-surface-high animate-pulse" />
                 : <p className="text-[26px] font-bold text-on-surface tabular-nums leading-none animate-fade-in">
@@ -207,43 +214,64 @@ export default function ReportesPage() {
               <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'var(--primary-container)' }}>
                 <Wallet className="w-3.5 h-3.5 text-primary" />
               </div>
-              <h3 className="text-[13px] font-semibold text-on-surface">Desglose del mes</h3>
+              <h3 className="text-[13px] font-semibold text-on-surface">{isAsesor ? 'Mi comisión' : 'Desglose del mes'}</h3>
             </div>
             {isLoading
               ? <div className="space-y-3 flex-1">
                   {[1,2,3,4].map(i => <div key={i} className="h-5 rounded bg-surface-high animate-pulse" />)}
                 </div>
-              : <div className="space-y-3 flex-1 flex flex-col justify-center animate-fade-in">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-on-surface-variant">Facturación bruta</span>
-                    <span className="text-[13px] font-bold text-on-surface tabular-nums">{formatCOP(animBruto)}</span>
+              : isAsesor
+                ? <div className="space-y-3 flex-1 flex flex-col justify-center animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] text-on-surface-variant">Mis ventas brutas</span>
+                      <span className="text-[13px] font-bold text-on-surface tabular-nums">{formatCOP(animBruto)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] text-on-surface-variant">% de comisión</span>
+                      <span className="text-[12px] font-semibold tabular-nums text-on-surface">
+                        {desglose.bruto > 0 ? Math.round((desglose.comisionAsesor / desglose.bruto) * 100) : 0}%
+                      </span>
+                    </div>
+                    <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
+                      <span className="text-[13px] font-semibold text-on-surface">Mi comisión ganada</span>
+                      <span className="text-[18px] font-bold tabular-nums" style={{ color: '#16a34a' }}>
+                        {formatCOP(animAsesor)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
-                      <Landmark className="w-3 h-3" /> Comisión Hotmart
-                    </span>
-                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#d97706' }}>
-                      −{formatCOP(animHotmart)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
-                      <Users className="w-3 h-3" /> Comisión asesores
-                    </span>
-                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#dc2626' }}>
-                      −{formatCOP(animAsesor)}
-                    </span>
-                  </div>
-                  <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
-                    <span className="text-[13px] font-semibold text-on-surface">Neto recibido</span>
-                    <span className="text-[18px] font-bold tabular-nums" style={{ color: '#16a34a' }}>
-                      {formatCOP(animNeto)}
-                    </span>
-                  </div>
-                </div>}
-            <p className="text-[9px] text-on-surface-variant/70 mt-3 leading-tight">
-              Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.
-            </p>
+                : <div className="space-y-3 flex-1 flex flex-col justify-center animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] text-on-surface-variant">Facturación bruta</span>
+                      <span className="text-[13px] font-bold text-on-surface tabular-nums">{formatCOP(animBruto)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+                        <Landmark className="w-3 h-3" /> Comisión Hotmart
+                      </span>
+                      <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#d97706' }}>
+                        −{formatCOP(animHotmart)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+                        <Users className="w-3 h-3" /> Comisión asesores
+                      </span>
+                      <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#dc2626' }}>
+                        −{formatCOP(animAsesor)}
+                      </span>
+                    </div>
+                    <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
+                      <span className="text-[13px] font-semibold text-on-surface">Neto recibido</span>
+                      <span className="text-[18px] font-bold tabular-nums" style={{ color: '#16a34a' }}>
+                        {formatCOP(animNeto)}
+                      </span>
+                    </div>
+                  </div>}
+            {!isAsesor && (
+              <p className="text-[9px] text-on-surface-variant/70 mt-3 leading-tight">
+                Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.
+              </p>
+            )}
           </div>
         </div>
       </div>

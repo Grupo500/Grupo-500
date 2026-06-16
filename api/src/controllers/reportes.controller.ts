@@ -219,6 +219,9 @@ export async function rankingAsesores(req: Request, res: Response) {
   const sumar = (pagos: { asesorId: string | null; monto: number }[], id: string) =>
     pagos.filter(p => p.asesorId === id).reduce((s, p) => s + p.monto, 0)
 
+  // VENDEDOR ve las ventas de todos, pero la comisión solo la suya
+  const ocultarComisionAjena = req.userRole === 'VENDEDOR'
+
   const ranking = asesores
     .map(a => {
       const pagosDelAsesor = pagosActual.filter(p => p.asesorId === a.id)
@@ -228,6 +231,7 @@ export async function rankingAsesores(req: Request, res: Response) {
       // Estudiantes distintos con venta DENTRO del período (no histórico)
       const estudiantesPeriodo = new Set(pagosDelAsesor.map(p => p.estudianteId)).size
       const comisionGanada = pagosDelAsesor.reduce((s, p) => s + (p.comisionAsesor ?? 0), 0)
+      const esYo = a.id === req.asesorId
       return {
         id: a.id,
         nombre: a.nombre,
@@ -236,9 +240,10 @@ export async function rankingAsesores(req: Request, res: Response) {
         cobrado: ventasActual,
         cantidadPagos: pagosDelAsesor.length,
         totalEstudiantes: estudiantesPeriodo,
-        comisionGanada,
+        comisionGanada: ocultarComisionAjena && !esYo ? null : comisionGanada,
         variacion,
         ventasAnterior,
+        esYo,
       }
     })
     .sort((a, b) => b.totalVentas - a.totalVentas)
@@ -265,12 +270,20 @@ export async function cursosMasVendidos(req: Request, res: Response) {
     hastaDate = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
   }
 
+  // VENDEDOR → solo sus estudiantes por curso; ADMIN → global
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+
   const cursos = await prisma.curso.findMany({
     where: { activo: true },
     include: {
       _count: {
         select: {
-          estudiantes: { where: { fechaCompra: { gte: desdeDate, lte: hastaDate } } },
+          estudiantes: {
+            where: {
+              fechaCompra: { gte: desdeDate, lte: hastaDate },
+              ...(filtroAsesor && { estudiante: { asesorId: filtroAsesor } }),
+            },
+          },
         },
       },
     },
@@ -573,10 +586,13 @@ export async function ventasGrafica(req: Request, res: Response) {
     }
   }
 
+  // VENDEDOR → solo sus pagos; ADMIN → global
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+
   const resultados = await Promise.all(
     puntos.map(async ({ label, desde, hasta }) => {
       const agg = await prisma.pago.aggregate({
-        where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } },
+        where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta }, ...(filtroAsesor && { asesorId: filtroAsesor }) },
         _sum: { monto: true },
         _count: true,
       })
@@ -614,10 +630,13 @@ export async function mediosPago(req: Request, res: Response) {
     ? new Date(hastaQ + 'T23:59:59')
     : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
 
+  // VENDEDOR → solo sus pagos; ADMIN → global
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+
   // Agrupar pagos pagados por método de pago
   const porMetodo = await prisma.pago.groupBy({
     by: ['metodo'],
-    where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta } },
+    where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta }, ...(filtroAsesor && { asesorId: filtroAsesor }) },
     _count: { metodo: true },
     _sum:   { monto: true },
   })

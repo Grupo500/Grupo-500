@@ -28,7 +28,7 @@ const moreItems: NavItem[] = [
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: true  },
-  { href: '/reportes',        label: 'Reportes',         icon: BarChart3,     adminOnly: true  },
+  { href: '/reportes',        label: 'Reportes',         icon: BarChart3,     adminOnly: false },
 ]
 
 interface BottomNavProps { role?: 'ADMIN' | 'VENDEDOR' }

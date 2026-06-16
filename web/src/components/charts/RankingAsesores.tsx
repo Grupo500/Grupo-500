@@ -14,8 +14,9 @@ interface Asesor {
   totalVentas: number
   cantidadPagos: number
   totalEstudiantes: number
-  comisionGanada: number
+  comisionGanada: number | null   // null = oculta (comisión ajena para un asesor)
   variacion: number
+  esYo?: boolean
 }
 
 interface Props {
@@ -166,7 +167,9 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                   </div>
                   <div className="flex items-center gap-3 text-[11px] text-on-surface-variant">
                     <span className="flex items-center gap-1"><UsersIcon className="w-3 h-3" /> {a.totalEstudiantes} estudiante{a.totalEstudiantes !== 1 ? 's' : ''}</span>
-                    <span className="text-[14px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>{formatCOP(a.comisionGanada)}</span>
+                    <span className="text-[14px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>
+                      {a.comisionGanada == null ? '—' : formatCOP(a.comisionGanada)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -191,7 +194,7 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                     <button
                       type="button"
                       onClick={() => setExpandidoId(prev => prev === a.id ? null : a.id)}
-                      className={`w-full grid grid-cols-[32px_36px_1fr_auto_50px_16px] gap-2 items-center px-3 py-2 rounded-xl text-left transition-colors border-0 cursor-pointer ${isOpen ? 'bg-[var(--primary-container)]/40' : 'bg-surface-high/40 hover:bg-surface-high'}`}
+                      className={`w-full grid grid-cols-[32px_36px_1fr_auto_50px_16px] gap-2 items-center px-3 py-2 rounded-xl text-left transition-colors border-0 cursor-pointer ${a.esYo ? 'bg-[var(--primary-container)]/60 ring-1 ring-primary/40' : isOpen ? 'bg-[var(--primary-container)]/40' : 'bg-surface-high/40 hover:bg-surface-high'}`}
                     >
                       <span className="text-[12px] font-semibold text-on-surface-variant">{pos}°</span>
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10">
@@ -200,7 +203,9 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                           : <span className="text-[10px] font-bold text-primary">{iniciales(a.nombre)}</span>}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-on-surface truncate" title={a.nombre}>{a.nombre}</p>
+                        <p className="text-[12px] font-semibold text-on-surface truncate" title={a.nombre}>
+                          {a.nombre}{a.esYo && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded ml-1.5 bg-primary text-white align-middle">TÚ</span>}
+                        </p>
                         {a.variacion !== 0 && (
                           <span className="text-[10px] font-semibold flex items-center gap-0.5"
                             style={{ color: a.variacion > 0 ? verde : rojo }}>
@@ -222,7 +227,9 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                           </div>
                           <div className="flex items-center gap-3 text-[11px] text-on-surface-variant">
                             <span className="flex items-center gap-1"><UsersIcon className="w-3 h-3" /> {a.totalEstudiantes} estudiante{a.totalEstudiantes !== 1 ? 's' : ''}</span>
-                            <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>{formatCOP(a.comisionGanada)}</span>
+                            <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>
+                              {a.comisionGanada == null ? '—' : formatCOP(a.comisionGanada)}
+                            </span>
                           </div>
                         </div>
                       </div>
