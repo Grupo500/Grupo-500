@@ -82,10 +82,13 @@ function buildMain(w: number, h: number, cy: number | null): string {
     const botMelt = cy + half > bottom - R - 2        // el brazo inferior toca la esquina
 
     // ── Borde derecho: entrada a la curva (arriba) — curva normal en todos los módulos ──
+    // jt no sube por encima de la esquina (evita el pico/cacho cuando el activo está arriba)
+    const jt   = Math.max(cy - half, top + R)
+    const dTop = cy - jt
     p.push(
       `Q${w},${top} ${w},${top + R}`,
-      `V${(cy - half).toFixed(1)}`,
-      `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+      `V${jt.toFixed(1)}`,
+      `C${w},${(cy - dTop * 0.35).toFixed(1)} ${wi},${(cy - dTop * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
     )
 
     // ── Salida de la curva (abajo) ──
