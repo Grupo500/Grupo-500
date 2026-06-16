@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import {
   LayoutDashboard, Users, CalendarDays,
@@ -35,6 +35,48 @@ const navItems: NavItem[] = [
 
 interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }
 
+// Paleta fija del sidebar oscuro (independiente del tema de la app)
+const RAIL_BG = '#15203a'
+const ACTIVE  = '#21b9f7'
+
+// Construye la silueta del fondo oscuro flotante: esquinas redondeadas + una
+// curva cóncava en el borde derecho a la altura `cy` del módulo activo.
+function buildPath(w: number, h: number, cy: number | null): string {
+  const padL = 6          // separación izquierda (look flotante)
+  const padY = 8          // separación arriba/abajo (look flotante)
+  const r    = 20         // radio de las esquinas
+  const top    = padY
+  const bottom = h - padY
+  const left   = padL
+
+  const p: string[] = [
+    `M${left},${top + r}`,
+    `Q${left},${top} ${left + r},${top}`,            // esquina sup-izq
+    `H${w - r}`,
+    `Q${w},${top} ${w},${top + r}`,                  // esquina sup-der
+  ]
+
+  if (cy != null) {
+    const depth = 26
+    const half  = 50
+    const wi    = w - depth
+    p.push(
+      `V${(cy - half).toFixed(1)}`,
+      `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+      `C${wi},${(cy + half * 0.6).toFixed(1)} ${w},${(cy + half * 0.35).toFixed(1)} ${w},${(cy + half).toFixed(1)}`,
+    )
+  }
+
+  p.push(
+    `V${bottom - r}`,
+    `Q${w},${bottom} ${w - r},${bottom}`,            // esquina inf-der
+    `H${left + r}`,
+    `Q${left},${bottom} ${left},${bottom - r}`,      // esquina inf-izq
+    `Z`,
+  )
+  return p.join(' ')
+}
+
 export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
@@ -45,23 +87,73 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const visibleItems = navItems.filter(item => !item.adminOnly || role === 'ADMIN')
   const isDark = theme === 'dark'
 
-  // Paleta fija del sidebar oscuro (independiente del tema de la app)
-  const RAIL_BG    = '#15203a'
-  const ACTIVE     = '#21b9f7'
+  const width = collapsed ? 60 : 220
+
+  // Ítem activo
+  const activeItem = visibleItems.find(
+    it => it.type === 'link' && (pathname === it.href || pathname.startsWith(it.href + '/'))
+  ) as Extract<NavItem, { type: 'link' }> | undefined
+  const ActiveIcon = activeItem?.icon
+
+  // ── Medición del centro del módulo activo para tallar la curva ──
+  const asideRef  = useRef<HTMLElement>(null)
+  const activeRef = useRef<HTMLAnchorElement>(null)
+  const [dims, setDims] = useState({ h: 0 })
+  const [cy, setCy]     = useState<number | null>(null)
+
+  const medir = useCallback(() => {
+    const aside = asideRef.current
+    if (!aside) return
+    setDims({ h: aside.clientHeight })
+    if (collapsed && activeRef.current) {
+      const a = activeRef.current.getBoundingClientRect()
+      const r = aside.getBoundingClientRect()
+      setCy(a.top - r.top + a.height / 2)
+    } else {
+      setCy(null)
+    }
+  }, [collapsed])
+
+  useEffect(() => { medir() }, [medir, pathname, mounted, role])
+  useEffect(() => {
+    window.addEventListener('resize', medir)
+    return () => window.removeEventListener('resize', medir)
+  }, [medir])
+
+  const notchFill = isDark ? '#0a1628' : '#eef6ff'
 
   return (
     <aside
-      style={{ background: RAIL_BG }}
+      ref={asideRef}
+      style={{ background: notchFill }}
       className={cn(
         'relative flex flex-col h-screen transition-all duration-300 z-20',
-        'border-r border-white/[0.06]',
         collapsed ? 'w-[60px]' : 'w-[220px]',
       )}
     >
+      {/* ── Fondo oscuro deformable (SVG) ───────────── */}
+      <svg
+        className="absolute inset-0 w-full h-full z-0 pointer-events-none transition-[all] duration-300"
+        viewBox={`0 0 ${width} ${dims.h || 800}`}
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path d={buildPath(width, dims.h || 800, cy)} fill={RAIL_BG} />
+      </svg>
+
+      {/* ── Círculo cian flotante del módulo activo (colapsado) ── */}
+      {collapsed && cy != null && ActiveIcon && (
+        <span
+          style={{ top: cy, background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.5)' }}
+          className="absolute right-[-23px] -translate-y-1/2 w-[50px] h-[50px] rounded-full flex items-center justify-center z-30 pointer-events-none"
+        >
+          <ActiveIcon className="w-6 h-6 text-white" />
+        </span>
+      )}
 
       {/* ── Logo ─────────────────────────────────── */}
       <div className={cn(
-        'flex items-center gap-2.5 h-14 border-b border-white/[0.06] px-4 flex-shrink-0',
+        'relative z-10 flex items-center gap-2.5 h-14 border-b border-white/[0.06] px-4 flex-shrink-0',
         collapsed && 'justify-center px-0',
       )}>
         <div className="flex-shrink-0 w-7 h-7">
@@ -76,12 +168,11 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       </div>
 
       {/* ── Nav ──────────────────────────────────── */}
-      {/* overflow-visible para que el círculo activo pueda salirse del borde */}
-      <nav className="flex-1 overflow-visible py-2 px-2 space-y-px">
+      <nav className={cn('relative z-10 flex-1 overflow-visible px-2', collapsed ? 'py-3 space-y-2.5' : 'py-2 space-y-1')}>
         {visibleItems.map((item, i) => {
           if (item.type === 'section') {
             return collapsed
-              ? <div key={i} className="my-1.5 mx-2 h-px bg-white/[0.06]" />
+              ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
               : <p key={i} className="pt-3 pb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
                   {item.label}
                 </p>
@@ -90,29 +181,17 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           const { href, label, icon: Icon, adminOnly } = item
           const isActive = pathname === href || pathname.startsWith(href + '/')
 
-          // ── Activo + colapsado: círculo cian flotante + curva cóncava ──
+          // ── Activo + colapsado: solo placeholder (el círculo se dibuja aparte) ──
           if (isActive && collapsed) {
             return (
               <Link
                 key={href}
+                ref={activeRef}
                 href={href}
                 title={label}
-                className="relative flex items-center justify-center px-0 py-2 group"
+                className="relative flex items-center justify-center py-2.5"
               >
-                {/* Curva cóncava tallada en el fondo oscuro (color del contenido) */}
-                <svg
-                  viewBox="0 0 46 92" preserveAspectRatio="none" aria-hidden="true"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-[34px] h-[92px] z-[2] [fill:#eef6ff] dark:[fill:#0a1628]"
-                >
-                  <path d="M46,0 C46,26 0,26 0,46 C0,66 46,66 46,92 Z" />
-                </svg>
-                {/* Círculo cian flotando fuera del borde */}
-                <span
-                  style={{ background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.45)' }}
-                  className="absolute right-[-22px] top-1/2 -translate-y-1/2 w-[46px] h-[46px] rounded-full flex items-center justify-center z-[5]"
-                >
-                  <Icon className="w-5 h-5 text-white" />
-                </span>
+                <Icon className="w-[22px] h-[22px] opacity-0" />
               </Link>
             )
           }
@@ -127,9 +206,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
               >
                 <span
                   style={{ background: ACTIVE, boxShadow: '0 4px 12px rgba(33,185,247,0.4)' }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
                 >
-                  <Icon className="w-4 h-4 text-white" />
+                  <Icon className="w-[18px] h-[18px] text-white" />
                 </span>
                 <span className="flex-1 truncate">{label}</span>
                 {adminOnly && (
@@ -148,13 +227,13 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
               href={href}
               title={collapsed ? label : undefined}
               className={cn(
-                'relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium',
+                'relative flex items-center gap-2.5 rounded-md text-[13px] font-medium',
                 'transition-colors duration-150 group',
                 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
-                collapsed && 'justify-center px-0',
+                collapsed ? 'justify-center py-2.5' : 'px-2.5 py-2',
               )}
             >
-              <Icon className="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-slate-100" />
+              <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[22px] h-[22px]' : 'w-[18px] h-[18px]')} />
 
               {!collapsed && (
                 <>
@@ -169,7 +248,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
 
               {/* Tooltip cuando colapsado */}
               {collapsed && (
-                <div className="absolute left-full ml-2.5 px-2.5 py-1.5 rounded-md shadow-float
+                <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-md shadow-float
                                 bg-[#253a61] text-white text-xs font-medium
                                 opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50
                                 transition-opacity duration-150">
@@ -182,7 +261,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       </nav>
 
       {/* ── Footer ───────────────────────────────── */}
-      <div className="flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
+      <div className="relative z-10 flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
         {/* Toggle tema */}
         {mounted && (
           <button
@@ -216,7 +295,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
         onClick={() => setCollapsed(!collapsed)}
         style={{ background: RAIL_BG }}
         className={cn(
-          'absolute -right-3 top-[52px] w-6 h-6 rounded-full z-10',
+          'absolute -right-3 top-[52px] w-6 h-6 rounded-full z-40',
           'border border-white/[0.12] shadow-card',
           'flex items-center justify-center',
           'text-slate-300 hover:text-white hover:bg-white/[0.08]',
