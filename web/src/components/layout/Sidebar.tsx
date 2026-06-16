@@ -20,16 +20,13 @@ type NavItem =
 
 const navItems: NavItem[] = [
   { type: 'link',    href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard, adminOnly: false },
-  { type: 'section', label: 'Gestión',                                                          adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
-  { type: 'section', label: 'Académico',                                                        adminOnly: false },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: true  },
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
   { type: 'link',    href: '/certificados',    label: 'Certificados',    icon: Award,           adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
-  { type: 'section', label: 'Análisis',                                                         adminOnly: true  },
   { type: 'link',    href: '/reportes',        label: 'Reportes',        icon: BarChart3,       adminOnly: true  },
 ]
 

@@ -47,9 +47,8 @@ export function CursosVendidosRanked({ desde, hasta }: { desde: string; hasta: s
     .sort((a, b) => b.vendidos - a.vendidos)
 
   const total   = todos.reduce((s, c) => s + c.vendidos, 0)
-  const top     = todos.slice(0, 6)
-  const otros   = total - top.reduce((s, c) => s + c.vendidos, 0)
-  const slices  = otros > 0 ? [...top, { nombre: 'Otros', vendidos: otros }] : top
+  // En Reportes se muestran TODOS los cursos (sin agrupar en "Otros")
+  const slices  = todos
 
   return (
     <div className="card p-5">
