@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { Crown, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react'
+import { Crown, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Wallet, Users as UsersIcon } from 'lucide-react'
 
 interface Asesor {
   id: string
@@ -36,6 +36,7 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
   const verde  = isDark ? '#6ee7b7' : '#16a34a'
   const rojo   = isDark ? '#f87171' : '#dc2626'
   const [verTodos, setVerTodos] = useState(false)
+  const [expandidoId, setExpandidoId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['ranking-asesores', desde, hasta],
@@ -94,7 +95,12 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                 const numColor   = isFirst || isThird ? '#fff' : 'var(--on-surface)'
 
                 return (
-                  <div key={a.id} className="flex flex-col items-center text-center">
+                  <button
+                    type="button"
+                    key={a.id}
+                    onClick={() => setExpandidoId(prev => prev === a.id ? null : a.id)}
+                    className="flex flex-col items-center text-center cursor-pointer hover:opacity-80 transition-opacity bg-transparent border-0 p-0"
+                  >
                     {isFirst && <Crown className="w-5 h-5 mb-1" style={{ color: '#ef9f27' }} />}
                     <div className="relative">
                       <div
@@ -142,11 +148,30 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                     >
                       {pos}°
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>
           )}
+
+          {/* Detalle de comisión del asesor seleccionado del podium */}
+          {podium.some(a => a.id === expandidoId) && (() => {
+            const a = podium.find(x => x.id === expandidoId)!
+            return (
+              <div className="rounded-xl border border-primary/30 bg-[var(--primary-container)]/30 p-3 animate-fade-in">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-primary" />
+                    <span className="text-[12px] font-semibold text-on-surface">Comisión de {a.nombre}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-on-surface-variant">
+                    <span className="flex items-center gap-1"><UsersIcon className="w-3 h-3" /> {a.totalEstudiantes} estudiante{a.totalEstudiantes !== 1 ? 's' : ''}</span>
+                    <span className="text-[14px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>{formatCOP(a.comisionGanada)}</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* ── Lista del 4° en adelante ───────────────────────────── */}
           {restoTotal.length > 0 && (
@@ -160,29 +185,48 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
               </div>
               {resto.map((a, i) => {
                 const pos = i + 4
+                const isOpen = expandidoId === a.id
                 return (
-                  <div
-                    key={a.id}
-                    className="grid grid-cols-[32px_36px_1fr_auto_50px] gap-2 items-center px-3 py-2 rounded-xl bg-surface-high/40 hover:bg-surface-high transition-colors"
-                  >
-                    <span className="text-[12px] font-semibold text-on-surface-variant">{pos}°</span>
-                    <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10">
-                      {a.image
-                        ? <img src={a.image} alt={a.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        : <span className="text-[10px] font-bold text-primary">{iniciales(a.nombre)}</span>}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-semibold text-on-surface truncate" title={a.nombre}>{a.nombre}</p>
-                      {a.variacion !== 0 && (
-                        <span className="text-[10px] font-semibold flex items-center gap-0.5"
-                          style={{ color: a.variacion > 0 ? verde : rojo }}>
-                          {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                          {a.variacion > 0 ? '+' : ''}{a.variacion}%
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[12px] font-bold text-on-surface tabular-nums text-right">{formatCOP(a.totalVentas)}</span>
-                    <span className="text-[11px] text-on-surface-variant tabular-nums text-right">{a.cantidadPagos}</span>
+                  <div key={a.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandidoId(prev => prev === a.id ? null : a.id)}
+                      className={`w-full grid grid-cols-[32px_36px_1fr_auto_50px_16px] gap-2 items-center px-3 py-2 rounded-xl text-left transition-colors border-0 cursor-pointer ${isOpen ? 'bg-[var(--primary-container)]/40' : 'bg-surface-high/40 hover:bg-surface-high'}`}
+                    >
+                      <span className="text-[12px] font-semibold text-on-surface-variant">{pos}°</span>
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10">
+                        {a.image
+                          ? <img src={a.image} alt={a.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          : <span className="text-[10px] font-bold text-primary">{iniciales(a.nombre)}</span>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-semibold text-on-surface truncate" title={a.nombre}>{a.nombre}</p>
+                        {a.variacion !== 0 && (
+                          <span className="text-[10px] font-semibold flex items-center gap-0.5"
+                            style={{ color: a.variacion > 0 ? verde : rojo }}>
+                            {a.variacion > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            {a.variacion > 0 ? '+' : ''}{a.variacion}%
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[12px] font-bold text-on-surface tabular-nums text-right">{formatCOP(a.totalVentas)}</span>
+                      <span className="text-[11px] text-on-surface-variant tabular-nums text-right">{a.cantidadPagos}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isOpen && (
+                      <div className="mt-1 mb-1 ml-10 mr-3 px-3 py-2 rounded-xl border border-primary/30 bg-[var(--primary-container)]/30 animate-fade-in">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <Wallet className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-[11px] font-semibold text-on-surface">Comisión generada</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-on-surface-variant">
+                            <span className="flex items-center gap-1"><UsersIcon className="w-3 h-3" /> {a.totalEstudiantes} estudiante{a.totalEstudiantes !== 1 ? 's' : ''}</span>
+                            <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>{formatCOP(a.comisionGanada)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}

@@ -103,7 +103,20 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
+              tickFormatter={(label: string) => {
+                if (granularidad === 'diaria') {
+                  // "02 jun" o "2 de jun" → "2"
+                  const m = label.match(/\d+/)
+                  return m ? String(Number(m[0])) : label
+                }
+                if (granularidad === 'mensual') {
+                  // "ene 26" / "ene de 26" → "ene"
+                  return label.split(/\s|\bde\b/).filter(Boolean)[0] ?? label
+                }
+                return label
+              }}
+            />
             <YAxis tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
               tickFormatter={v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
             <Tooltip

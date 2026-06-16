@@ -9,6 +9,7 @@ import { formatCOP } from '@/lib/utils'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { CursosVendidosRanked } from '@/components/charts/CursosVendidosRanked'
+import { TendenciaPagosCard } from '@/components/charts/TendenciaPagosCard'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts'
 import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet } from 'lucide-react'
@@ -251,8 +252,11 @@ export default function ReportesPage() {
       {/* ── FILA 3: Cursos más vendidos (burbujas) ────────────────── */}
       <CursosVendidosRanked desde={desde} hasta={hasta} />
 
-      {/* ── FILA 4: Medios de pago (50%) + Ranking asesores (50%) ── */}
+      {/* ── FILA 4: [Medios de pago + Tendencia] (50%) + Ranking asesores (50%) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
+
+        {/* Columna izquierda: Medios de pago + Tendencia de pagos */}
+        <div className="flex flex-col gap-4">
 
         {/* Medios de pago — bar chart */}
         <div className="card p-5">
@@ -290,9 +294,10 @@ export default function ReportesPage() {
                     domain={[0, 100]}
                   />
                   <Tooltip
+                    cursor={{ fill: 'var(--primary)', fillOpacity: 0.08, radius: 6 }}
                     formatter={(v: number) => [`${v}%`, 'Participación']}
                     labelStyle={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface)' }}
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--outline-variant)', background: 'var(--surface-lowest)' }}
+                    contentStyle={{ fontSize: 11, borderRadius: 10, border: '1px solid var(--outline-variant)', background: 'var(--surface-lowest)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                     itemStyle={{ color: 'var(--on-surface)' }}
                   />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -305,7 +310,7 @@ export default function ReportesPage() {
               </ResponsiveContainer>
 
               {/* Leyenda vertical */}
-              <div className="flex flex-col gap-1.5 mt-1">
+              <div className="flex flex-col gap-1.5 mt-5 pt-4 border-t border-outline-variant">
                 {metodos.map((m, i) => (
                   <div key={m.metodo} className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: COLORES[i % COLORES.length] }} />
@@ -317,6 +322,10 @@ export default function ReportesPage() {
               </div>
             </div>
           )}
+        </div>
+
+          {/* Tendencia de pagos (mini chart) */}
+          <TendenciaPagosCard desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
         </div>
 
         {/* Ranking asesores */}
