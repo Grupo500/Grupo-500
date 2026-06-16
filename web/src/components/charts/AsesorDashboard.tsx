@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { Target, RefreshCw } from 'lucide-react'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 interface DashboardData {
   estudiantes:   { total: number; nuevosMes: number }
@@ -70,12 +71,15 @@ export function AsesorDashboard() {
             <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Resumen de tu actividad y gestión</p>
           </div>
         </div>
-        {ultimaActualizacion && (
-          <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant flex-shrink-0">
-            <RefreshCw className="w-3 h-3" />
-            {ultimaActualizacion}
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {ultimaActualizacion && (
+            <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant">
+              <RefreshCw className="w-3 h-3" />
+              {ultimaActualizacion}
+            </div>
+          )}
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Cobrado este mes */}

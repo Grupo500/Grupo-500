@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   BookOpen, School, Award, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  Sun, Moon, ShieldCheck, ClipboardList,
+  ShieldCheck, ClipboardList,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -39,50 +39,77 @@ interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }
 const RAIL_BG = '#15203a'
 const ACTIVE  = '#21b9f7'
 
-// Construye la silueta del fondo oscuro flotante: esquinas redondeadas + una
-// curva cóncava en el borde derecho a la altura `cy` del módulo activo.
-function buildPath(w: number, h: number, cy: number | null): string {
-  const padL = 6          // separación izquierda (look flotante)
-  const padY = 8          // separación arriba/abajo (look flotante)
-  const r    = 20         // radio de las esquinas
-  const top    = padY
-  const bottom = h - padY
-  const left   = padL
+// Geometría del sidebar flotante
+const PAD_L       = 6     // separación izquierda
+const PAD_Y       = 8     // separación arriba/abajo
+const R           = 18    // radio de esquinas
+const LOGO_BOTTOM = 70    // borde inferior del bloque del logo
+const GAP         = 12    // separación entre el logo y el bloque principal
+const MAIN_TOP    = LOGO_BOTTOM + GAP
+
+// Rectángulo con las cuatro esquinas redondeadas
+function roundedRect(x1: number, y1: number, x2: number, y2: number, r: number): string {
+  return [
+    `M${x1},${y1 + r}`,
+    `Q${x1},${y1} ${x1 + r},${y1}`,
+    `H${x2 - r}`,
+    `Q${x2},${y1} ${x2},${y1 + r}`,
+    `V${y2 - r}`,
+    `Q${x2},${y2} ${x2 - r},${y2}`,
+    `H${x1 + r}`,
+    `Q${x1},${y2} ${x1},${y2 - r}`,
+    `Z`,
+  ].join(' ')
+}
+
+// Bloque principal (nav + footer): esquinas redondeadas + curva cóncava del activo
+function buildMain(w: number, h: number, cy: number | null): string {
+  const top    = MAIN_TOP
+  const bottom = h - PAD_Y
+  const left   = PAD_L
 
   const p: string[] = [
-    `M${left},${top + r}`,
-    `Q${left},${top} ${left + r},${top}`,            // esquina sup-izq
-    `H${w - r}`,
-    `Q${w},${top} ${w},${top + r}`,                  // esquina sup-der
+    `M${left},${top + R}`,
+    `Q${left},${top} ${left + R},${top}`,
+    `H${w - R}`,
+    `Q${w},${top} ${w},${top + R}`,
   ]
 
   if (cy != null) {
-    const depth = 26
-    const half  = 50
+    const depth = 38
+    const half  = 52
     const wi    = w - depth
+    const jt    = Math.max(cy - half, top + R + 2)
+    const jb    = Math.min(cy + half, bottom - R - 2)
+    const dTop  = cy - jt
+    const dBot  = jb - cy
     p.push(
-      `V${(cy - half).toFixed(1)}`,
-      `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
-      `C${wi},${(cy + half * 0.6).toFixed(1)} ${w},${(cy + half * 0.35).toFixed(1)} ${w},${(cy + half).toFixed(1)}`,
+      `V${jt.toFixed(1)}`,
+      `C${w},${(cy - dTop * 0.35).toFixed(1)} ${wi},${(cy - dTop * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+      `C${wi},${(cy + dBot * 0.6).toFixed(1)} ${w},${(cy + dBot * 0.35).toFixed(1)} ${w},${jb.toFixed(1)}`,
     )
   }
 
   p.push(
-    `V${bottom - r}`,
-    `Q${w},${bottom} ${w - r},${bottom}`,            // esquina inf-der
-    `H${left + r}`,
-    `Q${left},${bottom} ${left},${bottom - r}`,      // esquina inf-izq
+    `V${bottom - R}`,
+    `Q${w},${bottom} ${w - R},${bottom}`,
+    `H${left + R}`,
+    `Q${left},${bottom} ${left},${bottom - R}`,
     `Z`,
   )
   return p.join(' ')
 }
 
+// Fondo completo: bloque del logo (flotante) + bloque principal
+function buildPath(w: number, h: number, cy: number | null): string {
+  const logo = roundedRect(PAD_L, PAD_Y, w, LOGO_BOTTOM, R)
+  return `${logo} ${buildMain(w, h, cy)}`
+}
+
 export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const { theme } = useTheme()
 
   const visibleItems = navItems.filter(item => !item.adminOnly || role === 'ADMIN')
   const isDark = theme === 'dark'
@@ -114,7 +141,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     }
   }, [collapsed])
 
-  useEffect(() => { medir() }, [medir, pathname, mounted, role])
+  useEffect(() => { medir() }, [medir, pathname, role])
   useEffect(() => {
     window.addEventListener('resize', medir)
     return () => window.removeEventListener('resize', medir)
@@ -147,17 +174,20 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           style={{ top: cy, background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.5)' }}
           className="absolute right-[-23px] -translate-y-1/2 w-[50px] h-[50px] rounded-full flex items-center justify-center z-30 pointer-events-none"
         >
-          <ActiveIcon className="w-6 h-6 text-white" />
+          <ActiveIcon className="w-[21px] h-[21px] text-white" />
         </span>
       )}
 
-      {/* ── Logo ─────────────────────────────────── */}
-      <div className={cn(
-        'relative z-10 flex items-center gap-2.5 h-14 border-b border-white/[0.06] px-4 flex-shrink-0',
-        collapsed && 'justify-center px-0',
-      )}>
-        <div className="flex-shrink-0 w-7 h-7">
-          <Image src="/logo-grupo500.png" alt="Grupo 500" width={28} height={28} className="w-7 h-7 object-cover rounded-full" priority />
+      {/* ── Logo (bloque flotante separado) ──────── */}
+      <div
+        style={{ height: MAIN_TOP }}
+        className={cn(
+          'relative z-10 flex items-center gap-2.5 px-4 flex-shrink-0',
+          collapsed && 'justify-center px-0',
+        )}
+      >
+        <div className="flex-shrink-0 w-10 h-10">
+          <Image src="/logo-grupo500.png" alt="Grupo 500" width={40} height={40} className="w-10 h-10 object-cover rounded-full" priority />
         </div>
         {!collapsed && (
           <div className="min-w-0">
@@ -191,7 +221,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                 title={label}
                 className="relative flex items-center justify-center py-2.5"
               >
-                <Icon className="w-[22px] h-[22px] opacity-0" />
+                <Icon className="w-[19px] h-[19px] opacity-0" />
               </Link>
             )
           }
@@ -233,7 +263,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                 collapsed ? 'justify-center py-2.5' : 'px-2.5 py-2',
               )}
             >
-              <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[22px] h-[22px]' : 'w-[18px] h-[18px]')} />
+              <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[19px] h-[19px]' : 'w-[18px] h-[18px]')} />
 
               {!collapsed && (
                 <>
@@ -262,25 +292,6 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
 
       {/* ── Footer ───────────────────────────────── */}
       <div className="relative z-10 flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
-        {/* Toggle tema */}
-        {mounted && (
-          <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            title={isDark ? 'Modo claro' : 'Modo oscuro'}
-            className={cn(
-              'flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-[13px] font-medium',
-              'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100 transition-colors',
-              collapsed && 'justify-center px-0',
-            )}
-          >
-            {isDark
-              ? <Sun  className="w-4 h-4 flex-shrink-0 text-[#21b9f7]" />
-              : <Moon className="w-4 h-4 flex-shrink-0" />
-            }
-            {!collapsed && <span>{isDark ? 'Modo claro' : 'Modo oscuro'}</span>}
-          </button>
-        )}
-
         {/* Usuario */}
         <div className={cn(
           'flex items-center gap-2.5 px-2 py-1.5',

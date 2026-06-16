@@ -8,6 +8,7 @@ import { FacturadoMensual } from './FacturadoMensual'
 import { ComisionesKpis } from './ComisionesKpis'
 import { TopAsesores } from './TopAsesores'
 import { RefreshButton } from '@/components/ui/RefreshButton'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -38,7 +39,8 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
             <p className="text-[13px] font-semibold text-on-surface leading-tight mt-0.5">{mesLabel}</p>
           </div>
         </div>
-        <div className="flex-shrink-0 pt-1">
+        <div className="flex-shrink-0 pt-1 flex items-center gap-2">
+          <ThemeToggle />
           <RefreshButton />
         </div>
       </div>
