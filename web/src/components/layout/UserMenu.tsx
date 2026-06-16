@@ -7,9 +7,10 @@ import { cn } from '@/lib/utils'
 
 interface UserMenuProps {
   collapsed?: boolean
+  onDark?: boolean
 }
 
-export function UserMenu({ collapsed = false }: UserMenuProps) {
+export function UserMenu({ collapsed = false, onDark = false }: UserMenuProps) {
   const { data: session } = useSession()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -43,8 +44,8 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
         </div>
         {!collapsed && (
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-[12px] font-semibold text-on-surface truncate">{name}</p>
-            <p className="text-[10px] text-on-surface-variant truncate max-w-full overflow-hidden">{email}</p>
+            <p className={cn('text-[12px] font-semibold truncate', onDark ? 'text-white' : 'text-on-surface')}>{name}</p>
+            <p className={cn('text-[10px] truncate max-w-full overflow-hidden', onDark ? 'text-slate-400' : 'text-on-surface-variant')}>{email}</p>
           </div>
         )}
       </button>
