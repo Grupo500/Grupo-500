@@ -71,6 +71,94 @@ export async function dashboard(req: Request, res: Response) {
   })
 }
 
+// Resumen personal del asesor logueado: ventas, comisión, posición y ranking
+export async function miResumenAsesor(req: Request, res: Response) {
+  const yo = req.asesorId
+  const hoy = new Date()
+  const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const finMes       = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
+  const inicioMesAnt = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
+  const finMesAnt    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+
+  // Sin asesor asociado (p.ej. admin) → respuesta vacía
+  if (!yo) {
+    return ApiResponse.success(res, {
+      ventas: { monto: 0, cantidad: 0, variacion: 0 },
+      comision: 0,
+      estudiantes: { total: 0, nuevos: 0 },
+      posicion: { rank: 0, total: 0, falta: 0, siguienteNombre: null },
+      serie: [],
+      ranking: [],
+    })
+  }
+
+  // ── Mis métricas del mes ──
+  const [misMes, misMesAnt, totalEst, nuevosEst, pagosMes, asesores] = await Promise.all([
+    prisma.pago.aggregate({ where: { asesorId: yo, estado: 'PAGADO', fechaPago: { gte: inicioMes, lte: finMes } }, _sum: { monto: true, comisionAsesor: true }, _count: true }),
+    prisma.pago.aggregate({ where: { asesorId: yo, estado: 'PAGADO', fechaPago: { gte: inicioMesAnt, lte: finMesAnt } }, _sum: { monto: true } }),
+    prisma.estudiante.count({ where: { asesorId: yo } }),
+    prisma.estudiante.count({ where: { asesorId: yo, createdAt: { gte: inicioMes, lte: finMes } } }),
+    // Todos los pagos del mes para construir el ranking por asesor
+    prisma.pago.groupBy({ by: ['asesorId'], where: { estado: 'PAGADO', fechaPago: { gte: inicioMes, lte: finMes }, asesorId: { not: null } }, _sum: { monto: true }, _count: true }),
+    prisma.asesor.findMany({ select: { id: true, nombre: true, user: { select: { image: true } } } }),
+  ])
+
+  const miMonto       = misMes._sum.monto ?? 0
+  const miCantidad    = misMes._count
+  const miComision    = misMes._sum.comisionAsesor ?? 0
+  const montoAnterior = misMesAnt._sum.monto ?? 0
+  const variacion     = montoAnterior > 0 ? Math.round(((miMonto - montoAnterior) / montoAnterior) * 100) : 0
+
+  // ── Ranking del mes (ventas) ──
+  const nombrePorId = new Map(asesores.map(a => [a.id, { nombre: a.nombre, image: a.user?.image ?? null }]))
+  const ranking = pagosMes
+    .map(p => ({
+      id: p.asesorId as string,
+      nombre: nombrePorId.get(p.asesorId as string)?.nombre ?? 'Asesor',
+      image:  nombrePorId.get(p.asesorId as string)?.image ?? null,
+      totalVentas: p._sum.monto ?? 0,
+      cantidad: p._count,
+      esYo: p.asesorId === yo,
+    }))
+    .sort((a, b) => b.totalVentas - a.totalVentas)
+
+  // Si aún no tengo ventas este mes, igual aparezco al final del ranking
+  if (!ranking.some(r => r.esYo)) {
+    ranking.push({
+      id: yo,
+      nombre: nombrePorId.get(yo)?.nombre ?? req.userName ?? 'Yo',
+      image:  nombrePorId.get(yo)?.image ?? null,
+      totalVentas: miMonto,
+      cantidad: miCantidad,
+      esYo: true,
+    })
+  }
+
+  const miIndex   = ranking.findIndex(r => r.esYo)
+  const siguiente = miIndex > 0 ? ranking[miIndex - 1] : null
+  const falta     = siguiente ? Math.max(0, siguiente.totalVentas - miMonto) : 0
+
+  // ── Serie de mis ventas (últimos 6 meses) ──
+  const serie = await Promise.all(
+    Array.from({ length: 6 }, (_, k) => 5 - k).map(async (back) => {
+      const d   = new Date(hoy.getFullYear(), hoy.getMonth() - back, 1)
+      const ini = new Date(d.getFullYear(), d.getMonth(), 1)
+      const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
+      const agg = await prisma.pago.aggregate({ where: { asesorId: yo, estado: 'PAGADO', fechaPago: { gte: ini, lte: fin } }, _sum: { monto: true } })
+      return { label: d.toLocaleDateString('es-CO', { month: 'short' }), monto: agg._sum.monto ?? 0 }
+    })
+  )
+
+  return ApiResponse.success(res, {
+    ventas: { monto: miMonto, cantidad: miCantidad, variacion },
+    comision: miComision,
+    estudiantes: { total: totalEst, nuevos: nuevosEst },
+    posicion: { rank: miIndex + 1, total: ranking.length, falta, siguienteNombre: siguiente?.nombre ?? null },
+    serie,
+    ranking,
+  })
+}
+
 export async function ingresos(req: Request, res: Response) {
   const { desde, hasta, asesorId } = req.query
 

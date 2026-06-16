@@ -10,6 +10,7 @@ router.use(authenticate)
 
 // Dashboard es accesible para todos los roles (el controller filtra por asesorId si es VENDEDOR)
 router.get('/dashboard',       asyncHandler(ctrl.dashboard))
+router.get('/mi-resumen',      asyncHandler(ctrl.miResumenAsesor))
 
 // El resto solo para admin
 router.use(requireRole('ADMIN'))
