@@ -79,23 +79,14 @@ function buildMain(w: number, h: number, cy: number | null): string {
   if (cy == null) {
     p.push(`Q${w},${top} ${w},${top + R}`)  // esquina sup-der normal
   } else {
-    const topMelt = cy - half < top + R + 2          // el brazo superior toca la esquina
     const botMelt = cy + half > bottom - R - 2        // el brazo inferior toca la esquina
 
-    // ── Borde derecho: entrada a la curva (arriba) ──
-    if (topMelt) {
-      // Esquina sup-der redondeada y luego un arco alto que envuelve el círculo
-      p.push(
-        `Q${w},${top} ${w},${top + R}`,
-        `C${w},${(top + R + 6).toFixed(1)} ${wi},${(cy - half * 0.85).toFixed(1)} ${wi},${cy.toFixed(1)}`,
-      )
-    } else {
-      p.push(
-        `Q${w},${top} ${w},${top + R}`,
-        `V${(cy - half).toFixed(1)}`,
-        `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
-      )
-    }
+    // ── Borde derecho: entrada a la curva (arriba) — curva normal en todos los módulos ──
+    p.push(
+      `Q${w},${top} ${w},${top + R}`,
+      `V${(cy - half).toFixed(1)}`,
+      `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+    )
 
     // ── Salida de la curva (abajo) ──
     if (botMelt) {
