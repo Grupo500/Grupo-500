@@ -71,6 +71,9 @@ export async function webhook(req: Request, res: Response) {
     }
   }
 
+  // TEMP: log del payload crudo para verificar qué campos envía Hotmart. QUITAR tras verificar.
+  logger.info(`[Hotmart][TEMP-PAYLOAD] ${JSON.stringify(body?.data?.buyer ?? {})} | purchase=${JSON.stringify(body?.data?.purchase ?? {})}`)
+
   const { event, data } = body
 
   // Solo procesar compras completadas

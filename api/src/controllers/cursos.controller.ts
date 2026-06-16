@@ -29,9 +29,31 @@ export async function crear(req: Request, res: Response) {
 }
 
 export async function obtener(req: Request, res: Response) {
+  // VENDEDOR → solo sus estudiantes en el curso; ADMIN → todos
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+  const whereEst = filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}
+
   const curso = await prisma.curso.findUnique({
     where: { id: req.params.id },
-    include: { _count: { select: { estudiantes: true } } },
+    include: {
+      _count: { select: { estudiantes: { where: whereEst } } },
+      estudiantes: {
+        where: whereEst,
+        orderBy: { fechaCompra: 'desc' },
+        select: {
+          id: true,
+          fechaCompra: true,
+          precioAcordado: true,
+          estudiante: {
+            select: {
+              id: true, nombre: true, email: true, telefono: true,
+              ciudad: true, verificado: true,
+              asesor: { select: { nombre: true } },
+            },
+          },
+        },
+      },
+    },
   })
   if (!curso) throw new NotFoundError('Curso no encontrado')
   return ApiResponse.success(res, curso)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
@@ -67,10 +68,11 @@ function CursoCard({
   const isCombo = c.tipoCurso === 'COMBO'
 
   return (
-    <div
+    <Link
+      href={`/cursos/${c.id}`}
       className={`
         relative flex flex-col bg-surface-lowest border border-outline-variant
-        rounded-2xl overflow-hidden group cursor-default
+        rounded-2xl overflow-hidden group cursor-pointer
         transition-[transform,box-shadow,border-color] duration-200
         hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.07)]
         ${isCombo ? 'hover:border-amber-300/60' : 'hover:border-primary/30'}
@@ -100,7 +102,7 @@ function CursoCard({
           {isAdmin && (
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
               <button
-                onClick={() => onToggle(c.id, !c.activo)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(c.id, !c.activo) }}
                 title={c.activo ? 'Deshabilitar curso' : 'Habilitar curso'}
                 aria-label={c.activo ? 'Deshabilitar curso' : 'Habilitar curso'}
                 className={`p-1.5 rounded-lg transition-colors duration-150 cursor-pointer ${
@@ -167,7 +169,7 @@ function CursoCard({
 
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
 
