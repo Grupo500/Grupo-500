@@ -81,14 +81,11 @@ function buildMain(w: number, h: number, cy: number | null): string {
   } else {
     const botMelt = cy + half > bottom - R - 2        // el brazo inferior toca la esquina
 
-    // ── Borde derecho: entrada a la curva (arriba) — curva normal en todos los módulos ──
-    // jt no sube por encima de la esquina (evita el pico/cacho cuando el activo está arriba)
-    const jt   = Math.max(cy - half, top + R)
-    const dTop = cy - jt
+    // ── Borde derecho: entrada a la curva (arriba) — misma curva en todos los módulos ──
     p.push(
       `Q${w},${top} ${w},${top + R}`,
-      `V${jt.toFixed(1)}`,
-      `C${w},${(cy - dTop * 0.35).toFixed(1)} ${wi},${(cy - dTop * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+      `V${(cy - half).toFixed(1)}`,
+      `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
     )
 
     // ── Salida de la curva (abajo) ──
@@ -246,7 +243,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       {/* ── Nav ──────────────────────────────────── */}
       {/* Caja de ícono fija (w-11 h-10) → mismo tamaño/posición en colapsado y expandido */}
       <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto">
-        <div className="pt-10 pb-10 space-y-2">
+        <div className={cn('pb-10 space-y-2', collapsed ? 'pt-[54px]' : 'pt-10')}>
           {visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
