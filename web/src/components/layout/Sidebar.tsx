@@ -76,8 +76,8 @@ function buildMain(w: number, h: number, cy: number | null): string {
   ]
 
   if (cy != null) {
-    const depth = 38
-    const half  = 52
+    const depth = 36
+    const half  = 42
     const wi    = w - depth
     const jt    = Math.max(cy - half, top + R + 2)
     const jb    = Math.min(cy + half, bottom - R - 2)
@@ -122,30 +122,62 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   ) as Extract<NavItem, { type: 'link' }> | undefined
   const ActiveIcon = activeItem?.icon
 
-  // ── Medición del centro del módulo activo para tallar la curva ──
+  // ── Medición + deslizamiento animado del indicador activo ──
   const asideRef  = useRef<HTMLElement>(null)
   const activeRef = useRef<HTMLAnchorElement>(null)
   const [dims, setDims] = useState({ h: 0 })
   const [cy, setCy]     = useState<number | null>(null)
+  const cyRef    = useRef<number | null>(null)   // valor actual (para tweenear desde él)
+  const rafRef   = useRef<number | null>(null)
+  const firstRef = useRef(true)
 
-  const medir = useCallback(() => {
+  // Centro del módulo activo relativo al aside (null si expandido o sin activo)
+  const target = useCallback((): number | null => {
     const aside = asideRef.current
-    if (!aside) return
-    setDims({ h: aside.clientHeight })
-    if (collapsed && activeRef.current) {
-      const a = activeRef.current.getBoundingClientRect()
-      const r = aside.getBoundingClientRect()
-      setCy(a.top - r.top + a.height / 2)
-    } else {
-      setCy(null)
-    }
+    if (!aside || !collapsed || !activeRef.current) return null
+    const a = activeRef.current.getBoundingClientRect()
+    const r = aside.getBoundingClientRect()
+    return a.top - r.top + a.height / 2
   }, [collapsed])
 
-  useEffect(() => { medir() }, [medir, pathname, role])
+  const setCyNow = useCallback((v: number | null) => {
+    cyRef.current = v
+    setCy(v)
+  }, [])
+
+  const animarA = useCallback((to: number) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    const from = cyRef.current
+    if (from == null) { setCyNow(to); return }     // sin valor previo → instantáneo
+    const dur = 340
+    const t0  = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - t0) / dur, 1)
+      const e = 1 - Math.pow(1 - p, 3)             // ease-out cúbico
+      setCyNow(from + (to - from) * e)
+      if (p < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+  }, [setCyNow])
+
+  const medir = useCallback((animar: boolean) => {
+    const aside = asideRef.current
+    if (aside) setDims({ h: aside.clientHeight })
+    const to = target()
+    if (to == null) { if (rafRef.current) cancelAnimationFrame(rafRef.current); setCyNow(null); return }
+    if (firstRef.current || !animar) { firstRef.current = false; setCyNow(to) }
+    else animarA(to)
+  }, [target, animarA, setCyNow])
+
+  // Cambio de ruta → desliza; cambio de colapso/rol → instantáneo
+  useEffect(() => { medir(true) }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { medir(false) }, [collapsed, role]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    window.addEventListener('resize', medir)
-    return () => window.removeEventListener('resize', medir)
+    const onResize = () => medir(false)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [medir])
+  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }, [])
 
   const notchFill = isDark ? '#0a1628' : '#eef6ff'
 
@@ -198,7 +230,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       </div>
 
       {/* ── Nav ──────────────────────────────────── */}
-      <nav className={cn('relative z-10 flex-1 overflow-visible px-2', collapsed ? 'py-3 space-y-2.5' : 'py-2 space-y-1')}>
+      <nav className={cn('relative z-10 flex-1 overflow-visible px-2', collapsed ? 'pt-10 pb-10 space-y-2.5' : 'py-2 space-y-1')}>
         {visibleItems.map((item, i) => {
           if (item.type === 'section') {
             return collapsed
