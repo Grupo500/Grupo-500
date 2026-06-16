@@ -37,11 +37,15 @@ export async function dashboard(req: Request, res: Response) {
     totalEstudiantes,
     estudiantesNuevosMes,
     pagosCobrados,
+    pagosPorCobrar,
+    pagosVencidos,
     cursosActivos,
   ] = await Promise.all([
     prisma.estudiante.count({ where: filtroAsesor ? { asesorId: filtroAsesor } : {} }),
     prisma.estudiante.count({ where: { createdAt: { gte: inicioPeriodo, lte: finPeriodo }, ...(filtroAsesor && { asesorId: filtroAsesor }) } }),
     prisma.pago.aggregate({ where: { estado: 'PAGADO', fechaPago: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true, montoNeto: true, comisionHotmart: true, comisionAsesor: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'PENDIENTE', fechaVencimiento: filtroPeriodo, ...filtroEstPago }, _sum: { monto: true }, _count: true }),
+    prisma.pago.aggregate({ where: { estado: 'VENCIDO', ...filtroEstPago }, _sum: { monto: true }, _count: true }),
     prisma.curso.count({ where: { activo: true } }),
   ])
 
@@ -49,8 +53,12 @@ export async function dashboard(req: Request, res: Response) {
   return ApiResponse.success(res, {
     estudiantes: { total: totalEstudiantes, nuevosMes: estudiantesNuevosMes },
     cobranza: {
-      cobrado: { monto: s.monto ?? 0, cantidad: pagosCobrados._count },
+      cobrado:   { monto: s.monto ?? 0,                   cantidad: pagosCobrados._count },
+      porCobrar: { monto: pagosPorCobrar._sum.monto ?? 0, cantidad: pagosPorCobrar._count },
+      vencida:   { monto: pagosVencidos._sum.monto ?? 0,  cantidad: pagosVencidos._count },
+      pendiente: { monto: pagosPorCobrar._sum.monto ?? 0, cantidad: pagosPorCobrar._count },
     },
+    cobradoMes: s.monto ?? 0,
     // Desglose de comisiones del período (en COP)
     desglose: {
       bruto:           s.monto ?? 0,
