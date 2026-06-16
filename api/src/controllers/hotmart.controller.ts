@@ -12,13 +12,14 @@ interface HotmartBuyer {
   name: string
   email: string
   phone?: string
+  checkout_phone?: string   // Hotmart envía el teléfono aquí, no en `phone`
   document?: string
 }
 
 interface HotmartPurchase {
   transaction: string
   status: string
-  price: { value: number; currencyValue: string }
+  price: { value: number; currency_value?: string }
   payment?: { type?: string }
   approved_date?: number
   // Códigos de rastreo del link usado en la compra (?src= y ?sck=)
@@ -70,9 +71,6 @@ export async function webhook(req: Request, res: Response) {
       return res.status(401).json({ success: false, error: 'No autorizado' })
     }
   }
-
-  // TEMP: log del payload crudo para verificar qué campos envía Hotmart. QUITAR tras verificar.
-  logger.info(`[Hotmart][TEMP-PAYLOAD] ${JSON.stringify(body?.data?.buyer ?? {})} | purchase=${JSON.stringify(body?.data?.purchase ?? {})}`)
 
   const { event, data } = body
 
@@ -126,7 +124,7 @@ export async function webhook(req: Request, res: Response) {
       data: {
         nombre: buyer.name,
         email: buyer.email.toLowerCase(),
-        telefono: buyer.phone ?? '',
+        telefono: buyer.checkout_phone ?? buyer.phone ?? '',
         documento: buyer.document ?? '',
         fechaNacimiento: new Date('2000-01-01'), // se actualiza al verificar
         verificado: false,
@@ -134,6 +132,12 @@ export async function webhook(req: Request, res: Response) {
       },
     })
     logger.info(`[Hotmart] Estudiante creado: ${estudiante.id} (${buyer.email})`)
+  } else if (!estudiante.telefono && (buyer.checkout_phone || buyer.phone)) {
+    // Rellenar teléfono si el estudiante ya existía sin él
+    estudiante = await prisma.estudiante.update({
+      where: { id: estudiante.id },
+      data: { telefono: buyer.checkout_phone ?? buyer.phone ?? '' },
+    })
   }
 
   // Identificar asesor: por email de afiliado o por código de rastreo del link
@@ -204,7 +208,7 @@ export async function webhook(req: Request, res: Response) {
     },
   })
 
-  logger.info(`[Hotmart] Pago registrado: ${pago.id} — $${monto} ${purchase.price.currencyValue}`)
+  logger.info(`[Hotmart] Pago registrado: ${pago.id} — $${monto} ${purchase.price.currency_value ?? ''}`)
   broadcast('nuevo-estudiante', { estudianteId: estudiante.id, cursoId: curso.id })
   broadcast('pago-registrado', { pagoId: pago.id, estudianteId: estudiante.id })
   auditLog(
