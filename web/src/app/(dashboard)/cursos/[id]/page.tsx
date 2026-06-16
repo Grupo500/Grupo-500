@@ -8,7 +8,7 @@ import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import {
   ArrowLeft, BookOpen, Package, Users, Search, CalendarDays,
-  Mail, Phone, MapPin, CheckCircle2, Clock,
+  Mail, Phone, MapPin, Clock,
 } from 'lucide-react'
 
 interface Inscrito {
@@ -138,12 +138,7 @@ export default function CursoDetallePage() {
                   <span className="text-[12px] font-bold text-primary">{iniciales(i.estudiante.nombre)}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-[13px] font-semibold text-on-surface truncate">{i.estudiante.nombre}</p>
-                    {i.estudiante.verificado
-                      ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#16a34a] bg-[#16a34a]/10 px-1.5 py-0.5 rounded-full"><CheckCircle2 className="w-3 h-3" /> Verificado</span>
-                      : <span className="text-[10px] font-semibold text-on-surface-variant bg-surface-high px-1.5 py-0.5 rounded-full">Sin verificar</span>}
-                  </div>
+                  <p className="text-[13px] font-semibold text-on-surface truncate">{i.estudiante.nombre}</p>
                   <div className="flex items-center gap-3 mt-0.5 text-[11px] text-on-surface-variant flex-wrap">
                     <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3 flex-shrink-0" /> {i.estudiante.email}</span>
                     {i.estudiante.telefono && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {i.estudiante.telefono}</span>}
