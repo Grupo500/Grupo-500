@@ -206,7 +206,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       style={{ background: notchFill }}
       className={cn(
         'relative flex flex-col h-screen transition-all duration-300 z-20',
-        collapsed ? 'w-[60px]' : 'w-[220px]',
+        // margen derecho extra en comprimido para que el círculo flotante no toque el contenido
+        collapsed ? 'w-[60px] mr-8' : 'w-[220px]',
       )}
     >
       {/* ── Fondo oscuro deformable (SVG) ───────────── */}
