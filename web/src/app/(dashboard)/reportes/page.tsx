@@ -277,20 +277,11 @@ export default function ReportesPage() {
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart
                   data={metodos.map(m => ({ ...m, pct: Math.round(m.porcentajeMonto) }))}
-                  margin={{ top: 6, right: 4, left: -16, bottom: 32 }}
+                  margin={{ top: 6, right: 4, left: -16, bottom: 4 }}
                   barSize={22}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--outline-variant)" />
-                  <XAxis
-                    dataKey="metodo"
-                    tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }}
-                    axisLine={false}
-                    tickLine={false}
-                    interval={0}
-                    angle={-35}
-                    textAnchor="end"
-                    dy={6}
-                  />
+                  <XAxis dataKey="metodo" tick={false} axisLine={false} tickLine={false} height={4} />
                   <YAxis
                     tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }}
                     axisLine={false}
