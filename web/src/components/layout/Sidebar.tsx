@@ -87,8 +87,11 @@ function buildMain(w: number, h: number, cy: number | null): string {
 
     // ── Borde derecho: entrada a la curva (arriba) ──
     if (topMelt) {
-      // La esquina sup-der se funde con el brazo superior de la curva
-      p.push(`C${w},${top} ${wi},${(cy - half * 0.55).toFixed(1)} ${wi},${cy.toFixed(1)}`)
+      // Esquina sup-der redondeada y luego un arco alto que envuelve el círculo
+      p.push(
+        `Q${w},${top} ${w},${top + R}`,
+        `C${w},${(top + R + 6).toFixed(1)} ${wi},${(cy - half * 0.85).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+      )
     } else {
       p.push(
         `Q${w},${top} ${w},${top + R}`,
@@ -249,13 +252,14 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       </div>
 
       {/* ── Nav ──────────────────────────────────── */}
+      {/* Caja de ícono fija (w-11 h-10) → mismo tamaño/posición en colapsado y expandido */}
       <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto">
-        <div className={cn(collapsed ? 'pt-10 pb-10 space-y-2' : 'py-2 space-y-1')}>
+        <div className="pt-10 pb-10 space-y-2">
           {visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
                 ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
-                : <p key={i} className="pt-3 pb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
+                : <p key={i} className="pt-3 pb-0.5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
                     {item.label}
                   </p>
             }
@@ -263,40 +267,32 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
             const { href, label, icon: Icon, adminOnly } = item
             const isActive = pathname === href || pathname.startsWith(href + '/')
 
-            // ── Activo + colapsado: solo placeholder (el círculo se dibuja aparte) ──
+            // ── Activo + colapsado: placeholder (el círculo se dibuja aparte) ──
             if (isActive && collapsed) {
               return (
-                <Link
-                  key={href}
-                  ref={activeRef}
-                  href={href}
-                  title={label}
-                  className="relative flex items-center justify-center py-2"
-                >
-                  <Icon className="w-[17px] h-[17px] opacity-0" />
+                <Link key={href} ref={activeRef} href={href} title={label} className="relative flex items-center">
+                  <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                    <Icon className="w-[17px] h-[17px] opacity-0" />
+                  </span>
                 </Link>
               )
             }
 
-            // ── Activo + expandido: círculo cian inline + label ──
-            if (isActive && !collapsed) {
+            // ── Activo (expandido): círculo cian en la caja + label ──
+            if (isActive) {
               return (
-                <Link
-                  key={href}
-                  href={href}
-                  className="relative flex items-center gap-2.5 pl-1.5 pr-2.5 py-1.5 rounded-md text-[13px] font-medium text-white"
-                >
-                  <span
-                    style={{ background: ACTIVE, boxShadow: '0 4px 12px rgba(33,185,247,0.4)' }}
-                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                  >
-                    <Icon className="w-[18px] h-[18px] text-white" />
+                <Link key={href} href={href} className="relative flex items-center pr-3 rounded-md text-[13px] font-medium text-white">
+                  <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                    <span
+                      style={{ background: ACTIVE, boxShadow: '0 4px 12px rgba(33,185,247,0.4)' }}
+                      className="w-[34px] h-[34px] rounded-full flex items-center justify-center"
+                    >
+                      <Icon className="w-[17px] h-[17px] text-white" />
+                    </span>
                   </span>
                   <span className="flex-1 truncate">{label}</span>
                   {adminOnly && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#21b9f7]/20 text-[#7fd4fb] font-bold tracking-wide">
-                      ADMIN
-                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#21b9f7]/20 text-[#7fd4fb] font-bold tracking-wide">ADMIN</span>
                   )}
                 </Link>
               )
@@ -309,21 +305,19 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                 href={href}
                 title={collapsed ? label : undefined}
                 className={cn(
-                  'relative flex items-center gap-2.5 rounded-md text-[13px] font-medium',
-                  'transition-colors duration-150 group',
+                  'relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150 group',
                   'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
-                  collapsed ? 'justify-center py-2' : 'px-2.5 py-2',
+                  !collapsed && 'pr-3',
                 )}
               >
-                <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[17px] h-[17px]' : 'w-[18px] h-[18px]')} />
-
+                <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                  <Icon className="w-[17px] h-[17px] text-slate-400 group-hover:text-slate-100" />
+                </span>
                 {!collapsed && (
                   <>
                     <span className="flex-1 truncate">{label}</span>
                     {adminOnly && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-white/[0.08] text-slate-300 font-bold tracking-wide">
-                        ADMIN
-                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-white/[0.08] text-slate-300 font-bold tracking-wide">ADMIN</span>
                     )}
                   </>
                 )}

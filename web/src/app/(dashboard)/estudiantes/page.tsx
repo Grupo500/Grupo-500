@@ -225,7 +225,6 @@ export default function EstudiantesPage() {
   const [page, setPage] = useState(1)
   const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
-  const [filtroEstado,   setFiltroEstado]   = useState<'todos' | 'mora' | 'pendiente' | 'al-dia'>('todos')
   const [filtroTipo,     setFiltroTipo]     = useState<'todos' | 'nuevo' | 'antiguo'>('todos')
   const [filtroConfirm,  setFiltroConfirm]  = useState<'todos' | 'activo' | 'inactivo'>('todos')
   const [soloMios,       setSoloMios]       = useState(false)
@@ -435,7 +434,6 @@ const subirComprobante = async (file: File) => {
 
   // Filtros cliente
   const estudiantesFiltrados = estudiantes
-    .filter(e => filtroEstado  === 'todos' || calcFinanciero(e).estado === filtroEstado)
     .filter(e => filtroConfirm === 'todos' || (filtroConfirm === 'activo' ? e.verificado : !e.verificado))
     .filter(e => {
       if (filtroTipo === 'nuevo')   return (e.cursos?.length ?? 0) <= 1
@@ -520,22 +518,6 @@ const subirComprobante = async (file: File) => {
 
           <div className="w-px h-5 bg-outline-variant/40 flex-shrink-0" />
 
-          {/* Cobros */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[11px] text-on-surface-variant font-medium whitespace-nowrap">Cobros:</span>
-            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
-              {(['todos', 'mora', 'pendiente', 'al-dia'] as const).map(f => (
-                <button key={f} onClick={() => setFiltroEstado(f)}
-                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
-                    filtroEstado === f ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
-                  {f === 'todos' ? 'Todos' : f === 'mora' ? 'En mora' : f === 'pendiente' ? 'Pendiente' : 'Al día'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-px h-5 bg-outline-variant/40 flex-shrink-0" />
-
           {/* Tipo */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-[11px] text-on-surface-variant font-medium whitespace-nowrap">Tipo:</span>
@@ -595,7 +577,7 @@ const subirComprobante = async (file: File) => {
       ) : estudiantesFiltrados.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
           <Users className="w-10 h-10 mb-3 opacity-30" />
-          <p className="text-sm">{busqueda ? 'Sin resultados' : filtroEstado !== 'todos' ? 'Sin estudiantes en este estado' : 'No hay estudiantes registrados'}</p>
+          <p className="text-sm">{busqueda ? 'Sin resultados' : 'No hay estudiantes registrados'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
