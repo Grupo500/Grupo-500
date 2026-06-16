@@ -76,8 +76,8 @@ function buildMain(w: number, h: number, cy: number | null): string {
   ]
 
   if (cy != null) {
-    const depth = 36
-    const half  = 42
+    const depth = 38
+    const half  = 52
     const wi    = w - depth
     const jt    = Math.max(cy - half, top + R + 2)
     const jb    = Math.min(cy + half, bottom - R - 2)
@@ -122,62 +122,54 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   ) as Extract<NavItem, { type: 'link' }> | undefined
   const ActiveIcon = activeItem?.icon
 
-  // ── Medición + deslizamiento animado del indicador activo ──
-  const asideRef  = useRef<HTMLElement>(null)
-  const activeRef = useRef<HTMLAnchorElement>(null)
-  const [dims, setDims] = useState({ h: 0 })
-  const [cy, setCy]     = useState<number | null>(null)
-  const cyRef    = useRef<number | null>(null)   // valor actual (para tweenear desde él)
-  const rafRef   = useRef<number | null>(null)
-  const firstRef = useRef(true)
+  // ── Centrado del módulo activo: la lista se desliza para dejarlo al medio ──
+  const asideRef     = useRef<HTMLElement>(null)
+  const listRef      = useRef<HTMLDivElement>(null)
+  const activeRef    = useRef<HTMLAnchorElement>(null)
+  const footerRef    = useRef<HTMLDivElement>(null)
+  const translateRef = useRef(0)
+  const firstRef     = useRef(true)
+  const [dims, setDims]           = useState({ h: 0 })
+  const [centerY, setCenterY]     = useState<number | null>(null)
+  const [translateY, setTranslateY] = useState(0)
+  const [animate, setAnimate]     = useState(false)
 
-  // Centro del módulo activo relativo al aside (null si expandido o sin activo)
-  const target = useCallback((): number | null => {
+  const medir = useCallback((doAnimate: boolean) => {
     const aside = asideRef.current
-    if (!aside || !collapsed || !activeRef.current) return null
-    const a = activeRef.current.getBoundingClientRect()
-    const r = aside.getBoundingClientRect()
-    return a.top - r.top + a.height / 2
+    if (!aside) return
+    setDims({ h: aside.clientHeight })
+
+    if (!collapsed || !activeRef.current || !listRef.current || !footerRef.current) {
+      setCenterY(null)
+      translateRef.current = 0
+      setTranslateY(0)
+      return
+    }
+
+    const ar = aside.getBoundingClientRect()
+    const footerTop = footerRef.current.getBoundingClientRect().top - ar.top
+    const cYy = (MAIN_TOP + footerTop) / 2                       // centro del viewport del nav
+
+    const lr = listRef.current.getBoundingClientRect()
+    const er = activeRef.current.getBoundingClientRect()
+    const naturalCenter = (er.top - lr.top) + er.height / 2      // centro del activo dentro de la lista
+    const listTop0 = (lr.top - ar.top) - translateRef.current    // top de la lista a translate 0
+    const desired  = cYy - (listTop0 + naturalCenter)            // cuánto trasladar para centrarlo
+
+    setAnimate(doAnimate && !firstRef.current)
+    firstRef.current = false
+    setCenterY(cYy)
+    translateRef.current = desired
+    setTranslateY(desired)
   }, [collapsed])
 
-  const setCyNow = useCallback((v: number | null) => {
-    cyRef.current = v
-    setCy(v)
-  }, [])
-
-  const animarA = useCallback((to: number) => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    const from = cyRef.current
-    if (from == null) { setCyNow(to); return }     // sin valor previo → instantáneo
-    const dur = 340
-    const t0  = performance.now()
-    const tick = (now: number) => {
-      const p = Math.min((now - t0) / dur, 1)
-      const e = 1 - Math.pow(1 - p, 3)             // ease-out cúbico
-      setCyNow(from + (to - from) * e)
-      if (p < 1) rafRef.current = requestAnimationFrame(tick)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-  }, [setCyNow])
-
-  const medir = useCallback((animar: boolean) => {
-    const aside = asideRef.current
-    if (aside) setDims({ h: aside.clientHeight })
-    const to = target()
-    if (to == null) { if (rafRef.current) cancelAnimationFrame(rafRef.current); setCyNow(null); return }
-    if (firstRef.current || !animar) { firstRef.current = false; setCyNow(to) }
-    else animarA(to)
-  }, [target, animarA, setCyNow])
-
-  // Cambio de ruta → desliza; cambio de colapso/rol → instantáneo
-  useEffect(() => { medir(true) }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { medir(false) }, [collapsed, role]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { medir(true) }, [pathname])          // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { medir(false) }, [collapsed, role])  // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onResize = () => medir(false)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [medir])
-  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }, [])
 
   const notchFill = isDark ? '#0a1628' : '#eef6ff'
 
@@ -197,13 +189,13 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <path d={buildPath(width, dims.h || 800, cy)} fill={RAIL_BG} />
+        <path d={buildPath(width, dims.h || 800, centerY)} fill={RAIL_BG} />
       </svg>
 
-      {/* ── Círculo cian flotante del módulo activo (colapsado) ── */}
-      {collapsed && cy != null && ActiveIcon && (
+      {/* ── Círculo cian flotante del módulo activo (fijo al centro) ── */}
+      {collapsed && centerY != null && ActiveIcon && (
         <span
-          style={{ top: cy, background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.5)' }}
+          style={{ top: centerY, background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.5)' }}
           className="absolute right-[-23px] -translate-y-1/2 w-[50px] h-[50px] rounded-full flex items-center justify-center z-30 pointer-events-none"
         >
           <ActiveIcon className="w-[21px] h-[21px] text-white" />
@@ -230,100 +222,99 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       </div>
 
       {/* ── Nav ──────────────────────────────────── */}
-      <nav className={cn('relative z-10 flex-1 overflow-visible px-2', collapsed ? 'pt-10 pb-10 space-y-2.5' : 'py-2 space-y-1')}>
-        {visibleItems.map((item, i) => {
-          if (item.type === 'section') {
-            return collapsed
-              ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
-              : <p key={i} className="pt-3 pb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
-                  {item.label}
-                </p>
-          }
+      <nav className={cn('relative z-10 flex-1 px-2', collapsed ? 'overflow-hidden' : 'overflow-y-auto')}>
+        <div
+          ref={listRef}
+          style={collapsed ? {
+            transform: `translateY(${translateY}px)`,
+            transition: animate ? 'transform 380ms cubic-bezier(0.22,1,0.36,1)' : 'none',
+          } : undefined}
+          className={cn('py-2', collapsed ? 'space-y-2.5' : 'space-y-1')}
+        >
+          {visibleItems.map((item, i) => {
+            if (item.type === 'section') {
+              return collapsed
+                ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
+                : <p key={i} className="pt-3 pb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
+                    {item.label}
+                  </p>
+            }
 
-          const { href, label, icon: Icon, adminOnly } = item
-          const isActive = pathname === href || pathname.startsWith(href + '/')
+            const { href, label, icon: Icon, adminOnly } = item
+            const isActive = pathname === href || pathname.startsWith(href + '/')
 
-          // ── Activo + colapsado: solo placeholder (el círculo se dibuja aparte) ──
-          if (isActive && collapsed) {
-            return (
-              <Link
-                key={href}
-                ref={activeRef}
-                href={href}
-                title={label}
-                className="relative flex items-center justify-center py-2.5"
-              >
-                <Icon className="w-[19px] h-[19px] opacity-0" />
-              </Link>
-            )
-          }
-
-          // ── Activo + expandido: círculo cian inline + label ──
-          if (isActive && !collapsed) {
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="relative flex items-center gap-2.5 pl-1.5 pr-2.5 py-1.5 rounded-md text-[13px] font-medium text-white"
-              >
-                <span
-                  style={{ background: ACTIVE, boxShadow: '0 4px 12px rgba(33,185,247,0.4)' }}
-                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            // ── Activo + colapsado: solo placeholder (el círculo se dibuja aparte) ──
+            if (isActive && collapsed) {
+              return (
+                <Link
+                  key={href}
+                  ref={activeRef}
+                  href={href}
+                  title={label}
+                  className="relative flex items-center justify-center py-2.5"
                 >
-                  <Icon className="w-[18px] h-[18px] text-white" />
-                </span>
-                <span className="flex-1 truncate">{label}</span>
-                {adminOnly && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#21b9f7]/20 text-[#7fd4fb] font-bold tracking-wide">
-                    ADMIN
+                  <Icon className="w-[19px] h-[19px] opacity-0" />
+                </Link>
+              )
+            }
+
+            // ── Activo + expandido: círculo cian inline + label ──
+            if (isActive && !collapsed) {
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className="relative flex items-center gap-2.5 pl-1.5 pr-2.5 py-1.5 rounded-md text-[13px] font-medium text-white"
+                >
+                  <span
+                    style={{ background: ACTIVE, boxShadow: '0 4px 12px rgba(33,185,247,0.4)' }}
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
+                    <Icon className="w-[18px] h-[18px] text-white" />
                   </span>
-                )}
-              </Link>
-            )
-          }
-
-          // ── Ítem inactivo ──
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={collapsed ? label : undefined}
-              className={cn(
-                'relative flex items-center gap-2.5 rounded-md text-[13px] font-medium',
-                'transition-colors duration-150 group',
-                'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
-                collapsed ? 'justify-center py-2.5' : 'px-2.5 py-2',
-              )}
-            >
-              <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[19px] h-[19px]' : 'w-[18px] h-[18px]')} />
-
-              {!collapsed && (
-                <>
                   <span className="flex-1 truncate">{label}</span>
                   {adminOnly && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-white/[0.08] text-slate-300 font-bold tracking-wide">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#21b9f7]/20 text-[#7fd4fb] font-bold tracking-wide">
                       ADMIN
                     </span>
                   )}
-                </>
-              )}
+                </Link>
+              )
+            }
 
-              {/* Tooltip cuando colapsado */}
-              {collapsed && (
-                <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-md shadow-float
-                                bg-[#253a61] text-white text-xs font-medium
-                                opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50
-                                transition-opacity duration-150">
-                  {label}
-                </div>
-              )}
-            </Link>
-          )
-        })}
+            // ── Ítem inactivo ──
+            return (
+              <Link
+                key={href}
+                href={href}
+                title={collapsed ? label : undefined}
+                className={cn(
+                  'relative flex items-center gap-2.5 rounded-md text-[13px] font-medium',
+                  'transition-colors duration-150 group',
+                  'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
+                  collapsed ? 'justify-center py-2.5' : 'px-2.5 py-2',
+                )}
+              >
+                <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[19px] h-[19px]' : 'w-[18px] h-[18px]')} />
+
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 truncate">{label}</span>
+                    {adminOnly && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-white/[0.08] text-slate-300 font-bold tracking-wide">
+                        ADMIN
+                      </span>
+                    )}
+                  </>
+                )}
+              </Link>
+            )
+          })}
+        </div>
       </nav>
 
       {/* ── Footer ───────────────────────────────── */}
-      <div className="relative z-10 flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
+      <div ref={footerRef} className="relative z-10 flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
         {/* Usuario */}
         <div className={cn(
           'flex items-center gap-2.5 px-2 py-1.5',
