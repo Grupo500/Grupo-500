@@ -82,11 +82,10 @@ function buildMain(w: number, h: number, cy: number | null): string {
     const botMelt = cy + half > bottom - R - 2        // el brazo inferior toca la esquina
 
     // ── Borde derecho: entrada a la curva (arriba) — misma curva en todos los módulos ──
-    // brazo superior más redondo: cp1 más arriba para suavizar el doblez del tope
     p.push(
       `Q${w},${top} ${w},${top + R}`,
       `V${(cy - half).toFixed(1)}`,
-      `C${w},${(cy - half * 0.55).toFixed(1)} ${wi},${(cy - half * 0.62).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+      `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
     )
 
     // ── Salida de la curva (abajo) ──
