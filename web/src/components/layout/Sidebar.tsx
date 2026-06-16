@@ -243,7 +243,22 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       {/* ── Nav ──────────────────────────────────── */}
       {/* Caja de ícono fija (w-11 h-10) → mismo tamaño/posición en colapsado y expandido */}
       <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto">
-        <div className="pt-[52px] pb-10 space-y-2">
+        <div className="pt-2 pb-10 space-y-2">
+          {/* Toggle expandir/contraer (no es módulo, solo alterna el sidebar) */}
+          <button
+            type="button"
+            onClick={() => setCollapsed(c => !c)}
+            title={collapsed ? 'Expandir' : 'Contraer'}
+            className="relative flex items-center w-full rounded-md text-slate-400 hover:text-slate-100 hover:bg-white/[0.05] transition-colors mb-1"
+          >
+            <span className="w-11 h-10 flex items-center justify-center shrink-0">
+              {collapsed
+                ? <ChevronRight className="w-[18px] h-[18px]" />
+                : <ChevronLeft className="w-[18px] h-[18px]" />}
+            </span>
+            {!collapsed && <span className="text-[12px] font-medium">Contraer</span>}
+          </button>
+
           {visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
@@ -326,21 +341,6 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           <UserMenu collapsed={collapsed} onDark />
         </div>
       </div>
-
-      {/* ── Collapse toggle ───────────────────────── */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        style={{ background: RAIL_BG }}
-        className={cn(
-          'absolute -right-3 top-[52px] w-6 h-6 rounded-full z-40',
-          'border border-white/[0.12] shadow-card',
-          'flex items-center justify-center',
-          'text-slate-300 hover:text-white hover:bg-white/[0.08]',
-          'transition-colors duration-150',
-        )}
-      >
-        {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-      </button>
     </aside>
   )
 }
