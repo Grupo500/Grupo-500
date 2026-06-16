@@ -209,6 +209,17 @@ export default function CursosPage() {
     onError: (e: Error) => alert(`Error al sincronizar con Hotmart: ${e.message}`),
   })
 
+  // Backfill de teléfonos desde el historial (solo en clic manual, no en el auto-sync)
+  const historialMutation = useMutation({
+    mutationFn: () => fetcher<any>('/hotmart/sincronizar-historial', { method: 'POST' }),
+    onSuccess: (r: any) => {
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      const d = r?.data ?? {}
+      alert(`Backfill de teléfonos:\n• ${d.actualizados ?? 0} teléfonos actualizados\n• ${d.totalVentas ?? 0} ventas revisadas`)
+    },
+    onError: (e: Error) => alert(`Error en el backfill de historial: ${e.message}`),
+  })
+
   // Sincronización automática al montar la página (solo admin)
   useEffect(() => {
     if (isAdmin) sincronizarMutation.mutate()
@@ -242,11 +253,11 @@ export default function CursosPage() {
         />
         {isAdmin && (
           <button
-            onClick={() => sincronizarMutation.mutate()}
-            disabled={sincronizarMutation.isPending}
+            onClick={() => { sincronizarMutation.mutate(); historialMutation.mutate() }}
+            disabled={sincronizarMutation.isPending || historialMutation.isPending}
             className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${(sincronizarMutation.isPending || historialMutation.isPending) ? 'animate-spin' : ''}`} />
             Sincronizar Hotmart
           </button>
         )}

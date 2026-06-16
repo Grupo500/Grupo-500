@@ -12,7 +12,7 @@ import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
   CheckCircle, Clock, ChevronRight as Arrow, Link2, Copy, Check, ExternalLink,
-  Upload, FileSpreadsheet, X, AlertCircle, Download, CheckSquare, Square,
+  X, Download, CheckSquare, Square,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -242,9 +242,6 @@ export default function EstudiantesPage() {
   const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
   const [subiendoComprobante,  setSubiendoComprobante]  = useState(false)
   const [subiendoDocumento,    setSubiendoDocumento]    = useState(false)
-  const [modalImport, setModalImport]         = useState(false)
-  const [importFile, setImportFile]           = useState<File | null>(null)
-  const [importResult, setImportResult]       = useState<any | null>(null)
 
   // ── Selección múltiple ──────────────────────────────────────────────────────
   const [modoSeleccion,    setModoSeleccion]    = useState(false)
@@ -384,39 +381,6 @@ const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.dat
       setExportando(false)
     }
   }
-
-  async function descargarPlantilla() {
-    const token = await getClientToken()
-    const res   = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/plantilla`, {
-      headers: { Authorization: `Bearer ${token ?? ''}` },
-    })
-    const blob = await res.blob()
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url; a.download = 'plantilla-importacion-grupo500.xlsx'; a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const importarMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const token = await getClientToken()
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/import`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json?.error ?? 'Error al importar')
-      return json.data
-    },
-    onSuccess: (data) => {
-      setImportResult(data)
-      setImportFile(null)
-      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-      queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
-      queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-    },
-    onError: (e: any) => setImportResult({ error: e.message ?? 'Error al importar' }),
-  })
 
 const subirComprobante = async (file: File) => {
     setSubiendoComprobante(true)
@@ -1137,151 +1101,6 @@ const subirComprobante = async (file: File) => {
                 {eliminarBulkMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Eliminar
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Modal Importar Excel ── */}
-      {modalImport && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { if (!importarMutation.isPending) setModalImport(false) }} />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative bg-surface-lowest border border-outline-variant rounded-xl shadow-float w-full max-w-lg">
-
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <FileSpreadsheet className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-on-surface">Importar desde Excel</p>
-                    <p className="text-xs text-on-surface-variant">Sube el archivo de cobros de Grupo 500</p>
-                  </div>
-                </div>
-                <button onClick={() => setModalImport(false)} disabled={importarMutation.isPending}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-high transition-colors cursor-pointer disabled:opacity-40">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-4">
-
-                {/* Resultado exitoso */}
-                {importResult && !importResult.error ? (
-                  <div className="space-y-4">
-                    <div className="rounded-xl bg-[#16a34a]/8 border border-[#16a34a]/20 p-4 space-y-2">
-                      <div className="flex items-center gap-2 text-[#16a34a] font-semibold text-sm">
-                        <CheckCircle className="w-4 h-4" /> Importación completada
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-on-surface-variant mt-2">
-                        <div className="bg-surface-lowest rounded-lg p-2.5 text-center">
-                          <p className="text-lg font-bold text-on-surface">{importResult.resumen.estudiantesCreados}</p>
-                          <p>Nuevos</p>
-                        </div>
-                        <div className="bg-surface-lowest rounded-lg p-2.5 text-center">
-                          <p className="text-lg font-bold text-on-surface">{importResult.resumen.estudiantesActualizados}</p>
-                          <p>Actualizados</p>
-                        </div>
-                        <div className="bg-surface-lowest rounded-lg p-2.5 text-center">
-                          <p className="text-lg font-bold text-on-surface">{importResult.resumen.pagosCreados}</p>
-                          <p>Pagos creados</p>
-                        </div>
-                        <div className={cn('rounded-lg p-2.5 text-center', importResult.resumen.errores > 0 ? 'bg-[#dc2626]/8' : 'bg-surface-lowest')}>
-                          <p className={cn('text-lg font-bold', importResult.resumen.errores > 0 ? 'text-[#dc2626]' : 'text-on-surface')}>{importResult.resumen.errores}</p>
-                          <p>Errores</p>
-                        </div>
-                      </div>
-                    </div>
-                    {importResult.resumen.errores > 0 && (
-                      <div className="max-h-36 overflow-y-auto rounded-xl bg-[#dc2626]/6 border border-[#dc2626]/20 p-3 space-y-1">
-                        {importResult.detalles.filter((d: any) => d.error).map((d: any, i: number) => (
-                          <div key={i} className="text-xs text-[#dc2626] flex gap-2">
-                            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                            <span><strong>{d.nombre}:</strong> {d.error}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <button onClick={() => { setModalImport(false); setImportResult(null) }}
-                      className="w-full py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
-                      Cerrar
-                    </button>
-                  </div>
-
-                ) : importResult?.error ? (
-                  /* Error de importación */
-                  <div className="space-y-4">
-                    <div className="rounded-xl bg-[#dc2626]/8 border border-[#dc2626]/20 p-4 flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-[#dc2626] flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold text-[#dc2626]">Error al importar</p>
-                        <p className="text-xs text-on-surface-variant mt-1">{importResult.error}</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setImportResult(null)}
-                      className="w-full py-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
-                      Intentar de nuevo
-                    </button>
-                  </div>
-
-                ) : (
-                  /* Subir archivo */
-                  <>
-                    <label
-                      htmlFor="excel-import"
-                      className={cn(
-                        'flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 cursor-pointer transition-colors',
-                        importFile ? 'border-primary/50 bg-primary/5' : 'border-outline-variant hover:border-primary/40 hover:bg-surface-high',
-                      )}
-                    >
-                      <div className="w-12 h-12 rounded-2xl bg-surface-high flex items-center justify-center">
-                        {importFile
-                          ? <CheckCircle className="w-6 h-6 text-primary" />
-                          : <Upload className="w-6 h-6 text-on-surface-variant" />
-                        }
-                      </div>
-                      {importFile ? (
-                        <div className="text-center">
-                          <p className="text-sm font-semibold text-on-surface">{importFile.name}</p>
-                          <p className="text-xs text-on-surface-variant mt-0.5">{(importFile.size / 1024).toFixed(0)} KB — listo para importar</p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <p className="text-sm font-semibold text-on-surface">Selecciona el archivo Excel</p>
-                          <p className="text-xs text-on-surface-variant mt-0.5">.xlsx o .xls • máx. 10 MB</p>
-                        </div>
-                      )}
-                      <input id="excel-import" type="file" accept=".xlsx,.xls" className="hidden"
-                        onChange={e => { const f = e.target.files?.[0]; if (f) { setImportFile(f); setImportResult(null) } }} />
-                    </label>
-
-                    <div className="rounded-xl bg-surface-high border border-outline-variant/40 p-3 space-y-2.5">
-                      <div className="flex gap-2.5 text-xs text-on-surface-variant">
-                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#d97706]" />
-                        <span>Columnas: <strong>Nombre Alumno, Tipo Documento, Número Documento, Email, Número, Curso, Asesor, Línea, Abono, Valor Curso, Método Pago, Fecha Pago, Agregado</strong>. Si el estudiante ya existe se actualizan sus datos.</span>
-                      </div>
-                      <button
-                        onClick={descargarPlantilla}
-                        className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border border-outline-variant text-xs font-semibold text-on-surface-variant hover:bg-surface-lowest hover:text-on-surface transition-colors cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        Descargar plantilla de ejemplo (.csv)
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() => importFile && importarMutation.mutate(importFile)}
-                      disabled={!importFile || importarMutation.isPending}
-                      className="w-full py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      {importarMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                      {importarMutation.isPending ? 'Importando...' : 'Importar estudiantes'}
-                    </button>
-                  </>
-                )}
-              </div>
             </div>
           </div>
         </div>
