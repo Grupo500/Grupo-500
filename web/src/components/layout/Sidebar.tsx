@@ -62,39 +62,60 @@ function roundedRect(x1: number, y1: number, x2: number, y2: number, r: number):
   ].join(' ')
 }
 
-// Bloque principal (nav + footer): esquinas redondeadas + curva cóncava del activo
+// Bloque principal (nav + footer): esquinas redondeadas + curva cóncava del activo.
+// La curva tiene siempre la misma profundidad; cerca de los bordes su brazo
+// superior/inferior se funde con la esquina redondeada (no se achica ni se corta).
 function buildMain(w: number, h: number, cy: number | null): string {
   const top    = MAIN_TOP
   const bottom = h - PAD_Y
   const left   = PAD_L
+  const depth  = 38
+  const half   = 52
+  const wi     = w - depth
 
   const p: string[] = [
     `M${left},${top + R}`,
-    `Q${left},${top} ${left + R},${top}`,
+    `Q${left},${top} ${left + R},${top}`,   // esquina sup-izq
     `H${w - R}`,
-    `Q${w},${top} ${w},${top + R}`,
   ]
 
-  if (cy != null) {
-    // Curva simétrica y adaptativa: profunda en el centro, más corta (pero
-    // completa, nunca cortada) cuando el activo está cerca de los bordes.
-    const half  = Math.max(0, Math.min(52, cy - (top + R + 2), (bottom - R - 2) - cy))
-    if (half > 4) {
-      const depth = 38 * (half / 52)
-      const wi    = w - depth
+  if (cy == null) {
+    p.push(`Q${w},${top} ${w},${top + R}`)  // esquina sup-der normal
+  } else {
+    const topMelt = cy - half < top + R + 2          // el brazo superior toca la esquina
+    const botMelt = cy + half > bottom - R - 2        // el brazo inferior toca la esquina
+
+    // ── Borde derecho: entrada a la curva (arriba) ──
+    if (topMelt) {
+      // La esquina sup-der se funde con el brazo superior de la curva
+      p.push(`C${w},${top} ${wi},${(cy - half * 0.55).toFixed(1)} ${wi},${cy.toFixed(1)}`)
+    } else {
       p.push(
+        `Q${w},${top} ${w},${top + R}`,
         `V${(cy - half).toFixed(1)}`,
         `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
-        `C${wi},${(cy + half * 0.6).toFixed(1)} ${w},${(cy + half * 0.35).toFixed(1)} ${w},${(cy + half).toFixed(1)}`,
       )
     }
+
+    // ── Salida de la curva (abajo) ──
+    if (botMelt) {
+      // El brazo inferior se funde con la esquina inf-der
+      p.push(
+        `C${wi},${(cy + half * 0.55).toFixed(1)} ${w},${bottom} ${w - R},${bottom}`,
+        `H${left + R}`,
+        `Q${left},${bottom} ${left},${bottom - R}`,
+        `Z`,
+      )
+      return p.join(' ')
+    }
+    p.push(`C${wi},${(cy + half * 0.6).toFixed(1)} ${w},${(cy + half * 0.35).toFixed(1)} ${w},${(cy + half).toFixed(1)}`)
   }
 
   p.push(
     `V${bottom - R}`,
-    `Q${w},${bottom} ${w - R},${bottom}`,
+    `Q${w},${bottom} ${w - R},${bottom}`,   // esquina inf-der
     `H${left + R}`,
-    `Q${left},${bottom} ${left},${bottom - R}`,
+    `Q${left},${bottom} ${left},${bottom - R}`,  // esquina inf-izq
     `Z`,
   )
   return p.join(' ')
