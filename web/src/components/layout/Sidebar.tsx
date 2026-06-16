@@ -204,7 +204,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           style={{ top: cy, background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.5)' }}
           className="absolute right-[-23px] -translate-y-1/2 w-[50px] h-[50px] rounded-full flex items-center justify-center z-30 pointer-events-none"
         >
-          <ActiveIcon className="w-[21px] h-[21px] text-white" />
+          <ActiveIcon className="w-[19px] h-[19px] text-white" />
         </span>
       )}
 
@@ -229,7 +229,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
 
       {/* ── Nav ──────────────────────────────────── */}
       <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto">
-        <div className={cn(collapsed ? 'pt-7 pb-7 space-y-2.5' : 'py-2 space-y-1')}>
+        <div className={cn(collapsed ? 'pt-10 pb-10 space-y-2' : 'py-2 space-y-1')}>
           {visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
@@ -250,9 +250,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                   ref={activeRef}
                   href={href}
                   title={label}
-                  className="relative flex items-center justify-center py-2.5"
+                  className="relative flex items-center justify-center py-2"
                 >
-                  <Icon className="w-[19px] h-[19px] opacity-0" />
+                  <Icon className="w-[17px] h-[17px] opacity-0" />
                 </Link>
               )
             }
@@ -291,10 +291,10 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                   'relative flex items-center gap-2.5 rounded-md text-[13px] font-medium',
                   'transition-colors duration-150 group',
                   'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
-                  collapsed ? 'justify-center py-2.5' : 'px-2.5 py-2',
+                  collapsed ? 'justify-center py-2' : 'px-2.5 py-2',
                 )}
               >
-                <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[19px] h-[19px]' : 'w-[18px] h-[18px]')} />
+                <Icon className={cn('flex-shrink-0 text-slate-400 group-hover:text-slate-100', collapsed ? 'w-[17px] h-[17px]' : 'w-[18px] h-[18px]')} />
 
                 {!collapsed && (
                   <>
