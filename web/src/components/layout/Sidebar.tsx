@@ -76,18 +76,18 @@ function buildMain(w: number, h: number, cy: number | null): string {
   ]
 
   if (cy != null) {
-    const depth = 38
-    const half  = 52
-    const wi    = w - depth
-    const jt    = Math.max(cy - half, top + R + 2)
-    const jb    = Math.min(cy + half, bottom - R - 2)
-    const dTop  = cy - jt
-    const dBot  = jb - cy
-    p.push(
-      `V${jt.toFixed(1)}`,
-      `C${w},${(cy - dTop * 0.35).toFixed(1)} ${wi},${(cy - dTop * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
-      `C${wi},${(cy + dBot * 0.6).toFixed(1)} ${w},${(cy + dBot * 0.35).toFixed(1)} ${w},${jb.toFixed(1)}`,
-    )
+    // Curva simétrica y adaptativa: profunda en el centro, más corta (pero
+    // completa, nunca cortada) cuando el activo está cerca de los bordes.
+    const half  = Math.max(0, Math.min(52, cy - (top + R + 2), (bottom - R - 2) - cy))
+    if (half > 4) {
+      const depth = 38 * (half / 52)
+      const wi    = w - depth
+      p.push(
+        `V${(cy - half).toFixed(1)}`,
+        `C${w},${(cy - half * 0.35).toFixed(1)} ${wi},${(cy - half * 0.6).toFixed(1)} ${wi},${cy.toFixed(1)}`,
+        `C${wi},${(cy + half * 0.6).toFixed(1)} ${w},${(cy + half * 0.35).toFixed(1)} ${w},${(cy + half).toFixed(1)}`,
+      )
+    }
   }
 
   p.push(
@@ -122,54 +122,60 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   ) as Extract<NavItem, { type: 'link' }> | undefined
   const ActiveIcon = activeItem?.icon
 
-  // ── Centrado del módulo activo: la lista se desliza para dejarlo al medio ──
-  const asideRef     = useRef<HTMLElement>(null)
-  const listRef      = useRef<HTMLDivElement>(null)
-  const activeRef    = useRef<HTMLAnchorElement>(null)
-  const footerRef    = useRef<HTMLDivElement>(null)
-  const translateRef = useRef(0)
-  const firstRef     = useRef(true)
-  const [dims, setDims]           = useState({ h: 0 })
-  const [centerY, setCenterY]     = useState<number | null>(null)
-  const [translateY, setTranslateY] = useState(0)
-  const [animate, setAnimate]     = useState(false)
+  // ── Íconos fijos; el indicador (círculo + curva) se desliza al activo ──
+  const asideRef  = useRef<HTMLElement>(null)
+  const navRef    = useRef<HTMLElement>(null)
+  const activeRef = useRef<HTMLAnchorElement>(null)
+  const cyRef     = useRef<number | null>(null)
+  const rafRef    = useRef<number | null>(null)
+  const firstRef  = useRef(true)
+  const [dims, setDims] = useState({ h: 0 })
+  const [cy, setCy]     = useState<number | null>(null)
 
-  const medir = useCallback((doAnimate: boolean) => {
+  const setCyNow = useCallback((v: number | null) => { cyRef.current = v; setCy(v) }, [])
+
+  const animarA = useCallback((to: number) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    const from = cyRef.current
+    if (from == null) { setCyNow(to); return }
+    const dur = 320, t0 = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - t0) / dur, 1)
+      const e = 1 - Math.pow(1 - p, 3)
+      setCyNow(from + (to - from) * e)
+      if (p < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+  }, [setCyNow])
+
+  const medir = useCallback((animar: boolean) => {
     const aside = asideRef.current
-    if (!aside) return
-    setDims({ h: aside.clientHeight })
-
-    if (!collapsed || !activeRef.current || !listRef.current || !footerRef.current) {
-      setCenterY(null)
-      translateRef.current = 0
-      setTranslateY(0)
+    if (aside) setDims({ h: aside.clientHeight })
+    if (!aside || !collapsed || !activeRef.current) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      setCyNow(null)
       return
     }
-
     const ar = aside.getBoundingClientRect()
-    const footerTop = footerRef.current.getBoundingClientRect().top - ar.top
-    const cYy = (MAIN_TOP + footerTop) / 2                       // centro del viewport del nav
-
-    const lr = listRef.current.getBoundingClientRect()
     const er = activeRef.current.getBoundingClientRect()
-    const naturalCenter = (er.top - lr.top) + er.height / 2      // centro del activo dentro de la lista
-    const listTop0 = (lr.top - ar.top) - translateRef.current    // top de la lista a translate 0
-    const desired  = cYy - (listTop0 + naturalCenter)            // cuánto trasladar para centrarlo
-
-    setAnimate(doAnimate && !firstRef.current)
-    firstRef.current = false
-    setCenterY(cYy)
-    translateRef.current = desired
-    setTranslateY(desired)
-  }, [collapsed])
+    const to = er.top - ar.top + er.height / 2
+    if (firstRef.current || !animar) { firstRef.current = false; setCyNow(to) }
+    else animarA(to)
+  }, [collapsed, animarA, setCyNow])
 
   useEffect(() => { medir(true) }, [pathname])          // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { medir(false) }, [collapsed, role])  // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onResize = () => medir(false)
+    const nav = navRef.current
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    nav?.addEventListener('scroll', onResize, { passive: true })
+    return () => {
+      window.removeEventListener('resize', onResize)
+      nav?.removeEventListener('scroll', onResize)
+    }
   }, [medir])
+  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }, [])
 
   const notchFill = isDark ? '#0a1628' : '#eef6ff'
 
@@ -189,13 +195,13 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <path d={buildPath(width, dims.h || 800, centerY)} fill={RAIL_BG} />
+        <path d={buildPath(width, dims.h || 800, cy)} fill={RAIL_BG} />
       </svg>
 
-      {/* ── Círculo cian flotante del módulo activo (fijo al centro) ── */}
-      {collapsed && centerY != null && ActiveIcon && (
+      {/* ── Círculo cian flotante que se desliza al módulo activo ── */}
+      {collapsed && cy != null && ActiveIcon && (
         <span
-          style={{ top: centerY, background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.5)' }}
+          style={{ top: cy, background: ACTIVE, boxShadow: '0 6px 16px rgba(33,185,247,0.5)' }}
           className="absolute right-[-23px] -translate-y-1/2 w-[50px] h-[50px] rounded-full flex items-center justify-center z-30 pointer-events-none"
         >
           <ActiveIcon className="w-[21px] h-[21px] text-white" />
@@ -222,15 +228,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       </div>
 
       {/* ── Nav ──────────────────────────────────── */}
-      <nav className={cn('relative z-10 flex-1 px-2', collapsed ? 'overflow-hidden' : 'overflow-y-auto')}>
-        <div
-          ref={listRef}
-          style={collapsed ? {
-            transform: `translateY(${translateY}px)`,
-            transition: animate ? 'transform 380ms cubic-bezier(0.22,1,0.36,1)' : 'none',
-          } : undefined}
-          className={cn('py-2', collapsed ? 'space-y-2.5' : 'space-y-1')}
-        >
+      <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto">
+        <div className={cn(collapsed ? 'pt-7 pb-7 space-y-2.5' : 'py-2 space-y-1')}>
           {visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
@@ -314,7 +313,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       </nav>
 
       {/* ── Footer ───────────────────────────────── */}
-      <div ref={footerRef} className="relative z-10 flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
+      <div className="relative z-10 flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
         {/* Usuario */}
         <div className={cn(
           'flex items-center gap-2.5 px-2 py-1.5',
