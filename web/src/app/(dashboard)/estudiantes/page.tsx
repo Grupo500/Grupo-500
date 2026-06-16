@@ -363,7 +363,29 @@ const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.dat
     onError: () => setConfirmBulkElim(false),
   })
 
-async function descargarPlantilla() {
+  const [exportando, setExportando] = useState(false)
+  async function exportarEstudiantes() {
+    try {
+      setExportando(true)
+      const token = await getClientToken()
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/exportar`, {
+        headers: { Authorization: `Bearer ${token ?? ''}` },
+      })
+      if (!res.ok) throw new Error('Error al exportar')
+      const blob = await res.blob()
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      const fecha = new Date().toISOString().slice(0, 10)
+      a.href = url; a.download = `estudiantes-grupo500-${fecha}.xlsx`; a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('No se pudo exportar la base de estudiantes.')
+    } finally {
+      setExportando(false)
+    }
+  }
+
+  async function descargarPlantilla() {
     const token = await getClientToken()
     const res   = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/estudiantes/plantilla`, {
       headers: { Authorization: `Bearer ${token ?? ''}` },
@@ -456,12 +478,13 @@ const subirComprobante = async (file: File) => {
           <div className="flex items-center gap-2">
             {isAdmin && (
               <button
-                onClick={() => { setModalImport(true); setImportFile(null); setImportResult(null) }}
-                title="Importar estudiantes desde Excel"
-                className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-lowest transition-colors cursor-pointer"
+                onClick={exportarEstudiantes}
+                disabled={exportando}
+                title="Exportar base de estudiantes a Excel"
+                className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-lowest transition-colors cursor-pointer disabled:opacity-60"
               >
-                <Upload className="w-4 h-4" />
-                <span className="hidden sm:inline">Importar</span>
+                {exportando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                <span className="hidden sm:inline">{exportando ? 'Exportando…' : 'Exportar'}</span>
               </button>
             )}
             {!isAdmin && <MiEnlaceBtn />}

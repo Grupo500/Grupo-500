@@ -12,6 +12,7 @@ router.use(authenticate)
 
 router.get('/', asyncHandler(ctrl.listar))
 router.post('/', asyncHandler(ctrl.crear))
+router.get('/exportar', asyncHandler(ctrl.exportar))
 router.get('/plantilla', requireRole('ADMIN'), asyncHandler(ctrl.plantillaImport))
 router.post('/import', requireRole('ADMIN'), uploadExcel.single('file'), asyncHandler(ctrl.importar))
 router.get('/:id', asyncHandler(ctrl.obtener))

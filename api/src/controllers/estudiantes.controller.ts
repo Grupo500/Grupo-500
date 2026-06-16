@@ -367,6 +367,58 @@ interface ImportRow {
   agregado?:      boolean
 }
 
+// Exporta la base de estudiantes a Excel con los campos que provienen de Hotmart
+export async function exportar(req: Request, res: Response) {
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+
+  const estudiantes = await prisma.estudiante.findMany({
+    where: filtroAsesor ? { asesorId: filtroAsesor } : {},
+    orderBy: { createdAt: 'desc' },
+    select: {
+      nombre: true, email: true, telefono: true, documento: true, createdAt: true,
+      asesor: { select: { nombre: true } },
+      cursos: { select: { curso: { select: { nombre: true } } } },
+      pagos: {
+        where: { estado: 'PAGADO' },
+        orderBy: { fechaPago: 'desc' },
+        select: { monto: true, metodo: true, estado: true, fechaPago: true },
+      },
+    },
+  })
+
+  const filas = estudiantes.map(e => {
+    const ultimoPago = e.pagos[0]
+    const totalPagado = e.pagos.reduce((s, p) => s + p.monto, 0)
+    return {
+      'Nombre':        e.nombre,
+      'Email':         e.email,
+      'Teléfono':      e.telefono || '',
+      'Documento':     e.documento || '',
+      'Curso(s)':      e.cursos.map(c => c.curso.nombre).join(', '),
+      'Asesor':        e.asesor?.nombre ?? '',
+      'Método de pago': ultimoPago?.metodo ?? '',
+      'Total pagado':  totalPagado,
+      'Estado':        ultimoPago?.estado ?? 'SIN PAGO',
+      'Fecha de pago': ultimoPago?.fechaPago ? new Date(ultimoPago.fechaPago).toLocaleDateString('es-CO') : '',
+      'Registrado':    new Date(e.createdAt).toLocaleDateString('es-CO'),
+    }
+  })
+
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.json_to_sheet(filas)
+  ws['!cols'] = [
+    { wch: 30 }, { wch: 28 }, { wch: 16 }, { wch: 16 }, { wch: 28 },
+    { wch: 20 }, { wch: 16 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 },
+  ]
+  XLSX.utils.book_append_sheet(wb, ws, 'Estudiantes')
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+
+  const fecha = new Date().toISOString().slice(0, 10)
+  res.setHeader('Content-Disposition', `attachment; filename="estudiantes-grupo500-${fecha}.xlsx"`)
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  res.send(buffer)
+}
+
 export async function plantillaImport(_req: Request, res: Response) {
   const wb = XLSX.utils.book_new()
 
