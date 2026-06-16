@@ -405,20 +405,26 @@ export async function ventasGrafica(req: Request, res: Response) {
     const hasta = new Date(hastaQ + 'T23:59:59')
     const diffDias = Math.ceil((hasta.getTime() - desde.getTime()) / 86_400_000)
 
+    // No proyectar a futuro: si el rango incluye fechas posteriores a hoy, se trunca
+    const finHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+    const hastaReal = hasta > finHoy ? finHoy : hasta
+
     if (diffDias <= 1) {
-      // Granularidad horaria: 12 bloques de 2h
+      // Granularidad horaria: bloques de 2h, hasta la hora actual si es hoy
       granularidad = 'horaria'
+      const esHoy = desde.toDateString() === hoy.toDateString()
+      const horaTope = esHoy ? hoy.getHours() : 23
       const base = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 0, 0, 0)
-      for (let h = 0; h < 24; h += 2) {
+      for (let h = 0; h <= horaTope; h += 2) {
         const ini = new Date(base); ini.setHours(h, 0, 0, 0)
         const fin = new Date(base); fin.setHours(h + 1, 59, 59, 999)
         puntos.push({ label: `${String(h).padStart(2,'0')}h`, desde: ini, hasta: fin })
       }
     } else if (diffDias <= 62) {
-      // Granularidad diaria
+      // Granularidad diaria — hasta hoy si el rango incluye días futuros
       granularidad = 'diaria'
       const cur = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 0, 0, 0)
-      const fin = new Date(hasta.getFullYear(), hasta.getMonth(), hasta.getDate(), 23, 59, 59)
+      const fin = new Date(hastaReal.getFullYear(), hastaReal.getMonth(), hastaReal.getDate(), 23, 59, 59)
       while (cur <= fin) {
         const ini = new Date(cur)
         const finDia = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), 23, 59, 59)
@@ -427,10 +433,10 @@ export async function ventasGrafica(req: Request, res: Response) {
         cur.setDate(cur.getDate() + 1)
       }
     } else {
-      // Granularidad mensual
+      // Granularidad mensual — hasta el mes actual si el rango llega a futuro
       granularidad = 'mensual'
       const cur = new Date(desde.getFullYear(), desde.getMonth(), 1)
-      const fin = new Date(hasta.getFullYear(), hasta.getMonth(), 1)
+      const fin = new Date(hastaReal.getFullYear(), hastaReal.getMonth(), 1)
       while (cur <= fin) {
         const ini = new Date(cur.getFullYear(), cur.getMonth(), 1)
         const finMes = new Date(cur.getFullYear(), cur.getMonth() + 1, 0, 23, 59, 59)

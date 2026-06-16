@@ -9,7 +9,6 @@ import { formatCOP } from '@/lib/utils'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { CursosVendidosRanked } from '@/components/charts/CursosVendidosRanked'
-import { TendenciaPagosCard } from '@/components/charts/TendenciaPagosCard'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts'
 import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet } from 'lucide-react'
@@ -252,11 +251,8 @@ export default function ReportesPage() {
       {/* ── FILA 3: Cursos más vendidos (burbujas) ────────────────── */}
       <CursosVendidosRanked desde={desde} hasta={hasta} />
 
-      {/* ── FILA 4: [Medios de pago + Tendencia] (50%) + Ranking asesores (50%) ── */}
+      {/* ── FILA 4: Medios de pago (50%) + Ranking asesores (50%) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
-
-        {/* Columna izquierda: Medios de pago + Tendencia de pagos */}
-        <div className="flex flex-col gap-4">
 
         {/* Medios de pago — bar chart */}
         <div className="card p-5">
@@ -322,10 +318,6 @@ export default function ReportesPage() {
               </div>
             </div>
           )}
-        </div>
-
-          {/* Tendencia de pagos (mini chart) */}
-          <TendenciaPagosCard desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
         </div>
 
         {/* Ranking asesores */}

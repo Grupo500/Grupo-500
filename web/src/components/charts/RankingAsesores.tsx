@@ -28,7 +28,7 @@ function iniciales(nombre: string) {
   return nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
 
-const TOP_INICIAL = 10
+const TOP_INICIAL = 6
 
 export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
   const { resolvedTheme } = useTheme()
