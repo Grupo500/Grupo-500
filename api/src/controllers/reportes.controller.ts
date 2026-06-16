@@ -70,7 +70,7 @@ export async function ingresos(req: Request, res: Response) {
     where: {
       estado: 'PAGADO',
       ...(desde && hasta && {
-        fechaPago: { gte: new Date(String(desde)), lte: new Date(String(hasta)) },
+        fechaPago: { gte: new Date(String(desde) + 'T00:00:00'), lte: new Date(String(hasta) + 'T23:59:59') },
       }),
       ...(asesorId && { asesorId: String(asesorId) }),
     },
@@ -92,10 +92,9 @@ export async function rankingAsesores(req: Request, res: Response) {
   let finMesAnterior: Date
 
   if (desde && hasta) {
-    // Rango del datepicker; el período anterior es de igual duración, justo antes
-    inicioMesActual = new Date(String(desde))
-    finMesActual    = new Date(String(hasta))
-    finMesActual.setHours(23, 59, 59, 999)
+    // Rango del datepicker; parsear como hora local (no UTC) para evitar desfase de zona horaria
+    inicioMesActual = new Date(String(desde) + 'T00:00:00')
+    finMesActual    = new Date(String(hasta) + 'T23:59:59')
     const duracionMs   = finMesActual.getTime() - inicioMesActual.getTime()
     finMesAnterior     = new Date(inicioMesActual.getTime() - 1)
     inicioMesAnterior  = new Date(finMesAnterior.getTime() - duracionMs)
