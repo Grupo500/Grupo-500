@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
+type Granularidad = 'horaria' | 'diaria' | 'mensual'
 
 interface Punto { label: string; ingresos: number; pagos: number }
 
@@ -19,6 +20,12 @@ const subtitulos: Record<Periodo, string> = {
 const titulos: Record<Periodo, string> = {
   diario:  'Ingresos diarios',
   semanal: 'Ingresos semanales',
+  mensual: 'Ingresos mensuales',
+}
+
+const titulosGran: Record<Granularidad, string> = {
+  horaria: 'Ingresos por hora',
+  diaria:  'Ingresos diarios',
   mensual: 'Ingresos mensuales',
 }
 
@@ -40,20 +47,28 @@ function Kpi({ label, value, sub, color }: { label: string; value: string; sub?:
   )
 }
 
-export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Periodo }) {
+interface Props { periodo?: Periodo; desde?: string; hasta?: string; periodoLabel?: string }
+
+export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, periodoLabel }: Props) {
   const { resolvedTheme } = useTheme()
   const isDark            = resolvedTheme === 'dark'
   const temaListo         = resolvedTheme !== undefined
 
+  const usaRango = !!(desde && hasta)
+  const url = usaRango
+    ? `/reportes/ventas-grafica?desde=${desde}&hasta=${hasta}`
+    : `/reportes/ventas-grafica?periodo=${periodo}`
+
   const { data, isLoading } = useQuery({
-    queryKey: ['ventas-grafica', periodo],
-    queryFn: async () => {
-            return apiFetch<{ data: { puntos: Punto[]; variacion: number; actual: number } }>(`/reportes/ventas-grafica?periodo=${periodo}`)
-    },
+    queryKey: ['ventas-grafica', usaRango ? desde : periodo, usaRango ? hasta : ''],
+    queryFn: async () => apiFetch<{ data: { puntos: Punto[]; variacion: number; actual: number; granularidad: Granularidad } }>(url),
     staleTime: 30_000,
   })
 
-  const puntos    = data?.data?.puntos ?? []
+  const puntos      = data?.data?.puntos ?? []
+  const granularidad = data?.data?.granularidad
+  const titulo    = usaRango && granularidad ? titulosGran[granularidad] : titulos[periodo]
+  const subtitulo = usaRango ? (periodoLabel ?? 'Rango seleccionado') : subtitulos[periodo]
   const primary   = isDark ? '#95daff' : '#1a7de0'
   const gridColor = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
   const tickColor = isDark ? '#95c8f0' : '#2a4172'
@@ -70,8 +85,8 @@ export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Peri
   return (
     <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-on-surface">{titulos[periodo]}</p>
-        <span className="text-[11px] text-on-surface-variant">{subtitulos[periodo]}</span>
+        <p className="text-[13px] font-semibold text-on-surface">{titulo}</p>
+        <span className="text-[11px] text-on-surface-variant capitalize">{subtitulo}</span>
       </div>
 
       {!temaListo || isLoading ? (
@@ -110,9 +125,9 @@ export function IngresosMensualesChart({ periodo = 'mensual' }: { periodo?: Peri
       {/* ── Mini-KPIs ───────────────────────────────────────────────────── */}
       {temaListo && !isLoading && puntos.length > 0 && (
         <div className="grid grid-cols-4 gap-0 pt-3 border-t border-outline-variant divide-x divide-outline-variant">
-          <Kpi label="Total 6 meses"     value={fmtCompact(total)} />
-          <Kpi label="Mejor mes"         value={fmtCompact(mejor.ingresos)} sub={mejor.label} />
-          <Kpi label="Promedio mensual"  value={fmtCompact(promedio)} />
+          <Kpi label={usaRango ? 'Total período' : 'Total 6 meses'} value={fmtCompact(total)} />
+          <Kpi label={granularidad === 'horaria' ? 'Mejor hora' : granularidad === 'diaria' ? 'Mejor día' : 'Mejor mes'} value={fmtCompact(mejor.ingresos)} sub={mejor.label} />
+          <Kpi label={granularidad === 'horaria' ? 'Promedio horario' : granularidad === 'diaria' ? 'Promedio diario' : 'Promedio mensual'} value={fmtCompact(promedio)} />
           <Kpi
             label="Crecimiento"
             value={`${crecimiento > 0 ? '▲ +' : crecimiento < 0 ? '▼ ' : ''}${crecimiento}%`}

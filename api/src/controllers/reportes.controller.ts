@@ -393,11 +393,54 @@ export async function financiero(_req: Request, res: Response) {
 // Datos agregados para la gráfica de ventas por período
 export async function ventasGrafica(req: Request, res: Response) {
   const periodo = String(req.query.periodo ?? 'mensual')
+  const desdeQ  = req.query.desde as string | undefined
+  const hastaQ  = req.query.hasta as string | undefined
   const hoy = new Date()
   let puntos: { label: string; desde: Date; hasta: Date }[] = []
+  let granularidad: 'horaria' | 'diaria' | 'mensual' = 'mensual'
 
-  if (periodo === 'diario') {
-    // Últimos 14 días
+  // ── Modo con rango explícito (desde/hasta) ── granularidad adaptativa ──
+  if (desdeQ && hastaQ) {
+    const desde = new Date(desdeQ + 'T00:00:00')
+    const hasta = new Date(hastaQ + 'T23:59:59')
+    const diffDias = Math.ceil((hasta.getTime() - desde.getTime()) / 86_400_000)
+
+    if (diffDias <= 1) {
+      // Granularidad horaria: 12 bloques de 2h
+      granularidad = 'horaria'
+      const base = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 0, 0, 0)
+      for (let h = 0; h < 24; h += 2) {
+        const ini = new Date(base); ini.setHours(h, 0, 0, 0)
+        const fin = new Date(base); fin.setHours(h + 1, 59, 59, 999)
+        puntos.push({ label: `${String(h).padStart(2,'0')}h`, desde: ini, hasta: fin })
+      }
+    } else if (diffDias <= 62) {
+      // Granularidad diaria
+      granularidad = 'diaria'
+      const cur = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 0, 0, 0)
+      const fin = new Date(hasta.getFullYear(), hasta.getMonth(), hasta.getDate(), 23, 59, 59)
+      while (cur <= fin) {
+        const ini = new Date(cur)
+        const finDia = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), 23, 59, 59)
+        const label = ini.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+        puntos.push({ label, desde: ini, hasta: finDia })
+        cur.setDate(cur.getDate() + 1)
+      }
+    } else {
+      // Granularidad mensual
+      granularidad = 'mensual'
+      const cur = new Date(desde.getFullYear(), desde.getMonth(), 1)
+      const fin = new Date(hasta.getFullYear(), hasta.getMonth(), 1)
+      while (cur <= fin) {
+        const ini = new Date(cur.getFullYear(), cur.getMonth(), 1)
+        const finMes = new Date(cur.getFullYear(), cur.getMonth() + 1, 0, 23, 59, 59)
+        const label = ini.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' })
+        puntos.push({ label, desde: ini, hasta: finMes })
+        cur.setMonth(cur.getMonth() + 1)
+      }
+    }
+  } else if (periodo === 'diario') {
+    granularidad = 'diaria'
     for (let i = 13; i >= 0; i--) {
       const d = new Date(hoy)
       d.setDate(hoy.getDate() - i)
@@ -407,7 +450,7 @@ export async function ventasGrafica(req: Request, res: Response) {
       puntos.push({ label, desde, hasta })
     }
   } else if (periodo === 'semanal') {
-    // Últimas 8 semanas
+    granularidad = 'diaria'
     for (let i = 7; i >= 0; i--) {
       const inicioSem = new Date(hoy)
       inicioSem.setDate(hoy.getDate() - i * 7 - hoy.getDay() + 1)
@@ -419,7 +462,7 @@ export async function ventasGrafica(req: Request, res: Response) {
       puntos.push({ label, desde: inicioSem, hasta: finSem })
     }
   } else {
-    // Últimos 6 meses
+    granularidad = 'mensual'
     for (let i = 5; i >= 0; i--) {
       const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)
       const desde = new Date(d.getFullYear(), d.getMonth(), 1)
@@ -445,7 +488,7 @@ export async function ventasGrafica(req: Request, res: Response) {
   const anterior = resultados[resultados.length - 2]?.ingresos ?? 0
   const variacion = anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : 0
 
-  return ApiResponse.success(res, { puntos: resultados, variacion, actual, anterior })
+  return ApiResponse.success(res, { puntos: resultados, variacion, actual, anterior, granularidad })
 }
 
 // ── Medios de pago ───────────────────────────────────────────────────────────

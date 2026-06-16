@@ -199,7 +199,7 @@ export default function ReportesPage() {
       {/* ── FILA 2: Ingresos mensuales (70%) + Desglose financiero (30%) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:items-stretch">
         <div className="lg:col-span-7">
-          <IngresosMensualesChart periodo="mensual" />
+          <IngresosMensualesChart desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
         </div>
         <div className="lg:col-span-3">
           <div className="card p-5 h-full flex flex-col">
