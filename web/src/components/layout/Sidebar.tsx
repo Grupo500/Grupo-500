@@ -243,7 +243,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       {/* ── Nav ──────────────────────────────────── */}
       {/* Caja de ícono fija (w-11 h-10) → mismo tamaño/posición en colapsado y expandido */}
       <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto">
-        <div className="pt-10 pb-10 space-y-2">
+        <div className="pt-[52px] pb-10 space-y-2">
           {visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
