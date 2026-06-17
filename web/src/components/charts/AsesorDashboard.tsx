@@ -8,6 +8,7 @@ import { useSSE } from '@/hooks/useSSE'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { RefreshButton } from '@/components/ui/RefreshButton'
 import {
   TrendingUp, TrendingDown, Wallet, Users, Receipt,
   Trophy, Award, Crown,
@@ -130,7 +131,10 @@ export function AsesorDashboard() {
             <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Tu desempeño y comisiones</p>
           </div>
         </div>
-        <div className="flex-shrink-0"><ThemeToggle /></div>
+        <div className="flex-shrink-0 flex items-center gap-2">
+          <ThemeToggle />
+          <RefreshButton />
+        </div>
       </div>
 
       {/* KPIs */}
