@@ -219,6 +219,19 @@ export async function webhook(req: Request, res: Response) {
     { source: 'hotmart', transaccion, estudianteId: estudiante.id, cursoId: curso?.id }
   )
 
+  // Calcular el desglose de comisión de inmediato (sin esperar al job periódico).
+  // Fire-and-forget: no bloquea la respuesta a Hotmart. Re-emite el evento al
+  // terminar para que rankings y comisiones se refresquen en tiempo real.
+  void (async () => {
+    try {
+      const { backfillComisiones } = await import('../jobs/backfillComisiones')
+      await backfillComisiones()
+      broadcast('pago-registrado', { pagoId: pago.id, estudianteId: estudiante.id })
+    } catch (e: any) {
+      logger.warn(`[Hotmart] No se pudo calcular la comisión al instante: ${e?.message}`)
+    }
+  })()
+
   return res.status(200).json({ success: true, pagoId: pago.id, estudianteId: estudiante.id })
 }
 

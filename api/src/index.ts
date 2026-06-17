@@ -191,15 +191,16 @@ app.listen(PORT, () => {
   logger.info(`🚀 Servidor Grupo 500 corriendo en puerto ${PORT}`)
 
   // Reconciliación automática de asesores: una corrida inicial a los 2 min
-  // y luego cada 6 horas. Red de seguridad si el webhook no captura el afiliado.
-  const SEIS_HORAS = 6 * 60 * 60 * 1000
+  // y luego cada 15 min. Red de seguridad si el webhook no captura el afiliado.
+  const QUINCE_MIN = 15 * 60 * 1000
   setTimeout(() => { void reconciliarAsesores() }, 2 * 60 * 1000)
-  setInterval(() => { void reconciliarAsesores() }, SEIS_HORAS)
+  setInterval(() => { void reconciliarAsesores() }, QUINCE_MIN)
 
   // Desglose de comisiones: completa los pagos que falten. Corrida inicial a
-  // los 3 min (escalonada tras la reconciliación) y luego cada 6 horas.
+  // los 3 min y luego cada 15 min (el webhook ya lo calcula al instante; esto
+  // es la red de seguridad por si la comisión no estaba lista en Hotmart aún).
   setTimeout(() => { void backfillComisiones() }, 3 * 60 * 1000)
-  setInterval(() => { void backfillComisiones() }, SEIS_HORAS)
+  setInterval(() => { void backfillComisiones() }, QUINCE_MIN)
 })
 
 export default app

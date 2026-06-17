@@ -27,35 +27,17 @@ export function useSSE() {
       const url = `${process.env.NEXT_PUBLIC_API_URL}/eventos?token=${encodeURIComponent(token)}`
       es = new EventSource(url)
 
-      // ── Estudiante creado o asignado a asesor ────────────────────────────
-      es.addEventListener('estudiante-asignado', () => {
+      // Eventos de venta/asignación (poco frecuentes): invalidar TODO lo activo
+      // para que ventas, comisiones y rankings lleguen en tiempo real a admin y asesores.
+      const refrescarTodo = () => {
         startTransition(() => {
-          queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-          queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+          queryClient.invalidateQueries()
         })
-      })
+      }
 
-      // ── Nuevo estudiante via Hotmart ─────────────────────────────────────
-      es.addEventListener('nuevo-estudiante', () => {
-        startTransition(() => {
-          queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-          queryClient.invalidateQueries({ queryKey: ['cursos'] })
-          queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-          queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
-          queryClient.invalidateQueries({ queryKey: ['cursos-vendidos'] })
-          queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] })
-        })
-      })
-
-      // ── Pago registrado ──────────────────────────────────────────────────
-      es.addEventListener('pago-registrado', () => {
-        startTransition(() => {
-          queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-          queryClient.invalidateQueries({ queryKey: ['financiero-periodo'] })
-          queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-          queryClient.invalidateQueries({ queryKey: ['reportes-medios-pago'] })
-        })
-      })
+      es.addEventListener('estudiante-asignado', refrescarTodo)
+      es.addEventListener('nuevo-estudiante', refrescarTodo)
+      es.addEventListener('pago-registrado', refrescarTodo)
 
       es.onerror = () => {
         es?.close()
