@@ -71,31 +71,3 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data === 'skipWaiting') self.skipWaiting()
 })
-
-// ── Notificaciones push ──────────────────────────────────────────────────────
-self.addEventListener('push', (event) => {
-  let data = {}
-  try { data = event.data ? event.data.json() : {} } catch (e) {}
-  const title = data.title || 'Grupo 500'
-  const options = {
-    body: data.body || '',
-    icon: '/favicon-192x192.png',
-    badge: '/favicon-192x192.png',
-    vibrate: [80, 40, 80],
-    data: { url: data.url || '/dashboard' },
-  }
-  event.waitUntil(self.registration.showNotification(title, options))
-})
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close()
-  const url = (event.notification.data && event.notification.data.url) || '/dashboard'
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      for (const c of list) {
-        if ('focus' in c) { c.navigate(url); return c.focus() }
-      }
-      if (self.clients.openWindow) return self.clients.openWindow(url)
-    })
-  )
-})
