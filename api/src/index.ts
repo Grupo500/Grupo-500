@@ -192,11 +192,6 @@ app.use(errorHandler)
 app.listen(PORT, () => {
   logger.info(`🚀 Servidor Grupo 500 corriendo en puerto ${PORT}`)
 
-  // TEMP-DIAGNOSTICO: huella del NEXTAUTH_SECRET cargado (no expone el valor)
-  const _s = process.env.NEXTAUTH_SECRET || ''
-  const _huella = crypto.createHash('sha256').update(_s).digest('hex').slice(0, 12)
-  logger.info(`[TEMP-SECRET] huella=${_huella} len=${_s.length} trimLen=${_s.trim().length}`)
-
   // Reconciliación automática de asesores: una corrida inicial a los 2 min
   // y luego cada 15 min. Red de seguridad si el webhook no captura el afiliado.
   const QUINCE_MIN = 15 * 60 * 1000
