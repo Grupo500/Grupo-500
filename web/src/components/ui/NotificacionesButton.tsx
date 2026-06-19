@@ -18,7 +18,7 @@ export function NotificacionesButton() {
   if (estado === 'activo') {
     return (
       <span title="Notificaciones activas"
-        className={`${base} bg-emerald-500/12 text-emerald-600 dark:text-emerald-400`}>
+        className={`${base} bg-surface-high text-emerald-600 dark:text-emerald-400`}>
         <BellRing className="w-4 h-4" />
       </span>
     )
@@ -36,7 +36,7 @@ export function NotificacionesButton() {
   if (estado === 'denegado') {
     return (
       <span title="Notificaciones bloqueadas — actívalas en los ajustes del navegador/dispositivo"
-        className={`${base} bg-red-500/10 text-red-600 dark:text-red-400`}>
+        className={`${base} bg-surface-high text-red-600 dark:text-red-400`}>
         <BellOff className="w-4 h-4" />
       </span>
     )
