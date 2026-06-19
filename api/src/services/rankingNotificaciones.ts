@@ -6,7 +6,7 @@
 
 import { prisma } from '../config/prisma'
 import { logger } from '../utils/logger'
-import { sendPushToUser } from './push'
+import { sendPushToUser, sendPushToAdmins } from './push'
 
 export async function evaluarRankingYNotificar(): Promise<void> {
   const hoy       = new Date()
@@ -60,6 +60,34 @@ export async function evaluarRankingYNotificar(): Promise<void> {
       await sendPushToUser(info.userId, { title, body, url: '/dashboard' })
     }
   }))
+
+  // ── Notificaciones al ADMIN: nuevo #1 / cambio de podio ──
+  // Estado previo (snapshot guardado de este mes)
+  const prevMes  = asesores.filter(a => a.posicionMes === mesKey && a.posicionRanking != null)
+  const prevTop1 = prevMes.find(a => a.posicionRanking === 1)?.id ?? null
+  const prevTop3 = prevMes
+    .filter(a => (a.posicionRanking as number) <= 3)
+    .sort((a, b) => (a.posicionRanking as number) - (b.posicionRanking as number))
+    .map(a => a.id)
+
+  const newTop1 = ranking[0]?.asesorId ?? null
+  const newTop3 = ranking.slice(0, 3).map(r => r.asesorId)
+  const nombreDe = (id: string | null) => (id ? infoPorId.get(id)?.nombre ?? 'Asesor' : '')
+
+  if (newTop1 && newTop1 !== prevTop1) {
+    await sendPushToAdmins({
+      title: '🏆 Nuevo líder del ranking',
+      body:  `${nombreDe(newTop1)} tomó el primer lugar del mes.`,
+      url:   '/dashboard',
+    })
+  } else if (prevTop3.length > 0 && JSON.stringify(newTop3) !== JSON.stringify(prevTop3)) {
+    const lista = newTop3.map((id, i) => `${i + 1}. ${nombreDe(id)}`).join('   ')
+    await sendPushToAdmins({
+      title: '📊 Cambio de podio',
+      body:  lista,
+      url:   '/dashboard',
+    })
+  }
 
   // Actualizar snapshot de todos los del ranking
   await Promise.all(ranking.map((r, idx) =>

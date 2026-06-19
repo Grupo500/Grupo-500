@@ -5,14 +5,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useSSE } from '@/hooks/useSSE'
-import { usePushNotificaciones } from '@/hooks/usePushNotificaciones'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 import {
   TrendingUp, TrendingDown, Wallet, Users, Receipt,
-  Trophy, Award, Crown, Bell, BellRing, BellOff, Loader2,
+  Trophy, Award, Crown,
 } from 'lucide-react'
 
 interface RankItem {
@@ -82,7 +81,6 @@ export function AsesorDashboard() {
   const saludo = horaColombia < 12 ? 'Buenos días' : horaColombia < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   useSSE()
-  const { estado: estadoPush, activar: activarPush } = usePushNotificaciones()
 
   const { data, isLoading } = useQuery<{ data: MiResumen }>({
     queryKey: ['mi-resumen'],
@@ -134,36 +132,7 @@ export function AsesorDashboard() {
           </div>
         </div>
         <div className="flex-shrink-0 flex items-center gap-2">
-          {estadoPush !== 'no-soportado' && (
-            <button
-              onClick={estadoPush === 'idle' ? activarPush : undefined}
-              disabled={estadoPush === 'activando' || estadoPush === 'activo'}
-              title={
-                estadoPush === 'activo' ? 'Notificaciones activas'
-                : estadoPush === 'denegado' ? 'Bloqueadas — actívalas en los ajustes del navegador/dispositivo'
-                : 'Activar notificaciones de ranking'
-              }
-              className={`flex items-center gap-1.5 h-9 px-3 rounded-full text-[12px] font-semibold transition-colors ${
-                estadoPush === 'activo'
-                  ? 'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 cursor-default'
-                  : estadoPush === 'denegado'
-                  ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                  : 'bg-[#21b9f7]/15 text-[#1192c8] dark:text-[#21b9f7] hover:bg-[#21b9f7]/25'
-              }`}
-            >
-              {estadoPush === 'activo' ? <BellRing className="w-4 h-4" />
-                : estadoPush === 'denegado' ? <BellOff className="w-4 h-4" />
-                : estadoPush === 'activando' ? <Loader2 className="w-4 h-4 animate-spin" />
-                : <Bell className="w-4 h-4" />}
-              <span className="hidden sm:inline">
-                {estadoPush === 'activo' ? 'Notificaciones activas'
-                  : estadoPush === 'denegado' ? 'Notificaciones bloqueadas'
-                  : estadoPush === 'activando' ? 'Activando…'
-                  : 'Activar notificaciones'}
-              </span>
-            </button>
-          )}
-          <ThemeToggle />
+          <NotificacionesButton />
           <RefreshButton />
         </div>
       </div>

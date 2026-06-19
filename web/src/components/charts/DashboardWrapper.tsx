@@ -9,6 +9,7 @@ import { ComisionesKpis } from './ComisionesKpis'
 import { TopAsesores } from './TopAsesores'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -40,6 +41,7 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
           </div>
         </div>
         <div className="flex-shrink-0 pt-1 flex items-center gap-2">
+          <NotificacionesButton />
           <ThemeToggle />
           <RefreshButton />
         </div>

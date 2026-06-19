@@ -230,7 +230,18 @@ export async function webhook(req: Request, res: Response) {
     } catch (e: any) {
       logger.warn(`[Hotmart] No se pudo calcular la comisión al instante: ${e?.message}`)
     }
-    // Evaluar ranking y notificar a quien haya sido rebasado (no bloquea Hotmart)
+    // Notificar a los ADMIN de la nueva venta (push)
+    try {
+      const { sendPushToAdmins } = await import('../services/push')
+      await sendPushToAdmins({
+        title: '💰 Nueva venta',
+        body:  `$${monto.toLocaleString('es-CO')} — ${buyer.name} · ${product.name}`,
+        url:   '/dashboard',
+      })
+    } catch (e: any) {
+      logger.warn(`[Push] No se pudo notificar venta al admin: ${e?.message}`)
+    }
+    // Evaluar ranking y notificar al rebasado (asesor) + podio/nuevo #1 (admin)
     try {
       const { evaluarRankingYNotificar } = await import('../services/rankingNotificaciones')
       await evaluarRankingYNotificar()

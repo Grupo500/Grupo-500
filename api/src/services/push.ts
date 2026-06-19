@@ -24,6 +24,13 @@ export interface PushPayload {
   url?:  string
 }
 
+/** Envía una notificación push a todos los usuarios ADMIN. */
+export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
+  if (!configurado) return
+  const admins = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } })
+  await Promise.all(admins.map(a => sendPushToUser(a.id, payload)))
+}
+
 /** Envía una notificación push a todas las suscripciones de un usuario. */
 export async function sendPushToUser(userId: string, payload: PushPayload): Promise<void> {
   if (!configurado) return
