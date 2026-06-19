@@ -64,7 +64,14 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
       return next(error)
     }
-    next(new UnauthorizedError())
+    // Errores de JWT (token inválido/expirado) → 401. Cualquier OTRO error
+    // (ej: fallo de BD) NO debe disfrazarse de 401: se propaga como 500 para
+    // no enmascarar problemas reales como un "sin datos" engañoso.
+    const jwtErrorNames = ['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError']
+    if (error instanceof Error && jwtErrorNames.includes(error.name)) {
+      return next(new UnauthorizedError())
+    }
+    return next(error)
   }
 }
 
