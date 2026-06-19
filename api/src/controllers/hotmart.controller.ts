@@ -230,6 +230,13 @@ export async function webhook(req: Request, res: Response) {
     } catch (e: any) {
       logger.warn(`[Hotmart] No se pudo calcular la comisión al instante: ${e?.message}`)
     }
+    // Evaluar cambios de ranking y notificar (push) a quien fue superado
+    try {
+      const { evaluarRankingYNotificar } = await import('../services/rankingNotificaciones')
+      await evaluarRankingYNotificar()
+    } catch (e: any) {
+      logger.warn(`[Ranking] No se pudo evaluar notificaciones: ${e?.message}`)
+    }
   })()
 
   return res.status(200).json({ success: true, pagoId: pago.id, estudianteId: estudiante.id })

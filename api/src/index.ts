@@ -35,6 +35,7 @@ import passkeysRoutes from './routes/passkeys'
 import inscripcionRoutes from './routes/inscripcion'
 import formulariosRoutes from './routes/formularios'
 import hotmartRoutes from './routes/hotmart'
+import notificacionesRoutes from './routes/notificaciones'
 import { reconciliarAsesores } from './jobs/reconciliarAsesores'
 import { backfillComisiones } from './jobs/backfillComisiones'
 
@@ -178,6 +179,7 @@ app.use('/api/formularios',  formulariosRoutes)
 app.use('/api/eventos',     eventosRoutes)
 app.use('/api/passkeys',    passkeysRoutes)
 app.use('/api/hotmart',     hotmartRoutes)
+app.use('/api/notificaciones', notificacionesRoutes)
 
 // Sentry error handler — debe ir ANTES del errorHandler custom y DESPUÉS de todas las rutas
 if (process.env.SENTRY_DSN) {
