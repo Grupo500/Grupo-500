@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getClientToken } from '@/lib/api'
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
@@ -12,48 +12,69 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return arr
 }
 
+export type EstadoPush = 'idle' | 'no-soportado' | 'denegado' | 'activando' | 'activo'
+
 /**
- * Pide permiso y suscribe el navegador a notificaciones push.
- * Activar solo cuando `activo` es true (ej: dashboard del asesor).
+ * Notificaciones push del asesor.
+ *
+ * iOS NO permite pedir el permiso automáticamente: debe dispararse desde un
+ * gesto del usuario. Por eso este hook NO pide permiso solo — expone `activar()`
+ * para conectarlo a un botón. Funciona en iPhone, Android y PC por igual.
  */
-export function usePushNotificaciones(activo: boolean) {
+export function usePushNotificaciones() {
+  const [estado, setEstado] = useState<EstadoPush>('idle')
+
+  // Detectar estado inicial (soporte / permiso ya concedido)
   useEffect(() => {
-    if (!activo) return
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setEstado('no-soportado')
+      return
+    }
+    if (Notification.permission === 'denied') { setEstado('denegado'); return }
+    if (Notification.permission === 'granted') {
+      navigator.serviceWorker.ready
+        .then(reg => reg.pushManager.getSubscription())
+        .then(sub => { if (sub) setEstado('activo') })
+        .catch(() => {})
+    }
+  }, [])
+
+  const activar = useCallback(async () => {
     const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     if (!VAPID) return
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return
-    if (Notification.permission === 'denied') return
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setEstado('no-soportado')
+      return
+    }
 
-    let cancelado = false
-
-    ;(async () => {
-      try {
-        const permiso = Notification.permission === 'granted'
-          ? 'granted'
-          : await Notification.requestPermission()
-        if (permiso !== 'granted' || cancelado) return
-
-        const reg = await navigator.serviceWorker.ready
-        let sub = await reg.pushManager.getSubscription()
-        if (!sub) {
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID) as BufferSource,
-          })
-        }
-        if (cancelado) return
-
-        const token = await getClientToken()
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notificaciones/suscribir`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify(sub),
-        })
-      } catch {
-        /* permiso denegado o navegador sin soporte — silencioso */
+    try {
+      setEstado('activando')
+      const permiso = await Notification.requestPermission()
+      if (permiso !== 'granted') {
+        setEstado(permiso === 'denied' ? 'denegado' : 'idle')
+        return
       }
-    })()
 
-    return () => { cancelado = true }
-  }, [activo])
+      const reg = await navigator.serviceWorker.ready
+      let sub = await reg.pushManager.getSubscription()
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID) as BufferSource,
+        })
+      }
+
+      const token = await getClientToken()
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notificaciones/suscribir`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(sub),
+      })
+      setEstado('activo')
+    } catch {
+      setEstado('idle')
+    }
+  }, [])
+
+  return { estado, activar }
 }
