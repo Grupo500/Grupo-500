@@ -6,7 +6,7 @@
 
 import { prisma } from '../config/prisma'
 import { logger } from '../utils/logger'
-import { sendPushToUser, sendPushToAdmins } from './push'
+import { sendPushToUser, sendPushToAdmins, sendPushToAsesores } from './push'
 
 export async function evaluarRankingYNotificar(): Promise<void> {
   const hoy       = new Date()
@@ -42,11 +42,14 @@ export async function evaluarRankingYNotificar(): Promise<void> {
     const mismaVentana = info.posicionMes === mesKey
     const anterior     = mismaVentana ? info.posicionRanking : null
 
-    // Notificar solo si bajó de posición (lo rebasaron) y tiene ventas este mes
-    if (anterior != null && nuevaPos > anterior && r.ventas > 0) {
-      let title = '📊 Cambio en el ranking'
-      let body: string
+    // Solo si hay posición previa conocida y tiene ventas este mes
+    if (anterior == null || r.ventas <= 0) return
 
+    let title: string | null = null
+    let body  = ''
+
+    if (nuevaPos > anterior) {
+      // Bajó de posición (lo rebasaron)
       if (anterior === 1) {
         title = '⚠️ Perdiste el primer lugar'
         body  = `Otro asesor te superó. Ahora estás en el puesto #${nuevaPos}.`
@@ -54,9 +57,24 @@ export async function evaluarRankingYNotificar(): Promise<void> {
         title = '⚠️ Saliste del podio'
         body  = `Bajaste al puesto #${nuevaPos}. ¡Recupera tu lugar en el top 3!`
       } else {
+        title = '📊 Cambio en el ranking'
         body  = `Te superaron: pasaste del puesto #${anterior} al #${nuevaPos}.`
       }
+    } else if (nuevaPos < anterior) {
+      // Subió de posición
+      if (nuevaPos === 1) {
+        title = '🥇 ¡Tomaste el primer lugar!'
+        body  = 'Eres el #1 del mes. ¡A mantenerlo!'
+      } else if (nuevaPos <= 3 && anterior > 3) {
+        title = '🏅 ¡Entraste al podio!'
+        body  = `Subiste al puesto #${nuevaPos}. ¡Estás en el top 3!`
+      } else {
+        title = '🚀 ¡Subiste de puesto!'
+        body  = `Avanzaste del puesto #${anterior} al #${nuevaPos}.`
+      }
+    }
 
+    if (title) {
       await sendPushToUser(info.userId, { title, body, url: '/dashboard' })
     }
   }))
@@ -74,17 +92,26 @@ export async function evaluarRankingYNotificar(): Promise<void> {
   const newTop3 = ranking.slice(0, 3).map(r => r.asesorId)
   const nombreDe = (id: string | null) => (id ? infoPorId.get(id)?.nombre ?? 'Asesor' : '')
 
-  if (newTop1 && newTop1 !== prevTop1) {
+  const cambioLider = !!newTop1 && newTop1 !== prevTop1
+  const cambioPodio = prevTop3.length > 0 && JSON.stringify(newTop3) !== JSON.stringify(prevTop3)
+  const listaTop3   = newTop3.map((id, i) => `${i + 1}. ${nombreDe(id)}`).join('   ')
+
+  // Admin: nuevo líder (prioridad) o cambio de podio
+  if (cambioLider) {
     await sendPushToAdmins({
       title: '🏆 Nuevo líder del ranking',
       body:  `${nombreDe(newTop1)} tomó el primer lugar del mes.`,
       url:   '/dashboard',
     })
-  } else if (prevTop3.length > 0 && JSON.stringify(newTop3) !== JSON.stringify(prevTop3)) {
-    const lista = newTop3.map((id, i) => `${i + 1}. ${nombreDe(id)}`).join('   ')
-    await sendPushToAdmins({
-      title: '📊 Cambio de podio',
-      body:  lista,
+  } else if (cambioPodio) {
+    await sendPushToAdmins({ title: '📊 Cambio de podio', body: listaTop3, url: '/dashboard' })
+  }
+
+  // Todos los asesores: enterarse del cambio de podio (incluye nuevo líder)
+  if (cambioPodio) {
+    await sendPushToAsesores({
+      title: cambioLider ? '🏆 Nuevo líder del ranking' : '📊 Cambio en el podio',
+      body:  `Top 3 del mes:   ${listaTop3}`,
       url:   '/dashboard',
     })
   }
