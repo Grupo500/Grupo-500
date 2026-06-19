@@ -41,6 +41,7 @@ import { backfillComisiones } from './jobs/backfillComisiones'
 const app = express()
 
 const PORT = process.env.PORT || 3001
+// Deploy de prueba (aislar si un deploy normal afecta la auth) — sin cambios funcionales
 
 // Railway y proxies inversos envían X-Forwarded-For — necesario para rate-limit y HTTPS
 app.set('trust proxy', 1)
