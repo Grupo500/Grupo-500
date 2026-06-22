@@ -85,12 +85,29 @@ export async function webhook(req: Request, res: Response) {
 
   logger.info(`[Hotmart] Procesando compra ${transaccion} de ${buyer.email}`)
 
-  // Idempotencia: si ya existe el pago con esta referencia, ignorar
+  // Idempotencia: si ya existe el pago con esta referencia no se duplica, pero
+  // SÍ se sincronizan datos del comprador que pudieron cambiar en Hotmart
+  // (ej. correo corregido) cuando se reenvía el webhook de la misma transacción.
   const pagoExistente = await prisma.pago.findFirst({
     where: { referenciaPago: transaccion },
+    include: { estudiante: true },
   })
   if (pagoExistente) {
-    logger.info(`[Hotmart] Pago ${transaccion} ya procesado — ignorando`)
+    const est = pagoExistente.estudiante
+    if (est) {
+      const nuevoEmail = buyer.email?.toLowerCase()
+      const nuevoTel   = buyer.checkout_phone ?? buyer.phone
+      const cambios: { email?: string; telefono?: string } = {}
+      if (nuevoEmail && nuevoEmail !== est.email)        cambios.email    = nuevoEmail
+      if (nuevoTel   && nuevoTel   !== est.telefono)     cambios.telefono = nuevoTel
+      if (Object.keys(cambios).length) {
+        await prisma.estudiante.update({ where: { id: est.id }, data: cambios })
+        logger.info(`[Hotmart] Datos sincronizados del estudiante ${est.id} (${Object.keys(cambios).join(', ')}) por reenvío de ${transaccion}`)
+        broadcast('nuevo-estudiante', { estudianteId: est.id, cursoId: '' })
+        return res.status(200).json({ success: true, message: 'Datos del comprador sincronizados' })
+      }
+    }
+    logger.info(`[Hotmart] Pago ${transaccion} ya procesado — sin cambios`)
     return res.status(200).json({ success: true, message: 'Ya procesado' })
   }
 

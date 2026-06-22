@@ -45,11 +45,21 @@ export async function listar(req: Request, res: Response) {
   // El vendedor puede activar el filtro "soloMios" para ver solo los asignados a él.
   const filtrarSoloMios = soloMios === 'true' && req.asesorId
 
+  // El término de búsqueda (param `nombre` por compatibilidad) filtra por
+  // nombre, correo o teléfono.
+  const termino = nombre ? String(nombre).trim() : ''
+
   const where = {
     ...(filtrarSoloMios                ? { asesorId: req.asesorId } : {}),
     ...(isAdmin && asesorId            ? { asesorId: String(asesorId) } : {}),
-    ...(nombre    && { nombre:    { contains: String(nombre),    mode: 'insensitive' as const } }),
     ...(colegioId && { colegioId: String(colegioId) }),
+    ...(termino && {
+      OR: [
+        { nombre:   { contains: termino, mode: 'insensitive' as const } },
+        { email:    { contains: termino, mode: 'insensitive' as const } },
+        { telefono: { contains: termino, mode: 'insensitive' as const } },
+      ],
+    }),
   }
 
   const [estudiantes, total] = await Promise.all([
