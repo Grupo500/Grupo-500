@@ -12,7 +12,7 @@ import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
   CheckCircle, Clock, ChevronRight as Arrow, Check,
-  X, Download, CheckSquare, Square,
+  X, Download, CheckSquare, Square, RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -226,6 +226,11 @@ const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.dat
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda, soloMios],
     queryFn: () => fetcher<PaginatedResponse>(`/estudiantes?page=${page}&limit=15${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}${soloMios ? '&soloMios=true' : ''}`),
+  })
+
+  const sincronizarMutation = useMutation({
+    mutationFn: (id: string) => fetcher(`/estudiantes/${id}/sincronizar-hotmart`, { method: 'POST' }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['estudiantes'] }) },
   })
 
   const crearMutation = useMutation({
@@ -580,9 +585,22 @@ const subirComprobante = async (file: File) => {
                       </div>
                     </div>
                   </div>
-                  <span className={cn('flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full', badge.cls)}>
-                    {badge.label}
-                  </span>
+                  <div className="flex-shrink-0 flex items-center gap-1.5">
+                    {!modoSeleccion && (
+                      <button
+                        onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); sincronizarMutation.mutate(e.id) }}
+                        disabled={sincronizarMutation.isPending && sincronizarMutation.variables === e.id}
+                        title="Sincronizar correo con Hotmart"
+                        aria-label="Sincronizar con Hotmart"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-high transition-colors disabled:opacity-50"
+                      >
+                        <RefreshCw className={cn('w-3.5 h-3.5', sincronizarMutation.isPending && sincronizarMutation.variables === e.id && 'animate-spin')} />
+                      </button>
+                    )}
+                    <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', badge.cls)}>
+                      {badge.label}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Curso */}

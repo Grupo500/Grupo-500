@@ -458,3 +458,69 @@ export async function listarVentas(req: Request, res: Response) {
   const data = await apiRes.json()
   return ApiResponse.success(res, data)
 }
+
+// ---------------------------------------------------------------------------
+// Sincronizar datos de UN estudiante desde Hotmart (por sus transacciones)
+// Trae el correo/nombre más reciente de Hotmart y actualiza al estudiante.
+// ---------------------------------------------------------------------------
+export async function sincronizarEstudiante(req: Request, res: Response) {
+  const clientId     = process.env.HOTMART_CLIENT_ID
+  const clientSecret = process.env.HOTMART_CLIENT_SECRET
+  if (!clientId || !clientSecret) {
+    return res.status(503).json({ success: false, error: 'Hotmart API no configurada' })
+  }
+
+  const estudiante = await prisma.estudiante.findUnique({
+    where: { id: req.params.id },
+    include: { pagos: { where: { referenciaPago: { not: null } }, orderBy: { fechaPago: 'desc' } } },
+  })
+  if (!estudiante) {
+    return res.status(404).json({ success: false, error: 'Estudiante no encontrado' })
+  }
+
+  const transacciones = [...new Set(estudiante.pagos.map(p => p.referenciaPago).filter((t): t is string => !!t))]
+  if (transacciones.length === 0) {
+    return ApiResponse.success(res, { actualizado: false, mensaje: 'El estudiante no tiene transacciones de Hotmart' })
+  }
+
+  const token = await getAccessToken()
+
+  let nuevoEmail: string | undefined
+  let nuevoNombre: string | undefined
+  for (const tx of transacciones) {
+    const params = new URLSearchParams({ transaction: tx, max_results: '1' })
+    const apiRes = await fetch(
+      `https://developers.hotmart.com/payments/api/v1/sales/history?${params}`,
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } },
+    )
+    if (!apiRes.ok) {
+      logger.warn(`[Hotmart] Sync estudiante: error consultando tx ${tx}: ${apiRes.status}`)
+      continue
+    }
+    const json: any = await apiRes.json()
+    const buyer = json.items?.[0]?.buyer
+    if (buyer?.email) {
+      nuevoEmail  = String(buyer.email).toLowerCase()
+      nuevoNombre = buyer.name ? String(buyer.name) : undefined
+      break
+    }
+  }
+
+  if (!nuevoEmail) {
+    return ApiResponse.success(res, { actualizado: false, mensaje: 'No se encontró información del comprador en Hotmart' })
+  }
+
+  const cambios: { email?: string; nombre?: string } = {}
+  if (nuevoEmail !== estudiante.email)                 cambios.email  = nuevoEmail
+  if (nuevoNombre && nuevoNombre !== estudiante.nombre) cambios.nombre = nuevoNombre
+
+  if (Object.keys(cambios).length === 0) {
+    return ApiResponse.success(res, { actualizado: false, mensaje: 'Ya está al día con Hotmart' })
+  }
+
+  const actualizado = await prisma.estudiante.update({ where: { id: estudiante.id }, data: cambios })
+  logger.info(`[Hotmart] Estudiante ${estudiante.id} sincronizado (${Object.keys(cambios).join(', ')})`)
+  broadcast('nuevo-estudiante', { estudianteId: estudiante.id, cursoId: '' })
+
+  return ApiResponse.success(res, { actualizado: true, cambios, estudiante: actualizado })
+}
