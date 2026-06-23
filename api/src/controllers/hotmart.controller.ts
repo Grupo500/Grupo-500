@@ -524,3 +524,79 @@ export async function sincronizarEstudiante(req: Request, res: Response) {
 
   return ApiResponse.success(res, { actualizado: true, cambios, estudiante: actualizado })
 }
+
+// ---------------------------------------------------------------------------
+// Sincronizar TODOS los estudiantes desde Hotmart (general, solo ADMIN)
+// Pagina el historial de ventas, mapea transacción → correo/nombre actual y
+// actualiza los estudiantes cuyos datos cambiaron.
+// ---------------------------------------------------------------------------
+export async function sincronizarTodosEstudiantes(_req: Request, res: Response) {
+  const clientId     = process.env.HOTMART_CLIENT_ID
+  const clientSecret = process.env.HOTMART_CLIENT_SECRET
+  if (!clientId || !clientSecret) {
+    return res.status(503).json({ success: false, error: 'Hotmart API no configurada' })
+  }
+
+  const token = await getAccessToken()
+
+  // Mapa transacción → datos actuales del comprador en Hotmart
+  const txMap = new Map<string, { email?: string; name?: string }>()
+  const startDate = Date.UTC(2025, 0, 1) // ventas desde 2025 en adelante
+  const endDate   = Date.now()
+  let pageToken: string | undefined
+
+  do {
+    const params = new URLSearchParams({
+      max_results: '50',
+      start_date:  String(startDate),
+      end_date:    String(endDate),
+    })
+    if (pageToken) params.set('page_token', pageToken)
+
+    const apiRes = await fetch(
+      `https://developers.hotmart.com/payments/api/v1/sales/history?${params}`,
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } },
+    )
+    if (!apiRes.ok) {
+      const text = await apiRes.text()
+      logger.error(`[Hotmart] Sync general: error ${apiRes.status} ${text.slice(0, 200)}`)
+      break
+    }
+    const json: any = await apiRes.json()
+    for (const item of json.items ?? []) {
+      const tx = item?.purchase?.transaction
+      const b  = item?.buyer
+      if (tx && b?.email) txMap.set(String(tx), { email: String(b.email).toLowerCase(), name: b.name ? String(b.name) : undefined })
+    }
+    pageToken = json.page_info?.next_page_token
+  } while (pageToken)
+
+  // Recorrer pagos de Hotmart y actualizar al estudiante si cambió algo
+  const pagos = await prisma.pago.findMany({
+    where:  { referenciaPago: { not: null } },
+    select: { referenciaPago: true, estudiante: { select: { id: true, email: true, nombre: true } } },
+    orderBy: { fechaPago: 'desc' },
+  })
+
+  let actualizados = 0
+  const procesados = new Set<string>()
+  for (const p of pagos) {
+    const est  = p.estudiante
+    const info = p.referenciaPago ? txMap.get(p.referenciaPago) : undefined
+    if (!est || !info?.email || procesados.has(est.id)) continue
+    procesados.add(est.id)
+
+    const cambios: { email?: string; nombre?: string } = {}
+    if (info.email !== est.email)                  cambios.email  = info.email
+    if (info.name && info.name !== est.nombre)     cambios.nombre = info.name
+    if (Object.keys(cambios).length) {
+      await prisma.estudiante.update({ where: { id: est.id }, data: cambios })
+      actualizados++
+    }
+  }
+
+  if (actualizados > 0) broadcast('nuevo-estudiante', { estudianteId: '', cursoId: '' })
+  logger.info(`[Hotmart] Sync general: ${actualizados} estudiante(s) actualizados de ${txMap.size} ventas`)
+
+  return ApiResponse.success(res, { actualizados, ventasRevisadas: txMap.size })
+}

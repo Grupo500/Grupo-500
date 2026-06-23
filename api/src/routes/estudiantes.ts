@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { authenticate, requireRole } from '../middleware/auth'
 import { asyncHandler } from '../middleware/errorHandler'
 import * as ctrl from '../controllers/estudiantes.controller'
-import { sincronizarEstudiante } from '../controllers/hotmart.controller'
+import { sincronizarTodosEstudiantes } from '../controllers/hotmart.controller'
 import { uploadExcel } from '../middleware/upload'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
@@ -14,12 +14,12 @@ router.use(authenticate)
 router.get('/', asyncHandler(ctrl.listar))
 router.post('/', asyncHandler(ctrl.crear))
 router.get('/exportar', asyncHandler(ctrl.exportar))
+router.post('/sincronizar-hotmart', requireRole('ADMIN'), asyncHandler(sincronizarTodosEstudiantes))
 router.get('/plantilla', requireRole('ADMIN'), asyncHandler(ctrl.plantillaImport))
 router.post('/import', requireRole('ADMIN'), uploadExcel.single('file'), asyncHandler(ctrl.importar))
 router.get('/:id', asyncHandler(ctrl.obtener))
 router.patch('/:id', asyncHandler(ctrl.actualizar))
 router.delete('/:id', requireRole('ADMIN'), asyncHandler(ctrl.eliminar))
-router.post('/:id/sincronizar-hotmart', asyncHandler(sincronizarEstudiante))
 router.get('/:id/rendimiento', asyncHandler(ctrl.rendimiento))
 router.get('/:id/historial',       asyncHandler(ctrl.historial))
 router.get('/:id/observaciones',   asyncHandler(async (req, res) => {

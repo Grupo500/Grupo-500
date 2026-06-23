@@ -229,7 +229,7 @@ const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.dat
   })
 
   const sincronizarMutation = useMutation({
-    mutationFn: (id: string) => fetcher(`/estudiantes/${id}/sincronizar-hotmart`, { method: 'POST' }),
+    mutationFn: () => fetcher('/estudiantes/sincronizar-hotmart', { method: 'POST' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['estudiantes'] }) },
   })
 
@@ -400,6 +400,17 @@ const subirComprobante = async (file: File) => {
         subtitle={`${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`}
         actions={
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => sincronizarMutation.mutate()}
+                disabled={sincronizarMutation.isPending}
+                title="Sincronizar correos con Hotmart"
+                aria-label="Sincronizar con Hotmart"
+                className="flex items-center justify-center w-10 h-10 bg-surface-high border border-outline-variant text-on-surface rounded-xl hover:bg-surface-lowest transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={cn('w-4 h-4', sincronizarMutation.isPending && 'animate-spin')} />
+              </button>
+            )}
             {isAdmin && (
               <button
                 onClick={exportarEstudiantes}
@@ -585,22 +596,9 @@ const subirComprobante = async (file: File) => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex-shrink-0 flex items-center gap-1.5">
-                    {!modoSeleccion && (
-                      <button
-                        onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); sincronizarMutation.mutate(e.id) }}
-                        disabled={sincronizarMutation.isPending && sincronizarMutation.variables === e.id}
-                        title="Sincronizar correo con Hotmart"
-                        aria-label="Sincronizar con Hotmart"
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-high transition-colors disabled:opacity-50"
-                      >
-                        <RefreshCw className={cn('w-3.5 h-3.5', sincronizarMutation.isPending && sincronizarMutation.variables === e.id && 'animate-spin')} />
-                      </button>
-                    )}
-                    <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', badge.cls)}>
-                      {badge.label}
-                    </span>
-                  </div>
+                  <span className={cn('flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full', badge.cls)}>
+                    {badge.label}
+                  </span>
                 </div>
 
                 {/* Curso */}
