@@ -228,9 +228,16 @@ const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.dat
     queryFn: () => fetcher<PaginatedResponse>(`/estudiantes?page=${page}&limit=15${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}${soloMios ? '&soloMios=true' : ''}`),
   })
 
+  const [msgSync, setMsgSync] = useState<string | null>(null)
   const sincronizarMutation = useMutation({
-    mutationFn: () => fetcher('/estudiantes/sincronizar-hotmart', { method: 'POST' }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['estudiantes'] }) },
+    mutationFn: () => fetcher<any>('/estudiantes/sincronizar-hotmart', { method: 'POST' }),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
+      const n = res?.data?.actualizados ?? 0
+      setMsgSync(n > 0 ? `${n} estudiante${n !== 1 ? 's' : ''} actualizado${n !== 1 ? 's' : ''}` : 'Todo al día con Hotmart')
+      setTimeout(() => setMsgSync(null), 5000)
+    },
+    onError: (e: Error) => alert(`Error al sincronizar con Hotmart: ${e.message}`),
   })
 
   const crearMutation = useMutation({
@@ -397,18 +404,21 @@ const subirComprobante = async (file: File) => {
     <div className="space-y-5">
       <PageHeader
         title="Estudiantes"
-        subtitle={`${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`}
+        subtitle={
+          sincronizarMutation.isPending
+            ? 'Sincronizando con Hotmart…'
+            : msgSync ?? `${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`
+        }
         actions={
           <div className="flex items-center gap-2">
             {isAdmin && (
               <button
                 onClick={() => sincronizarMutation.mutate()}
                 disabled={sincronizarMutation.isPending}
-                title="Sincronizar correos con Hotmart"
-                aria-label="Sincronizar con Hotmart"
-                className="flex items-center justify-center w-10 h-10 bg-surface-high border border-outline-variant text-on-surface rounded-xl hover:bg-surface-lowest transition-colors cursor-pointer disabled:opacity-60"
+                className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
               >
-                <RefreshCw className={cn('w-4 h-4', sincronizarMutation.isPending && 'animate-spin')} />
+                <RefreshCw className={`h-3.5 w-3.5 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
+                Sincronizar Hotmart
               </button>
             )}
             {isAdmin && (
