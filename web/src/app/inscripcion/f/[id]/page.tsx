@@ -1256,6 +1256,12 @@ export default function FormularioDinamico() {
     ]).then(([fData, tData, cData, aData]) => {
       if (!fData.success || !fData.data?.activo) { setNotFound(true); return }
       setForm(fData.data)
+      // Preseleccionar campos con una sola opción (ej. método de pago = Addi)
+      const defaults: Record<string, any> = {}
+      for (const c of (fData.data.campos ?? [])) {
+        if (Array.isArray(c?.opciones) && c.opciones.length === 1) defaults[c.id] = c.opciones[0]
+      }
+      if (Object.keys(defaults).length) setValores(v => ({ ...v, ...defaults }))
       if (fData.data.meta) setMeta(fData.data.meta)
       if (tData.success && tData.data?.url) setTerminos(tData.data.url)
       if (cData?.success) {
