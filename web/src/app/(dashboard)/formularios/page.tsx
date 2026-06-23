@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch, getClientToken } from '@/lib/api'
 import {
@@ -37,8 +38,8 @@ function useToast() {
 }
 
 // ── Card de formulario ────────────────────────────────────────────────────────
-function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCopyLink, onEditNombre, toggling }: {
-  form: Formulario; index: number; toggling: boolean
+function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCopyLink, onEditNombre, toggling, isAdmin, miAsesorId }: {
+  form: Formulario; index: number; toggling: boolean; isAdmin: boolean; miAsesorId?: string
   onDelete: () => void; onCopyLink: () => void; onEditNombre: () => void
   onToggleActivo: () => void; onToggleLanding: () => void
 }) {
@@ -77,12 +78,14 @@ function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCo
           </div>
           <div className="flex items-start gap-1.5 group/title">
             <h3 className="font-bold text-on-surface truncate flex-1">{form.nombre}</h3>
-            <button onClick={onEditNombre}
-              title="Editar nombre"
-              className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 rounded-lg
-                text-on-surface-variant hover:text-primary hover:bg-primary/5 cursor-pointer active:scale-[0.95] shrink-0">
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
+            {isAdmin && (
+              <button onClick={onEditNombre}
+                title="Editar nombre"
+                className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 rounded-lg
+                  text-on-surface-variant hover:text-primary hover:bg-primary/5 cursor-pointer active:scale-[0.95] shrink-0">
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
           {form.descripcion && (
             <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-1">{form.descripcion}</p>
@@ -123,43 +126,52 @@ function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCo
 
         {/* Acciones */}
         <div className="flex items-center gap-2">
-          <button onClick={onToggleActivo} disabled={toggling}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl
-              text-xs font-semibold cursor-pointer transition-all active:scale-[0.97] disabled:opacity-50 ${
-              form.activo
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                : 'bg-surface-high text-on-surface-variant border border-outline-variant hover:bg-surface-high'
-            }`}>
-            {toggling
-              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              : form.activo ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
-            }
-            {form.activo ? 'Activo' : 'Activar'}
-          </button>
-          <button onClick={onToggleLanding}
-            title={form.visibleEnLanding ? 'Ocultar de landing' : 'Mostrar en landing'}
-            className={`p-2 rounded-xl border cursor-pointer transition-all active:scale-[0.97] ${
-              form.visibleEnLanding
-                ? 'bg-primary/10 border-primary/20 text-primary'
-                : 'border-outline-variant text-on-surface-variant hover:bg-surface-high'
-            }`}>
-            <Globe className="w-4 h-4" />
-          </button>
+          {isAdmin ? (
+            <>
+              <button onClick={onToggleActivo} disabled={toggling}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl
+                  text-xs font-semibold cursor-pointer transition-all active:scale-[0.97] disabled:opacity-50 ${
+                  form.activo
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-surface-high text-on-surface-variant border border-outline-variant hover:bg-surface-high'
+                }`}>
+                {toggling
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : form.activo ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
+                }
+                {form.activo ? 'Activo' : 'Activar'}
+              </button>
+              <button onClick={onToggleLanding}
+                title={form.visibleEnLanding ? 'Ocultar de landing' : 'Mostrar en landing'}
+                className={`p-2 rounded-xl border cursor-pointer transition-all active:scale-[0.97] ${
+                  form.visibleEnLanding
+                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    : 'border-outline-variant text-on-surface-variant hover:bg-surface-high'
+                }`}>
+                <Globe className="w-4 h-4" />
+              </button>
+            </>
+          ) : null}
           <a href={`${origin}/inscripcion/f/${form.id}`} target="_blank" rel="noopener noreferrer"
-            className="p-2 rounded-xl border border-outline-variant text-on-surface-variant
-              hover:bg-surface-high cursor-pointer transition-all active:scale-[0.97]"
+            className={`${isAdmin ? '' : 'flex-1 justify-center'} flex items-center gap-1.5 p-2 rounded-xl border border-outline-variant text-on-surface-variant
+              hover:bg-surface-high cursor-pointer transition-all active:scale-[0.97] text-xs font-semibold`}
             title="Abrir formulario">
             <ExternalLink className="w-4 h-4" />
+            {!isAdmin && 'Abrir formulario'}
           </a>
-          <button onClick={onDelete}
-            className="p-2 rounded-xl border border-outline-variant text-on-surface-variant
-              hover:bg-red-50 hover:border-red-200 hover:text-red-500 cursor-pointer transition-all active:scale-[0.97]">
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {isAdmin && (
+            <button onClick={onDelete}
+              className="p-2 rounded-xl border border-outline-variant text-on-surface-variant
+                hover:bg-red-50 hover:border-red-200 hover:text-red-500 cursor-pointer transition-all active:scale-[0.97]">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* Botón generar enlace por asesor */}
-        <EnlaceAsesorBtn formId={form.id} />
+        {/* Enlace de asesor: admin elige cualquiera; asesor copia el suyo */}
+        {isAdmin
+          ? <EnlaceAsesorBtn formId={form.id} />
+          : <MiEnlaceBtn formId={form.id} miAsesorId={miAsesorId} />}
       </div>
     </div>
   )
@@ -238,6 +250,33 @@ function EnlaceAsesorBtn({ formId }: { formId: string }) {
         </>
       )}
     </div>
+  )
+}
+
+// ── Botón "Copiar mi enlace" (para asesores) ──────────────────────────────────
+function MiEnlaceBtn({ formId, miAsesorId }: { formId: string; miAsesorId?: string }) {
+  const [copiado, setCopiado] = useState(false)
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+
+  if (!miAsesorId) return null
+
+  function copiar() {
+    const url = `${origin}/inscripcion/f/${formId}?asesor=${miAsesorId}`
+    navigator.clipboard.writeText(url)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
+
+  return (
+    <button onClick={copiar}
+      className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-semibold
+        transition-all active:scale-[0.97] cursor-pointer mt-2 ${
+        copiado
+          ? 'border-emerald-300 text-emerald-700 bg-emerald-50'
+          : 'border-primary/30 text-primary hover:bg-primary/5'
+      }`}>
+      {copiado ? <><Check className="w-3.5 h-3.5" /> Enlace copiado</> : <><Link2 className="w-3.5 h-3.5" /> Copiar mi enlace</>}
+    </button>
   )
 }
 
@@ -373,7 +412,17 @@ function UploadTCSection() {
 // ── Página ────────────────────────────────────────────────────────────────────
 export default function FormulariosPage() {
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
+  const isAdmin = ((session?.user as any)?.role ?? 'VENDEDOR') === 'ADMIN'
   const { msg: toastMsg, show: showToast } = useToast()
+
+  // Asesor: su propio id para generar su enlace personalizado
+  const { data: meData } = useQuery({
+    queryKey: ['asesor-me'],
+    queryFn:  () => apiFetch<any>('/asesores/me'),
+    enabled:  !isAdmin,
+  })
+  const miAsesorId = (meData as any)?.data?.id ?? (meData as any)?.id
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const [editNombre, setEditNombre] = useState<Formulario | null>(null)
@@ -435,8 +484,8 @@ export default function FormulariosPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-          {/* T&C */}
-          <UploadTCSection />
+          {/* T&C — solo admin */}
+          {isAdmin && <UploadTCSection />}
 
           {/* Divisor */}
           <div className="flex items-center gap-3" style={{ animation: 'fadeIn 0.4s ease-out 0.15s both' }}>
@@ -479,6 +528,7 @@ export default function FormulariosPage() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {formularios.map((form, i) => (
                 <FormCard key={form.id} form={form} index={i}
+                  isAdmin={isAdmin} miAsesorId={miAsesorId}
                   toggling={togglingId === form.id}
                   onDelete={() => setConfirmDel(form.id)}
                   onCopyLink={() => handleCopyLink(form.id)}

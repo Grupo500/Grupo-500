@@ -26,7 +26,7 @@ const moreItems: NavItem[] = [
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
-  { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: true  },
+  { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
   { href: '/reportes',        label: 'Reportes',         icon: BarChart3,     adminOnly: false },
 ]
 
