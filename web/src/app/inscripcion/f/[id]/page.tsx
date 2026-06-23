@@ -1236,6 +1236,7 @@ export default function FormularioDinamico() {
   const [terminosUrl, setTerminos]  = useState('https://res.cloudinary.com/dbc1cm3hq/raw/upload/v1780155655/grupo500/documentos/terminos-condiciones-grupo500.pdf')
   const [loading,     setLoading]   = useState(true)
   const [notFound,    setNotFound]  = useState(false)
+  const [loadError,   setLoadError] = useState(false)
   const [asesorNombre, setAsesorNombre] = useState<string | null>(null)
   const [asesorError,  setAsesorError]  = useState(false)
   const [cursos,      setCursos]    = useState<any[]>([])
@@ -1247,13 +1248,15 @@ export default function FormularioDinamico() {
   const [errorGlobal, setErrorGlobal] = useState('')
   const [tcOpen,      setTcOpen]    = useState(false)
 
-  useEffect(() => {
-    Promise.all([
-      fetch(`${API}/inscripcion/formularios/${id}`).then(r => r.json()),
-      fetch(`${API}/inscripcion/terminos`).then(r => r.json()),
-      fetch(`${API}/inscripcion/cursos-activos`).then(r => r.json()),
-      asesorParam ? fetch(`${API}/inscripcion/asesor/${asesorParam}`).then(r => r.json()).catch(() => ({ success: false })) : Promise.resolve(null),
-    ]).then(([fData, tData, cData, aData]) => {
+  // Carga del formulario (con reintento). Solo marca "no activo" si el form
+  // realmente no existe o está inactivo; un fallo de red muestra error con reintento.
+  const cargarForm = useCallback(async () => {
+    setLoading(true); setLoadError(false); setNotFound(false)
+    try {
+      const r = await fetch(`${API}/inscripcion/formularios/${id}`)
+      if (r.status === 404) { setNotFound(true); return }
+      if (!r.ok) { setLoadError(true); return }
+      const fData = await r.json()
       if (!fData.success || !fData.data?.activo) { setNotFound(true); return }
       setForm(fData.data)
       // Preseleccionar campos con una sola opción (ej. método de pago = Addi)
@@ -1263,18 +1266,26 @@ export default function FormularioDinamico() {
       }
       if (Object.keys(defaults).length) setValores(v => ({ ...v, ...defaults }))
       if (fData.data.meta) setMeta(fData.data.meta)
-      if (tData.success && tData.data?.url) setTerminos(tData.data.url)
-      if (cData?.success) {
-        setCursos(cData.data)
-        setValores(v => ({ ...v, __cursos: cData.data, __tipoCurso: 'INDIVIDUAL' }))
-      }
-      if (aData !== null) {
-        if (aData.success) setAsesorNombre(aData.data.nombre)
-        else setAsesorError(true)
-      }
-    }).catch(() => setNotFound(true))
-      .finally(() => setLoading(false))
+    } catch {
+      setLoadError(true) // error de conexión — NO es "formulario inactivo"
+    } finally {
+      setLoading(false)
+    }
   }, [id])
+
+  useEffect(() => {
+    cargarForm()
+    // Secundarios: su fallo NO bloquea el formulario
+    fetch(`${API}/inscripcion/terminos`).then(r => r.json())
+      .then(t => { if (t.success && t.data?.url) setTerminos(t.data.url) }).catch(() => {})
+    fetch(`${API}/inscripcion/cursos-activos`).then(r => r.json())
+      .then(c => { if (c?.success) { setCursos(c.data); setValores(v => ({ ...v, __cursos: c.data, __tipoCurso: 'INDIVIDUAL' })) } }).catch(() => {})
+    if (asesorParam) {
+      fetch(`${API}/inscripcion/asesor/${asesorParam}`).then(r => r.json())
+        .then(a => { if (a.success) setAsesorNombre(a.data.nombre); else setAsesorError(true) })
+        .catch(() => setAsesorError(true))
+    }
+  }, [id, asesorParam, cargarForm])
 
   function set(campoId: string, valor: any) {
     setValores(v => ({ ...v, [campoId]: valor }))
@@ -1400,6 +1411,27 @@ export default function FormularioDinamico() {
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="w-10 h-10 text-white animate-spin" />
         <p className="text-white/80 text-sm font-medium">Cargando formulario...</p>
+      </div>
+    </div>
+  )
+
+  // ── Error de conexión (NO es "inactivo") — permite reintentar ──
+  if (loadError) return (
+    <div className="min-h-dvh bg-gradient-to-b from-[#21b9f7] to-[#1a7de0] flex items-center justify-center px-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
+        <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="w-8 h-8 text-amber-400" />
+        </div>
+        <h2 className={`${poppins.className} font-bold text-slate-800 text-lg mb-2`}>
+          No se pudo cargar
+        </h2>
+        <p className="text-slate-500 text-sm mb-5">
+          Hubo un problema de conexión. Revisa tu internet e inténtalo de nuevo.
+        </p>
+        <button onClick={() => cargarForm()}
+          className="block w-full py-3 rounded-xl bg-[#21b9f7] text-white font-bold text-sm text-center">
+          Reintentar
+        </button>
       </div>
     </div>
   )
