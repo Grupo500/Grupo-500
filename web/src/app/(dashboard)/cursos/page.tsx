@@ -180,7 +180,7 @@ export default function CursosPage() {
   const isAdmin = session?.user?.role === 'ADMIN'
 
   const [busqueda,     setBusqueda]     = useState('')
-  const [filtroActivo, setFiltroActivo] = useState<'todos' | 'activos' | 'inactivos'>('activos')
+  const [filtroActivo, setFiltroActivo] = useState<'todos' | 'activos' | 'inactivos'>('todos')
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getClientToken()
@@ -252,31 +252,10 @@ export default function CursosPage() {
         )}
       </div>
 
-      {/* Barra de filtros */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Barra de filtros — búsqueda arriba, tabs abajo */}
+      <div className="flex flex-col gap-3">
 
-        <div className="relative flex p-1 bg-surface-high rounded-xl border border-outline-variant self-start shrink-0">
-          {(['activos', 'inactivos', 'todos'] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFiltroActivo(f)}
-              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap ${
-                filtroActivo === f
-                  ? 'bg-surface-lowest text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              {f === 'activos' ? 'Habilitados' : f === 'inactivos' ? 'Deshabilitados' : 'Todos'}
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors duration-150 shrink-0 ${
-                filtroActivo === f ? 'bg-primary/15 text-primary' : 'bg-outline-variant/20 text-on-surface-variant'
-              }`}>
-                {counts[f]}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-2 flex-1 max-w-sm">
+        <div className="flex gap-2 w-full">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             <input
@@ -296,6 +275,27 @@ export default function CursosPage() {
               <X className="w-4 h-4" />
             </button>
           )}
+        </div>
+
+        <div className="relative flex p-1 bg-surface-high rounded-xl border border-outline-variant self-start shrink-0">
+          {(['todos', 'activos', 'inactivos'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFiltroActivo(f)}
+              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+                filtroActivo === f
+                  ? 'bg-surface-lowest text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              {f === 'activos' ? 'Habilitados' : f === 'inactivos' ? 'Deshabilitados' : 'Todos'}
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors duration-150 shrink-0 ${
+                filtroActivo === f ? 'bg-primary/15 text-primary' : 'bg-outline-variant/20 text-on-surface-variant'
+              }`}>
+                {counts[f]}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
