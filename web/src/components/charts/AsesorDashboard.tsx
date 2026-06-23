@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { useSSE } from '@/hooks/useSSE'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
@@ -80,7 +79,7 @@ export function AsesorDashboard() {
   )
   const saludo = horaColombia < 12 ? 'Buenos días' : horaColombia < 18 ? 'Buenas tardes' : 'Buenas noches'
 
-  useSSE()
+  // El SSE se monta globalmente en el layout (SSEProvider); no duplicar aquí.
 
   const { data, isLoading } = useQuery<{ data: MiResumen }>({
     queryKey: ['mi-resumen'],
