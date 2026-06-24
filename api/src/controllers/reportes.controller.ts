@@ -274,7 +274,6 @@ export async function cursosMasVendidos(req: Request, res: Response) {
   const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
 
   const cursos = await prisma.curso.findMany({
-    where: { activo: true },
     include: {
       _count: {
         select: {
