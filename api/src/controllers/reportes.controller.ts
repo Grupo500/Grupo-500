@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
+import { construirRanking, hoyColombia, emailKey } from '../services/ranking'
 
 export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
@@ -202,51 +203,48 @@ export async function rankingAsesores(req: Request, res: Response) {
     finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate(), 23, 59, 59)
   }
 
-  // Traer asesores + pagos de ambos períodos en 3 queries paralelas
-  const [asesores, pagosActual, pagosAnterior] = await Promise.all([
-    prisma.asesor.findMany({ select: { id: true, nombre: true, user: { select: { image: true } } } }),
+  // Inicio del día de hoy en hora Colombia, para conteo de "leads de hoy"
+  const inicioHoyCol = new Date(`${hoyColombia()}T00:00:00-05:00`)
+
+  // Traer asesores + pagos + leads de Trengo en queries paralelas
+  const [asesores, pagosActual, pagosAnterior, leadsAll, leadsHoy] = await Promise.all([
+    prisma.asesor.findMany({ select: { id: true, nombre: true, email: true, user: { select: { image: true } } } }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
-      select: { asesorId: true, monto: true, estudianteId: true, comisionAsesor: true },
+      select: { asesorId: true, monto: true, estudianteId: true, comisionAsesor: true, fechaPago: true },
     }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesAnterior, lte: finMesAnterior } },
       select: { asesorId: true, monto: true },
     }),
+    prisma.trengoTicket.groupBy({ by: ['agentEmail'], _count: { ticketId: true } }),
+    prisma.trengoTicket.groupBy({
+      by: ['agentEmail'],
+      where: { firstAssignedAt: { gte: inicioHoyCol } },
+      _count: { ticketId: true },
+    }),
   ])
 
-  // Agrupar por asesor
-  const sumar = (pagos: { asesorId: string | null; monto: number }[], id: string) =>
-    pagos.filter(p => p.asesorId === id).reduce((s, p) => s + p.monto, 0)
+  // Construir mapas de leads por email canónico
+  const leadsPorEmail: Record<string, number> = {}
+  for (const r of leadsAll) leadsPorEmail[emailKey(r.agentEmail)] = r._count.ticketId
+  const leadsHoyPorEmail: Record<string, number> = {}
+  for (const r of leadsHoy) leadsHoyPorEmail[emailKey(r.agentEmail)] = r._count.ticketId
 
-  // VENDEDOR ve las ventas de todos, pero la comisión solo la suya
-  const ocultarComisionAjena = req.userRole === 'VENDEDOR'
-
-  const ranking = asesores
-    .map(a => {
-      const pagosDelAsesor = pagosActual.filter(p => p.asesorId === a.id)
-      const ventasActual   = pagosDelAsesor.reduce((s, p) => s + p.monto, 0)
-      const ventasAnterior = sumar(pagosAnterior, a.id)
-      const variacion      = ventasAnterior > 0 ? Math.round(((ventasActual - ventasAnterior) / ventasAnterior) * 100) : 0
-      // Estudiantes distintos con venta DENTRO del período (no histórico)
-      const estudiantesPeriodo = new Set(pagosDelAsesor.map(p => p.estudianteId)).size
-      const comisionGanada = pagosDelAsesor.reduce((s, p) => s + (p.comisionAsesor ?? 0), 0)
-      const esYo = a.id === req.asesorId
-      return {
-        id: a.id,
-        nombre: a.nombre,
-        image: a.user?.image ?? null,
-        totalVentas: ventasActual,
-        cobrado: ventasActual,
-        cantidadPagos: pagosDelAsesor.length,
-        totalEstudiantes: estudiantesPeriodo,
-        comisionGanada: ocultarComisionAjena && !esYo ? null : comisionGanada,
-        variacion,
-        ventasAnterior,
-        esYo,
-      }
-    })
-    .sort((a, b) => b.totalVentas - a.totalVentas)
+  const ranking = construirRanking({
+    asesores: asesores.map(a => ({
+      id: a.id,
+      nombre: a.nombre,
+      email: a.email,
+      image: a.user?.image ?? null,
+    })),
+    pagosActual,
+    pagosAnterior,
+    leadsPorEmail,
+    leadsHoyPorEmail,
+    ocultarComisionAjena: req.userRole === 'VENDEDOR',
+    asesorIdActual: req.asesorId ?? null,
+  })
 
   return ApiResponse.success(res, ranking)
 }

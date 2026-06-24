@@ -17,6 +17,9 @@ interface Asesor {
   comisionGanada: number | null   // null = oculta (comisión ajena para un asesor)
   variacion: number
   esYo?: boolean
+  leads?: number
+  tasaCierre?: number | null
+  score?: number | null
 }
 
 interface Props {
@@ -159,7 +162,7 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
           {podium.some(a => a.id === expandidoId) && (() => {
             const a = podium.find(x => x.id === expandidoId)!
             return (
-              <div className="rounded-xl border border-primary/30 bg-[var(--primary-container)]/30 p-3 animate-fade-in">
+              <div className="rounded-xl border border-primary/30 bg-[var(--primary-container)]/30 p-3 animate-fade-in space-y-2">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Wallet className="w-4 h-4 text-primary" />
@@ -172,6 +175,13 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                     </span>
                   </div>
                 </div>
+                {(a.tasaCierre != null || a.score != null) && (
+                  <div className="flex items-center gap-3 text-[11px] text-on-surface-variant pt-2 border-t border-primary/20">
+                    {a.leads != null && a.leads > 0 && <span>{a.leads} lead{a.leads !== 1 ? 's' : ''}</span>}
+                    {a.tasaCierre != null && <span className="text-on-surface font-semibold tabular-nums">Cierre {Math.round(a.tasaCierre)}%</span>}
+                    {a.score != null && <span className="ml-auto text-[13px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>Score {a.score}</span>}
+                  </div>
+                )}
               </div>
             )
           })()}
@@ -219,7 +229,7 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                       <ChevronDown className={`w-3.5 h-3.5 text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {isOpen && (
-                      <div className="mt-1 mb-1 ml-10 mr-3 px-3 py-2 rounded-xl border border-primary/30 bg-[var(--primary-container)]/30 animate-fade-in">
+                      <div className="mt-1 mb-1 ml-10 mr-3 px-3 py-2 rounded-xl border border-primary/30 bg-[var(--primary-container)]/30 animate-fade-in space-y-1.5">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2">
                             <Wallet className="w-3.5 h-3.5 text-primary" />
@@ -232,6 +242,13 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                             </span>
                           </div>
                         </div>
+                        {(a.tasaCierre != null || a.score != null) && (
+                          <div className="flex items-center gap-3 text-[11px] text-on-surface-variant pt-1.5 border-t border-primary/20">
+                            {a.leads != null && a.leads > 0 && <span>{a.leads} lead{a.leads !== 1 ? 's' : ''}</span>}
+                            {a.tasaCierre != null && <span className="text-on-surface font-semibold tabular-nums">Cierre {Math.round(a.tasaCierre)}%</span>}
+                            {a.score != null && <span className="ml-auto text-[12px] font-bold tabular-nums" style={{ color: 'var(--primary)' }}>Score {a.score}</span>}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

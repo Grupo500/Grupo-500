@@ -16,6 +16,9 @@ interface Asesor {
   totalEstudiantes: number
   comisionGanada: number
   variacion: number
+  leads?: number
+  tasaCierre?: number | null
+  score?: number | null
 }
 
 const MEDALLAS = ['🥇', '🥈', '🥉']
@@ -81,6 +84,13 @@ export function TopAsesores() {
                 {a.comisionGanada > 0 && (
                   <p className="text-[10px] mt-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
                     Comisión {formatCOP(a.comisionGanada)}
+                  </p>
+                )}
+                {/* Cierre + score (solo si hay datos de leads) */}
+                {a.tasaCierre != null && (
+                  <p className="text-[10px] mt-1 text-on-surface-variant tabular-nums">
+                    Cierre {Math.round(a.tasaCierre)}%
+                    {a.score != null && <span className="ml-1.5 text-on-surface font-semibold">· Score {a.score}</span>}
                   </p>
                 )}
                 <div className="mt-auto pt-2.5 border-t border-outline-variant w-full text-center">

@@ -374,3 +374,16 @@ enum EtapaNegociacion {
   CONVENIO
   DESCARTADO
 }
+
+// Conversaciones de Trengo asignadas a un asesor (= leads).
+// El webhook upsertea por ticketId; si cambia el asesor se actualiza el agentEmail
+// y se preserva firstAssignedAt para distinguir "lead nuevo" de "reasignación".
+model TrengoTicket {
+  ticketId         String   @id
+  agentEmail       String
+  firstAssignedAt  DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([agentEmail])
+  @@index([firstAssignedAt])
+}

@@ -27,6 +27,7 @@ import certificadosRoutes from './routes/certificados'
 import simulacrosRoutes from './routes/simulacros'
 import reportesRoutes from './routes/reportes'
 import webhookRoutes from './routes/webhooks'
+import trengoRoutes from './routes/trengo'
 import uploadRoutes from './routes/upload'
 import configRoutes from './routes/config'
 import negociacionesRoutes from './routes/negociaciones'
@@ -181,6 +182,7 @@ app.use('/api/eventos',     eventosRoutes)
 app.use('/api/passkeys',    passkeysRoutes)
 app.use('/api/hotmart',     hotmartRoutes)
 app.use('/api/notificaciones', notificacionesRoutes)
+app.use('/api/trengo',       trengoRoutes)
 
 // Sentry error handler — debe ir ANTES del errorHandler custom y DESPUÉS de todas las rutas
 if (process.env.SENTRY_DSN) {
