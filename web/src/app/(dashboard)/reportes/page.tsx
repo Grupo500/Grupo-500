@@ -276,11 +276,9 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* ── FILA 3: Cursos más vendidos (burbujas) ────────────────── */}
-      <CursosVendidosRanked desde={desde} hasta={hasta} />
-
-      {/* ── FILA 4: Medios de pago (50%) + Ranking asesores (50%) ── */}
+      {/* ── FILA 3: Cursos más vendidos (50%) + Medios de pago (50%) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
+        <CursosVendidosRanked desde={desde} hasta={hasta} />
 
         {/* Medios de pago — bar chart */}
         <div className="card p-5">
@@ -348,9 +346,10 @@ export default function ReportesPage() {
           )}
         </div>
 
-        {/* Ranking asesores */}
-        <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
       </div>
+
+      {/* ── FILA 4: Ranking asesores (ancho completo) ─────────────── */}
+      <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
     </div>
   )
 }

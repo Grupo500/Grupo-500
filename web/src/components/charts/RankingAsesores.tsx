@@ -141,6 +141,14 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                     {isFirst && (
                       <p className="text-[10px] text-on-surface-variant tabular-nums">{a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}</p>
                     )}
+                    <div className="flex items-center gap-2 mt-1 text-[10px] tabular-nums">
+                      {a.tasaCierre != null && (
+                        <span className="text-on-surface-variant">Cierre {Math.round(a.tasaCierre)}%</span>
+                      )}
+                      {a.score != null && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">{a.score}</span>
+                      )}
+                    </div>
                     <div
                       className="w-full mt-2 rounded-t-lg flex items-center justify-center font-bold"
                       style={{
@@ -189,12 +197,15 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
           {/* ── Lista del 4° en adelante ───────────────────────────── */}
           {restoTotal.length > 0 && (
             <div className="space-y-1.5 pt-2">
-              <div className="grid grid-cols-[32px_36px_1fr_auto_50px] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wide text-on-surface-variant">
+              <div className="hidden sm:grid grid-cols-[32px_36px_1fr_auto_64px_64px_44px_16px] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wide text-on-surface-variant">
                 <span>#</span>
                 <span></span>
                 <span>Asesor</span>
                 <span className="text-right">Ventas</span>
+                <span className="text-right">Cierre</span>
+                <span className="text-right">Score</span>
                 <span className="text-right">N°</span>
+                <span></span>
               </div>
               {resto.map((a, i) => {
                 const pos = i + 4
@@ -204,7 +215,7 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                     <button
                       type="button"
                       onClick={() => setExpandidoId(prev => prev === a.id ? null : a.id)}
-                      className={`w-full grid grid-cols-[32px_36px_1fr_auto_50px_16px] gap-2 items-center px-3 py-2 rounded-xl text-left transition-colors border-0 cursor-pointer ${a.esYo ? 'bg-[var(--primary-container)]/60 ring-1 ring-primary/40' : isOpen ? 'bg-[var(--primary-container)]/40' : 'bg-surface-high/40 hover:bg-surface-high'}`}
+                      className={`w-full grid grid-cols-[32px_36px_1fr_auto_50px_16px] sm:grid-cols-[32px_36px_1fr_auto_64px_64px_44px_16px] gap-2 items-center px-3 py-2 rounded-xl text-left transition-colors border-0 cursor-pointer ${a.esYo ? 'bg-[var(--primary-container)]/60 ring-1 ring-primary/40' : isOpen ? 'bg-[var(--primary-container)]/40' : 'bg-surface-high/40 hover:bg-surface-high'}`}
                     >
                       <span className="text-[12px] font-semibold text-on-surface-variant">{pos}°</span>
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10">
@@ -225,6 +236,14 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
                         )}
                       </div>
                       <span className="text-[12px] font-bold text-on-surface tabular-nums text-right">{formatCOP(a.totalVentas)}</span>
+                      <span className="hidden sm:inline text-[11px] text-on-surface-variant tabular-nums text-right">
+                        {a.tasaCierre != null ? `${Math.round(a.tasaCierre)}%` : '—'}
+                      </span>
+                      <span className="hidden sm:inline text-right">
+                        {a.score != null
+                          ? <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary tabular-nums">{a.score}</span>
+                          : <span className="text-[11px] text-on-surface-variant">—</span>}
+                      </span>
                       <span className="text-[11px] text-on-surface-variant tabular-nums text-right">{a.cantidadPagos}</span>
                       <ChevronDown className={`w-3.5 h-3.5 text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                     </button>
