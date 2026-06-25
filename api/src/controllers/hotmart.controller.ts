@@ -20,7 +20,10 @@ interface HotmartPurchase {
   transaction: string
   status: string
   price: { value: number; currency_value?: string }
-  payment?: { type?: string }
+  payment?: { type?: string; installments_number?: number }
+  // payment_mode de la oferta: PAY_IN_FULL / UNIQUE_PAYMENT (cae completo)
+  // o MULTIPLE_PAYMENTS (cae por partes; este cargo es solo una cuota)
+  offer?: { payment_mode?: string; code?: string }
   approved_date?: number
   // Códigos de rastreo del link usado en la compra (?src= y ?sck=)
   origin?: { xcod?: string; sck?: string; src?: string }
@@ -83,6 +86,14 @@ export async function webhook(req: Request, res: Response) {
   const { buyer, purchase, product, affiliates } = data
   const transaccion = purchase.transaction
 
+  // ── Detección de pago en partes (Smart Installment / MULTIPLE_PAYMENTS) ──
+  // En estas ventas el dinero NO cae completo: este cargo es solo una cuota
+  // (ej. débito o crédito configurado como "múltiples pagos"). El price.value
+  // es el monto de ESTE cargo, no el total del curso.
+  const paymentMode  = purchase.offer?.payment_mode ?? null
+  const installments = purchase.payment?.installments_number ?? 1
+  const esEnPartes   = paymentMode === 'MULTIPLE_PAYMENTS'
+
   logger.info(`[Hotmart] Procesando compra ${transaccion} de ${buyer.email}`)
 
   // Idempotencia: si ya existe el pago con esta referencia no se duplica, pero
@@ -118,10 +129,15 @@ export async function webhook(req: Request, res: Response) {
   })
   if (!curso) {
     const tipoCurso = /combo/i.test(product.name) ? 'COMBO' : 'INDIVIDUAL'
+    // Si es pago en partes, el precio del curso es el total (cargo × cuotas),
+    // no el monto de esta sola cuota.
+    const precioCurso = esEnPartes && installments > 1
+      ? purchase.price.value * installments
+      : purchase.price.value
     curso = await prisma.curso.create({
       data: {
         nombre: product.name,
-        precio: purchase.price.value,
+        precio: precioCurso,
         tipoCurso,
         activo: true,
         duracionHoras: 0,
@@ -196,20 +212,38 @@ export async function webhook(req: Request, res: Response) {
   }
 
   // Matricular al curso si no está ya matriculado.
-  // precioAcordado = precio real de la oferta (con descuento si aplica) —
-  // así el saldo se calcula contra lo que esta persona acordó pagar.
+  // precioAcordado = total que esta persona se comprometió a pagar.
+  //  - Pago completo: el monto del cargo (comportamiento normal).
+  //  - Pago en partes (MULTIPLE_PAYMENTS): el TOTAL del curso, no esta cuota,
+  //    para que el saldo refleje lo que aún debe.
+  const montoCargo = purchase.price.value
+  let precioAcordado = montoCargo
+  if (esEnPartes) {
+    precioAcordado = installments > 1
+      // Crédito a cuotas: el total comprometido es cargo × cuotas. Cuadra con
+      // la suma de cargos que irá llegando y respeta promociones/descuentos.
+      ? montoCargo * installments
+      // Débito/billet en partes: no se puede derivar el total de un solo cargo,
+      // se usa el precio del curso como mejor estimado (o el cargo si es mayor).
+      : Math.max(curso?.precio ?? 0, montoCargo)
+  }
+
   if (curso) {
     await prisma.cursoEstudiante.upsert({
       where: { estudianteId_cursoId: { estudianteId: estudiante.id, cursoId: curso.id } },
-      create: { estudianteId: estudiante.id, cursoId: curso.id, precioAcordado: purchase.price.value },
+      create: { estudianteId: estudiante.id, cursoId: curso.id, precioAcordado },
       update: {},
     })
   }
 
-  // Registrar el pago
-  const monto = purchase.price.value
+  // Registrar el pago (el monto es lo que realmente cayó en este cargo)
+  const monto = montoCargo
   const fechaPago = purchase.approved_date ? new Date(purchase.approved_date) : new Date()
   const metodo = purchase.payment?.type ?? 'HOTMART'
+
+  const notaPago = esEnPartes
+    ? `Compra Hotmart — Producto: ${product.name} (ID: ${product.id}) — Pago en partes (cuota de ${installments}; cargo $${montoCargo.toLocaleString('es-CO')})`
+    : `Compra Hotmart — Producto: ${product.name} (ID: ${product.id})`
 
   const pago = await prisma.pago.create({
     data: {
@@ -220,7 +254,7 @@ export async function webhook(req: Request, res: Response) {
       referenciaPago: transaccion,
       fechaVencimiento: fechaPago,
       fechaPago,
-      notas: `Compra Hotmart — Producto: ${product.name} (ID: ${product.id})`,
+      notas: notaPago,
       ...(asesorId && { asesorId }),
     },
   })
