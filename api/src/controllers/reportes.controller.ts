@@ -217,7 +217,13 @@ export async function rankingAsesores(req: Request, res: Response) {
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesAnterior, lte: finMesAnterior } },
       select: { asesorId: true, monto: true },
     }),
-    prisma.trengoTicket.groupBy({ by: ['agentEmail'], _count: { ticketId: true } }),
+    // Leads del MISMO período seleccionado (no histórico), para que la tasa
+    // de cierre compare ventas y leads del mismo rango de fechas.
+    prisma.trengoTicket.groupBy({
+      by: ['agentEmail'],
+      where: { firstAssignedAt: { gte: inicioMesActual, lte: finMesActual } },
+      _count: { ticketId: true },
+    }),
     prisma.trengoTicket.groupBy({
       by: ['agentEmail'],
       where: { firstAssignedAt: { gte: inicioHoyCol } },

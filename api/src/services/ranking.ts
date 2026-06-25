@@ -127,9 +127,13 @@ export function construirRanking(args: {
     const k = emailKey(a.email)
     const leads    = leadsPorEmail[k] ?? 0
     const leadsHoy = leadsHoyPorEmail[k] ?? 0
-    // Tasa de cierre = ventas (período) / leads (histórico)
-    const tasaCierre    = leads > 0 ? (pagos.length / leads) * 100 : null
-    const tasaCierreHoy = leadsHoy > 0 ? (ventasHoy / leadsHoy) * 100 : null
+    // Tasa de cierre = ventas / leads del MISMO período.
+    // Si supera 100% es señal de datos aún no comparables (más ventas que
+    // leads registrados en el período); en ese caso mostramos null ("—").
+    const tcRaw    = leads > 0 ? (pagos.length / leads) * 100 : null
+    const tasaCierre    = tcRaw !== null && tcRaw <= 100 ? tcRaw : null
+    const tcHoyRaw = leadsHoy > 0 ? (ventasHoy / leadsHoy) * 100 : null
+    const tasaCierreHoy = tcHoyRaw !== null && tcHoyRaw <= 100 ? tcHoyRaw : null
 
     const esYo = !!asesorIdActual && a.id === asesorIdActual
 
@@ -161,11 +165,9 @@ export function construirRanking(args: {
     b.score = calcularScore(b.tasaCierre, b._ventas, maxVentas)
   }
 
-  // Ordenar: primero por score (si existe), si no por ventas
-  const ordenado = borrador.sort((a, b) => {
-    if (a.score !== null && b.score !== null && a.score !== b.score) return b.score - a.score
-    return b.totalVentas - a.totalVentas
-  })
+  // Ordenar por VENTAS (monto): el ranking refleja quién más vendió.
+  // El score y la tasa de cierre son columnas informativas, no el orden.
+  const ordenado = borrador.sort((a, b) => b.totalVentas - a.totalVentas)
 
   // Quitar el campo interno _ventas
   return ordenado.map(({ _ventas: _ignored, ...resto }) => resto)
