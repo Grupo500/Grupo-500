@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, ClipboardList } from 'lucide-react'
+import { ArrowLeft, ClipboardList, Settings } from 'lucide-react'
 
 // Landing del módulo de simulacros (motor de examen).
 // Solo estudiantes y admin. La UI completa del examen llega en la siguiente fase;
@@ -30,10 +30,18 @@ export default async function ExamenesPage() {
           <div className="w-11 h-11 rounded-xl bg-primary-container text-secondary flex items-center justify-center">
             <ClipboardList className="w-6 h-6" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-on-surface">Simulacros</h1>
             <p className="text-sm text-on-surface-variant">Exámenes tipo Saber 11</p>
           </div>
+          {role === 'ADMIN' && (
+            <Link
+              href="/examenes/admin"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-high border border-outline-variant text-sm font-medium text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors"
+            >
+              <Settings className="w-4 h-4" /> Administrar
+            </Link>
+          )}
         </div>
 
         <div className="space-y-3">
