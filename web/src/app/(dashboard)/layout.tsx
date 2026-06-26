@@ -9,7 +9,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR'
+  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE'
+
+  // Muro de acceso: el módulo de ventas es SOLO para staff (admin/asesor).
+  // Un estudiante que intente abrir cualquier pantalla de ventas se va a su módulo.
+  if (role !== 'ADMIN' && role !== 'VENDEDOR') redirect('/examenes')
 
   return (
     <QueryProvider>
