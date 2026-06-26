@@ -75,6 +75,14 @@ export async function generar(req: Request, res: Response) {
   return ApiResponse.created(res, certificado)
 }
 
+export async function eliminar(req: Request, res: Response) {
+  const certificado = await prisma.certificado.findUnique({ where: { id: req.params.id } })
+  if (!certificado) throw new NotFoundError('Certificado no encontrado')
+
+  await prisma.certificado.delete({ where: { id: req.params.id } })
+  return ApiResponse.success(res, { id: req.params.id, eliminado: true })
+}
+
 export async function obtener(req: Request, res: Response) {
   const certificado = await prisma.certificado.findUnique({
     where: { id: req.params.id },

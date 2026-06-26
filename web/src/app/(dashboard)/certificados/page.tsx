@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatDate, cn } from '@/lib/utils'
-import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mail, MessageCircle, Search, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface CursoEstudiante {
@@ -19,7 +19,7 @@ interface Certificado {
   fechaEmision: string
   archivoUrl: string
   estudiante: {
-    nombre: string; email: string
+    nombre: string; email: string; telefono?: string
     tipoDocumento?: string; documento?: string; ciudad?: string
     colegio?: { nombre: string; ciudad: string } | null
     cursos?: CursoEstudiante[]
@@ -171,6 +171,8 @@ export default function CertificadosPage() {
   const [descargando, setDescargando] = useState<string | null>(null)
   const [enviando, setEnviando] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState<'sebastian' | 'andres' | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Certificado | null>(null)
+  const [eliminando, setEliminando] = useState(false)
 
   // Búsqueda de estudiante en modal
   const [busqEst, setBusqEst] = useState('')
@@ -297,6 +299,44 @@ export default function CertificadosPage() {
     }
   }
 
+  // WhatsApp: abre el chat del estudiante con un mensaje listo y descarga el
+  // PDF para adjuntarlo (el certificado se genera local, no se hostea).
+  const handleWhatsApp = async (cert: Certificado, i: number) => {
+    if (descargando || enviando) return
+    const tel = (cert.estudiante.telefono ?? '').replace(/\D/g, '')
+    const primerNombre = cert.estudiante.nombre.split(' ')[0]
+    const tipoTxt = cert.tipo === 'COMPLETADO' ? 'certificado de finalización' : 'certificado de estudio'
+    const msg = encodeURIComponent(
+      `Hola ${primerNombre}, te saluda GRUPO 500 EDUCACIÓN S.A.S. 🎓\n\nTe compartimos tu ${tipoTxt} del PREICFES. Lo encontrarás adjunto en este chat.\n\nCualquier duda quedamos atentos.`
+    )
+    const url = tel ? `https://wa.me/57${tel}?text=${msg}` : `https://wa.me/?text=${msg}`
+    // Abrir WhatsApp dentro del gesto del usuario (evita bloqueo de popups)
+    window.open(url, '_blank')
+    // Descargar el PDF para que quede listo para adjuntar en el chat
+    setDescargando(cert.id)
+    try {
+      await generarPDF(cert, i, certificados.length, firmas)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setDescargando(null)
+    }
+  }
+
+  const handleEliminar = async () => {
+    if (!confirmDelete || eliminando) return
+    setEliminando(true)
+    try {
+      await fetcher(`/certificados/${confirmDelete.id}`, { method: 'DELETE' })
+      queryClient.invalidateQueries({ queryKey: ['certificados'] })
+      setConfirmDelete(null)
+    } catch (e: any) {
+      alert(e?.message ?? 'Error al eliminar el certificado')
+    } finally {
+      setEliminando(false)
+    }
+  }
+
   const certificados: Certificado[] = data?.data ?? []
   const total = data?.pagination?.total ?? 0
   const totalPages = data?.pagination?.totalPages ?? 1
@@ -391,12 +431,12 @@ export default function CertificadosPage() {
                     {cargando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                   </button>
                   <button
-                    onClick={() => handleEnviar(c, 'whatsapp')}
+                    onClick={() => handleWhatsApp(c, i)}
                     disabled={!!descargando || !!enviando}
                     className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-[#25D366] bg-[#25D366]/10 hover:bg-[#25D366]/20 disabled:opacity-50 transition-colors"
-                    title="WhatsApp"
+                    title="Enviar por WhatsApp"
                   >
-                    {enviando === `${c.id}-whatsapp` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                    <MessageCircle className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleEnviar(c, 'correo')}
@@ -406,6 +446,16 @@ export default function CertificadosPage() {
                   >
                     {enviando === `${c.id}-correo` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
                   </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setConfirmDelete(c)}
+                      disabled={!!descargando || !!enviando}
+                      className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-red-500 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 transition-colors"
+                      title="Eliminar certificado"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -422,6 +472,42 @@ export default function CertificadosPage() {
           </div>
         </div>
       )}
+
+      {/* ── Modal Confirmar eliminación ── */}
+      <Modal open={!!confirmDelete} onClose={() => { if (!eliminando) setConfirmDelete(null) }}>
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+              <Trash2 className="w-5 h-5 text-red-500" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-on-surface">Eliminar certificado</h2>
+              <p className="text-xs text-on-surface-variant">Esta acción no se puede deshacer.</p>
+            </div>
+          </div>
+          <p className="text-sm text-on-surface-variant mb-6">
+            ¿Seguro que deseas eliminar el certificado de{' '}
+            <strong className="text-on-surface">{confirmDelete?.estudiante.nombre}</strong>?
+          </p>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setConfirmDelete(null)}
+              disabled={eliminando}
+              className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface disabled:opacity-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleEliminar}
+              disabled={eliminando}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {eliminando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* ── Modal Generar ── */}
       <Modal open={modalGenerar} onClose={() => { setModalGenerar(false); limpiarEstudiante() }}>
