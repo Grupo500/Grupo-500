@@ -7,7 +7,6 @@ interface CertificadoData {
   colegio: string
   ciudadColegio: string
   curso: string
-  calendario: string
   duracionHoras: number
   tipo: 'CURSANDO' | 'COMPLETADO'
   fechaEmision: string
@@ -42,7 +41,7 @@ const CONTACTOS = [
 export function CertificadoTemplate({ data, innerRef }: Props) {
   const {
     nombreEstudiante, tipoDocumento, documento,
-    colegio, ciudadColegio, calendario,
+    colegio, ciudadColegio, curso,
     duracionHoras, tipo, fechaEmision, numeroCertificado,
     firmaAndres,
   } = data
@@ -107,8 +106,8 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         </p>
 
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '32px' }}>
-          Pertenece al <strong>Grupo Calendario {calendario} {new Date(fechaEmision).getFullYear()}</strong>.
-          El programa académico abarca un total de <strong>{duracionHoras} horas</strong>, e incluye
+          Pertenece al programa <strong>{curso}</strong>.
+          El plan académico abarca un total de <strong>{duracionHoras} horas</strong>, e incluye
           asignaturas como <em>lectura crítica, ciencias sociales, inglés, matemáticas, química y biología</em>.
           El horario de las clases es de lunes a viernes de 6:00 p.m. a 8:00 p.m., mientras que los sábados
           se imparten clases en dos bloques: de 8:00 a.m. a 12:00 m. y de 2:00 p.m. a 6:00 p.m.

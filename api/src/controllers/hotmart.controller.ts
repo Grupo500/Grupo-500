@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/response'
 import { logger } from '../utils/logger'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
+import { horasPorNombreCurso } from '../utils/cursoHoras'
 
 // ---------------------------------------------------------------------------
 // Tipos del payload de Hotmart
@@ -140,7 +141,7 @@ export async function webhook(req: Request, res: Response) {
         precio: precioCurso,
         tipoCurso,
         activo: true,
-        duracionHoras: 0,
+        duracionHoras: horasPorNombreCurso(product.name),
         hotmartProductId: productId,
       },
     })
@@ -435,7 +436,7 @@ export async function sincronizarProductos(_req: Request, res: Response) {
           precio,
           tipoCurso,
           activo: isActive,
-          duracionHoras: 0,
+          duracionHoras: horasPorNombreCurso(nombre),
           hotmartProductId: productId,
         },
       })

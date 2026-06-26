@@ -97,6 +97,23 @@ function FirmaCard({ nombre, cargo, url, onUpload, uploading }: {
   )
 }
 
+// Horas por nombre de curso (fallback si el curso tiene 0 horas en BD).
+// Misma regla que el backend: calendario 310h, intensivo 40h, combos suman,
+// año 500 = 660h, premédico 100h.
+function horasPorNombreCurso(nombre: string): number {
+  const n = (nombre ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  if (n.includes('premedico') || n.includes('med500')) return 100
+  if (n.includes('ano 500')) return 660
+  if (n.includes('+') || n.includes('combo')) {
+    let total = 0
+    for (const p of n.split('+')) { if (p.includes('intensivo')) total += 40; else if (p.includes('calendario')) total += 310 }
+    if (total > 0) return total
+  }
+  if (n.includes('intensivo')) return 40
+  if (n.includes('calendario')) return 310
+  return 0
+}
+
 // ── Generador de PDF ────────────────────────────────────────────────────────
 async function generarPDF(
   cert: Certificado,
@@ -129,8 +146,9 @@ async function generarPDF(
         colegio:          e.colegio?.nombre ?? '',
         ciudadColegio:    e.colegio?.ciudad ?? e.ciudad ?? '',
         curso:            cursoData?.nombre ?? 'Preicfes',
-        calendario:       cursoData?.calendario ?? 'A',
-        duracionHoras:    cursoData?.duracionHoras ?? 310,
+        duracionHoras:    (cursoData?.duracionHoras && cursoData.duracionHoras > 0)
+                            ? cursoData.duracionHoras
+                            : horasPorNombreCurso(cursoData?.nombre ?? ''),
         tipo:             cert.tipo,
         fechaEmision:     cert.fechaEmision,
         numeroCertificado: totalCerts - index,
