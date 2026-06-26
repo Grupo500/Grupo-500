@@ -13,11 +13,12 @@ export const authConfig: NextAuthConfig = {
       const isAuthPage       = request.nextUrl.pathname.startsWith('/sign-in')
       const isPublicPage     = [
         '/sign-in', '/sign-up', '/no-autorizado', '/verificando',
-        '/inscripcion', // Hub de inscripciones, formularios públicos y builder forms
+        '/inscripcion',       // Hub de inscripciones, formularios públicos y builder forms
+        '/examenes/acceso',   // Login de estudiantes (correo + documento)
       ].some(p => request.nextUrl.pathname.startsWith(p))
 
       if (isLoggedIn && isAuthPage) {
-        return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
+        return NextResponse.redirect(new URL('/inicio', request.nextUrl))
       }
       if (!isLoggedIn && !isPublicPage) {
         return NextResponse.redirect(new URL('/sign-in', request.nextUrl))
@@ -41,7 +42,7 @@ export const authConfig: NextAuthConfig = {
     session({ session, token }) {
       if (token && session.user) {
         session.user.id    = token.id    as string
-        session.user.role  = token.role  as 'ADMIN' | 'VENDEDOR'
+        session.user.role  = token.role  as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE'
         session.user.image = token.image as string | null
         if (token.name) session.user.name = token.name as string
       }

@@ -115,6 +115,7 @@ model Colegio {
   contactoTelefono String?
   estudiantes      Estudiante[]
   negociaciones    Negociacion[]
+  estudiantesExamen EstudianteExamen[]
 }
 
 model Estudiante {
@@ -386,4 +387,79 @@ model TrengoTicket {
 
   @@index([agentEmail])
   @@index([firstAssignedAt])
+}
+
+// ============================================================
+// MÓDULO SIMULACROS (motor de examen online)
+// Migrado desde la app simulacros-grupo500 (Supabase → Railway PG).
+// Tablas conservan nombre sim_* (@@map) para no chocar con el
+// modelo `Simulacro` existente (que es análisis de PDFs, otra cosa).
+// Estudiantes de examen = tabla aparte (NO el Estudiante de ventas).
+// ============================================================
+
+model Examen {
+  id          Int              @id // ids explícitos (1,2,3), no autoincrement
+  titulo      String
+  descripcion String?
+  abreAt      DateTime?        @map("abre_at")
+  cierraAt    DateTime?        @map("cierra_at")
+  duracionMin Int?             @map("duracion_min")
+  activo      Boolean          @default(false)
+  preguntas   PreguntaExamen[]
+  intentos    IntentoExamen[]
+
+  @@map("sim_simulacros")
+}
+
+model PreguntaExamen {
+  id          BigInt  @id @default(autoincrement())
+  examenId    Int     @map("simulacro_id")
+  sesion      Int
+  area        String?
+  numero      Int?
+  contexto    String?
+  enunciado   String
+  opcionA     String? @map("opcion_a")
+  opcionB     String? @map("opcion_b")
+  opcionC     String? @map("opcion_c")
+  opcionD     String? @map("opcion_d")
+  correcta    String  @db.Char(1)
+  explicacion String?
+  imagenUrl   String? @map("imagen_url")
+  tieneImagen Boolean @default(false) @map("tiene_imagen")
+  examen      Examen  @relation(fields: [examenId], references: [id])
+
+  @@index([examenId, sesion, numero])
+  @@map("sim_preguntas")
+}
+
+model EstudianteExamen {
+  id            String          @id @default(uuid()) @db.Uuid
+  email         String          @unique
+  documentoHash String          @map("documento_hash")
+  nombre        String
+  colegioId     String?         @map("colegio_id")
+  creadoAt      DateTime        @default(now()) @map("creado_at")
+  colegio       Colegio?        @relation(fields: [colegioId], references: [id])
+  intentos      IntentoExamen[]
+
+  @@map("sim_estudiantes")
+}
+
+model IntentoExamen {
+  id           BigInt           @id @default(autoincrement())
+  estudianteId String           @map("estudiante_id") @db.Uuid
+  examenId     Int              @map("simulacro_id")
+  respuestas   Json             @default("{}")
+  correctas    Int?
+  total        Int?
+  puntaje      Decimal?         @db.Decimal
+  sesionActual Int              @default(1) @map("sesion_actual")
+  iniciadoAt   DateTime         @default(now()) @map("iniciado_at")
+  finalizadoAt DateTime?        @map("finalizado_at")
+  estudiante   EstudianteExamen @relation(fields: [estudianteId], references: [id])
+  examen       Examen           @relation(fields: [examenId], references: [id])
+
+  @@unique([estudianteId, examenId])
+  @@map("sim_intentos")
 }

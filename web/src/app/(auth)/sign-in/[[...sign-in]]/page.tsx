@@ -43,13 +43,13 @@ export default function SignInPage() {
     if (result?.error) {
       setError('Email o contraseña incorrectos')
     } else {
-      router.replace('/dashboard')
+      router.replace('/inicio')
     }
   }
 
   async function handleGoogle() {
     setGoogleLoading(true)
-    await signIn('google', { callbackUrl: '/dashboard' })
+    await signIn('google', { callbackUrl: '/inicio' })
   }
 
   async function handleFaceId() {
@@ -108,7 +108,7 @@ export default function SignInPage() {
         throw new Error('No se pudo iniciar sesión')
       }
 
-      router.replace('/dashboard')
+      router.replace('/inicio')
     } catch (err: any) {
       // AbortError = usuario canceló el diálogo biométrico
       if (err?.name === 'AbortError' || err?.name === 'NotAllowedError') {
