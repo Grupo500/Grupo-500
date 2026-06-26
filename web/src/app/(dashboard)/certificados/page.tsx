@@ -410,8 +410,18 @@ export default function CertificadosPage() {
             const { label, color, icon: Icon } = TIPOS[c.tipo]
             const cargando = descargando === c.id
             return (
-              <div key={c.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
-                <div className="flex items-center gap-2">
+              <div key={c.id} className="relative bg-surface-lowest border border-outline-variant rounded-xl p-3 flex flex-col gap-2.5 hover:border-primary/30 transition-colors">
+                {isAdmin && (
+                  <button
+                    onClick={() => setConfirmDelete(c)}
+                    disabled={!!descargando || !!enviando}
+                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-on-surface-variant hover:text-red-500 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                    title="Eliminar certificado"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <div className="flex items-center gap-2 pr-6">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                     <Award className="w-4 h-4 text-primary" />
                   </div>
@@ -446,16 +456,6 @@ export default function CertificadosPage() {
                   >
                     {enviando === `${c.id}-correo` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
                   </button>
-                  {isAdmin && (
-                    <button
-                      onClick={() => setConfirmDelete(c)}
-                      disabled={!!descargando || !!enviando}
-                      className="flex-1 flex items-center justify-center py-1.5 rounded-lg text-red-500 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 transition-colors"
-                      title="Eliminar certificado"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
               </div>
             )
