@@ -573,13 +573,13 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             <Pencil className="w-3 h-3" />Editar
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { icon: User,       label: 'Nombre',     value: e.nombre },
-            { icon: CreditCard, label: 'Documento',  value: e.documento ? `${e.tipoDocumento} ${e.documento}` : e.tipoDocumento ?? '—' },
             { icon: Mail,       label: 'Email',      value: e.email },
             { icon: Phone,      label: 'Teléfono',   value: e.telefono },
             { icon: Users,      label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
+            { icon: CreditCard, label: 'Documento',  value: e.documento ? `${e.tipoDocumento} ${e.documento}` : e.tipoDocumento ?? '—' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
               <Icon className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" />
