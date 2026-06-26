@@ -12,7 +12,6 @@ interface CertificadoData {
   tipo: 'CURSANDO' | 'COMPLETADO'
   fechaEmision: string
   numeroCertificado: number
-  firmaSebastian?: string
   firmaAndres?: string
 }
 
@@ -45,7 +44,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
     nombreEstudiante, tipoDocumento, documento,
     colegio, ciudadColegio, calendario,
     duracionHoras, tipo, fechaEmision, numeroCertificado,
-    firmaSebastian, firmaAndres,
+    firmaAndres,
   } = data
 
   const tipoBold = tipo === 'CURSANDO' ? 'se encuentra matriculado/a' : 'ha completado satisfactoriamente'
@@ -86,7 +85,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
             style={{ width: '130px', height: '130px', objectFit: 'contain', margin: '0 auto 12px' }}
           />
           <p style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.5px', color: '#1a1a1a', margin: 0 }}>
-            PREICFES GRUPO 500 &nbsp;–&nbsp; NIT: 901768155-8
+            GRUPO 500 EDUCACIÓN S.A.S &nbsp;–&nbsp; NIT: 901768155-8
           </p>
         </div>
 
@@ -119,24 +118,20 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
 
         <p style={{ fontSize: '13px', marginBottom: '36px', fontStyle: 'italic' }}>Atentamente,</p>
 
-        {/* Firmas */}
-        <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '36px' }}>
-          {[
-            { nombre: 'SEBASTIÁN FERNANDO FLÓREZ DUARTE', cc: '10052823 14 Bucaramanga', img: firmaSebastian },
-            { nombre: 'ANDRÉS FELIPE DÍAZ RIVERO',        cc: '1005480173 Bucaramanga',   img: firmaAndres    },
-          ].map((f) => (
-            <div key={f.cc} style={{ textAlign: 'center', width: '45%' }}>
-              <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                {f.img && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={f.img} alt="" style={{ maxHeight: '52px', maxWidth: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
-                )}
-              </div>
-              <div style={{ borderBottom: '1.5px solid #1a1a1a', marginBottom: '6px' }} />
-              <p style={{ fontSize: '11.5px', fontWeight: 700, margin: '0 0 2px' }}>{f.nombre}</p>
-              <p style={{ fontSize: '11px', margin: 0, color: '#444' }}>CC: {f.cc}</p>
+        {/* Firma del representante legal */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '36px' }}>
+          <div style={{ textAlign: 'center', width: '55%' }}>
+            <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+              {firmaAndres && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={firmaAndres} alt="" style={{ maxHeight: '52px', maxWidth: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+              )}
             </div>
-          ))}
+            <div style={{ borderBottom: '1.5px solid #1a1a1a', marginBottom: '6px' }} />
+            <p style={{ fontSize: '11.5px', fontWeight: 700, margin: '0 0 2px' }}>ANDRÉS FELIPE DÍAZ RIVERO</p>
+            <p style={{ fontSize: '11px', margin: '0 0 2px', color: '#444' }}>CC: 1005480173 Bucaramanga</p>
+            <p style={{ fontSize: '11px', margin: 0, color: '#444', fontWeight: 600 }}>Representante Legal</p>
+          </div>
         </div>
 
         {/* Fecha expedición */}

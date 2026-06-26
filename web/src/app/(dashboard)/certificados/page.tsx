@@ -134,7 +134,6 @@ async function generarPDF(
         tipo:             cert.tipo,
         fechaEmision:     cert.fechaEmision,
         numeroCertificado: totalCerts - index,
-        firmaSebastian:   firmas.firmaSebastian ?? undefined,
         firmaAndres:      firmas.firmaAndres    ?? undefined,
       },
     }))
@@ -325,19 +324,12 @@ export default function CertificadosPage() {
       {isAdmin && (
         <div className="space-y-3">
           <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">
-            Firmas de representantes legales
+            Firma del representante legal
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FirmaCard
-              nombre="Sebastián Fernando Flórez Duarte"
-              cargo="CC: 10052823 14 · Bucaramanga"
-              url={firmas.firmaSebastian}
-              uploading={subiendo === 'sebastian'}
-              onUpload={f => handleSubirFirma('sebastian', f)}
-            />
-            <FirmaCard
               nombre="Andrés Felipe Díaz Rivero"
-              cargo="CC: 1005480173 · Bucaramanga"
+              cargo="CC: 1005480173 · Bucaramanga · Representante Legal"
               url={firmas.firmaAndres}
               uploading={subiendo === 'andres'}
               onUpload={f => handleSubirFirma('andres', f)}
