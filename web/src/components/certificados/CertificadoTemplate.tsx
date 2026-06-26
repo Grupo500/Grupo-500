@@ -40,8 +40,7 @@ const CONTACTOS = [
 
 export function CertificadoTemplate({ data, innerRef }: Props) {
   const {
-    nombreEstudiante, tipoDocumento, documento,
-    colegio, ciudadColegio, curso,
+    nombreEstudiante, tipoDocumento, documento, curso,
     duracionHoras, tipo, fechaEmision, numeroCertificado,
     firmaAndres,
   } = data
@@ -99,10 +98,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
           <strong style={{ textTransform: 'uppercase' }}>{nombreEstudiante}</strong>
           {' '}identificado/a con {tipoDocumento} N°{' '}
           <strong>{documento || '_______________'}</strong>
-          , estudiante de{' '}
-          <strong style={{ textTransform: 'uppercase' }}>{colegio || 'INSTITUCIÓN EDUCATIVA'}</strong>
-          {ciudadColegio ? ` de ${ciudadColegio}` : ''},{' '}
-          {tipoBold} en nuestro PREICFES Modalidad Virtual.
+          {' '}{tipoBold} en nuestro PREICFES Modalidad Virtual.
         </p>
 
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '32px' }}>
