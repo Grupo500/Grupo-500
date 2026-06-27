@@ -44,7 +44,7 @@ export async function finalizarSesion1(
   respuestas: Record<string, string>
 ) {
   const estudId = await estudianteActual()
-  if (!estudId) redirect('/examenes/acceso')
+  if (!estudId) redirect('/sign-in')
 
   const intento = await prisma.intentoExamen.findUnique({
     where: { estudianteId_examenId: { estudianteId: estudId, examenId } },
@@ -67,7 +67,7 @@ export async function finalizarSimulacro(
   respuestasS2: Record<string, string>
 ) {
   const estudId = await estudianteActual()
-  if (!estudId) redirect('/examenes/acceso')
+  if (!estudId) redirect('/sign-in')
 
   const intento = await prisma.intentoExamen.findUnique({
     where: { estudianteId_examenId: { estudianteId: estudId, examenId } },

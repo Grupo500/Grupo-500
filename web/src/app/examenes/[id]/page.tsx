@@ -16,7 +16,7 @@ export default async function PaginaExamen({
   const sp = await searchParams
 
   const session = await auth()
-  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/examenes/acceso')
+  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/sign-in')
   const estudId = session!.user.id
 
   const examId = parseInt(id)

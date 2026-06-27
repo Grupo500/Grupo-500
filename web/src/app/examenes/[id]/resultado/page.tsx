@@ -34,7 +34,7 @@ export default async function PaginaResultado({
   const { id } = await params;
 
   const session = await auth();
-  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/examenes/acceso');
+  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/sign-in');
   const estudId = session!.user.id;
 
   const simId = parseInt(id);

@@ -35,13 +35,25 @@ export default function SignInPage() {
     if (!email || !password) { setError('Completa todos los campos'); return }
     setLoading(true); setError('')
 
-    const result = await signIn('credentials', {
+    // Un solo formulario para todos: primero se intenta como staff (contraseña).
+    // Si no coincide, se intenta como estudiante (el mismo campo = número de documento).
+    const resultStaff = await signIn('credentials', {
       email: email.trim(), password, redirect: false,
+    })
+
+    if (!resultStaff?.error) {
+      setLoading(false)
+      router.replace('/inicio')
+      return
+    }
+
+    const resultEstudiante = await signIn('estudiante', {
+      email: email.trim(), documento: password, redirect: false,
     })
     setLoading(false)
 
-    if (result?.error) {
-      setError('Email o contraseña incorrectos')
+    if (resultEstudiante?.error) {
+      setError('Correo o contraseña incorrectos')
     } else {
       router.replace('/inicio')
     }
@@ -246,6 +258,9 @@ export default function SignInPage() {
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <p className="text-[11px] text-[#5a74a8] mt-1.5">
+                ¿Eres estudiante de simulacros? Usa tu número de documento aquí.
+              </p>
             </div>
 
             {error && (
