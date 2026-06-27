@@ -11,7 +11,17 @@ export default async function InicioPage() {
   if (!session?.user) redirect('/sign-in')
 
   const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE'
-  const nombre = session.user.name?.split(' ')[0] ?? 'Hola'
+
+  // Los estudiantes migrados están guardados como "Apellido Apellido Nombre Nombre"
+  // (convención colombiana). Para el saludo mostramos los nombres, no los apellidos.
+  // Staff (admin/asesor) usa el formato normal "Nombre Apellido" → primera palabra.
+  function primerNombre(nombreCompleto: string): string {
+    const partes = nombreCompleto.trim().split(/\s+/)
+    if (role !== 'ESTUDIANTE' || partes.length <= 2) return partes[0]
+    const nombres = partes.slice(2).filter(p => !p.includes('.') && p.length > 1)
+    return nombres.length ? nombres.slice(0, 2).join(' ') : partes[0]
+  }
+  const nombre = session.user.name ? primerNombre(session.user.name) : 'Hola'
 
   const verVentas     = role === 'ADMIN' || role === 'VENDEDOR'
   const verSimulacros = role === 'ADMIN' || role === 'ESTUDIANTE'
