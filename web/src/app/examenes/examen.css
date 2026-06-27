@@ -1,0 +1,51 @@
+/* Estilos del motor de examen — réplica exacta de simulacros-grupo500/globals.css,
+   con prefijo .examen-sim para no chocar con el resto de la app. */
+.examen-sim {
+  --azul:#2540c8; --azul-osc:#16266e; --azul-claro:#eaeefc; --azul-borde:#c9d3f5;
+  --tinta:#0f1733; --gris:#5b6178; --linea:#e7e9f2; --ok:#16a34a; --mal:#dc2626;
+  --dorado:#f5c400; --blanco:#fff; --fondo:#f6f7fb; --radio:16px;
+  --sombra:0 10px 30px -12px rgba(22,38,110,.22);
+  --ease:cubic-bezier(.22,1,.36,1);
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  min-height: 100dvh;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.examen-sim .display,
+.examen-sim h1, .examen-sim h2, .examen-sim h3 {
+  font-family: 'Poppins', 'Inter', sans-serif;
+  letter-spacing: -.01em;
+  margin: 0;
+}
+
+.examen-sim .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; cursor: pointer; font-weight: 700; font-size: .95rem;
+  border-radius: 12px; padding: 12px 18px; transition: all .18s var(--ease);
+  font-family: inherit; text-decoration: none;
+}
+.examen-sim .btn-azul { background: var(--azul); color: #fff; box-shadow: 0 12px 26px -12px rgba(37,64,200,.8); }
+.examen-sim .btn-azul:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -12px rgba(37,64,200,.9); }
+.examen-sim .btn-azul:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.examen-sim .btn-claro { background: #fff; color: var(--azul); border: 1.5px solid var(--azul-borde); }
+.examen-sim .btn-claro:hover { border-color: var(--azul); background: var(--azul-claro); }
+.examen-sim .btn-bloque { width: 100%; }
+
+.examen-sim .tarjeta { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio); box-shadow: var(--sombra); }
+
+.examen-sim .contenedor { max-width: 1100px; margin: 0 auto; padding: 0 22px; }
+.examen-sim .nota { font-size: .8rem; color: var(--gris); }
+.examen-sim .error { color: var(--mal); font-size: .88rem; }
+
+@media (max-width: 880px) {
+  .examen-sim .wrap-exam { grid-template-columns: 1fr !important; }
+  .examen-sim .wrap-exam aside > div {
+    position: fixed !important; left: 0; right: 0; bottom: 0; top: auto !important;
+    border-radius: 18px 18px 0 0 !important; z-index: 40;
+  }
+  .examen-sim .wrap-exam aside > div > div:nth-child(2) { max-height: 30vh !important; }
+}

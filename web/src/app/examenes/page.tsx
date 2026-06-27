@@ -2,11 +2,10 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, ClipboardList, Settings } from 'lucide-react'
+import { ArrowLeft, ClipboardList, Settings, ArrowRight } from 'lucide-react'
 
 // Landing del módulo de simulacros (motor de examen).
-// Solo estudiantes y admin. La UI completa del examen llega en la siguiente fase;
-// por ahora lista los exámenes disponibles desde la base ya migrada.
+// Solo estudiantes y admin.
 export default async function ExamenesPage() {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
@@ -18,6 +17,14 @@ export default async function ExamenesPage() {
     orderBy: { id: 'asc' },
     select: { id: true, titulo: true, descripcion: true, activo: true, duracionMin: true },
   })
+
+  const intentos = role === 'ESTUDIANTE'
+    ? await prisma.intentoExamen.findMany({
+        where: { estudianteId: session.user.id },
+        select: { examenId: true, finalizadoAt: true },
+      })
+    : []
+  const intentoPorExamen = new Map(intentos.map(i => [i.examenId, i]))
 
   return (
     <main className="min-h-dvh edu-bg-pattern">
@@ -45,26 +52,37 @@ export default async function ExamenesPage() {
         </div>
 
         <div className="space-y-3">
-          {examenes.map(ex => (
-            <div key={ex.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-on-surface">{ex.titulo}</p>
-                  {ex.descripcion && <p className="text-xs text-on-surface-variant mt-0.5">{ex.descripcion}</p>}
+          {examenes.map(ex => {
+            const intento = intentoPorExamen.get(ex.id)
+            const terminado = !!intento?.finalizadoAt
+            return (
+              <div key={ex.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-on-surface">{ex.titulo}</p>
+                    {ex.descripcion && <p className="text-xs text-on-surface-variant mt-0.5">{ex.descripcion}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={ex.activo
+                      ? 'text-xs px-2.5 py-1 rounded-full bg-primary-container text-secondary'
+                      : 'text-xs px-2.5 py-1 rounded-full bg-surface-high text-on-surface-variant'}>
+                      {ex.activo ? 'Disponible' : 'Cerrado'}
+                    </span>
+                    {role === 'ESTUDIANTE' && ex.activo && (
+                      <Link
+                        href={terminado ? `/examenes/${ex.id}/resultado` : `/examenes/${ex.id}`}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-medium hover:bg-primary/90 transition-colors"
+                      >
+                        {terminado ? 'Ver resultado' : intento ? 'Continuar' : 'Presentar'}
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
-                <span className={ex.activo
-                  ? 'text-xs px-2.5 py-1 rounded-full bg-primary-container text-secondary'
-                  : 'text-xs px-2.5 py-1 rounded-full bg-surface-high text-on-surface-variant'}>
-                  {ex.activo ? 'Disponible' : 'Cerrado'}
-                </span>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
-
-        <p className="text-xs text-on-surface-variant mt-6">
-          El motor de examen (responder preguntas en dos sesiones y ver resultados) se conecta en la siguiente fase.
-        </p>
       </div>
     </main>
   )
