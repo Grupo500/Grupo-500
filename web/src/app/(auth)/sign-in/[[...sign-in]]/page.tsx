@@ -28,11 +28,18 @@ export default function SignInPage() {
   const [showForgot,    setShowForgot]    = useState(false)
 
   const [supportsWebAuthn, setSupportsWebAuthn] = useState(false)
+  const [shake, setShake] = useState(false)
   useEffect(() => { setSupportsWebAuthn(browserSupportsWebAuthn()) }, [])
+
+  function fallar(mensaje: string) {
+    setError(mensaje)
+    setShake(true)
+    setTimeout(() => setShake(false), 400)
+  }
 
   async function handleCredentials(e: React.FormEvent) {
     e.preventDefault()
-    if (!email || !password) { setError('Completa todos los campos'); return }
+    if (!email || !password) { fallar('Completa todos los campos'); return }
     setLoading(true); setError('')
 
     // Un solo formulario para todos: primero se intenta como staff (contraseña).
@@ -53,7 +60,7 @@ export default function SignInPage() {
     setLoading(false)
 
     if (resultEstudiante?.error) {
-      setError('Correo o contraseña incorrectos')
+      fallar('Correo o contraseña incorrectos')
     } else {
       router.replace('/inicio')
     }
@@ -144,7 +151,7 @@ export default function SignInPage() {
         alt=""
         width={420}
         height={560}
-        className="absolute bottom-[45%] md:bottom-[41%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0"
+        className="absolute bottom-[45%] md:bottom-[41%] left-1/2 -translate-x-1/2 w-72 sm:w-80 object-contain pointer-events-none select-none z-0 animate-card-enter"
         priority
         aria-hidden
       />
@@ -156,18 +163,18 @@ export default function SignInPage() {
       <div className="h-48 md:h-36" />
 
       {/* Título */}
-      <div className="text-center">
+      <div className="text-center animate-slide-up delay-1">
         <p className={`${poppins.className} text-xl font-bold text-white tracking-tight`}>Grupo 500</p>
         <p className="text-sm text-white/80 font-medium">Pre-ICFES</p>
       </div>
 
       {/* Card de login */}
-      <div className="w-full">
+      <div className="w-full animate-slide-up delay-2">
         <p className="text-[13px] font-semibold text-white mb-2 text-center">
           Inicia sesión con:
         </p>
 
-        <div className="bg-white rounded-xl border border-black/[0.07] shadow-none p-5 space-y-4">
+        <div className={`bg-white rounded-xl border border-black/[0.07] shadow-none p-5 space-y-4 transition-shadow ${shake ? 'animate-shake' : ''}`}>
 
           {/* Face ID / Biometría — PRIMERO */}
           {supportsWebAuthn && (
@@ -175,7 +182,7 @@ export default function SignInPage() {
               type="button"
               onClick={handleFaceId}
               disabled={faceLoading || loading || googleLoading}
-              className="w-full flex items-center justify-center gap-2 border border-[#1a7de0]/30 hover:bg-[#1a7de0]/5 transition-colors rounded-lg py-2.5 text-sm font-medium text-[#1a7de0] disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 border border-[#1a7de0]/30 hover:bg-[#1a7de0]/5 transition-all active:scale-[0.97] rounded-lg py-2.5 text-sm font-medium text-[#1a7de0] disabled:opacity-60"
             >
               {faceLoading
                 ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -190,7 +197,7 @@ export default function SignInPage() {
             type="button"
             onClick={handleGoogle}
             disabled={googleLoading || loading || faceLoading}
-            className="w-full flex items-center justify-center gap-2 border border-black/[0.08] hover:bg-black/[0.03] transition-colors rounded-lg py-2.5 text-sm font-medium text-[#001d3d] disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 border border-black/[0.08] hover:bg-black/[0.03] transition-all active:scale-[0.97] rounded-lg py-2.5 text-sm font-medium text-[#001d3d] disabled:opacity-60"
           >
             {googleLoading
               ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -264,13 +271,13 @@ export default function SignInPage() {
             </div>
 
             {error && (
-              <p className="text-xs text-[#c0392b] font-medium">{error}</p>
+              <p className="text-xs text-[#c0392b] font-medium animate-fade-in">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={loading || googleLoading || faceLoading}
-              className="w-full bg-[#1a7de0] hover:bg-[#1570cc] text-white font-semibold rounded-lg py-2.5 text-sm transition-colors shadow-none disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full bg-[#1a7de0] hover:bg-[#1570cc] text-white font-semibold rounded-lg py-2.5 text-sm transition-all active:scale-[0.97] shadow-none disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Iniciar sesión
@@ -290,8 +297,8 @@ export default function SignInPage() {
       {/* Modal — ¿Olvidaste tu contraseña? */}
       {showForgot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowForgot(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setShowForgot(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4 animate-slide-up">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#1a7de0]/10 flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5 text-[#1a7de0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,7 +318,7 @@ export default function SignInPage() {
                 href="https://wa.me/573168819037"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#25d366] hover:bg-[#20bc5a] text-white rounded-xl text-sm font-semibold transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#25d366] hover:bg-[#20bc5a] text-white rounded-xl text-sm font-semibold transition-all active:scale-[0.97]"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>

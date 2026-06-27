@@ -31,7 +31,7 @@ export default async function InicioPage() {
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
 
         {/* Encabezado */}
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex items-start justify-between mb-8 animate-slide-up">
           <div>
             <h1 className="text-2xl font-bold text-on-surface">Hola, {nombre}</h1>
             <p className="text-sm text-on-surface-variant mt-0.5">Elige un espacio de trabajo</p>
@@ -45,14 +45,14 @@ export default async function InicioPage() {
           {verVentas && (
             <Link
               href="/dashboard"
-              className="group bg-surface-lowest border border-outline-variant rounded-2xl p-5 hover:border-primary/40 transition-colors"
+              className="group bg-surface-lowest border border-outline-variant rounded-2xl p-5 transition-all duration-200 ease-out hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-float active:scale-[0.98] animate-card-enter delay-1"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-primary-container text-secondary flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-primary-container text-secondary flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                   <Wallet className="w-6 h-6" />
                 </div>
                 <span className="text-lg font-semibold text-on-surface">Ventas</span>
-                <ArrowRight className="w-4 h-4 text-on-surface-variant ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="w-4 h-4 text-on-surface-variant ml-auto opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0" />
               </div>
               <p className="text-sm text-on-surface-variant leading-relaxed">
                 Estudiantes, pagos y cuotas, asesores, colegios, certificados y reportes.
@@ -63,14 +63,14 @@ export default async function InicioPage() {
           {verSimulacros && (
             <Link
               href="/examenes"
-              className="group bg-surface-lowest border border-outline-variant rounded-2xl p-5 hover:border-primary/40 transition-colors"
+              className="group bg-surface-lowest border border-outline-variant rounded-2xl p-5 transition-all duration-200 ease-out hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-float active:scale-[0.98] animate-card-enter delay-2"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-primary-container text-secondary flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-primary-container text-secondary flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                   <ClipboardList className="w-6 h-6" />
                 </div>
                 <span className="text-lg font-semibold text-on-surface">Simulacros</span>
-                <ArrowRight className="w-4 h-4 text-on-surface-variant ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="w-4 h-4 text-on-surface-variant ml-auto opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0" />
               </div>
               <p className="text-sm text-on-surface-variant leading-relaxed">
                 Exámenes tipo Saber 11 en dos sesiones, calificación automática y resultados por área.
@@ -81,7 +81,7 @@ export default async function InicioPage() {
         </div>
 
         {/* Nota de acceso */}
-        <p className="flex items-center gap-2 text-xs text-on-surface-variant mt-6">
+        <p className="flex items-center gap-2 text-xs text-on-surface-variant mt-6 animate-fade-in delay-3">
           <Lock className="w-3.5 h-3.5" />
           Cada quien ve solo los módulos a los que tiene acceso.
         </p>
