@@ -30,6 +30,7 @@ export default async function PreviewExamenPage({
       select: {
         id: true, numero: true, area: true, contexto: true, enunciado: true,
         opcionA: true, opcionB: true, opcionC: true, opcionD: true,
+        opcionE: true, opcionF: true, opcionG: true, opcionH: true,
         imagenUrl: true, correcta: true,
       },
     }),
@@ -47,6 +48,10 @@ export default async function PreviewExamenPage({
     opcion_b: p.opcionB,
     opcion_c: p.opcionC,
     opcion_d: p.opcionD,
+    opcion_e: p.opcionE,
+    opcion_f: p.opcionF,
+    opcion_g: p.opcionG,
+    opcion_h: p.opcionH,
     imagen_url: p.imagenUrl,
     correcta: p.correcta,
   }))

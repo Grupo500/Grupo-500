@@ -15,6 +15,10 @@ type Pregunta = {
   opcion_b: string | null;
   opcion_c: string | null;
   opcion_d: string | null;
+  opcion_e: string | null;
+  opcion_f: string | null;
+  opcion_g: string | null;
+  opcion_h: string | null;
   imagen_url: string | null;
 };
 
@@ -85,9 +89,10 @@ function EnunciadoConPregunta({ texto, tieneImagen }: { texto: string; tieneImag
   );
 }
 
-const LET = ["A", "B", "C", "D"] as const;
+const LET = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 const LETRAS_OPCIONES = {
   A: "opcion_a", B: "opcion_b", C: "opcion_c", D: "opcion_d",
+  E: "opcion_e", F: "opcion_f", G: "opcion_g", H: "opcion_h",
 } as const;
 
 function textoOpcion(p: Pregunta, l: typeof LET[number]): string | null {
@@ -602,7 +607,7 @@ export default function ExamenCliente({
               {preguntas.map((p) => {
                 const resp = respuestas[String(p.id)];
                 const esActual = p.numero === filaActual;
-                const bolaLetras = p.opcion_a ? LET.filter((l) => textoOpcion(p, l) !== null) : LET;
+                const bolaLetras = LET.filter((l) => textoOpcion(p, l) !== null);
 
                 return (
                   <div
@@ -623,24 +628,28 @@ export default function ExamenCliente({
                     }}>
                       {p.numero}
                     </span>
-                    <div style={{ display: "flex", gap: 5, marginLeft: 4 }}>
-                      {bolaLetras.map((l) => (
-                        <div
-                          key={l}
-                          onClick={(e) => { e.stopPropagation(); marcar(p.id, l); }}
-                          style={{
-                            width: 26, height: 26, borderRadius: "50%",
-                            border: `2px solid ${resp === l ? "var(--azul)" : "var(--azul-borde)"}`,
-                            background: resp === l ? "var(--azul)" : "transparent",
-                            color: resp === l ? "#fff" : "var(--azul)",
-                            display: "grid", placeItems: "center",
-                            fontSize: ".72rem", fontWeight: 800, cursor: "pointer",
-                            transition: "all .12s",
-                          }}
-                        >
-                          {l}
-                        </div>
-                      ))}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginLeft: 4, maxWidth: 180 }}>
+                      {bolaLetras.map((l) => {
+                        const sz = bolaLetras.length > 4 ? 22 : 26;
+                        return (
+                          <div
+                            key={l}
+                            onClick={(e) => { e.stopPropagation(); marcar(p.id, l); }}
+                            style={{
+                              width: sz, height: sz, borderRadius: "50%",
+                              border: `2px solid ${resp === l ? "var(--azul)" : "var(--azul-borde)"}`,
+                              background: resp === l ? "var(--azul)" : "transparent",
+                              color: resp === l ? "#fff" : "var(--azul)",
+                              display: "grid", placeItems: "center",
+                              fontSize: bolaLetras.length > 4 ? ".65rem" : ".72rem",
+                              fontWeight: 800, cursor: "pointer",
+                              transition: "all .12s",
+                            }}
+                          >
+                            {l}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );

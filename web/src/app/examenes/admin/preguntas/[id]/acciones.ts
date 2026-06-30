@@ -10,6 +10,10 @@ export async function editarPregunta(preguntaId: string, data: {
   opcionB: string | null
   opcionC: string | null
   opcionD: string | null
+  opcionE: string | null
+  opcionF: string | null
+  opcionG: string | null
+  opcionH: string | null
   correcta: string
   area: string | null
   explicacion: string | null
@@ -26,6 +30,10 @@ export async function editarPregunta(preguntaId: string, data: {
       opcionB:     data.opcionB?.trim()     || null,
       opcionC:     data.opcionC?.trim()     || null,
       opcionD:     data.opcionD?.trim()     || null,
+      opcionE:     data.opcionE?.trim()     || null,
+      opcionF:     data.opcionF?.trim()     || null,
+      opcionG:     data.opcionG?.trim()     || null,
+      opcionH:     data.opcionH?.trim()     || null,
       correcta:    data.correcta.trim().toUpperCase().slice(0, 1),
       area:        data.area?.trim()        || null,
       explicacion: data.explicacion?.trim() || null,

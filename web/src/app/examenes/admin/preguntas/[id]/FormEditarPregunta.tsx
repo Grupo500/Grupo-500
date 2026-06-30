@@ -12,6 +12,10 @@ type Inicial = {
   opcionB: string
   opcionC: string
   opcionD: string
+  opcionE: string
+  opcionF: string
+  opcionG: string
+  opcionH: string
   correcta: string
   area: string
   explicacion: string
@@ -41,6 +45,10 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
         opcionB:     form.opcionB     || null,
         opcionC:     form.opcionC     || null,
         opcionD:     form.opcionD     || null,
+        opcionE:     form.opcionE     || null,
+        opcionF:     form.opcionF     || null,
+        opcionG:     form.opcionG     || null,
+        opcionH:     form.opcionH     || null,
         correcta:    form.correcta,
         area:        form.area        || null,
         explicacion: form.explicacion || null,
@@ -102,7 +110,7 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
         />
       </div>
 
-      {/* Opciones */}
+      {/* Opciones A-D */}
       <div className="grid sm:grid-cols-2 gap-3">
         {campo('Opción A', 'opcionA')}
         {campo('Opción B', 'opcionB')}
@@ -110,11 +118,24 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
         {campo('Opción D', 'opcionD')}
       </div>
 
+      {/* Opciones E-H (solo para preguntas de matching) */}
+      <div>
+        <label className="block text-xs font-semibold text-on-surface-variant mb-1">
+          Opciones E–H <span className="text-on-surface-variant font-normal">(solo para preguntas de matching)</span>
+        </label>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {campo('Opción E', 'opcionE')}
+          {campo('Opción F', 'opcionF')}
+          {campo('Opción G', 'opcionG')}
+          {campo('Opción H', 'opcionH')}
+        </div>
+      </div>
+
       {/* Correcta */}
       <div>
         <label className="block text-xs font-semibold text-on-surface-variant mb-2">Respuesta correcta <span className="text-error">*</span></label>
-        <div className="flex gap-2">
-          {['A','B','C','D'].map(l => (
+        <div className="flex flex-wrap gap-2">
+          {['A','B','C','D','E','F','G','H'].map(l => (
             <button
               key={l}
               type="button"

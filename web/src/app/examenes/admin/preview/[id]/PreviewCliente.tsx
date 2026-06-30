@@ -15,6 +15,10 @@ type Pregunta = {
   opcion_b: string | null;
   opcion_c: string | null;
   opcion_d: string | null;
+  opcion_e: string | null;
+  opcion_f: string | null;
+  opcion_g: string | null;
+  opcion_h: string | null;
   imagen_url: string | null;
   correcta: string;
 };
@@ -72,9 +76,10 @@ function EnunciadoConPregunta({ texto, tieneImagen }: { texto: string; tieneImag
   );
 }
 
-const LET = ["A", "B", "C", "D"] as const;
+const LET = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 const LETRAS_OPCIONES = {
   A: "opcion_a", B: "opcion_b", C: "opcion_c", D: "opcion_d",
+  E: "opcion_e", F: "opcion_f", G: "opcion_g", H: "opcion_h",
 } as const;
 
 function textoOpcion(p: Pregunta, l: typeof LET[number]): string | null {
@@ -389,20 +394,22 @@ export default function PreviewCliente({
                     }}>
                       {p.numero}
                     </span>
-                    <div style={{ display: "flex", gap: 5, marginLeft: 4 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginLeft: 4, maxWidth: 180 }}>
                       {bolaLetras.map((l) => {
                         const esCor = l === p.correcta.toUpperCase();
+                        const sz = bolaLetras.length > 4 ? 22 : 26;
                         return (
                           <div
                             key={l}
                             onClick={(e) => { e.stopPropagation(); irAPregunta(p.numero); }}
                             style={{
-                              width: 26, height: 26, borderRadius: "50%",
+                              width: sz, height: sz, borderRadius: "50%",
                               border: `2px solid ${esCor ? "var(--ok)" : "var(--azul-borde)"}`,
                               background: esCor ? "var(--ok)" : "transparent",
                               color: esCor ? "#fff" : "var(--azul)",
                               display: "grid", placeItems: "center",
-                              fontSize: ".72rem", fontWeight: 800, cursor: "pointer",
+                              fontSize: bolaLetras.length > 4 ? ".65rem" : ".72rem",
+                              fontWeight: 800, cursor: "pointer",
                               transition: "all .12s",
                             }}
                           >

@@ -423,6 +423,10 @@ model PreguntaExamen {
   opcionB     String? @map("opcion_b")
   opcionC     String? @map("opcion_c")
   opcionD     String? @map("opcion_d")
+  opcionE     String? @map("opcion_e")
+  opcionF     String? @map("opcion_f")
+  opcionG     String? @map("opcion_g")
+  opcionH     String? @map("opcion_h")
   correcta    String  @db.Char(1)
   explicacion String?
   imagenUrl   String? @map("imagen_url")

@@ -46,13 +46,17 @@ export default async function EditarPreguntaPage({
           preguntaId={String(pregunta.id)}
           inicial={{
             enunciado:   pregunta.enunciado,
-            contexto:    pregunta.contexto   ?? '',
-            opcionA:     pregunta.opcionA    ?? '',
-            opcionB:     pregunta.opcionB    ?? '',
-            opcionC:     pregunta.opcionC    ?? '',
-            opcionD:     pregunta.opcionD    ?? '',
+            contexto:    pregunta.contexto    ?? '',
+            opcionA:     pregunta.opcionA     ?? '',
+            opcionB:     pregunta.opcionB     ?? '',
+            opcionC:     pregunta.opcionC     ?? '',
+            opcionD:     pregunta.opcionD     ?? '',
+            opcionE:     pregunta.opcionE     ?? '',
+            opcionF:     pregunta.opcionF     ?? '',
+            opcionG:     pregunta.opcionG     ?? '',
+            opcionH:     pregunta.opcionH     ?? '',
             correcta:    pregunta.correcta,
-            area:        pregunta.area       ?? '',
+            area:        pregunta.area        ?? '',
             explicacion: pregunta.explicacion ?? '',
           }}
         />
