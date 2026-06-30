@@ -46,7 +46,7 @@ const config: Config = {
         'on-primary':         'var(--primary-on)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'display':      ['48px', { lineHeight: '56px', letterSpacing: '-0.02em', fontWeight: '700' }],
