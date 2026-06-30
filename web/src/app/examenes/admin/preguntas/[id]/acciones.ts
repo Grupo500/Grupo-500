@@ -2,7 +2,6 @@
 
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { redirect } from 'next/navigation'
 
 export async function editarPregunta(preguntaId: string, data: {
   enunciado: string
@@ -34,5 +33,5 @@ export async function editarPregunta(preguntaId: string, data: {
     select: { examenId: true },
   })
 
-  redirect(`/examenes/admin/imagenes?sim=${updated.examenId}`)
+  return { ok: true, redirectTo: `/examenes/admin/imagenes?sim=${updated.examenId}` }
 }

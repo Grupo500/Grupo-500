@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2, Save } from 'lucide-react'
 import { editarPregunta } from './acciones'
 
@@ -22,6 +23,7 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
   const [form, setForm]   = useState(inicial)
   const [error, setError] = useState<string | null>(null)
   const [pending, start]  = useTransition()
+  const router = useRouter()
 
   function set(key: keyof Inicial, val: string) {
     setForm(f => ({ ...f, [key]: val }))
@@ -34,16 +36,17 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
     start(async () => {
       const r = await editarPregunta(preguntaId, {
         enunciado:   form.enunciado,
-        contexto:    form.contexto   || null,
-        opcionA:     form.opcionA    || null,
-        opcionB:     form.opcionB    || null,
-        opcionC:     form.opcionC    || null,
-        opcionD:     form.opcionD    || null,
+        contexto:    form.contexto    || null,
+        opcionA:     form.opcionA     || null,
+        opcionB:     form.opcionB     || null,
+        opcionC:     form.opcionC     || null,
+        opcionD:     form.opcionD     || null,
         correcta:    form.correcta,
-        area:        form.area       || null,
+        area:        form.area        || null,
         explicacion: form.explicacion || null,
       })
-      if (r?.error) setError(r.error)
+      if (r?.error) { setError(r.error); return }
+      if (r?.redirectTo) router.push(r.redirectTo)
     })
   }
 
