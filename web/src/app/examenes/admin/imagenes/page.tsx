@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Pencil } from 'lucide-react'
 import SubirImagen from './SubirImagen'
 
 // Gestión de imágenes: muestra TODAS las preguntas del simulacro (filtros de
@@ -81,14 +81,21 @@ export default async function AdminImagenesPage({
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
             {preguntas.map(p => (
-              <SubirImagen
-                key={String(p.id)}
-                preguntaId={String(p.id)}
-                numero={p.numero}
-                area={p.area ?? ''}
-                enunciado={p.enunciado}
-                imagenUrlInicial={p.imagenUrl}
-              />
+              <div key={String(p.id)} className="flex flex-col gap-2">
+                <SubirImagen
+                  preguntaId={String(p.id)}
+                  numero={p.numero}
+                  area={p.area ?? ''}
+                  enunciado={p.enunciado}
+                  imagenUrlInicial={p.imagenUrl}
+                />
+                <Link
+                  href={`/examenes/admin/preguntas/${p.id}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-on-surface-variant hover:text-primary transition-colors px-1"
+                >
+                  <Pencil className="w-3 h-3" /> Editar pregunta
+                </Link>
+              </div>
             ))}
           </div>
         )}
