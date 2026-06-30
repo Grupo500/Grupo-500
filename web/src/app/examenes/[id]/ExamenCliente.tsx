@@ -106,12 +106,12 @@ function formatearTiempo(segundos: number): string {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-const AREA_ICONOS: Record<string, string> = {
-  "Matemáticas": "M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM9 9h6M12 7v10",
-  "Lectura Crítica": "M2 4h7a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H2zM22 4h-7a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H22z",
-  "Sociales y Ciudadanas": "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
-  "Ciencias Naturales": "M9 3h6M10 3v6L4.5 18.5A1 1 0 0 0 5.4 20h13.2a1 1 0 0 0 .9-1.5L14 9V3M7 14h10",
-  "Inglés": "M5 8l4 4-4 4M11 12h8",
+const AREA_CONFIG: Record<string, { color: string; dot: string; icon: string }> = {
+  "Matemáticas":           { color: "#60a5fa", dot: "#3b82f6", icon: "M4 7h16M4 12h8M4 17h12" },
+  "Lectura Crítica":       { color: "#c084fc", dot: "#a855f7", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" },
+  "Sociales y Ciudadanas": { color: "#34d399", dot: "#10b981", icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10" },
+  "Ciencias Naturales":    { color: "#86efac", dot: "#22c55e", icon: "M9 3h6M10 3v6L4.5 18.5A1 1 0 0 0 5.4 20h13.2a1 1 0 0 0 .9-1.5L14 9V3M7 14h10" },
+  "Inglés":                { color: "#fbbf24", dot: "#f59e0b", icon: "M5 8l4 4-4 4M11 12h8" },
 };
 
 export default function ExamenCliente({
@@ -346,18 +346,34 @@ export default function ExamenCliente({
             Marca tu respuesta en la hoja de respuestas de la derecha. Solo se contabilizan las marcas de la hoja.
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
-            {grupos.map(({ area, items }) => (
-              <span key={area} style={{
-                display: "inline-flex", alignItems: "center", gap: 7,
-                background: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.22)",
-                padding: "6px 13px", borderRadius: 999, fontSize: ".8rem", fontWeight: 600,
-              }}>
-                <svg style={{ width: 15, height: 15, opacity: .9, stroke: "currentColor", fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
-                  <path d={AREA_ICONOS[area] ?? "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"} />
-                </svg>
-                {area} · {items.length}
-              </span>
-            ))}
+            {grupos.map(({ area, items }) => {
+              const cfg = AREA_CONFIG[area] ?? { color: "#fff", dot: "#fff", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" };
+              return (
+                <span key={area} style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "rgba(255,255,255,.10)",
+                  border: `1px solid ${cfg.color}55`,
+                  padding: "5px 12px 5px 8px", borderRadius: 999,
+                  fontSize: ".8rem", fontWeight: 600,
+                }}>
+                  <span style={{
+                    width: 22, height: 22, borderRadius: "50%",
+                    background: `${cfg.color}28`,
+                    border: `1.5px solid ${cfg.color}70`,
+                    display: "grid", placeItems: "center", flexShrink: 0,
+                  }}>
+                    <svg style={{ width: 11, height: 11, stroke: cfg.color, fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
+                      <path d={cfg.icon} />
+                    </svg>
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,.9)" }}>{area}</span>
+                  <span style={{
+                    background: `${cfg.color}30`, color: cfg.color,
+                    borderRadius: 999, padding: "1px 7px", fontSize: ".72rem", fontWeight: 800,
+                  }}>{items.length}</span>
+                </span>
+              );
+            })}
           </div>
         </div>
 
@@ -466,22 +482,32 @@ export default function ExamenCliente({
                                 </button>
                               );
                             }
-                            // Desktop: solo visual, se marca en hoja
+                            // Desktop: visual con estado de selección reflejado
+                            const esSeleccionada = resp === l;
+                            const hayRespuesta = !!resp;
                             return (
                               <div key={l} style={{
                                 display: "flex", alignItems: "flex-start", gap: 12,
-                                border: "1px solid var(--linea)", borderRadius: 12,
-                                padding: "11px 14px", background: "#fafbff",
+                                border: `1.5px solid ${esSeleccionada ? "var(--azul)" : hayRespuesta ? "#d8dce8" : "var(--linea)"}`,
+                                borderRadius: 12,
+                                padding: "11px 14px",
+                                background: esSeleccionada ? "var(--azul-claro)" : hayRespuesta ? "#f9f9f9" : "#fafbff",
+                                opacity: hayRespuesta && !esSeleccionada ? 0.45 : 1,
+                                transition: "all .2s",
                               }}>
                                 <span style={{
                                   flexShrink: 0, width: 26, height: 26, borderRadius: "50%",
-                                  border: "2px solid var(--azul-borde)", display: "grid",
-                                  placeItems: "center", fontWeight: 800, color: "var(--azul)",
+                                  border: `2px solid ${esSeleccionada ? "var(--azul)" : hayRespuesta ? "#c0c8d8" : "var(--azul-borde)"}`,
+                                  background: esSeleccionada ? "var(--azul)" : "transparent",
+                                  display: "grid",
+                                  placeItems: "center", fontWeight: 800,
+                                  color: esSeleccionada ? "#fff" : hayRespuesta ? "#9aa0b5" : "var(--azul)",
                                   fontSize: ".82rem",
+                                  transition: "all .2s",
                                 }}>
                                   {l}
                                 </span>
-                                <span style={{ paddingTop: 2, fontSize: ".96rem" }}>
+                                <span style={{ paddingTop: 2, fontSize: ".96rem", color: hayRespuesta && !esSeleccionada ? "#9aa0b5" : "inherit" }}>
                                   {textoOpcion(p, l)}
                                 </span>
                               </div>
@@ -590,15 +616,38 @@ export default function ExamenCliente({
             border: "1px solid var(--linea)", borderRadius: "var(--radio)",
             boxShadow: "var(--sombra)", overflow: "hidden",
           }}>
-            <div style={{ background: "var(--azul-osc)", color: "#fff", padding: "13px 16px" }}>
-              <div style={{ fontWeight: 800, fontSize: ".92rem" }}>Hoja de respuestas</div>
-              <div style={{ fontSize: ".75rem", opacity: .85, marginTop: 2 }}>
-                {cant} de {totalPreguntas} contestadas
+            <div style={{
+              background: "linear-gradient(135deg, var(--azul-osc) 0%, #2540c8 100%)",
+              color: "#fff", padding: "14px 16px 12px",
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: ".88rem", letterSpacing: "-.01em" }}>Hoja de respuestas</div>
+                  <div style={{ fontSize: ".72rem", opacity: .65, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                    {cant} <span style={{ opacity: .7 }}>de</span> {totalPreguntas} contestadas
+                  </div>
+                </div>
+                {/* Porcentaje grande */}
+                <div style={{
+                  fontWeight: 900, fontSize: "1.9rem", lineHeight: 1,
+                  fontVariantNumeric: "tabular-nums",
+                  background: "linear-gradient(135deg, #fff 40%, #95daff)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}>
+                  {Math.round(porcentaje)}<span style={{ fontSize: "1rem", fontWeight: 700 }}>%</span>
+                </div>
               </div>
-              <div style={{ height: 5, background: "rgba(255,255,255,.25)", borderRadius: 999, marginTop: 8 }}>
+              {/* Barra de progreso */}
+              <div style={{
+                height: 5, background: "rgba(255,255,255,.18)",
+                borderRadius: 999, marginTop: 10, overflow: "hidden",
+              }}>
                 <div style={{
                   height: "100%", width: `${porcentaje}%`,
-                  background: "#fff", borderRadius: 999, transition: "width .3s",
+                  background: "linear-gradient(90deg, #95daff, #fff)",
+                  borderRadius: 999, transition: "width .4s cubic-bezier(.22,1,.36,1)",
+                  boxShadow: "0 0 8px rgba(149,218,255,.55)",
                 }} />
               </div>
             </div>
