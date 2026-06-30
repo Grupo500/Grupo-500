@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Users, ListChecks, CheckCircle2, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Users, ListChecks, CheckCircle2, Image as ImageIcon, Eye } from 'lucide-react'
 
 // Panel de admin de simulacros. Solo ADMIN. Tablero con estadísticas por simulacro.
 export default async function AdminSimulacrosPage() {
@@ -87,6 +87,12 @@ export default async function AdminSimulacrosPage() {
                   <span className="text-on-surface"><b className="tabular-nums">{s.terminados}</b> <span className="text-on-surface-variant text-xs">terminaron</span></span>
                   <span className="text-on-surface"><b className="tabular-nums">{s.promedio}</b> <span className="text-on-surface-variant text-xs">pts prom.</span></span>
                 </div>
+                <Link
+                  href={`/examenes/admin/preview/${ex.id}`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Preview
+                </Link>
                 <Link
                   href={`/examenes/admin/imagenes?sim=${ex.id}`}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors"
