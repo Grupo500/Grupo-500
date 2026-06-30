@@ -40,7 +40,7 @@ export default async function InicioPage() {
         {/* Saludo */}
         <div className="text-center animate-card-enter">
           <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">
-            Hola, {nombre} 👋
+            Hola, {nombre}
           </p>
           <p className="text-sm text-white/75 mt-1 font-medium">¿Qué quieres hacer hoy?</p>
         </div>
