@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { ArrowLeft } from 'lucide-react'
-import '../../examen.css'
+import '../../../examen.css'
 
 export default async function PreviewExamenPage({
   params,
