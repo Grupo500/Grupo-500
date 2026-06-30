@@ -3,10 +3,17 @@ import Google      from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
+import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import { jwtVerify } from 'jose'
 import { authConfig } from './auth.config'
 import { prisma } from '@/lib/prisma'
+
+// Huella del documento (contraseña del estudiante), idéntica a la app de simulacros.
+// El documento nunca se guarda en texto plano: en la DB vive como este hash.
+function hashDocumento(documento: string): string {
+  return createHash('sha256').update(`sim:${documento.trim()}`).digest('hex')
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -89,6 +96,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       },
     }),
+    // Estudiantes de simulacros — login con correo + número de documento.
+    // No están en la tabla User (staff); viven en EstudianteExamen.
+    Credentials({
+      id: 'estudiante',
+      credentials: {
+        email:     { label: 'Correo',    type: 'email' },
+        documento: { label: 'Documento', type: 'text'  },
+      },
+      async authorize(credentials) {
+        const parsed = z.object({
+          email:     z.string().email(),
+          documento: z.string().min(1),
+        }).safeParse(credentials)
+
+        if (!parsed.success) return null
+
+        const estudiante = await prisma.estudianteExamen.findFirst({
+          where: {
+            email:         { equals: parsed.data.email.trim(), mode: 'insensitive' },
+            documentoHash: hashDocumento(parsed.data.documento),
+          },
+        })
+
+        if (!estudiante) return null
+
+        return {
+          id:    estudiante.id,
+          email: estudiante.email,
+          name:  estudiante.nombre,
+          role:  'ESTUDIANTE' as const,
+        }
+      },
+    }),
+
     // Passkeys / WebAuthn — recibe JWT firmado por el API tras verificar la biometría
     Credentials({
       id: 'credentials-passkey',
