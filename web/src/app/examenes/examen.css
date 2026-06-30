@@ -41,6 +41,7 @@
 .examen-sim .nota { font-size: .8rem; color: var(--gris); }
 .examen-sim .error { color: var(--mal); font-size: .88rem; }
 
+/* ── Tablet ─────────────────────────────────────────────────────── */
 @media (max-width: 880px) {
   .examen-sim .wrap-exam { grid-template-columns: 1fr !important; }
   .examen-sim .wrap-exam aside > div {
@@ -48,4 +49,58 @@
     border-radius: 18px 18px 0 0 !important; z-index: 40;
   }
   .examen-sim .wrap-exam aside > div > div:nth-child(2) { max-height: 30vh !important; }
+}
+
+/* ── Móvil: opciones clicables directas, sin hoja de respuestas ── */
+@media (max-width: 600px) {
+  /* Ocultar hoja de respuestas lateral */
+  .examen-sim .wrap-exam aside { display: none !important; }
+  .examen-sim .wrap-exam { padding: 14px 12px 100px !important; gap: 14px !important; }
+
+  /* Header más compacto */
+  .examen-sim .encabezado { padding: 10px 14px !important; gap: 10px !important; }
+  .examen-sim .home-label { display: inline !important; }
+
+  /* Tarjeta de pregunta */
+  .examen-sim .pregunta-movil { padding: 16px 14px !important; margin-bottom: 10px !important; }
+
+  /* Opción clicable en móvil */
+  .examen-sim .opcion-movil {
+    display: flex; align-items: flex-start; gap: 11px;
+    border: 2px solid var(--linea); border-radius: 12px;
+    padding: 11px 13px; background: #fafbff;
+    cursor: pointer; transition: all .15s; -webkit-tap-highlight-color: transparent;
+    width: 100%;
+  }
+  .examen-sim .opcion-movil:active { transform: scale(.98); }
+  .examen-sim .opcion-movil.seleccionada {
+    border-color: var(--azul); background: var(--azul-claro);
+    box-shadow: 0 0 0 3px var(--azul-claro);
+  }
+  .examen-sim .opcion-movil .bola {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--azul-borde); display: grid; place-items: center;
+    font-weight: 800; color: var(--azul); font-size: .82rem; transition: all .15s;
+  }
+  .examen-sim .opcion-movil.seleccionada .bola {
+    background: var(--azul); border-color: var(--azul); color: #fff;
+  }
+
+  /* Barra de progreso flotante inferior */
+  .examen-sim .barra-progreso-movil {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+    background: #fff; border-top: 1px solid var(--linea);
+    padding: 10px 16px 14px;
+    box-shadow: 0 -4px 20px -6px rgba(22,38,110,.18);
+  }
+  .examen-sim .barra-progreso-movil .pista {
+    height: 5px; background: var(--linea); border-radius: 999px; overflow: hidden; margin-bottom: 8px;
+  }
+  .examen-sim .barra-progreso-movil .relleno {
+    height: 100%; background: var(--azul); border-radius: 999px; transition: width .3s;
+  }
+  .examen-sim .barra-progreso-movil .info {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: .78rem; color: var(--gris); font-weight: 600;
+  }
 }

@@ -127,6 +127,7 @@ export default function ExamenCliente({
   duracionMin: number | null;
 }) {
   const router = useRouter();
+  const [esCelular, setEsCelular] = useState(false);
   const [respuestas, setRespuestas] = useState<Record<string, string>>(respuestasPrevias);
   const [segundos, setSegundos] = useState(0);
   const [filaActual, setFilaActual] = useState<number | null>(null);
@@ -135,6 +136,15 @@ export default function ExamenCliente({
   const [isPending, startTransition] = useTransition();
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const respuestasRef = useRef(respuestas);
+
+  // Detectar móvil (≤600px)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    setEsCelular(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setEsCelular(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // Mantener ref actualizada para usarla en eventos sin stale closure
   useEffect(() => { respuestasRef.current = respuestas; }, [respuestas]);
@@ -382,6 +392,7 @@ export default function ExamenCliente({
                     {/* Tarjeta de pregunta */}
                     <div
                       id={`q${p.numero}`}
+                      className="pregunta-movil"
                       style={{
                         background: "#fff", border: `1px solid ${resp ? "var(--azul-borde)" : "var(--linea)"}`,
                         borderRadius: "var(--radio)", padding: "22px 24px",
@@ -429,34 +440,56 @@ export default function ExamenCliente({
                         </div>
                       )}
 
-                      {/* Opciones (solo lectura visual; se marca en la hoja) */}
+                      {/* Opciones */}
                       {!esPlaceholder && (
                         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14 }}>
-                          {opcDisponibles.map((l) => (
-                            <div key={l} style={{
-                              display: "flex", alignItems: "flex-start", gap: 12,
-                              border: "1px solid var(--linea)", borderRadius: 12,
-                              padding: "11px 14px", background: "#fafbff",
-                            }}>
-                              <span style={{
-                                flexShrink: 0, width: 26, height: 26, borderRadius: "50%",
-                                border: "2px solid var(--azul-borde)", display: "grid",
-                                placeItems: "center", fontWeight: 800, color: "var(--azul)",
-                                fontSize: ".82rem",
+                          {opcDisponibles.map((l) => {
+                            const seleccionada = resp === l;
+                            if (esCelular) {
+                              // Móvil: opción clicable directamente
+                              return (
+                                <button
+                                  key={l}
+                                  type="button"
+                                  onClick={() => marcar(p.id, l)}
+                                  className={`opcion-movil${seleccionada ? " seleccionada" : ""}`}
+                                >
+                                  <span className="bola">{l}</span>
+                                  <span style={{ paddingTop: 2, fontSize: ".96rem", textAlign: "left" }}>
+                                    {textoOpcion(p, l)}
+                                  </span>
+                                </button>
+                              );
+                            }
+                            // Desktop: solo visual, se marca en hoja
+                            return (
+                              <div key={l} style={{
+                                display: "flex", alignItems: "flex-start", gap: 12,
+                                border: "1px solid var(--linea)", borderRadius: 12,
+                                padding: "11px 14px", background: "#fafbff",
                               }}>
-                                {l}
-                              </span>
-                              <span style={{ paddingTop: 2, fontSize: ".96rem" }}>
-                                {textoOpcion(p, l)}
-                              </span>
-                            </div>
-                          ))}
-                          <p style={{ fontSize: ".78rem", color: "var(--gris)", marginTop: 6, fontStyle: "italic" }}>
-                            <svg style={{ width: 13, height: 13, marginRight: 4, verticalAlign: -1, stroke: "currentColor", fill: "none", strokeWidth: 2 }} viewBox="0 0 24 24">
-                              <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
-                            </svg>
-                            Marca tu respuesta en la hoja de respuestas (fila {p.numero}).
-                          </p>
+                                <span style={{
+                                  flexShrink: 0, width: 26, height: 26, borderRadius: "50%",
+                                  border: "2px solid var(--azul-borde)", display: "grid",
+                                  placeItems: "center", fontWeight: 800, color: "var(--azul)",
+                                  fontSize: ".82rem",
+                                }}>
+                                  {l}
+                                </span>
+                                <span style={{ paddingTop: 2, fontSize: ".96rem" }}>
+                                  {textoOpcion(p, l)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                          {!esCelular && (
+                            <p style={{ fontSize: ".78rem", color: "var(--gris)", marginTop: 6, fontStyle: "italic" }}>
+                              <svg style={{ width: 13, height: 13, marginRight: 4, verticalAlign: -1, stroke: "currentColor", fill: "none", strokeWidth: 2 }} viewBox="0 0 24 24">
+                                <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+                              </svg>
+                              Marca tu respuesta en la hoja de respuestas (fila {p.numero}).
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -524,6 +557,26 @@ export default function ExamenCliente({
             )}
           </div>
         </main>
+
+        {/* Barra de progreso flotante — solo móvil (CSS oculta aside en ≤600px) */}
+        {esCelular && (
+          <div className="barra-progreso-movil">
+            <div className="pista">
+              <div className="relleno" style={{ width: `${porcentaje}%` }} />
+            </div>
+            <div className="info">
+              <span>{cant} de {totalPreguntas} respondidas</span>
+              <button
+                className="btn btn-azul"
+                style={{ padding: "6px 14px", fontSize: ".8rem", borderRadius: 10 }}
+                onClick={() => setConfirmando(true)}
+                disabled={isPending}
+              >
+                {sesion === 1 ? "Finalizar sesión 1" : "Enviar y calificar"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Hoja de respuestas (fija a la derecha) */}
         <aside>
