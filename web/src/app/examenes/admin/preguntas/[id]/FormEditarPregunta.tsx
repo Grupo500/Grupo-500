@@ -35,7 +35,7 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
 
   function guardar() {
     if (!form.enunciado.trim()) { setError('El enunciado no puede estar vacío'); return }
-    if (!form.correcta.match(/^[ABCD]$/i)) { setError('La correcta debe ser A, B, C o D'); return }
+    if (!form.correcta.match(/^[A-H]$/i)) { setError('La correcta debe ser A–H'); return }
     setError(null)
     start(async () => {
       const r = await editarPregunta(preguntaId, {
