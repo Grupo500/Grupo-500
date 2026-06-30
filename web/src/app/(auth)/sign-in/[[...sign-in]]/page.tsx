@@ -179,7 +179,7 @@ export default function SignInPage() {
             Inicia sesión con:
           </p>
 
-          <div className={`bg-white/97 backdrop-blur-sm rounded-2xl border border-white/30 shadow-[0_20px_50px_-12px_rgba(0,30,60,0.5)] p-5 space-y-4 transition-all duration-300 ${shake ? 'animate-shake' : ''}`}>
+          <div className={`bg-white rounded-2xl border border-white/60 shadow-[0_20px_50px_-12px_rgba(0,30,60,0.5)] p-5 space-y-4 transition-all duration-300 ${shake ? 'animate-shake' : ''}`}>
 
             {/* Face ID / Biometría — PRIMERO */}
             {supportsWebAuthn && (
