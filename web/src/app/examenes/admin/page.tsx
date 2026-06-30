@@ -88,10 +88,16 @@ export default async function AdminSimulacrosPage() {
                   <span className="text-on-surface"><b className="tabular-nums">{s.promedio}</b> <span className="text-on-surface-variant text-xs">pts prom.</span></span>
                 </div>
                 <Link
-                  href={`/examenes/admin/preview/${ex.id}`}
+                  href={`/examenes/admin/preview/${ex.id}?sesion=1`}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors"
                 >
-                  <Eye className="w-3.5 h-3.5" /> Preview
+                  <Eye className="w-3.5 h-3.5" /> S1
+                </Link>
+                <Link
+                  href={`/examenes/admin/preview/${ex.id}?sesion=2`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5" /> S2
                 </Link>
                 <Link
                   href={`/examenes/admin/imagenes?sim=${ex.id}`}

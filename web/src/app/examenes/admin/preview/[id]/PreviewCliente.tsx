@@ -155,15 +155,23 @@ export default function PreviewCliente({
         padding: "7px 18px", fontSize: ".82rem", fontWeight: 700,
         boxShadow: "0 2px 8px rgba(0,0,0,.12)",
       }}>
-        <span>👁 VISTA PREVIA — Respuestas correctas marcadas en verde</span>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <Link
-            href={`/examenes/admin/preview/${examenId}?sesion=${sesion === 1 ? 2 : 1}`}
-            style={{ color: "#78350f", fontWeight: 700, fontSize: ".8rem", textDecoration: "underline" }}
-          >
-            Ver sesión {sesion === 1 ? 2 : 1}
-          </Link>
-          <Link href="/examenes/admin" style={{ color: "#78350f", fontSize: ".8rem", textDecoration: "underline" }}>
+        <span>👁 VISTA PREVIA — Correctas en verde</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {[1, 2].map(s => (
+            <Link
+              key={s}
+              href={`/examenes/admin/preview/${examenId}?sesion=${s}`}
+              style={{
+                padding: "4px 12px", borderRadius: 8, fontSize: ".8rem", fontWeight: 700,
+                background: sesion === s ? "#78350f" : "rgba(120,53,15,.15)",
+                color: sesion === s ? "#fef3c7" : "#78350f",
+                textDecoration: "none",
+              }}
+            >
+              Sesión {s}
+            </Link>
+          ))}
+          <Link href="/examenes/admin" style={{ color: "#78350f", fontSize: ".8rem", textDecoration: "underline", marginLeft: 4 }}>
             ← Panel
           </Link>
         </div>
