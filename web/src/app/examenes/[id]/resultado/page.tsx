@@ -113,7 +113,7 @@ export default async function PaginaResultado({
           <Link href="/inicio" className="btn btn-claro" style={{ padding: "8px 14px", fontSize: ".85rem" }}>
             Inicio
           </Link>
-          <form action={async () => { await signOut({ redirectTo: '/sign-in' }) }}>
+          <form action={async () => { 'use server'; await signOut({ redirectTo: '/sign-in' }) }}>
             <button className="btn" type="submit" style={{ padding: "8px 14px", fontSize: ".85rem", color: "var(--gris)", border: "1px solid var(--linea)", borderRadius: 10 }}>
               Salir
             </button>
