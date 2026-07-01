@@ -268,14 +268,33 @@ export default function PreviewCliente({
                   ? (["A", "B", "C", "D"] as const)
                   : LET.filter((l) => textoOpcion(p, l) !== null);
 
+                // Rango de preguntas que comparten este contexto
+                let ctxLastNum = p.numero;
+                if (p.contexto && esPrimera) {
+                  for (let j = idx + 1; j < items.length; j++) {
+                    if (items[j].contexto !== p.contexto) break;
+                    ctxLastNum = items[j].numero;
+                  }
+                }
+
                 return (
                   <div key={p.id}>
                     {p.contexto && esPrimera && (
                       <div style={{
-                        background: "var(--azul-claro)", border: "1px solid var(--azul-borde)",
-                        borderRadius: "var(--radio)", padding: "16px 20px", marginBottom: 8,
+                        background: "var(--azul-claro)", borderLeft: "3px solid var(--azul)",
+                        borderRadius: "0 14px 14px 0", padding: "14px 20px 14px", marginBottom: 8,
                         fontSize: ".9rem", lineHeight: 1.7,
                       }}>
+                        <div style={{
+                          fontSize: ".67rem", fontWeight: 800, letterSpacing: ".07em",
+                          textTransform: "uppercase", color: "var(--azul)", marginBottom: 10, opacity: .8,
+                        }}>
+                          {p.numero === ctxLastNum
+                            ? `Responda la pregunta ${p.numero} de acuerdo con la siguiente información`
+                            : ctxLastNum === p.numero + 1
+                              ? `Responda las preguntas ${p.numero} y ${ctxLastNum} de acuerdo con la siguiente información`
+                              : `Responda las preguntas ${p.numero} a ${ctxLastNum} de acuerdo con la siguiente información`}
+                        </div>
                         <TextoConParrafos texto={p.contexto} style={{ fontSize: ".9rem" }} />
                       </div>
                     )}
@@ -306,8 +325,9 @@ export default function PreviewCliente({
                         </div>
                       ) : (
                         <div style={{ margin: "12px 0 4px" }}>
+                          <EnunciadoConPregunta texto={p.enunciado} tieneImagen={!!p.imagen_url} />
                           {p.imagen_url && (
-                            <div style={{ margin: "10px 0 14px" }}>
+                            <div style={{ margin: "14px 0 4px" }}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={p.imagen_url}
@@ -316,7 +336,6 @@ export default function PreviewCliente({
                               />
                             </div>
                           )}
-                          <EnunciadoConPregunta texto={p.enunciado} tieneImagen={!!p.imagen_url} />
                         </div>
                       )}
 

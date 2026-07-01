@@ -453,11 +453,11 @@ export default function ExamenCliente({
                           <svg style={{ width: 13, height: 13, stroke: "currentColor", fill: "none", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", flexShrink: 0 }} viewBox="0 0 24 24">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14,2 14,8 20,8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
                           </svg>
-                          Contexto
-                          <span className="contexto-label-badge">
-                            {p.numero === ctxLastNum ? `P. ${p.numero}` : `P. ${p.numero}–${ctxLastNum}`}
-                          </span>
-                          · Las siguientes preguntas se basan en este texto
+                          {p.numero === ctxLastNum
+                            ? `Responda la pregunta ${p.numero} de acuerdo con la siguiente información`
+                            : ctxLastNum === p.numero + 1
+                              ? `Responda las preguntas ${p.numero} y ${ctxLastNum} de acuerdo con la siguiente información`
+                              : `Responda las preguntas ${p.numero} a ${ctxLastNum} de acuerdo con la siguiente información`}
                         </div>
                         <TextoConParrafos texto={p.contexto} style={{ fontSize: ".88rem", color: "var(--tinta)" }} />
                       </div>
@@ -500,9 +500,11 @@ export default function ExamenCliente({
                         </div>
                       ) : (
                         <div style={{ margin: "12px 0 4px" }}>
+                          {/* Enunciado (pregunta) SIEMPRE arriba de la imagen */}
+                          <EnunciadoConPregunta texto={p.enunciado} tieneImagen={!!p.imagen_url} />
                           {/* Imagen de la pregunta si está disponible */}
                           {p.imagen_url && (
-                            <div style={{ margin: "10px 0 14px" }}>
+                            <div style={{ margin: "14px 0 4px" }}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={p.imagen_url}
@@ -511,7 +513,6 @@ export default function ExamenCliente({
                               />
                             </div>
                           )}
-                          <EnunciadoConPregunta texto={p.enunciado} tieneImagen={!!p.imagen_url} />
                         </div>
                       )}
 
