@@ -1,42 +1,183 @@
-/* Estilos del motor de examen — réplica exacta de simulacros-grupo500/globals.css,
-   con prefijo .examen-sim para no chocar con el resto de la app. */
+/* Estilos del motor de examen */
 .examen-sim {
   --azul:#2540c8; --azul-osc:#16266e; --azul-claro:#eaeefc; --azul-borde:#c9d3f5;
   --tinta:#0f1733; --gris:#5b6178; --linea:#e7e9f2; --ok:#16a34a; --mal:#dc2626;
   --dorado:#f5c400; --blanco:#fff; --fondo:#f6f7fb; --radio:16px;
   --sombra:0 10px 30px -12px rgba(22,38,110,.22);
-  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-ios:  cubic-bezier(0.32, 0.72, 0, 1);
   background: var(--fondo);
   color: var(--tinta);
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   min-height: 100dvh;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin         { to { transform: rotate(360deg); } }
+@keyframes slideUpFade  {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes chipEnter    {
+  from { opacity: 0; transform: translateY(6px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes headerDrop   {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes contextReveal {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 
-.examen-sim .display,
+/* ── Animación de entrada para tarjetas ─────────────────────────── */
+.examen-sim .anim-card {
+  animation: slideUpFade 240ms var(--ease-out) both;
+}
+.examen-sim .anim-header {
+  animation: headerDrop 280ms var(--ease-out) both;
+}
+
+/* ── Chips de área — clicables, con stagger ─────────────────────── */
+.examen-sim .chip-area {
+  animation: chipEnter 200ms var(--ease-out) both;
+  cursor: pointer;
+  border: none;
+  background: rgba(255,255,255,.13);
+  border: 1px solid rgba(255,255,255,.22);
+  padding: 5px 12px 5px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.92);
+  font-family: inherit;
+  will-change: transform;
+  transition:
+    background  160ms var(--ease-out),
+    transform   160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    box-shadow  160ms var(--ease-out);
+}
+/* Gate hover behind pointer — Emil: interact-touch-hover */
+@media (hover: hover) and (pointer: fine) {
+  .examen-sim .chip-area:hover {
+    background: rgba(255,255,255,.22);
+    border-color: rgba(255,255,255,.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px -4px rgba(22,38,110,.35);
+  }
+}
+/* Press feedback — Emil: transform-scale-097 */
+.examen-sim .chip-area:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+/* ── Bloque de contexto ─────────────────────────────────────────── */
+.examen-sim .contexto-bloque {
+  border-left: 3px solid var(--azul);
+  background: linear-gradient(105deg, var(--azul-claro) 0%, rgba(234,238,252,.35) 100%);
+  border-radius: 0 14px 14px 0;
+  padding: 16px 20px 14px;
+  margin-bottom: 10px;
+  animation: contextReveal 220ms var(--ease-out) both;
+}
+.examen-sim .contexto-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .67rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--azul);
+  margin-bottom: 10px;
+  opacity: .75;
+}
+.examen-sim .contexto-label-badge {
+  background: var(--azul);
+  color: #fff;
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+/* ── Separador de área ──────────────────────────────────────────── */
+.examen-sim .area-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0 10px;
+}
+.examen-sim .area-icon-box {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  transition: transform 160ms var(--ease-out);
+}
+.examen-sim .area-label {
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--azul);
+}
+.examen-sim .area-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(to right, var(--azul-borde), transparent);
+}
+.examen-sim .area-count {
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--gris);
+  background: var(--azul-claro);
+  border: 1px solid var(--azul-borde);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+/* ── Tipografía ─────────────────────────────────────────────────── */
 .examen-sim h1, .examen-sim h2, .examen-sim h3 {
-  font-family: 'Poppins', 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   letter-spacing: -.01em;
   margin: 0;
 }
 
+/* ── Botones ────────────────────────────────────────────────────── */
 .examen-sim .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   border: none; cursor: pointer; font-weight: 700; font-size: .95rem;
-  border-radius: 12px; padding: 12px 18px; transition: all .18s var(--ease);
+  border-radius: 12px; padding: 12px 18px;
+  transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), background 160ms var(--ease-out);
   font-family: inherit; text-decoration: none;
+  will-change: transform;
 }
-.examen-sim .btn-azul { background: var(--azul); color: #fff; box-shadow: 0 12px 26px -12px rgba(37,64,200,.8); }
-.examen-sim .btn-azul:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -12px rgba(37,64,200,.9); }
+.examen-sim .btn-azul {
+  background: var(--azul); color: #fff;
+  box-shadow: 0 8px 22px -8px rgba(37,64,200,.7);
+}
+@media (hover: hover) and (pointer: fine) {
+  .examen-sim .btn-azul:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -10px rgba(37,64,200,.8);
+  }
+}
+.examen-sim .btn-azul:active  { transform: scale(0.97); transition-duration: 80ms; }
 .examen-sim .btn-azul:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .examen-sim .btn-claro { background: #fff; color: var(--azul); border: 1.5px solid var(--azul-borde); }
-.examen-sim .btn-claro:hover { border-color: var(--azul); background: var(--azul-claro); }
+@media (hover: hover) and (pointer: fine) {
+  .examen-sim .btn-claro:hover { border-color: var(--azul); background: var(--azul-claro); }
+}
 .examen-sim .btn-bloque { width: 100%; }
 
 .examen-sim .tarjeta { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio); box-shadow: var(--sombra); }
-
 .examen-sim .contenedor { max-width: 1100px; margin: 0 auto; padding: 0 22px; }
 .examen-sim .nota { font-size: .8rem; color: var(--gris); }
 .examen-sim .error { color: var(--mal); font-size: .88rem; }
@@ -51,28 +192,22 @@
   .examen-sim .wrap-exam aside > div > div:nth-child(2) { max-height: 30vh !important; }
 }
 
-/* ── Móvil: opciones clicables directas, sin hoja de respuestas ── */
+/* ── Móvil ───────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  /* Ocultar hoja de respuestas lateral */
   .examen-sim .wrap-exam aside { display: none !important; }
   .examen-sim .wrap-exam { padding: 14px 12px 100px !important; gap: 14px !important; }
-
-  /* Header más compacto */
   .examen-sim .encabezado { padding: 10px 14px !important; gap: 10px !important; }
   .examen-sim .home-label { display: inline !important; }
-
-  /* Tarjeta de pregunta */
   .examen-sim .pregunta-movil { padding: 16px 14px !important; margin-bottom: 10px !important; }
 
-  /* Opción clicable en móvil */
   .examen-sim .opcion-movil {
     display: flex; align-items: flex-start; gap: 11px;
     border: 2px solid var(--linea); border-radius: 12px;
     padding: 11px 13px; background: #fafbff;
-    cursor: pointer; transition: all .15s; -webkit-tap-highlight-color: transparent;
-    width: 100%;
+    cursor: pointer; transition: all .15s var(--ease-out);
+    -webkit-tap-highlight-color: transparent; width: 100%;
   }
-  .examen-sim .opcion-movil:active { transform: scale(.98); }
+  .examen-sim .opcion-movil:active { transform: scale(.97); transition-duration: 80ms; }
   .examen-sim .opcion-movil.seleccionada {
     border-color: var(--azul); background: var(--azul-claro);
     box-shadow: 0 0 0 3px var(--azul-claro);
@@ -86,7 +221,6 @@
     background: var(--azul); border-color: var(--azul); color: #fff;
   }
 
-  /* Barra de progreso flotante inferior */
   .examen-sim .barra-progreso-movil {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
     background: #fff; border-top: 1px solid var(--linea);
@@ -97,10 +231,22 @@
     height: 5px; background: var(--linea); border-radius: 999px; overflow: hidden; margin-bottom: 8px;
   }
   .examen-sim .barra-progreso-movil .relleno {
-    height: 100%; background: var(--azul); border-radius: 999px; transition: width .3s;
+    height: 100%; background: var(--azul); border-radius: 999px; transition: width .3s var(--ease-out);
   }
   .examen-sim .barra-progreso-movil .info {
     display: flex; align-items: center; justify-content: space-between;
     font-size: .78rem; color: var(--gris); font-weight: 600;
+  }
+}
+
+/* ── Reduced motion — Emil: polish-reduced-motion ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .examen-sim .anim-card,
+  .examen-sim .anim-header,
+  .examen-sim .chip-area,
+  .examen-sim .contexto-bloque {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

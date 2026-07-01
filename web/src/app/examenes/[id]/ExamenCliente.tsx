@@ -107,11 +107,11 @@ function formatearTiempo(segundos: number): string {
 }
 
 const AREA_CONFIG: Record<string, { color: string; dot: string; icon: string }> = {
-  "Matemáticas":           { color: "#60a5fa", dot: "#3b82f6", icon: "M4 7h16M4 12h8M4 17h12" },
+  "Matemáticas":           { color: "#60a5fa", dot: "#3b82f6", icon: "M5 12h14M12 5v14" },
   "Lectura Crítica":       { color: "#c084fc", dot: "#a855f7", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" },
-  "Sociales y Ciudadanas": { color: "#34d399", dot: "#10b981", icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10" },
-  "Ciencias Naturales":    { color: "#86efac", dot: "#22c55e", icon: "M9 3h6M10 3v6L4.5 18.5A1 1 0 0 0 5.4 20h13.2a1 1 0 0 0 .9-1.5L14 9V3M7 14h10" },
-  "Inglés":                { color: "#fbbf24", dot: "#f59e0b", icon: "M5 8l4 4-4 4M11 12h8" },
+  "Sociales y Ciudadanas": { color: "#34d399", dot: "#10b981", icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2c-2.5 2.6-4 6.1-4 10s1.5 7.4 4 10M12 2c2.5 2.6 4 6.1 4 10s-1.5 7.4-4 10" },
+  "Ciencias Naturales":    { color: "#86efac", dot: "#22c55e", icon: "M10 2h4M9 7h6M8 7L4.5 17A2 2 0 0 0 6.4 20h11.2a2 2 0 0 0 1.9-2.73L16 7M7 13h10" },
+  "Inglés":                { color: "#fbbf24", dot: "#f59e0b", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
 };
 
 export default function ExamenCliente({
@@ -236,6 +236,11 @@ export default function ExamenCliente({
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function irAArea(area: string) {
+    const el = document.getElementById(`area-${area.replace(/\s+/g, "-")}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function contestadas() {
     return preguntas.filter((p) => respuestas[String(p.id)]).length;
   }
@@ -333,93 +338,142 @@ export default function ExamenCliente({
       }} className="wrap-exam">
 
         {/* Cabecera de sesión */}
-        <div style={{
-          gridColumn: "1/-1",
-          background: "linear-gradient(120deg, var(--azul-osc), var(--azul))",
-          color: "#fff", borderRadius: "var(--radio)", padding: "22px 26px",
-          boxShadow: "var(--sombra)",
-        }}>
-          <h1 style={{ fontSize: "1.4rem", fontWeight: 800 }}>
-            {titulo} — {sesion === 1 ? "Primera" : "Segunda"} sesión
-          </h1>
-          <p style={{ opacity: .85, fontSize: ".92rem", marginTop: 4 }}>
-            Marca tu respuesta en la hoja de respuestas de la derecha. Solo se contabilizan las marcas de la hoja.
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
-            {grupos.map(({ area, items }) => {
-              const cfg = AREA_CONFIG[area] ?? { color: "#fff", dot: "#fff", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" };
-              return (
-                <span key={area} style={{
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                  background: "rgba(255,255,255,.10)",
-                  border: `1px solid ${cfg.color}55`,
-                  padding: "5px 12px 5px 8px", borderRadius: 999,
-                  fontSize: ".8rem", fontWeight: 600,
-                }}>
-                  <span style={{
-                    width: 22, height: 22, borderRadius: "50%",
-                    background: `${cfg.color}28`,
-                    border: `1.5px solid ${cfg.color}70`,
-                    display: "grid", placeItems: "center", flexShrink: 0,
-                  }}>
-                    <svg style={{ width: 11, height: 11, stroke: cfg.color, fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
-                      <path d={cfg.icon} />
-                    </svg>
-                  </span>
-                  <span style={{ color: "rgba(255,255,255,.9)" }}>{area}</span>
-                  <span style={{
-                    background: `${cfg.color}30`, color: cfg.color,
-                    borderRadius: 999, padding: "1px 7px", fontSize: ".72rem", fontWeight: 800,
-                  }}>{items.length}</span>
-                </span>
-              );
-            })}
+        <div
+          className="anim-header"
+          style={{
+            gridColumn: "1/-1",
+            background: "linear-gradient(120deg, var(--azul-osc) 0%, #1e3db8 50%, var(--azul) 100%)",
+            color: "#fff", borderRadius: "var(--radio)", padding: "22px 26px",
+            boxShadow: "0 12px 40px -14px rgba(22,38,110,.55)",
+            position: "relative", overflow: "hidden",
+          }}
+        >
+          {/* decoración de fondo */}
+          <div style={{
+            position: "absolute", top: -40, right: -40,
+            width: 220, height: 220, borderRadius: "50%",
+            background: "rgba(255,255,255,.05)", pointerEvents: "none",
+          }} />
+          <div style={{
+            position: "absolute", bottom: -50, right: 80,
+            width: 140, height: 140, borderRadius: "50%",
+            background: "rgba(255,255,255,.04)", pointerEvents: "none",
+          }} />
+          <div style={{ position: "relative" }}>
+            <p style={{ fontSize: ".67rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", opacity: .55, marginBottom: 4 }}>
+              {sesion === 1 ? "Primera sesión" : "Segunda sesión"}
+            </p>
+            <h1 style={{ fontSize: "1.35rem", fontWeight: 800, letterSpacing: "-.02em" }}>
+              {titulo}
+            </h1>
+            <p style={{ opacity: .7, fontSize: ".84rem", marginTop: 5, maxWidth: 520 }}>
+              Marca en la hoja de la derecha. Solo cuentan las marcas de la hoja de respuestas.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+              {grupos.map(({ area, items }, i) => {
+                const cfg = AREA_CONFIG[area] ?? { color: "#fff", dot: "#fff", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" };
+                return (
+                  <button
+                    key={area}
+                    className="chip-area"
+                    onClick={() => irAArea(area)}
+                    style={{ animationDelay: `${i * 55}ms`, borderColor: `${cfg.color}50` }}
+                    title={`Ir a ${area}`}
+                  >
+                    <span style={{
+                      width: 24, height: 24, borderRadius: "50%",
+                      background: `${cfg.color}22`,
+                      border: `1.5px solid ${cfg.color}60`,
+                      display: "grid", placeItems: "center", flexShrink: 0,
+                    }}>
+                      <svg style={{ width: 13, height: 13, stroke: cfg.color, fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
+                        <path d={cfg.icon} />
+                      </svg>
+                    </span>
+                    <span>{area}</span>
+                    <span style={{
+                      background: `${cfg.color}28`, color: cfg.color,
+                      borderRadius: 999, padding: "1px 7px", fontSize: ".7rem", fontWeight: 800,
+                    }}>{items.length}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
         {/* Preguntas */}
         <main style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {grupos.map(({ area, items }) => (
+          {grupos.map(({ area, items }) => {
+            const cfg = AREA_CONFIG[area] ?? { color: "#60a5fa", dot: "#3b82f6", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" };
+            return (
             <div key={area}>
-              {/* Separador de área */}
-              <div style={{
-                fontSize: ".8rem", fontWeight: 800, color: "var(--azul)",
-                textTransform: "uppercase", letterSpacing: ".1em",
-                margin: "10px 2px 6px", display: "flex", alignItems: "center", gap: 10,
-              }}>
-                {area}
-                <span style={{ flex: 1, height: 1, background: "var(--azul-borde)", display: "block" }} />
+              {/* Separador de área con ancla para scroll */}
+              <div
+                id={`area-${area.replace(/\s+/g, "-")}`}
+                className="area-header"
+                style={{ scrollMarginTop: 100 }}
+              >
+                <div className="area-icon-box" style={{ background: `${cfg.color}18`, border: `1.5px solid ${cfg.color}45` }}>
+                  <svg style={{ width: 15, height: 15, stroke: cfg.color, fill: "none", strokeWidth: 2.1, strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
+                    <path d={cfg.icon} />
+                  </svg>
+                </div>
+                <span className="area-label">{area}</span>
+                <div className="area-line" />
+                <span className="area-count">{items.length} preguntas</span>
               </div>
 
               {items.map((p, idx) => {
                 const esPrimera = idx === 0 || items[idx - 1].contexto !== p.contexto;
                 const resp = respuestas[String(p.id)];
-                const esPlaceholder = !p.opcion_a && !p.opcion_b;
-                const opcDisponibles = LET.filter((l) => textoOpcion(p, l) !== null);
+                // Placeholder solo si no hay opciones de texto Y tampoco hay imagen
+                const esPlaceholder = !p.opcion_a && !p.opcion_b && !p.imagen_url;
+                // Si hay imagen pero no hay texto de opciones → mostrar A B C D sin texto
+                const tieneOpcImagen = !!p.imagen_url && !p.opcion_a && !p.opcion_b;
+                const opcDisponibles = tieneOpcImagen
+                  ? (["A", "B", "C", "D"] as const)
+                  : LET.filter((l) => textoOpcion(p, l) !== null);
+
+                // Rango de preguntas que comparten este contexto
+                let ctxLastNum = p.numero;
+                if (p.contexto && esPrimera) {
+                  for (let j = idx + 1; j < items.length; j++) {
+                    if (items[j].contexto !== p.contexto) break;
+                    ctxLastNum = items[j].numero;
+                  }
+                }
 
                 return (
                   <div key={p.id}>
-                    {/* Contexto compartido: solo en el primer cambio */}
+                    {/* Contexto compartido: solo al primer cambio de texto */}
                     {p.contexto && esPrimera && (
-                      <div style={{
-                        background: "var(--azul-claro)", border: "1px solid var(--azul-borde)",
-                        borderRadius: "var(--radio)", padding: "16px 20px", marginBottom: 8,
-                        fontSize: ".9rem", lineHeight: 1.7,
-                      }}>
-                        <TextoConParrafos texto={p.contexto} style={{ fontSize: ".9rem" }} />
+                      <div className="contexto-bloque">
+                        <div className="contexto-label">
+                          <svg style={{ width: 13, height: 13, stroke: "currentColor", fill: "none", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", flexShrink: 0 }} viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14,2 14,8 20,8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+                          </svg>
+                          Contexto
+                          <span className="contexto-label-badge">
+                            {p.numero === ctxLastNum ? `P. ${p.numero}` : `P. ${p.numero}–${ctxLastNum}`}
+                          </span>
+                          · Las siguientes preguntas se basan en este texto
+                        </div>
+                        <TextoConParrafos texto={p.contexto} style={{ fontSize: ".88rem", color: "var(--tinta)" }} />
                       </div>
                     )}
 
                     {/* Tarjeta de pregunta */}
                     <div
                       id={`q${p.numero}`}
-                      className="pregunta-movil"
+                      className="pregunta-movil anim-card"
                       style={{
                         background: "#fff", border: `1px solid ${resp ? "var(--azul-borde)" : "var(--linea)"}`,
                         borderRadius: "var(--radio)", padding: "22px 24px",
                         scrollMarginTop: 90, marginBottom: 14,
-                        boxShadow: resp ? "0 0 0 3px var(--azul-claro)" : "none",
-                        transition: "border-color .2s, box-shadow .2s",
+                        boxShadow: resp ? "0 4px 18px -8px rgba(37,64,200,.2), 0 0 0 3px var(--azul-claro)" : "0 2px 10px -6px rgba(22,38,110,.12)",
+                        transition: "border-color .2s var(--ease-out), box-shadow .25s var(--ease-out)",
+                        animationDelay: `${Math.min(idx * 35, 220)}ms`,
                       }}
                     >
                       <span style={{
@@ -463,11 +517,35 @@ export default function ExamenCliente({
 
                       {/* Opciones */}
                       {!esPlaceholder && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14 }}>
+                        <div style={{
+                          display: "flex",
+                          flexDirection: tieneOpcImagen ? "row" : "column",
+                          flexWrap: tieneOpcImagen ? "wrap" : undefined,
+                          gap: tieneOpcImagen ? 10 : 8,
+                          marginTop: 14,
+                        }}>
+                          {tieneOpcImagen && (
+                            <p style={{ width: "100%", fontSize: ".78rem", color: "var(--gris)", margin: "0 0 2px", fontStyle: "italic" }}>
+                              Las opciones están en la imagen. Selecciona tu respuesta:
+                            </p>
+                          )}
                           {opcDisponibles.map((l) => {
                             const seleccionada = resp === l;
                             if (esCelular) {
-                              // Móvil: opción clicable directamente
+                              // Móvil con imagen: solo burbuja clicable
+                              if (tieneOpcImagen) {
+                                return (
+                                  <button
+                                    key={l}
+                                    type="button"
+                                    onClick={() => marcar(p.id, l)}
+                                    className={`opcion-movil${seleccionada ? " seleccionada" : ""}`}
+                                    style={{ width: "auto", minWidth: 56, justifyContent: "center" }}
+                                  >
+                                    <span className="bola">{l}</span>
+                                  </button>
+                                );
+                              }
                               return (
                                 <button
                                   key={l}
@@ -485,6 +563,24 @@ export default function ExamenCliente({
                             // Desktop: visual con estado de selección reflejado
                             const esSeleccionada = resp === l;
                             const hayRespuesta = !!resp;
+                            if (tieneOpcImagen) {
+                              // Solo burbuja grande, sin texto
+                              return (
+                                <div key={l} style={{
+                                  width: 44, height: 44, borderRadius: "50%",
+                                  border: `2px solid ${esSeleccionada ? "var(--azul)" : hayRespuesta ? "#c0c8d8" : "var(--azul-borde)"}`,
+                                  background: esSeleccionada ? "var(--azul)" : hayRespuesta && !esSeleccionada ? "#f5f5f7" : "transparent",
+                                  display: "grid", placeItems: "center",
+                                  fontWeight: 800, fontSize: ".9rem",
+                                  color: esSeleccionada ? "#fff" : hayRespuesta && !esSeleccionada ? "#9aa0b5" : "var(--azul)",
+                                  opacity: hayRespuesta && !esSeleccionada ? 0.5 : 1,
+                                  transition: "all .2s",
+                                  cursor: "default",
+                                }}>
+                                  {l}
+                                </div>
+                              );
+                            }
                             return (
                               <div key={l} style={{
                                 display: "flex", alignItems: "flex-start", gap: 12,
@@ -528,7 +624,8 @@ export default function ExamenCliente({
                 );
               })}
             </div>
-          ))}
+          );
+          })}
 
           {/* Botón final de la sesión */}
           <div style={{
@@ -656,7 +753,11 @@ export default function ExamenCliente({
               {preguntas.map((p) => {
                 const resp = respuestas[String(p.id)];
                 const esActual = p.numero === filaActual;
-                const bolaLetras = LET.filter((l) => textoOpcion(p, l) !== null);
+                // Si la pregunta tiene imagen pero no opciones texto, usa A-D por defecto
+                const hayOpcImagen = !!p.imagen_url && !p.opcion_a && !p.opcion_b;
+                const bolaLetras = hayOpcImagen
+                  ? (["A", "B", "C", "D"] as const)
+                  : LET.filter((l) => textoOpcion(p, l) !== null);
 
                 return (
                   <div
