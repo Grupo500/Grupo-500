@@ -563,18 +563,16 @@ export default function ExamenCliente({
                             }
                             // Desktop: visual con estado de selección reflejado
                             const esSeleccionada = resp === l;
-                            const hayRespuesta = !!resp;
                             if (tieneOpcImagen) {
-                              // Solo burbuja grande, sin texto
+                              // Solo burbuja grande, sin texto — la seleccionada en azul, las demás visibles
                               return (
                                 <div key={l} style={{
                                   width: 44, height: 44, borderRadius: "50%",
-                                  border: `2px solid ${esSeleccionada ? "var(--azul)" : hayRespuesta ? "#c0c8d8" : "var(--azul-borde)"}`,
-                                  background: esSeleccionada ? "var(--azul)" : hayRespuesta && !esSeleccionada ? "#f5f5f7" : "transparent",
+                                  border: `2px solid ${esSeleccionada ? "var(--azul)" : "var(--azul-borde)"}`,
+                                  background: esSeleccionada ? "var(--azul)" : "transparent",
                                   display: "grid", placeItems: "center",
                                   fontWeight: 800, fontSize: ".9rem",
-                                  color: esSeleccionada ? "#fff" : hayRespuesta && !esSeleccionada ? "#9aa0b5" : "var(--azul)",
-                                  opacity: hayRespuesta && !esSeleccionada ? 0.5 : 1,
+                                  color: esSeleccionada ? "#fff" : "var(--azul)",
                                   transition: "all .2s",
                                   cursor: "default",
                                 }}>
@@ -582,29 +580,29 @@ export default function ExamenCliente({
                                 </div>
                               );
                             }
+                            // Seleccionada resaltada en azul; las demás quedan totalmente legibles
                             return (
                               <div key={l} style={{
                                 display: "flex", alignItems: "flex-start", gap: 12,
-                                border: `1.5px solid ${esSeleccionada ? "var(--azul)" : hayRespuesta ? "#d8dce8" : "var(--linea)"}`,
+                                border: `1.5px solid ${esSeleccionada ? "var(--azul)" : "var(--linea)"}`,
                                 borderRadius: 12,
                                 padding: "11px 14px",
-                                background: esSeleccionada ? "var(--azul-claro)" : hayRespuesta ? "#f9f9f9" : "#fafbff",
-                                opacity: hayRespuesta && !esSeleccionada ? 0.45 : 1,
+                                background: esSeleccionada ? "var(--azul-claro)" : "#fafbff",
                                 transition: "all .2s",
                               }}>
                                 <span style={{
                                   flexShrink: 0, width: 26, height: 26, borderRadius: "50%",
-                                  border: `2px solid ${esSeleccionada ? "var(--azul)" : hayRespuesta ? "#c0c8d8" : "var(--azul-borde)"}`,
+                                  border: `2px solid ${esSeleccionada ? "var(--azul)" : "var(--azul-borde)"}`,
                                   background: esSeleccionada ? "var(--azul)" : "transparent",
                                   display: "grid",
                                   placeItems: "center", fontWeight: 800,
-                                  color: esSeleccionada ? "#fff" : hayRespuesta ? "#9aa0b5" : "var(--azul)",
+                                  color: esSeleccionada ? "#fff" : "var(--azul)",
                                   fontSize: ".82rem",
                                   transition: "all .2s",
                                 }}>
                                   {l}
                                 </span>
-                                <span style={{ paddingTop: 2, fontSize: ".96rem", color: hayRespuesta && !esSeleccionada ? "#9aa0b5" : "inherit" }}>
+                                <span style={{ paddingTop: 2, fontSize: ".96rem" }}>
                                   {textoOpcion(p, l)}
                                 </span>
                               </div>
