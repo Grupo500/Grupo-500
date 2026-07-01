@@ -50,6 +50,7 @@ export default async function PaginaResultado({
       select: {
         id: true, sesion: true, numero: true, area: true, contexto: true, enunciado: true,
         opcionA: true, opcionB: true, opcionC: true, opcionD: true, correcta: true, explicacion: true,
+        retroOpciones: true,
       },
     }),
     prisma.examen.findUnique({ where: { id: simId }, select: { titulo: true } }),
@@ -74,6 +75,7 @@ export default async function PaginaResultado({
     opcion_d: p.opcionD,
     correcta: p.correcta,
     explicacion: p.explicacion,
+    retroOpciones: (p.retroOpciones as Record<string, string> | null) ?? null,
   }));
 
   // Calcular por área
@@ -264,6 +266,17 @@ export default async function PaginaResultado({
                               </div>
                             );
                           })}
+                        </div>
+                      )}
+
+                      {/* Por qué tu respuesta no es correcta (retroalimentación específica de la opción marcada) */}
+                      {dada && !esCorrecta && p.retroOpciones?.[dada] && (
+                        <div style={{
+                          background: "#fef2f2", borderRadius: 10,
+                          padding: "10px 14px", fontSize: ".85rem", color: "#7a1f1f",
+                          borderLeft: "3px solid var(--mal)", marginBottom: 8,
+                        }}>
+                          <strong>Por qué tu respuesta no es correcta: </strong>{p.retroOpciones[dada]}
                         </div>
                       )}
 

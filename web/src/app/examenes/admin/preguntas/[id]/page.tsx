@@ -58,6 +58,10 @@ export default async function EditarPreguntaPage({
             correcta:    pregunta.correcta,
             area:        pregunta.area        ?? '',
             explicacion: pregunta.explicacion ?? '',
+            retroA:      (pregunta.retroOpciones as Record<string, string> | null)?.A ?? '',
+            retroB:      (pregunta.retroOpciones as Record<string, string> | null)?.B ?? '',
+            retroC:      (pregunta.retroOpciones as Record<string, string> | null)?.C ?? '',
+            retroD:      (pregunta.retroOpciones as Record<string, string> | null)?.D ?? '',
           }}
         />
       </div>

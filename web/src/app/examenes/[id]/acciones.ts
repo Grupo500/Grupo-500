@@ -38,6 +38,31 @@ export async function guardarRespuestas(
   })
 }
 
+// Pausa el cronómetro de una sesión: acumula el tiempo transcurrido desde que se
+// activó y limpia la marca de "activo" (queda en `null` hasta que se reanude).
+// Se llama al cerrar la pestaña o al salir del examen dentro de la app.
+export async function pausarSesion(examenId: number, sesion: 1 | 2): Promise<void> {
+  const estudId = await estudianteActual()
+  if (!estudId) return
+
+  const intento = await prisma.intentoExamen.findUnique({
+    where: { estudianteId_examenId: { estudianteId: estudId, examenId } },
+  })
+  if (!intento) return
+
+  const iniciadoEn = sesion === 1 ? intento.sesion1IniciadoEn : intento.sesion2IniciadoEn
+  if (!iniciadoEn) return // ya estaba pausada, nada que hacer
+
+  const transcurrido = Math.max(0, Math.floor((Date.now() - iniciadoEn.getTime()) / 1000))
+
+  await prisma.intentoExamen.update({
+    where: { estudianteId_examenId: { estudianteId: estudId, examenId } },
+    data: sesion === 1
+      ? { sesion1ConsumidoSeg: intento.sesion1ConsumidoSeg + transcurrido, sesion1IniciadoEn: null }
+      : { sesion2ConsumidoSeg: intento.sesion2ConsumidoSeg + transcurrido, sesion2IniciadoEn: null },
+  })
+}
+
 // Termina la sesión 1 y avanza a la sesión 2
 export async function finalizarSesion1(
   examenId: number,

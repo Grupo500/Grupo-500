@@ -19,6 +19,10 @@ type Inicial = {
   correcta: string
   area: string
   explicacion: string
+  retroA: string
+  retroB: string
+  retroC: string
+  retroD: string
 }
 
 const AREAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
@@ -52,6 +56,10 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
         correcta:    form.correcta,
         area:        form.area        || null,
         explicacion: form.explicacion || null,
+        retroA:      form.retroA      || null,
+        retroB:      form.retroB      || null,
+        retroC:      form.retroC      || null,
+        retroD:      form.retroD      || null,
       })
       if (r?.error) { setError(r.error); return }
       if (r?.redirectTo) router.push(r.redirectTo)
@@ -162,6 +170,27 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
           placeholder="Por qué esa es la respuesta correcta..."
           className="w-full rounded-lg border border-outline-variant bg-surface-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary transition-colors resize-y"
         />
+      </div>
+
+      {/* Retroalimentación por opción incorrecta */}
+      <div>
+        <label className="block text-xs font-semibold text-on-surface-variant mb-1">
+          Retroalimentación por opción incorrecta <span className="text-on-surface-variant font-normal">(opcional — por qué esa opción específica está mal)</span>
+        </label>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {(['retroA', 'retroB', 'retroC', 'retroD'] as const).map((key, i) => (
+            <div key={key}>
+              <label className="block text-xs text-on-surface-variant mb-1">Retro opción {String.fromCharCode(65 + i)}</label>
+              <textarea
+                value={form[key]}
+                onChange={e => set(key, e.target.value)}
+                rows={2}
+                placeholder={`Por qué la opción ${String.fromCharCode(65 + i)} es incorrecta...`}
+                className="w-full rounded-lg border border-outline-variant bg-surface-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary transition-colors resize-y"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {error && <p className="text-sm text-error">{error}</p>}

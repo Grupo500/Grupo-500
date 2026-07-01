@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { guardarRespuestas, finalizarSesion1, finalizarSimulacro } from "./acciones";
+import { guardarRespuestas, finalizarSesion1, finalizarSimulacro, pausarSesion } from "./acciones";
 
 type Pregunta = {
   id: number;
@@ -120,21 +120,20 @@ export default function ExamenCliente({
   sesion,
   preguntas,
   respuestasPrevias,
-  iniciadoAt,
-  duracionMin,
+  segundosRestantesInicial,
 }: {
   simulacroId: number;
   titulo: string;
   sesion: 1 | 2;
   preguntas: Pregunta[];
   respuestasPrevias: Record<string, string>;
-  iniciadoAt: string;
-  duracionMin: number | null;
+  segundosRestantesInicial: number | null;
 }) {
   const router = useRouter();
   const [esCelular, setEsCelular] = useState(false);
   const [respuestas, setRespuestas] = useState<Record<string, string>>(respuestasPrevias);
-  const [segundos, setSegundos] = useState(0);
+  const [segundos, setSegundos] = useState(segundosRestantesInicial ?? 0);
+  const autoEnviadoRef = useRef(false);
   const [filaActual, setFilaActual] = useState<number | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [yendoAHome, setYendoAHome] = useState(false);
@@ -177,19 +176,37 @@ export default function ExamenCliente({
     router.push("/inicio");
   }
 
-  // Timer
+  // Timer — cuenta regresiva por sesión (pausable) si el examen tiene duración configurada;
+  // si no, cuenta hacia adelante sin límite (comportamiento legado, exámenes sin duración fija).
   useEffect(() => {
-    const inicio = new Date(iniciadoAt).getTime();
-    const base = duracionMin ? duracionMin * 60 : 0;
-
+    const inicio = Date.now();
     const actualizar = () => {
       const transcurrido = Math.floor((Date.now() - inicio) / 1000);
-      setSegundos(base > 0 ? Math.max(0, base - transcurrido) : transcurrido);
+      if (segundosRestantesInicial === null) {
+        setSegundos(transcurrido);
+        return;
+      }
+      const restante = Math.max(0, segundosRestantesInicial - transcurrido);
+      setSegundos(restante);
+      if (restante <= 0 && !autoEnviadoRef.current) {
+        autoEnviadoRef.current = true;
+        handleFinalizar(); // se acabó el tiempo: envía lo ya contestado, sin pedir confirmación
+      }
     };
     actualizar();
     const intervalo = setInterval(actualizar, 1000);
     return () => clearInterval(intervalo);
-  }, [iniciadoAt, duracionMin]);
+  }, [segundosRestantesInicial]);
+
+  // Pausar el cronómetro al cerrar la pestaña o salir del examen (navegación interna)
+  useEffect(() => {
+    const alCerrarPestana = () => { pausarSesion(simulacroId, sesion); };
+    window.addEventListener("pagehide", alCerrarPestana);
+    return () => {
+      window.removeEventListener("pagehide", alCerrarPestana);
+      pausarSesion(simulacroId, sesion);
+    };
+  }, [simulacroId, sesion]);
 
   // Resaltar fila actual al hacer scroll
   useEffect(() => {
@@ -270,7 +287,7 @@ export default function ExamenCliente({
   const totalPreguntas = preguntas.length;
   const cant = contestadas();
   const porcentaje = totalPreguntas > 0 ? (cant / totalPreguntas) * 100 : 0;
-  const enCountdown = duracionMin !== null;
+  const enCountdown = segundosRestantesInicial !== null;
   const tiempoColor = enCountdown && segundos < 600 ? "var(--mal)" : "var(--azul-osc)";
 
   return (

@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export async function editarPregunta(preguntaId: string, data: {
   enunciado: string
@@ -17,26 +18,39 @@ export async function editarPregunta(preguntaId: string, data: {
   correcta: string
   area: string | null
   explicacion: string | null
+  retroA: string | null
+  retroB: string | null
+  retroC: string | null
+  retroD: string | null
 }) {
   const session = await auth()
   if ((session?.user as any)?.role !== 'ADMIN') return { error: 'Sin permiso' }
 
+  // Retroalimentación por opción incorrecta: se guarda como JSON { "A": "...", "B": "..." }
+  // solo con las letras que tengan texto (nunca se guarda vacío).
+  const retroOpciones: Record<string, string> = {}
+  if (data.retroA?.trim()) retroOpciones.A = data.retroA.trim()
+  if (data.retroB?.trim()) retroOpciones.B = data.retroB.trim()
+  if (data.retroC?.trim()) retroOpciones.C = data.retroC.trim()
+  if (data.retroD?.trim()) retroOpciones.D = data.retroD.trim()
+
   const updated = await prisma.preguntaExamen.update({
     where: { id: BigInt(preguntaId) },
     data: {
-      enunciado:   data.enunciado.trim(),
-      contexto:    data.contexto?.trim()    || null,
-      opcionA:     data.opcionA?.trim()     || null,
-      opcionB:     data.opcionB?.trim()     || null,
-      opcionC:     data.opcionC?.trim()     || null,
-      opcionD:     data.opcionD?.trim()     || null,
-      opcionE:     data.opcionE?.trim()     || null,
-      opcionF:     data.opcionF?.trim()     || null,
-      opcionG:     data.opcionG?.trim()     || null,
-      opcionH:     data.opcionH?.trim()     || null,
-      correcta:    data.correcta.trim().toUpperCase().slice(0, 1),
-      area:        data.area?.trim()        || null,
-      explicacion: data.explicacion?.trim() || null,
+      enunciado:     data.enunciado.trim(),
+      contexto:      data.contexto?.trim()    || null,
+      opcionA:       data.opcionA?.trim()     || null,
+      opcionB:       data.opcionB?.trim()     || null,
+      opcionC:       data.opcionC?.trim()     || null,
+      opcionD:       data.opcionD?.trim()     || null,
+      opcionE:       data.opcionE?.trim()     || null,
+      opcionF:       data.opcionF?.trim()     || null,
+      opcionG:       data.opcionG?.trim()     || null,
+      opcionH:       data.opcionH?.trim()     || null,
+      correcta:      data.correcta.trim().toUpperCase().slice(0, 1),
+      area:          data.area?.trim()        || null,
+      explicacion:   data.explicacion?.trim() || null,
+      retroOpciones: Object.keys(retroOpciones).length > 0 ? retroOpciones : Prisma.DbNull,
     },
     select: { examenId: true },
   })

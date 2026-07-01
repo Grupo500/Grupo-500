@@ -98,7 +98,7 @@ export default async function ExamenesPage() {
                       )}
                       {ex.duracionMin && (
                         <span className="flex items-center gap-1 text-xs text-[#5a74a8]">
-                          <Clock className="w-3 h-3" /> {ex.duracionMin} min
+                          <Clock className="w-3 h-3" /> {ex.duracionMin} min por sesión
                         </span>
                       )}
                     </div>

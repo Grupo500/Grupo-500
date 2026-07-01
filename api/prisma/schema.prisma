@@ -427,11 +427,12 @@ model PreguntaExamen {
   opcionF     String? @map("opcion_f")
   opcionG     String? @map("opcion_g")
   opcionH     String? @map("opcion_h")
-  correcta    String  @db.Char(1)
-  explicacion String?
-  imagenUrl   String? @map("imagen_url")
-  tieneImagen Boolean @default(false) @map("tiene_imagen")
-  examen      Examen  @relation(fields: [examenId], references: [id])
+  correcta      String  @db.Char(1)
+  explicacion   String?
+  retroOpciones Json?   @map("retro_opciones")
+  imagenUrl     String? @map("imagen_url")
+  tieneImagen   Boolean @default(false) @map("tiene_imagen")
+  examen        Examen  @relation(fields: [examenId], references: [id])
 
   @@index([examenId, sesion, numero])
   @@map("sim_preguntas")
@@ -451,18 +452,22 @@ model EstudianteExamen {
 }
 
 model IntentoExamen {
-  id           BigInt           @id @default(autoincrement())
-  estudianteId String           @map("estudiante_id") @db.Uuid
-  examenId     Int              @map("simulacro_id")
-  respuestas   Json             @default("{}")
-  correctas    Int?
-  total        Int?
-  puntaje      Decimal?         @db.Decimal
-  sesionActual Int              @default(1) @map("sesion_actual")
-  iniciadoAt   DateTime         @default(now()) @map("iniciado_at")
-  finalizadoAt DateTime?        @map("finalizado_at")
-  estudiante   EstudianteExamen @relation(fields: [estudianteId], references: [id])
-  examen       Examen           @relation(fields: [examenId], references: [id])
+  id                  BigInt           @id @default(autoincrement())
+  estudianteId        String           @map("estudiante_id") @db.Uuid
+  examenId            Int              @map("simulacro_id")
+  respuestas          Json             @default("{}")
+  correctas           Int?
+  total                Int?
+  puntaje             Decimal?         @db.Decimal
+  sesionActual        Int              @default(1) @map("sesion_actual")
+  iniciadoAt          DateTime         @default(now()) @map("iniciado_at")
+  finalizadoAt        DateTime?        @map("finalizado_at")
+  sesion1IniciadoEn   DateTime?        @map("sesion1_iniciado_en")
+  sesion1ConsumidoSeg Int              @default(0) @map("sesion1_consumido_seg")
+  sesion2IniciadoEn   DateTime?        @map("sesion2_iniciado_en")
+  sesion2ConsumidoSeg Int              @default(0) @map("sesion2_consumido_seg")
+  estudiante          EstudianteExamen @relation(fields: [estudianteId], references: [id])
+  examen              Examen           @relation(fields: [examenId], references: [id])
 
   @@unique([estudianteId, examenId])
   @@map("sim_intentos")
