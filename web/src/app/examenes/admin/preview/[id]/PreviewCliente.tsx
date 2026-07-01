@@ -260,8 +260,13 @@ export default function PreviewCliente({
 
               {items.map((p, idx) => {
                 const esPrimera = idx === 0 || items[idx - 1].contexto !== p.contexto;
-                const esPlaceholder = !p.opcion_a && !p.opcion_b;
-                const opcDisponibles = LET.filter((l) => textoOpcion(p, l) !== null);
+                // Placeholder solo si no hay opciones de texto Y tampoco imagen
+                const esPlaceholder = !p.opcion_a && !p.opcion_b && !p.imagen_url;
+                // Si hay imagen sin texto de opciones, usar A-D
+                const tieneOpcImagen = !!p.imagen_url && !p.opcion_a && !p.opcion_b;
+                const opcDisponibles = tieneOpcImagen
+                  ? (["A", "B", "C", "D"] as const)
+                  : LET.filter((l) => textoOpcion(p, l) !== null);
 
                 return (
                   <div key={p.id}>
@@ -316,9 +321,33 @@ export default function PreviewCliente({
                       )}
 
                       {!esPlaceholder && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14 }}>
+                        <div style={{
+                          display: "flex",
+                          flexDirection: tieneOpcImagen ? "row" : "column",
+                          flexWrap: tieneOpcImagen ? "wrap" : undefined,
+                          gap: tieneOpcImagen ? 10 : 8, marginTop: 14,
+                        }}>
+                          {tieneOpcImagen && (
+                            <p style={{ width: "100%", fontSize: ".78rem", color: "var(--gris)", margin: "0 0 4px", fontStyle: "italic" }}>
+                              Opciones en la imagen — correcta en verde:
+                            </p>
+                          )}
                           {opcDisponibles.map((l) => {
                             const esCor = l === p.correcta.toUpperCase();
+                            if (tieneOpcImagen) {
+                              return (
+                                <div key={l} style={{
+                                  width: 44, height: 44, borderRadius: "50%",
+                                  border: `2px solid ${esCor ? "var(--ok)" : "var(--azul-borde)"}`,
+                                  background: esCor ? "var(--ok)" : "transparent",
+                                  display: "grid", placeItems: "center",
+                                  fontWeight: 800, fontSize: ".9rem",
+                                  color: esCor ? "#fff" : "var(--azul)",
+                                }}>
+                                  {l}
+                                </div>
+                              );
+                            }
                             return (
                               <div key={l} style={{
                                 display: "flex", alignItems: "flex-start", gap: 12,
@@ -373,7 +402,9 @@ export default function PreviewCliente({
             <div style={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto", padding: "8px 6px" }}>
               {preguntas.map((p) => {
                 const esActual = p.numero === filaActual;
-                const bolaLetras = p.opcion_a ? LET.filter((l) => textoOpcion(p, l) !== null) : LET;
+                const bolaLetras = (!!p.imagen_url && !p.opcion_a)
+                  ? (["A", "B", "C", "D"] as const)
+                  : p.opcion_a ? LET.filter((l) => textoOpcion(p, l) !== null) : LET;
 
                 return (
                   <div
