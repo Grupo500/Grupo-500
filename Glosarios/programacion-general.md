@@ -57,3 +57,10 @@ Términos generales del desarrollo de software y de la app Grupo 500.
 **Qué es:** Un pequeño recuadro con información que aparece cuando pasas el mouse por encima de un elemento (o lo mantienes pulsado en móvil).
 **Analogía:** La etiqueta que cuelga de un producto: solo la ves cuando te acercas, y te da un dato extra sin estorbar.
 **En la práctica:** En la app, al pasar el mouse sobre la ✕ de un certificado aparece un tooltip que dice "Eliminar certificado".
+
+---
+
+### z-index
+**Qué es:** Una propiedad de CSS que decide qué elemento va **adelante** y cuál **atrás** cuando dos se superponen en pantalla. Número más alto = queda por encima.
+**Analogía:** Capas de hojas sobre un escritorio: la hoja con el número más alto tapa a las de abajo.
+**En la práctica:** Un modal, un menú desplegable o un tooltip usan un z-index alto para aparecer por encima del resto de la página y no quedar tapados.

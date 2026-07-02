@@ -11,6 +11,18 @@ Términos sobre Git y GitHub — las herramientas que usamos para guardar, versi
 
 ---
 
+### fix (y otros prefijos de commit)
+**Qué es:** La palabra "fix" al inicio de un mensaje de commit indica que el cambio **corrige un error o bug**. Es una convención para clasificar los commits de un vistazo.
+**Analogía:** Etiquetar una nota: "🔧 arreglo" vs "✨ mejora nueva".
+**En la práctica:** Prefijos más usados:
+- `fix:` → arregla algo roto (ej. `fix: corregir gráfico de cursos`)
+- `feat:` → funcionalidad nueva (*feature*)
+- `docs:` → documentación
+- `ui:` → cambios visuales
+- `chore:` → mantenimiento/limpieza
+
+---
+
 ### push
 **Qué es:** Subir tus commits (tus cambios ya guardados) desde tu computador a GitHub (la nube).
 **Analogía:** Empujar hacia afuera ⬆️ — mandas lo tuyo para que quede respaldado y otros lo vean.
