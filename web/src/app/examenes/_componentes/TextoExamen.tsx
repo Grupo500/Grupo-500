@@ -12,6 +12,22 @@
 const RE_CITA = /^\s*(Tomado y adaptado de|Tomado de|Adaptado de|Recuperado de|Fuente)\s*:?/i;
 const RE_LISTA = /^\s*(Primero|Segundo|Tercero|Cuarto|Quinto|Paso\s+\d+|Afirmación\s+\d+)\s*[.:]\s*/;
 
+// Conectores que gramaticalmente introducen el cuerpo de una pregunta: la cláusula que empieza
+// con uno de estos (condicional/subordinada/preámbulo) se completa con el "¿...?" que le sigue,
+// por lo que forman una sola oración. NO se une una afirmación independiente (termina en punto)
+// ni una cláusula que no arranca con estos conectores.
+const RE_PREAMBULO = /^(si\b|cuando\b|mientras\b|aunque\b|como\b|porque\b|dado\b|puesto que\b|ya que\b|seg[uú]n\b|conforme\b|teniendo en cuenta\b|con base\b|a partir de\b|en funci[oó]n de\b|para\b|al\b|de acuerdo\b|de lo anterior\b|de la informaci[oó]n\b|con la informaci[oó]n\b|con los datos\b|respecto a\b|con respecto\b|en relaci[oó]n\b|frente a\b|ante\b|considerando\b|a juzgar\b|sabiendo\b|suponiendo\b|si bien\b|tras\b|luego de\b|despu[eé]s de\b|antes de\b|bas[aá]ndose\b|con base en\b|de este modo\b|en este caso\b|en ese caso\b)/i;
+
+// ¿Es la cláusula que precede a una pregunta (preámbulo que se completa con "¿...?")?
+// Requisitos gramaticales: (1) termina en coma o punto y coma, (2) es UNA sola cláusula —
+// no contiene una oración previa ya cerrada—, (3) arranca con un conector introductorio.
+function esPreambuloPregunta(texto: string): boolean {
+  const s = texto.trim();
+  if (!/[,;]$/.test(s)) return false;
+  if (/[.!?]\s/.test(s)) return false; // ya hay una oración completa antes: es contexto, no preámbulo
+  return RE_PREAMBULO.test(s);
+}
+
 // Detecta si un párrafo es texto de tabla extraído del PDF (filas de números/columnas)
 export function esParrafoTabla(p: string): boolean {
   const t = p.trim();
@@ -57,8 +73,8 @@ function aBloques(parrafos: string[]): Bloque[] {
     const i = p.indexOf("¿");
     if (i > 0) {
       const previo = p.slice(0, i).trim();
-      // "Cláusula condicional, ¿pregunta?" en el mismo párrafo → una sola oración
-      if (/[,;]$/.test(previo)) {
+      // "Cláusula preámbulo, ¿pregunta?" en el mismo párrafo → una sola oración con sentido
+      if (esPreambuloPregunta(previo)) {
         bloques.push({ tipo: "pregunta", contenido: p.trim() });
       } else {
         bloques.push({ tipo: "texto", contenido: previo });
@@ -70,13 +86,13 @@ function aBloques(parrafos: string[]): Bloque[] {
       bloques.push({ tipo: "texto", contenido: p });
     }
   }
-  // Une la cláusula que precede a la pregunta cuando quedó en párrafo aparte y termina en coma
+  // Une la cláusula preámbulo que quedó en párrafo aparte con la pregunta que le sigue
   // (ej. "Si la persona decide comprar el celular de menor precio," + "¿cuál debe ser su elección?")
   for (let k = bloques.length - 1; k > 0; k--) {
     if (
       bloques[k].tipo === "pregunta" &&
       bloques[k - 1].tipo === "texto" &&
-      /[,;]$/.test(bloques[k - 1].contenido.trim())
+      esPreambuloPregunta(bloques[k - 1].contenido)
     ) {
       bloques[k - 1] = { tipo: "pregunta", contenido: bloques[k - 1].contenido.trim() + " " + bloques[k].contenido };
       bloques.splice(k, 1);
