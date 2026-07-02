@@ -137,6 +137,28 @@ export default function ExamenCliente({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulacroId, sesion]);
 
+  // Protección durante el examen: bloquea click derecho, atajos de DevTools y "ver código fuente".
+  // No es infalible (el menú del navegador sigue existiendo), pero cierra las vías comunes.
+  useEffect(() => {
+    const bloquearMenu = (e: MouseEvent) => e.preventDefault();
+    const bloquearTeclas = (e: KeyboardEvent) => {
+      const k = e.key.toUpperCase();
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && (k === "I" || k === "J" || k === "C")) ||
+        (e.ctrlKey && k === "U")
+      ) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("contextmenu", bloquearMenu);
+    document.addEventListener("keydown", bloquearTeclas);
+    return () => {
+      document.removeEventListener("contextmenu", bloquearMenu);
+      document.removeEventListener("keydown", bloquearTeclas);
+    };
+  }, []);
+
   // Ir a home guardando primero
   async function irAHome() {
     setYendoAHome(true);
