@@ -56,12 +56,30 @@ function aBloques(parrafos: string[]): Bloque[] {
     if (esEcuacion(p)) { bloques.push({ tipo: "ecuacion", contenido: p }); continue; }
     const i = p.indexOf("¿");
     if (i > 0) {
-      bloques.push({ tipo: "texto", contenido: p.slice(0, i).trim() });
-      bloques.push({ tipo: "pregunta", contenido: p.slice(i).trim() });
+      const previo = p.slice(0, i).trim();
+      // "Cláusula condicional, ¿pregunta?" en el mismo párrafo → una sola oración
+      if (/[,;]$/.test(previo)) {
+        bloques.push({ tipo: "pregunta", contenido: p.trim() });
+      } else {
+        bloques.push({ tipo: "texto", contenido: previo });
+        bloques.push({ tipo: "pregunta", contenido: p.slice(i).trim() });
+      }
     } else if (i === 0) {
       bloques.push({ tipo: "pregunta", contenido: p });
     } else {
       bloques.push({ tipo: "texto", contenido: p });
+    }
+  }
+  // Une la cláusula que precede a la pregunta cuando quedó en párrafo aparte y termina en coma
+  // (ej. "Si la persona decide comprar el celular de menor precio," + "¿cuál debe ser su elección?")
+  for (let k = bloques.length - 1; k > 0; k--) {
+    if (
+      bloques[k].tipo === "pregunta" &&
+      bloques[k - 1].tipo === "texto" &&
+      /[,;]$/.test(bloques[k - 1].contenido.trim())
+    ) {
+      bloques[k - 1] = { tipo: "pregunta", contenido: bloques[k - 1].contenido.trim() + " " + bloques[k].contenido };
+      bloques.splice(k, 1);
     }
   }
   return bloques;
