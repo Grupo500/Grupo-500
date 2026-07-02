@@ -50,3 +50,10 @@ Términos generales del desarrollo de software y de la app Grupo 500.
 **Qué es:** Un dato de configuración secreto o cambiante que la app lee (claves, contraseñas, URLs).
 **Analogía:** Las llaves y códigos guardados en una caja fuerte, aparte del código.
 **En la práctica:** La contraseña de la base de datos o las claves de Hotmart viven como variables de entorno en Railway/Vercel, no dentro del código.
+
+---
+
+### tooltip
+**Qué es:** Un pequeño recuadro con información que aparece cuando pasas el mouse por encima de un elemento (o lo mantienes pulsado en móvil).
+**Analogía:** La etiqueta que cuelga de un producto: solo la ves cuando te acercas, y te da un dato extra sin estorbar.
+**En la práctica:** En la app, al pasar el mouse sobre la ✕ de un certificado aparece un tooltip que dice "Eliminar certificado".
