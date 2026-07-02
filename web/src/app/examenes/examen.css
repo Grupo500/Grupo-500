@@ -182,30 +182,39 @@
 .examen-sim .nota { font-size: .8rem; color: var(--gris); }
 .examen-sim .error { color: var(--mal); font-size: .88rem; }
 
-/* ── Tablet ─────────────────────────────────────────────────────── */
+/* ── Tablet / compacto: hoja de respuestas como hoja inferior colapsable ── */
 @media (max-width: 880px) {
   .examen-sim .wrap-exam { grid-template-columns: 1fr !important; }
   .examen-sim .wrap-exam aside > div {
     position: fixed !important; left: 0; right: 0; bottom: 0; top: auto !important;
-    border-radius: 18px 18px 0 0 !important; z-index: 40;
+    border-radius: 18px 18px 0 0 !important; z-index: 46;
+    box-shadow: 0 -10px 40px -8px rgba(22,38,110,.35) !important;
   }
-  .examen-sim .wrap-exam aside > div > div:nth-child(2) { max-height: 30vh !important; }
+  .examen-sim .wrap-exam aside > div > div:nth-child(2) { max-height: 38vh !important; }
 }
 
 /* ── Móvil ───────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .examen-sim .wrap-exam aside { display: none !important; }
   .examen-sim .wrap-exam { padding: 14px 12px 100px !important; gap: 14px !important; }
   .examen-sim .encabezado { padding: 10px 14px !important; gap: 10px !important; }
-  .examen-sim .home-label { display: inline !important; }
-  .examen-sim .pregunta-movil { padding: 16px 14px !important; margin-bottom: 10px !important; }
+  .examen-sim .pregunta-movil { padding: 16px 14px 20px !important; margin-bottom: 10px !important; }
+  .examen-sim .wrap-exam aside > div > div:nth-child(2) { max-height: 34vh !important; }
 
   .examen-sim .opcion-movil {
-    display: flex; align-items: flex-start; gap: 11px;
+    display: flex; align-items: flex-start; gap: 10px;
     border: 2px solid var(--linea); border-radius: 12px;
-    padding: 11px 13px; background: #fafbff;
+    padding: 10px 12px; background: #fafbff;
     cursor: pointer; transition: all .15s var(--ease-out);
     -webkit-tap-highlight-color: transparent; width: 100%;
+    min-width: 0;
+  }
+  /* El texto de la opción nunca se corta: salto de línea forzado */
+  .examen-sim .opcion-movil span:not(.bola) {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+    flex: 1;
   }
   .examen-sim .opcion-movil:active { transform: scale(.97); transition-duration: 80ms; }
   .examen-sim .opcion-movil.seleccionada {
@@ -213,9 +222,9 @@
     box-shadow: 0 0 0 3px var(--azul-claro);
   }
   .examen-sim .opcion-movil .bola {
-    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
     border: 2px solid var(--azul-borde); display: grid; place-items: center;
-    font-weight: 800; color: var(--azul); font-size: .82rem; transition: all .15s;
+    font-weight: 800; color: var(--azul); font-size: .78rem; transition: all .15s;
   }
   .examen-sim .opcion-movil.seleccionada .bola {
     background: var(--azul); border-color: var(--azul); color: #fff;

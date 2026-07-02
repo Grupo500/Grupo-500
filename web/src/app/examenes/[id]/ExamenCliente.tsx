@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { guardarRespuestas, finalizarSesion1, finalizarSimulacro, pausarSesion } from "./acciones";
+import { TextoConParrafos, EnunciadoConImagen } from "../_componentes/TextoExamen";
 
 type Pregunta = {
   id: number;
@@ -21,73 +22,6 @@ type Pregunta = {
   opcion_h: string | null;
   imagen_url: string | null;
 };
-
-// Renderiza contexto (texto corrido, sin negrilla)
-function TextoConParrafos({ texto, style }: { texto: string; style?: React.CSSProperties }) {
-  const parrafos = texto.split('\n\n').filter(Boolean);
-  return (
-    <div style={style}>
-      {parrafos.map((p, i) => (
-        <p key={i} style={{ margin: i === 0 ? 0 : '10px 0 0', lineHeight: 1.7, fontSize: "1rem" }}>
-          {p.trim()}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-// Detecta si un párrafo es texto de tabla extraído del PDF (filas de números/columnas)
-function esParrafoTabla(p: string): boolean {
-  const t = p.trim();
-  // Líneas de fuente/crédito
-  if (/^(Fuente:|Tabla\s*$)/i.test(t)) return true;
-  const tokens = t.split(/\s+/);
-  if (tokens.length < 5) return false;
-  const nums = tokens.filter(tok =>
-    /^[\d.,]+%?$/.test(tok) ||
-    /^\$[\d.,]+$/.test(tok) ||
-    /^\d{4}$/.test(tok)
-  );
-  const ratio = nums.length / tokens.length;
-  // Ratio alto → tabla
-  if (ratio > 0.28) return true;
-  // Precios colombianos (1.400.000) + ratio moderado → lista de precios/tabla
-  if (/\d\.\d{3}/.test(t) && ratio > 0.18) return true;
-  return false;
-}
-
-// Renderiza el enunciado de la pregunta:
-// - Si tiene imagen: oculta párrafos de tabla (ya se ven en la imagen)
-// - La parte ¿...? siempre va en negrilla
-function EnunciadoConPregunta({ texto, tieneImagen }: { texto: string; tieneImagen?: boolean }) {
-  const todosParrafos = texto.split('\n\n').filter(Boolean);
-  // Si hay imagen subida, filtramos los párrafos que son dump de tabla
-  const parrafos = tieneImagen
-    ? todosParrafos.filter(p => !esParrafoTabla(p))
-    : todosParrafos;
-
-  return (
-    <div>
-      {parrafos.map((p, i) => {
-        const t = p.trim();
-        const pregIdx = t.indexOf('¿');
-        if (pregIdx >= 0) {
-          return (
-            <p key={i} style={{ margin: i === 0 ? 0 : '10px 0 0', lineHeight: 1.7, fontSize: "1rem" }}>
-              {pregIdx > 0 && <span>{t.slice(0, pregIdx)}</span>}
-              <strong>{t.slice(pregIdx)}</strong>
-            </p>
-          );
-        }
-        return (
-          <p key={i} style={{ margin: i === 0 ? 0 : '10px 0 0', lineHeight: 1.7, fontSize: "1rem" }}>
-            {t}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
 
 const LET = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 const LETRAS_OPCIONES = {
@@ -150,29 +84,64 @@ export default function ExamenCliente({
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  // Pantalla compacta (≤880px): la hoja de respuestas pasa a ser una pestaña colapsable
+  const [esCompacto, setEsCompacto] = useState(false);
+  const [hojaAbierta, setHojaAbierta] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 880px)");
+    setEsCompacto(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setEsCompacto(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   // Mantener ref actualizada para usarla en eventos sin stale closure
   useEffect(() => { respuestasRef.current = respuestas; }, [respuestas]);
 
-  // Guardar inmediatamente al minimizar/cambiar pestaña o cerrar
+  // Respaldo local: cada respuesta se persiste al instante en localStorage,
+  // de modo que un crash, un cierre abrupto o una caída de internet no pierdan nada.
+  const claveLocal = `sim${simulacroId}-s${sesion}-resp`;
+
+  // Al montar: recuperar respuestas del respaldo local que el servidor no alcanzó a guardar
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(claveLocal);
+      if (!raw) return;
+      const local = JSON.parse(raw) as Record<string, string>;
+      const hayDiferencia = Object.entries(local).some(([k, v]) => respuestasRef.current[k] !== v);
+      if (hayDiferencia) {
+        const merged = { ...respuestasRef.current, ...local };
+        setRespuestas(merged);
+        startTransition(() => guardarRespuestas(simulacroId, sesion, merged).catch(() => {}));
+      }
+    } catch { /* respaldo corrupto: ignorar */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Guardar inmediatamente al minimizar/cambiar pestaña o cerrar; también al
+  // recuperar la conexión a internet (flush de lo que quedó pendiente offline)
   useEffect(() => {
     const guardarAhora = () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      startTransition(() => guardarRespuestas(simulacroId, sesion, respuestasRef.current));
+      startTransition(() => guardarRespuestas(simulacroId, sesion, respuestasRef.current).catch(() => {}));
     };
     const onHide = () => { if (document.visibilityState === "hidden") guardarAhora(); };
     document.addEventListener("visibilitychange", onHide);
     window.addEventListener("pagehide", guardarAhora);
+    window.addEventListener("online", guardarAhora);
     return () => {
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("pagehide", guardarAhora);
+      window.removeEventListener("online", guardarAhora);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulacroId, sesion]);
 
   // Ir a home guardando primero
   async function irAHome() {
     setYendoAHome(true);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    await guardarRespuestas(simulacroId, sesion, respuestasRef.current);
+    try { await guardarRespuestas(simulacroId, sesion, respuestasRef.current); } catch { /* sin internet: el respaldo local lo cubre */ }
     router.push("/inicio");
   }
 
@@ -200,11 +169,11 @@ export default function ExamenCliente({
 
   // Pausar el cronómetro al cerrar la pestaña o salir del examen (navegación interna)
   useEffect(() => {
-    const alCerrarPestana = () => { pausarSesion(simulacroId, sesion); };
+    const alCerrarPestana = () => { pausarSesion(simulacroId, sesion).catch(() => {}); };
     window.addEventListener("pagehide", alCerrarPestana);
     return () => {
       window.removeEventListener("pagehide", alCerrarPestana);
-      pausarSesion(simulacroId, sesion);
+      pausarSesion(simulacroId, sesion).catch(() => {});
     };
   }, [simulacroId, sesion]);
 
@@ -241,11 +210,14 @@ export default function ExamenCliente({
     const nuevas = { ...respuestas, [String(pregId)]: letra };
     setRespuestas(nuevas);
 
-    // Guardar en servidor con debounce de 2 s
+    // Respaldo local inmediato (sobrevive crash, cierre o caída de internet)
+    try { localStorage.setItem(claveLocal, JSON.stringify(nuevas)); } catch { /* almacenamiento lleno/bloqueado */ }
+
+    // Guardar en servidor con debounce corto; si falla (offline) el respaldo local cubre
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      startTransition(() => guardarRespuestas(simulacroId, sesion, nuevas));
-    }, 2000);
+      startTransition(() => guardarRespuestas(simulacroId, sesion, nuevas).catch(() => {}));
+    }, 800);
   }
 
   function irAPregunta(num: number) {
@@ -264,6 +236,8 @@ export default function ExamenCliente({
 
   async function handleFinalizar() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    // El respaldo local de esta sesión ya cumplió su función: las respuestas van en la llamada
+    try { localStorage.removeItem(claveLocal); } catch { /* no crítico */ }
     startTransition(async () => {
       if (sesion === 1) {
         await finalizarSesion1(simulacroId, respuestas);
@@ -308,11 +282,13 @@ export default function ExamenCliente({
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Botón Home */}
+          {/* Botón Pausar: guarda respuestas, pausa el tiempo y sale al inicio */}
           <button
             onClick={irAHome}
             disabled={yendoAHome}
-            title="Volver al inicio (tus respuestas se guardan)"
+            title={enCountdown
+              ? "Pausa el tiempo y guarda tus respuestas. Puedes retomar cuando quieras."
+              : "Volver al inicio (tus respuestas se guardan)"}
             style={{
               display: "inline-flex", alignItems: "center", gap: 7,
               padding: "8px 14px", borderRadius: 999,
@@ -323,13 +299,17 @@ export default function ExamenCliente({
           >
             {yendoAHome ? (
               <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid var(--azul)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+            ) : enCountdown ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="9" y1="5" x2="9" y2="19" /><line x1="15" y1="5" x2="15" y2="19" />
+              </svg>
             ) : (
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9,22 9,12 15,12 15,22" />
               </svg>
             )}
-            <span style={{ display: "none" }} className="home-label">Inicio</span>
+            <span>{enCountdown ? "Pausar" : "Inicio"}</span>
           </button>
 
           {/* Reloj */}
@@ -517,19 +497,8 @@ export default function ExamenCliente({
                         </div>
                       ) : (
                         <div style={{ margin: "12px 0 4px" }}>
-                          {/* Enunciado (pregunta) SIEMPRE arriba de la imagen */}
-                          <EnunciadoConPregunta texto={p.enunciado} tieneImagen={!!p.imagen_url} />
-                          {/* Imagen de la pregunta si está disponible */}
-                          {p.imagen_url && (
-                            <div style={{ margin: "14px 0 4px" }}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={p.imagen_url}
-                                alt={`Figura pregunta ${p.numero}`}
-                                style={{ maxWidth: "100%", borderRadius: 10, border: "1px solid var(--linea)" }}
-                              />
-                            </div>
-                          )}
+                          {/* Orden: intro del enunciado → imagen → pregunta */}
+                          <EnunciadoConImagen texto={p.enunciado} imagenUrl={p.imagen_url} numero={p.numero} />
                         </div>
                       )}
 
@@ -722,7 +691,31 @@ export default function ExamenCliente({
           </div>
         )}
 
-        {/* Hoja de respuestas (fija a la derecha) */}
+        {/* Pestaña flotante para abrir la hoja de respuestas (solo pantallas compactas) */}
+        {esCompacto && !hojaAbierta && (
+          <button
+            onClick={() => setHojaAbierta(true)}
+            style={{
+              position: "fixed", right: 14, bottom: esCelular ? 84 : 18, zIndex: 45,
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "var(--azul)", color: "#fff", border: "none",
+              borderRadius: 999, padding: "10px 16px", fontWeight: 700, fontSize: ".82rem",
+              boxShadow: "0 8px 22px -6px rgba(37,64,200,.6)", cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
+            Hoja de respuestas
+            <span style={{ background: "rgba(255,255,255,.22)", borderRadius: 999, padding: "1px 8px", fontSize: ".74rem" }}>
+              {cant}/{totalPreguntas}
+            </span>
+          </button>
+        )}
+
+        {/* Hoja de respuestas (fija a la derecha; en compacto es una hoja inferior colapsable) */}
+        {(!esCompacto || hojaAbierta) && (
         <aside>
           <div style={{
             position: "sticky", top: 86, background: "#fff",
@@ -740,15 +733,33 @@ export default function ExamenCliente({
                     {cant} <span style={{ opacity: .7 }}>de</span> {totalPreguntas} contestadas
                   </div>
                 </div>
-                {/* Porcentaje grande */}
-                <div style={{
-                  fontWeight: 900, fontSize: "1.9rem", lineHeight: 1,
-                  fontVariantNumeric: "tabular-nums",
-                  background: "linear-gradient(135deg, #fff 40%, #95daff)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}>
-                  {Math.round(porcentaje)}<span style={{ fontSize: "1rem", fontWeight: 700 }}>%</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {/* Porcentaje grande */}
+                  <div style={{
+                    fontWeight: 900, fontSize: "1.9rem", lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
+                    background: "linear-gradient(135deg, #fff 40%, #95daff)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}>
+                    {Math.round(porcentaje)}<span style={{ fontSize: "1rem", fontWeight: 700 }}>%</span>
+                  </div>
+                  {/* Cerrar (solo en compacto) */}
+                  {esCompacto && (
+                    <button
+                      onClick={() => setHojaAbierta(false)}
+                      aria-label="Cerrar hoja de respuestas"
+                      style={{
+                        background: "rgba(255,255,255,.15)", border: "none", color: "#fff",
+                        width: 30, height: 30, borderRadius: "50%", cursor: "pointer",
+                        display: "grid", placeItems: "center", flexShrink: 0,
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
               {/* Barra de progreso */}
@@ -834,6 +845,7 @@ export default function ExamenCliente({
             </div>
           </div>
         </aside>
+        )}
       </div>
     </>
   );

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { TextoConParrafos, EnunciadoConImagen } from "../../../_componentes/TextoExamen";
 
 type Pregunta = {
   id: number;
@@ -22,59 +23,6 @@ type Pregunta = {
   imagen_url: string | null;
   correcta: string;
 };
-
-function TextoConParrafos({ texto, style }: { texto: string; style?: React.CSSProperties }) {
-  const parrafos = texto.split('\n\n').filter(Boolean);
-  return (
-    <div style={style}>
-      {parrafos.map((p, i) => (
-        <p key={i} style={{ margin: i === 0 ? 0 : '10px 0 0', lineHeight: 1.7, fontSize: "1rem" }}>
-          {p.trim()}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-function esParrafoTabla(p: string): boolean {
-  const t = p.trim();
-  if (/^(Fuente:|Tabla\s*$)/i.test(t)) return true;
-  const tokens = t.split(/\s+/);
-  if (tokens.length < 5) return false;
-  const nums = tokens.filter(tok =>
-    /^[\d.,]+%?$/.test(tok) || /^\$[\d.,]+$/.test(tok) || /^\d{4}$/.test(tok)
-  );
-  const ratio = nums.length / tokens.length;
-  if (ratio > 0.28) return true;
-  if (/\d\.\d{3}/.test(t) && ratio > 0.18) return true;
-  return false;
-}
-
-function EnunciadoConPregunta({ texto, tieneImagen }: { texto: string; tieneImagen?: boolean }) {
-  const todosParrafos = texto.split('\n\n').filter(Boolean);
-  const parrafos = tieneImagen ? todosParrafos.filter(p => !esParrafoTabla(p)) : todosParrafos;
-  return (
-    <div>
-      {parrafos.map((p, i) => {
-        const t = p.trim();
-        const pregIdx = t.indexOf('¿');
-        if (pregIdx >= 0) {
-          return (
-            <p key={i} style={{ margin: i === 0 ? 0 : '10px 0 0', lineHeight: 1.7, fontSize: "1rem" }}>
-              {pregIdx > 0 && <span>{t.slice(0, pregIdx)}</span>}
-              <strong>{t.slice(pregIdx)}</strong>
-            </p>
-          );
-        }
-        return (
-          <p key={i} style={{ margin: i === 0 ? 0 : '10px 0 0', lineHeight: 1.7, fontSize: "1rem" }}>
-            {t}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
 
 const LET = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 const LETRAS_OPCIONES = {
@@ -325,17 +273,8 @@ export default function PreviewCliente({
                         </div>
                       ) : (
                         <div style={{ margin: "12px 0 4px" }}>
-                          <EnunciadoConPregunta texto={p.enunciado} tieneImagen={!!p.imagen_url} />
-                          {p.imagen_url && (
-                            <div style={{ margin: "14px 0 4px" }}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={p.imagen_url}
-                                alt={`Figura pregunta ${p.numero}`}
-                                style={{ maxWidth: "100%", borderRadius: 10, border: "1px solid var(--linea)" }}
-                              />
-                            </div>
-                          )}
+                          {/* Orden: intro del enunciado → imagen → pregunta */}
+                          <EnunciadoConImagen texto={p.enunciado} imagenUrl={p.imagen_url} numero={p.numero} />
                         </div>
                       )}
 

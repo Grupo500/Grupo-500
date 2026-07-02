@@ -50,6 +50,10 @@ export default async function PaginaExamen({
   if (sesionSolicitada === 2 && (intento.sesionActual ?? 1) < 2) {
     redirect(`/examenes/${examId}`)
   }
+  // Sesión 1 ya finalizada: no se puede reabrir (evita corregir respuestas ya enviadas)
+  if (sesionSolicitada === 1 && (intento.sesionActual ?? 1) >= 2) {
+    redirect(`/examenes/${examId}?sesion=2`)
+  }
   const sesion = sesionSolicitada as 1 | 2
 
   // Cronómetro pausable de la sesión (si el examen tiene duración por sesión configurada)
