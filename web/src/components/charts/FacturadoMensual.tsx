@@ -32,7 +32,10 @@ export function FacturadoMensual() {
   const finActual     = toISO(endOfMonth(now))
   const mesAnterior   = subMonths(now, 1)
   const inicioAnt     = toISO(startOfMonth(mesAnterior))
-  const finAnt        = toISO(endOfMonth(mesAnterior))
+  // Mismo corte de días: si estamos a día 3 de julio, comparar jun 1–3
+  const corteAnt      = new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), now.getDate())
+  const finMesAnt     = endOfMonth(mesAnterior)
+  const finAnt        = toISO(corteAnt > finMesAnt ? finMesAnt : corteAnt)
 
   const color   = isDark ? '#95daff' : '#1a7de0'
   const sombra  = isDark ? 'rgba(148,167,190,0.45)' : 'rgba(100,116,139,0.40)'

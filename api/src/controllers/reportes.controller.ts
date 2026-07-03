@@ -79,7 +79,7 @@ export async function miResumenAsesor(req: Request, res: Response) {
   const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const finMes       = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
   const inicioMesAnt = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
-  const finMesAnt    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+  const finMesAnt    = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate(), 23, 59, 59)
 
   // Sin asesor asociado (p.ej. admin) → respuesta vacía
   if (!yo) {
@@ -347,7 +347,7 @@ export async function financieroPeriodo(req: Request, res: Response) {
       desdeTotales  = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
       hastaTotales  = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
       desdeAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
-      hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
+      hastaAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate(), 23, 59, 59)
     }
   }
 

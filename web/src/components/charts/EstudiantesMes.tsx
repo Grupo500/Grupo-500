@@ -69,8 +69,13 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
   const primary = isDark ? '#95daff' : '#1a7de0'
 
   const base      = new Date(desde + 'T00:00:00')
-  const inicioAnt = toISO(startOfMonth(subMonths(base, 1)))
-  const finAnt    = toISO(endOfMonth(subMonths(base, 1)))
+  const hoy       = new Date()
+  const mesAnt    = subMonths(base, 1)
+  const inicioAnt = toISO(startOfMonth(mesAnt))
+  // Mismo corte de días: si estamos a día 3 de julio, comparar jun 1–3
+  const corteAnt  = new Date(mesAnt.getFullYear(), mesAnt.getMonth(), hoy.getDate())
+  const finMesAnt = endOfMonth(mesAnt)
+  const finAnt    = toISO(corteAnt > finMesAnt ? finMesAnt : corteAnt)
 
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes-por-mes', desde, hasta],
