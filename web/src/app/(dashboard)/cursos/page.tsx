@@ -212,9 +212,20 @@ export default function CursosPage() {
     onError: (e: Error) => alert(e.message || 'Error al cambiar el estado del curso'),
   })
 
+  const [msgSync, setMsgSync] = useState<string | null>(null)
   const sincronizarMutation = useMutation({
     mutationFn: () => fetcher<any>('/hotmart/sincronizar', { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] })
+      const act = res?.data?.actualizados ?? 0
+      const cre = res?.data?.creados ?? 0
+      setMsgSync(
+        act > 0 || cre > 0
+          ? `${act} nombre${act !== 1 ? 's' : ''} actualizado${act !== 1 ? 's' : ''}${cre > 0 ? ` · ${cre} curso${cre !== 1 ? 's' : ''} nuevo${cre !== 1 ? 's' : ''}` : ''}`
+          : 'Todo al día con Hotmart'
+      )
+      setTimeout(() => setMsgSync(null), 5000)
+    },
     onError: (e: Error) => alert(`Error al sincronizar con Hotmart: ${e.message}`),
   })
 
@@ -273,7 +284,7 @@ export default function CursosPage() {
           subtitle={
             sincronizarMutation.isPending
               ? 'Actualizando desde Hotmart...'
-              : `${cursos.length} curso${cursos.length !== 1 ? 's' : ''}`
+              : msgSync ?? `${cursos.length} curso${cursos.length !== 1 ? 's' : ''}`
           }
         />
         {isAdmin && (
