@@ -10,7 +10,7 @@ import { Award, Plus, X, Loader2, Download, CheckCircle, Clock, Upload, Pen, Mai
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface CursoEstudiante {
-  curso: { nombre: string; duracionHoras: number; calendario: string }
+  curso: { nombre: string; duracionHoras: number; calendario: string; fechaInicio?: string | null; fechaFin?: string | null }
 }
 interface Certificado {
   id: string
@@ -149,6 +149,8 @@ async function generarPDF(
         duracionHoras:    (cursoData?.duracionHoras && cursoData.duracionHoras > 0)
                             ? cursoData.duracionHoras
                             : horasPorNombreCurso(cursoData?.nombre ?? ''),
+        fechaInicioCurso: cursoData?.fechaInicio ?? null,
+        fechaFinCurso:    cursoData?.fechaFin    ?? null,
         tipo:             cert.tipo,
         fechaEmision:     cert.fechaEmision,
         numeroCertificado: totalCerts - index,

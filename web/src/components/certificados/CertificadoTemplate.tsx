@@ -8,6 +8,8 @@ interface CertificadoData {
   ciudadColegio: string
   curso: string
   duracionHoras: number
+  fechaInicioCurso?: string | null
+  fechaFinCurso?: string | null
   tipo: 'CURSANDO' | 'COMPLETADO'
   fechaEmision: string
   numeroCertificado: number
@@ -27,6 +29,11 @@ function formatFechaLarga(iso: string) {
   return `${dia} días del mes de ${mes} de ${anio}`
 }
 
+function formatFechaCorta(iso: string) {
+  const d = new Date(iso)
+  return `${d.getDate()} de ${d.toLocaleDateString('es-CO', { month: 'long' })} de ${d.getFullYear()}`
+}
+
 // ── Iconos como <img> con data URL — html2canvas renderiza <img> con verticalAlign perfectamente ──
 const EMAIL_ICON  = "data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='2' y='4' width='20' height='16' rx='2' stroke='%23555' stroke-width='1.8'/%3E%3Cpath d='M2 7l10 7 10-7' stroke='%23555' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"
 const WA_ICON     = "data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 24 24' fill='%2325D366' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.417A9.953 9.953 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.95 7.95 0 01-4.054-1.107l-.29-.172-2.953.84.847-2.876-.19-.298A7.96 7.96 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8zm4.406-5.884c-.242-.121-1.432-.707-1.654-.787-.222-.08-.384-.121-.545.121-.162.242-.627.787-.769.949-.141.162-.283.182-.525.06-.242-.12-1.021-.376-1.944-1.199-.719-.641-1.204-1.433-1.345-1.675-.141-.242-.015-.373.106-.493.109-.108.242-.283.363-.424.12-.141.161-.242.242-.403.08-.162.04-.303-.02-.424-.061-.12-.545-1.314-.747-1.799-.196-.473-.396-.409-.545-.417l-.464-.008c-.162 0-.424.06-.646.303-.222.242-.848.829-.848 2.022 0 1.192.868 2.344.989 2.506.121.162 1.708 2.607 4.138 3.655.578.25 1.029.398 1.38.51.58.184 1.108.158 1.526.096.465-.069 1.432-.585 1.634-1.15.201-.565.201-1.049.141-1.15-.06-.1-.222-.162-.464-.283z'/%3E%3C/svg%3E"
@@ -41,11 +48,21 @@ const CONTACTOS = [
 export function CertificadoTemplate({ data, innerRef }: Props) {
   const {
     nombreEstudiante, tipoDocumento, documento, curso,
-    duracionHoras, tipo, fechaEmision, numeroCertificado,
+    duracionHoras, fechaInicioCurso, fechaFinCurso, tipo, fechaEmision, numeroCertificado,
     firmaAndres,
   } = data
 
   const tipoBold = tipo === 'CURSANDO' ? 'se encuentra matriculado/a' : 'ha completado satisfactoriamente'
+
+  // Frase de fechas: solo si hay al menos una fecha configurada en el curso
+  let fraseFechas = ''
+  if (fechaInicioCurso && fechaFinCurso) {
+    fraseFechas = `, con fecha de inicio el ${formatFechaCorta(fechaInicioCurso)} y fecha de finalización el ${formatFechaCorta(fechaFinCurso)}`
+  } else if (fechaInicioCurso) {
+    fraseFechas = `, con fecha de inicio el ${formatFechaCorta(fechaInicioCurso)}`
+  } else if (fechaFinCurso) {
+    fraseFechas = `, con fecha de finalización el ${formatFechaCorta(fechaFinCurso)}`
+  }
 
   return (
     <div
@@ -102,7 +119,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         </p>
 
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '32px' }}>
-          Pertenece al programa <strong>{curso}</strong>.
+          Pertenece al programa <strong>{curso}</strong>{fraseFechas}.
           El plan académico abarca un total de <strong>{duracionHoras} horas</strong>, e incluye
           asignaturas como <em>lectura crítica, ciencias sociales, inglés, matemáticas, química y biología</em>.
           El horario de las clases es de lunes a viernes de 6:00 p.m. a 8:00 p.m., mientras que los sábados

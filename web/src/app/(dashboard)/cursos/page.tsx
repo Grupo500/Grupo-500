@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X, RefreshCw } from 'lucide-react'
+import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X, RefreshCw, Pencil, Loader2 } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -58,12 +58,13 @@ function EstadoBadge({ fechaInicio, fechaFin }: { fechaInicio?: string | null; f
 // ── Tarjeta de curso ──────────────────────────────────────────────────────────
 function CursoCard({
   c, isAdmin, idx,
-  onToggle,
+  onToggle, onEditarFechas,
 }: {
   c: Curso
   isAdmin: boolean
   idx: number
   onToggle: (id: string, activo: boolean) => void
+  onEditarFechas: (c: Curso) => void
 }) {
   const isCombo = c.tipoCurso === 'COMBO'
 
@@ -101,6 +102,14 @@ function CursoCard({
 
           {isAdmin && (
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEditarFechas(c) }}
+                title="Editar fechas de inicio/fin"
+                aria-label="Editar fechas de inicio/fin"
+                className="p-1.5 rounded-lg transition-colors duration-150 cursor-pointer text-on-surface-variant hover:text-primary hover:bg-primary/10"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(c.id, !c.activo) }}
                 title={c.activo ? 'Deshabilitar curso' : 'Habilitar curso'}
@@ -207,6 +216,33 @@ export default function CursosPage() {
     mutationFn: () => fetcher<any>('/hotmart/sincronizar', { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cursos'] }),
     onError: (e: Error) => alert(`Error al sincronizar con Hotmart: ${e.message}`),
+  })
+
+  // ── Editar fechas de inicio/fin ──────────────────────────────────────────
+  const [editandoCurso, setEditandoCurso] = useState<Curso | null>(null)
+  const [fechaInicioForm, setFechaInicioForm] = useState('')
+  const [fechaFinForm, setFechaFinForm] = useState('')
+
+  function abrirEditarFechas(c: Curso) {
+    setEditandoCurso(c)
+    setFechaInicioForm(toDateInput(c.fechaInicio))
+    setFechaFinForm(toDateInput(c.fechaFin))
+  }
+
+  const editarFechasMutation = useMutation({
+    mutationFn: () => fetcher(`/cursos/${editandoCurso!.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fechaInicio: fechaInicioForm ? new Date(fechaInicioForm + 'T00:00:00').toISOString() : null,
+        fechaFin:    fechaFinForm    ? new Date(fechaFinForm    + 'T00:00:00').toISOString() : null,
+      }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] })
+      setEditandoCurso(null)
+    },
+    onError: (e: Error) => alert(e.message || 'Error al guardar las fechas'),
   })
 
   // Sincronización automática al montar la página (solo admin)
@@ -330,8 +366,70 @@ export default function CursosPage() {
               isAdmin={isAdmin}
               idx={idx}
               onToggle={(id, activo) => toggleActivoMutation.mutate({ id, activo })}
+              onEditarFechas={abrirEditarFechas}
             />
           ))}
+        </div>
+      )}
+
+      {/* ── Modal: editar fechas de inicio/fin ── */}
+      {editandoCurso && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !editarFechasMutation.isPending && setEditandoCurso(null)}
+          />
+          <div className="relative w-full max-w-sm bg-surface-lowest border border-outline-variant rounded-2xl shadow-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-on-surface">Fechas del curso</p>
+              <button
+                onClick={() => setEditandoCurso(null)}
+                className="p-1 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-high"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-on-surface-variant line-clamp-2">{editandoCurso.nombre}</p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Fecha de inicio</label>
+                <input
+                  type="date"
+                  value={fechaInicioForm}
+                  onChange={e => setFechaInicioForm(e.target.value)}
+                  className="w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Fecha de finalización</label>
+                <input
+                  type="date"
+                  value={fechaFinForm}
+                  onChange={e => setFechaFinForm(e.target.value)}
+                  className="w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                onClick={() => setEditandoCurso(null)}
+                disabled={editarFechasMutation.isPending}
+                className="px-3 py-2 text-xs font-medium text-on-surface-variant hover:text-on-surface disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => editarFechasMutation.mutate()}
+                disabled={editarFechasMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-xs font-semibold hover:bg-primary/90 disabled:opacity-50"
+              >
+                {editarFechasMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Guardar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
