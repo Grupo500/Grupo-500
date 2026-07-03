@@ -247,7 +247,7 @@ export default function CursosPage() {
             className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
-            Sincronizar Hotmart
+            Actualizar nombres
           </button>
         )}
       </div>
@@ -317,7 +317,7 @@ export default function CursosPage() {
             {busqueda
               ? `Sin resultados para "${busqueda}"`
               : isAdmin
-                ? 'Sin cursos — usa "Sincronizar Hotmart" para importarlos'
+                ? 'Sin cursos — usa "Actualizar nombres" para importarlos'
                 : 'No hay cursos en esta categoría'}
           </p>
         </div>

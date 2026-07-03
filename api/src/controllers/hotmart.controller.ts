@@ -379,8 +379,11 @@ export async function sincronizarProductos(_req: Request, res: Response) {
     const params = new URLSearchParams({ max_results: '50' })
     if (pageToken) params.set('page_token', pageToken)
 
+    // OJO: el endpoint es /products (plural). /product (singular) no existe:
+    // Hotmart responde 200 con cuerpo vacío (redirige a /docs/ internamente),
+    // por lo que la sincronización "corría" sin error pero sin traer nada.
     const apiRes = await fetch(
-      `https://developers.hotmart.com/products/api/v1/product?${params}`,
+      `https://developers.hotmart.com/products/api/v1/products?${params}`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
     const rawText = await apiRes.text()
@@ -410,12 +413,13 @@ export async function sincronizarProductos(_req: Request, res: Response) {
   let creados   = 0
   let actualizados = 0
 
+  // El endpoint /products (plural) devuelve los campos en el item directamente
+  // (sin envoltura "product"), y NO incluye precio ni descripción — esos se
+  // gestionan manualmente en el módulo Cursos (PATCH /config/precios).
   for (const item of allItems) {
-    const productId   = String(item.product?.id ?? item.id)
-    const nombre      = item.product?.name ?? item.name ?? 'Sin nombre'
-    const descripcion = item.product?.description ?? item.description ?? null
-    const precio      = item.price?.value ?? 0
-    const isActive    = (item.product?.status ?? item.status) === 'ACTIVE'
+    const productId = String(item.id)
+    const nombre     = item.name ?? 'Sin nombre'
+    const isActive   = item.status === 'ACTIVE'
 
     // Determinar tipoCurso: si el nombre incluye "combo" lo clasificamos automáticamente
     const tipoCurso = /combo/i.test(nombre) ? 'COMBO' : 'INDIVIDUAL'
@@ -423,17 +427,21 @@ export async function sincronizarProductos(_req: Request, res: Response) {
     const existente = await prisma.curso.findUnique({ where: { hotmartProductId: productId } })
 
     if (existente) {
-      await prisma.curso.update({
-        where: { hotmartProductId: productId },
-        data: { nombre, descripcion, precio, tipoCurso },
-      })
-      actualizados++
+      // Solo actualizamos nombre y tipoCurso. NO tocamos precio (Hotmart no
+      // lo expone en este endpoint) ni activo (se gestiona manualmente en la
+      // app para controlar qué curso aparece en la landing).
+      if (existente.nombre !== nombre || existente.tipoCurso !== tipoCurso) {
+        await prisma.curso.update({
+          where: { hotmartProductId: productId },
+          data: { nombre, tipoCurso },
+        })
+        actualizados++
+      }
     } else {
       await prisma.curso.create({
         data: {
           nombre,
-          descripcion,
-          precio,
+          precio: 0, // Hotmart no expone precio aquí; se configura manualmente en Cursos
           tipoCurso,
           activo: isActive,
           duracionHoras: horasPorNombreCurso(nombre),
