@@ -196,11 +196,11 @@ export async function rankingAsesores(req: Request, res: Response) {
     finMesAnterior     = new Date(inicioMesActual.getTime() - 1)
     inicioMesAnterior  = new Date(finMesAnterior.getTime() - duracionMs)
   } else {
-    // Sin filtro: comparar desde inicio de mes hasta HOY vs mismo corte del mes anterior
+    // Sin filtro: mes actual (1–hoy) vs mes anterior COMPLETO
     inicioMesActual   = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
     finMesActual      = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
     inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
-    finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate(), 23, 59, 59)
+    finMesAnterior    = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59)
   }
 
   // Inicio del día de hoy en hora Colombia, para conteo de "leads de hoy"
