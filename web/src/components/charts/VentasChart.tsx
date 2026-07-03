@@ -96,12 +96,12 @@ export function VentasChart({ periodo }: { periodo: Periodo }) {
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Inter' }}
+              tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Poppins, system-ui, sans-serif' }}
               axisLine={false} tickLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Inter' }}
+              tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Poppins, system-ui, sans-serif' }}
               axisLine={false} tickLine={false}
               tickFormatter={(v) => v >= 1_000_000
                 ? `$${(v / 1_000_000).toFixed(1)}M`

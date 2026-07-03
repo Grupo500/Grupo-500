@@ -9,7 +9,7 @@ import { formatCOP } from '@/lib/utils'
 type Periodo = 'diario' | 'semanal' | 'mensual'
 type Granularidad = 'horaria' | 'diaria' | 'mensual'
 
-interface Punto { label: string; ingresos: number; pagos: number }
+interface Punto { label: string; ingresos: number | null; pagos: number }
 
 const subtitulos: Record<Periodo, string> = {
   diario:  'Últimos 14 días',
@@ -73,10 +73,10 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
   const gridColor = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
   const tickColor = isDark ? '#95c8f0' : '#2a4172'
 
-  // ── KPIs derivados de la serie ──────────────────────────────────────────
-  const total        = puntos.reduce((s, p) => s + p.ingresos, 0)
-  const mejor        = puntos.reduce((m, p) => (p.ingresos > m.ingresos ? p : m), puntos[0] ?? { label: '—', ingresos: 0, pagos: 0 })
-  const mesesActivos = puntos.filter(p => p.ingresos > 0).length
+  // ── KPIs derivados de la serie (ignora días futuros con ingresos null) ────
+  const total        = puntos.reduce((s, p) => s + (p.ingresos ?? 0), 0)
+  const mejor        = puntos.reduce((m, p) => ((p.ingresos ?? 0) > (m.ingresos ?? 0) ? p : m), puntos[0] ?? { label: '—', ingresos: 0, pagos: 0 })
+  const mesesActivos = puntos.filter(p => (p.ingresos ?? 0) > 0).length
   const promedio     = mesesActivos > 0 ? total / mesesActivos : 0
   const crecimiento  = data?.data?.variacion ?? 0
   const verde        = isDark ? '#6ee7b7' : '#16a34a'
@@ -103,7 +103,7 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
+            <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Poppins, system-ui, sans-serif' }} axisLine={false} tickLine={false}
               tickFormatter={(label: string) => {
                 if (granularidad === 'diaria') {
                   // "02 jun" o "2 de jun" → "2"
@@ -117,7 +117,7 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
                 return label
               }}
             />
-            <YAxis tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false}
+            <YAxis tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Poppins, system-ui, sans-serif' }} axisLine={false} tickLine={false}
               tickFormatter={v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
             <Tooltip
               contentStyle={{
@@ -130,7 +130,7 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
               itemStyle={{ color: primary, fontSize: 12 }}
             />
             <Area type="monotone" dataKey="ingresos" stroke={primary} strokeWidth={2.5}
-              fill="url(#gradIngresosMensuales)" dot={false} activeDot={{ r: 5, fill: primary, strokeWidth: 0 }} />
+              fill="url(#gradIngresosMensuales)" dot={false} activeDot={{ r: 5, fill: primary, strokeWidth: 0 }} connectNulls={false} />
           </AreaChart>
         </ResponsiveContainer>
       )}
@@ -139,7 +139,7 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
       {temaListo && !isLoading && puntos.length > 0 && (
         <div className="grid grid-cols-4 gap-0 pt-3 border-t border-outline-variant divide-x divide-outline-variant">
           <Kpi label={usaRango ? 'Total período' : 'Total 6 meses'} value={fmtCompact(total)} />
-          <Kpi label={granularidad === 'horaria' ? 'Mejor hora' : granularidad === 'diaria' ? 'Mejor día' : 'Mejor mes'} value={fmtCompact(mejor.ingresos)} sub={mejor.label} />
+          <Kpi label={granularidad === 'horaria' ? 'Mejor hora' : granularidad === 'diaria' ? 'Mejor día' : 'Mejor mes'} value={fmtCompact(mejor.ingresos ?? 0)} sub={mejor.label} />
           <Kpi label={granularidad === 'horaria' ? 'Promedio horario' : granularidad === 'diaria' ? 'Promedio diario' : 'Promedio mensual'} value={fmtCompact(promedio)} />
           <Kpi
             label="Crecimiento"

@@ -37,7 +37,7 @@ export function FacturadoMensual() {
 
   const color   = isDark ? '#95daff' : '#1a7de0'
   const sombra  = isDark ? 'rgba(148,167,190,0.45)' : 'rgba(100,116,139,0.40)'
-  const tickFill = { fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Inter' }
+  const tickFill = { fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Poppins, system-ui, sans-serif' }
 
   const { data: actualData, isLoading: la } = useQuery({
     queryKey: ['financiero-periodo', inicioActual, finActual],

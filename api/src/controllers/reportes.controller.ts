@@ -532,10 +532,11 @@ export async function ventasGrafica(req: Request, res: Response) {
         puntos.push({ label: `${String(h).padStart(2,'0')}h`, desde: ini, hasta: fin })
       }
     } else if (diffDias <= 62) {
-      // Granularidad diaria — hasta hoy si el rango incluye días futuros
+      // Granularidad diaria — mostramos TODOS los días del rango (mes completo);
+      // los días futuros salen null en la agregación para no dibujar línea en 0
       granularidad = 'diaria'
       const cur = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 0, 0, 0)
-      const fin = new Date(hastaReal.getFullYear(), hastaReal.getMonth(), hastaReal.getDate(), 23, 59, 59)
+      const fin = new Date(hasta.getFullYear(), hasta.getMonth(), hasta.getDate(), 23, 59, 59)
       while (cur <= fin) {
         const ini = new Date(cur)
         const finDia = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), 23, 59, 59)
@@ -592,20 +593,26 @@ export async function ventasGrafica(req: Request, res: Response) {
   // VENDEDOR → solo sus pagos; ADMIN → global
   const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
 
+  // Corte de hoy: los días posteriores se devuelven null (sin datos), para que
+  // la gráfica muestre el eje del mes completo sin dibujar la línea en 0
+  const finHoyAgg = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+
   const resultados = await Promise.all(
     puntos.map(async ({ label, desde, hasta }) => {
+      if (desde > finHoyAgg) return { label, ingresos: null as number | null, pagos: 0 }
       const agg = await prisma.pago.aggregate({
         where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: hasta }, ...(filtroAsesor && { asesorId: filtroAsesor }) },
         _sum: { monto: true },
         _count: true,
       })
-      return { label, ingresos: agg._sum.monto ?? 0, pagos: agg._count }
+      return { label, ingresos: (agg._sum.monto ?? 0) as number | null, pagos: agg._count }
     })
   )
 
-  // Variación vs período anterior
-  const actual   = resultados[resultados.length - 1]?.ingresos ?? 0
-  const anterior = resultados[resultados.length - 2]?.ingresos ?? 0
+  // Variación vs período anterior (último día con datos vs el previo)
+  const conDatos = resultados.filter(r => r.ingresos != null)
+  const actual   = conDatos[conDatos.length - 1]?.ingresos ?? 0
+  const anterior = conDatos[conDatos.length - 2]?.ingresos ?? 0
   const variacion = anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : 0
 
   return ApiResponse.success(res, { puntos: resultados, variacion, actual, anterior, granularidad })
