@@ -87,11 +87,15 @@ export function TopAsesores() {
                     Comisión {formatCOP(a.comisionGanada)}
                   </p>
                 )}
-                {/* Cierre + score (solo si hay datos de leads) */}
-                {a.tasaCierre != null && (
+                {/* Cierre (si hay leads) + score (siempre que se pueda calcular) */}
+                {(a.tasaCierre != null || a.score != null) && (
                   <p className="text-[10px] mt-1 text-on-surface-variant tabular-nums">
-                    Cierre {Math.round(a.tasaCierre)}%
-                    {a.score != null && <span className="ml-1.5 text-on-surface font-semibold">· Score {a.score}</span>}
+                    {a.tasaCierre != null && <>Cierre {Math.round(a.tasaCierre)}%</>}
+                    {a.score != null && (
+                      <span className={a.tasaCierre != null ? 'ml-1.5 text-on-surface font-semibold' : 'text-on-surface font-semibold'}>
+                        {a.tasaCierre != null ? '· ' : ''}Score {a.score}
+                      </span>
+                    )}
                   </p>
                 )}
                 <div className="mt-auto pt-2.5 border-t border-outline-variant w-full text-center">
