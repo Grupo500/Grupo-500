@@ -32,10 +32,8 @@ export function FacturadoMensual() {
   const finActual     = toISO(endOfMonth(now))
   const mesAnterior   = subMonths(now, 1)
   const inicioAnt     = toISO(startOfMonth(mesAnterior))
-  // Mismo corte de días: si estamos a día 3 de julio, comparar jun 1–3
-  const corteAnt      = new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), now.getDate())
-  const finMesAnt     = endOfMonth(mesAnterior)
-  const finAnt        = toISO(corteAnt > finMesAnt ? finMesAnt : corteAnt)
+  // Mes anterior COMPLETO: la sombra de la gráfica muestra todos los días
+  const finAnt        = toISO(endOfMonth(mesAnterior))
 
   const color   = isDark ? '#95daff' : '#1a7de0'
   const sombra  = isDark ? 'rgba(148,167,190,0.45)' : 'rgba(100,116,139,0.40)'
@@ -54,8 +52,12 @@ export function FacturadoMensual() {
 
   const isLoading = la || lp
   const totalActual = actualData?.data?.totales?.ventaTotal ?? 0
-  const totalAnt    = antData?.data?.totales?.ventaTotal ?? 0
-  const variacion   = totalAnt > 0 ? Math.round(((totalActual - totalAnt) / totalAnt) * 100) : null
+  // Variación "vs mes anterior" con mismo corte de días: suma solo los
+  // primeros N días del mes anterior (N = día actual), no todo el mes.
+  const totalAntCorte = (antData?.data?.puntos ?? [])
+    .slice(0, now.getDate())
+    .reduce((s, p) => s + (p.ventaTotal ?? 0), 0)
+  const variacion   = totalAntCorte > 0 ? Math.round(((totalActual - totalAntCorte) / totalAntCorte) * 100) : null
 
   // Fusionar por día del mes (índice): actual (frente) + anterior (sombra)
   const puntos = useMemo(() => {
