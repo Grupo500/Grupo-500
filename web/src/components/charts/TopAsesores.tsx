@@ -95,20 +95,11 @@ export function TopAsesores() {
                   </p>
                 )}
                 <div className="mt-auto pt-2.5 border-t border-outline-variant w-full text-center">
-                  {a.variacion === 0 && (a.ventasAnterior ?? 0) === 0 && a.totalVentas > 0 ? (
-                    <>
-                      <p className="text-[14px] font-semibold leading-none" style={{ color: verde }}>Nuevo</p>
-                      <p className="text-[10px] text-on-surface-variant mt-0.5">sin datos mes anterior</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-[18px] font-semibold tabular-nums leading-none"
-                        style={{ color: a.variacion > 0 ? verde : a.variacion < 0 ? rojo : 'var(--on-surface-variant)' }}>
-                        {a.variacion > 0 ? '+' : ''}{a.variacion}%
-                      </p>
-                      <p className="text-[10px] text-on-surface-variant mt-0.5">vs mes anterior</p>
-                    </>
-                  )}
+                  <p className="text-[18px] font-semibold tabular-nums leading-none"
+                    style={{ color: a.variacion > 0 ? verde : a.variacion < 0 ? rojo : 'var(--on-surface-variant)' }}>
+                    {a.variacion > 0 ? '+' : ''}{a.variacion}%
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant mt-0.5">vs mes anterior</p>
                 </div>
               </div>
             )
