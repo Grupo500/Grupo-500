@@ -340,8 +340,14 @@ const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.dat
       const url  = URL.createObjectURL(blob)
       const a    = document.createElement('a')
       const fecha = new Date().toISOString().slice(0, 10)
-      a.href = url; a.download = `estudiantes-grupo500-${fecha}.xlsx`; a.click()
-      URL.revokeObjectURL(url)
+      a.href = url
+      a.download = `estudiantes-grupo500-${fecha}.xlsx`
+      // Adjuntar al DOM antes del click y revocar con retraso: si se revoca
+      // de inmediato Chrome cancela la descarga y el archivo baja vacío.
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1500)
     } catch {
       alert('No se pudo exportar la base de estudiantes.')
     } finally {
