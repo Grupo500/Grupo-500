@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Poppins } from 'next/font/google'
 import { Calendar, Users, ChevronRight, Loader2, ArrowLeft } from 'lucide-react'
+import { Hero3D } from '@/components/hero/Hero3D'
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
@@ -44,33 +45,34 @@ export default function InscripcionHub() {
   }, [])
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#21b9f7] to-[#1a7de0]">
-      {/* Header */}
-      <header className="w-full pt-6 pb-4 px-5 flex items-center gap-3">
-        <Link href="/" className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-colors">
-          <ArrowLeft className="w-5 h-5 text-white" />
-        </Link>
-        <div>
-          <p className={`${poppins.className} text-white font-bold text-base`}>Inscripciones</p>
-          <p className="text-white/70 text-xs">Selecciona tu calendario</p>
-        </div>
-      </header>
+    <div className="min-h-dvh bg-[#eef6ff]">
+      {/* Hero 3D — animado con Three.js/GSAP, con fallback estático y respeto a prefers-reduced-motion */}
+      <Hero3D className="h-[380px] sm:h-[440px]">
+        <header className="w-full pt-6 pb-4 px-5 flex items-center gap-3">
+          <Link href="/" className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </Link>
+          <div>
+            <p className={`${poppins.className} text-white font-bold text-base`}>Inscripciones</p>
+            <p className="text-white/70 text-xs">Selecciona tu calendario</p>
+          </div>
+        </header>
 
-      <main className="px-4 pb-10">
-        {/* Banner */}
-        <div className="bg-white/15 rounded-3xl p-5 mb-6 text-center">
-          <p className={`${poppins.className} text-white font-bold text-xl mb-1`}>
-            Elige tu calendario
+        <div className="flex flex-col items-center justify-center text-center px-6 h-[calc(100%-88px)]">
+          <p data-hero-anim className={`${poppins.className} text-white font-extrabold text-3xl sm:text-4xl mb-3 drop-shadow-sm`}>
+            Prepárate para tu ICFES
           </p>
-          <p className="text-white/80 text-sm">
-            Selecciona el curso para el que quieres prepararte y completa tu inscripción.
+          <p data-hero-anim className="text-white/85 text-sm sm:text-base max-w-md">
+            Elige tu calendario con Grupo 500 y completa tu inscripción en minutos.
           </p>
         </div>
+      </Hero3D>
 
+      <main className="px-4 pt-6 pb-10">
         {loading && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Loader2 className="w-8 h-8 text-white animate-spin" />
-            <p className="text-white/70 text-sm">Cargando calendarios...</p>
+            <Loader2 className="w-8 h-8 text-[#2094ff] animate-spin" />
+            <p className="text-slate-500 text-sm">Cargando calendarios...</p>
           </div>
         )}
 
