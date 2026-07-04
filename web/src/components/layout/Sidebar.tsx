@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
   { type: 'link',    href: '/certificados',    label: 'Certificados',    icon: Award,           adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
-  { type: 'link',    href: '/reportes',        label: 'Reportes',        icon: BarChart3,       adminOnly: false },
+  { type: 'link',    href: '/reportes',        label: 'Analíticas',      icon: BarChart3,       adminOnly: false },
 ]
 
 interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }

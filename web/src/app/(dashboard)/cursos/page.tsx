@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X, RefreshCw, Pencil, Loader2 } from 'lucide-react'
+import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X, Pencil, Loader2 } from 'lucide-react'
 
 interface Curso {
   id: string
@@ -287,16 +287,6 @@ export default function CursosPage() {
               : msgSync ?? `${cursos.length} curso${cursos.length !== 1 ? 's' : ''}`
           }
         />
-        {isAdmin && (
-          <button
-            onClick={() => sincronizarMutation.mutate()}
-            disabled={sincronizarMutation.isPending}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
-            Actualizar nombres
-          </button>
-        )}
       </div>
 
       {/* Barra de filtros — búsqueda arriba, tabs abajo */}

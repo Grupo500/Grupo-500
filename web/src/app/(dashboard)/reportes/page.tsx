@@ -12,7 +12,7 @@ import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { CursosVendidosRanked } from '@/components/charts/CursosVendidosRanked'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts'
-import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet, RefreshCw } from 'lucide-react'
+import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet } from 'lucide-react'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 function getRangeFromMonth(month: string | null): { desde: string; hasta: string } {
@@ -89,17 +89,17 @@ export default function ReportesPage() {
   }
 
   const queryClient = useQueryClient()
-  const [msgHubspot, setMsgHubspot] = useState<string | null>(null)
   const sincronizarHubspotMutation = useMutation({
     mutationFn: async () => (await fetcher())<any>('/hubspot/sincronizar', { method: 'POST' }),
-    onSuccess: (res: any) => {
-      queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] })
-      const n = res?.data?.sincronizados ?? 0
-      setMsgHubspot(`${n} lead${n !== 1 ? 's' : ''} de HubSpot sincronizado${n !== 1 ? 's' : ''}`)
-      setTimeout(() => setMsgHubspot(null), 5000)
-    },
-    onError: (e: Error) => alert(`Error al sincronizar con HubSpot: ${e.message}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] }),
+    onError: () => {}, // sincronización silenciosa en segundo plano — no interrumpe al usuario
   })
+
+  // Sincronización automática de leads de HubSpot al entrar (solo admin, sin botón visible)
+  useEffect(() => {
+    if (!isAsesor) sincronizarHubspotMutation.mutate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAsesor])
 
   const { data: dashData, isLoading } = useQuery({
     queryKey: ['reportes-dashboard', desde, hasta],
@@ -136,7 +136,7 @@ export default function ReportesPage() {
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <PageHeader
-          title={isAsesor ? 'Mis reportes' : 'Reportes'}
+          title={isAsesor ? 'Mis analíticas' : 'Analíticas'}
           subtitle={isAsesor ? 'Estadísticas de tu gestión' : 'Estadísticas globales de la operación'}
         />
         <div className="flex flex-col items-start md:items-end gap-1 flex-shrink-0 w-full md:w-auto">
@@ -289,12 +289,11 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* ── FILA 3: Cursos más vendidos (50%) + Medios de pago (50%) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
-        <CursosVendidosRanked desde={desde} hasta={hasta} />
+      {/* ── FILA 3: Cursos más vendidos (ancho completo) ────────────── */}
+      <CursosVendidosRanked desde={desde} hasta={hasta} />
 
-        {/* Medios de pago — bar chart */}
-        <div className="card p-5">
+      {/* ── FILA 4: Medios de pago (ancho completo) ─────────────────── */}
+      <div className="card p-5">
           <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
             <p className="text-[13px] font-semibold text-on-surface">Medios de pago</p>
             {medios && (
@@ -357,24 +356,9 @@ export default function ReportesPage() {
               </div>
             </div>
           )}
-        </div>
-
       </div>
 
-      {/* ── FILA 4: Ranking asesores (ancho completo) ─────────────── */}
-      {!isAsesor && (
-        <div className="flex items-center justify-end gap-2">
-          {msgHubspot && <span className="text-[11px] text-on-surface-variant">{msgHubspot}</span>}
-          <button
-            onClick={() => sincronizarHubspotMutation.mutate()}
-            disabled={sincronizarHubspotMutation.isPending}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${sincronizarHubspotMutation.isPending ? 'animate-spin' : ''}`} />
-            Sincronizar HubSpot
-          </button>
-        </div>
-      )}
+      {/* ── FILA 5: Ranking asesores (ancho completo) ─────────────── */}
       <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
     </div>
   )
