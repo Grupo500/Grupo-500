@@ -11,6 +11,7 @@ import { RefreshButton } from '@/components/ui/RefreshButton'
 import {
   TrendingUp, TrendingDown, Wallet, Users, Receipt,
   Trophy, Award, Crown,
+  type LucideIcon,
 } from 'lucide-react'
 
 interface RankItem {
@@ -56,7 +57,7 @@ function useCountUp(target: number, duration = 900) {
 }
 
 function Kpi({ icon: Icon, label, value, sub, subColor, valColor }: {
-  icon: React.ElementType; label: string; value: string; sub?: string; subColor?: string; valColor?: string
+  icon: LucideIcon; label: string; value: string; sub?: string; subColor?: string; valColor?: string
 }) {
   return (
     <div className="card p-4">

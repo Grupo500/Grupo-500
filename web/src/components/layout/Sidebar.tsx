@@ -11,11 +11,12 @@ import {
   BookOpen, School, Award, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
   ShieldCheck, ClipboardList,
+  type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type NavItem =
-  | { type: 'link';    href: string; label: string; icon: React.ElementType; adminOnly: boolean }
+  | { type: 'link';    href: string; label: string; icon: LucideIcon; adminOnly: boolean }
   | { type: 'section'; label: string; adminOnly: boolean }
 
 const navItems: NavItem[] = [

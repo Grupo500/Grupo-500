@@ -12,6 +12,7 @@ import {
   Wallet, CheckCircle, AlertTriangle, Paperclip,
   Save, ChevronDown, ChevronUp,
   MessageSquarePlus, Trash2 as Trash,
+  type LucideIcon,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -91,7 +92,7 @@ function NumericInput({ value, onChange, placeholder, className }: {
 }
 
 type Tab = 'perfil' | 'financiero' | 'historial' | 'observaciones'
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const TABS: { key: Tab; label: string; icon: LucideIcon }[] = [
   { key: 'perfil',         label: 'Perfil',         icon: User               },
   { key: 'financiero',     label: 'Financiero',     icon: Wallet             },
   { key: 'observaciones',  label: 'Observaciones',  icon: MessageSquarePlus  },

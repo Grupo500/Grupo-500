@@ -10,10 +10,11 @@ import {
   MoreHorizontal, X, BookOpen, School,
   Award, FileBarChart2, BarChart3,
   ShieldCheck, Sun, Moon, ClipboardList,
+  type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type NavItem = { href: string; label: string; icon: React.ElementType; adminOnly: boolean }
+type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean }
 
 const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
