@@ -1,8 +1,12 @@
 // ============================================================
 // Sincronización de leads desde HubSpot.
-// Trae los contactos con "owner" asignado (equivalente al asesor)
-// y los guarda en HubspotLead, cruzando por el email del owner —
-// el mismo mecanismo que ya usamos con Trengo (ver ranking.ts).
+//
+// Los leads NO son los "Contactos" de HubSpot (esos son muy pocos,
+// solo la gente que llega a completar un formulario). El grueso de
+// los leads llega como conversaciones (chat/email/formulario) que
+// HubSpot autoasigna a un asesor y registra como "Ticket". Cada
+// Ticket con owner asignado = 1 lead, exactamente igual que
+// TrengoTicket. Cruzamos por el email del owner (ver ranking.ts).
 // ============================================================
 import { prisma } from '../config/prisma'
 import { emailKey } from './ranking'
@@ -16,7 +20,7 @@ function headers() {
 }
 
 interface HubspotOwner { id: string; email?: string }
-interface HubspotContact { id: string; properties: { hubspot_owner_id?: string; createdate?: string } }
+interface HubspotTicket { id: string; properties: { hubspot_owner_id?: string; createdate?: string } }
 
 // Trae todos los owners de HubSpot (id → email canónico)
 async function obtenerOwners(): Promise<Map<string, string>> {
@@ -41,13 +45,19 @@ async function obtenerOwners(): Promise<Map<string, string>> {
   return mapa
 }
 
-// Trae todos los contactos que tienen un owner asignado
-async function obtenerContactos(): Promise<HubspotContact[]> {
-  const contactos: HubspotContact[] = []
+// Trae los tickets con owner asignado, creados desde `desde` (si se indica).
+// Sin `desde` trae TODO el histórico (solo para la primera sincronización).
+async function obtenerTickets(desde?: Date): Promise<HubspotTicket[]> {
+  const tickets: HubspotTicket[] = []
   let after: string | undefined
 
+  const filtros: { propertyName: string; operator: string; value?: string }[] = [
+    { propertyName: 'hubspot_owner_id', operator: 'HAS_PROPERTY' },
+  ]
+  if (desde) filtros.push({ propertyName: 'createdate', operator: 'GTE', value: String(desde.getTime()) })
+
   do {
-    const res = await fetch(`${HS_API}/crm/v3/objects/contacts/search`, {
+    const res = await fetch(`${HS_API}/crm/v3/objects/tickets/search`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -55,45 +65,51 @@ async function obtenerContactos(): Promise<HubspotContact[]> {
         after,
         sorts: [{ propertyName: 'createdate', direction: 'ASCENDING' }],
         properties: ['hubspot_owner_id', 'createdate'],
-        filterGroups: [{ filters: [{ propertyName: 'hubspot_owner_id', operator: 'HAS_PROPERTY' }] }],
+        filterGroups: [{ filters: filtros }],
       }),
     })
-    if (!res.ok) throw new Error(`HubSpot contacts error: ${res.status} ${await res.text()}`)
+    if (!res.ok) throw new Error(`HubSpot tickets error: ${res.status} ${await res.text()}`)
 
-    const body = await res.json() as { results: HubspotContact[]; paging?: { next?: { after: string } } }
-    contactos.push(...body.results)
+    const body = await res.json() as { results: HubspotTicket[]; paging?: { next?: { after: string } } }
+    tickets.push(...body.results)
     after = body.paging?.next?.after
   } while (after)
 
-  return contactos
+  return tickets
 }
 
 export interface ResultadoSyncHubspot {
-  contactosVistos: number
+  ticketsVistos: number
   sincronizados: number
   sinOwnerReconocido: number
 }
 
 export async function sincronizarLeadsHubspot(): Promise<ResultadoSyncHubspot> {
-  const [owners, contactos] = await Promise.all([obtenerOwners(), obtenerContactos()])
+  // Sincronización incremental: solo traemos tickets nuevos desde el
+  // último que ya tenemos guardado, para no repaginar el histórico completo
+  // en cada sincronización (hoy son ~7.8k tickets y crece cada día).
+  const ultimo = await prisma.hubspotLead.aggregate({ _max: { createdAtHubspot: true } })
+  const desde = ultimo._max.createdAtHubspot ?? undefined
+
+  const [owners, tickets] = await Promise.all([obtenerOwners(), obtenerTickets(desde)])
 
   let sincronizados = 0
   let sinOwnerReconocido = 0
 
-  for (const c of contactos) {
-    const ownerId = c.properties.hubspot_owner_id
+  for (const t of tickets) {
+    const ownerId = t.properties.hubspot_owner_id
     const email = ownerId ? owners.get(ownerId) : undefined
     if (!email) { sinOwnerReconocido++; continue }
 
-    const createdAtHubspot = c.properties.createdate ? new Date(c.properties.createdate) : new Date()
+    const createdAtHubspot = t.properties.createdate ? new Date(t.properties.createdate) : new Date()
 
     await prisma.hubspotLead.upsert({
-      where: { contactId: c.id },
-      create: { contactId: c.id, ownerEmail: email, createdAtHubspot },
+      where: { ticketId: t.id },
+      create: { ticketId: t.id, ownerEmail: email, createdAtHubspot },
       update: { ownerEmail: email, createdAtHubspot },
     })
     sincronizados++
   }
 
-  return { contactosVistos: contactos.length, sincronizados, sinOwnerReconocido }
+  return { ticketsVistos: tickets.length, sincronizados, sinOwnerReconocido }
 }

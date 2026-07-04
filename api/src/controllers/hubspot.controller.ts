@@ -15,7 +15,7 @@ export async function sincronizar(_req: Request, res: Response) {
     const resultado = await sincronizarLeadsHubspot()
     logger.info(
       `[HubSpot] Sincronización completada: ${resultado.sincronizados} leads, ` +
-      `${resultado.sinOwnerReconocido} sin owner reconocido (de ${resultado.contactosVistos} contactos)`
+      `${resultado.sinOwnerReconocido} sin owner reconocido (de ${resultado.ticketsVistos} tickets)`
     )
     return ApiResponse.success(res, resultado)
   } catch (e: any) {

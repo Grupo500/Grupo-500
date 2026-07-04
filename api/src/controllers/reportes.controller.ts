@@ -233,23 +233,23 @@ export async function rankingAsesores(req: Request, res: Response) {
     prisma.hubspotLead.groupBy({
       by: ['ownerEmail'],
       where: { createdAtHubspot: { gte: inicioMesActual, lte: finMesActual } },
-      _count: { contactId: true },
+      _count: { ticketId: true },
     }),
     prisma.hubspotLead.groupBy({
       by: ['ownerEmail'],
       where: { createdAtHubspot: { gte: inicioHoyCol } },
-      _count: { contactId: true },
+      _count: { ticketId: true },
     }),
   ])
 
   // Construir mapas de leads por email canónico — Trengo + HubSpot sumados
   const leadsPorEmail: Record<string, number> = {}
   for (const r of leadsAll) leadsPorEmail[emailKey(r.agentEmail)] = (leadsPorEmail[emailKey(r.agentEmail)] ?? 0) + r._count.ticketId
-  for (const r of leadsHubspotAll) leadsPorEmail[emailKey(r.ownerEmail)] = (leadsPorEmail[emailKey(r.ownerEmail)] ?? 0) + r._count.contactId
+  for (const r of leadsHubspotAll) leadsPorEmail[emailKey(r.ownerEmail)] = (leadsPorEmail[emailKey(r.ownerEmail)] ?? 0) + r._count.ticketId
 
   const leadsHoyPorEmail: Record<string, number> = {}
   for (const r of leadsHoy) leadsHoyPorEmail[emailKey(r.agentEmail)] = (leadsHoyPorEmail[emailKey(r.agentEmail)] ?? 0) + r._count.ticketId
-  for (const r of leadsHubspotHoy) leadsHoyPorEmail[emailKey(r.ownerEmail)] = (leadsHoyPorEmail[emailKey(r.ownerEmail)] ?? 0) + r._count.contactId
+  for (const r of leadsHubspotHoy) leadsHoyPorEmail[emailKey(r.ownerEmail)] = (leadsHoyPorEmail[emailKey(r.ownerEmail)] ?? 0) + r._count.ticketId
 
   const ranking = construirRanking({
     asesores: asesores.map(a => ({

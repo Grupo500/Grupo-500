@@ -389,10 +389,11 @@ model TrengoTicket {
   @@index([firstAssignedAt])
 }
 
-// Leads provenientes de HubSpot (contactos con lifecyclestage=lead),
-// cruzados por el email del "owner" asignado en HubSpot.
+// Leads provenientes de HubSpot: cada Ticket (conversación autoasignada a
+// un asesor — chat, email, formulario) cuenta como un lead, igual que
+// TrengoTicket. Cruzados por el email del "owner" asignado en HubSpot.
 model HubspotLead {
-  contactId        String   @id
+  ticketId         String   @id
   ownerEmail       String
   createdAtHubspot DateTime
   updatedAt        DateTime @updatedAt
