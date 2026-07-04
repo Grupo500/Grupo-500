@@ -1,10 +1,14 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
+
+function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
 type Periodo = 'diario' | 'semanal' | 'mensual'
 type Granularidad = 'horaria' | 'diaria' | 'mensual'
@@ -70,8 +74,39 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
   const titulo    = usaRango && granularidad ? titulosGran[granularidad] : titulos[periodo]
   const subtitulo = usaRango ? (periodoLabel ?? 'Rango seleccionado') : subtitulos[periodo]
   const primary   = isDark ? '#95daff' : '#1a7de0'
+  const sombra    = isDark ? 'rgba(148,167,190,0.45)' : 'rgba(100,116,139,0.40)'
   const gridColor = isDark ? 'rgba(149,218,255,0.06)' : 'rgba(0,48,96,0.06)'
   const tickColor = isDark ? '#95c8f0' : '#2a4172'
+
+  // ── Comparativo con mes anterior (igual que el gráfico del dashboard) ────
+  // Solo aplica en vista diaria de un mes completo (uso real desde /reportes)
+  const comparativo = usaRango && granularidad === 'diaria'
+  let inicioAnt: string | undefined
+  let finAnt: string | undefined
+  if (comparativo && desde) {
+    const mesAnt = subMonths(new Date(desde + 'T00:00:00'), 1)
+    inicioAnt = toISO(startOfMonth(mesAnt))
+    finAnt    = toISO(endOfMonth(mesAnt))
+  }
+
+  const { data: antData } = useQuery({
+    queryKey: ['ventas-grafica', 'anterior', inicioAnt, finAnt],
+    queryFn: async () => apiFetch<{ data: { puntos: Punto[] } }>(`/reportes/ventas-grafica?desde=${inicioAnt}&hasta=${finAnt}`),
+    enabled: !!(comparativo && inicioAnt && finAnt),
+    staleTime: 30_000,
+  })
+
+  const puntosComparativo = useMemo(() => {
+    if (!comparativo) return []
+    const act = puntos
+    const ant = antData?.data?.puntos ?? []
+    const n = Math.max(act.length, ant.length)
+    return Array.from({ length: n }, (_, i) => ({
+      label: String(i + 1),
+      actual: act[i]?.ingresos ?? null,
+      anterior: ant[i]?.ingresos ?? 0,
+    }))
+  }, [comparativo, puntos, antData])
 
   // ── KPIs derivados de la serie (ignora días futuros con ingresos null) ────
   const total        = puntos.reduce((s, p) => s + (p.ingresos ?? 0), 0)
@@ -84,15 +119,54 @@ export function IngresosMensualesChart({ periodo = 'mensual', desde, hasta, peri
 
   return (
     <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-on-surface">{titulo}</p>
-        <span className="text-[11px] text-on-surface-variant capitalize">{subtitulo}</span>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <p className="text-[13px] font-semibold text-on-surface">{titulo}</p>
+          <span className="text-[11px] text-on-surface-variant capitalize">{subtitulo}</span>
+        </div>
+        {comparativo && (
+          <div className="flex items-center gap-3 text-[10px] text-on-surface-variant">
+            <span className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: primary }} /> Mes actual</span>
+            <span className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: sombra }} /> Mes anterior</span>
+          </div>
+        )}
       </div>
 
       {!temaListo || isLoading ? (
         <div className="h-56 rounded-xl bg-surface-high animate-pulse" />
       ) : puntos.length === 0 ? (
         <div className="h-56 flex items-center justify-center text-[13px] text-on-surface-variant">Sin datos</div>
+      ) : comparativo ? (
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={puntosComparativo} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
+            <defs>
+              <linearGradient id="gradIngresosMensuales" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={primary} stopOpacity={0.25} />
+                <stop offset="100%" stopColor={primary} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Poppins, system-ui, sans-serif' }} axisLine={false} tickLine={false} interval={1} minTickGap={4} />
+            <YAxis tick={{ fill: tickColor, fontSize: 11, fontFamily: 'Poppins, system-ui, sans-serif' }} axisLine={false} tickLine={false}
+              tickFormatter={v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(1)}M` : v >= 1_000 ? `$${(v/1_000).toFixed(0)}K` : `$${v}`} />
+            <Tooltip
+              contentStyle={{
+                background: isDark ? '#0f1e35' : '#fff',
+                border: `1px solid ${isDark ? 'rgba(149,218,255,0.12)' : 'rgba(0,48,96,0.10)'}`,
+                borderRadius: 10, padding: '8px 12px',
+              }}
+              labelStyle={{ color: isDark ? '#d6eaff' : '#001d3d', fontWeight: 600, fontSize: 12 }}
+              labelFormatter={(l) => `Día ${l}`}
+              formatter={(v: number, name) => [formatCOP(v), name === 'actual' ? 'Mes actual' : 'Mes anterior']}
+            />
+            {/* Sombra del mes anterior (detrás) */}
+            <Area type="monotone" dataKey="anterior" stroke={sombra} strokeWidth={1.5} strokeDasharray="4 3"
+              fill={sombra} fillOpacity={0.12} dot={false} />
+            {/* Mes actual (frente) */}
+            <Area type="monotone" dataKey="actual" stroke={primary} strokeWidth={2.5}
+              fill="url(#gradIngresosMensuales)" dot={false} activeDot={{ r: 5, fill: primary, strokeWidth: 0 }} connectNulls />
+          </AreaChart>
+        </ResponsiveContainer>
       ) : (
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={puntos} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
