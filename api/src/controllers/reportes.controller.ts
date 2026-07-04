@@ -206,8 +206,8 @@ export async function rankingAsesores(req: Request, res: Response) {
   // Inicio del día de hoy en hora Colombia, para conteo de "leads de hoy"
   const inicioHoyCol = new Date(`${hoyColombia()}T00:00:00-05:00`)
 
-  // Traer asesores + pagos + leads de Trengo en queries paralelas
-  const [asesores, pagosActual, pagosAnterior, leadsAll, leadsHoy] = await Promise.all([
+  // Traer asesores + pagos + leads de Trengo y HubSpot en queries paralelas
+  const [asesores, pagosActual, pagosAnterior, leadsAll, leadsHoy, leadsHubspotAll, leadsHubspotHoy] = await Promise.all([
     prisma.asesor.findMany({ select: { id: true, nombre: true, email: true, user: { select: { image: true } } } }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
@@ -229,13 +229,27 @@ export async function rankingAsesores(req: Request, res: Response) {
       where: { firstAssignedAt: { gte: inicioHoyCol } },
       _count: { ticketId: true },
     }),
+    // Leads de HubSpot (mismo período), se suman a los de Trengo
+    prisma.hubspotLead.groupBy({
+      by: ['ownerEmail'],
+      where: { createdAtHubspot: { gte: inicioMesActual, lte: finMesActual } },
+      _count: { contactId: true },
+    }),
+    prisma.hubspotLead.groupBy({
+      by: ['ownerEmail'],
+      where: { createdAtHubspot: { gte: inicioHoyCol } },
+      _count: { contactId: true },
+    }),
   ])
 
-  // Construir mapas de leads por email canónico
+  // Construir mapas de leads por email canónico — Trengo + HubSpot sumados
   const leadsPorEmail: Record<string, number> = {}
-  for (const r of leadsAll) leadsPorEmail[emailKey(r.agentEmail)] = r._count.ticketId
+  for (const r of leadsAll) leadsPorEmail[emailKey(r.agentEmail)] = (leadsPorEmail[emailKey(r.agentEmail)] ?? 0) + r._count.ticketId
+  for (const r of leadsHubspotAll) leadsPorEmail[emailKey(r.ownerEmail)] = (leadsPorEmail[emailKey(r.ownerEmail)] ?? 0) + r._count.contactId
+
   const leadsHoyPorEmail: Record<string, number> = {}
-  for (const r of leadsHoy) leadsHoyPorEmail[emailKey(r.agentEmail)] = r._count.ticketId
+  for (const r of leadsHoy) leadsHoyPorEmail[emailKey(r.agentEmail)] = (leadsHoyPorEmail[emailKey(r.agentEmail)] ?? 0) + r._count.ticketId
+  for (const r of leadsHubspotHoy) leadsHoyPorEmail[emailKey(r.ownerEmail)] = (leadsHoyPorEmail[emailKey(r.ownerEmail)] ?? 0) + r._count.contactId
 
   const ranking = construirRanking({
     asesores: asesores.map(a => ({

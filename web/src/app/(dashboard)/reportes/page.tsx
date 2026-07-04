@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
@@ -12,7 +12,7 @@ import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { CursosVendidosRanked } from '@/components/charts/CursosVendidosRanked'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts'
-import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet } from 'lucide-react'
+import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet, RefreshCw } from 'lucide-react'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 function getRangeFromMonth(month: string | null): { desde: string; hasta: string } {
@@ -87,6 +87,19 @@ export default function ReportesPage() {
     const token = await getClientToken()
     return createClientFetcher(token ?? '')
   }
+
+  const queryClient = useQueryClient()
+  const [msgHubspot, setMsgHubspot] = useState<string | null>(null)
+  const sincronizarHubspotMutation = useMutation({
+    mutationFn: async () => (await fetcher())<any>('/hubspot/sincronizar', { method: 'POST' }),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['ranking-asesores'] })
+      const n = res?.data?.sincronizados ?? 0
+      setMsgHubspot(`${n} lead${n !== 1 ? 's' : ''} de HubSpot sincronizado${n !== 1 ? 's' : ''}`)
+      setTimeout(() => setMsgHubspot(null), 5000)
+    },
+    onError: (e: Error) => alert(`Error al sincronizar con HubSpot: ${e.message}`),
+  })
 
   const { data: dashData, isLoading } = useQuery({
     queryKey: ['reportes-dashboard', desde, hasta],
@@ -349,6 +362,19 @@ export default function ReportesPage() {
       </div>
 
       {/* ── FILA 4: Ranking asesores (ancho completo) ─────────────── */}
+      {!isAsesor && (
+        <div className="flex items-center justify-end gap-2">
+          {msgHubspot && <span className="text-[11px] text-on-surface-variant">{msgHubspot}</span>}
+          <button
+            onClick={() => sincronizarHubspotMutation.mutate()}
+            disabled={sincronizarHubspotMutation.isPending}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${sincronizarHubspotMutation.isPending ? 'animate-spin' : ''}`} />
+            Sincronizar HubSpot
+          </button>
+        </div>
+      )}
       <RankingAsesores desde={desde} hasta={hasta} periodoLabel={periodoLabel} />
     </div>
   )

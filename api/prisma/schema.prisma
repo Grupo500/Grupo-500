@@ -389,6 +389,18 @@ model TrengoTicket {
   @@index([firstAssignedAt])
 }
 
+// Leads provenientes de HubSpot (contactos con lifecyclestage=lead),
+// cruzados por el email del "owner" asignado en HubSpot.
+model HubspotLead {
+  contactId        String   @id
+  ownerEmail       String
+  createdAtHubspot DateTime
+  updatedAt        DateTime @updatedAt
+
+  @@index([ownerEmail])
+  @@index([createdAtHubspot])
+}
+
 // ============================================================
 // MÓDULO SIMULACROS (motor de examen online)
 // Migrado desde la app simulacros-grupo500 (Supabase → Railway PG).
