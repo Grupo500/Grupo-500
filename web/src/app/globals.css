@@ -292,7 +292,7 @@
   .animate-shake      { animation: shake 0.35s ease-in-out; }
   .animate-float-slow { animation: floatSlow 7s ease-in-out infinite; }
   .animate-logo-pulse { animation: logoPulse 3.2s ease-in-out infinite; }
-  .animate-dot-pulse  { animation: dotPulse 1.8s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+  .animate-day-pulse  { animation: dayPulse 2s ease-out infinite; }
   .delay-1 { animation-delay: 60ms; }
   .delay-2 { animation-delay: 120ms; }
   .delay-3 { animation-delay: 180ms; }
@@ -320,9 +320,9 @@
     0%, 100% { box-shadow: 0 12px 40px -8px rgba(0,30,60,0.45), 0 0 0 0 rgba(255,255,255,0.0); }
     50%      { box-shadow: 0 12px 40px -8px rgba(0,30,60,0.45), 0 0 0 10px rgba(255,255,255,0.08); }
   }
-  @keyframes dotPulse {
-    0%   { r: 6; opacity: 0.55; }
-    100% { r: 15; opacity: 0; }
+  @keyframes dayPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(32,148,255,0.35); }
+    100% { box-shadow: 0 0 0 8px rgba(32,148,255,0); }
   }
 
   /* ─── Fondo educativo — patrón SVG con iconos sutiles ─── */
