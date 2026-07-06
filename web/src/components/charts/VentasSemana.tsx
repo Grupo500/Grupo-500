@@ -33,27 +33,95 @@ function useCountUp(target: number, duration = 900) {
   return v
 }
 
-function BarraDia({ pct, esHoy, esFuturo, delay }: { pct: number; esHoy: boolean; esFuturo: boolean; delay: number }) {
-  const [h, setH] = useState(0)
-  useEffect(() => {
-    if (esFuturo) return
-    const t = setTimeout(() => setH(Math.max(pct, 4)), delay)
-    return () => clearTimeout(t)
-  }, [pct, delay, esFuturo])
+// ── Gráfico de línea + puntos (Lun-Dom) ──
+// Trazo que se dibuja solo (line drawing) + puntos que aparecen en cascada
+// con ligero rebote (stagger + pop in) + el punto de hoy con pulso continuo.
+const SVG_W = 320
+const SVG_H = 96
+const PAD_X = 18
+const TOP   = 12
+const BASE  = 74
 
-  if (esFuturo) {
-    return <div className="w-full rounded-t-md border border-dashed" style={{ height: '12%', borderColor: 'var(--outline-variant)' }} />
-  }
+function GraficoDias({ dias, maxDia, hoyIndex }: { dias: Punto[]; maxDia: number; hoyIndex: number }) {
+  const pathRef = useRef<SVGPathElement>(null)
+  const [dibujado, setDibujado] = useState(false)
+  const [visibles, setVisibles] = useState<boolean[]>(() => dias.map(() => false))
+
+  const step = (SVG_W - PAD_X * 2) / (dias.length - 1)
+  const puntos = dias.map((d, i) => {
+    const x = PAD_X + step * i
+    const tieneValor = d.ingresos != null
+    const y = tieneValor ? BASE - ((d.ingresos as number) / maxDia) * (BASE - TOP) : BASE
+    return { x, y, tieneValor, valor: d.ingresos }
+  })
+
+  const conValor = puntos.filter(p => p.tieneValor)
+  const pathD = conValor.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+
+  useEffect(() => {
+    const t = setTimeout(() => setDibujado(true), 120)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    const timers = dias.map((_, i) => setTimeout(() => {
+      setVisibles(v => { const next = [...v]; next[i] = true; return next })
+    }, 260 + i * 90))
+    return () => timers.forEach(clearTimeout)
+  }, [dias])
+
+  const largo = pathRef.current?.getTotalLength?.() ?? 300
 
   return (
-    <div
-      className={`w-full rounded-t-md ${esHoy ? 'animate-bar-pulse' : ''}`}
-      style={{
-        height: `${h}%`,
-        background: esHoy ? 'linear-gradient(180deg, var(--accent), var(--primary))' : 'var(--primary-container)',
-        transition: 'height 700ms cubic-bezier(0.23,1,0.32,1)',
-      }}
-    />
+    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full h-24" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="lineaHoy" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="var(--accent)" />
+          <stop offset="100%" stopColor="var(--primary)" />
+        </linearGradient>
+      </defs>
+
+      <path
+        ref={pathRef}
+        d={pathD}
+        fill="none"
+        stroke="var(--primary-container)"
+        strokeWidth={2}
+        strokeLinecap="round"
+        style={{
+          strokeDasharray: largo,
+          strokeDashoffset: dibujado ? 0 : largo,
+          transition: 'stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1)',
+        }}
+      />
+
+      {puntos.map((p, i) => {
+        const esHoy = i === hoyIndex
+        const visible = visibles[i]
+        const r = esHoy ? 6 : 4
+
+        if (!p.tieneValor) {
+          return (
+            <circle key={i} cx={p.x} cy={p.y} r={3}
+              fill="none" stroke="var(--outline-variant)" strokeWidth={1.5} strokeDasharray="2 2"
+              style={{ opacity: visible ? 1 : 0, transition: 'opacity 400ms ease-out' }} />
+          )
+        }
+
+        return (
+          <g key={i}>
+            {esHoy && (
+              <circle cx={p.x} cy={p.y} r={r} fill="var(--accent)" className="animate-dot-pulse" />
+            )}
+            <circle
+              cx={p.x} cy={p.y} r={visible ? r : 0}
+              fill={esHoy ? 'url(#lineaHoy)' : 'var(--primary)'}
+              style={{ transition: 'r 500ms cubic-bezier(0.34,1.56,0.64,1)' }}
+            />
+          </g>
+        )
+      })}
+    </svg>
   )
 }
 
@@ -142,18 +210,7 @@ export function VentasSemana() {
             </div>
           </div>
 
-          <div className="flex items-end gap-2 h-28">
-            {dias.map((d, i) => (
-              <div key={i} className="flex-1 flex items-end h-full">
-                <BarraDia
-                  pct={d.ingresos != null ? Math.round((d.ingresos / maxDia) * 100) : 0}
-                  esHoy={i === hoyIndex}
-                  esFuturo={d.ingresos == null}
-                  delay={100 + i * 60}
-                />
-              </div>
-            ))}
-          </div>
+          <GraficoDias dias={dias} maxDia={maxDia} hoyIndex={hoyIndex} />
           <div className="flex gap-2 mt-1.5">
             {etiquetas.map((label, i) => (
               <span
