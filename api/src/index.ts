@@ -38,6 +38,8 @@ import inscripcionRoutes from './routes/inscripcion'
 import formulariosRoutes from './routes/formularios'
 import hotmartRoutes from './routes/hotmart'
 import notificacionesRoutes from './routes/notificaciones'
+import publicRoutes from './routes/public'
+import apiKeysRoutes from './routes/apiKeys'
 import { reconciliarAsesores } from './jobs/reconciliarAsesores'
 import { backfillComisiones } from './jobs/backfillComisiones'
 
@@ -185,6 +187,8 @@ app.use('/api/hotmart',     hotmartRoutes)
 app.use('/api/notificaciones', notificacionesRoutes)
 app.use('/api/trengo',       trengoRoutes)
 app.use('/api/hubspot',      hubspotRoutes)
+app.use('/api/apikeys',      apiKeysRoutes)
+app.use('/api/public/v1',    publicRoutes)
 
 // Sentry error handler — debe ir ANTES del errorHandler custom y DESPUÉS de todas las rutas
 if (process.env.SENTRY_DSN) {

@@ -241,9 +241,7 @@ export default function ReportesPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] text-on-surface-variant">% de comisión</span>
-                      <span className="text-[12px] font-semibold tabular-nums text-on-surface">
-                        {desglose.bruto > 0 ? Math.round((desglose.comisionAsesor / desglose.bruto) * 100) : 0}%
-                      </span>
+                      <span className="text-[12px] font-semibold tabular-nums text-on-surface">3%</span>
                     </div>
                     <div className="border-t border-outline-variant pt-3 flex items-center justify-between">
                       <span className="text-[13px] font-semibold text-on-surface">Mi comisión ganada</span>

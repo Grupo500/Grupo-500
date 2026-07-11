@@ -24,6 +24,21 @@ model User {
   passkeys       Passkey[]
   sessions       Session[]
   pushSubs       PushSubscription[]
+  apiKeys        ApiKey[]
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  nombre      String
+  keyHash     String    @unique
+  prefijo     String
+  scopes      String[]
+  activa      Boolean   @default(true)
+  ultimoUso   DateTime?
+  creadaPorId String
+  creadaPor   User      @relation(fields: [creadaPorId], references: [id])
+  createdAt   DateTime  @default(now())
+  revocadaAt  DateTime?
 }
 
 model PushSubscription {

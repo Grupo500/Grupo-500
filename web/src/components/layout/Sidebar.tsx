@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   BookOpen, School, Award, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  ShieldCheck, ClipboardList,
+  ShieldCheck, ClipboardList, KeyRound,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/certificados',    label: 'Certificados',    icon: Award,           adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
   { type: 'link',    href: '/reportes',        label: 'Analíticas',      icon: BarChart3,       adminOnly: false },
+  { type: 'link',    href: '/api-keys',        label: 'API Keys',        icon: KeyRound,        adminOnly: true  },
 ]
 
 interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }
