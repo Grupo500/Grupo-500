@@ -28,7 +28,6 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
   { type: 'link',    href: '/reportes',        label: 'Analíticas',      icon: BarChart3,       adminOnly: false },
-  { type: 'link',    href: '/ajustes',         label: 'Ajustes',         icon: Settings,        adminOnly: false },
 ]
 
 interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }
@@ -334,6 +333,24 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
 
       {/* ── Footer ───────────────────────────────── */}
       <div className="relative z-10 flex-shrink-0 border-t border-white/[0.06] p-2 space-y-px">
+        {/* Ajustes */}
+        <Link
+          href="/ajustes"
+          title={collapsed ? 'Ajustes' : undefined}
+          className={cn(
+            'relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150 group',
+            pathname === '/ajustes' || pathname.startsWith('/ajustes/')
+              ? 'text-white'
+              : 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
+            !collapsed && 'pr-3',
+          )}
+        >
+          <span className="w-11 h-10 flex items-center justify-center shrink-0">
+            <Settings className="w-[17px] h-[17px]" />
+          </span>
+          {!collapsed && <span className="flex-1 truncate">Ajustes</span>}
+        </Link>
+
         {/* Usuario */}
         <div className={cn(
           'flex items-center gap-2.5 px-2 py-1.5',

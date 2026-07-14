@@ -28,7 +28,6 @@ const moreItems: NavItem[] = [
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
-  { href: '/ajustes',         label: 'Ajustes',          icon: Settings,      adminOnly: false },
 ]
 
 interface BottomNavProps { role?: 'ADMIN' | 'VENDEDOR' }
@@ -141,6 +140,13 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <UserMenu />
           </div>
+          <Link
+            href="/ajustes"
+            onClick={handleClose}
+            className="w-9 h-9 rounded-2xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all active:scale-90"
+          >
+            <Settings className="w-4 h-4" />
+          </Link>
           {mounted && (
             <button
               onClick={() => setTheme(isDark ? 'light' : 'dark')}

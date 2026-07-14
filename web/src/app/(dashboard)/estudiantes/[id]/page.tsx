@@ -1425,13 +1425,17 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
 // ══════════════════════════════════════════════════════════════════════════
 // TAB CERTIFICADOS
 // ══════════════════════════════════════════════════════════════════════════
-function TabCertificados({ estudianteId, fetcher }: {
-  estudianteId: string
+function TabCertificados({ e, fetcher, onRefresh }: {
+  e: EstudianteDetalle
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
+  onRefresh: () => void
 }) {
+  const estudianteId = e.id
   const queryClient = useQueryClient()
   const [tipoNuevo, setTipoNuevo] = useState<'CURSANDO' | 'COMPLETADO'>('CURSANDO')
   const [descargando, setDescargando] = useState<string | null>(null)
+  const [tipoDocInput, setTipoDocInput] = useState(e.tipoDocumento || 'CC')
+  const [documentoInput, setDocumentoInput] = useState(e.documento ?? '')
 
   const { data, isLoading } = useQuery({
     queryKey: ['certificados-estudiante', estudianteId],
@@ -1440,6 +1444,16 @@ function TabCertificados({ estudianteId, fetcher }: {
   const { data: firmasData } = useQuery({
     queryKey: ['config-firmas'],
     queryFn: () => fetcher<{ data: Firmas }>('/config/firmas'),
+  })
+
+  const guardarDocumentoMutation = useMutation({
+    mutationFn: () => fetcher(`/estudiantes/${estudianteId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipoDocumento: tipoDocInput, documento: documentoInput.trim() }),
+    }),
+    onSuccess: () => onRefresh(),
+    onError: (err: any) => alert(err?.message ?? 'Error al guardar el documento'),
   })
 
   const generarMutation = useMutation({
@@ -1451,6 +1465,8 @@ function TabCertificados({ estudianteId, fetcher }: {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['certificados-estudiante', estudianteId] }),
     onError: (e: any) => alert(e?.message ?? 'Error al generar certificado'),
   })
+
+  const tieneDocumento = !!e.documento
 
   const certificados = data?.data ?? []
   const firmas: Firmas = firmasData?.data ?? { firmaSebastian: null, firmaAndres: null }
@@ -1512,7 +1528,46 @@ function TabCertificados({ estudianteId, fetcher }: {
       {/* Generar certificado adicional (ej. CURSANDO ya emitido, falta COMPLETADO) */}
       <div className="bg-surface-lowest border border-outline-variant rounded-2xl p-4 space-y-3">
         <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Generar certificado</p>
-        <div className="grid grid-cols-2 gap-2">
+
+        {!tieneDocumento && (
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#d97706]/8 border border-[#d97706]/20">
+            <AlertTriangle className="w-4 h-4 text-[#d97706] mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-on-surface leading-relaxed">
+              Este estudiante no tiene número de documento registrado — hace falta para que aparezca en el certificado.
+            </p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-[100px_1fr] gap-2">
+          <select
+            value={tipoDocInput}
+            onChange={e => setTipoDocInput(e.target.value)}
+            className="bg-surface-high border border-outline-variant rounded-lg px-2 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50"
+          >
+            {['CC', 'TI', 'CE', 'PA', 'RC'].map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input
+            type="text"
+            placeholder="Número de documento"
+            value={documentoInput}
+            onChange={e => setDocumentoInput(e.target.value)}
+            className="bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+        {documentoInput.trim() !== (e.documento ?? '') && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => guardarDocumentoMutation.mutate()}
+              disabled={!documentoInput.trim() || guardarDocumentoMutation.isPending}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50 transition-colors text-xs font-medium"
+            >
+              {guardarDocumentoMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              Guardar documento
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
           {(['CURSANDO', 'COMPLETADO'] as const).map(tipo => (
             <button
               key={tipo}
@@ -1532,7 +1587,8 @@ function TabCertificados({ estudianteId, fetcher }: {
         <div className="flex justify-end">
           <button
             onClick={() => generarMutation.mutate()}
-            disabled={generarMutation.isPending}
+            disabled={generarMutation.isPending || !tieneDocumento}
+            title={!tieneDocumento ? 'Registra el número de documento primero' : undefined}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {generarMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
@@ -1716,7 +1772,7 @@ export default function EstudianteDetallePage() {
           <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} cursos={cursos} isAdmin={isAdmin} />
         )}
         {tab === 'certificados' && (
-          <TabCertificados estudianteId={e.id} fetcher={fetcher} />
+          <TabCertificados e={e} fetcher={fetcher} onRefresh={handleRefresh} />
         )}
       </div>
 
