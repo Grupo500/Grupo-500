@@ -16,7 +16,30 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
     where: { id: req.userId },
     include: { asesor: true },
   })
-  return ApiResponse.success(res, { data: { role: user?.role } })
+  return ApiResponse.success(res, {
+    data: {
+      role:    user?.role,
+      email:   user?.email,
+      nombre:  user?.nombre,
+      image:   user?.image,
+      telefono: user?.asesor?.telefono,
+    },
+  })
+}))
+
+// ── Actualizar foto de perfil ────────────────────────────────────────────────
+router.patch('/usuarios/:id/foto', authenticate, asyncHandler(async (req, res) => {
+  // Solo el propio usuario o un ADMIN puede cambiar la foto
+  if (req.userId !== req.params.id && req.userRole !== 'ADMIN') {
+    return res.status(403).json({ error: 'No autorizado' })
+  }
+  const { image } = req.body
+  if (!image || typeof image !== 'string') {
+    return res.status(400).json({ error: 'URL de imagen inválida' })
+  }
+  const user = await prisma.user.update({ where: { id: req.params.id }, data: { image } })
+  auditLog(req, 'UPDATE', 'usuario_foto', req.params.id)
+  return ApiResponse.success(res, { image: user.image })
 }))
 
 // ── Listar todos los usuarios (solo ADMIN) ───────────────────────────────────

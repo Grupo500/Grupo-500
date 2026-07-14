@@ -5,9 +5,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Save, Lock, Loader2 } from 'lucide-react'
+import { Save, Lock, Loader2, Camera, Mail } from 'lucide-react'
 
 interface MiAsesor { id: string; nombre: string; telefono: string; email: string }
+interface MiCuenta { role: string; email: string; nombre: string | null; image: string | null; telefono?: string }
 
 export default function AjustesPage() {
   const { data: session } = useSession()
@@ -17,6 +18,8 @@ export default function AjustesPage() {
   const [cargado, setCargado] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState('')
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [fotoOverride, setFotoOverride] = useState<string | null>(null)
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
     const token = await getClientToken()
@@ -27,8 +30,13 @@ export default function AjustesPage() {
     queryKey: ['mi-perfil'],
     queryFn: () => fetcher<{ data: MiAsesor }>('/asesores/me'),
   })
+  const { data: cuentaData, refetch: refetchCuenta } = useQuery({
+    queryKey: ['mi-cuenta'],
+    queryFn: () => fetcher<{ data: MiCuenta }>('/auth/me'),
+  })
 
   const mia = data?.data
+  const cuenta = cuentaData?.data
   if (mia && !cargado) {
     setNombre(mia.nombre)
     setTelefono(mia.telefono)
@@ -55,11 +63,77 @@ export default function AjustesPage() {
     onError: (e: any) => setPasswordMsg(e?.message ?? 'Error al cambiar contraseña'),
   })
 
+  const handleSubirFoto = async (file: File) => {
+    setSubiendoFoto(true)
+    try {
+      const token = await getClientToken()
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      if (!res.ok) throw new Error('Error al subir la imagen')
+      const json = await res.json()
+      const url = json.data.url as string
+
+      await fetcher(`/auth/usuarios/${session!.user.id}/foto`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: url }),
+      })
+      setFotoOverride(url)
+      refetchCuenta()
+    } catch (e: any) {
+      alert(e?.message ?? 'Error al actualizar la foto')
+    } finally {
+      setSubiendoFoto(false)
+    }
+  }
+
   if (!session?.user) return null
+
+  const fotoActual = fotoOverride ?? cuenta?.image ?? session.user.image ?? null
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Ajustes" subtitle="Tu perfil y configuración general del sistema" />
+
+      {/* ── Foto de perfil ── */}
+      <div className="card overflow-hidden">
+        <div className="p-5 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
+            {fotoActual
+              ? <img src={fotoActual} alt="Foto de perfil" className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-lg font-bold text-primary">{(nombre || '?')[0]?.toUpperCase()}</span>
+                </div>
+            }
+          </div>
+          <div>
+            <p className="text-base font-semibold text-on-surface">Foto de perfil</p>
+            <p className="text-xs text-on-surface-variant mt-1">Se muestra en tu menú de usuario y en el listado de asesores.</p>
+          </div>
+        </div>
+        <div className="px-5 py-3.5 bg-surface-high border-t border-outline-variant flex justify-end">
+          <label className="btn-primary cursor-pointer">
+            {subiendoFoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+            Cambiar foto
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              disabled={subiendoFoto}
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) handleSubirFoto(f)
+                e.target.value = ''
+              }}
+            />
+          </label>
+        </div>
+      </div>
 
       {/* ── Datos personales ── */}
       <div className="card overflow-hidden">
@@ -76,6 +150,13 @@ export default function AjustesPage() {
             <div>
               <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
               <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} className="input-base" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
+                <Mail className="w-3 h-3" /> Correo
+              </label>
+              <input type="email" value={cuenta?.email ?? ''} disabled className="input-base opacity-60 cursor-not-allowed" />
+              <p className="text-[11px] text-on-surface-variant mt-1">Contacta a un administrador para cambiar tu correo.</p>
             </div>
           </div>
         </div>
