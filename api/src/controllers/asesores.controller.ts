@@ -74,7 +74,7 @@ export async function me(req: Request, res: Response) {
   if (!req.asesorId) return res.status(404).json({ success: false, error: 'No encontrado' })
   const asesor = await prisma.asesor.findUnique({
     where: { id: req.asesorId },
-    select: { id: true, nombre: true },
+    select: { id: true, nombre: true, telefono: true, email: true, codigosHotmart: true },
   })
   if (!asesor) return res.status(404).json({ success: false, error: 'Asesor no encontrado' })
   return ApiResponse.success(res, asesor)
@@ -88,6 +88,14 @@ export async function misEstadisticas(req: Request, res: Response) {
 
 export async function actualizar(req: Request, res: Response) {
   const { id } = req.params
+  const isAdmin = req.userRole === 'ADMIN'
+
+  // Un VENDEDOR solo puede editar su propio perfil, y solo nombre/teléfono
+  // (email y códigos de Hotmart quedan reservados a ADMIN)
+  if (!isAdmin && req.asesorId !== id) {
+    return res.status(403).json({ success: false, error: 'No autorizado' })
+  }
+
   const { nombre, telefono, email, codigosHotmart } = req.body
 
   const asesor = await prisma.asesor.update({
@@ -95,8 +103,8 @@ export async function actualizar(req: Request, res: Response) {
     data: {
       ...(nombre   && { nombre:   nombre.trim() }),
       ...(telefono && { telefono: telefono.trim() }),
-      ...(email    && { email:    String(email).toLowerCase().trim() }),
-      ...(Array.isArray(codigosHotmart) && { codigosHotmart: codigosHotmart.map((c: string) => String(c).trim()).filter(Boolean) }),
+      ...(isAdmin && email    && { email:    String(email).toLowerCase().trim() }),
+      ...(isAdmin && Array.isArray(codigosHotmart) && { codigosHotmart: codigosHotmart.map((c: string) => String(c).trim()).filter(Boolean) }),
     },
   })
 
@@ -104,7 +112,7 @@ export async function actualizar(req: Request, res: Response) {
   // app (la lista de Usuarios muestra user.nombre; el login usa user.email).
   const userData = {
     ...(nombre && { nombre: nombre.trim() }),
-    ...(email  && { email:  String(email).toLowerCase().trim() }),
+    ...(isAdmin && email  && { email:  String(email).toLowerCase().trim() }),
   }
   if (Object.keys(userData).length > 0) {
     await prisma.user.update({ where: { id: asesor.userId }, data: userData }).catch(() => {})
