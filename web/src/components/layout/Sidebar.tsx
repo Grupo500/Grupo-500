@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AJUSTES_TABS } from '@/lib/ajustesNav'
 
 type NavItem =
   | { type: 'link';    href: string; label: string; icon: LucideIcon; adminOnly: boolean }
@@ -123,7 +124,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { theme } = useTheme()
 
+  const isAjustesMode = pathname === '/ajustes' || pathname.startsWith('/ajustes/')
   const visibleItems = navItems.filter(item => !item.adminOnly || role === 'ADMIN')
+  const visibleAjustesTabs = AJUSTES_TABS.filter(t => !t.adminOnly || role === 'ADMIN')
   const isDark = theme === 'dark'
 
   const width = collapsed ? 60 : 220
@@ -259,7 +262,41 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
             {!collapsed && <span className="text-[12px] font-medium">Contraer</span>}
           </button>
 
-          {visibleItems.map((item, i) => {
+          {isAjustesMode ? (<>
+            {/* ── Modo sub-navegación: Ajustes ── */}
+            <Link
+              href="/dashboard"
+              title={collapsed ? 'Volver' : undefined}
+              className="relative flex items-center rounded-md text-[13px] font-semibold text-slate-100 hover:bg-white/[0.05] transition-colors mb-1"
+            >
+              <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                <ChevronLeft className="w-[17px] h-[17px]" />
+              </span>
+              {!collapsed && <span className="flex-1 truncate">Ajustes</span>}
+            </Link>
+
+            {visibleAjustesTabs.map(tab => {
+              const Icon = tab.icon
+              const isActive = pathname === tab.href
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  title={collapsed ? tab.label : undefined}
+                  className={cn(
+                    'relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150 group',
+                    isActive ? 'bg-white/[0.08] text-white' : 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
+                    !collapsed && 'pr-3',
+                  )}
+                >
+                  <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                    <Icon className={cn('w-[17px] h-[17px]', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-100')} />
+                  </span>
+                  {!collapsed && <span className="flex-1 truncate">{tab.label}</span>}
+                </Link>
+              )
+            })}
+          </>) : visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
                 ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
