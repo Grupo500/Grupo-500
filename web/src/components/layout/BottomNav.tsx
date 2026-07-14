@@ -8,8 +8,8 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
-  Award, FileBarChart2, BarChart3,
-  ShieldCheck, Sun, Moon, ClipboardList, KeyRound,
+  FileBarChart2, BarChart3,
+  ShieldCheck, Sun, Moon, ClipboardList, KeyRound, Settings,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,7 +20,7 @@ const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
   { href: '/cursos',       label: 'Cursos',      icon: BookOpen,        adminOnly: false },
-  { href: '/certificados', label: 'Certificados', icon: Award,         adminOnly: false },
+  { href: '/reportes',     label: 'Analíticas',  icon: BarChart3,       adminOnly: false },
 ]
 
 const moreItems: NavItem[] = [
@@ -28,8 +28,8 @@ const moreItems: NavItem[] = [
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
-  { href: '/reportes',        label: 'Analíticas',       icon: BarChart3,     adminOnly: false },
   { href: '/api-keys',        label: 'API Keys',         icon: KeyRound,      adminOnly: true  },
+  { href: '/ajustes',         label: 'Ajustes',          icon: Settings,      adminOnly: true  },
 ]
 
 interface BottomNavProps { role?: 'ADMIN' | 'VENDEDOR' }

@@ -133,10 +133,10 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         {/* Firma del representante legal */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '36px' }}>
           <div style={{ textAlign: 'center', width: '55%' }}>
-            <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div style={{ height: '78px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
               {firmaAndres && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={firmaAndres} alt="" style={{ maxHeight: '52px', maxWidth: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
+                <img src={firmaAndres} alt="" style={{ maxHeight: '78px', maxWidth: '100%', objectFit: 'contain' }} crossOrigin="anonymous" />
               )}
             </div>
             <div style={{ borderBottom: '1.5px solid #1a1a1a', marginBottom: '6px' }} />

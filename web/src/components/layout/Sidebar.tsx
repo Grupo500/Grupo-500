@@ -8,9 +8,9 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import {
   LayoutDashboard, Users, CalendarDays,
-  BookOpen, School, Award, FileBarChart2,
+  BookOpen, School, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  ShieldCheck, ClipboardList, KeyRound,
+  ShieldCheck, ClipboardList, KeyRound, Settings,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -26,10 +26,10 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: false },
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
-  { type: 'link',    href: '/certificados',    label: 'Certificados',    icon: Award,           adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
   { type: 'link',    href: '/reportes',        label: 'Analíticas',      icon: BarChart3,       adminOnly: false },
   { type: 'link',    href: '/api-keys',        label: 'API Keys',        icon: KeyRound,        adminOnly: true  },
+  { type: 'link',    href: '/ajustes',         label: 'Ajustes',         icon: Settings,        adminOnly: true  },
 ]
 
 interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }

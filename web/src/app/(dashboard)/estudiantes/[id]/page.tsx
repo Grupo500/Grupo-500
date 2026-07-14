@@ -8,14 +8,14 @@ import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP, cn } from '@/lib/utils'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
-  Phone, Mail, Users, CreditCard, History,
+  Phone, Mail, Users, CreditCard, Award,
   Wallet, CheckCircle, AlertTriangle, Paperclip,
-  Save, ChevronDown, ChevronUp,
-  MessageSquarePlus, Trash2 as Trash,
+  Save, ChevronDown, ChevronUp, Download, Clock,
   type LucideIcon,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
 import { isBefore, parseISO, isToday } from 'date-fns'
+import { TIPOS as TIPOS_CERTIFICADO, generarPDF, type Certificado, type Firmas } from '@/lib/certificados'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
@@ -37,10 +37,6 @@ interface Pago {
   fechaPago?: string; comprobante?: string
   createdAt: string; notas?: string
   asesor?: { nombre: string }
-}
-interface HistorialItem {
-  id: string; accion: string; descripcion: string
-  cambios?: any; realizadoPor: string; createdAt: string
 }
 interface EstudianteDetalle {
   id: string; nombre: string
@@ -91,12 +87,11 @@ function NumericInput({ value, onChange, placeholder, className }: {
   )
 }
 
-type Tab = 'perfil' | 'financiero' | 'historial' | 'observaciones'
+type Tab = 'perfil' | 'financiero' | 'certificados'
 const TABS: { key: Tab; label: string; icon: LucideIcon }[] = [
-  { key: 'perfil',         label: 'Perfil',         icon: User               },
-  { key: 'financiero',     label: 'Financiero',     icon: Wallet             },
-  { key: 'observaciones',  label: 'Observaciones',  icon: MessageSquarePlus  },
-  { key: 'historial',      label: 'Historial',      icon: History            },
+  { key: 'perfil',         label: 'Perfil',         icon: User    },
+  { key: 'financiero',     label: 'Financiero',     icon: Wallet  },
+  { key: 'certificados',   label: 'Certificados',   icon: Award   },
 ]
 
 const inputCls = 'w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20'
@@ -1428,182 +1423,123 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// TAB: HISTORIAL
+// TAB CERTIFICADOS
 // ══════════════════════════════════════════════════════════════════════════
-function TabHistorial({ estudianteId, fetcher }: {
+function TabCertificados({ estudianteId, fetcher }: {
   estudianteId: string
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
 }) {
+  const queryClient = useQueryClient()
+  const [tipoNuevo, setTipoNuevo] = useState<'CURSANDO' | 'COMPLETADO'>('CURSANDO')
+  const [descargando, setDescargando] = useState<string | null>(null)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['historial-estudiante', estudianteId],
-    queryFn: () => fetcher<{ data: HistorialItem[] }>(`/estudiantes/${estudianteId}/historial`),
-    staleTime: 30_000,
+    queryKey: ['certificados-estudiante', estudianteId],
+    queryFn: () => fetcher<{ data: Certificado[] }>(`/certificados/estudiante/${estudianteId}`),
+  })
+  const { data: firmasData } = useQuery({
+    queryKey: ['config-firmas'],
+    queryFn: () => fetcher<{ data: Firmas }>('/config/firmas'),
   })
 
-  const registros = data?.data ?? []
+  const generarMutation = useMutation({
+    mutationFn: () => fetcher('/certificados', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estudianteId, tipo: tipoNuevo }),
+    }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['certificados-estudiante', estudianteId] }),
+    onError: (e: any) => alert(e?.message ?? 'Error al generar certificado'),
+  })
 
-  const ACCION_STYLE: Record<string, { color: string; bg: string; label: string }> = {
-    UPDATE_PERFIL:         { color: 'text-primary',    bg: 'bg-primary/15',    label: 'Perfil' },
-    ABONO:                 { color: 'text-[#16a34a]',  bg: 'bg-[#16a34a]/15', label: 'Abono' },
-    EDITAR_CUOTA:          { color: 'text-[#d97706]',  bg: 'bg-[#d97706]/15', label: 'Edición' },
-    REVERTIR_CUOTA:        { color: 'text-[#dc2626]',  bg: 'bg-[#dc2626]/15', label: 'Reversión' },
-    CREAR_FINANCIAMIENTO:  { color: 'text-primary',    bg: 'bg-primary/15',    label: 'Financiamiento' },
-    UPDATE_CUOTA:          { color: 'text-[#d97706]',  bg: 'bg-[#d97706]/15', label: 'Cuota' },
+  const certificados = data?.data ?? []
+  const firmas: Firmas = firmasData?.data ?? { firmaSebastian: null, firmaAndres: null }
+
+  const handleDescargar = async (cert: Certificado, i: number) => {
+    if (descargando) return
+    setDescargando(cert.id)
+    try {
+      await generarPDF(cert, i, certificados.length, firmas)
+    } catch (e) {
+      console.error(e)
+      alert('Error al generar el PDF')
+    } finally {
+      setDescargando(null)
+    }
   }
 
   if (isLoading) return (
-    <div className="space-y-3">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex gap-3 animate-pulse">
-          <div className="w-8 h-8 rounded-full bg-surface-high flex-shrink-0" />
-          <div className="flex-1 space-y-1.5 pt-1">
-            <div className="h-3 w-48 rounded bg-surface-high" />
-            <div className="h-2.5 w-32 rounded bg-surface-high" />
-          </div>
-        </div>
-      ))}
-    </div>
+    <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-on-surface-variant" /></div>
   )
-
-  if (registros.length === 0) return (
-    <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
-      <History className="w-10 h-10 mb-3 opacity-30" />
-      <p className="text-sm">Sin actividad registrada aún</p>
-      <p className="text-xs mt-1">Los cambios al perfil y abonos aparecerán aquí</p>
-    </div>
-  )
-
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-4">
-        {registros.length} evento{registros.length !== 1 ? 's' : ''} registrado{registros.length !== 1 ? 's' : ''}
-      </p>
-      <div className="relative pl-5">
-        <div className="absolute left-[9px] top-2 bottom-2 w-px bg-outline-variant/40" />
-        {registros.map((r, i) => {
-          const style = ACCION_STYLE[r.accion] ?? { color: 'text-on-surface-variant', bg: 'bg-surface-high', label: r.accion }
-          return (
-            <div key={r.id} className="relative flex gap-3 pb-4">
-              <div className={cn('absolute -left-5 mt-1 w-3.5 h-3.5 rounded-full border-2 border-surface-lowest flex-shrink-0', style.bg)} />
-              <div className="flex-1 pl-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 flex-wrap">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', style.bg, style.color)}>
-                        {style.label}
-                      </span>
-                      <p className="text-[13px] font-medium text-on-surface">{r.descripcion}</p>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[11px] text-on-surface-variant">{fmtFechaHora(r.createdAt)}</p>
-                      <span className="text-on-surface-variant/30">·</span>
-                      <p className="text-[11px] text-on-surface-variant">{r.realizadoPor}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ══════════════════════════════════════════════════════════════════════════
-// TAB OBSERVACIONES
-// ══════════════════════════════════════════════════════════════════════════
-function TabObservaciones({ estudianteId, fetcher, isAdmin }: {
-  estudianteId: string
-  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
-  isAdmin: boolean
-}) {
-  const queryClient = useQueryClient()
-  const [texto, setTexto] = useState('')
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['observaciones', estudianteId],
-    queryFn: () => fetcher<{ data: { id: string; texto: string; autor: string; createdAt: string }[] }>(`/estudiantes/${estudianteId}/observaciones`),
-  })
-
-  const crearMutation = useMutation({
-    mutationFn: () => fetcher(`/estudiantes/${estudianteId}/observaciones`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texto }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['observaciones', estudianteId] })
-      setTexto('')
-    },
-    onError: (e: Error) => alert(e.message || 'Error al guardar la observación'),
-  })
-
-  const eliminarMutation = useMutation({
-    mutationFn: (obsId: string) => fetcher(`/estudiantes/${estudianteId}/observaciones/${obsId}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['observaciones', estudianteId] }),
-    onError: (e: Error) => alert(e.message || 'Error al eliminar la observación'),
-  })
-
-  const obs = data?.data ?? []
 
   return (
     <div className="space-y-4">
-      {/* Input nueva observación */}
+      {certificados.length === 0 ? (
+        <div className="text-center py-8 text-on-surface-variant text-sm">
+          <Award className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          Este estudiante aún no tiene certificados
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {certificados.map((c, i) => {
+            const { label, color, icon: Icon } = TIPOS_CERTIFICADO[c.tipo]
+            const cargando = descargando === c.id
+            return (
+              <div key={c.id} className="flex items-center gap-3 bg-surface-lowest border border-outline-variant rounded-xl p-3.5">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Award className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium', color)}>
+                    <Icon className="w-3 h-3" />{label}
+                  </span>
+                  <p className="text-[11px] text-on-surface-variant mt-1">Emitido {fmtFecha(c.fechaEmision)}</p>
+                </div>
+                <button
+                  onClick={() => handleDescargar(c, i)}
+                  disabled={!!descargando}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50 transition-colors text-xs font-medium flex-shrink-0"
+                >
+                  {cargando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                  Descargar
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Generar certificado adicional (ej. CURSANDO ya emitido, falta COMPLETADO) */}
       <div className="bg-surface-lowest border border-outline-variant rounded-2xl p-4 space-y-3">
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Nueva observación</p>
-        <textarea
-          rows={3}
-          placeholder="Escribe una observación sobre este estudiante..."
-          value={texto}
-          onChange={e => setTexto(e.target.value)}
-          className="w-full bg-surface-high border border-outline-variant rounded-xl px-3 py-2.5 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 resize-none"
-        />
+        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Generar certificado</p>
+        <div className="grid grid-cols-2 gap-2">
+          {(['CURSANDO', 'COMPLETADO'] as const).map(tipo => (
+            <button
+              key={tipo}
+              onClick={() => setTipoNuevo(tipo)}
+              className={cn(
+                'flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors',
+                tipoNuevo === tipo
+                  ? 'border-primary/40 bg-primary/10 text-primary'
+                  : 'border-outline-variant bg-surface-high text-on-surface-variant hover:bg-surface-highest'
+              )}
+            >
+              {tipo === 'CURSANDO' ? <Clock className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+              {TIPOS_CERTIFICADO[tipo].label}
+            </button>
+          ))}
+        </div>
         <div className="flex justify-end">
           <button
-            onClick={() => texto.trim() && crearMutation.mutate()}
-            disabled={!texto.trim() || crearMutation.isPending}
+            onClick={() => generarMutation.mutate()}
+            disabled={generarMutation.isPending}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            {crearMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquarePlus className="w-4 h-4" />}
-            Agregar
+            {generarMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
+            Generar
           </button>
         </div>
       </div>
-
-      {/* Lista de observaciones */}
-      {isLoading ? (
-        <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-on-surface-variant" /></div>
-      ) : obs.length === 0 ? (
-        <div className="text-center py-10 text-on-surface-variant text-sm">
-          <MessageSquarePlus className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          Sin observaciones registradas
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {obs.map(o => (
-            <div key={o.id} className="bg-surface-lowest border border-outline-variant rounded-2xl p-4 group">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm text-on-surface leading-relaxed flex-1">{o.texto}</p>
-                {isAdmin && (
-                  <button
-                    onClick={() => eliminarMutation.mutate(o.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-on-surface-variant hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-all cursor-pointer shrink-0"
-                  >
-                    <Trash className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-[11px] font-semibold text-primary">{o.autor}</span>
-                <span className="text-[11px] text-on-surface-variant">
-                  {new Date(o.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
@@ -1779,11 +1715,8 @@ export default function EstudianteDetallePage() {
         {tab === 'financiero' && (
           <TabFinanciero e={e} fetcher={fetcher} onRefresh={handleRefresh} cursos={cursos} isAdmin={isAdmin} />
         )}
-        {tab === 'historial' && (
-          <TabHistorial estudianteId={e.id} fetcher={fetcher} />
-        )}
-        {tab === 'observaciones' && (
-          <TabObservaciones estudianteId={e.id} fetcher={fetcher} isAdmin={isAdmin} />
+        {tab === 'certificados' && (
+          <TabCertificados estudianteId={e.id} fetcher={fetcher} />
         )}
       </div>
 
