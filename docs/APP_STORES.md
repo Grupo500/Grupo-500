@@ -65,5 +65,5 @@ Como la app es esencialmente un WebView de un sitio existente, ambas tiendas (so
 
 ## Cambiar ícono o URL de producción más adelante
 
-- **Ícono/splash**: reemplaza los archivos en `mobile/assets/` (`icon-only.png`, `icon-foreground.png`, `icon-background.png`, `splash.png`, `splash-dark.png` — mínimo recomendado 1024×1024 para íconos, 2732×2732 para splash) y corre `npx capacitor-assets generate` de nuevo desde `mobile/`. **El logo fuente actual (512×512) es más pequeño que lo recomendado** — para mejor calidad en las tiendas, conviene subir una versión de al menos 1024×1024 antes de publicar.
+- **Ícono/splash**: reemplaza los archivos en `mobile/assets/` (`icon-only.png`, `icon-foreground.png`, `icon-background.png`, `splash.png`, `splash-dark.png` — mínimo recomendado 1024×1024 para íconos, 2732×2732 para splash) y corre `npx @capacitor/assets generate` de nuevo desde `mobile/` (se descarga al vuelo, no queda instalado — así evitamos que su dependencia `sharp` vieja rompa el build de Vercel). **El logo fuente actual (512×512) es más pequeño que lo recomendado** — para mejor calidad en las tiendas, conviene subir una versión de al menos 1024×1024 antes de publicar.
 - **Dominio**: si el dominio de producción cambia, edita `server.url` en `mobile/capacitor.config.ts` y vuelve a compilar/subir una nueva versión a ambas tiendas.
