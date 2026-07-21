@@ -7,6 +7,36 @@
       "skillPath": "skills/animation-vocabulary/SKILL.md",
       "computedHash": "280c6688ef2568ad92f40c4dc638f0cc5cde0f49bdd6debd097410aa9945f44f"
     },
+    "capacitor-app-development": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-app-development/SKILL.md",
+      "computedHash": "ff4eefe7a91cf3c5a31c13d0007f51b21490deee22eb2faaeaca065283cb3c25"
+    },
+    "capacitor-apple-review-preflight": {
+      "source": "cap-go/capgo-skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-apple-review-preflight/SKILL.md",
+      "computedHash": "0e323b7e0e53679762d6aa33dbb595c4d0318da8c24c22004163984c59386204"
+    },
+    "capacitor-best-practices": {
+      "source": "cap-go/capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-best-practices/SKILL.md",
+      "computedHash": "4b5ba5caae080d8e2be86fa2c35f77025ed46835ed1f39f3129e06325813737b"
+    },
+    "capacitor-plugins": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-plugins/SKILL.md",
+      "computedHash": "7f2f1fd0460dada8795c0e31ac2d1dfd214e22f578558aa9ed9ef6a11467620e"
+    },
+    "framework-to-capacitor": {
+      "source": "cap-go/capgo-skills",
+      "sourceType": "github",
+      "skillPath": "skills/framework-to-capacitor/SKILL.md",
+      "computedHash": "e046570c532d28a2c432e78137dbb60c6a39fce5131e9d01875dd4dfcb228653"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",

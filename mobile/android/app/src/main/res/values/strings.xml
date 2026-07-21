@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Grupo 500</string>
+    <string name="title_activity_main">Grupo 500</string>
+    <string name="package_name">com.grupo500.app</string>
+    <string name="custom_url_scheme">com.grupo500.app</string>
+</resources>
