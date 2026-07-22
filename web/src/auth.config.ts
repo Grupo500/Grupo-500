@@ -15,6 +15,7 @@ export const authConfig: NextAuthConfig = {
         '/sign-in', '/sign-up', '/no-autorizado', '/verificando',
         '/inscripcion',       // Hub de inscripciones, formularios públicos y builder forms
         '/examenes/acceso',   // Login de estudiantes (correo + documento)
+        '/privacidad',        // Política de privacidad (pública, requerida por Play Store/App Store)
       ].some(p => request.nextUrl.pathname.startsWith(p))
 
       if (isLoggedIn && isAuthPage) {
