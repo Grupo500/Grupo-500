@@ -112,7 +112,7 @@ export default function PrivacidadPage() {
             Puedes ejercer estos derechos escribiendo a{' '}
             <a href="mailto:pregrupo500@gmail.com" className="text-blue-600 underline">pregrupo500@gmail.com</a>{' '}
             o por WhatsApp al{' '}
-            <a href="https://wa.me/573164134212" className="text-blue-600 underline">+57 316 413 4212</a>.
+            <a href="https://wa.me/573170630256" className="text-blue-600 underline">+57 317 063 0256</a>.
             Daremos trámite a tu solicitud dentro de los términos establecidos en la Ley 1581 de 2012 y
             demás normas aplicables.
           </p>
