@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
 import { Flame, Heart, Trophy, Lock, Check, ArrowLeft } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
+import { PerfilMenu } from '../PerfilMenu'
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
@@ -18,7 +19,7 @@ export default async function MapaBritoPage() {
   if (!perfil) redirect('/brito')
   const estudianteId = perfil.estudianteId
 
-  const [lecciones, completadas] = await Promise.all([
+  const [lecciones, completadas, estudiante] = await Promise.all([
     prisma.britoLeccion.findMany({
       orderBy: [{ materia: 'asc' }, { orden: 'asc' }],
       include: { _count: { select: { preguntas: true } } },
@@ -27,6 +28,10 @@ export default async function MapaBritoPage() {
       where: { estudianteId },
       select: { leccionId: true },
       distinct: ['leccionId'],
+    }),
+    prisma.estudianteExamen.findUnique({
+      where: { id: estudianteId },
+      select: { nombre: true, email: true },
     }),
   ])
   const completadasSet = new Set(completadas.map(c => c.leccionId))
@@ -49,7 +54,7 @@ export default async function MapaBritoPage() {
     <main className="min-h-dvh" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-md bg-[#003060]/80 border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
+        <div className="relative max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/inicio" title="Volver al inicio" className="text-white/60 hover:text-white transition-colors shrink-0">
               <ArrowLeft className="w-4.5 h-4.5" />
@@ -60,16 +65,27 @@ export default async function MapaBritoPage() {
             <span className="text-white font-bold text-sm">Brito</span>
           </div>
 
-          <div className="flex items-center gap-3 text-white text-sm font-semibold">
+          {/* Stats centradas */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 text-white text-sm font-semibold">
             <span className="flex items-center gap-1"><Flame className="w-4 h-4 text-orange-400" /> {perfil.rachaActual}</span>
             <span className="flex items-center gap-1">
               <Heart className="w-4 h-4 text-red-400" />
               {perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones}
             </span>
             <span className="flex items-center gap-1 text-amber-300">{perfil.xpTotal} XP</span>
-            <Link href="/brito/ranking" className="text-white/70 hover:text-white transition-colors">
+            <Link href="/brito/ranking" title="Ranking" className="text-white/70 hover:text-white transition-colors">
               <Trophy className="w-4 h-4" />
             </Link>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <PerfilMenu
+              nombre={estudiante?.nombre ?? 'Estudiante'}
+              email={estudiante?.email ?? ''}
+              plan={perfil.plan === 'PREMIUM' ? 'PREMIUM' : 'FREE'}
+              xpTotal={perfil.xpTotal}
+              rachaMejor={perfil.rachaMejor}
+            />
             <CerrarSesionIcono />
           </div>
         </div>
