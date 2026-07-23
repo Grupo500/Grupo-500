@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { BRITO_BANCO_EXAMEN_ID } from '@/lib/britoBanco'
 
 async function requireAdmin() {
   const session = await auth()
@@ -54,4 +55,49 @@ export async function quitarPreguntaDeLeccion(leccionId: string, preguntaId: str
   })
   revalidatePath(`/brito-admin/${leccionId}`)
   return { ok: true }
+}
+
+export async function crearPregunta(data: {
+  area: string
+  enunciado: string
+  contexto?: string
+  opcionA: string
+  opcionB: string
+  opcionC: string
+  opcionD: string
+  correcta: string
+  explicacion?: string
+  imagenUrl?: string | null
+}) {
+  await requireAdmin()
+
+  const enunciado = data.enunciado.trim()
+  const opcionA = data.opcionA.trim()
+  const opcionB = data.opcionB.trim()
+  const opcionC = data.opcionC.trim()
+  const opcionD = data.opcionD.trim()
+  if (!enunciado || !opcionA || !opcionB || !opcionC || !opcionD) {
+    return { error: 'Completa el enunciado y las 4 opciones' }
+  }
+
+  const pregunta = await prisma.preguntaExamen.create({
+    data: {
+      examenId: BRITO_BANCO_EXAMEN_ID,
+      sesion: 0,
+      area: data.area,
+      enunciado,
+      contexto: data.contexto?.trim() || null,
+      opcionA,
+      opcionB,
+      opcionC,
+      opcionD,
+      correcta: data.correcta,
+      explicacion: data.explicacion?.trim() || null,
+      imagenUrl: data.imagenUrl || null,
+      tieneImagen: !!data.imagenUrl,
+    },
+  })
+
+  revalidatePath('/brito-admin')
+  return { ok: true, id: pregunta.id.toString() }
 }

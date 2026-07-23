@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { BRITO_BANCO_EXAMEN_ID } from '@/lib/britoBanco'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import SubirImagen from './SubirImagen'
 
@@ -21,7 +22,7 @@ export default async function AdminImagenesPage({
   const simId = parseInt(sp.sim ?? '1')
   const sesionFiltro = (parseInt(sp.sesion ?? '0') || 0) as 0 | 1 | 2
 
-  const examenes = await prisma.examen.findMany({ orderBy: { id: 'asc' }, select: { id: true } })
+  const examenes = await prisma.examen.findMany({ where: { id: { not: BRITO_BANCO_EXAMEN_ID } }, orderBy: { id: 'asc' }, select: { id: true } })
 
   const preguntas = await prisma.preguntaExamen.findMany({
     where: { examenId: simId, ...(sesionFiltro ? { sesion: sesionFiltro } : {}) },

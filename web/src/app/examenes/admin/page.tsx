@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { BRITO_BANCO_EXAMEN_ID } from '@/lib/britoBanco'
 import { ArrowLeft, Users, ListChecks, CheckCircle2, Image as ImageIcon, Eye } from 'lucide-react'
 
 // Panel de admin de simulacros. Solo ADMIN. Tablero con estadísticas por simulacro.
@@ -12,7 +13,7 @@ export default async function AdminSimulacrosPage() {
   if (role !== 'ADMIN') redirect('/no-autorizado')
 
   const [examenes, totalEst, intentosTodos, intentosTerm] = await Promise.all([
-    prisma.examen.findMany({ orderBy: { id: 'asc' }, select: { id: true, titulo: true, activo: true } }),
+    prisma.examen.findMany({ where: { id: { not: BRITO_BANCO_EXAMEN_ID } }, orderBy: { id: 'asc' }, select: { id: true, titulo: true, activo: true } }),
     prisma.estudianteExamen.count(),
     prisma.intentoExamen.groupBy({ by: ['examenId'], _count: { _all: true } }),
     prisma.intentoExamen.groupBy({

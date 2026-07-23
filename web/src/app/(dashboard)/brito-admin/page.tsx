@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Users, ListChecks, Flame, ChevronRight } from 'lucide-react'
+import { Users, ListChecks, Flame, ChevronRight, FilePlus } from 'lucide-react'
 import { NuevaLeccionForm } from './NuevaLeccionForm'
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
@@ -47,7 +47,15 @@ export default async function BritoAdminPage() {
         {stat('Lecciones completadas', totalCompletadas, Flame)}
       </div>
 
-      <NuevaLeccionForm materias={MATERIAS} />
+      <div className="flex items-center gap-2">
+        <NuevaLeccionForm materias={MATERIAS} />
+        <Link
+          href="/brito-admin/preguntas/nueva"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-sm font-semibold text-on-surface-variant hover:text-on-surface hover:border-primary/30 transition-colors"
+        >
+          <FilePlus className="w-4 h-4" /> Nueva pregunta
+        </Link>
+      </div>
 
       <div className="space-y-6">
         {porMateria.map(({ materia, lecciones: ls }) => (

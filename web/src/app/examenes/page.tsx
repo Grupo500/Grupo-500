@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { BRITO_BANCO_EXAMEN_ID } from '@/lib/britoBanco'
 import { ArrowLeft, ClipboardList, Settings, ArrowRight, Clock } from 'lucide-react'
 
 export default async function ExamenesPage() {
@@ -12,6 +13,7 @@ export default async function ExamenesPage() {
   if (role === 'VENDEDOR') redirect('/no-autorizado')
 
   const examenes = await prisma.examen.findMany({
+    where: { id: { not: BRITO_BANCO_EXAMEN_ID } },
     orderBy: { id: 'asc' },
     select: { id: true, titulo: true, descripcion: true, activo: true, duracionMin: true },
   })
