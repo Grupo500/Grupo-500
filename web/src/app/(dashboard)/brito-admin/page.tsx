@@ -3,9 +3,27 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Users, ListChecks, Flame, ChevronRight, HelpCircle } from 'lucide-react'
+import {
+  Users, ListChecks, Flame, ChevronRight,
+  BookOpen, Calculator, Landmark, FlaskConical, Languages,
+  type LucideIcon,
+} from 'lucide-react'
 
-const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
+const MATERIAS: { nombre: string; icon: LucideIcon; tono: string }[] = [
+  { nombre: 'Lectura Crítica',        icon: BookOpen,      tono: 'violet' },
+  { nombre: 'Matemáticas',            icon: Calculator,    tono: 'blue' },
+  { nombre: 'Sociales y Ciudadanas',  icon: Landmark,       tono: 'amber' },
+  { nombre: 'Ciencias Naturales',     icon: FlaskConical,  tono: 'emerald' },
+  { nombre: 'Inglés',                 icon: Languages,     tono: 'rose' },
+]
+
+const TONOS: Record<string, { bg: string; text: string; ring: string }> = {
+  violet:  { bg: 'bg-violet-500/10',  text: 'text-violet-600 dark:text-violet-400',   ring: 'group-hover:border-violet-500/30' },
+  blue:    { bg: 'bg-blue-500/10',    text: 'text-blue-600 dark:text-blue-400',       ring: 'group-hover:border-blue-500/30' },
+  amber:   { bg: 'bg-amber-500/10',   text: 'text-amber-600 dark:text-amber-400',     ring: 'group-hover:border-amber-500/30' },
+  emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', ring: 'group-hover:border-emerald-500/30' },
+  rose:    { bg: 'bg-rose-500/10',    text: 'text-rose-600 dark:text-rose-400',       ring: 'group-hover:border-rose-500/30' },
+}
 
 export default async function BritoAdminPage() {
   const session = await auth()
@@ -19,8 +37,8 @@ export default async function BritoAdminPage() {
     prisma.preguntaExamen.groupBy({ by: ['area'], _count: true }),
   ])
 
-  const stat = (label: string, valor: number, Icon: any) => (
-    <div className="bg-surface-lowest border border-outline-variant rounded-xl p-4">
+  const stat = (label: string, valor: number, Icon: LucideIcon, delay: number) => (
+    <div className="bg-surface-lowest border border-outline-variant rounded-xl p-4 animate-card-enter" style={{ animationDelay: `${delay}ms` }}>
       <div className="flex items-center gap-2 text-on-surface-variant mb-1.5">
         <Icon className="w-4 h-4" />
         <span className="text-xs font-medium">{label}</span>
@@ -39,32 +57,45 @@ export default async function BritoAdminPage() {
       <PageHeader title="Brito" subtitle="Modo de práctica gamificado · con Brito te vas a convertir en cerebrito" />
 
       <div className="grid grid-cols-3 gap-3">
-        {stat('Estudiantes con perfil', totalPerfiles, Users)}
-        {stat('Lecciones creadas', lecciones.length, ListChecks)}
-        {stat('Lecciones completadas', totalCompletadas, Flame)}
+        {stat('Estudiantes con perfil', totalPerfiles, Users, 0)}
+        {stat('Lecciones creadas', lecciones.length, ListChecks, 60)}
+        {stat('Lecciones completadas', totalCompletadas, Flame, 120)}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {MATERIAS.map(materia => (
-          <Link
-            key={materia}
-            href={`/brito-admin/materia/${encodeURIComponent(materia)}`}
-            className="flex items-center gap-4 bg-surface-lowest border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-colors"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-on-surface truncate mb-2">{materia}</p>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1 text-on-surface-variant">
-                  <ListChecks className="w-3.5 h-3.5" /> <b className="text-on-surface tabular-nums">{leccionesPorMateria.get(materia) ?? 0}</b> lecciones
-                </span>
-                <span className="flex items-center gap-1 text-on-surface-variant">
-                  <HelpCircle className="w-3.5 h-3.5" /> <b className="text-on-surface tabular-nums">{preguntasMap.get(materia) ?? 0}</b> preguntas
-                </span>
+        {MATERIAS.map(({ nombre, icon: Icon, tono }, i) => {
+          const t = TONOS[tono]
+          const numLecciones = leccionesPorMateria.get(nombre) ?? 0
+          const numPreguntas = preguntasMap.get(nombre) ?? 0
+          return (
+            <Link
+              key={nombre}
+              href={`/brito-admin/materia/${encodeURIComponent(nombre)}`}
+              className={`group flex items-center gap-4 bg-surface-lowest border border-outline-variant rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-md transition-all animate-card-enter ${t.ring}`}
+              style={{ animationDelay: `${180 + i * 60}ms` }}
+            >
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${t.bg}`}>
+                <Icon className={`w-5 h-5 ${t.text}`} />
               </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-on-surface-variant shrink-0" />
-          </Link>
-        ))}
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-on-surface truncate mb-1.5">{nombre}</p>
+                <div className="flex items-center gap-4">
+                  <span className="flex items-baseline gap-1">
+                    <b className="text-lg font-bold text-on-surface tabular-nums leading-none">{numLecciones}</b>
+                    <span className="text-[11px] text-on-surface-variant">lecciones</span>
+                  </span>
+                  <span className="flex items-baseline gap-1">
+                    <b className="text-lg font-bold text-on-surface tabular-nums leading-none">{numPreguntas}</b>
+                    <span className="text-[11px] text-on-surface-variant">preguntas</span>
+                  </span>
+                </div>
+              </div>
+
+              <ChevronRight className="w-4 h-4 text-on-surface-variant shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
