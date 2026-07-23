@@ -461,6 +461,7 @@ model PreguntaExamen {
   imagenUrl     String? @map("imagen_url")
   tieneImagen   Boolean @default(false) @map("tiene_imagen")
   examen        Examen  @relation(fields: [examenId], references: [id])
+  britoLecciones BritoLeccionPregunta[]
 
   @@index([examenId, sesion, numero])
   @@map("sim_preguntas")
@@ -475,8 +476,64 @@ model EstudianteExamen {
   creadoAt      DateTime        @default(now()) @map("creado_at")
   colegio       Colegio?        @relation(fields: [colegioId], references: [id])
   intentos      IntentoExamen[]
+  britoPerfil   BritoPerfil?
 
   @@map("sim_estudiantes")
+}
+
+// ── Brito: modo de práctica gamificado, capa nueva sobre el banco de preguntas
+// existente (PreguntaExamen). No toca el motor de simulacros/exámenes real. ──
+model BritoLeccion {
+  id        String                 @id @default(cuid())
+  materia   String
+  titulo    String
+  orden     Int
+  createdAt DateTime               @default(now())
+  preguntas BritoLeccionPregunta[]
+  completadas BritoLeccionCompletada[]
+
+  @@map("brito_lecciones")
+}
+
+model BritoLeccionPregunta {
+  leccionId  String
+  preguntaId BigInt
+  orden      Int
+  leccion    BritoLeccion   @relation(fields: [leccionId], references: [id], onDelete: Cascade)
+  pregunta   PreguntaExamen @relation(fields: [preguntaId], references: [id])
+
+  @@id([leccionId, preguntaId])
+  @@map("brito_leccion_preguntas")
+}
+
+model BritoPerfil {
+  id              String    @id @default(cuid())
+  estudianteId    String    @unique @db.Uuid
+  xpTotal         Int       @default(0)
+  corazones       Int       @default(5)
+  corazonesAt     DateTime  @default(now())
+  rachaActual     Int       @default(0)
+  rachaMejor      Int       @default(0)
+  ultimaLeccionAt DateTime?
+  plan            String    @default("FREE")
+  createdAt       DateTime  @default(now())
+  estudiante      EstudianteExamen @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+
+  @@map("brito_perfiles")
+}
+
+model BritoLeccionCompletada {
+  id           String       @id @default(cuid())
+  estudianteId String       @db.Uuid
+  leccionId    String
+  correctas    Int
+  total        Int
+  xpGanado     Int
+  completadaAt DateTime     @default(now())
+  leccion      BritoLeccion @relation(fields: [leccionId], references: [id], onDelete: Cascade)
+
+  @@index([estudianteId, leccionId])
+  @@map("brito_lecciones_completadas")
 }
 
 model IntentoExamen {

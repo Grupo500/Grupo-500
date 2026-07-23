@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   FileBarChart2, BarChart3,
-  ShieldCheck, Sun, Moon, ClipboardList, Settings,
+  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -26,6 +26,7 @@ const primaryItems: NavItem[] = [
 const moreItems: NavItem[] = [
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
+  { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
 ]
