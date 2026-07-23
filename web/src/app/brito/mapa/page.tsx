@@ -4,19 +4,19 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
-import { Flame, Heart, Trophy, Lock, Check, ArrowLeft } from 'lucide-react'
+import { Flame, Heart, Trophy, Lock, Check, ArrowLeft, Gem } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
 
-const COLOR_MATERIA: Record<string, { banner: string; glow: string }> = {
-  'Lectura Crítica': { banner: 'from-violet-500 to-violet-700', glow: 'shadow-violet-500/30' },
-  'Matemáticas': { banner: 'from-blue-500 to-blue-700', glow: 'shadow-blue-500/30' },
-  'Sociales y Ciudadanas': { banner: 'from-amber-500 to-amber-700', glow: 'shadow-amber-500/30' },
-  'Ciencias Naturales': { banner: 'from-emerald-500 to-emerald-700', glow: 'shadow-emerald-500/30' },
-  'Inglés': { banner: 'from-rose-500 to-rose-700', glow: 'shadow-rose-500/30' },
+const COLOR_MATERIA: Record<string, { banner: string; glow: string; texto: string }> = {
+  'Lectura Crítica': { banner: 'from-violet-500 to-violet-700', glow: 'shadow-violet-500/30', texto: 'text-violet-300' },
+  'Matemáticas': { banner: 'from-blue-500 to-blue-700', glow: 'shadow-blue-500/30', texto: 'text-blue-300' },
+  'Sociales y Ciudadanas': { banner: 'from-amber-500 to-amber-700', glow: 'shadow-amber-500/30', texto: 'text-amber-300' },
+  'Ciencias Naturales': { banner: 'from-emerald-500 to-emerald-700', glow: 'shadow-emerald-500/30', texto: 'text-emerald-300' },
+  'Inglés': { banner: 'from-rose-500 to-rose-700', glow: 'shadow-rose-500/30', texto: 'text-rose-300' },
 }
 
 // Desplazamiento horizontal en zig-zag, estilo sendero de Duolingo.
@@ -47,18 +47,30 @@ export default async function MapaBritoPage() {
   ])
   const completadasSet = new Set(completadas.map(c => c.leccionId))
 
-  const porMateria = MATERIAS.map(materia => {
+  // Estado (bloqueada/desbloqueada/completada) calculado por materia — el orden
+  // dentro de cada materia define su propia cadena de desbloqueo independiente.
+  const todasConEstado = MATERIAS.flatMap(materia => {
     const ls = lecciones.filter(l => l.materia === materia && l._count.preguntas > 0)
     let previaCompletada = true
-    const conEstado = ls.map(l => {
+    return ls.map((l, idx) => {
       const completada = completadasSet.has(l.id)
       const desbloqueada = previaCompletada
       previaCompletada = completada
-      return { ...l, completada, desbloqueada }
+      return { ...l, materia, completada, desbloqueada, ordenMateria: idx + 1 }
     })
-    return { materia, lecciones: conEstado }
-  }).filter(m => m.lecciones.length > 0)
+  })
 
+  // Se agrupa por sección (campo `sesion` de la lección), no por materia: cada
+  // sección reúne una lección de cada materia, en el orden fijo de MATERIAS.
+  const seccionesDisponibles = Array.from(new Set(todasConEstado.map(l => l.sesion))).sort((a, b) => a - b)
+  const porSeccion = seccionesDisponibles
+    .map(sesion => ({
+      sesion,
+      lecciones: MATERIAS.flatMap(materia => todasConEstado.filter(l => l.materia === materia && l.sesion === sesion)),
+    }))
+    .filter(s => s.lecciones.length > 0)
+
+  const totalCompletadas = completadas.length
   const sinCorazones = perfil.plan !== 'PREMIUM' && perfil.corazones <= 0
 
   return (
@@ -76,8 +88,8 @@ export default async function MapaBritoPage() {
             <span className="text-white font-bold text-sm">Brito</span>
           </div>
 
-          {/* Stats centradas */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 text-white text-sm font-semibold">
+          {/* Stats centradas (solo móvil — en desktop se muestran en el panel lateral) */}
+          <div className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center gap-4 text-white text-sm font-semibold">
             <span className="flex items-center gap-1"><Flame className="w-4 h-4 text-orange-400" /> {perfil.rachaActual}</span>
             <span className="flex items-center gap-1">
               <Heart className="w-4 h-4 text-red-400" />
@@ -111,27 +123,23 @@ export default async function MapaBritoPage() {
           </div>
         )}
 
-        <div className="max-w-md mx-auto space-y-10">
-          {porMateria.map(({ materia, lecciones: ls }) => {
-            const color = COLOR_MATERIA[materia] ?? COLOR_MATERIA['Lectura Crítica']
-            const completadasCount = ls.filter(l => l.completada).length
-            const indiceActual = ls.findIndex(l => l.desbloqueada && !l.completada)
-
-            return (
-              <div key={materia}>
+        <div className="flex flex-col lg:flex-row gap-10 lg:items-start">
+          {/* Sendero de secciones */}
+          <div className="flex-1 max-w-md mx-auto lg:mx-0 space-y-10">
+            {porSeccion.map(({ sesion, lecciones: ls }) => (
+              <div key={sesion}>
                 {/* Banner de la sección */}
-                <div className={`bg-gradient-to-r ${color.banner} rounded-2xl px-5 py-4 mb-8 shadow-lg ${color.glow}`}>
-                  <p className="text-white/80 text-[11px] font-bold uppercase tracking-wider">
-                    Sección {ls[Math.min(indiceActual === -1 ? completadasCount : indiceActual, ls.length - 1)].sesion} · Lección {Math.min(completadasCount + 1, ls.length)} de {ls.length}
-                  </p>
-                  <h2 className="text-white font-extrabold text-lg leading-tight">{materia}</h2>
+                <div className="bg-gradient-to-r from-slate-600 to-slate-800 rounded-2xl px-5 py-4 mb-8 shadow-lg shadow-black/20">
+                  <p className="text-white/80 text-[11px] font-bold uppercase tracking-wider">Sección {sesion}</p>
+                  <h2 className="text-white font-extrabold text-lg leading-tight">Practica todas las materias</h2>
                 </div>
 
                 {/* Sendero de lecciones en zig-zag */}
                 <div className="flex flex-col items-center gap-7">
                   {ls.map((l, idx) => {
+                    const color = COLOR_MATERIA[l.materia] ?? COLOR_MATERIA['Lectura Crítica']
                     const bloqueada = !l.desbloqueada
-                    const esActual = idx === indiceActual
+                    const esActual = l.desbloqueada && !l.completada
                     const offset = OFFSETS_X[idx % OFFSETS_X.length]
 
                     const nodo = (
@@ -152,7 +160,7 @@ export default async function MapaBritoPage() {
                         ) : l.completada ? (
                           <Check className="w-6 h-6 text-white" />
                         ) : (
-                          <span className="text-white font-bold text-base">{idx + 1}</span>
+                          <span className="text-white font-bold text-base">{l.ordenMateria}</span>
                         )}
                       </div>
                     )
@@ -160,7 +168,7 @@ export default async function MapaBritoPage() {
                     return (
                       <div
                         key={l.id}
-                        className="flex flex-col items-center gap-1.5 relative"
+                        className="flex flex-col items-center gap-1 relative"
                         style={{ transform: `translateX(${offset}px)` }}
                       >
                         {esActual && (
@@ -174,27 +182,61 @@ export default async function MapaBritoPage() {
                         ) : (
                           <Link href={`/brito/leccion/${l.id}`}>{nodo}</Link>
                         )}
+                        <span className={`text-[10px] font-bold uppercase tracking-wide ${color.texto}`}>{l.materia}</span>
                         <span className="text-[11px] text-white/70 font-medium text-center leading-tight max-w-24">{l.titulo}</span>
                       </div>
                     )
                   })}
                 </div>
               </div>
-            )
-          })}
-        </div>
+            ))}
 
-        {porMateria.length === 0 && (
-          <div className="flex flex-col items-center text-center mt-16 gap-4">
-            <div className="w-20 h-20 rounded-full overflow-hidden border border-white/20 opacity-80">
-              <Image src="/brito/brito-hero.jpg" alt="Brito" width={80} height={80} className="object-cover w-full h-full" />
-            </div>
-            <div>
-              <p className="text-white font-semibold text-sm">Brito está preparando tus lecciones</p>
-              <p className="text-white/60 text-xs mt-1 max-w-[240px]">Todavía no hay lecciones publicadas. Vuelve pronto para empezar a practicar.</p>
-            </div>
+            {porSeccion.length === 0 && (
+              <div className="flex flex-col items-center text-center mt-16 gap-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden border border-white/20 opacity-80">
+                  <Image src="/brito/brito-hero.jpg" alt="Brito" width={80} height={80} className="object-cover w-full h-full" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Brito está preparando tus lecciones</p>
+                  <p className="text-white/60 text-xs mt-1 max-w-[240px]">Todavía no hay lecciones publicadas. Vuelve pronto para empezar a practicar.</p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Panel lateral — solo desktop */}
+          <aside className="hidden lg:block w-80 shrink-0 sticky top-24 space-y-4">
+            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-white/80 font-medium"><Flame className="w-4 h-4 text-orange-400" /> Racha</span>
+                <span className="text-white font-bold">{perfil.rachaActual}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-white/80 font-medium"><Heart className="w-4 h-4 text-red-400" /> Vidas</span>
+                <span className="text-white font-bold">{perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-white/80 font-medium"><Gem className="w-4 h-4 text-sky-400" /> XP</span>
+                <span className="text-white font-bold">{perfil.xpTotal}</span>
+              </div>
+            </div>
+
+            <Link
+              href="/brito/ranking"
+              className="block bg-white/[0.04] border border-white/10 rounded-2xl p-4 hover:border-white/20 transition-colors"
+            >
+              <p className="text-white font-bold text-sm mb-2">¡Compite en las Ligas!</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
+                  <Trophy className="w-5 h-5 text-amber-300" />
+                </div>
+                <p className="text-white/60 text-xs leading-snug">
+                  {totalCompletadas > 0 ? 'Ve el ranking semanal y tu posición.' : 'Completa tu primera lección para entrar al ranking.'}
+                </p>
+              </div>
+            </Link>
+          </aside>
+        </div>
       </div>
     </main>
   )
