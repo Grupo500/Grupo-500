@@ -28,9 +28,10 @@ export function PerfilMenu({
       </button>
 
       {abierto && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setAbierto(false)} />
-          <div className="relative w-full max-w-sm my-8 max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl animate-slide-up" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
+          <div className="relative min-h-full flex items-center justify-center p-4">
+          <div className="relative w-full max-w-sm rounded-2xl shadow-2xl animate-slide-up" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <p className="text-sm font-bold text-white">Tu perfil</p>
               <button onClick={() => setAbierto(false)} className="text-white/50 hover:text-white transition-colors">
@@ -74,6 +75,7 @@ export function PerfilMenu({
                 <LogOut className="w-4 h-4" /> Cerrar sesión
               </button>
             </div>
+          </div>
           </div>
         </div>
       )}
