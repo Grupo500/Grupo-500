@@ -115,17 +115,17 @@ export default async function MapaBritoPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+      <div className="w-full px-4 md:px-8 py-8">
         {sinCorazones && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+          <div className="mb-6 max-w-md mx-auto lg:mx-0 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
             <p className="text-sm font-semibold text-red-200">Te quedaste sin corazones</p>
             <p className="text-xs text-red-200/70 mt-0.5">Se regeneran 1 cada 4 horas. Vuelve pronto o hazte Premium.</p>
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-10 lg:items-start">
-          {/* Sendero de secciones */}
-          <div className="flex-1 max-w-md mx-auto lg:mx-0 space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 lg:items-start">
+          {/* Sendero de secciones — centrado en el espacio disponible */}
+          <div className="max-w-md mx-auto space-y-10">
             {porSeccion.map(({ sesion, lecciones: ls }) => (
               <div key={sesion}>
                 {/* Banner de la sección */}
@@ -205,7 +205,7 @@ export default async function MapaBritoPage() {
           </div>
 
           {/* Panel lateral — solo desktop */}
-          <aside className="hidden lg:block w-80 shrink-0 sticky top-24 space-y-4">
+          <aside className="hidden lg:block sticky top-24 space-y-4">
             <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2 text-white/80 font-medium"><Flame className="w-4 h-4 text-orange-400" /> Racha</span>
