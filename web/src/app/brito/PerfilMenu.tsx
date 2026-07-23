@@ -6,7 +6,7 @@ import { signOut } from 'next-auth/react'
 import { X, LogOut, Mail, Sparkles, Flame } from 'lucide-react'
 
 export function PerfilMenu({
-  nombre, email, plan, xpTotal, rachaMejor, imagenUrl,
+  nombre, email, plan, xpTotal, rachaMejor, imagenUrl, trigger,
 }: {
   nombre: string
   email: string
@@ -14,6 +14,7 @@ export function PerfilMenu({
   xpTotal: number
   rachaMejor: number
   imagenUrl?: string | null
+  trigger?: (abrir: () => void) => React.ReactNode
 }) {
   const [abierto, setAbierto] = useState(false)
   const [montado, setMontado] = useState(false)
@@ -75,13 +76,17 @@ export function PerfilMenu({
 
   return (
     <>
-      <button
-        onClick={() => setAbierto(true)}
-        title="Tu perfil"
-        className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xs font-bold shrink-0 hover:brightness-110 transition-all"
-      >
-        {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
-      </button>
+      {trigger ? (
+        trigger(() => setAbierto(true))
+      ) : (
+        <button
+          onClick={() => setAbierto(true)}
+          title="Tu perfil"
+          className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xs font-bold shrink-0 hover:brightness-110 transition-all"
+        >
+          {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
+        </button>
+      )}
 
       {montado && modal && createPortal(modal, document.body)}
     </>

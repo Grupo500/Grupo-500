@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
-import { Flame, Heart, Trophy, Lock, Check, ArrowLeft, Gem } from 'lucide-react'
+import { Flame, Heart, Trophy, Lock, Check, ArrowLeft, Gem, Map as MapIcon, Gift, User } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
 
@@ -123,7 +123,45 @@ export default async function MapaBritoPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 lg:items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_320px] gap-10 lg:items-start">
+          {/* Nav lateral izquierda — solo desktop */}
+          <aside className="hidden lg:flex flex-col gap-1 sticky top-24">
+            <Link
+              href="/brito/mapa"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#ffb703]/15 text-[#ffb703] text-sm font-bold"
+            >
+              <MapIcon className="w-[18px] h-[18px]" /> Aprender
+            </Link>
+            <Link
+              href="/brito/ranking"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
+            >
+              <Trophy className="w-[18px] h-[18px]" /> Ligas
+            </Link>
+            <span
+              title="Próximamente"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/30 text-sm font-medium cursor-default"
+            >
+              <Gift className="w-[18px] h-[18px]" /> Recompensas
+            </span>
+            <PerfilMenu
+              nombre={estudiante?.nombre ?? 'Estudiante'}
+              email={estudiante?.email ?? ''}
+              plan={perfil.plan === 'PREMIUM' ? 'PREMIUM' : 'FREE'}
+              xpTotal={perfil.xpTotal}
+              rachaMejor={perfil.rachaMejor}
+              imagenUrl={(session?.user as any)?.image ?? null}
+              trigger={abrir => (
+                <button
+                  onClick={abrir}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
+                >
+                  <User className="w-[18px] h-[18px]" /> Perfil
+                </button>
+              )}
+            />
+          </aside>
+
           {/* Sendero de secciones — centrado en el espacio disponible */}
           <div className="max-w-md mx-auto space-y-10">
             {porSeccion.map(({ sesion, lecciones: ls }) => (
