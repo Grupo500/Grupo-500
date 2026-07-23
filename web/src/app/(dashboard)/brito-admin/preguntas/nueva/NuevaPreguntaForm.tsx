@@ -13,6 +13,7 @@ export function NuevaPreguntaForm({ materias, defaultOpen = false }: { materias:
   const router = useRouter()
   const [abierto, setAbierto] = useState(defaultOpen)
   const [area, setArea] = useState(materias[0])
+  const [sesion, setSesion] = useState('1')
   const [guardada, setGuardada] = useState(false)
   const [enunciado, setEnunciado] = useState('')
   const [contexto, setContexto] = useState('')
@@ -52,6 +53,7 @@ export function NuevaPreguntaForm({ materias, defaultOpen = false }: { materias:
     setGuardada(false)
     const res = await crearPregunta({
       area,
+      sesion: Number(sesion),
       enunciado,
       contexto,
       opcionA: opciones.A,
@@ -96,9 +98,22 @@ export function NuevaPreguntaForm({ materias, defaultOpen = false }: { materias:
 
       {abierto && (
       <div className="px-5 pb-5 space-y-4 border-t border-outline-variant pt-4">
-      <div>
-        <label className={etiqueta}>Materia</label>
-        <Select value={area} onValueChange={setArea} options={materias.map(m => ({ value: m, label: m }))} />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={etiqueta}>Materia</label>
+          <Select value={area} onValueChange={setArea} options={materias.map(m => ({ value: m, label: m }))} />
+        </div>
+        <div>
+          <label className={etiqueta}>Sesión</label>
+          <Select
+            value={sesion}
+            onValueChange={setSesion}
+            options={[
+              { value: '1', label: 'Sesión 1' },
+              { value: '2', label: 'Sesión 2' },
+            ]}
+          />
+        </div>
       </div>
 
       <div>

@@ -59,6 +59,7 @@ export async function quitarPreguntaDeLeccion(leccionId: string, preguntaId: str
 
 export async function crearPregunta(data: {
   area: string
+  sesion: number
   enunciado: string
   contexto?: string
   opcionA: string
@@ -83,7 +84,7 @@ export async function crearPregunta(data: {
   const pregunta = await prisma.preguntaExamen.create({
     data: {
       examenId: BRITO_BANCO_EXAMEN_ID,
-      sesion: 0,
+      sesion: data.sesion,
       area: data.area,
       enunciado,
       contexto: data.contexto?.trim() || null,

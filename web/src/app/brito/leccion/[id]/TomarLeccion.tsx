@@ -100,7 +100,7 @@ export function TomarLeccion({
         </span>
       </div>
 
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 md:px-0 py-8 flex flex-col">
+      <div className="flex-1 max-w-3xl w-full mx-auto px-4 md:px-0 py-8 flex flex-col">
         <p className="text-xs text-white/50 font-medium mb-3">{leccionTitulo} · {indice + 1}/{preguntas.length}</p>
 
         {pregunta.contexto && (
@@ -114,7 +114,7 @@ export function TomarLeccion({
           </div>
         )}
 
-        <h2 className="text-white font-semibold text-xl leading-snug mb-6">{pregunta.enunciado}</h2>
+        <h2 className="text-white font-medium text-lg leading-relaxed mb-6">{pregunta.enunciado}</h2>
 
         <div className="space-y-2.5 flex-1">
           {pregunta.opciones.map(op => {
@@ -149,7 +149,7 @@ export function TomarLeccion({
       {/* Barra inferior de feedback */}
       {feedback && (
         <div className={`px-4 py-4 border-t ${feedback.correcta ? 'bg-emerald-950/60 border-emerald-500/30' : 'bg-red-950/60 border-red-500/30'}`}>
-          <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <div className="max-w-3xl mx-auto flex items-center gap-3">
             <div className="w-11 h-11 rounded-full overflow-hidden border border-white/20 shrink-0">
               <Image src="/brito/brito-hero.jpg" alt="Brito" width={44} height={44} className="object-cover w-full h-full" />
             </div>
