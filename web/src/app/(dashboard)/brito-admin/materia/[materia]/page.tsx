@@ -53,10 +53,7 @@ export default async function MateriaAdminPage({ params }: { params: Promise<{ m
       </div>
 
       {/* ── Constructor de preguntas ── */}
-      <div>
-        <h2 className="text-sm font-semibold text-on-surface mb-3">Nueva pregunta para {materia}</h2>
-        <NuevaPreguntaForm materias={[materia]} />
-      </div>
+      <NuevaPreguntaForm materias={[materia]} />
 
       {/* ── Lecciones de esta materia ── */}
       <div>

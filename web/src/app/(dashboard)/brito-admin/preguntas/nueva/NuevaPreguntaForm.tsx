@@ -3,14 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getClientToken } from '@/lib/api'
-import { Loader2, Save, ImagePlus, X, Check } from 'lucide-react'
+import { Loader2, Save, ImagePlus, X, Check, ChevronDown, Plus } from 'lucide-react'
 import { Select } from '@/components/ui/Select'
 import { crearPregunta } from '../../acciones'
 
 const LETRAS = ['A', 'B', 'C', 'D'] as const
 
-export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
+export function NuevaPreguntaForm({ materias, defaultOpen = false }: { materias: string[]; defaultOpen?: boolean }) {
   const router = useRouter()
+  const [abierto, setAbierto] = useState(defaultOpen)
   const [area, setArea] = useState(materias[0])
   const [guardada, setGuardada] = useState(false)
   const [enunciado, setEnunciado] = useState('')
@@ -82,7 +83,19 @@ export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
   const etiqueta = 'text-xs font-medium text-on-surface-variant block mb-1.5'
 
   return (
-    <div className="card p-5 space-y-4">
+    <div className="card overflow-hidden">
+      <button
+        onClick={() => setAbierto(o => !o)}
+        className="w-full flex items-center justify-between gap-2 px-5 py-4 text-left hover:bg-surface-high/50 transition-colors"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold text-on-surface">
+          <Plus className="w-4 h-4 text-primary" /> Nueva pregunta
+        </span>
+        <ChevronDown className={`w-4 h-4 text-on-surface-variant transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`} />
+      </button>
+
+      {abierto && (
+      <div className="px-5 pb-5 space-y-4 border-t border-outline-variant pt-4">
       <div>
         <label className={etiqueta}>Materia</label>
         <Select value={area} onValueChange={setArea} options={materias.map(m => ({ value: m, label: m }))} />
@@ -174,6 +187,8 @@ export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
           </span>
         )}
       </div>
+      </div>
+      )}
     </div>
   )
 }

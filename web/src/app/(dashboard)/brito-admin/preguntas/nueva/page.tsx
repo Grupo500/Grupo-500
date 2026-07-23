@@ -20,7 +20,7 @@ export default async function NuevaPreguntaPage() {
 
       <PageHeader title="Nueva pregunta" subtitle="Se agrega al banco de preguntas y queda disponible para armar lecciones." />
 
-      <NuevaPreguntaForm materias={MATERIAS} />
+      <NuevaPreguntaForm materias={MATERIAS} defaultOpen />
     </div>
   )
 }
