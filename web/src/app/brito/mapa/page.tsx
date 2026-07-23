@@ -122,7 +122,7 @@ export default async function MapaBritoPage() {
                 {/* Banner de la sección */}
                 <div className={`bg-gradient-to-r ${color.banner} rounded-2xl px-5 py-4 mb-8 shadow-lg ${color.glow}`}>
                   <p className="text-white/80 text-[11px] font-bold uppercase tracking-wider">
-                    Lección {Math.min(completadasCount + 1, ls.length)} de {ls.length}
+                    Sección {ls[Math.min(indiceActual === -1 ? completadasCount : indiceActual, ls.length - 1)].sesion} · Lección {Math.min(completadasCount + 1, ls.length)} de {ls.length}
                   </p>
                   <h2 className="text-white font-extrabold text-lg leading-tight">{materia}</h2>
                 </div>

@@ -13,6 +13,7 @@ export function NuevaLeccionForm({ materias }: { materias: string[] }) {
   const [materia, setMateria] = useState(materias[0])
   const [titulo, setTitulo] = useState('')
   const [orden, setOrden] = useState(1)
+  const [sesion, setSesion] = useState('1')
 
   if (!open) {
     return (
@@ -34,7 +35,7 @@ export function NuevaLeccionForm({ materias }: { materias: string[] }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <Select
           value={materia}
           onValueChange={setMateria}
@@ -54,12 +55,21 @@ export function NuevaLeccionForm({ materias }: { materias: string[] }) {
           placeholder="Orden"
           className="col-span-1 px-3 py-2 rounded-lg bg-surface-high border border-outline-variant text-sm text-on-surface"
         />
+        <Select
+          value={sesion}
+          onValueChange={setSesion}
+          options={[
+            { value: '1', label: 'Sesión 1' },
+            { value: '2', label: 'Sesión 2' },
+          ]}
+          className="col-span-1"
+        />
       </div>
 
       <button
         disabled={!titulo.trim() || pending}
         onClick={() => startTransition(async () => {
-          const res = await crearLeccion({ materia, titulo: titulo.trim(), orden })
+          const res = await crearLeccion({ materia, titulo: titulo.trim(), orden, sesion: Number(sesion) })
           if (res.ok) {
             setTitulo('')
             setOpen(false)

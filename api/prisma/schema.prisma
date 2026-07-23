@@ -493,6 +493,7 @@ model BritoLeccion {
   materia   String
   titulo    String
   orden     Int
+  sesion    Int                    @default(1)
   createdAt DateTime               @default(now())
   preguntas BritoLeccionPregunta[]
   completadas BritoLeccionCompletada[]

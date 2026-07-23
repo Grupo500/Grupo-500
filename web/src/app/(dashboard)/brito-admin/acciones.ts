@@ -10,7 +10,7 @@ async function requireAdmin() {
   if ((session?.user as any)?.role !== 'ADMIN') throw new Error('No autorizado')
 }
 
-export async function crearLeccion(data: { materia: string; titulo: string; orden: number }) {
+export async function crearLeccion(data: { materia: string; titulo: string; orden: number; sesion: number }) {
   await requireAdmin()
   const leccion = await prisma.britoLeccion.create({ data })
   revalidatePath('/brito-admin')
