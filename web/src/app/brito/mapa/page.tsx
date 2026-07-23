@@ -139,6 +139,17 @@ export default async function MapaBritoPage() {
                   )
                 })}
               </div>
+
+              {materia === 'Inglés' && (
+                <video
+                  src="/brito/brito-saludando.webm"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-28 h-28 mx-auto mt-2 -mb-2 pointer-events-none"
+                />
+              )}
             </div>
           ))}
         </div>
