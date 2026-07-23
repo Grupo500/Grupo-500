@@ -32,6 +32,7 @@ export type AsesorInfo = {
   id: string
   nombre: string
   email: string
+  emailCrm?: string | null  // correo alterno para cruzar leads (Trengo/HubSpot), si difiere del de perfil
   image: string | null
 }
 
@@ -124,7 +125,9 @@ export function construirRanking(args: {
     const comision = pagos.reduce((s, p) => s + (p.comisionAsesor ?? 0), 0)
     const ventasHoy = pagos.filter(p => p.fechaPago && diaColombia(p.fechaPago) === hoy).length
 
-    const k = emailKey(a.email)
+    // Si el asesor tiene un correo alterno de CRM (login distinto en Trengo/HubSpot),
+    // se usa ese para el cruce de leads en vez del correo de perfil.
+    const k = emailKey(a.emailCrm || a.email)
     const leads    = leadsPorEmail[k] ?? 0
     const leadsHoy = leadsHoyPorEmail[k] ?? 0
     // Tasa de cierre = ventas / leads del MISMO período.

@@ -105,6 +105,11 @@ model Asesor {
   userId        String        @unique
   nombre        String
   email         String
+  // Correo alterno de solo lectura para cruzar leads de Trengo/HubSpot cuando
+  // el asesor inició sesión ahí con un correo distinto al de su perfil (ej.
+  // Sara Duarte: perfil saraduarte5500@gmail.com, Trengo funnyplayer407@gmail.com).
+  // Campo interno — no se expone en ningún formulario, se asigna a mano por caso.
+  emailCrm      String?
   telefono      String
   // Códigos de rastreo Hotmart (src/sck de sus links) + email de afiliado
   codigosHotmart String[]     @default([])

@@ -208,7 +208,7 @@ export async function rankingAsesores(req: Request, res: Response) {
 
   // Traer asesores + pagos + leads de Trengo y HubSpot en queries paralelas
   const [asesores, pagosActual, pagosAnterior, leadsAll, leadsHoy, leadsHubspotAll, leadsHubspotHoy] = await Promise.all([
-    prisma.asesor.findMany({ select: { id: true, nombre: true, email: true, user: { select: { image: true } } } }),
+    prisma.asesor.findMany({ select: { id: true, nombre: true, email: true, emailCrm: true, user: { select: { image: true } } } }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
       select: { asesorId: true, monto: true, estudianteId: true, comisionAsesor: true, fechaPago: true },
