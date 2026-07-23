@@ -95,29 +95,28 @@ export default function AjustesPage() {
   if (!session?.user) return null
 
   const fotoActual = fotoOverride ?? cuenta?.image ?? session.user.image ?? null
+  const etiqueta = 'text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide block mb-1.5'
+  const campo = 'w-full px-3 py-2 rounded-lg border border-outline-variant bg-transparent text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-colors'
+  const boton = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed'
+  const botonSecundario = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-on-surface border border-outline-variant hover:bg-surface-high transition-colors cursor-pointer disabled:opacity-50'
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="max-w-[640px] animate-fade-in">
       <PageHeader title="Ajustes" subtitle="Tu perfil y configuración general del sistema" />
 
       {/* ── Foto de perfil ── */}
-      <div className="card overflow-hidden">
-        <div className="p-5 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
+      <section className="py-6 border-b border-outline-variant">
+        <p className="text-sm font-semibold text-on-surface mb-3">Foto de perfil</p>
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full overflow-hidden bg-primary/10 border border-outline-variant flex-shrink-0">
             {fotoActual
               ? <img src={fotoActual} alt="Foto de perfil" className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-lg font-bold text-primary">{(nombre || '?')[0]?.toUpperCase()}</span>
+                  <span className="text-base font-bold text-primary">{(nombre || '?')[0]?.toUpperCase()}</span>
                 </div>
             }
           </div>
-          <div>
-            <p className="text-base font-semibold text-on-surface">Foto de perfil</p>
-            <p className="text-xs text-on-surface-variant mt-1">Se muestra en tu menú de usuario y en el listado de asesores.</p>
-          </div>
-        </div>
-        <div className="px-5 py-3.5 bg-surface-high border-t border-outline-variant flex justify-end">
-          <label className="btn-primary cursor-pointer">
+          <label className={botonSecundario}>
             {subiendoFoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
             Cambiar foto
             <input
@@ -133,76 +132,66 @@ export default function AjustesPage() {
             />
           </label>
         </div>
-      </div>
+      </section>
 
       {/* ── Datos personales ── */}
-      <div className="card overflow-hidden">
-        <div className="p-5 space-y-4">
+      <section className="py-6 border-b border-outline-variant">
+        <p className="text-sm font-semibold text-on-surface mb-4">Datos personales</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <p className="text-base font-semibold text-on-surface">Datos personales</p>
-            <p className="text-xs text-on-surface-variant mt-1">Tu nombre y teléfono, visibles en tu perfil de asesor.</p>
+            <label className={etiqueta}>Nombre</label>
+            <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className={campo} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-            <div>
-              <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Nombre</label>
-              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="input-base" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
-              <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} className="input-base" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
-                <Mail className="w-3 h-3" /> Correo
-              </label>
-              <input type="email" value={cuenta?.email ?? ''} disabled className="input-base opacity-60 cursor-not-allowed" />
-              <p className="text-[11px] text-on-surface-variant mt-1">Contacta a un administrador para cambiar tu correo.</p>
-            </div>
+          <div>
+            <label className={etiqueta}>Teléfono</label>
+            <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} className={campo} />
           </div>
         </div>
-        <div className="px-5 py-3.5 bg-surface-high border-t border-outline-variant flex justify-end">
+        <div className="mb-4">
+          <label className={etiqueta}>Correo</label>
+          <input type="email" value={cuenta?.email ?? ''} disabled className={`${campo} opacity-60 cursor-not-allowed`} />
+          <p className="text-[11px] text-on-surface-variant mt-1.5 flex items-center gap-1">
+            <Mail className="w-3 h-3" /> Contacta a un administrador para cambiar tu correo.
+          </p>
+        </div>
+        <div className="flex justify-end">
           <button
             onClick={() => guardar.mutate()}
             disabled={!nombre.trim() || !telefono.trim() || guardar.isPending}
-            className="btn-primary"
+            className={boton}
           >
             {guardar.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Guardar
           </button>
         </div>
-      </div>
+      </section>
 
       {/* ── Contraseña ── */}
-      <div className="card overflow-hidden">
-        <div className="p-5 space-y-4">
-          <div>
-            <p className="text-base font-semibold text-on-surface">Contraseña</p>
-            <p className="text-xs text-on-surface-variant mt-1">Actualiza la contraseña de tu cuenta.</p>
-          </div>
-          <div className="max-w-sm">
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Nueva contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => { setPassword(e.target.value); setPasswordMsg('') }}
-              placeholder="Mínimo 8 caracteres"
-              autoComplete="new-password"
-              className="input-base"
-            />
-            {passwordMsg && <p className="text-[11px] mt-1 text-on-surface-variant">{passwordMsg}</p>}
-          </div>
+      <section className="py-6">
+        <p className="text-sm font-semibold text-on-surface mb-4">Contraseña</p>
+        <div className="mb-4">
+          <label className={etiqueta}>Nueva contraseña</label>
+          <input
+            type="password"
+            value={password}
+            onChange={e => { setPassword(e.target.value); setPasswordMsg('') }}
+            placeholder="Mínimo 8 caracteres"
+            autoComplete="new-password"
+            className={campo}
+          />
+          {passwordMsg && <p className="text-[11px] mt-1.5 text-on-surface-variant">{passwordMsg}</p>}
         </div>
-        <div className="px-5 py-3.5 bg-surface-high border-t border-outline-variant flex justify-end">
+        <div className="flex justify-end">
           <button
             onClick={() => cambiarPassword.mutate()}
             disabled={password.length < 8 || cambiarPassword.isPending}
-            className="btn-primary"
+            className={botonSecundario}
           >
             {cambiarPassword.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
             Cambiar contraseña
           </button>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
