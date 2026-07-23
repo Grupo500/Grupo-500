@@ -11,7 +11,6 @@ export const metadata = {
 export default async function BritoLandingPage() {
   const session = await auth()
   const role = (session?.user as any)?.role as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE' | undefined
-  const yaLogueado = role === 'ESTUDIANTE' || role === 'ADMIN'
 
   return (
     <main
@@ -47,12 +46,19 @@ export default async function BritoLandingPage() {
             <span className="flex items-center gap-1.5 text-xs font-semibold"><Trophy className="w-4 h-4 text-amber-500" /> Ranking</span>
           </div>
 
-          {yaLogueado ? (
+          {role === 'ESTUDIANTE' ? (
             <Link
               href="/brito/mapa"
               className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
             >
               Ir a mis lecciones
+            </Link>
+          ) : role === 'ADMIN' ? (
+            <Link
+              href="/brito-admin"
+              className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
+            >
+              Ir al panel de administración
             </Link>
           ) : (
             <div className="flex flex-col gap-2">

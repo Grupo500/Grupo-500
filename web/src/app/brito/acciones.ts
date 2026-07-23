@@ -9,10 +9,32 @@ const HORAS_POR_CORAZON = 4
 const XP_POR_CORRECTA = 10
 const XP_BONO_PERFECTO = 20
 
-async function estudianteActual(): Promise<string | null> {
+// Devuelve el EstudianteExamen.id a usar para el juego. Estudiantes reales
+// usan su propio id de sesión. Un ADMIN puede entrar a revisar el juego —
+// se le crea (una sola vez) una cuenta de estudiante "espejo" ligada a su
+// correo de staff, para que tenga su propio perfil/racha/XP de prueba.
+export async function obtenerEstudianteIdActual(): Promise<string | null> {
   const session = await auth()
-  if ((session?.user as any)?.role !== 'ESTUDIANTE') return null
-  return session!.user.id
+  const role = (session?.user as any)?.role
+  if (role === 'ESTUDIANTE') return session!.user.id
+
+  if (role === 'ADMIN' && session?.user?.email) {
+    let estudiante = await prisma.estudianteExamen.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+    })
+    if (!estudiante) {
+      estudiante = await prisma.estudianteExamen.create({
+        data: {
+          email: session.user.email,
+          nombre: `${session.user.name ?? 'Admin'} (preview)`,
+          documentoHash: hashDocumento(`brito-admin-preview:${session.user.id}`),
+        },
+      })
+    }
+    return estudiante.id
+  }
+
+  return null
 }
 
 // ── Registro público ─────────────────────────────────────────────────────
@@ -49,7 +71,7 @@ async function calcularCorazones(perfil: { corazones: number; corazonesAt: Date;
 }
 
 export async function obtenerPerfilActual() {
-  const estudianteId = await estudianteActual()
+  const estudianteId = await obtenerEstudianteIdActual()
   if (!estudianteId) return null
 
   let perfil = await prisma.britoPerfil.findUnique({ where: { estudianteId } })
@@ -64,7 +86,7 @@ export async function obtenerPerfilActual() {
 
 // ── Responder una pregunta (valida server-side, resta corazón si falla) ──
 export async function responderPregunta(preguntaId: string, opcionElegida: string) {
-  const estudianteId = await estudianteActual()
+  const estudianteId = await obtenerEstudianteIdActual()
   if (!estudianteId) return { error: 'No autorizado' }
 
   const perfil = await obtenerPerfilActual()
@@ -96,7 +118,7 @@ export async function responderPregunta(preguntaId: string, opcionElegida: strin
 
 // ── Finalizar lección: XP, racha, registro de completada ────────────────
 export async function finalizarLeccion(leccionId: string, correctas: number, total: number) {
-  const estudianteId = await estudianteActual()
+  const estudianteId = await obtenerEstudianteIdActual()
   if (!estudianteId) return { error: 'No autorizado' }
 
   const perfil = await prisma.britoPerfil.findUnique({ where: { estudianteId } })

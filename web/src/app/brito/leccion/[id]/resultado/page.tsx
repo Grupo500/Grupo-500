@@ -10,7 +10,7 @@ export default async function ResultadoLeccionPage({
   searchParams: Promise<{ correctas?: string; total?: string; xp?: string; racha?: string }>
 }) {
   const session = await auth()
-  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/brito')
+  if (!['ESTUDIANTE', 'ADMIN'].includes((session?.user as any)?.role)) redirect('/brito')
 
   const sp = await searchParams
   const correctas = Number(sp.correctas ?? 0)

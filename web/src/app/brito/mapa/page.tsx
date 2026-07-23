@@ -8,14 +8,15 @@ import { Flame, Heart, Trophy, Lock, Check } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
+const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
 
 export default async function MapaBritoPage() {
   const session = await auth()
-  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/brito')
+  if (!ROLES_PERMITIDOS.includes((session?.user as any)?.role)) redirect('/brito')
 
-  const estudianteId = session!.user.id
   const perfil = await obtenerPerfilActual()
   if (!perfil) redirect('/brito')
+  const estudianteId = perfil.estudianteId
 
   const [lecciones, completadas] = await Promise.all([
     prisma.britoLeccion.findMany({

@@ -2,16 +2,15 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Trophy, Medal } from 'lucide-react'
-import { obtenerRanking } from '../acciones'
+import { obtenerRanking, obtenerEstudianteIdActual } from '../acciones'
 
 const MEDALLA = ['text-amber-400', 'text-slate-300', 'text-amber-700']
 
 export default async function RankingBritoPage() {
   const session = await auth()
-  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/brito')
+  if (!['ESTUDIANTE', 'ADMIN'].includes((session?.user as any)?.role)) redirect('/brito')
 
-  const ranking = await obtenerRanking()
-  const miId = session!.user.id
+  const [ranking, miId] = await Promise.all([obtenerRanking(), obtenerEstudianteIdActual()])
 
   return (
     <main className="min-h-dvh" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>

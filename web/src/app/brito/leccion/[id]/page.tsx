@@ -7,7 +7,7 @@ import { TomarLeccion } from './TomarLeccion'
 export default async function LeccionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const session = await auth()
-  if ((session?.user as any)?.role !== 'ESTUDIANTE') redirect('/brito')
+  if (!['ESTUDIANTE', 'ADMIN'].includes((session?.user as any)?.role)) redirect('/brito')
 
   const perfil = await obtenerPerfilActual()
   if (!perfil) redirect('/brito')
