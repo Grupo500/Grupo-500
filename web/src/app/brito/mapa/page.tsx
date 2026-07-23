@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
-import { Flame, Heart, Trophy, Lock, Check } from 'lucide-react'
+import { Flame, Heart, Trophy, Lock, Check, ArrowLeft } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
@@ -50,7 +50,10 @@ export default async function MapaBritoPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-md bg-[#003060]/80 border-b border-white/10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <Link href="/inicio" title="Volver al inicio" className="text-white/60 hover:text-white transition-colors shrink-0">
+              <ArrowLeft className="w-4.5 h-4.5" />
+            </Link>
             <div className="w-9 h-9 rounded-full overflow-hidden border border-white/20 shrink-0">
               <Image src="/brito/brito-hero.jpg" alt="Brito" width={36} height={36} className="object-cover w-full h-full" />
             </div>
@@ -124,7 +127,15 @@ export default async function MapaBritoPage() {
         </div>
 
         {porMateria.length === 0 && (
-          <p className="text-center text-white/60 text-sm mt-10">Todavía no hay lecciones publicadas. Vuelve pronto.</p>
+          <div className="flex flex-col items-center text-center mt-16 gap-4">
+            <div className="w-20 h-20 rounded-full overflow-hidden border border-white/20 opacity-80">
+              <Image src="/brito/brito-hero.jpg" alt="Brito" width={80} height={80} className="object-cover w-full h-full" />
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm">Brito está preparando tus lecciones</p>
+              <p className="text-white/60 text-xs mt-1 max-w-[240px]">Todavía no hay lecciones publicadas. Vuelve pronto para empezar a practicar.</p>
+            </div>
+          </div>
         )}
       </div>
     </main>
