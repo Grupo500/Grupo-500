@@ -99,7 +99,7 @@ export default async function InicioPage() {
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #ffb703, #fb8500)' }}>
                   <Gamepad2 className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-base font-bold text-[#001d3d]">Juega con Brito</span>
+                <span className="text-base font-bold text-[#001d3d]">Brito</span>
                 <ArrowRight className="w-4 h-4 text-[#5a74a8] ml-auto opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0" />
               </div>
               <p className="text-[13px] text-[#2a4172] leading-relaxed">

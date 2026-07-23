@@ -22,7 +22,7 @@ export default function BritoLandingPage() {
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-6 text-center">
         <div className="w-40 h-40 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shadow-2xl">
-          <Image src="/brito/brito-normal.jpg" alt="Brito" width={160} height={160} className="object-cover w-full h-full" priority />
+          <Image src="/brito/brito-hero.jpg" alt="Brito" width={160} height={160} className="object-cover w-full h-full" priority />
         </div>
 
         <div>
