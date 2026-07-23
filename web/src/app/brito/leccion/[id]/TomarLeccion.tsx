@@ -40,8 +40,12 @@ export function TomarLeccion({
   function elegir(letra: string) {
     if (feedback || pending) return
     setSeleccion(letra)
+  }
+
+  function confirmar() {
+    if (!seleccion || feedback || pending) return
     startTransition(async () => {
-      const res = await responderPregunta(pregunta.id, letra)
+      const res = await responderPregunta(pregunta.id, seleccion)
       if ('error' in res) {
         if (res.error === 'sin_corazones') setSinCorazones(true)
         return
@@ -126,6 +130,7 @@ export function TomarLeccion({
             if (esCorrectaMostrada) estilo = 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
             else if (esIncorrectaSeleccionada) estilo = 'border-red-400 bg-red-500/20 text-red-100'
             else if (feedback && esSeleccionada) estilo = 'border-white/30 bg-white/10 text-white'
+            else if (!feedback && esSeleccionada) estilo = 'border-[#fb8500] bg-[#fb8500]/15 text-white'
 
             return (
               <button
@@ -145,6 +150,22 @@ export function TomarLeccion({
           })}
         </div>
       </div>
+
+      {/* Barra inferior de confirmar selección */}
+      {!feedback && seleccion && (
+        <div className="px-4 py-4 border-t border-white/10 bg-white/5">
+          <div className="max-w-3xl mx-auto flex justify-end">
+            <button
+              onClick={confirmar}
+              disabled={pending}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ffb703] to-[#fb8500] text-white font-semibold text-sm flex items-center gap-2 disabled:opacity-60"
+            >
+              {pending && <Loader2 className="w-4 h-4 animate-spin" />}
+              Confirmar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Barra inferior de feedback */}
       {feedback && (

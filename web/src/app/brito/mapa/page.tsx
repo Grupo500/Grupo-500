@@ -11,6 +11,17 @@ import { PerfilMenu } from '../PerfilMenu'
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
 
+const COLOR_MATERIA: Record<string, { banner: string; glow: string }> = {
+  'Lectura Crítica': { banner: 'from-violet-500 to-violet-700', glow: 'shadow-violet-500/30' },
+  'Matemáticas': { banner: 'from-blue-500 to-blue-700', glow: 'shadow-blue-500/30' },
+  'Sociales y Ciudadanas': { banner: 'from-amber-500 to-amber-700', glow: 'shadow-amber-500/30' },
+  'Ciencias Naturales': { banner: 'from-emerald-500 to-emerald-700', glow: 'shadow-emerald-500/30' },
+  'Inglés': { banner: 'from-rose-500 to-rose-700', glow: 'shadow-rose-500/30' },
+}
+
+// Desplazamiento horizontal en zig-zag, estilo sendero de Duolingo.
+const OFFSETS_X = [0, 56, 88, 56, 0, -56, -88, -56]
+
 export default async function MapaBritoPage() {
   const session = await auth()
   if (!ROLES_PERMITIDOS.includes((session?.user as any)?.role)) redirect('/brito')
@@ -100,47 +111,77 @@ export default async function MapaBritoPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {porMateria.map(({ materia, lecciones: ls }) => (
-            <div key={materia} className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
-              <h2 className="text-xs font-bold text-white/60 uppercase tracking-wider mb-4">{materia}</h2>
-              <div className="flex flex-wrap gap-4">
-                {ls.map((l, idx) => {
-                  const bloqueada = !l.desbloqueada
-                  const contenido = (
-                    <div
-                      className={[
-                        'w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform',
-                        bloqueada
-                          ? 'bg-white/10 border border-white/10'
-                          : l.completada
-                          ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 hover:scale-105 active:scale-95'
-                          : 'bg-gradient-to-br from-[#ffb703] to-[#fb8500] hover:scale-105 active:scale-95',
-                      ].join(' ')}
-                    >
-                      {bloqueada ? (
-                        <Lock className="w-5 h-5 text-white/40" />
-                      ) : l.completada ? (
-                        <Check className="w-6 h-6 text-white" />
-                      ) : (
-                        <span className="text-white font-bold text-sm">{idx + 1}</span>
-                      )}
-                    </div>
-                  )
-                  return (
-                    <div key={l.id} className="flex flex-col items-center gap-1.5 w-20">
-                      {bloqueada ? (
-                        <div className="opacity-60">{contenido}</div>
-                      ) : (
-                        <Link href={`/brito/leccion/${l.id}`}>{contenido}</Link>
-                      )}
-                      <span className="text-[11px] text-white/70 font-medium text-center leading-tight">{l.titulo}</span>
-                    </div>
-                  )
-                })}
+        <div className="max-w-md mx-auto space-y-10">
+          {porMateria.map(({ materia, lecciones: ls }) => {
+            const color = COLOR_MATERIA[materia] ?? COLOR_MATERIA['Lectura Crítica']
+            const completadasCount = ls.filter(l => l.completada).length
+            const indiceActual = ls.findIndex(l => l.desbloqueada && !l.completada)
+
+            return (
+              <div key={materia}>
+                {/* Banner de la sección */}
+                <div className={`bg-gradient-to-r ${color.banner} rounded-2xl px-5 py-4 mb-8 shadow-lg ${color.glow}`}>
+                  <p className="text-white/80 text-[11px] font-bold uppercase tracking-wider">
+                    Lección {Math.min(completadasCount + 1, ls.length)} de {ls.length}
+                  </p>
+                  <h2 className="text-white font-extrabold text-lg leading-tight">{materia}</h2>
+                </div>
+
+                {/* Sendero de lecciones en zig-zag */}
+                <div className="flex flex-col items-center gap-7">
+                  {ls.map((l, idx) => {
+                    const bloqueada = !l.desbloqueada
+                    const esActual = idx === indiceActual
+                    const offset = OFFSETS_X[idx % OFFSETS_X.length]
+
+                    const nodo = (
+                      <div
+                        className={[
+                          'rounded-full flex items-center justify-center shadow-lg transition-transform relative',
+                          esActual ? 'w-20 h-20' : 'w-16 h-16',
+                          bloqueada
+                            ? 'bg-white/10 border border-white/10'
+                            : l.completada
+                            ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 hover:scale-105 active:scale-95'
+                            : 'bg-gradient-to-br from-[#ffb703] to-[#fb8500] hover:scale-105 active:scale-95',
+                          esActual ? 'ring-4 ring-white/15' : '',
+                        ].join(' ')}
+                      >
+                        {bloqueada ? (
+                          <Lock className="w-5 h-5 text-white/40" />
+                        ) : l.completada ? (
+                          <Check className="w-6 h-6 text-white" />
+                        ) : (
+                          <span className="text-white font-bold text-base">{idx + 1}</span>
+                        )}
+                      </div>
+                    )
+
+                    return (
+                      <div
+                        key={l.id}
+                        className="flex flex-col items-center gap-1.5 relative"
+                        style={{ transform: `translateX(${offset}px)` }}
+                      >
+                        {esActual && (
+                          <span className="absolute -top-11 px-3 py-1.5 rounded-xl bg-white text-[#001d3d] text-xs font-extrabold shadow-md whitespace-nowrap animate-bounce">
+                            EMPEZAR
+                            <span className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-3 h-3 bg-white rotate-45" />
+                          </span>
+                        )}
+                        {bloqueada ? (
+                          <div className="opacity-60">{nodo}</div>
+                        ) : (
+                          <Link href={`/brito/leccion/${l.id}`}>{nodo}</Link>
+                        )}
+                        <span className="text-[11px] text-white/70 font-medium text-center leading-tight max-w-24">{l.titulo}</span>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {porMateria.length === 0 && (
