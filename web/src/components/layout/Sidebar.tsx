@@ -263,7 +263,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
             {!collapsed && <span className="text-[12px] font-medium">Contraer</span>}
           </button>
 
-          {isAjustesMode ? (<>
+          {isAjustesMode ? (
+            <div key="ajustes-nav" className="space-y-2 animate-nav-in-right">
             {/* ── Modo sub-navegación: Ajustes ── */}
             <Link
               href="/dashboard"
@@ -297,7 +298,10 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                 </Link>
               )
             })}
-          </>) : visibleItems.map((item, i) => {
+            </div>
+          ) : (
+            <div key="main-nav" className="space-y-2 animate-nav-in-left">
+            {visibleItems.map((item, i) => {
             if (item.type === 'section') {
               return collapsed
                 ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
@@ -365,7 +369,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                 )}
               </Link>
             )
-          })}
+            })}
+            </div>
+          )}
         </div>
       </nav>
 
