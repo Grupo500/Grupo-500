@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Loader2, X } from 'lucide-react'
+import { Select } from '@/components/ui/Select'
 import { crearLeccion } from './acciones'
 
 export function NuevaLeccionForm({ materias }: { materias: string[] }) {
@@ -34,13 +35,12 @@ export function NuevaLeccionForm({ materias }: { materias: string[] }) {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <select
+        <Select
           value={materia}
-          onChange={e => setMateria(e.target.value)}
-          className="col-span-1 px-3 py-2 rounded-lg bg-surface-high border border-outline-variant text-sm text-on-surface"
-        >
-          {materias.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
+          onValueChange={setMateria}
+          options={materias.map(m => ({ value: m, label: m }))}
+          className="col-span-1"
+        />
         <input
           value={titulo}
           onChange={e => setTitulo(e.target.value)}

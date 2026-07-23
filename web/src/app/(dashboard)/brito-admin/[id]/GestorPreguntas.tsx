@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Plus, Minus, Loader2 } from 'lucide-react'
+import { Select } from '@/components/ui/Select'
 import { buscarPreguntas, agregarPreguntaALeccion, quitarPreguntaDeLeccion } from '../acciones'
 
 interface Pregunta { id: string; area: string | null; numero: number | null; enunciado: string }
@@ -76,13 +77,12 @@ export function GestorPreguntas({
       <div className="space-y-2">
         <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Banco de preguntas</h2>
         <div className="flex gap-2">
-          <select
+          <Select
             value={area}
-            onChange={e => setArea(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-surface-high border border-outline-variant text-sm text-on-surface"
-          >
-            {materias.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
+            onValueChange={setArea}
+            options={materias.map(m => ({ value: m, label: m }))}
+            className="w-44 shrink-0"
+          />
           <input
             value={texto}
             onChange={e => setTexto(e.target.value)}

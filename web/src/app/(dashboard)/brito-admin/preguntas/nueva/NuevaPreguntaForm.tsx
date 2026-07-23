@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getClientToken } from '@/lib/api'
 import { Loader2, Save, ImagePlus, X, Check } from 'lucide-react'
+import { Select } from '@/components/ui/Select'
 import { crearPregunta } from '../../acciones'
 
 const LETRAS = ['A', 'B', 'C', 'D'] as const
@@ -84,9 +85,7 @@ export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
     <div className="card p-5 space-y-4">
       <div>
         <label className={etiqueta}>Materia</label>
-        <select value={area} onChange={e => setArea(e.target.value)} className={campo}>
-          {materias.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
+        <Select value={area} onValueChange={setArea} options={materias.map(m => ({ value: m, label: m }))} />
       </div>
 
       <div>
