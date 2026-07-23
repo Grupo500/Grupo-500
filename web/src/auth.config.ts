@@ -10,14 +10,17 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const isLoggedIn       = !!auth?.user
-      const isAuthPage       = request.nextUrl.pathname.startsWith('/sign-in')
-      const isPublicPage     = [
+      const path             = request.nextUrl.pathname
+      const isAuthPage       = path.startsWith('/sign-in')
+      // Solo la landing y el registro de Brito son públicos — el resto
+      // (/brito/mapa, /brito/leccion/*, /brito/ranking) exige sesión ESTUDIANTE.
+      const isBritoPublic    = path === '/brito' || path.startsWith('/brito/registro')
+      const isPublicPage     = isBritoPublic || [
         '/sign-in', '/sign-up', '/no-autorizado', '/verificando',
         '/inscripcion',       // Hub de inscripciones, formularios públicos y builder forms
         '/examenes/acceso',   // Login de estudiantes (correo + documento)
         '/privacidad',        // Política de privacidad (pública, requerida por Play Store/App Store)
-        '/brito',             // Landing pública de Brito (modo práctica gamificado)
-      ].some(p => request.nextUrl.pathname.startsWith(p))
+      ].some(p => path.startsWith(p))
 
       if (isLoggedIn && isAuthPage) {
         return NextResponse.redirect(new URL('/inicio', request.nextUrl))

@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma'
 
 // Huella del documento (contraseña del estudiante), idéntica a la app de simulacros.
 // El documento nunca se guarda en texto plano: en la DB vive como este hash.
-function hashDocumento(documento: string): string {
+export function hashDocumento(documento: string): string {
   return createHash('sha256').update(`sim:${documento.trim()}`).digest('hex')
 }
 

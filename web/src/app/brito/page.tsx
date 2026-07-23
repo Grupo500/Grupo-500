@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { auth } from '@/auth'
 import { ArrowLeft, Flame, Heart, Trophy } from 'lucide-react'
 
 export const metadata = {
@@ -7,7 +8,11 @@ export const metadata = {
   description: 'Practica ICFES en modo juego: lecciones cortas, racha, corazones y ranking.',
 }
 
-export default function BritoLandingPage() {
+export default async function BritoLandingPage() {
+  const session = await auth()
+  const role = (session?.user as any)?.role as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE' | undefined
+  const yaLogueado = role === 'ESTUDIANTE' || role === 'ADMIN'
+
   return (
     <main
       className="min-h-dvh relative overflow-hidden flex flex-col items-center justify-center px-4 py-10"
@@ -36,16 +41,35 @@ export default function BritoLandingPage() {
             cuida tus corazones y sube en el ranking.
           </p>
 
-          <div className="flex items-center justify-center gap-5 text-[#001d3d] mb-4">
+          <div className="flex items-center justify-center gap-5 text-[#001d3d] mb-5">
             <span className="flex items-center gap-1.5 text-xs font-semibold"><Flame className="w-4 h-4 text-orange-500" /> Racha</span>
             <span className="flex items-center gap-1.5 text-xs font-semibold"><Heart className="w-4 h-4 text-red-500" /> Corazones</span>
             <span className="flex items-center gap-1.5 text-xs font-semibold"><Trophy className="w-4 h-4 text-amber-500" /> Ranking</span>
           </div>
 
-          <div className="w-full rounded-xl bg-surface-high text-center py-3 px-4">
-            <p className="text-sm font-semibold text-[#001d3d]">Próximamente</p>
-            <p className="text-xs text-[#5a74a8] mt-0.5">Estamos construyendo el juego. Vuelve pronto.</p>
-          </div>
+          {yaLogueado ? (
+            <Link
+              href="/brito/mapa"
+              className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
+            >
+              Ir a mis lecciones
+            </Link>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Link
+                href="/brito/registro"
+                className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
+              >
+                Crear cuenta gratis
+              </Link>
+              <Link
+                href="/sign-in"
+                className="w-full block text-center border border-black/[0.10] hover:bg-black/[0.03] text-[#001d3d] font-medium rounded-xl py-2.5 text-sm transition-all active:scale-[0.97]"
+              >
+                Ya tengo cuenta
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </main>
