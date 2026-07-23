@@ -16,6 +16,7 @@ export const authConfig: NextAuthConfig = {
         '/inscripcion',       // Hub de inscripciones, formularios públicos y builder forms
         '/examenes/acceso',   // Login de estudiantes (correo + documento)
         '/privacidad',        // Política de privacidad (pública, requerida por Play Store/App Store)
+        '/brito',             // Landing pública de Brito (modo práctica gamificado)
       ].some(p => request.nextUrl.pathname.startsWith(p))
 
       if (isLoggedIn && isAuthPage) {
