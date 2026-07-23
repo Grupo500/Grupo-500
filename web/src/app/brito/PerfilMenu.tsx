@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { signOut } from 'next-auth/react'
 import { X, LogOut, Mail, Sparkles, Flame } from 'lucide-react'
 
@@ -15,19 +16,11 @@ export function PerfilMenu({
   imagenUrl?: string | null
 }) {
   const [abierto, setAbierto] = useState(false)
+  const [montado, setMontado] = useState(false)
+  useEffect(() => setMontado(true), [])
   const inicial = (nombre || '?')[0]?.toUpperCase()
 
-  return (
-    <>
-      <button
-        onClick={() => setAbierto(true)}
-        title="Tu perfil"
-        className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xs font-bold shrink-0 hover:brightness-110 transition-all"
-      >
-        {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
-      </button>
-
-      {abierto && (
+  const modal = abierto && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setAbierto(false)} />
           <div className="relative min-h-full flex items-center justify-center p-4">
@@ -78,7 +71,19 @@ export function PerfilMenu({
           </div>
           </div>
         </div>
-      )}
+  )
+
+  return (
+    <>
+      <button
+        onClick={() => setAbierto(true)}
+        title="Tu perfil"
+        className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xs font-bold shrink-0 hover:brightness-110 transition-all"
+      >
+        {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
+      </button>
+
+      {montado && modal && createPortal(modal, document.body)}
     </>
   )
 }
