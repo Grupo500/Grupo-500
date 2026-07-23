@@ -54,12 +54,20 @@ export default async function BritoLandingPage() {
               Ir a mis lecciones
             </Link>
           ) : role === 'ADMIN' ? (
-            <Link
-              href="/brito-admin"
-              className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
-            >
-              Ir al panel de administración
-            </Link>
+            <div className="flex flex-col gap-2">
+              <Link
+                href="/brito-admin"
+                className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
+              >
+                Administrar panel
+              </Link>
+              <Link
+                href="/brito/mapa"
+                className="w-full block text-center border border-black/[0.10] hover:bg-black/[0.03] text-[#001d3d] font-medium rounded-xl py-2.5 text-sm transition-all active:scale-[0.97]"
+              >
+                Jugar
+              </Link>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
               <Link
