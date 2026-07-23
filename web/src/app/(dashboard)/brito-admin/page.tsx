@@ -3,8 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Users, ListChecks, Flame, ChevronRight, FilePlus } from 'lucide-react'
-import { NuevaLeccionForm } from './NuevaLeccionForm'
+import { Users, ListChecks, Flame, ChevronRight, HelpCircle } from 'lucide-react'
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
 
@@ -13,13 +12,11 @@ export default async function BritoAdminPage() {
   if (!session?.user) redirect('/sign-in')
   if ((session.user as any).role !== 'ADMIN') redirect('/no-autorizado')
 
-  const [lecciones, totalPerfiles, totalCompletadas] = await Promise.all([
-    prisma.britoLeccion.findMany({
-      orderBy: [{ materia: 'asc' }, { orden: 'asc' }],
-      include: { _count: { select: { preguntas: true, completadas: true } } },
-    }),
+  const [lecciones, totalPerfiles, totalCompletadas, preguntasPorMateria] = await Promise.all([
+    prisma.britoLeccion.findMany({ select: { id: true, materia: true } }),
     prisma.britoPerfil.count(),
     prisma.britoLeccionCompletada.count(),
+    prisma.preguntaExamen.groupBy({ by: ['area'], _count: true }),
   ])
 
   const stat = (label: string, valor: number, Icon: any) => (
@@ -32,10 +29,10 @@ export default async function BritoAdminPage() {
     </div>
   )
 
-  const porMateria = MATERIAS.map(materia => ({
-    materia,
-    lecciones: lecciones.filter(l => l.materia === materia),
-  }))
+  const leccionesPorMateria = new Map<string, number>()
+  for (const l of lecciones) leccionesPorMateria.set(l.materia, (leccionesPorMateria.get(l.materia) ?? 0) + 1)
+
+  const preguntasMap = new Map(preguntasPorMateria.map(p => [p.area, p._count]))
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -47,44 +44,26 @@ export default async function BritoAdminPage() {
         {stat('Lecciones completadas', totalCompletadas, Flame)}
       </div>
 
-      <div className="flex items-center gap-2">
-        <NuevaLeccionForm materias={MATERIAS} />
-        <Link
-          href="/brito-admin/preguntas/nueva"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-sm font-semibold text-on-surface-variant hover:text-on-surface hover:border-primary/30 transition-colors"
-        >
-          <FilePlus className="w-4 h-4" /> Nueva pregunta
-        </Link>
-      </div>
-
-      <div className="space-y-6">
-        {porMateria.map(({ materia, lecciones: ls }) => (
-          <div key={materia}>
-            <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">{materia}</h2>
-            {ls.length === 0 ? (
-              <p className="text-sm text-on-surface-variant/70 italic">Sin lecciones todavía</p>
-            ) : (
-              <div className="space-y-2">
-                {ls.map(l => (
-                  <Link
-                    key={l.id}
-                    href={`/brito-admin/${l.id}`}
-                    className="flex items-center gap-4 bg-surface-lowest border border-outline-variant rounded-xl p-4 hover:border-primary/30 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-on-surface truncate">{l.titulo}</p>
-                      <p className="text-xs text-on-surface-variant">Orden {l.orden}</p>
-                    </div>
-                    <div className="flex items-center gap-5 text-sm shrink-0">
-                      <span className="text-on-surface"><b className="tabular-nums">{l._count.preguntas}</b> <span className="text-on-surface-variant text-xs">preguntas</span></span>
-                      <span className="text-on-surface"><b className="tabular-nums">{l._count.completadas}</b> <span className="text-on-surface-variant text-xs">completadas</span></span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-on-surface-variant shrink-0" />
-                  </Link>
-                ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {MATERIAS.map(materia => (
+          <Link
+            key={materia}
+            href={`/brito-admin/materia/${encodeURIComponent(materia)}`}
+            className="flex items-center gap-4 bg-surface-lowest border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-colors"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-on-surface truncate mb-2">{materia}</p>
+              <div className="flex items-center gap-4 text-xs">
+                <span className="flex items-center gap-1 text-on-surface-variant">
+                  <ListChecks className="w-3.5 h-3.5" /> <b className="text-on-surface tabular-nums">{leccionesPorMateria.get(materia) ?? 0}</b> lecciones
+                </span>
+                <span className="flex items-center gap-1 text-on-surface-variant">
+                  <HelpCircle className="w-3.5 h-3.5" /> <b className="text-on-surface tabular-nums">{preguntasMap.get(materia) ?? 0}</b> preguntas
+                </span>
               </div>
-            )}
-          </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-on-surface-variant shrink-0" />
+          </Link>
         ))}
       </div>
     </div>

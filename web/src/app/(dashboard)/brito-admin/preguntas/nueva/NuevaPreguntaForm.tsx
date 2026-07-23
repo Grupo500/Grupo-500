@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getClientToken } from '@/lib/api'
-import { Loader2, Save, ImagePlus, X } from 'lucide-react'
+import { Loader2, Save, ImagePlus, X, Check } from 'lucide-react'
 import { crearPregunta } from '../../acciones'
 
 const LETRAS = ['A', 'B', 'C', 'D'] as const
@@ -11,6 +11,7 @@ const LETRAS = ['A', 'B', 'C', 'D'] as const
 export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
   const router = useRouter()
   const [area, setArea] = useState(materias[0])
+  const [guardada, setGuardada] = useState(false)
   const [enunciado, setEnunciado] = useState('')
   const [contexto, setContexto] = useState('')
   const [opciones, setOpciones] = useState({ A: '', B: '', C: '', D: '' })
@@ -46,6 +47,7 @@ export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
   async function handleGuardar() {
     setGuardando(true)
     setError('')
+    setGuardada(false)
     const res = await crearPregunta({
       area,
       enunciado,
@@ -63,7 +65,16 @@ export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
       setError(res.error!)
       return
     }
-    router.push('/brito-admin')
+    // Se limpia el formulario (menos la materia) para poder seguir cargando
+    // preguntas seguidas sin salir de la página.
+    setEnunciado('')
+    setContexto('')
+    setOpciones({ A: '', B: '', C: '', D: '' })
+    setCorrecta('A')
+    setExplicacion('')
+    setImagenUrl(null)
+    setGuardada(true)
+    router.refresh()
   }
 
   const campo = 'w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-lowest text-sm text-on-surface outline-none focus:border-primary transition-colors'
@@ -149,14 +160,21 @@ export function NuevaPreguntaForm({ materias }: { materias: string[] }) {
 
       {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
 
-      <button
-        onClick={handleGuardar}
-        disabled={guardando || subiendoImagen || !enunciado.trim() || !opciones.A.trim() || !opciones.B.trim() || !opciones.C.trim() || !opciones.D.trim()}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-      >
-        {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-        Guardar pregunta
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleGuardar}
+          disabled={guardando || subiendoImagen || !enunciado.trim() || !opciones.A.trim() || !opciones.B.trim() || !opciones.C.trim() || !opciones.D.trim()}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Guardar pregunta
+        </button>
+        {guardada && (
+          <span className="flex items-center gap-1 text-xs font-medium text-secondary">
+            <Check className="w-3.5 h-3.5" /> Guardada — puedes cargar la siguiente
+          </span>
+        )}
+      </div>
     </div>
   )
 }
