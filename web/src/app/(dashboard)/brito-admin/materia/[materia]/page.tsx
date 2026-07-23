@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ArrowLeft, ListChecks, HelpCircle, ChevronRight } from 'lucide-react'
 import { NuevaLeccionForm } from '../../NuevaLeccionForm'
+import { EliminarLeccionBoton } from '../../EliminarLeccionBoton'
 import { NuevaPreguntaForm } from '../../preguntas/nueva/NuevaPreguntaForm'
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
@@ -67,21 +68,23 @@ export default async function MateriaAdminPage({ params }: { params: Promise<{ m
         ) : (
           <div className="space-y-2">
             {lecciones.map(l => (
-              <Link
+              <div
                 key={l.id}
-                href={`/brito-admin/${l.id}`}
-                className="flex items-center gap-4 bg-surface-lowest border border-outline-variant rounded-xl p-4 hover:border-primary/30 transition-colors"
+                className="flex items-center gap-2 bg-surface-lowest border border-outline-variant rounded-xl pr-2 hover:border-primary/30 transition-colors"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-on-surface truncate">{l.titulo}</p>
-                  <p className="text-xs text-on-surface-variant">Orden {l.orden}</p>
-                </div>
-                <div className="flex items-center gap-5 text-sm shrink-0">
-                  <span className="text-on-surface"><b className="tabular-nums">{l._count.preguntas}</b> <span className="text-on-surface-variant text-xs">preguntas</span></span>
-                  <span className="text-on-surface"><b className="tabular-nums">{l._count.completadas}</b> <span className="text-on-surface-variant text-xs">completadas</span></span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-on-surface-variant shrink-0" />
-              </Link>
+                <Link href={`/brito-admin/${l.id}`} className="flex-1 min-w-0 flex items-center gap-4 p-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-on-surface truncate">{l.titulo}</p>
+                    <p className="text-xs text-on-surface-variant">Orden {l.orden}</p>
+                  </div>
+                  <div className="flex items-center gap-5 text-sm shrink-0">
+                    <span className="text-on-surface"><b className="tabular-nums">{l._count.preguntas}</b> <span className="text-on-surface-variant text-xs">preguntas</span></span>
+                    <span className="text-on-surface"><b className="tabular-nums">{l._count.completadas}</b> <span className="text-on-surface-variant text-xs">completadas</span></span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-on-surface-variant shrink-0" />
+                </Link>
+                <EliminarLeccionBoton leccionId={l.id} titulo={l.titulo} />
+              </div>
             ))}
           </div>
         )}
