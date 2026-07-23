@@ -85,6 +85,7 @@ export default async function MapaBritoPage() {
               plan={perfil.plan === 'PREMIUM' ? 'PREMIUM' : 'FREE'}
               xpTotal={perfil.xpTotal}
               rachaMejor={perfil.rachaMejor}
+              imagenUrl={(session?.user as any)?.image ?? null}
             />
             <CerrarSesionIcono />
           </div>
@@ -113,7 +114,7 @@ export default async function MapaBritoPage() {
                         bloqueada
                           ? 'bg-white/10 border border-white/10'
                           : l.completada
-                          ? 'bg-gradient-to-br from-amber-400 to-amber-600 hover:scale-105 active:scale-95'
+                          ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 hover:scale-105 active:scale-95'
                           : 'bg-gradient-to-br from-[#ffb703] to-[#fb8500] hover:scale-105 active:scale-95',
                       ].join(' ')}
                     >

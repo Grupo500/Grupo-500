@@ -5,13 +5,14 @@ import { signOut } from 'next-auth/react'
 import { X, LogOut, Mail, Sparkles, Flame } from 'lucide-react'
 
 export function PerfilMenu({
-  nombre, email, plan, xpTotal, rachaMejor,
+  nombre, email, plan, xpTotal, rachaMejor, imagenUrl,
 }: {
   nombre: string
   email: string
   plan: 'FREE' | 'PREMIUM'
   xpTotal: number
   rachaMejor: number
+  imagenUrl?: string | null
 }) {
   const [abierto, setAbierto] = useState(false)
   const inicial = (nombre || '?')[0]?.toUpperCase()
@@ -21,15 +22,15 @@ export function PerfilMenu({
       <button
         onClick={() => setAbierto(true)}
         title="Tu perfil"
-        className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xs font-bold shrink-0 hover:brightness-110 transition-all"
+        className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xs font-bold shrink-0 hover:brightness-110 transition-all"
       >
-        {inicial}
+        {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
       </button>
 
       {abierto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setAbierto(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl animate-slide-up" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
+          <div className="relative w-full max-w-sm my-8 max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl animate-slide-up" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <p className="text-sm font-bold text-white">Tu perfil</p>
               <button onClick={() => setAbierto(false)} className="text-white/50 hover:text-white transition-colors">
@@ -39,8 +40,8 @@ export function PerfilMenu({
 
             <div className="p-5 space-y-5">
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xl font-bold shrink-0">
-                  {inicial}
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xl font-bold shrink-0">
+                  {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
                 </div>
                 <div className="min-w-0">
                   <p className="text-white font-semibold text-sm truncate">{nombre}</p>
