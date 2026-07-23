@@ -37,13 +37,17 @@ export default async function BritoAdminPage() {
     prisma.preguntaExamen.groupBy({ by: ['area'], _count: true }),
   ])
 
-  const stat = (label: string, valor: number, Icon: LucideIcon, delay: number) => (
-    <div className="bg-surface-lowest border border-outline-variant rounded-xl p-4 animate-card-enter" style={{ animationDelay: `${delay}ms` }}>
-      <div className="flex items-center gap-2 text-on-surface-variant mb-1.5">
-        <Icon className="w-4 h-4" />
-        <span className="text-xs font-medium">{label}</span>
+  const stat = (label: string, valor: number, Icon: LucideIcon, gradient: string, shadow: string, delay: number) => (
+    <div
+      className="relative overflow-hidden rounded-2xl p-4 animate-card-enter"
+      style={{ background: gradient, boxShadow: shadow, animationDelay: `${delay}ms` }}
+    >
+      <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-2xl pointer-events-none" aria-hidden />
+      <div className="relative w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center mb-3">
+        <Icon className="w-4 h-4 text-white" />
       </div>
-      <p className="text-2xl font-bold text-on-surface tabular-nums">{valor}</p>
+      <p className="relative text-3xl font-extrabold text-white tabular-nums leading-none mb-1.5">{valor}</p>
+      <p className="relative text-xs font-medium text-white/80">{label}</p>
     </div>
   )
 
@@ -56,10 +60,25 @@ export default async function BritoAdminPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Brito" subtitle="Modo de práctica gamificado · con Brito te vas a convertir en cerebrito" />
 
-      <div className="grid grid-cols-3 gap-3">
-        {stat('Estudiantes con perfil', totalPerfiles, Users, 0)}
-        {stat('Lecciones creadas', lecciones.length, ListChecks, 60)}
-        {stat('Lecciones completadas', totalCompletadas, Flame, 120)}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {stat(
+          'Estudiantes con perfil', totalPerfiles, Users,
+          'linear-gradient(135deg, #7c3aed 0%, #4338ca 100%)',
+          '0 8px 24px -6px rgba(124,58,237,0.45)',
+          0,
+        )}
+        {stat(
+          'Lecciones creadas', lecciones.length, ListChecks,
+          'linear-gradient(135deg, #2563eb 0%, #0891b2 100%)',
+          '0 8px 24px -6px rgba(37,99,235,0.45)',
+          60,
+        )}
+        {stat(
+          'Lecciones completadas', totalCompletadas, Flame,
+          'linear-gradient(135deg, #f97316 0%, #e11d48 100%)',
+          '0 8px 24px -6px rgba(249,115,22,0.45)',
+          120,
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
