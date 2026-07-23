@@ -49,7 +49,7 @@ export default async function MapaBritoPage() {
     <main className="min-h-dvh" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-md bg-[#003060]/80 border-b border-white/10">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Link href="/inicio" title="Volver al inicio" className="text-white/60 hover:text-white transition-colors shrink-0">
               <ArrowLeft className="w-4.5 h-4.5" />
@@ -75,7 +75,7 @@ export default async function MapaBritoPage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
         {sinCorazones && (
           <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
             <p className="text-sm font-semibold text-red-200">Te quedaste sin corazones</p>
@@ -83,11 +83,11 @@ export default async function MapaBritoPage() {
           </div>
         )}
 
-        <div className="space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {porMateria.map(({ materia, lecciones: ls }) => (
-            <div key={materia}>
+            <div key={materia} className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
               <h2 className="text-xs font-bold text-white/60 uppercase tracking-wider mb-4">{materia}</h2>
-              <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-wrap gap-4">
                 {ls.map((l, idx) => {
                   const bloqueada = !l.desbloqueada
                   const contenido = (
@@ -111,13 +111,13 @@ export default async function MapaBritoPage() {
                     </div>
                   )
                   return (
-                    <div key={l.id} className="flex flex-col items-center gap-1.5">
+                    <div key={l.id} className="flex flex-col items-center gap-1.5 w-20">
                       {bloqueada ? (
                         <div className="opacity-60">{contenido}</div>
                       ) : (
                         <Link href={`/brito/leccion/${l.id}`}>{contenido}</Link>
                       )}
-                      <span className="text-[11px] text-white/70 font-medium max-w-[110px] text-center leading-tight">{l.titulo}</span>
+                      <span className="text-[11px] text-white/70 font-medium text-center leading-tight">{l.titulo}</span>
                     </div>
                   )
                 })}
