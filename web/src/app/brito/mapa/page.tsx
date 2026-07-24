@@ -2,25 +2,68 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
-import { Flame, Heart, Trophy, Lock, Check, ArrowLeft, Gem, Map as MapIcon, Gift, Flag, Compass } from 'lucide-react'
+import {
+  Flame, Heart, Trophy, Lock, Check, ArrowLeft, Diamond, Route, Gift, Flag,
+  Calculator, BookOpen, FlaskConical, Globe, Languages, RotateCw, ArrowRight,
+} from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
+
+const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
 
-const COLOR_MATERIA: Record<string, { texto: string }> = {
-  'Lectura Crítica': { texto: 'text-violet-700' },
-  'Matemáticas': { texto: 'text-blue-700' },
-  'Sociales y Ciudadanas': { texto: 'text-amber-700' },
-  'Ciencias Naturales': { texto: 'text-emerald-700' },
-  'Inglés': { texto: 'text-rose-700' },
+const MATERIA_INFO: Record<string, { color: string; Icono: typeof Calculator }> = {
+  'Lectura Crítica': { color: '#7C6FDB', Icono: BookOpen },
+  'Matemáticas': { color: '#3B82D6', Icono: Calculator },
+  'Sociales y Ciudadanas': { color: '#D69A2D', Icono: Globe },
+  'Ciencias Naturales': { color: '#2FA37A', Icono: FlaskConical },
+  'Inglés': { color: '#D6598F', Icono: Languages },
 }
 
-// Desplazamiento horizontal en zig-zag, estilo sendero de Duolingo.
-const OFFSETS_X = [0, 56, 88, 56, 0, -56, -88, -56]
+// Constantes de layout del sendero (posicionamiento absoluto, curva suave entre nodos).
+const NODE = 72
+const CONTENT_W = 370
+const ROW_GAP = 170
+const SIGN_BLOCK = 140
+const TOP_PAD = 60
+const BOTTOM_PAD = 140
+const OFFSETS = [0, 20, 40, 20, 0, -20, -40, -20]
+
+function smoothPath(pts: [number, number][]): string {
+  if (!pts.length) return ''
+  let d = `M ${pts[0][0]} ${pts[0][1]}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[Math.min(i + 2, pts.length - 1)]
+    const c1x = p1[0] + (p2[0] - p0[0]) / 5
+    const c1y = p1[1] + (p2[1] - p0[1]) / 5
+    const c2x = p2[0] - (p3[0] - p1[0]) / 5
+    const c2y = p2[1] - (p3[1] - p1[1]) / 5
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`
+  }
+  return d
+}
+
+function circuloEstilo(status: 'completed' | 'current' | 'locked') {
+  if (status === 'completed') return { background: '#22C56E', boxShadow: '0 6px 0 #159354, 0 8px 14px rgba(0,0,0,0.15)' }
+  if (status === 'current') return { background: '#F5A623', boxShadow: '0 6px 0 #C97E1E, 0 8px 14px rgba(0,0,0,0.15)' }
+  return { background: '#D8D8D2', boxShadow: '0 6px 0 #B5B5AE, 0 8px 14px rgba(0,0,0,0.1)' }
+}
+
+type NodoLeccion = {
+  id: string
+  materia: string
+  titulo: string
+  status: 'completed' | 'current' | 'locked'
+  esRepaso?: boolean
+}
 
 export default async function MapaBritoPage() {
   const session = await auth()
@@ -58,51 +101,88 @@ export default async function MapaBritoPage() {
   // Una sola cadena de desbloqueo global: solo la primera lección del sendero
   // empieza desbloqueada; completarla desbloquea la siguiente, y así sucesivamente.
   let previaCompletada = true
-  const secuenciaConEstado = secuencia.map((l, idx) => {
+  const secuenciaConEstado = secuencia.map(l => {
     const completada = completadasSet.has(l.id)
     const desbloqueada = previaCompletada
     previaCompletada = completada
-    return { ...l, completada, desbloqueada, ordenGlobal: idx + 1 }
+    const status: NodoLeccion['status'] = completada ? 'completed' : desbloqueada ? 'current' : 'locked'
+    return { id: l.id, materia: l.materia, titulo: l.titulo, status }
   })
 
-  const porSeccion = seccionesDisponibles
-    .map(sesion => ({ sesion, lecciones: secuenciaConEstado.filter(l => l.sesion === sesion) }))
-    .filter(s => s.lecciones.length > 0)
+  const secciones = seccionesDisponibles
+    .map(sesion => {
+      const nodosMateria = secuenciaConEstado.filter((_, idx) => secuencia[idx].sesion === sesion)
+      if (nodosMateria.length === 0) return null
+      const todasCompletadas = nodosMateria.every(n => n.status === 'completed')
+      const repaso: NodoLeccion = {
+        id: `repaso-${sesion}`,
+        materia: 'Repaso',
+        titulo: 'Repaso de la sección',
+        status: todasCompletadas ? 'completed' : 'locked',
+        esRepaso: true,
+      }
+      return { sesion, nodos: [...nodosMateria, repaso] }
+    })
+    .filter((s): s is { sesion: number; nodos: NodoLeccion[] } => s !== null)
+
+  // Layout absoluto: se calculan las coordenadas (top/left) de cada nodo,
+  // los puntos de la curva del sendero por sección, y la posición final de la bandera.
+  let y = TOP_PAD
+  let gIndex = 0
+  const rutas: string[] = []
+  const bloques = secciones.map((sec, secIdx) => {
+    const headerTop = y
+    y += SIGN_BLOCK
+    const puntos: [number, number][] = []
+    const nodos = sec.nodos.map(n => {
+      const off = OFFSETS[gIndex % OFFSETS.length]
+      const centerX = CONTENT_W / 2 + off
+      const centerY = y + NODE / 2
+      puntos.push([centerX, centerY])
+      const bubbleSide: 'left' | 'right' = gIndex % 2 === 0 ? 'right' : 'left'
+      const top = y
+      y += ROW_GAP
+      gIndex++
+      return { ...n, top, left: centerX - NODE / 2, bubbleSide }
+    })
+    rutas.push(smoothPath(puntos))
+    return { sesion: sec.sesion, headerTop, nodos }
+  })
+
+  let flag: { top: number; left: number } | null = null
+  if (bloques.length > 0) {
+    const off = OFFSETS[gIndex % OFFSETS.length]
+    const flagCenterX = CONTENT_W / 2 + off
+    flag = { top: y, left: flagCenterX - NODE / 2 }
+  }
+  const totalHeight = y + NODE + BOTTOM_PAD
 
   const totalCompletadas = completadas.length
   const sinCorazones = perfil.plan !== 'PREMIUM' && perfil.corazones <= 0
 
   return (
-    <main
-      className="min-h-dvh"
-      style={{
-        background: '#f3e6c8',
-        backgroundImage:
-          'radial-gradient(circle at 15% 20%, rgba(180,150,90,0.12) 0, transparent 45%), radial-gradient(circle at 85% 75%, rgba(180,150,90,0.12) 0, transparent 45%)',
-      }}
-    >
-      {/* Header */}
-      <div className="sticky top-0 z-10 backdrop-blur-md bg-[#fdf6e3]/90 border-b border-[#d8c090]">
-        <div className="relative max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
+    <main className={`${nunito.className} min-h-dvh`} style={{ background: '#FAFAF7', color: '#2B2B28' }}>
+      {/* Header móvil */}
+      <div className="lg:hidden sticky top-0 z-10 backdrop-blur-md bg-white/90 border-b border-[#ECEAE2]">
+        <div className="relative max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Link href="/inicio" title="Volver al inicio" className="text-[#8a6a35]/70 hover:text-[#8a6a35] transition-colors shrink-0">
+            <Link href="/inicio" title="Volver al inicio" className="text-[#6b6a63] hover:text-[#2B2B28] transition-colors shrink-0">
               <ArrowLeft className="w-4.5 h-4.5" />
             </Link>
-            <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#fdf6e3] shadow-[0_0_0_1.5px_#c9a86a] shrink-0">
+            <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
               <Image src="/brito/brito-hero.jpg" alt="Brito" width={36} height={36} className="object-cover w-full h-full" />
             </div>
-            <span className="text-[#5a4322] font-bold text-sm">Brito</span>
+            <span className="text-[#2B2B28] font-extrabold text-sm">Brito</span>
           </div>
 
-          {/* Stats centradas (solo móvil — en desktop se muestran en el panel lateral) */}
-          <div className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center gap-4 text-[#5a4322] text-sm font-semibold">
-            <span className="flex items-center gap-1"><Flame className="w-4 h-4 text-orange-500" /> {perfil.rachaActual}</span>
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 text-sm font-bold">
+            <span className="flex items-center gap-1"><Flame className="w-4 h-4 text-[#F5A623]" /> {perfil.rachaActual}</span>
             <span className="flex items-center gap-1">
-              <Heart className="w-4 h-4 text-red-500" />
+              <Heart className="w-4 h-4 text-[#D6598F]" />
               {perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones}
             </span>
-            <span className="flex items-center gap-1 text-amber-700">{perfil.xpTotal} XP</span>
-            <Link href="/brito/ranking" title="Ranking" className="text-[#8a6a35]/70 hover:text-[#8a6a35] transition-colors">
+            <span className="flex items-center gap-1 text-[#3B82D6]">{perfil.xpTotal} XP</span>
+            <Link href="/brito/ranking" title="Ranking" className="text-[#6b6a63] hover:text-[#2B2B28] transition-colors">
               <Trophy className="w-4 h-4" />
             </Link>
           </div>
@@ -121,177 +201,222 @@ export default async function MapaBritoPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 md:px-8 py-8">
-        {sinCorazones && (
-          <div className="mb-6 max-w-md mx-auto lg:mx-0 bg-red-50 border border-red-300 rounded-xl p-4 text-center">
-            <p className="text-sm font-semibold text-red-700">Te quedaste sin corazones</p>
-            <p className="text-xs text-red-700/70 mt-0.5">Se regeneran 1 cada 4 horas. Vuelve pronto o hazte Premium.</p>
-          </div>
-        )}
+      {sinCorazones && (
+        <div className="lg:hidden mx-4 mt-4 bg-[#FCE9F0] border border-[#F3C6D8] rounded-xl p-4 text-center">
+          <p className="text-sm font-bold text-[#B33D6E]">Te quedaste sin corazones</p>
+          <p className="text-xs text-[#B33D6E]/70 mt-0.5">Se regeneran 1 cada 4 horas. Vuelve pronto o hazte Premium.</p>
+        </div>
+      )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_320px] gap-10 lg:items-stretch">
-          {/* Nav lateral izquierda — solo desktop */}
-          <aside className="hidden lg:block lg:border-r lg:border-[#d8c090] lg:pr-6">
-          <div className="sticky top-24 flex flex-col gap-1">
-            <Link
-              href="/brito/mapa"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#e8a33d]/20 text-[#b3781f] text-sm font-bold"
-            >
-              <MapIcon className="w-[18px] h-[18px]" /> Aprender
-            </Link>
-            <Link
-              href="/brito/ranking"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#7a6640] hover:text-[#5a4322] hover:bg-[#e8dcc0] transition-colors text-sm font-medium"
-            >
-              <Trophy className="w-[18px] h-[18px]" /> Ligas
-            </Link>
-            <span
-              title="Próximamente"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#a99a76] text-sm font-medium cursor-default"
-            >
+      <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_320px] lg:h-dvh">
+        {/* Nav lateral izquierda — solo desktop */}
+        <aside className="hidden lg:flex flex-col gap-1.5 bg-white border-r border-[#ECEAE2] p-6">
+          <div className="flex items-center gap-2.5 pb-5 mb-2 border-b border-[#ECEAE2]">
+            <div className="w-8 h-8 rounded-[10px] bg-[#1E5FA8] text-white flex items-center justify-center font-extrabold text-sm">B</div>
+            <span className="font-extrabold text-lg text-[#2B2B28]">Brito</span>
+          </div>
+
+          <Link
+            href="/brito/mapa"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-[#EAF1FA] text-[#1E5FA8] text-sm font-bold"
+          >
+            <Route className="w-[18px] h-[18px]" /> Aprender
+          </Link>
+          <Link
+            href="/brito/ranking"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[#57564f] hover:bg-[#F5F3EC] transition-colors text-sm font-bold"
+          >
+            <Trophy className="w-[18px] h-[18px]" /> Ligas
+          </Link>
+          <span
+            title="Próximamente"
+            className="flex flex-col gap-0.5 px-3 py-2.5 rounded-[10px] opacity-50 cursor-default"
+          >
+            <span className="flex items-center gap-3 text-[#57564f] text-sm font-bold">
               <Gift className="w-[18px] h-[18px]" /> Recompensas
             </span>
-            <PerfilMenu
-              nombre={estudiante?.nombre ?? 'Estudiante'}
-              email={estudiante?.email ?? ''}
-              plan={perfil.plan === 'PREMIUM' ? 'PREMIUM' : 'FREE'}
-              xpTotal={perfil.xpTotal}
-              rachaMejor={perfil.rachaMejor}
-              imagenUrl={(session?.user as any)?.image ?? null}
-              variante="navitem"
-            />
-          </div>
-          </aside>
+            <span className="text-[10px] font-bold uppercase tracking-wide text-[#9a998f] ml-[30px]">Próximamente</span>
+          </span>
+          <PerfilMenu
+            nombre={estudiante?.nombre ?? 'Estudiante'}
+            email={estudiante?.email ?? ''}
+            plan={perfil.plan === 'PREMIUM' ? 'PREMIUM' : 'FREE'}
+            xpTotal={perfil.xpTotal}
+            rachaMejor={perfil.rachaMejor}
+            imagenUrl={(session?.user as any)?.image ?? null}
+            variante="navitem"
+          />
+        </aside>
 
-          {/* Sendero de secciones — centrado en el espacio disponible */}
-          <div className="max-w-md mx-auto space-y-14">
-            <div className="flex items-center justify-center gap-2 text-[#8a6a35]">
-              <Compass className="w-[18px] h-[18px]" />
-              <span className="text-xs font-bold uppercase tracking-widest">Mapa de aventuras Brito</span>
+        {/* Sendero central */}
+        <div className="lg:overflow-y-auto" style={{ background: '#EEF2F7' }}>
+          {sinCorazones && (
+            <div className="hidden lg:block max-w-md mx-auto mt-6 bg-[#FCE9F0] border border-[#F3C6D8] rounded-xl p-4 text-center">
+              <p className="text-sm font-bold text-[#B33D6E]">Te quedaste sin corazones</p>
+              <p className="text-xs text-[#B33D6E]/70 mt-0.5">Se regeneran 1 cada 4 horas. Vuelve pronto o hazte Premium.</p>
             </div>
+          )}
 
-            {porSeccion.map(({ sesion, lecciones: ls }) => (
-              <div key={sesion}>
-                {/* Banner de la sección */}
-                <div className="bg-[#fdf6e3] border-2 border-dashed border-[#c9a86a] rounded-2xl px-5 py-4 mb-10 shadow-[2px_2px_0_#d8c090] text-center">
-                  <p className="text-[#a9834a] text-[11px] font-bold uppercase tracking-wider">Sección {sesion}</p>
-                  <h2 className="text-[#5a4322] font-extrabold text-lg leading-tight">Practica todas las materias</h2>
-                </div>
+          {bloques.length === 0 ? (
+            <div className="flex flex-col items-center text-center py-20 gap-4 px-6">
+              <div className="w-20 h-20 rounded-full overflow-hidden shadow-md">
+                <Image src="/brito/brito-hero.jpg" alt="Brito" width={80} height={80} className="object-cover w-full h-full" />
+              </div>
+              <div>
+                <p className="text-[#2B2B28] font-bold text-sm">Brito está preparando tus lecciones</p>
+                <p className="text-[#6b6a63] text-xs mt-1 max-w-[240px]">Todavía no hay lecciones publicadas. Vuelve pronto para empezar a practicar.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="relative mx-auto py-4" style={{ width: CONTENT_W, height: totalHeight }}>
+              <svg className="absolute top-0 left-0 w-full h-full overflow-visible pointer-events-none">
+                {rutas.map((d, i) => (
+                  <path key={i} d={d} fill="none" stroke="#DCD7C8" strokeWidth={4} strokeLinecap="round" strokeDasharray="1 16" />
+                ))}
+              </svg>
 
-                {/* Sendero de lecciones en zig-zag */}
-                <div className="flex flex-col items-center gap-7">
-                  {ls.map((l, idx) => {
-                    const color = COLOR_MATERIA[l.materia] ?? COLOR_MATERIA['Lectura Crítica']
-                    const bloqueada = !l.desbloqueada
-                    const esActual = l.desbloqueada && !l.completada
-                    const offset = OFFSETS_X[idx % OFFSETS_X.length]
+              {bloques.map(bloque => (
+                <div key={bloque.sesion}>
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 bg-white rounded-xl px-4 py-3 text-center shadow-sm flex items-center justify-center gap-2"
+                    style={{ top: bloque.headerTop, width: 200, boxShadow: '0 2px 8px rgba(40,30,10,0.06)' }}
+                  >
+                    <BookOpen className="w-4 h-4 text-[#1E5FA8] shrink-0" />
+                    <div>
+                      <div className="font-extrabold text-[15px] text-[#2B2B28] leading-tight">Sección {bloque.sesion}</div>
+                      <div className="text-[11.5px] font-semibold text-[#8a897f]">Practica todas las materias</div>
+                    </div>
+                  </div>
 
-                    const nodo = (
+                  {bloque.nodos.map(nodo => {
+                    const info = MATERIA_INFO[nodo.materia]
+                    const Icono = nodo.esRepaso ? RotateCw : info?.Icono ?? BookOpen
+                    const subjectColor = nodo.esRepaso ? '#1E5FA8' : info?.color ?? '#1E5FA8'
+                    const circulo = (
                       <div
-                        className={[
-                          'rounded-full flex items-center justify-center transition-transform relative border-[3px] border-[#fdf6e3]',
-                          esActual ? 'w-20 h-20' : 'w-16 h-16',
-                          bloqueada
-                            ? 'bg-[#d9c9a3] shadow-[0_0_0_2px_#c9b483]'
-                            : l.completada
-                            ? 'bg-[#5aab7e] shadow-[0_0_0_2px_#4a8f68] hover:scale-105 active:scale-95'
-                            : 'bg-[#e8a33d] shadow-[0_0_0_2px_#c9822a] hover:scale-105 active:scale-95',
-                        ].join(' ')}
+                        className={`w-[72px] h-[72px] rounded-full border-[5px] border-white flex items-center justify-center relative transition-transform ${nodo.status !== 'locked' ? 'hover:-translate-y-[3px]' : ''} ${nodo.status === 'current' ? 'brito-pulse' : ''}`}
+                        style={circuloEstilo(nodo.status)}
                       >
-                        {bloqueada ? (
-                          <Lock className="w-5 h-5 text-[#8a7550]" />
-                        ) : l.completada ? (
+                        {nodo.status === 'locked' ? (
+                          <Lock className="w-[22px] h-[22px] text-[#9a998f]" />
+                        ) : nodo.status === 'completed' && !nodo.esRepaso ? (
                           <Check className="w-6 h-6 text-white" />
                         ) : (
-                          <span className="text-white font-bold text-base">{l.ordenGlobal}</span>
+                          <Icono className="w-[26px] h-[26px] text-white" />
                         )}
                       </div>
                     )
-
                     return (
-                      <div
-                        key={l.id}
-                        className="flex flex-col items-center gap-1 relative"
-                        style={{ transform: `translateX(${offset}px)` }}
-                      >
-                        {esActual && (
-                          <span className="absolute -top-11 px-3 py-1.5 rounded-xl bg-[#fdf6e3] border-2 border-[#c9a86a] text-[#5a4322] text-xs font-extrabold shadow-sm whitespace-nowrap animate-bounce">
+                      <div key={nodo.id} className="absolute" style={{ top: nodo.top, left: nodo.left, width: NODE }}>
+                        {nodo.status === 'current' && (
+                          <div
+                            className="absolute whitespace-nowrap text-white font-extrabold text-[11.5px] px-3.5 py-1.5 rounded-full"
+                            style={{ top: -34, left: '50%', transform: 'translateX(-50%)', background: '#F5A623', boxShadow: '0 4px 10px rgba(245,166,35,0.4)' }}
+                          >
                             EMPEZAR
-                            <span className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-[#fdf6e3] border-r-2 border-b-2 border-[#c9a86a] rotate-45" />
-                          </span>
+                            <div className="absolute rotate-45" style={{ bottom: -4, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 8, height: 8, background: '#F5A623' }} />
+                          </div>
                         )}
-                        {bloqueada ? (
-                          <div className="opacity-70">{nodo}</div>
+
+                        {nodo.esRepaso || nodo.status === 'locked' ? (
+                          <div className={nodo.status === 'locked' ? 'opacity-90' : ''}>{circulo}</div>
                         ) : (
-                          <Link href={`/brito/leccion/${l.id}`}>{nodo}</Link>
+                          <Link href={`/brito/leccion/${nodo.id}`}>{circulo}</Link>
                         )}
-                        <span className={`text-[10px] font-bold uppercase tracking-wide ${color.texto}`}>{l.materia}</span>
-                        <span className="text-[11px] text-[#7a6640] font-medium text-center leading-tight max-w-24">{l.titulo}</span>
+
+                        <div
+                          className="absolute bg-white rounded-[14px] px-2.5 py-1.5 shadow-sm"
+                          style={{
+                            top: 36,
+                            transform: 'translateY(-50%)',
+                            width: 95,
+                            boxShadow: '0 2px 8px rgba(40,30,10,0.12)',
+                            textAlign: nodo.bubbleSide === 'left' ? 'right' : 'left',
+                            ...(nodo.bubbleSide === 'left' ? { right: 80 } : { left: 80 }),
+                          }}
+                        >
+                          <div className="font-bold text-xs" style={{ color: subjectColor }}>{nodo.materia}</div>
+                          <div className="text-[11px] font-semibold text-[#79786f] mt-0.5">{nodo.titulo}</div>
+                        </div>
                       </div>
                     )
                   })}
                 </div>
-              </div>
-            ))}
+              ))}
 
-            {porSeccion.length > 0 && (
-              <div className="flex flex-col items-center gap-2 pt-2">
-                <div className="w-14 h-14 rounded-full bg-[#fdf6e3] border-2 border-dashed border-[#c9a86a] flex items-center justify-center">
-                  <Flag className="w-5 h-5 text-[#a9834a]" />
-                </div>
-                <span className="text-[11px] text-[#a9834a] font-medium">Meta del recorrido</span>
-              </div>
-            )}
+              {flag && (
+                <>
+                  <div
+                    className="absolute w-[72px] h-[72px] rounded-full flex items-center justify-center"
+                    style={{ top: flag.top, left: flag.left, background: '#1E5FA8', boxShadow: '0 4px 12px rgba(30,95,168,0.25)' }}
+                  >
+                    <Flag className="w-[26px] h-[26px] text-white" />
+                  </div>
+                  <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: flag.top + 88 }}>
+                    <div className="font-bold text-[12.5px] text-[#57564f]">Meta</div>
+                    <div className="text-[11px] font-semibold text-[#8a897f]">Fin de la sección</div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
-            {porSeccion.length === 0 && (
-              <div className="flex flex-col items-center text-center mt-16 gap-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#fdf6e3] shadow-[0_0_0_2px_#c9a86a] opacity-90">
-                  <Image src="/brito/brito-hero.jpg" alt="Brito" width={80} height={80} className="object-cover w-full h-full" />
-                </div>
-                <div>
-                  <p className="text-[#5a4322] font-semibold text-sm">Brito está preparando tus lecciones</p>
-                  <p className="text-[#7a6640] text-xs mt-1 max-w-[240px]">Todavía no hay lecciones publicadas. Vuelve pronto para empezar a practicar.</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Panel lateral — solo desktop */}
-          <aside className="hidden lg:block lg:border-l lg:border-[#d8c090] lg:pl-8">
-          <div className="sticky top-24 space-y-4">
-            <div className="bg-[#fdf6e3] border border-[#d8c090] rounded-2xl p-4 space-y-3 shadow-[2px_2px_0_#e8dcc0]">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-[#7a6640] font-medium"><Flame className="w-4 h-4 text-orange-500" /> Racha</span>
-                <span className="text-[#5a4322] font-bold">{perfil.rachaActual}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-[#7a6640] font-medium"><Heart className="w-4 h-4 text-red-500" /> Vidas</span>
-                <span className="text-[#5a4322] font-bold">{perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-[#7a6640] font-medium"><Gem className="w-4 h-4 text-sky-600" /> XP</span>
-                <span className="text-[#5a4322] font-bold">{perfil.xpTotal}</span>
+        {/* Panel lateral — solo desktop */}
+        <aside className="hidden lg:flex flex-col gap-4 bg-white border-l border-[#ECEAE2] p-6">
+          <div className="rounded-2xl p-4 flex flex-col gap-3.5" style={{ background: '#EAF1FA', border: '1px solid #DCE8F5' }}>
+            <div className="flex items-center gap-3">
+              <Flame className="w-6 h-6 text-[#F5A623]" />
+              <div>
+                <div className="font-extrabold text-base text-[#2B2B28]">{perfil.rachaActual} días</div>
+                <div className="text-[11px] text-[#8a897f] font-semibold">Racha actual</div>
               </div>
             </div>
-
-            <Link
-              href="/brito/ranking"
-              className="block bg-[#fdf6e3] border border-[#d8c090] rounded-2xl p-4 shadow-[2px_2px_0_#e8dcc0] hover:border-[#c9a86a] transition-colors"
-            >
-              <p className="text-[#5a4322] font-bold text-sm mb-2">¡Compite en las Ligas!</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#e8a33d]/15 border border-[#e8a33d]/30 flex items-center justify-center shrink-0">
-                  <Trophy className="w-5 h-5 text-amber-600" />
-                </div>
-                <p className="text-[#7a6640] text-xs leading-snug">
-                  {totalCompletadas > 0 ? 'Ve el ranking semanal y tu posición.' : 'Completa tu primera lección para entrar al ranking.'}
-                </p>
+            <div className="h-px bg-[#D9DEE5]" />
+            <div className="flex items-center gap-3">
+              <Heart className="w-6 h-6 text-[#D6598F]" />
+              <div>
+                <div className="font-extrabold text-base text-[#2B2B28]">{perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones} vidas</div>
+                <div className="text-[11px] text-[#8a897f] font-semibold">Te quedan</div>
               </div>
-            </Link>
+            </div>
+            <div className="h-px bg-[#D9DEE5]" />
+            <div className="flex items-center gap-3">
+              <Diamond className="w-6 h-6 text-[#3B82D6]" />
+              <div>
+                <div className="font-extrabold text-base text-[#2B2B28]">{perfil.xpTotal} XP</div>
+                <div className="text-[11px] text-[#8a897f] font-semibold">Experiencia total</div>
+              </div>
+            </div>
           </div>
-          </aside>
-        </div>
+
+          <Link
+            href="/brito/ranking"
+            className="rounded-2xl p-4 flex flex-col gap-2"
+            style={{ background: '#EAF1FA', border: '1px solid #DCE8F5' }}
+          >
+            <Trophy className="w-[26px] h-[26px] text-[#1E5FA8]" />
+            <div className="font-extrabold text-[15px] text-[#2B2B28]">¡Compite en las Ligas!</div>
+            <p className="text-xs font-semibold text-[#6b6a63] leading-snug">
+              {totalCompletadas > 0 ? 'Sube posiciones y gana medallas cada semana.' : 'Completa tu primera lección para entrar al ranking.'}
+            </p>
+            <div
+              className="mt-1.5 rounded-full py-2.5 px-4 flex items-center justify-center gap-1.5 text-white font-bold text-[13px]"
+              style={{ background: '#1E5FA8', boxShadow: '0 4px 12px rgba(30,95,168,0.28)' }}
+            >
+              Ver ranking <ArrowRight className="w-4 h-4" />
+            </div>
+          </Link>
+        </aside>
       </div>
+
+      <style>{`
+        @keyframes pulseRing {
+          0%, 100% { box-shadow: 0 6px 0 #C97E1E, 0 8px 14px rgba(0,0,0,0.15), 0 0 0 0 rgba(245,166,35,0.35); }
+          50% { box-shadow: 0 6px 0 #C97E1E, 0 8px 14px rgba(0,0,0,0.15), 0 0 0 8px rgba(245,166,35,0); }
+        }
+        .brito-pulse { animation: pulseRing 2.4s ease-out infinite; }
+      `}</style>
     </main>
   )
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { signOut } from 'next-auth/react'
-import { X, LogOut, Mail, Sparkles, Flame, User } from 'lucide-react'
+import { X, LogOut, Mail, Diamond, Flame, UserCircle2 } from 'lucide-react'
 
 export function PerfilMenu({
   nombre, email, plan, xpTotal, rachaMejor, imagenUrl, variante = 'avatar',
@@ -19,56 +19,54 @@ export function PerfilMenu({
   const [abierto, setAbierto] = useState(false)
   const [montado, setMontado] = useState(false)
   useEffect(() => setMontado(true), [])
-  const inicial = (nombre || '?')[0]?.toUpperCase()
+  const iniciales = (nombre || '?')
+    .split(' ')
+    .slice(0, 2)
+    .map(p => p[0]?.toUpperCase())
+    .join('')
 
   const modal = abierto && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setAbierto(false)} />
+          <div className="fixed inset-0 bg-[#1e1e19]/40 animate-fade-in" onClick={() => setAbierto(false)} />
           <div className="relative min-h-full flex items-center justify-center p-4">
-          <div className="relative w-full max-w-sm rounded-2xl shadow-2xl animate-slide-up" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-              <p className="text-sm font-bold text-white">Tu perfil</p>
-              <button onClick={() => setAbierto(false)} className="text-white/50 hover:text-white transition-colors">
-                <X className="w-4 h-4" />
-              </button>
+          <div className="relative w-full max-w-xs rounded-2xl shadow-2xl animate-slide-up bg-white p-6">
+            <button onClick={() => setAbierto(false)} className="absolute top-3.5 right-3.5 text-[#9a998f] hover:text-[#2B2B28] transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center gap-1.5 mb-4">
+              <div className="w-[68px] h-[68px] rounded-full overflow-hidden bg-[#1E5FA8] text-white flex items-center justify-center font-extrabold text-2xl">
+                {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : iniciales}
+              </div>
+              <p className="text-[#2B2B28] font-extrabold text-base mt-1">{nombre}</p>
+              <p className="text-[#8a897f] text-xs font-semibold flex items-center gap-1"><Mail className="w-3 h-3 shrink-0" /> {email}</p>
             </div>
 
-            <div className="p-5 space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xl font-bold shrink-0">
-                  {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-white font-semibold text-sm truncate">{nombre}</p>
-                  <p className="text-white/50 text-xs flex items-center gap-1 truncate"><Mail className="w-3 h-3 shrink-0" /> {email}</p>
-                </div>
+            <div className="flex gap-2.5 mb-4">
+              <div className="flex-1 bg-[#F5F0E6] rounded-xl p-3 text-center">
+                <Diamond className="w-[19px] h-[19px] text-[#3B82D6] mx-auto" />
+                <p className="text-[#2B2B28] font-extrabold text-[15px] mt-1">{xpTotal}</p>
+                <p className="text-[#8a897f] text-[10px] font-bold">XP total</p>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                  <p className="flex items-center gap-1.5 text-amber-300 text-xs font-semibold mb-1"><Sparkles className="w-3.5 h-3.5" /> XP total</p>
-                  <p className="text-white font-bold text-lg">{xpTotal}</p>
-                </div>
-                <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                  <p className="flex items-center gap-1.5 text-orange-400 text-xs font-semibold mb-1"><Flame className="w-3.5 h-3.5" /> Mejor racha</p>
-                  <p className="text-white font-bold text-lg">{rachaMejor}</p>
-                </div>
+              <div className="flex-1 bg-[#F5F0E6] rounded-xl p-3 text-center">
+                <Flame className="w-[19px] h-[19px] text-[#F5A623] mx-auto" />
+                <p className="text-[#2B2B28] font-extrabold text-[15px] mt-1">{rachaMejor}</p>
+                <p className="text-[#8a897f] text-[10px] font-bold">Mejor racha</p>
               </div>
-
-              <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-                <span className="text-white/70 text-xs font-medium">Plan</span>
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${plan === 'PREMIUM' ? 'bg-amber-400/20 text-amber-300' : 'bg-white/10 text-white/70'}`}>
-                  {plan === 'PREMIUM' ? 'Premium' : 'Gratis'}
-                </span>
-              </div>
-
-              <button
-                onClick={() => signOut({ callbackUrl: '/sign-in' })}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-white/15 text-white/80 hover:bg-white/5 hover:text-white transition-colors text-sm font-medium"
-              >
-                <LogOut className="w-4 h-4" /> Cerrar sesión
-              </button>
             </div>
+
+            {plan === 'PREMIUM' && (
+              <div className="flex items-center justify-center gap-1.5 bg-[#EAF1FA] text-[#1E5FA8] text-xs font-bold px-3 py-2 rounded-full mb-3">
+                Plan Premium
+              </div>
+            )}
+
+            <button
+              onClick={() => signOut({ callbackUrl: '/sign-in' })}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-[#FCE9F0] text-[#B33D6E] hover:bg-[#f8dbe6] transition-colors text-[13.5px] font-bold"
+            >
+              <LogOut className="w-4 h-4" /> Cerrar sesión
+            </button>
           </div>
           </div>
         </div>
@@ -79,17 +77,17 @@ export function PerfilMenu({
       {variante === 'navitem' ? (
         <button
           onClick={() => setAbierto(true)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#7a6640] hover:text-[#5a4322] hover:bg-[#e8dcc0] transition-colors text-sm font-medium"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[#57564f] hover:bg-[#F5F3EC] transition-colors text-sm font-bold"
         >
-          <User className="w-[18px] h-[18px]" /> Perfil
+          <UserCircle2 className="w-[18px] h-[18px]" /> Perfil
         </button>
       ) : (
         <button
           onClick={() => setAbierto(true)}
           title="Tu perfil"
-          className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#ffb703] to-[#fb8500] flex items-center justify-center text-white text-xs font-bold shrink-0 hover:brightness-110 transition-all"
+          className="w-8 h-8 rounded-full overflow-hidden bg-[#1E5FA8] text-white flex items-center justify-center text-xs font-bold shrink-0 hover:brightness-110 transition-all"
         >
-          {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : inicial}
+          {imagenUrl ? <img src={imagenUrl} alt={nombre} className="w-full h-full object-cover" /> : iniciales}
         </button>
       )}
 
