@@ -79,7 +79,7 @@ export function PerfilMenu({
       {variante === 'navitem' ? (
         <button
           onClick={() => setAbierto(true)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#7a6640] hover:text-[#5a4322] hover:bg-[#e8dcc0] transition-colors text-sm font-medium"
         >
           <User className="w-[18px] h-[18px]" /> Perfil
         </button>
