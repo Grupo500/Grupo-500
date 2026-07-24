@@ -6,8 +6,8 @@ import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
 import {
-  Flame, Heart, Trophy, Lock, Check, ArrowLeft, Diamond, Route, Gift, Flag,
-  Calculator, BookOpen, FlaskConical, Globe, Languages, RotateCw, ArrowRight,
+  Flame, Heart, Trophy, Lock, ArrowLeft, Route, Gift, Flag,
+  BookOpen, RotateCw, ArrowRight,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
@@ -17,12 +17,12 @@ const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800']
 const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
 
-const MATERIA_INFO: Record<string, { color: string; Icono: typeof Calculator }> = {
-  'Lectura Crítica': { color: '#7C6FDB', Icono: BookOpen },
-  'Matemáticas': { color: '#3B82D6', Icono: Calculator },
-  'Sociales y Ciudadanas': { color: '#D69A2D', Icono: Globe },
-  'Ciencias Naturales': { color: '#2FA37A', Icono: FlaskConical },
-  'Inglés': { color: '#D6598F', Icono: Languages },
+const MATERIA_INFO: Record<string, { color: string; icono: string }> = {
+  'Lectura Crítica': { color: '#7C6FDB', icono: '/brito/icons/lectura-critica.png' },
+  'Matemáticas': { color: '#3B82D6', icono: '/brito/icons/matematicas.png' },
+  'Sociales y Ciudadanas': { color: '#D69A2D', icono: '/brito/icons/sociales.png' },
+  'Ciencias Naturales': { color: '#2FA37A', icono: '/brito/icons/ciencias.png' },
+  'Inglés': { color: '#D6598F', icono: '/brito/icons/ingles.png' },
 }
 
 // Constantes de layout del sendero (posicionamiento absoluto, curva suave entre nodos).
@@ -131,7 +131,9 @@ export default async function MapaBritoPage() {
   let y = TOP_PAD
   let gIndex = 0
   const rutas: string[] = []
+  const divisores: number[] = []
   const bloques = secciones.map((sec, secIdx) => {
+    if (secIdx > 0) divisores.push(y + 35)
     const headerTop = y
     y += SIGN_BLOCK
     const puntos: [number, number][] = []
@@ -276,6 +278,13 @@ export default async function MapaBritoPage() {
                 ))}
               </svg>
 
+              {divisores.map((top, i) => (
+                <div key={i}>
+                  <div className="absolute h-px" style={{ top, left: 0, width: 76, background: '#D9DEE5' }} />
+                  <div className="absolute h-px" style={{ top, right: 0, width: 76, background: '#D9DEE5' }} />
+                </div>
+              ))}
+
               {bloques.map(bloque => (
                 <div key={bloque.sesion}>
                   <div
@@ -291,7 +300,6 @@ export default async function MapaBritoPage() {
 
                   {bloque.nodos.map(nodo => {
                     const info = MATERIA_INFO[nodo.materia]
-                    const Icono = nodo.esRepaso ? RotateCw : info?.Icono ?? BookOpen
                     const subjectColor = nodo.esRepaso ? '#1E5FA8' : info?.color ?? '#1E5FA8'
                     const circulo = (
                       <div
@@ -300,10 +308,10 @@ export default async function MapaBritoPage() {
                       >
                         {nodo.status === 'locked' ? (
                           <Lock className="w-[22px] h-[22px] text-[#9a998f]" />
-                        ) : nodo.status === 'completed' && !nodo.esRepaso ? (
-                          <Check className="w-6 h-6 text-white" />
+                        ) : nodo.esRepaso ? (
+                          <RotateCw className="w-[26px] h-[26px] text-white" />
                         ) : (
-                          <Icono className="w-[26px] h-[26px] text-white" />
+                          <img src={info?.icono} alt="" className="w-11 h-11 object-contain" />
                         )}
                       </div>
                     )
@@ -353,7 +361,7 @@ export default async function MapaBritoPage() {
                   >
                     <Flag className="w-[26px] h-[26px] text-white" />
                   </div>
-                  <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: flag.top + 88 }}>
+                  <div className="absolute text-center" style={{ top: flag.top + 88, left: flag.left, width: NODE }}>
                     <div className="font-bold text-[12.5px] text-[#57564f]">Meta</div>
                     <div className="text-[11px] font-semibold text-[#8a897f]">Fin de la sección</div>
                   </div>
@@ -367,7 +375,7 @@ export default async function MapaBritoPage() {
         <aside className="hidden lg:flex flex-col gap-4 bg-white border-l border-[#ECEAE2] p-6">
           <div className="rounded-2xl p-4 flex flex-col gap-3.5" style={{ background: '#EAF1FA', border: '1px solid #DCE8F5' }}>
             <div className="flex items-center gap-3">
-              <Flame className="w-6 h-6 text-[#F5A623]" />
+              <img src="/brito/icons/racha.png" alt="" className="w-8 h-8 object-contain" />
               <div>
                 <div className="font-extrabold text-base text-[#2B2B28]">{perfil.rachaActual} días</div>
                 <div className="text-[11px] text-[#8a897f] font-semibold">Racha actual</div>
@@ -375,7 +383,7 @@ export default async function MapaBritoPage() {
             </div>
             <div className="h-px bg-[#D9DEE5]" />
             <div className="flex items-center gap-3">
-              <Heart className="w-6 h-6 text-[#D6598F]" />
+              <img src="/brito/icons/vidas.png" alt="" className="w-8 h-8 object-contain" />
               <div>
                 <div className="font-extrabold text-base text-[#2B2B28]">{perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones} vidas</div>
                 <div className="text-[11px] text-[#8a897f] font-semibold">Te quedan</div>
@@ -383,7 +391,7 @@ export default async function MapaBritoPage() {
             </div>
             <div className="h-px bg-[#D9DEE5]" />
             <div className="flex items-center gap-3">
-              <Diamond className="w-6 h-6 text-[#3B82D6]" />
+              <img src="/brito/icons/xp.png" alt="" className="w-8 h-8 object-contain" />
               <div>
                 <div className="font-extrabold text-base text-[#2B2B28]">{perfil.xpTotal} XP</div>
                 <div className="text-[11px] text-[#8a897f] font-semibold">Experiencia total</div>
