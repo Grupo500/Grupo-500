@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
-import { Flame, Heart, Trophy, Lock, Check, ArrowLeft, Gem, Map as MapIcon, Gift, User } from 'lucide-react'
+import { Flame, Heart, Trophy, Lock, Check, ArrowLeft, Gem, Map as MapIcon, Gift } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
 
@@ -151,14 +151,7 @@ export default async function MapaBritoPage() {
               xpTotal={perfil.xpTotal}
               rachaMejor={perfil.rachaMejor}
               imagenUrl={(session?.user as any)?.image ?? null}
-              trigger={abrir => (
-                <button
-                  onClick={abrir}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
-                >
-                  <User className="w-[18px] h-[18px]" /> Perfil
-                </button>
-              )}
+              variante="navitem"
             />
           </aside>
 

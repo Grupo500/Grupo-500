@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { signOut } from 'next-auth/react'
-import { X, LogOut, Mail, Sparkles, Flame } from 'lucide-react'
+import { X, LogOut, Mail, Sparkles, Flame, User } from 'lucide-react'
 
 export function PerfilMenu({
-  nombre, email, plan, xpTotal, rachaMejor, imagenUrl, trigger,
+  nombre, email, plan, xpTotal, rachaMejor, imagenUrl, variante = 'avatar',
 }: {
   nombre: string
   email: string
@@ -14,7 +14,7 @@ export function PerfilMenu({
   xpTotal: number
   rachaMejor: number
   imagenUrl?: string | null
-  trigger?: (abrir: () => void) => React.ReactNode
+  variante?: 'avatar' | 'navitem'
 }) {
   const [abierto, setAbierto] = useState(false)
   const [montado, setMontado] = useState(false)
@@ -76,8 +76,13 @@ export function PerfilMenu({
 
   return (
     <>
-      {trigger ? (
-        trigger(() => setAbierto(true))
+      {variante === 'navitem' ? (
+        <button
+          onClick={() => setAbierto(true)}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
+        >
+          <User className="w-[18px] h-[18px]" /> Perfil
+        </button>
       ) : (
         <button
           onClick={() => setAbierto(true)}
