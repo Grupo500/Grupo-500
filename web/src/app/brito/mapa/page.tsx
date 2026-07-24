@@ -33,6 +33,7 @@ const SIGN_BLOCK = 140
 const TOP_PAD = 60
 const BOTTOM_PAD = 140
 const OFFSETS = [0, 20, 40, 20, 0, -20, -40, -20]
+const BUBBLE_W = 160
 
 function smoothPath(pts: [number, number][]): string {
   if (!pts.length) return ''
@@ -208,7 +209,7 @@ export default async function MapaBritoPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_320px] lg:h-dvh">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] lg:h-dvh">
         {/* Nav lateral izquierda — solo desktop */}
         <aside className="hidden lg:flex flex-col gap-1.5 bg-white border-r border-[#ECEAE2] p-6">
           <div className="flex items-center gap-2.5 pb-5 mb-2 border-b border-[#ECEAE2]">
@@ -329,7 +330,7 @@ export default async function MapaBritoPage() {
                           style={{
                             top: 36,
                             transform: 'translateY(-50%)',
-                            width: 95,
+                            width: BUBBLE_W,
                             boxShadow: '0 2px 8px rgba(40,30,10,0.12)',
                             textAlign: nodo.bubbleSide === 'left' ? 'right' : 'left',
                             ...(nodo.bubbleSide === 'left' ? { right: 80 } : { left: 80 }),
