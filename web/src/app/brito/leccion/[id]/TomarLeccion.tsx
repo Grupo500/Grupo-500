@@ -118,7 +118,7 @@ export function TomarLeccion({
           </div>
         )}
 
-        <h2 className="text-white font-medium text-lg leading-relaxed mb-6">{pregunta.enunciado}</h2>
+        <h2 className="text-white/85 font-normal text-base leading-relaxed mb-6">{pregunta.enunciado}</h2>
 
         <div className="space-y-2.5 flex-1">
           {pregunta.opciones.map(op => {
