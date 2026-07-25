@@ -4,9 +4,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
-import { obtenerPerfilActual } from '../acciones'
+import { obtenerPerfilActual, obtenerRanking } from '../acciones'
+import { RankingModal } from '../RankingModal'
 import {
-  Lock, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight,
+  Lock, ArrowLeft, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
@@ -24,13 +25,13 @@ const MATERIA_INFO: Record<string, { color: string; icono: string }> = {
   'Inglés': { color: '#D6598F', icono: '/brito/icons/ingles.png' },
 }
 
-// Cada sección tiene su propio color de banner, rotando la paleta.
+// Cada sección tiene su propio degradado de banner, rotando la paleta.
 const COLORES_SECCION = [
-  { bg: '#22C56E', sombra: '#159354' },
-  { bg: '#1E5FA8', sombra: '#154577' },
-  { bg: '#D6598F', sombra: '#A63F6C' },
-  { bg: '#F5A623', sombra: '#C97E1E' },
-  { bg: '#7C6FDB', sombra: '#5B4FB0' },
+  { de: '#1E5FA8', a: '#2E86D9', halo: 'rgba(30,95,168,0.30)' },
+  { de: '#17845F', a: '#22C56E', halo: 'rgba(23,132,95,0.30)' },
+  { de: '#A63F6C', a: '#D6598F', halo: 'rgba(166,63,108,0.30)' },
+  { de: '#C97E1E', a: '#F5A623', halo: 'rgba(201,126,30,0.30)' },
+  { de: '#5B4FB0', a: '#7C6FDB', halo: 'rgba(91,79,176,0.30)' },
 ]
 
 // Constantes de layout del sendero (posicionamiento absoluto, curva suave entre nodos).
@@ -87,7 +88,7 @@ export default async function MapaBritoPage({
   if (!perfil) redirect('/brito')
   const estudianteId = perfil.estudianteId
 
-  const [lecciones, completadas, estudiante] = await Promise.all([
+  const [lecciones, completadas, estudiante, ranking] = await Promise.all([
     prisma.britoLeccion.findMany({
       orderBy: [{ materia: 'asc' }, { orden: 'asc' }],
       include: { _count: { select: { preguntas: true } } },
@@ -101,6 +102,7 @@ export default async function MapaBritoPage({
       where: { id: estudianteId },
       select: { nombre: true, email: true },
     }),
+    obtenerRanking(),
   ])
   const completadasSet = new Set(completadas.map(c => c.leccionId))
 
@@ -178,7 +180,8 @@ export default async function MapaBritoPage({
     })
     rutas.push(smoothPath(puntos))
     const color = COLORES_SECCION[(sec.sesion - 1 + COLORES_SECCION.length) % COLORES_SECCION.length]
-    return { sesion: sec.sesion, headerTop, nodos, color }
+    const hechas = sec.nodos.filter(n => n.status === 'completed').length
+    return { sesion: sec.sesion, headerTop, nodos, color, hechas, totalNodos: sec.nodos.length }
   })
 
   const totalHeight = y + BOTTOM_PAD
@@ -212,9 +215,7 @@ export default async function MapaBritoPage({
             <span className="flex items-center gap-1">
               <img src="/brito/icons/xp.png" alt="" className="w-5 h-5 object-contain" /> {perfil.xpTotal}
             </span>
-            <Link href="/brito/ranking" title="Ranking" className="opacity-90 hover:opacity-100 transition-opacity">
-              <img src="/brito/icons/trofeo.png" alt="Ranking" className="w-5 h-5 object-contain" />
-            </Link>
+            <RankingModal ranking={ranking} miId={estudianteId} hayProgreso={totalCompletadas > 0} variante="icono" />
           </div>
 
           <div className="flex items-center gap-3">
@@ -252,12 +253,7 @@ export default async function MapaBritoPage({
           >
             <img src="/brito/icons/aprender.png" alt="" className="w-8 h-8 object-contain" /> Aprender
           </Link>
-          <Link
-            href="/brito/ranking"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[#57564f] hover:bg-[#F5F3EC] transition-colors text-sm font-bold"
-          >
-            <img src="/brito/icons/trofeo.png" alt="" className="w-8 h-8 object-contain" /> Ligas
-          </Link>
+          <RankingModal ranking={ranking} miId={estudianteId} hayProgreso={totalCompletadas > 0} variante="navitem" />
           <span
             title="Próximamente"
             className="flex flex-col gap-0.5 px-3 py-2.5 rounded-[10px] opacity-50 cursor-default"
@@ -354,28 +350,46 @@ export default async function MapaBritoPage({
               {bloques.map(bloque => (
                 <div key={bloque.sesion}>
                   <div
-                    className="absolute left-1/2 flex items-center justify-between gap-3 rounded-2xl px-5 py-4"
+                    className="absolute left-1/2 overflow-hidden rounded-[20px] px-5 py-4"
                     style={{
                       top: bloque.headerTop,
                       transform: 'translateX(-50%)',
-                      width: 'min(480px, 92vw)',
-                      background: bloque.color.bg,
-                      boxShadow: `0 4px 0 ${bloque.color.sombra}`,
+                      width: 'min(500px, 92vw)',
+                      background: `linear-gradient(115deg, ${bloque.color.de} 0%, ${bloque.color.a} 100%)`,
+                      boxShadow: `0 10px 24px -6px ${bloque.color.halo}`,
                     }}
                   >
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-extrabold uppercase tracking-wider text-white/75">
-                        Sección {bloque.sesion}
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+                        style={{ background: 'rgba(255,255,255,0.92)' }}
+                      >
+                        <img src="/brito/icons/libro.png" alt="" className="h-7 w-7 object-contain" />
                       </div>
-                      <div className="mt-0.5 text-[19px] font-extrabold leading-tight text-white">
-                        Practica todas las materias
+
+                      <div className="min-w-0 flex-1">
+                        <span
+                          className="inline-block rounded-full px-2.5 py-[3px] text-[10px] font-extrabold uppercase tracking-wider text-white"
+                          style={{ background: 'rgba(255,255,255,0.22)' }}
+                        >
+                          Sección {bloque.sesion}
+                        </span>
+                        <div className="mt-1.5 text-[18px] font-extrabold leading-tight text-white">
+                          Practica todas las materias
+                        </div>
                       </div>
                     </div>
-                    <div
-                      className="flex shrink-0 items-center justify-center rounded-xl p-2"
-                      style={{ background: 'rgba(255,255,255,0.18)' }}
-                    >
-                      <img src="/brito/icons/libro.png" alt="" className="h-8 w-8 object-contain" />
+
+                    <div className="mt-3.5 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.25)' }}>
+                        <div
+                          className="h-full rounded-full bg-white transition-all"
+                          style={{ width: `${Math.round((bloque.hechas / bloque.totalNodos) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="shrink-0 text-[11.5px] font-extrabold text-white/90">
+                        {bloque.hechas}/{bloque.totalNodos}
+                      </span>
                     </div>
                   </div>
 
@@ -469,23 +483,7 @@ export default async function MapaBritoPage({
             </div>
           </div>
 
-          <Link
-            href="/brito/ranking"
-            className="rounded-2xl p-4 flex flex-col gap-2"
-            style={{ background: '#EAF1FA', border: '1px solid #DCE8F5' }}
-          >
-            <img src="/brito/icons/trofeo.png" alt="" className="w-8 h-8 object-contain" />
-            <div className="font-extrabold text-[15px] text-[#2B2B28]">¡Compite en las Ligas!</div>
-            <p className="text-xs font-semibold text-[#6b6a63] leading-snug">
-              {totalCompletadas > 0 ? 'Sube posiciones y gana medallas cada semana.' : 'Completa tu primera lección para entrar al ranking.'}
-            </p>
-            <div
-              className="mt-1.5 rounded-full py-2.5 px-4 flex items-center justify-center gap-1.5 text-white font-bold text-[13px]"
-              style={{ background: '#1E5FA8', boxShadow: '0 4px 12px rgba(30,95,168,0.28)' }}
-            >
-              Ver ranking <ArrowRight className="w-4 h-4" />
-            </div>
-          </Link>
+          <RankingModal ranking={ranking} miId={estudianteId} hayProgreso={totalCompletadas > 0} />
         </aside>
       </div>
 
