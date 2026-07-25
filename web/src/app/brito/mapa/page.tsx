@@ -6,7 +6,7 @@ import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
 import {
-  Flame, Heart, Trophy, Lock, ArrowLeft, Route, Gift, Flag,
+  Trophy, Lock, ArrowLeft, Route, Gift, Flag,
   BookOpen, RotateCw, ArrowRight,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
@@ -179,12 +179,16 @@ export default async function MapaBritoPage() {
           </div>
 
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 text-sm font-bold">
-            <span className="flex items-center gap-1"><Flame className="w-4 h-4 text-[#F5A623]" /> {perfil.rachaActual}</span>
             <span className="flex items-center gap-1">
-              <Heart className="w-4 h-4 text-[#D6598F]" />
+              <img src="/brito/icons/racha.png" alt="" className="w-5 h-5 object-contain" /> {perfil.rachaActual}
+            </span>
+            <span className="flex items-center gap-1">
+              <img src="/brito/icons/vidas.png" alt="" className="w-5 h-5 object-contain" />
               {perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones}
             </span>
-            <span className="flex items-center gap-1 text-[#3B82D6]">{perfil.xpTotal} XP</span>
+            <span className="flex items-center gap-1">
+              <img src="/brito/icons/xp.png" alt="" className="w-5 h-5 object-contain" /> {perfil.xpTotal}
+            </span>
             <Link href="/brito/ranking" title="Ranking" className="text-[#6b6a63] hover:text-[#2B2B28] transition-colors">
               <Trophy className="w-4 h-4" />
             </Link>
