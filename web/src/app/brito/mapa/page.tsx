@@ -322,12 +322,16 @@ export default async function MapaBritoPage() {
                     return (
                       <div key={nodo.id} className="absolute" style={{ top: nodo.top, left: nodo.left, width: NODE }}>
                         {nodo.status === 'current' && (
-                          <div
-                            className="absolute whitespace-nowrap text-white font-extrabold text-[11.5px] px-3.5 py-1.5 rounded-full animate-bounce"
-                            style={{ top: -34, left: '50%', transform: 'translateX(-50%)', background: '#F5A623', boxShadow: '0 4px 10px rgba(245,166,35,0.4)' }}
-                          >
-                            EMPEZAR
-                            <div className="absolute rotate-45" style={{ bottom: -4, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 8, height: 8, background: '#F5A623' }} />
+                          // El contenedor externo centra; el interno anima. Si se juntan,
+                          // el transform de animate-bounce pisa el translateX(-50%) del centrado.
+                          <div className="absolute" style={{ top: -34, left: '50%', transform: 'translateX(-50%)' }}>
+                            <div
+                              className="relative whitespace-nowrap text-white font-extrabold text-[11.5px] px-3.5 py-1.5 rounded-full animate-bounce"
+                              style={{ background: '#F5A623', boxShadow: '0 4px 10px rgba(245,166,35,0.4)' }}
+                            >
+                              EMPEZAR
+                              <div className="absolute" style={{ bottom: -4, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 8, height: 8, background: '#F5A623' }} />
+                            </div>
                           </div>
                         )}
 
