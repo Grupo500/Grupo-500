@@ -319,7 +319,7 @@ export default async function MapaBritoPage() {
                       <div key={nodo.id} className="absolute" style={{ top: nodo.top, left: nodo.left, width: NODE }}>
                         {nodo.status === 'current' && (
                           <div
-                            className="absolute whitespace-nowrap text-white font-extrabold text-[11.5px] px-3.5 py-1.5 rounded-full"
+                            className="absolute whitespace-nowrap text-white font-extrabold text-[11.5px] px-3.5 py-1.5 rounded-full animate-bounce"
                             style={{ top: -34, left: '50%', transform: 'translateX(-50%)', background: '#F5A623', boxShadow: '0 4px 10px rgba(245,166,35,0.4)' }}
                           >
                             EMPEZAR
