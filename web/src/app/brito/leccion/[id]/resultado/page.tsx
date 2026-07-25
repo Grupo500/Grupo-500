@@ -2,7 +2,6 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Flame, Sparkles } from 'lucide-react'
 
 export default async function ResultadoLeccionPage({
   searchParams,
@@ -45,13 +44,13 @@ export default async function ResultadoLeccionPage({
       <div className="w-full max-w-xs bg-white rounded-2xl p-5 shadow-[0_16px_40px_-8px_rgba(0,30,60,0.45)] space-y-3 mb-6">
         <div className="flex items-center justify-between px-1">
           <span className="flex items-center gap-2 text-sm font-semibold text-[#001d3d]">
-            <Sparkles className="w-4 h-4 text-amber-500" /> XP ganado
+            <img src="/brito/icons/xp.png" alt="" className="w-5 h-5 object-contain" /> XP ganado
           </span>
           <span className="text-sm font-bold text-[#001d3d]">+{xp}</span>
         </div>
         <div className="flex items-center justify-between px-1">
           <span className="flex items-center gap-2 text-sm font-semibold text-[#001d3d]">
-            <Flame className="w-4 h-4 text-orange-500" /> Racha
+            <img src="/brito/icons/racha.png" alt="" className="w-5 h-5 object-contain" /> Racha
           </span>
           <span className="text-sm font-bold text-[#001d3d]">{racha} {racha === 1 ? 'día' : 'días'}</span>
         </div>

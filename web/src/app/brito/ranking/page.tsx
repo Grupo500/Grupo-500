@@ -1,10 +1,8 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Trophy, Medal } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { obtenerRanking, obtenerEstudianteIdActual } from '../acciones'
-
-const MEDALLA = ['text-amber-400', 'text-slate-300', 'text-amber-700']
 
 export default async function RankingBritoPage() {
   const session = await auth()
@@ -20,7 +18,7 @@ export default async function RankingBritoPage() {
         </Link>
 
         <div className="flex items-center gap-2 mb-1">
-          <Trophy className="w-5 h-5 text-amber-400" />
+          <img src="/brito/icons/trofeo.png" alt="" className="w-7 h-7 object-contain" />
           <h1 className="text-xl font-bold text-white">Ranking semanal</h1>
         </div>
         <p className="text-xs text-white/50 mb-6">XP ganado en los últimos 7 días · Global</p>
@@ -36,8 +34,10 @@ export default async function RankingBritoPage() {
                   key={r.estudianteId}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${esYo ? 'bg-[#ffb703]/15 border-[#ffb703]/40' : 'bg-white/5 border-white/10'}`}
                 >
-                  <span className={`w-7 text-center font-bold text-sm ${r.posicion <= 3 ? MEDALLA[r.posicion - 1] : 'text-white/50'}`}>
-                    {r.posicion <= 3 ? <Medal className="w-4 h-4 inline" /> : r.posicion}
+                  <span className="w-7 flex items-center justify-center font-bold text-sm text-white/50">
+                    {r.posicion <= 3
+                      ? <img src="/brito/icons/medalla.png" alt={`Puesto ${r.posicion}`} className="w-6 h-6 object-contain" />
+                      : r.posicion}
                   </span>
                   <span className={`flex-1 text-sm font-medium truncate ${esYo ? 'text-white' : 'text-white/85'}`}>
                     {r.nombre}{esYo && ' (tú)'}

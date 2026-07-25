@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { signOut } from 'next-auth/react'
-import { X, LogOut, Mail, Diamond, Flame, UserCircle2 } from 'lucide-react'
+import { X, LogOut, Mail, UserCircle2 } from 'lucide-react'
 
 export function PerfilMenu({
   nombre, email, plan, xpTotal, rachaMejor, imagenUrl, variante = 'avatar',
@@ -44,12 +44,12 @@ export function PerfilMenu({
 
             <div className="flex gap-2.5 mb-4">
               <div className="flex-1 bg-[#F5F0E6] rounded-xl p-3 text-center">
-                <Diamond className="w-[19px] h-[19px] text-[#3B82D6] mx-auto" />
+                <img src="/brito/icons/xp.png" alt="" className="w-[22px] h-[22px] object-contain mx-auto" />
                 <p className="text-[#2B2B28] font-extrabold text-[15px] mt-1">{xpTotal}</p>
                 <p className="text-[#8a897f] text-[10px] font-bold">XP total</p>
               </div>
               <div className="flex-1 bg-[#F5F0E6] rounded-xl p-3 text-center">
-                <Flame className="w-[19px] h-[19px] text-[#F5A623] mx-auto" />
+                <img src="/brito/icons/racha.png" alt="" className="w-[22px] h-[22px] object-contain mx-auto" />
                 <p className="text-[#2B2B28] font-extrabold text-[15px] mt-1">{rachaMejor}</p>
                 <p className="text-[#8a897f] text-[10px] font-bold">Mejor racha</p>
               </div>

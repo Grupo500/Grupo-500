@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { auth } from '@/auth'
-import { ArrowLeft, Flame, Heart, Trophy } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 export const metadata = {
   title: 'Brito — Con Brito te vas a convertir en cerebrito',
@@ -41,9 +41,9 @@ export default async function BritoLandingPage() {
           </p>
 
           <div className="flex items-center justify-center gap-5 text-[#001d3d] mb-5">
-            <span className="flex items-center gap-1.5 text-xs font-semibold"><Flame className="w-4 h-4 text-orange-500" /> Racha</span>
-            <span className="flex items-center gap-1.5 text-xs font-semibold"><Heart className="w-4 h-4 text-red-500" /> Corazones</span>
-            <span className="flex items-center gap-1.5 text-xs font-semibold"><Trophy className="w-4 h-4 text-amber-500" /> Ranking</span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold"><img src="/brito/icons/racha.png" alt="" className="w-5 h-5 object-contain" /> Racha</span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold"><img src="/brito/icons/vidas.png" alt="" className="w-5 h-5 object-contain" /> Corazones</span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold"><img src="/brito/icons/trofeo.png" alt="" className="w-5 h-5 object-contain" /> Ranking</span>
           </div>
 
           {role === 'ESTUDIANTE' ? (

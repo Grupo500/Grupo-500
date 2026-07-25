@@ -6,8 +6,7 @@ import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
 import {
-  Trophy, Lock, ArrowLeft, Route, Gift, Flag,
-  BookOpen, RotateCw, ArrowRight,
+  Lock, ArrowLeft, Route, ArrowRight, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
@@ -66,7 +65,12 @@ type NodoLeccion = {
   esRepaso?: boolean
 }
 
-export default async function MapaBritoPage() {
+export default async function MapaBritoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ seccion?: string }>
+}) {
+  const { seccion: seccionParam } = await searchParams
   const session = await auth()
   if (!ROLES_PERMITIDOS.includes((session?.user as any)?.role)) redirect('/brito')
 
@@ -122,9 +126,24 @@ export default async function MapaBritoPage() {
         status: todasCompletadas ? 'completed' : 'locked',
         esRepaso: true,
       }
-      return { sesion, nodos: [...nodosMateria, repaso] }
+      return { sesion, nodos: [...nodosMateria, repaso], completa: todasCompletadas }
     })
-    .filter((s): s is { sesion: number; nodos: NodoLeccion[] } => s !== null)
+    .filter((s): s is { sesion: number; nodos: NodoLeccion[]; completa: boolean } => s !== null)
+
+  // Paginación: se muestra una sola sección a la vez. Una sección queda
+  // accesible cuando la anterior está completa; la primera siempre lo está.
+  const accesibles = secciones.map((_, i) => i === 0 || secciones[i - 1].completa)
+  const indicePorDefecto = Math.max(
+    0,
+    secciones.findIndex(s => s.nodos.some(n => n.status === 'current'))
+  )
+  const pedido = seccionParam ? secciones.findIndex(s => s.sesion === Number(seccionParam)) : -1
+  const indiceActivo = pedido >= 0 && accesibles[pedido] ? pedido : indicePorDefecto
+  const seccionActiva = secciones[indiceActivo]
+  const hayAnterior = indiceActivo > 0
+  const haySiguiente = indiceActivo < secciones.length - 1
+  const siguienteDesbloqueada = haySiguiente && accesibles[indiceActivo + 1]
+  const seccionesVisibles = seccionActiva ? [seccionActiva] : []
 
   // Layout absoluto: se calculan las coordenadas (top/left) de cada nodo,
   // los puntos de la curva del sendero por sección, y la posición final de la bandera.
@@ -132,7 +151,7 @@ export default async function MapaBritoPage() {
   let gIndex = 0
   const rutas: string[] = []
   const divisores: number[] = []
-  const bloques = secciones.map((sec, secIdx) => {
+  const bloques = seccionesVisibles.map((sec, secIdx) => {
     if (secIdx > 0) divisores.push(y + 35)
     const headerTop = y
     y += SIGN_BLOCK
@@ -189,8 +208,8 @@ export default async function MapaBritoPage() {
             <span className="flex items-center gap-1">
               <img src="/brito/icons/xp.png" alt="" className="w-5 h-5 object-contain" /> {perfil.xpTotal}
             </span>
-            <Link href="/brito/ranking" title="Ranking" className="text-[#6b6a63] hover:text-[#2B2B28] transition-colors">
-              <Trophy className="w-4 h-4" />
+            <Link href="/brito/ranking" title="Ranking" className="opacity-90 hover:opacity-100 transition-opacity">
+              <img src="/brito/icons/trofeo.png" alt="Ranking" className="w-5 h-5 object-contain" />
             </Link>
           </div>
 
@@ -233,14 +252,14 @@ export default async function MapaBritoPage() {
             href="/brito/ranking"
             className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[#57564f] hover:bg-[#F5F3EC] transition-colors text-sm font-bold"
           >
-            <Trophy className="w-[18px] h-[18px]" /> Ligas
+            <img src="/brito/icons/trofeo.png" alt="" className="w-[20px] h-[20px] object-contain" /> Ligas
           </Link>
           <span
             title="Próximamente"
             className="flex flex-col gap-0.5 px-3 py-2.5 rounded-[10px] opacity-50 cursor-default"
           >
             <span className="flex items-center gap-3 text-[#57564f] text-sm font-bold">
-              <Gift className="w-[18px] h-[18px]" /> Recompensas
+              <img src="/brito/icons/regalo.png" alt="" className="w-[20px] h-[20px] object-contain" /> Recompensas
             </span>
             <span className="text-[10px] font-bold uppercase tracking-wide text-[#9a998f] ml-[30px]">Próximamente</span>
           </span>
@@ -261,6 +280,45 @@ export default async function MapaBritoPage() {
             <div className="hidden lg:block max-w-md mx-auto mt-6 bg-[#FCE9F0] border border-[#F3C6D8] rounded-xl p-4 text-center">
               <p className="text-sm font-bold text-[#B33D6E]">Te quedaste sin corazones</p>
               <p className="text-xs text-[#B33D6E]/70 mt-0.5">Se regeneran 1 cada 4 horas. Vuelve pronto o hazte Premium.</p>
+            </div>
+          )}
+
+          {seccionActiva && secciones.length > 1 && (
+            <div className="sticky top-0 z-10 backdrop-blur-md bg-[#EEF2F7]/85 border-b border-[#DDE3EB]">
+              <div className="mx-auto flex items-center justify-between gap-2 px-3 py-2.5" style={{ maxWidth: CONTENT_W + 40 }}>
+                {hayAnterior ? (
+                  <Link
+                    href={`/brito/mapa?seccion=${secciones[indiceActivo - 1].sesion}`}
+                    className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[#1E5FA8] shadow-sm transition-colors hover:bg-[#EAF1FA]"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Anterior
+                  </Link>
+                ) : (
+                  <span className="w-[92px]" />
+                )}
+
+                <span className="text-[12px] font-bold text-[#6b6a63]">
+                  Sección {seccionActiva.sesion} de {secciones.length}
+                </span>
+
+                {siguienteDesbloqueada ? (
+                  <Link
+                    href={`/brito/mapa?seccion=${secciones[indiceActivo + 1].sesion}`}
+                    className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[#1E5FA8] shadow-sm transition-colors hover:bg-[#EAF1FA]"
+                  >
+                    Siguiente <ChevronRight className="h-4 w-4" />
+                  </Link>
+                ) : haySiguiente ? (
+                  <span
+                    title="Completa esta sección para desbloquear la siguiente"
+                    className="flex cursor-default items-center gap-1 rounded-full bg-[#E4E7EC] px-3 py-1.5 text-[12px] font-bold text-[#9a998f]"
+                  >
+                    Siguiente <Lock className="h-3.5 w-3.5" />
+                  </span>
+                ) : (
+                  <span className="w-[92px]" />
+                )}
+              </div>
             </div>
           )}
 
@@ -295,7 +353,7 @@ export default async function MapaBritoPage() {
                     className="absolute left-1/2 -translate-x-1/2 bg-white rounded-xl px-4 py-3 text-center shadow-sm flex items-center justify-center gap-2"
                     style={{ top: bloque.headerTop, width: 200, boxShadow: '0 2px 8px rgba(40,30,10,0.06)' }}
                   >
-                    <BookOpen className="w-4 h-4 text-[#1E5FA8] shrink-0" />
+                    <img src="/brito/icons/libro.png" alt="" className="w-6 h-6 object-contain shrink-0" />
                     <div>
                       <div className="font-extrabold text-[15px] text-[#2B2B28] leading-tight">Sección {bloque.sesion}</div>
                       <div className="text-[11.5px] font-semibold text-[#8a897f]">Practica todas las materias</div>
@@ -313,7 +371,7 @@ export default async function MapaBritoPage() {
                         {nodo.status === 'locked' ? (
                           <Lock className="w-[22px] h-[22px] text-[#9a998f]" />
                         ) : nodo.esRepaso ? (
-                          <RotateCw className="w-[26px] h-[26px] text-white" />
+                          <img src="/brito/icons/repaso.png" alt="" className="w-10 h-10 object-contain" />
                         ) : (
                           <img src={info?.icono} alt="" className="w-11 h-11 object-contain" />
                         )}
@@ -367,7 +425,7 @@ export default async function MapaBritoPage() {
                     className="absolute w-[72px] h-[72px] rounded-full flex items-center justify-center"
                     style={{ top: flag.top, left: flag.left, background: '#1E5FA8', boxShadow: '0 4px 12px rgba(30,95,168,0.25)' }}
                   >
-                    <Flag className="w-[26px] h-[26px] text-white" />
+                    <img src="/brito/icons/meta.png" alt="" className="w-10 h-10 object-contain" />
                   </div>
                   <div className="absolute text-center" style={{ top: flag.top + 88, left: flag.left, width: NODE }}>
                     <div className="font-bold text-[12.5px] text-[#57564f]">Meta</div>
@@ -412,7 +470,7 @@ export default async function MapaBritoPage() {
             className="rounded-2xl p-4 flex flex-col gap-2"
             style={{ background: '#EAF1FA', border: '1px solid #DCE8F5' }}
           >
-            <Trophy className="w-[26px] h-[26px] text-[#1E5FA8]" />
+            <img src="/brito/icons/trofeo.png" alt="" className="w-8 h-8 object-contain" />
             <div className="font-extrabold text-[15px] text-[#2B2B28]">¡Compite en las Ligas!</div>
             <p className="text-xs font-semibold text-[#6b6a63] leading-snug">
               {totalCompletadas > 0 ? 'Sube posiciones y gana medallas cada semana.' : 'Completa tu primera lección para entrar al ranking.'}

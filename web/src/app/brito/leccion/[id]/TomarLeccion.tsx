@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { X, Heart, Check, XCircle, Loader2 } from 'lucide-react'
+import { X, Check, XCircle, Loader2 } from 'lucide-react'
 import { responderPregunta, finalizarLeccion } from '../../acciones'
 
 interface Opcion { letra: string; texto: string }
@@ -100,7 +100,7 @@ export function TomarLeccion({
           <div className="h-full bg-gradient-to-r from-[#ffb703] to-[#fb8500] transition-all duration-300" style={{ width: `${progreso}%` }} />
         </div>
         <span className="flex items-center gap-1 text-white text-sm font-semibold shrink-0">
-          <Heart className="w-4 h-4 text-red-400" /> {plan === 'PREMIUM' ? '∞' : corazones}
+          <img src="/brito/icons/vidas.png" alt="" className="w-5 h-5 object-contain" /> {plan === 'PREMIUM' ? '∞' : corazones}
         </span>
       </div>
 
