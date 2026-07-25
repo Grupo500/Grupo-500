@@ -6,7 +6,7 @@ import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
 import {
-  Lock, ArrowLeft, Route, ArrowRight, ChevronLeft, ChevronRight,
+  Lock, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
@@ -23,6 +23,15 @@ const MATERIA_INFO: Record<string, { color: string; icono: string }> = {
   'Ciencias Naturales': { color: '#2FA37A', icono: '/brito/icons/ciencias.png' },
   'Inglés': { color: '#D6598F', icono: '/brito/icons/ingles.png' },
 }
+
+// Cada sección tiene su propio color de banner, rotando la paleta.
+const COLORES_SECCION = [
+  { bg: '#22C56E', sombra: '#159354' },
+  { bg: '#1E5FA8', sombra: '#154577' },
+  { bg: '#D6598F', sombra: '#A63F6C' },
+  { bg: '#F5A623', sombra: '#C97E1E' },
+  { bg: '#7C6FDB', sombra: '#5B4FB0' },
+]
 
 // Constantes de layout del sendero (posicionamiento absoluto, curva suave entre nodos).
 const NODE = 72
@@ -168,16 +177,11 @@ export default async function MapaBritoPage({
       return { ...n, top, left: centerX - NODE / 2, bubbleSide }
     })
     rutas.push(smoothPath(puntos))
-    return { sesion: sec.sesion, headerTop, nodos }
+    const color = COLORES_SECCION[(sec.sesion - 1 + COLORES_SECCION.length) % COLORES_SECCION.length]
+    return { sesion: sec.sesion, headerTop, nodos, color }
   })
 
-  let flag: { top: number; left: number } | null = null
-  if (bloques.length > 0) {
-    const off = OFFSETS[gIndex % OFFSETS.length]
-    const flagCenterX = CONTENT_W / 2 + off
-    flag = { top: y, left: flagCenterX - NODE / 2 }
-  }
-  const totalHeight = y + NODE + BOTTOM_PAD
+  const totalHeight = y + BOTTOM_PAD
 
   const totalCompletadas = completadas.length
   const sinCorazones = perfil.plan !== 'PREMIUM' && perfil.corazones <= 0
@@ -246,22 +250,22 @@ export default async function MapaBritoPage({
             href="/brito/mapa"
             className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-[#EAF1FA] text-[#1E5FA8] text-sm font-bold"
           >
-            <Route className="w-[18px] h-[18px]" /> Aprender
+            <img src="/brito/icons/aprender.png" alt="" className="w-8 h-8 object-contain" /> Aprender
           </Link>
           <Link
             href="/brito/ranking"
             className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[#57564f] hover:bg-[#F5F3EC] transition-colors text-sm font-bold"
           >
-            <img src="/brito/icons/trofeo.png" alt="" className="w-[20px] h-[20px] object-contain" /> Ligas
+            <img src="/brito/icons/trofeo.png" alt="" className="w-8 h-8 object-contain" /> Ligas
           </Link>
           <span
             title="Próximamente"
             className="flex flex-col gap-0.5 px-3 py-2.5 rounded-[10px] opacity-50 cursor-default"
           >
             <span className="flex items-center gap-3 text-[#57564f] text-sm font-bold">
-              <img src="/brito/icons/regalo.png" alt="" className="w-[20px] h-[20px] object-contain" /> Recompensas
+              <img src="/brito/icons/regalo.png" alt="" className="w-8 h-8 object-contain" /> Recompensas
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wide text-[#9a998f] ml-[30px]">Próximamente</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide text-[#9a998f] ml-[44px]">Próximamente</span>
           </span>
           <PerfilMenu
             nombre={estudiante?.nombre ?? 'Estudiante'}
@@ -350,13 +354,28 @@ export default async function MapaBritoPage({
               {bloques.map(bloque => (
                 <div key={bloque.sesion}>
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 bg-white rounded-xl px-4 py-3 text-center shadow-sm flex items-center justify-center gap-2"
-                    style={{ top: bloque.headerTop, width: 200, boxShadow: '0 2px 8px rgba(40,30,10,0.06)' }}
+                    className="absolute left-1/2 flex items-center justify-between gap-3 rounded-2xl px-5 py-4"
+                    style={{
+                      top: bloque.headerTop,
+                      transform: 'translateX(-50%)',
+                      width: 'min(480px, 92vw)',
+                      background: bloque.color.bg,
+                      boxShadow: `0 4px 0 ${bloque.color.sombra}`,
+                    }}
                   >
-                    <img src="/brito/icons/libro.png" alt="" className="w-6 h-6 object-contain shrink-0" />
-                    <div>
-                      <div className="font-extrabold text-[15px] text-[#2B2B28] leading-tight">Sección {bloque.sesion}</div>
-                      <div className="text-[11.5px] font-semibold text-[#8a897f]">Practica todas las materias</div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-extrabold uppercase tracking-wider text-white/75">
+                        Sección {bloque.sesion}
+                      </div>
+                      <div className="mt-0.5 text-[19px] font-extrabold leading-tight text-white">
+                        Practica todas las materias
+                      </div>
+                    </div>
+                    <div
+                      className="flex shrink-0 items-center justify-center rounded-xl p-2"
+                      style={{ background: 'rgba(255,255,255,0.18)' }}
+                    >
+                      <img src="/brito/icons/libro.png" alt="" className="h-8 w-8 object-contain" />
                     </div>
                   </div>
 
@@ -418,21 +437,6 @@ export default async function MapaBritoPage({
                   })}
                 </div>
               ))}
-
-              {flag && (
-                <>
-                  <div
-                    className="absolute w-[72px] h-[72px] rounded-full flex items-center justify-center"
-                    style={{ top: flag.top, left: flag.left, background: '#1E5FA8', boxShadow: '0 4px 12px rgba(30,95,168,0.25)' }}
-                  >
-                    <img src="/brito/icons/meta.png" alt="" className="w-10 h-10 object-contain" />
-                  </div>
-                  <div className="absolute text-center" style={{ top: flag.top + 88, left: flag.left, width: NODE }}>
-                    <div className="font-bold text-[12.5px] text-[#57564f]">Meta</div>
-                    <div className="text-[11px] font-semibold text-[#8a897f]">Fin de la sección</div>
-                  </div>
-                </>
-              )}
             </div>
           )}
         </div>

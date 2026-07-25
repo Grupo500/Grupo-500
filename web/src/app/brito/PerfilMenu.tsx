@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { signOut } from 'next-auth/react'
-import { X, LogOut, Mail, UserCircle2 } from 'lucide-react'
+import { X, LogOut, Mail } from 'lucide-react'
 
 export function PerfilMenu({
   nombre, email, plan, xpTotal, rachaMejor, imagenUrl, variante = 'avatar',
@@ -79,7 +79,7 @@ export function PerfilMenu({
           onClick={() => setAbierto(true)}
           className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[#57564f] hover:bg-[#F5F3EC] transition-colors text-sm font-bold"
         >
-          <UserCircle2 className="w-[18px] h-[18px]" /> Perfil
+          <img src="/brito/icons/perfil.png" alt="" className="w-8 h-8 object-contain" /> Perfil
         </button>
       ) : (
         <button
