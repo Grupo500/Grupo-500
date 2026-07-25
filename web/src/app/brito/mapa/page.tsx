@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
-import { obtenerPerfilActual, obtenerRanking } from '../acciones'
+import { obtenerPerfilActual } from '../acciones'
+import { obtenerEstadoLiga } from '../ligas'
 import { RankingModal } from '../RankingModal'
 import {
   Lock, ArrowLeft, ChevronLeft, ChevronRight,
@@ -88,7 +89,7 @@ export default async function MapaBritoPage({
   if (!perfil) redirect('/brito')
   const estudianteId = perfil.estudianteId
 
-  const [lecciones, completadas, estudiante, ranking] = await Promise.all([
+  const [lecciones, completadas, estudiante, estadoLiga] = await Promise.all([
     prisma.britoLeccion.findMany({
       orderBy: [{ materia: 'asc' }, { orden: 'asc' }],
       include: { _count: { select: { preguntas: true } } },
@@ -102,7 +103,7 @@ export default async function MapaBritoPage({
       where: { id: estudianteId },
       select: { nombre: true, email: true },
     }),
-    obtenerRanking(),
+    obtenerEstadoLiga(estudianteId),
   ])
   const completadasSet = new Set(completadas.map(c => c.leccionId))
 
@@ -186,7 +187,6 @@ export default async function MapaBritoPage({
 
   const totalHeight = y + BOTTOM_PAD
 
-  const totalCompletadas = completadas.length
   const sinCorazones = perfil.plan !== 'PREMIUM' && perfil.corazones <= 0
 
   return (
@@ -215,7 +215,7 @@ export default async function MapaBritoPage({
             <span className="flex items-center gap-1">
               <img src="/brito/icons/xp.png" alt="" className="w-5 h-5 object-contain" /> {perfil.xpTotal}
             </span>
-            <RankingModal ranking={ranking} miId={estudianteId} hayProgreso={totalCompletadas > 0} variante="icono" />
+            <RankingModal estado={estadoLiga} miId={estudianteId} variante="icono" />
           </div>
 
           <div className="flex items-center gap-3">
@@ -249,16 +249,16 @@ export default async function MapaBritoPage({
 
           <Link
             href="/brito/mapa"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-[#EAF1FA] text-[#1E5FA8] text-sm font-bold"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-[#EAF1FA] text-[#1E5FA8] text-sm font-semibold"
           >
             <img src="/brito/icons/aprender.png" alt="" className="w-8 h-8 object-contain" /> Aprender
           </Link>
-          <RankingModal ranking={ranking} miId={estudianteId} hayProgreso={totalCompletadas > 0} variante="navitem" />
+          <RankingModal estado={estadoLiga} miId={estudianteId} variante="navitem" />
           <span
             title="Próximamente"
             className="flex flex-col gap-0.5 px-3 py-2.5 rounded-[10px] opacity-50 cursor-default"
           >
-            <span className="flex items-center gap-3 text-[#57564f] text-sm font-bold">
+            <span className="flex items-center gap-3 text-[#57564f] text-sm font-semibold">
               <img src="/brito/icons/regalo.png" alt="" className="w-8 h-8 object-contain" /> Recompensas
             </span>
             <span className="text-[10px] font-bold uppercase tracking-wide text-[#9a998f] ml-[44px]">Próximamente</span>
@@ -369,12 +369,12 @@ export default async function MapaBritoPage({
 
                       <div className="min-w-0 flex-1">
                         <span
-                          className="inline-block rounded-full px-2.5 py-[3px] text-[10px] font-extrabold uppercase tracking-wider text-white"
+                          className="inline-block rounded-full px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-wider text-white"
                           style={{ background: 'rgba(255,255,255,0.22)' }}
                         >
                           Sección {bloque.sesion}
                         </span>
-                        <div className="mt-1.5 text-[18px] font-extrabold leading-tight text-white">
+                        <div className="mt-1.5 text-[18px] font-bold leading-tight text-white">
                           Practica todas las materias
                         </div>
                       </div>
@@ -443,8 +443,8 @@ export default async function MapaBritoPage({
                             ...(nodo.bubbleSide === 'left' ? { right: 80 } : { left: 80 }),
                           }}
                         >
-                          <div className="font-bold text-xs" style={{ color: subjectColor }}>{nodo.materia}</div>
-                          <div className="text-[11px] font-semibold text-[#79786f] mt-0.5">{nodo.titulo}</div>
+                          <div className="font-semibold text-xs" style={{ color: subjectColor }}>{nodo.materia}</div>
+                          <div className="text-[11px] font-normal text-[#79786f] mt-0.5">{nodo.titulo}</div>
                         </div>
                       </div>
                     )
@@ -461,29 +461,29 @@ export default async function MapaBritoPage({
             <div className="flex items-center gap-3">
               <img src="/brito/icons/racha.png" alt="" className="w-8 h-8 object-contain" />
               <div>
-                <div className="font-extrabold text-base text-[#2B2B28]">{perfil.rachaActual} días</div>
-                <div className="text-[11px] text-[#8a897f] font-semibold">Racha actual</div>
+                <div className="font-bold text-base text-[#2B2B28]">{perfil.rachaActual} días</div>
+                <div className="text-[11px] text-[#8a897f] font-medium">Racha actual</div>
               </div>
             </div>
             <div className="h-px bg-[#D9DEE5]" />
             <div className="flex items-center gap-3">
               <img src="/brito/icons/vidas.png" alt="" className="w-8 h-8 object-contain" />
               <div>
-                <div className="font-extrabold text-base text-[#2B2B28]">{perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones} vidas</div>
-                <div className="text-[11px] text-[#8a897f] font-semibold">Te quedan</div>
+                <div className="font-bold text-base text-[#2B2B28]">{perfil.plan === 'PREMIUM' ? '∞' : perfil.corazones} vidas</div>
+                <div className="text-[11px] text-[#8a897f] font-medium">Te quedan</div>
               </div>
             </div>
             <div className="h-px bg-[#D9DEE5]" />
             <div className="flex items-center gap-3">
               <img src="/brito/icons/xp.png" alt="" className="w-8 h-8 object-contain" />
               <div>
-                <div className="font-extrabold text-base text-[#2B2B28]">{perfil.xpTotal} XP</div>
-                <div className="text-[11px] text-[#8a897f] font-semibold">Experiencia total</div>
+                <div className="font-bold text-base text-[#2B2B28]">{perfil.xpTotal} XP</div>
+                <div className="text-[11px] text-[#8a897f] font-medium">Experiencia total</div>
               </div>
             </div>
           </div>
 
-          <RankingModal ranking={ranking} miId={estudianteId} hayProgreso={totalCompletadas > 0} />
+          <RankingModal estado={estadoLiga} miId={estudianteId} />
         </aside>
       </div>
 

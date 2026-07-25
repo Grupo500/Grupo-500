@@ -3,6 +3,7 @@
 import { auth, hashDocumento } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { asegurarLiga } from './ligas'
 
 const MAX_CORAZONES_FREE = 5
 const HORAS_POR_CORAZON = 4
@@ -147,6 +148,9 @@ export async function finalizarLeccion(leccionId: string, correctas: number, tot
   }
   const rachaMejor = Math.max(perfil.rachaMejor, rachaActual)
 
+  // Garantiza la membresía de la semana en curso antes de sumarle el XP.
+  const miembro = await asegurarLiga(estudianteId)
+
   await prisma.$transaction([
     prisma.britoLeccionCompletada.create({
       data: { estudianteId, leccionId, correctas, total, xpGanado },
@@ -155,35 +159,12 @@ export async function finalizarLeccion(leccionId: string, correctas: number, tot
       where: { estudianteId },
       data: { xpTotal: { increment: xpGanado }, rachaActual, rachaMejor, ultimaLeccionAt: new Date() },
     }),
+    ...(miembro
+      ? [prisma.britoMiembroLiga.update({ where: { id: miembro.id }, data: { xpSemana: { increment: xpGanado } } })]
+      : []),
   ])
 
   revalidatePath('/brito/mapa')
-  revalidatePath('/brito/ranking')
   return { ok: true, xpGanado, rachaActual }
 }
 
-// ── Ranking semanal simple (global, por XP ganado en los últimos 7 días) ─
-export async function obtenerRanking() {
-  const hace7dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-
-  const filas = await prisma.britoLeccionCompletada.groupBy({
-    by: ['estudianteId'],
-    where: { completadaAt: { gte: hace7dias } },
-    _sum: { xpGanado: true },
-    orderBy: { _sum: { xpGanado: 'desc' } },
-    take: 20,
-  })
-
-  const estudiantes = await prisma.estudianteExamen.findMany({
-    where: { id: { in: filas.map(f => f.estudianteId) } },
-    select: { id: true, nombre: true },
-  })
-  const nombreDe = new Map(estudiantes.map(e => [e.id, e.nombre]))
-
-  return filas.map((f, i) => ({
-    posicion: i + 1,
-    estudianteId: f.estudianteId,
-    nombre: nombreDe.get(f.estudianteId) ?? 'Estudiante',
-    xpSemana: f._sum.xpGanado ?? 0,
-  }))
-}

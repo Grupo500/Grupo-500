@@ -522,10 +522,37 @@ model BritoPerfil {
   rachaMejor      Int       @default(0)
   ultimaLeccionAt DateTime?
   plan            String    @default("FREE")
+  liga             Int      @default(0)
+  ligaSemana       String?
+  semanasInactivas Int      @default(0)
   createdAt       DateTime  @default(now())
   estudiante      EstudianteExamen @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
 
   @@map("brito_perfiles")
+}
+
+model BritoGrupoLiga {
+  id        String             @id @default(cuid())
+  liga      Int
+  semana    String
+  createdAt DateTime           @default(now())
+  miembros  BritoMiembroLiga[]
+
+  @@index([liga, semana])
+  @@map("brito_grupos_liga")
+}
+
+model BritoMiembroLiga {
+  id           String         @id @default(cuid())
+  grupoId      String
+  estudianteId String         @db.Uuid
+  xpSemana     Int            @default(0)
+  resultado    String?
+  grupo        BritoGrupoLiga @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+
+  @@unique([grupoId, estudianteId])
+  @@index([estudianteId])
+  @@map("brito_miembros_liga")
 }
 
 model BritoLeccionCompletada {
