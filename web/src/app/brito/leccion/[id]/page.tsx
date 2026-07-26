@@ -48,6 +48,7 @@ export default async function LeccionPage({ params }: { params: Promise<{ id: st
     <TomarLeccion
       leccionId={leccion.id}
       leccionTitulo={leccion.titulo}
+      leccionMateria={leccion.materia}
       preguntas={preguntas}
       corazonesIniciales={perfil.corazones}
       plan={perfil.plan === 'PREMIUM' ? 'PREMIUM' : 'FREE'}

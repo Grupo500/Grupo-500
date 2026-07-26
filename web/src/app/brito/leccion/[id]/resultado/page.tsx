@@ -2,6 +2,9 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Nunito } from 'next/font/google'
+
+const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 export default async function ResultadoLeccionPage({
   searchParams,
@@ -19,49 +22,63 @@ export default async function ResultadoLeccionPage({
   const porcentaje = total > 0 ? Math.round((correctas / total) * 100) : 0
   const buenDesempeno = porcentaje >= 70
 
+  const acento = buenDesempeno
+    ? { color: '#22C56E', oscuro: '#159354' }
+    : { color: '#F5A623', oscuro: '#C97E1E' }
+
   return (
     <main
-      className="min-h-dvh flex flex-col items-center justify-center px-4 py-10 text-center"
-      style={{ background: buenDesempeno ? 'linear-gradient(160deg, #003060 0%, #2094ff 55%, #21b9f7 100%)' : 'linear-gradient(160deg, #1a2332 0%, #2c3e50 100%)' }}
+      className={`${nunito.className} flex min-h-dvh flex-col items-center justify-center px-4 py-10 text-center animate-fade-in`}
+      style={{ background: '#EEF2F7', color: '#2B2B28' }}
     >
-      <div className="w-36 h-36 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shadow-2xl mb-5">
-        <Image
-          src="/brito/brito-hero.jpg"
-          alt="Brito"
-          width={144}
-          height={144}
-          className={`object-cover w-full h-full ${buenDesempeno ? '' : 'grayscale opacity-80'}`}
-        />
-      </div>
-
-      <h1 className="text-2xl font-extrabold text-white tracking-tight mb-1">
-        {buenDesempeno ? '¡Muy bien!' : '¡Sigue practicando!'}
-      </h1>
-      <p className="text-sm text-white/75 mb-6">
-        {correctas} de {total} correctas ({porcentaje}%)
-      </p>
-
-      <div className="w-full max-w-xs bg-white rounded-2xl p-5 shadow-[0_16px_40px_-8px_rgba(0,30,60,0.45)] space-y-3 mb-6">
-        <div className="flex items-center justify-between px-1">
-          <span className="flex items-center gap-2 text-sm font-semibold text-[#001d3d]">
-            <img src="/brito/icons/xp.png" alt="" className="w-5 h-5 object-contain" /> XP ganado
-          </span>
-          <span className="text-sm font-bold text-[#001d3d]">+{xp}</span>
+      <div className="flex w-full max-w-sm flex-col items-center animate-card-enter">
+        <div
+          className="mb-5 h-32 w-32 overflow-hidden rounded-full border-4 border-white"
+          style={{ boxShadow: `0 10px 26px -6px ${acento.color}55` }}
+        >
+          <Image
+            src="/brito/brito-hero.jpg"
+            alt="Brito"
+            width={128}
+            height={128}
+            className={`h-full w-full object-cover ${buenDesempeno ? '' : 'grayscale'}`}
+          />
         </div>
-        <div className="flex items-center justify-between px-1">
-          <span className="flex items-center gap-2 text-sm font-semibold text-[#001d3d]">
-            <img src="/brito/icons/racha.png" alt="" className="w-5 h-5 object-contain" /> Racha
-          </span>
-          <span className="text-sm font-bold text-[#001d3d]">{racha} {racha === 1 ? 'día' : 'días'}</span>
-        </div>
-      </div>
 
-      <Link
-        href="/brito/mapa"
-        className="w-full max-w-xs block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97]"
-      >
-        Continuar
-      </Link>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight">
+          {buenDesempeno ? '¡Muy bien!' : '¡Sigue practicando!'}
+        </h1>
+        <p className="mb-6 text-sm font-medium text-[#6b6a63]">
+          {correctas} de {total} correctas ({porcentaje}%)
+        </p>
+
+        <div className="mb-6 w-full space-y-2.5">
+          <Fila icono="/brito/icons/xp.png" etiqueta="XP ganado" valor={`+${xp}`} />
+          <Fila icono="/brito/icons/racha.png" etiqueta="Racha" valor={`${racha} ${racha === 1 ? 'día' : 'días'}`} />
+        </div>
+
+        <Link
+          href="/brito/mapa"
+          className="w-full rounded-full py-3.5 text-center text-sm font-bold text-white transition-all active:translate-y-[2px]"
+          style={{ background: acento.color, boxShadow: `0 4px 0 ${acento.oscuro}` }}
+        >
+          Continuar
+        </Link>
+      </div>
     </main>
+  )
+}
+
+function Fila({ icono, etiqueta, valor }: { icono: string; etiqueta: string; valor: string }) {
+  return (
+    <div
+      className="flex items-center justify-between rounded-2xl bg-white px-4 py-3.5"
+      style={{ boxShadow: '0 2px 10px rgba(40,30,10,0.06)' }}
+    >
+      <span className="flex items-center gap-2.5 text-sm font-semibold text-[#2B2B28]">
+        <img src={icono} alt="" className="h-6 w-6 object-contain" /> {etiqueta}
+      </span>
+      <span className="text-[15px] font-bold text-[#1E5FA8]">{valor}</span>
+    </div>
   )
 }

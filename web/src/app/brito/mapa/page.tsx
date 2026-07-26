@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
 import { obtenerEstadoLiga } from '../ligas'
 import { RankingModal } from '../RankingModal'
+import { MATERIAS, MATERIA_INFO } from '@/lib/britoMaterias'
 import {
   Lock, ArrowLeft, ChevronLeft, ChevronRight,
 } from 'lucide-react'
@@ -15,16 +16,7 @@ import { PerfilMenu } from '../PerfilMenu'
 
 const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
-const MATERIAS = ['Lectura Crítica', 'Matemáticas', 'Sociales y Ciudadanas', 'Ciencias Naturales', 'Inglés']
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
-
-const MATERIA_INFO: Record<string, { color: string; icono: string }> = {
-  'Lectura Crítica': { color: '#7C6FDB', icono: '/brito/icons/lectura-critica.png' },
-  'Matemáticas': { color: '#3B82D6', icono: '/brito/icons/matematicas.png' },
-  'Sociales y Ciudadanas': { color: '#D69A2D', icono: '/brito/icons/sociales.png' },
-  'Ciencias Naturales': { color: '#2FA37A', icono: '/brito/icons/ciencias.png' },
-  'Inglés': { color: '#D6598F', icono: '/brito/icons/ingles.png' },
-}
 
 // Cada sección tiene su propio degradado de banner, rotando la paleta.
 const COLORES_SECCION = [

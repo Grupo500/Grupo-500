@@ -4,8 +4,12 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Nunito } from 'next/font/google'
 import { X, Check, XCircle, Loader2 } from 'lucide-react'
+import { materiaInfo } from '@/lib/britoMaterias'
 import { responderPregunta, finalizarLeccion } from '../../acciones'
+
+const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 interface Opcion { letra: string; texto: string }
 interface Pregunta {
@@ -17,10 +21,11 @@ interface Pregunta {
 }
 
 export function TomarLeccion({
-  leccionId, leccionTitulo, preguntas, corazonesIniciales, plan,
+  leccionId, leccionTitulo, leccionMateria, preguntas, corazonesIniciales, plan,
 }: {
   leccionId: string
   leccionTitulo: string
+  leccionMateria: string
   preguntas: Pregunta[]
   corazonesIniciales: number
   plan: 'FREE' | 'PREMIUM'
@@ -34,8 +39,12 @@ export function TomarLeccion({
   const [feedback, setFeedback] = useState<{ correcta: boolean; letraCorrecta: string; explicacion: string | null } | null>(null)
   const [sinCorazones, setSinCorazones] = useState(false)
 
+  const materia = materiaInfo(leccionMateria)
   const pregunta = preguntas[indice]
   const progreso = ((indice + (feedback ? 1 : 0)) / preguntas.length) * 100
+  // Con un contexto largo la lectura se parte en dos columnas en escritorio,
+  // así el texto no empuja las opciones fuera de la pantalla.
+  const dosColumnas = !!pregunta.contexto && pregunta.contexto.length > 320
 
   function elegir(letra: string) {
     if (feedback || pending) return
@@ -76,118 +85,185 @@ export function TomarLeccion({
 
   if (sinCorazones) {
     return (
-      <main className="min-h-dvh flex flex-col items-center justify-center px-4 text-center" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
-        <div className="w-24 h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden mb-4">
-          <Image src="/brito/brito-hero.jpg" alt="Brito" width={96} height={96} className="object-cover w-full h-full grayscale" />
+      <main className={`${nunito.className} min-h-dvh flex flex-col items-center justify-center px-4 text-center animate-fade-in`} style={{ background: '#EEF2F7' }}>
+        <div className="animate-card-enter flex flex-col items-center">
+          <div className="mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
+            <Image src="/brito/brito-hero.jpg" alt="Brito" width={96} height={96} className="h-full w-full object-cover grayscale" />
+          </div>
+          <h1 className="mb-2 text-xl font-bold text-[#2B2B28]">Te quedaste sin corazones</h1>
+          <p className="mb-6 max-w-xs text-sm font-medium text-[#6b6a63]">
+            Se regeneran 1 cada 4 horas. Vuelve pronto para seguir practicando.
+          </p>
+          <Link
+            href="/brito/mapa"
+            className="rounded-full px-6 py-3 text-sm font-bold text-white"
+            style={{ background: '#1E5FA8', boxShadow: '0 4px 0 #154577' }}
+          >
+            Volver al mapa
+          </Link>
         </div>
-        <h1 className="text-xl font-bold text-white mb-2">Te quedaste sin corazones</h1>
-        <p className="text-sm text-white/70 mb-6 max-w-xs">Se regeneran 1 cada 4 horas. Vuelve pronto para seguir practicando.</p>
-        <Link href="/brito/mapa" className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ffb703] to-[#fb8500] text-white font-semibold text-sm">
-          Volver al mapa
-        </Link>
       </main>
     )
   }
 
   return (
-    <main className="min-h-dvh flex flex-col" style={{ background: 'linear-gradient(180deg, #003060 0%, #0b1f3a 100%)' }}>
-      {/* Header con progreso */}
-      <div className="flex items-center gap-3 px-4 py-3">
-        <Link href="/brito/mapa" className="text-white/60 hover:text-white transition-colors shrink-0">
-          <X className="w-5 h-5" />
-        </Link>
-        <div className="flex-1 h-2.5 rounded-full bg-white/10 overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-[#ffb703] to-[#fb8500] transition-all duration-300" style={{ width: `${progreso}%` }} />
+    <main className={`${nunito.className} flex min-h-dvh flex-col animate-fade-in`} style={{ background: '#EEF2F7', color: '#2B2B28' }}>
+      {/* Cabecera con progreso */}
+      <header className="sticky top-0 z-10 border-b border-[#E1E6EE] bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+          <Link href="/brito/mapa" title="Salir de la lección" className="shrink-0 text-[#9a998f] transition-colors hover:text-[#2B2B28]">
+            <X className="h-5 w-5" />
+          </Link>
+
+          <img src={materia.icono} alt="" className="hidden h-7 w-7 shrink-0 object-contain sm:block" />
+          <div className="hidden min-w-0 shrink-0 sm:block" style={{ width: 150 }}>
+            <div className="truncate text-[12.5px] font-semibold leading-tight" style={{ color: materia.color }}>
+              {leccionMateria}
+            </div>
+            <div className="truncate text-[11px] font-normal text-[#8a897f]">{leccionTitulo}</div>
+          </div>
+
+          <div className="h-3 flex-1 overflow-hidden rounded-full bg-[#E1E6EE]">
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{ width: `${progreso}%`, background: materia.color }}
+            />
+          </div>
+
+          <span className="flex shrink-0 items-center gap-1.5 text-sm font-bold">
+            <img src="/brito/icons/vidas.png" alt="" className="h-5 w-5 object-contain" />
+            {plan === 'PREMIUM' ? '∞' : corazones}
+          </span>
         </div>
-        <span className="flex items-center gap-1 text-white text-sm font-semibold shrink-0">
-          <img src="/brito/icons/vidas.png" alt="" className="w-5 h-5 object-contain" /> {plan === 'PREMIUM' ? '∞' : corazones}
-        </span>
+      </header>
+
+      {/* Contenido */}
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 pb-40 pt-7">
+        <p className="mb-4 text-[11.5px] font-semibold uppercase tracking-wider text-[#a5a49b]">
+          Pregunta {indice + 1} de {preguntas.length}
+        </p>
+
+        <div key={pregunta.id} className={`animate-card-enter gap-6 ${dosColumnas ? 'lg:grid lg:grid-cols-2 lg:items-start' : ''}`}>
+          {/* Columna de lectura */}
+          {(pregunta.contexto || pregunta.imagenUrl) && (
+            <div className={dosColumnas ? 'lg:sticky lg:top-24' : ''}>
+              {pregunta.contexto && (
+                <div
+                  className={`mb-4 rounded-2xl bg-white p-5 text-[14.5px] font-normal leading-relaxed text-[#4a4941] ${dosColumnas ? 'lg:mb-0 lg:max-h-[calc(100dvh-260px)] lg:overflow-y-auto' : 'max-h-56 overflow-y-auto'}`}
+                  style={{ boxShadow: '0 2px 10px rgba(40,30,10,0.06)' }}
+                >
+                  {pregunta.contexto}
+                </div>
+              )}
+              {pregunta.imagenUrl && (
+                <div className="mb-4 overflow-hidden rounded-2xl bg-white" style={{ boxShadow: '0 2px 10px rgba(40,30,10,0.06)' }}>
+                  <Image src={pregunta.imagenUrl} alt="" width={600} height={400} className="h-auto w-full object-contain" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Columna de respuesta */}
+          <div>
+            <h2 className="mb-5 text-[17px] font-semibold leading-relaxed text-[#2B2B28]">{pregunta.enunciado}</h2>
+
+            <div className="space-y-3">
+              {pregunta.opciones.map((op, i) => {
+                const esSeleccionada = seleccion === op.letra
+                const esCorrectaMostrada = feedback && op.letra === feedback.letraCorrecta
+                const esIncorrectaSeleccionada = feedback && esSeleccionada && !feedback.correcta
+
+                let estilo: React.CSSProperties = {
+                  background: '#FFFFFF',
+                  boxShadow: '0 3px 0 #DCE1E9',
+                  color: '#2B2B28',
+                }
+                if (esCorrectaMostrada) {
+                  estilo = { background: '#E4F8EC', boxShadow: '0 3px 0 #159354', color: '#12704A' }
+                } else if (esIncorrectaSeleccionada) {
+                  estilo = { background: '#FDE9E9', boxShadow: '0 3px 0 #C23B3B', color: '#A32F2F' }
+                } else if (!feedback && esSeleccionada) {
+                  estilo = { background: '#FFFFFF', boxShadow: `0 3px 0 ${materia.oscuro}`, color: materia.oscuro }
+                }
+
+                return (
+                  // El contenedor externo anima la entrada; el botón conserva su
+                  // propio transform de hover. Si se juntan, el transform final
+                  // de la animación (fill both) pisa el hover.
+                  <div key={op.letra} className="animate-card-enter" style={{ animationDelay: `${60 + i * 55}ms` }}>
+                    <button
+                      disabled={!!feedback || pending}
+                      onClick={() => elegir(op.letra)}
+                      className="flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium transition-all disabled:cursor-default enabled:hover:-translate-y-[2px]"
+                      style={estilo}
+                    >
+                      <span
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold"
+                        style={{ borderColor: 'currentColor' }}
+                      >
+                        {op.letra}
+                      </span>
+                      <span className="flex-1">{op.texto}</span>
+                      {esCorrectaMostrada && <Check className="h-4 w-4 shrink-0" />}
+                      {esIncorrectaSeleccionada && <XCircle className="h-4 w-4 shrink-0" />}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 max-w-3xl w-full mx-auto px-4 md:px-0 py-8 flex flex-col">
-        <p className="text-xs text-white/50 font-medium mb-3">{leccionTitulo} · {indice + 1}/{preguntas.length}</p>
-
-        {pregunta.contexto && (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-3 text-sm text-white/80 max-h-40 overflow-y-auto">
-            {pregunta.contexto}
-          </div>
-        )}
-        {pregunta.imagenUrl && (
-          <div className="mb-3 rounded-xl overflow-hidden border border-white/10">
-            <Image src={pregunta.imagenUrl} alt="" width={600} height={400} className="w-full h-auto object-contain bg-white" />
-          </div>
-        )}
-
-        <h2 className="text-white/85 font-normal text-base leading-relaxed mb-6">{pregunta.enunciado}</h2>
-
-        <div className="space-y-2.5 flex-1">
-          {pregunta.opciones.map(op => {
-            const esSeleccionada = seleccion === op.letra
-            const esCorrectaMostrada = feedback && op.letra === feedback.letraCorrecta
-            const esIncorrectaSeleccionada = feedback && esSeleccionada && !feedback.correcta
-
-            let estilo = 'border-white/15 bg-white/5 text-white/90 hover:bg-white/10'
-            if (esCorrectaMostrada) estilo = 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
-            else if (esIncorrectaSeleccionada) estilo = 'border-red-400 bg-red-500/20 text-red-100'
-            else if (feedback && esSeleccionada) estilo = 'border-white/30 bg-white/10 text-white'
-            else if (!feedback && esSeleccionada) estilo = 'border-[#fb8500] bg-[#fb8500]/15 text-white'
-
-            return (
-              <button
-                key={op.letra}
-                disabled={!!feedback || pending}
-                onClick={() => elegir(op.letra)}
-                className={`w-full text-left px-5 py-4 rounded-xl border text-[15px] font-medium transition-all flex items-center gap-3 ${estilo} disabled:cursor-default`}
-              >
-                <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-xs font-bold shrink-0">
-                  {op.letra}
-                </span>
-                <span className="flex-1">{op.texto}</span>
-                {esCorrectaMostrada && <Check className="w-4 h-4 shrink-0" />}
-                {esIncorrectaSeleccionada && <XCircle className="w-4 h-4 shrink-0" />}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Barra inferior de confirmar selección */}
+      {/* Barra inferior fija: confirmar o feedback */}
       {!feedback && seleccion && (
-        <div className="px-4 py-4 border-t border-white/10 bg-white/5">
-          <div className="max-w-3xl mx-auto flex justify-end">
+        <div className="fixed inset-x-0 bottom-0 border-t border-[#E1E6EE] bg-white animate-slide-up">
+          <div className="mx-auto flex max-w-5xl justify-end px-4 py-4">
             <button
               onClick={confirmar}
               disabled={pending}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ffb703] to-[#fb8500] text-white font-semibold text-sm flex items-center gap-2 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-full px-8 py-3 text-sm font-bold text-white transition-all disabled:opacity-60 enabled:active:translate-y-[2px]"
+              style={{ background: materia.color, boxShadow: `0 4px 0 ${materia.oscuro}` }}
             >
-              {pending && <Loader2 className="w-4 h-4 animate-spin" />}
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               Confirmar
             </button>
           </div>
         </div>
       )}
 
-      {/* Barra inferior de feedback */}
       {feedback && (
-        <div className={`px-4 py-4 border-t ${feedback.correcta ? 'bg-emerald-950/60 border-emerald-500/30' : 'bg-red-950/60 border-red-500/30'}`}>
-          <div className="max-w-3xl mx-auto flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full overflow-hidden border border-white/20 shrink-0">
-              <Image src="/brito/brito-hero.jpg" alt="Brito" width={44} height={44} className="object-cover w-full h-full" />
+        <div
+          className="fixed inset-x-0 bottom-0 border-t animate-slide-up"
+          style={
+            feedback.correcta
+              ? { background: '#E4F8EC', borderColor: '#B9E9CD' }
+              : { background: '#FDE9E9', borderColor: '#F3C6C6' }
+          }
+        >
+          <div className="mx-auto flex max-w-5xl items-center gap-3.5 px-4 py-4">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm">
+              <Image src="/brito/brito-hero.jpg" alt="Brito" width={48} height={48} className={`h-full w-full object-cover ${feedback.correcta ? '' : 'grayscale'}`} />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm font-bold ${feedback.correcta ? 'text-emerald-300' : 'text-red-300'}`}>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-bold" style={{ color: feedback.correcta ? '#12704A' : '#A32F2F' }}>
                 {feedback.correcta ? '¡Correcto!' : 'Incorrecto'}
               </p>
               {feedback.explicacion && (
-                <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{feedback.explicacion}</p>
+                <p className="mt-0.5 line-clamp-2 text-[12.5px] font-normal text-[#57564f]">{feedback.explicacion}</p>
               )}
             </div>
             <button
               onClick={siguiente}
               disabled={pending}
-              className="shrink-0 px-4 py-2 rounded-xl bg-white text-[#001d3d] font-semibold text-sm flex items-center gap-2 disabled:opacity-60"
+              className="flex shrink-0 items-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white transition-all disabled:opacity-60 enabled:active:translate-y-[2px]"
+              style={
+                feedback.correcta
+                  ? { background: '#22C56E', boxShadow: '0 4px 0 #159354' }
+                  : { background: '#D94A4A', boxShadow: '0 4px 0 #A32F2F' }
+              }
             >
-              {pending && <Loader2 className="w-4 h-4 animate-spin" />}
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {indice + 1 >= preguntas.length ? 'Terminar' : 'Continuar'}
             </button>
           </div>
