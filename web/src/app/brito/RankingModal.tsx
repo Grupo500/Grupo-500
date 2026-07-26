@@ -153,7 +153,7 @@ export function RankingModal({
       ) : (
         <button
           onClick={() => setAbierto(true)}
-          className="flex w-full flex-col gap-2 rounded-2xl p-4 text-left"
+          className="group flex w-full flex-col gap-2 rounded-2xl p-4 text-left"
           style={{ background: '#EAF1FA', border: '1px solid #DCE8F5' }}
         >
           <div className="flex items-center gap-2.5">
@@ -173,10 +173,10 @@ export function RankingModal({
               : 'Completa tu primera lección para entrar a competir.'}
           </span>
           <span
-            className="mt-1.5 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-[13px] font-bold text-white"
-            style={{ background: '#1E5FA8', boxShadow: '0 4px 12px rgba(30,95,168,0.28)' }}
+            className="mt-1.5 flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_12px_rgba(30,95,168,0.28)] transition-all group-hover:-translate-y-[2px] group-hover:brightness-110 group-hover:shadow-[0_7px_18px_rgba(30,95,168,0.4)] group-active:translate-y-0 group-active:brightness-95"
+            style={{ background: '#1E5FA8' }}
           >
-            Ver ranking <ArrowRight className="h-4 w-4" />
+            Ver ranking <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </span>
         </button>
       )}
