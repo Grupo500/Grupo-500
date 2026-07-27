@@ -724,3 +724,29 @@ Admin/Asesor revisa → presiona "Confirmar matrícula" → ✓ Verificado
 - Formularios Cal B y Cal C
 - Twilio WhatsApp real
 - Exportar reportes CSV/PDF
+
+---
+
+## Sesión 013 — 2026-07-27
+
+**Objetivo:** Entrenamiento del agente sobre **Plata Clara** — convertir el documento de handoff en memoria operativa permanente del repositorio.
+
+### Lo que se hizo
+
+**Nueva skill `plata-clara`** (`.claude/skills/plata-clara/`, espejada en `.agents/skills/`):
+- `SKILL.md` — identidad del proyecto, las 4 reglas que no se rompen (pesos enteros, `cache.invalidarUsuario()`, filtrar por `req.usuario.id`, la app nunca regaña), el flujo "recibe una orden → ejecuta de punta a punta", mapa del código y recetas rápidas.
+- `references/despliegue.md` — dev local, receta de despliegue (debe terminar en `DEPLOY_OK`), VPS Hostinger/GRUPO500, servicios, DNS, rollback, gotchas de infra, estado de la monetización (Hotmart, pausada).
+- `references/finanzas.md` — motor de cálculo (`server/src/finanzas.js`), fórmulas, parámetros Colombia y la advertencia de que avalancha ≡ bola de nieve con cuotas mínimas (no es bug).
+- `references/api-y-datos.md` — esquema SQLite, 12 endpoints, CSRF (`X-Requested-With`), caché LRU + ETag, Clerk.
+- `references/gotchas-y-qa.md` — método de QA con **sign-in tokens de Clerk** (el formulario de registro NO funciona con Playwright; no es rate limit) + 11 gotchas de Windows, frontend y PWA.
+- `references/diseno-y-copy.md` — tokens Nocturne y el tono del copy con ejemplos ❌/✅.
+
+**Decisión de seguridad:** este repositorio es **público**. Los procedimientos se documentaron completos, pero los secretos NO: la contraseña del usuario de QA se omitió (el flujo de ticket no la necesita), y la IP del VPS se parametrizó como `$PC_VPS` / `$PC_SSH_KEY`, a resolver desde el runbook local en tiempo de ejecución. La skill incluye una tabla de dónde vive cada credencial.
+
+### Decisiones tomadas
+- Plata Clara **no** vive en este repo (git local + espejo en VPS, sin GitHub); la skill es solo memoria operativa, no código.
+- La descripción de la skill delimita explícitamente que **no** aplica a Grupo 500 / ICFES, para evitar disparos cruzados entre los dos proyectos.
+
+### Pendientes
+- Rotar la contraseña del usuario de QA de Clerk (`qa.plataclara@gmail.com`) si el documento de handoff circuló.
+- El historial venía desactualizado: las sesiones del módulo "brito" (junio–julio) no están registradas.
