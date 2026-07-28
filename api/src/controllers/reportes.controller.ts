@@ -72,6 +72,62 @@ export async function dashboard(req: Request, res: Response) {
   })
 }
 
+// Módulo "Mis ventas": totales del periodo + ritmo diario, para el asesor logueado.
+// Atribuye por `pago.asesorId` (quién hizo la venta), no por el asesor del
+// estudiante — un asesor puede venderle a un estudiante que trajo otro.
+export async function misVentasResumen(req: Request, res: Response) {
+  const yo = req.asesorId
+  const { desde, hasta } = req.query
+
+  const hoy = new Date()
+  const inicio = desde ? new Date(String(desde)) : new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const fin = hasta ? new Date(String(hasta)) : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
+
+  if (!yo) {
+    return ApiResponse.success(res, {
+      vendido: 0, comision: 0, cantidad: 0, ticketPromedio: 0,
+      dias: [], desde: inicio, hasta: fin,
+    })
+  }
+
+  const where = { asesorId: yo, estado: 'PAGADO' as const, fechaPago: { gte: inicio, lte: fin } }
+
+  const [agg, pagos] = await Promise.all([
+    prisma.pago.aggregate({ where, _sum: { monto: true, comisionAsesor: true }, _count: true }),
+    prisma.pago.findMany({ where, select: { monto: true, fechaPago: true } }),
+  ])
+
+  const vendido = agg._sum.monto ?? 0
+  const cantidad = agg._count
+
+  // Un punto por día del periodo, aunque no haya ventas — la gráfica necesita
+  // los días vacíos para que el ritmo del mes se lea completo.
+  const porDia = new Map<string, number>()
+  for (const p of pagos) {
+    if (!p.fechaPago) continue
+    const clave = p.fechaPago.toISOString().slice(0, 10)
+    porDia.set(clave, (porDia.get(clave) ?? 0) + p.monto)
+  }
+
+  const dias: { fecha: string; monto: number }[] = []
+  const cursor = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate())
+  while (cursor <= fin) {
+    const clave = cursor.toISOString().slice(0, 10)
+    dias.push({ fecha: clave, monto: porDia.get(clave) ?? 0 })
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return ApiResponse.success(res, {
+    vendido,
+    comision: agg._sum.comisionAsesor ?? 0,
+    cantidad,
+    ticketPromedio: cantidad > 0 ? Math.round(vendido / cantidad) : 0,
+    dias,
+    desde: inicio,
+    hasta: fin,
+  })
+}
+
 // Resumen personal del asesor logueado: ventas, comisión, posición y ranking
 export async function miResumenAsesor(req: Request, res: Response) {
   const yo = req.asesorId

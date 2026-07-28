@@ -15,9 +15,26 @@ const registrarSchema = z.object({
 })
 
 export async function listar(req: Request, res: Response) {
-  const { estudianteId, asesorId, estado, desde, hasta, nombre } = req.query
+  const { estudianteId, asesorId, estado, desde, hasta, nombre, cursoId, porFechaPago } = req.query
   const { page, limit, skip } = parsePagination(req.query)
   const isAdmin = req.userRole === 'ADMIN'
+
+  // El módulo "Mis ventas" ubica una venta por cuándo se pagó, no por cuándo
+  // vencía la cuota; el resto de pantallas sigue filtrando por vencimiento.
+  const rango = desde && hasta
+    ? { gte: new Date(String(desde)), lte: new Date(String(hasta)) }
+    : undefined
+
+  // El buscador cruza nombre del estudiante y referencia de Hotmart, para poder
+  // pegarle a una venta con el código de la transacción.
+  const busqueda = nombre
+    ? {
+        OR: [
+          { estudiante: { nombre: { contains: String(nombre), mode: 'insensitive' as const } } },
+          { referenciaPago: { contains: String(nombre), mode: 'insensitive' as const } },
+        ],
+      }
+    : {}
 
   const where = {
     // VENDEDORs only see their own payments
@@ -26,17 +43,29 @@ export async function listar(req: Request, res: Response) {
     // Admins can filter by any asesorId; vendedors can't override the scope above
     ...(isAdmin && asesorId && { asesorId: String(asesorId) }),
     ...(estado && { estado: String(estado) as any }),
-    ...(desde && hasta && { fechaVencimiento: { gte: new Date(String(desde)), lte: new Date(String(hasta)) } }),
-    ...(nombre && { estudiante: { nombre: { contains: String(nombre), mode: 'insensitive' as const } } }),
+    ...(rango && (porFechaPago === 'true' ? { fechaPago: rango } : { fechaVencimiento: rango })),
+    ...(cursoId && { estudiante: { cursos: { some: { cursoId: String(cursoId) } } } }),
+    ...busqueda,
   }
 
   const [pagos, total] = await Promise.all([
     prisma.pago.findMany({
       where,
-      include: { estudiante: true, asesor: true },
+      include: {
+        estudiante: {
+          include: {
+            // Todos los cursos, no solo el último: un pago no está ligado a un
+            // curso en el schema, así que el consumidor empareja por la fecha
+            // de compra más cercana a la del pago.
+            cursos: { include: { curso: { select: { id: true, nombre: true } } }, orderBy: { fechaCompra: 'desc' } },
+            asesor: { select: { id: true, nombre: true } },
+          },
+        },
+        asesor: true,
+      },
       skip,
       take: Number(limit),
-      orderBy: { createdAt: 'desc' },
+      orderBy: porFechaPago === 'true' ? { fechaPago: 'desc' } : { createdAt: 'desc' },
     }),
     prisma.pago.count({ where }),
   ])

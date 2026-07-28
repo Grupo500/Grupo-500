@@ -10,19 +10,22 @@ import {
   LayoutDashboard, Users, CalendarDays,
   BookOpen, School, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  ShieldCheck, ClipboardList, Settings, Gamepad2,
+  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AJUSTES_TABS } from '@/lib/ajustesNav'
 
+// `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor
+// que un ADMIN no necesita ver (él tiene sus propias vistas globales).
 type NavItem =
-  | { type: 'link';    href: string; label: string; icon: LucideIcon; adminOnly: boolean }
-  | { type: 'section'; label: string; adminOnly: boolean }
+  | { type: 'link';    href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean }
+  | { type: 'section'; label: string; adminOnly: boolean; soloAsesor?: boolean }
 
 const navItems: NavItem[] = [
   { type: 'link',    href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard, adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
+  { type: 'link',    href: '/mis-ventas',      label: 'Mis ventas',      icon: Receipt,         adminOnly: false, soloAsesor: true },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: false },
@@ -126,7 +129,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const { theme } = useTheme()
 
   const isAjustesMode = pathname === '/ajustes' || pathname.startsWith('/ajustes/')
-  const visibleItems = navItems.filter(item => !item.adminOnly || role === 'ADMIN')
+  const visibleItems = navItems.filter(
+    item => (!item.adminOnly || role === 'ADMIN') && (!item.soloAsesor || role !== 'ADMIN')
+  )
   const visibleAjustesTabs = AJUSTES_TABS.filter(t => !t.adminOnly || role === 'ADMIN')
   const isDark = theme === 'dark'
 

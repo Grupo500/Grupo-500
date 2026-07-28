@@ -9,12 +9,13 @@ import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   FileBarChart2, BarChart3,
-  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2,
+  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean }
+// `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor.
+type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean }
 
 const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
@@ -24,6 +25,7 @@ const primaryItems: NavItem[] = [
 ]
 
 const moreItems: NavItem[] = [
+  { href: '/mis-ventas',      label: 'Mis ventas',       icon: Receipt,       adminOnly: false, soloAsesor: true },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
@@ -51,7 +53,9 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   }, [moreOpen])
 
   const isDark = theme === 'dark'
-  const visibleMore = moreItems.filter(i => !i.adminOnly || role === 'ADMIN')
+  const visibleMore = moreItems.filter(
+    i => (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN')
+  )
   const isMoreActive = visibleMore.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
   const handleClose = () => setMoreOpen(false)
 
