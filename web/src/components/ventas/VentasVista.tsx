@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Search, Repeat2, Loader2, Receipt, AlertTriangle } from 'lucide-react'
+import {
+  ChevronLeft, ChevronRight, Search, Repeat2, Loader2, Receipt, AlertTriangle,
+  TrendingUp, Wallet, Target, type LucideIcon,
+} from 'lucide-react'
 
 // Los montos se comparan en columna: cifras tabulares para que cada dígito
 // ocupe el mismo ancho. La familia es la global (Poppins).
@@ -98,6 +101,8 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
   const [cursoId, setCursoId] = useState('')
   const [asesorId, setAsesorId] = useState('')
   const [pagina, setPagina] = useState(1)
+  const [diaActivo, setDiaActivo] = useState<number | null>(null)
+  const rielRef = useRef<HTMLDivElement>(null)
 
   const { inicio, fin } = useMemo(() => rangoDelMes(offset), [offset])
   const esMesActual = offset === 0
@@ -144,10 +149,25 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
   const maxDia = Math.max(1, ...(r?.dias ?? []).map(d => d.monto))
   const hoyISO = new Date().toISOString().slice(0, 10)
+  const diaSeleccionado = diaActivo != null ? r?.dias?.[diaActivo] ?? null : null
+
+  // Recorrer la gráfica con el dedo (o el mouse): la posición horizontal dentro
+  // del riel determina qué día se está mirando.
+  function scrub(e: React.TouchEvent | React.MouseEvent) {
+    const riel = rielRef.current
+    const dias = r?.dias?.length ?? 0
+    if (!riel || dias === 0) return
+    const x = 'touches' in e ? e.touches[0]?.clientX : e.clientX
+    if (x == null) return
+    const { left, width } = riel.getBoundingClientRect()
+    const i = Math.floor(((x - left) / width) * dias)
+    setDiaActivo(Math.min(dias - 1, Math.max(0, i)))
+  }
 
   function cambiarMes(delta: number) {
     setOffset(o => Math.max(0, o + delta))
     setPagina(1)
+    setDiaActivo(null)
   }
 
   return (
@@ -156,6 +176,14 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
         title={esAdmin ? 'Ventas' : 'Mis ventas'}
         subtitle={esAdmin ? 'Todas las ventas del equipo, con su atribución' : 'Cada venta que cerraste, con su comisión'}
       />
+
+      {/* Tarjetas de resumen — mismo formato que el dashboard */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Kpi icon={TrendingUp} label="Vendido" valor={formatCOP(r?.vendido ?? 0)} cargando={cargandoResumen} />
+        <Kpi icon={Wallet} label="Comisión" valor={formatCOP(r?.comision ?? 0)} valColor="#16a34a" cargando={cargandoResumen} />
+        <Kpi icon={Receipt} label="Ventas" valor={String(r?.cantidad ?? 0)} cargando={cargandoResumen} />
+        <Kpi icon={Target} label="Ticket promedio" valor={formatCOP(r?.ticketPromedio ?? 0)} cargando={cargandoResumen} />
+      </div>
 
       {/* Ritmo del mes */}
       <div className="card p-5">
@@ -189,10 +217,23 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
           <div className="h-16 rounded-xl bg-surface-high animate-pulse" />
         ) : (
           <>
-            <div className="flex items-end gap-[3px] h-16" role="img" aria-label={`Ventas por día de ${MESES[inicio.getMonth()]}`}>
-              {(r?.dias ?? []).map(d => {
+            <div
+              ref={rielRef}
+              onTouchStart={scrub}
+              onTouchMove={scrub}
+              onMouseLeave={() => setDiaActivo(null)}
+              onMouseMove={scrub}
+              // pan-y deja el scroll vertical de la página intacto y nos reserva
+              // el gesto horizontal para recorrer los días.
+              style={{ touchAction: 'pan-y' }}
+              className="flex items-end gap-[3px] h-16 cursor-crosshair"
+              role="img"
+              aria-label={`Ventas por día de ${MESES[inicio.getMonth()]}`}
+            >
+              {(r?.dias ?? []).map((d, i) => {
                 const esHoy = d.fecha === hoyISO
                 const futuro = d.fecha > hoyISO
+                const activo = i === diaActivo
                 const alto = d.monto > 0 ? Math.max(6, (d.monto / maxDia) * 100) : 4
                 return (
                   <div
@@ -201,31 +242,32 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                     className="flex-1 rounded-t-[2px] transition-all"
                     style={{
                       height: `${alto}%`,
-                      background: esHoy ? 'var(--on-surface)' : 'var(--primary)',
-                      opacity: futuro ? 0.15 : d.monto > 0 ? 1 : 0.25,
+                      background: activo || esHoy ? 'var(--on-surface)' : 'var(--primary)',
+                      opacity: activo ? 1 : futuro ? 0.15 : d.monto > 0 ? 1 : 0.25,
                     }}
                   />
                 )
               })}
             </div>
             <div className={`${mono.className} flex justify-between mt-1.5 text-[10.5px] text-on-surface-variant`}>
-              <span>1</span>
-              {esMesActual && <span className="text-on-surface">hoy · {new Date().getDate()}</span>}
-              <span>{fin.getDate()}</span>
+              {diaSeleccionado ? (
+                <>
+                  <span className="text-on-surface font-semibold">
+                    {Number(diaSeleccionado.fecha.slice(8, 10))} de {MESES[inicio.getMonth()]}
+                  </span>
+                  <span className="text-on-surface font-semibold">{formatCOP(diaSeleccionado.monto)}</span>
+                </>
+              ) : (
+                <>
+                  <span>1</span>
+                  {esMesActual && <span className="text-on-surface">hoy · {new Date().getDate()}</span>}
+                  <span>{fin.getDate()}</span>
+                </>
+              )}
             </div>
           </>
         )}
 
-        {/* Línea de totales */}
-        <div className="flex items-stretch border-t border-b border-surface-high mt-5 py-4">
-          <Total etiqueta="Vendido" valor={formatCOP(r?.vendido ?? 0)} cargando={cargandoResumen} flex="1.3" />
-          <Divisor />
-          <Total etiqueta="Comisión" valor={formatCOP(r?.comision ?? 0)} color="#16a34a" cargando={cargandoResumen} flex="1.1" />
-          <Divisor />
-          <Total etiqueta="Ventas" valor={String(r?.cantidad ?? 0)} cargando={cargandoResumen} flex="0.6" />
-          <Divisor />
-          <Total etiqueta="Ticket prom." valor={formatCOP(r?.ticketPromedio ?? 0)} cargando={cargandoResumen} flex="1.1" />
-        </div>
       </div>
 
       {/* Filtros */}
@@ -392,26 +434,29 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
   )
 }
 
-function Divisor() {
-  return <div className="w-px bg-surface-high mx-4 shrink-0" />
-}
-
-function Total({
-  etiqueta, valor, color, cargando, flex,
+// Mismo formato que las tarjetas del dashboard del asesor (AsesorDashboard.tsx),
+// para que las dos pantallas se lean igual.
+function Kpi({
+  icon: Icon, label, valor, valColor, cargando,
 }: {
-  etiqueta: string
+  icon: LucideIcon
+  label: string
   valor: string
-  color?: string
+  valColor?: string
   cargando?: boolean
-  flex: string
 }) {
   return (
-    <div style={{ flex }} className="min-w-0">
-      <p className="text-[11px] tracking-[0.14em] text-on-surface-variant font-semibold uppercase mb-1.5">{etiqueta}</p>
+    <div className="card p-4">
+      <p className="text-[11px] text-on-surface-variant flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5 shrink-0" /> {label}
+      </p>
       {cargando ? (
-        <div className="h-6 w-20 rounded bg-surface-high animate-pulse" />
+        <div className="h-[22px] w-24 rounded bg-surface-high animate-pulse mt-1.5" />
       ) : (
-        <p className={`${mono.className} text-[19px] font-medium truncate`} style={color ? { color } : undefined}>
+        <p
+          className="text-[22px] font-bold tabular-nums mt-1.5 leading-none truncate"
+          style={valColor ? { color: valColor } : undefined}
+        >
           {valor}
         </p>
       )}

@@ -17,16 +17,18 @@ import { cn } from '@/lib/utils'
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor.
 type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean }
 
+// Las ventas son el uso diario del asesor en el celular, así que ocupan un
+// puesto fijo en la barra; Cursos se consulta poco y pasa al menú "Más".
 const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
-  { href: '/cursos',       label: 'Cursos',      icon: BookOpen,        adminOnly: false },
+  { href: '/mis-ventas',  label: 'Mis ventas',  icon: Receipt,         adminOnly: false, soloAsesor: true },
+  { href: '/ventas',      label: 'Ventas',      icon: Receipt,         adminOnly: true  },
   { href: '/reportes',     label: 'Analíticas',  icon: BarChart3,       adminOnly: false },
 ]
 
 const moreItems: NavItem[] = [
-  { href: '/mis-ventas',      label: 'Mis ventas',       icon: Receipt,       adminOnly: false, soloAsesor: true },
-  { href: '/ventas',          label: 'Ventas',           icon: Receipt,       adminOnly: true  },
+  { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
@@ -54,9 +56,9 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   }, [moreOpen])
 
   const isDark = theme === 'dark'
-  const visibleMore = moreItems.filter(
-    i => (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN')
-  )
+  const porRol = (i: NavItem) => (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN')
+  const visiblePrimary = primaryItems.filter(porRol)
+  const visibleMore = moreItems.filter(porRol)
   const isMoreActive = visibleMore.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
   const handleClose = () => setMoreOpen(false)
 
@@ -177,7 +179,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           }}
         >
           {/* Ítems primarios */}
-          {primaryItems.map((item, idx) => {
+          {visiblePrimary.map((item, idx) => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 

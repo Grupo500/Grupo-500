@@ -231,8 +231,17 @@ export async function miResumenAsesor(req: Request, res: Response) {
       const d   = new Date(hoy.getFullYear(), hoy.getMonth() - back, 1)
       const ini = new Date(d.getFullYear(), d.getMonth(), 1)
       const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
-      const agg = await prisma.pago.aggregate({ where: { asesorId: yo, estado: 'PAGADO', fechaPago: { gte: ini, lte: fin } }, _sum: { monto: true } })
-      return { label: d.toLocaleDateString('es-CO', { month: 'short' }), monto: agg._sum.monto ?? 0 }
+      const agg = await prisma.pago.aggregate({
+        where: { asesorId: yo, estado: 'PAGADO', fechaPago: { gte: ini, lte: fin } },
+        _sum: { monto: true, comisionAsesor: true },
+        _count: true,
+      })
+      return {
+        label: d.toLocaleDateString('es-CO', { month: 'short' }),
+        monto: agg._sum.monto ?? 0,
+        comision: agg._sum.comisionAsesor ?? 0,
+        cantidad: agg._count,
+      }
     })
   )
 

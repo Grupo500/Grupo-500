@@ -28,7 +28,7 @@ interface MiResumen {
   comision:    number
   estudiantes: { total: number; nuevos: number }
   posicion:    { rank: number; total: number; falta: number; siguienteNombre: string | null }
-  serie:       { label: string; monto: number }[]
+  serie:       { label: string; monto: number; comision?: number; cantidad?: number }[]
   ranking:     RankItem[]
 }
 
@@ -107,6 +107,8 @@ export function AsesorDashboard() {
   const rojo  = isDark ? '#f87171' : '#dc2626'
 
   const maxSerie = Math.max(1, ...serie.map(s => s.monto))
+  // Mes tocado en la gráfica; null = se muestra el mes más reciente.
+  const [mesActivo, setMesActivo] = useState<number | null>(null)
   const pctComision = ventas.monto > 0 ? Math.round((comision / ventas.monto) * 100) : 0
 
   // Progreso hacia el siguiente puesto
@@ -194,15 +196,54 @@ export function AsesorDashboard() {
             <>
               <div className="flex items-end gap-1.5 h-24">
                 {serie.map((s, i) => (
-                  <div key={i} className="flex-1 flex items-end h-full">
-                    <BarSerie pct={Math.round((s.monto / maxSerie) * 100)} last={i === serie.length - 1} delay={100 + i * 70} />
-                  </div>
+                  <button
+                    key={i}
+                    onClick={() => setMesActivo(m => (m === i ? null : i))}
+                    aria-label={`${s.label}: ${formatCOP(s.monto)}`}
+                    aria-pressed={mesActivo === i}
+                    className="flex-1 flex items-end h-full cursor-pointer"
+                  >
+                    <BarSerie
+                      pct={Math.round((s.monto / maxSerie) * 100)}
+                      last={mesActivo != null ? mesActivo === i : i === serie.length - 1}
+                      delay={100 + i * 70}
+                    />
+                  </button>
                 ))}
               </div>
               <div className="flex gap-1.5 mt-1.5">
                 {serie.map((s, i) => (
-                  <span key={i} className="flex-1 text-center text-[9px] text-on-surface-variant capitalize">{s.label}</span>
+                  <span
+                    key={i}
+                    className={`flex-1 text-center text-[9px] capitalize ${mesActivo === i ? 'text-on-surface font-semibold' : 'text-on-surface-variant'}`}
+                  >
+                    {s.label}
+                  </span>
                 ))}
+              </div>
+
+              {/* Detalle del mes tocado */}
+              <div className="mt-3 pt-3 border-t border-surface-high">
+                {(() => {
+                  const sel = mesActivo != null ? serie[mesActivo] : serie[serie.length - 1]
+                  if (!sel) return null
+                  return (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] text-on-surface-variant capitalize">
+                        {sel.label}
+                        {sel.cantidad != null && ` · ${sel.cantidad} ${sel.cantidad === 1 ? 'venta' : 'ventas'}`}
+                      </span>
+                      <span className="flex items-baseline gap-2.5">
+                        <span className="text-[15px] font-bold tabular-nums text-on-surface">{formatCOP(sel.monto)}</span>
+                        {sel.comision != null && (
+                          <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#16a34a' }}>
+                            {formatCOP(sel.comision)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )
+                })()}
               </div>
             </>
           )}
