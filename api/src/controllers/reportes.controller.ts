@@ -91,15 +91,31 @@ export async function misVentasResumen(req: Request, res: Response) {
   if (!isAdmin && !req.asesorId) {
     return ApiResponse.success(res, {
       vendido: 0, comision: 0, cantidad: 0, ticketPromedio: 0,
+      variacion: { vendido: null, comision: null, cantidad: null, ticketPromedio: null },
       dias: [], porAsesor: [], desde: inicio, hasta: fin,
     })
   }
 
   const where = { ...filtroAsesor, estado: 'PAGADO' as const, fechaPago: { gte: inicio, lte: fin } }
 
-  const [agg, pagos] = await Promise.all([
+  // Periodo anterior con el mismo tramo transcurrido: si vamos por el día 12
+  // del mes, se compara contra los primeros 12 días del mes pasado. El corte se
+  // acota al último día de ese mes para que un 31 no se desborde al siguiente.
+  const ahora = new Date()
+  const corte = fin < ahora ? fin : ahora
+  const diasCorridos = corte.getDate()
+  const inicioPrevio = new Date(inicio.getFullYear(), inicio.getMonth() - 1, 1)
+  const ultimoDiaPrevio = new Date(inicio.getFullYear(), inicio.getMonth(), 0).getDate()
+  const finPrevio = new Date(
+    inicioPrevio.getFullYear(), inicioPrevio.getMonth(),
+    Math.min(diasCorridos, ultimoDiaPrevio), 23, 59, 59
+  )
+  const wherePrevio = { ...filtroAsesor, estado: 'PAGADO' as const, fechaPago: { gte: inicioPrevio, lte: finPrevio } }
+
+  const [agg, pagos, aggPrevio] = await Promise.all([
     prisma.pago.aggregate({ where, _sum: { monto: true, comisionAsesor: true }, _count: true }),
     prisma.pago.findMany({ where, select: { monto: true, fechaPago: true } }),
+    prisma.pago.aggregate({ where: wherePrevio, _sum: { monto: true, comisionAsesor: true }, _count: true }),
   ])
 
   const vendido = agg._sum.monto ?? 0
@@ -146,11 +162,27 @@ export async function misVentasResumen(req: Request, res: Response) {
       .sort((a, b) => b.vendido - a.vendido)
   }
 
+  // null = el periodo anterior fue cero, así que no hay base de comparación.
+  const variar = (actual: number, previo: number) =>
+    previo > 0 ? Math.round(((actual - previo) / previo) * 100) : null
+
+  const comision = agg._sum.comisionAsesor ?? 0
+  const ticketPromedio = cantidad > 0 ? Math.round(vendido / cantidad) : 0
+  const vendidoPrevio = aggPrevio._sum.monto ?? 0
+  const cantidadPrevia = aggPrevio._count
+  const ticketPrevio = cantidadPrevia > 0 ? Math.round(vendidoPrevio / cantidadPrevia) : 0
+
   return ApiResponse.success(res, {
     vendido,
-    comision: agg._sum.comisionAsesor ?? 0,
+    comision,
     cantidad,
-    ticketPromedio: cantidad > 0 ? Math.round(vendido / cantidad) : 0,
+    ticketPromedio,
+    variacion: {
+      vendido: variar(vendido, vendidoPrevio),
+      comision: variar(comision, aggPrevio._sum.comisionAsesor ?? 0),
+      cantidad: variar(cantidad, cantidadPrevia),
+      ticketPromedio: variar(ticketPromedio, ticketPrevio),
+    },
     dias,
     porAsesor,
     desde: inicio,
@@ -165,12 +197,16 @@ export async function miResumenAsesor(req: Request, res: Response) {
   const inicioMes    = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const finMes       = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
   const inicioMesAnt = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
-  const finMesAnt    = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate(), 23, 59, 59)
+  // Se compara el mismo tramo transcurrido del mes anterior. Ojo: si hoy es 31
+  // y el mes anterior tiene 30 días, `new Date(y, m-1, 31)` se desborda al mes
+  // siguiente y contaría ventas del mes en curso como del anterior.
+  const ultimoDiaMesAnt = new Date(hoy.getFullYear(), hoy.getMonth(), 0).getDate()
+  const finMesAnt    = new Date(hoy.getFullYear(), hoy.getMonth() - 1, Math.min(hoy.getDate(), ultimoDiaMesAnt), 23, 59, 59)
 
   // Sin asesor asociado (p.ej. admin) → respuesta vacía
   if (!yo) {
     return ApiResponse.success(res, {
-      ventas: { monto: 0, cantidad: 0, variacion: 0 },
+      ventas: { monto: 0, cantidad: 0, variacion: null },
       comision: 0,
       estudiantes: { total: 0, nuevos: 0 },
       posicion: { rank: 0, total: 0, falta: 0, siguienteNombre: null },
@@ -194,7 +230,9 @@ export async function miResumenAsesor(req: Request, res: Response) {
   const miCantidad    = misMes._count
   const miComision    = misMes._sum.comisionAsesor ?? 0
   const montoAnterior = misMesAnt._sum.monto ?? 0
-  const variacion     = montoAnterior > 0 ? Math.round(((miMonto - montoAnterior) / montoAnterior) * 100) : 0
+  // `null` = no hay base de comparación (el mes anterior no tuvo ventas). Es
+  // distinto de 0, que significa "vendiste lo mismo".
+  const variacion     = montoAnterior > 0 ? Math.round(((miMonto - montoAnterior) / montoAnterior) * 100) : null
 
   // ── Ranking del mes (ventas) ──
   const nombrePorId = new Map(asesores.map(a => [a.id, { nombre: a.nombre, image: a.user?.image ?? null }]))

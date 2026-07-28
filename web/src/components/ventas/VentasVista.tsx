@@ -48,10 +48,17 @@ interface Resumen {
   ticketPromedio: number
   dias: { fecha: string; monto: number }[]
   porAsesor: FilaAsesor[]
+  // null = el mes anterior no tuvo movimiento, no hay con qué comparar.
+  variacion?: {
+    vendido: number | null
+    comision: number | null
+    cantidad: number | null
+    ticketPromedio: number | null
+  }
 }
 interface AsesorRef { id: string; nombre: string }
 
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
 function rangoDelMes(offset: number) {
   const hoy = new Date()
@@ -201,7 +208,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
       {/* Ritmo del mes */}
       <div className="card p-5">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <p className="text-[11px] tracking-[0.16em] text-on-surface-variant font-semibold uppercase">
+          <p className="text-[11px] text-on-surface-variant font-semibold">
             Ritmo de {MESES[inicio.getMonth()]}
           </p>
           <div className="flex items-center gap-1">
@@ -314,10 +321,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
       {/* Tarjetas de resumen — mismo formato que el dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Kpi icon={TrendingUp} label="Vendido" valor={formatCOP(r?.vendido ?? 0)} cargando={cargandoResumen} />
-        <Kpi icon={Wallet} label="Comisión" valor={formatCOP(r?.comision ?? 0)} valColor="#16a34a" cargando={cargandoResumen} />
-        <Kpi icon={Receipt} label="Ventas" valor={String(r?.cantidad ?? 0)} cargando={cargandoResumen} />
-        <Kpi icon={Target} label="Ticket promedio" valor={formatCOP(r?.ticketPromedio ?? 0)} cargando={cargandoResumen} />
+        <Kpi icon={TrendingUp} label="Vendido" valor={formatCOP(r?.vendido ?? 0)} variacion={r?.variacion?.vendido} cargando={cargandoResumen} />
+        <Kpi icon={Wallet} label="Comisión" valor={formatCOP(r?.comision ?? 0)} valColor="#16a34a" variacion={r?.variacion?.comision} cargando={cargandoResumen} />
+        <Kpi icon={Receipt} label="Ventas" valor={String(r?.cantidad ?? 0)} variacion={r?.variacion?.cantidad} cargando={cargandoResumen} />
+        <Kpi icon={Target} label="Ticket promedio" valor={formatCOP(r?.ticketPromedio ?? 0)} variacion={r?.variacion?.ticketPromedio} cargando={cargandoResumen} />
       </div>
 
       {/* Filtros */}
@@ -361,7 +368,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
       {/* Desglose por asesor — solo cuando el admin mira a todos */}
       {esAdmin && !asesorId && (resumen?.data.porAsesor?.length ?? 0) > 0 && (
         <div className="card p-5">
-          <p className="text-[11px] tracking-[0.16em] text-on-surface-variant font-semibold uppercase mb-3.5">
+          <p className="text-[11px] text-on-surface-variant font-semibold mb-3.5">
             Por asesor
           </p>
           <div className="space-y-1">
@@ -506,28 +513,50 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 // Mismo formato que las tarjetas del dashboard del asesor (AsesorDashboard.tsx),
 // para que las dos pantallas se lean igual.
 function Kpi({
-  icon: Icon, label, valor, valColor, cargando,
+  icon: Icon, label, valor, valColor, variacion, cargando,
 }: {
   icon: LucideIcon
   label: string
   valor: string
   valColor?: string
+  variacion?: number | null
   cargando?: boolean
 }) {
+  // Se compara contra el mismo tramo del mes anterior. `null` o `undefined`
+  // significa que ese mes no tuvo movimiento: no hay base de comparación.
+  const sub =
+    variacion == null
+      ? 'Sin mes anterior para comparar'
+      : variacion === 0
+        ? 'Igual que el mes pasado'
+        : `${variacion > 0 ? '▲ +' : '▼ '}${variacion}% vs mes anterior`
+  const subColor = variacion == null || variacion === 0 ? undefined : variacion > 0 ? '#16a34a' : '#dc2626'
+
   return (
     <div className="card p-4">
       <p className="text-[11px] text-on-surface-variant flex items-center gap-1.5">
         <Icon className="w-3.5 h-3.5 shrink-0" /> {label}
       </p>
       {cargando ? (
-        <div className="h-[22px] w-24 rounded bg-surface-high animate-pulse mt-1.5" />
+        <>
+          <div className="h-[22px] w-24 rounded bg-surface-high animate-pulse mt-1.5" />
+          <div className="h-3 w-20 rounded bg-surface-high animate-pulse mt-2" />
+        </>
       ) : (
-        <p
-          className="text-[22px] font-bold tabular-nums mt-1.5 leading-none truncate"
-          style={valColor ? { color: valColor } : undefined}
-        >
-          {valor}
-        </p>
+        <>
+          <p
+            className="text-[22px] font-bold tabular-nums mt-1.5 leading-none truncate"
+            style={valColor ? { color: valColor } : undefined}
+          >
+            {valor}
+          </p>
+          <p
+            className="text-[11px] mt-1.5 truncate"
+            style={{ color: subColor ?? 'var(--on-surface-variant)' }}
+          >
+            {sub}
+          </p>
+        </>
       )}
     </div>
   )

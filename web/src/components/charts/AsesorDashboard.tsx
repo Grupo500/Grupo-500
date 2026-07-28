@@ -24,7 +24,7 @@ interface RankItem {
   esYo: boolean
 }
 interface MiResumen {
-  ventas:      { monto: number; cantidad: number; variacion: number }
+  ventas:      { monto: number; cantidad: number; variacion: number | null }
   comision:    number
   estudiantes: { total: number; nuevos: number }
   posicion:    { rank: number; total: number; falta: number; siguienteNombre: string | null }
@@ -91,7 +91,7 @@ export function AsesorDashboard() {
   })
 
   const r = data?.data
-  const ventas      = r?.ventas      ?? { monto: 0, cantidad: 0, variacion: 0 }
+  const ventas      = r?.ventas      ?? { monto: 0, cantidad: 0, variacion: null }
   const comision    = r?.comision    ?? 0
   const estudiantes = r?.estudiantes ?? { total: 0, nuevos: 0 }
   const posicion    = r?.posicion    ?? { rank: 0, total: 0, falta: 0, siguienteNombre: null }
@@ -110,6 +110,15 @@ export function AsesorDashboard() {
   // Mes tocado en la gráfica; null = se muestra el mes más reciente.
   const [mesActivo, setMesActivo] = useState<number | null>(null)
   const pctComision = ventas.monto > 0 ? Math.round((comision / ventas.monto) * 100) : 0
+
+  // `variacion` en null significa que el mes anterior no tuvo ventas: no hay
+  // con qué comparar, que no es lo mismo que "vendiste igual".
+  const textoVariacion =
+    ventas.variacion == null
+      ? ventas.monto > 0 ? 'Primer mes con ventas' : 'Sin ventas este mes'
+      : ventas.variacion === 0
+        ? 'Igual que el mes pasado'
+        : `${ventas.variacion > 0 ? '▲ +' : '▼ '}${ventas.variacion}% vs mes anterior`
 
   // Progreso hacia el siguiente puesto
   const siguienteVentas = ventas.monto + posicion.falta
@@ -146,8 +155,8 @@ export function AsesorDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi icon={TrendingUp} label="Mis ventas del mes" value={formatCOP(animMonto)}
-          sub={ventas.variacion !== 0 ? `${ventas.variacion > 0 ? '▲ +' : '▼ '}${ventas.variacion}% vs mes anterior` : 'Sin cambio'}
-          subColor={ventas.variacion > 0 ? verde : ventas.variacion < 0 ? rojo : undefined} />
+          sub={textoVariacion}
+          subColor={(ventas.variacion ?? 0) > 0 ? verde : (ventas.variacion ?? 0) < 0 ? rojo : undefined} />
         <Kpi icon={Wallet} label="Mi comisión" value={formatCOP(animComision)} valColor="#16a34a"
           sub={`${pctComision}% sobre ventas`} />
         <Kpi icon={Receipt} label="Ventas cerradas" value={String(animCant)} sub="pagos este mes" />
