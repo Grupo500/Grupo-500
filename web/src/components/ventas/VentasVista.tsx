@@ -7,6 +7,7 @@ import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
 import { useCountUp } from '@/hooks/useCountUp'
+import { Select } from '@/components/ui/Select'
 import {
   ChevronLeft, ChevronRight, Search, Repeat2, Loader2, Receipt, AlertTriangle,
   TrendingUp, Wallet, Target, X, type LucideIcon,
@@ -58,6 +59,10 @@ interface Resumen {
   }
 }
 interface AsesorRef { id: string; nombre: string }
+
+// Radix Select no acepta la cadena vacía como valor de una opción, así que el
+// "sin filtro" viaja con un centinela y se traduce a '' en el estado.
+const TODOS = '__todos__'
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
@@ -362,30 +367,34 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
           />
         </div>
         {esAdmin && (
-          <select
-            value={asesorId}
-            onChange={e => { setAsesorId(e.target.value); setPagina(1) }}
-            aria-label="Filtrar por asesor"
-            className="px-3 py-2.5 rounded-xl bg-surface-lowest border border-surface-high text-[13px] text-on-surface focus:outline-none focus:border-primary transition-colors cursor-pointer sm:max-w-[220px]"
-          >
-            <option value="">Todos los asesores</option>
-            <option value="sin-asesor">⚠ Sin asesor</option>
-            {(asesores?.data ?? []).map(a => (
-              <option key={a.id} value={a.id}>{a.nombre}</option>
-            ))}
-          </select>
+          <div className="sm:w-[220px] shrink-0">
+            <Select
+              value={asesorId || TODOS}
+              onValueChange={v => { setAsesorId(v === TODOS ? '' : v); setPagina(1) }}
+              className="py-2.5 rounded-xl border-surface-high text-[13px]"
+              options={[
+                { value: TODOS, label: 'Todos los asesores' },
+                { value: 'sin-asesor', label: 'Sin asesor asignado' },
+                ...(asesores?.data ?? []).map(a => ({ value: a.id, label: a.nombre })),
+              ]}
+            />
+          </div>
         )}
-        <select
-          value={cursoId}
-          onChange={e => { setCursoId(e.target.value); setPagina(1) }}
-          aria-label="Filtrar por curso"
-          className="px-3 py-2.5 rounded-xl bg-surface-lowest border border-surface-high text-[13px] text-on-surface focus:outline-none focus:border-primary transition-colors cursor-pointer sm:max-w-[240px]"
-        >
-          <option value="">Todos los cursos</option>
-          {(cursos?.data ?? []).map(c => (
-            <option key={c.id} value={c.id}>{c.nombre}</option>
-          ))}
-        </select>
+        <div className="sm:w-[240px] shrink-0">
+          <Select
+            value={cursoId || TODOS}
+            onValueChange={v => { setCursoId(v === TODOS ? '' : v); setPagina(1) }}
+            className="py-2.5 rounded-xl border-surface-high text-[13px]"
+            // Los nombres de curso son largos: el panel crece y las opciones
+            // se parten en varias líneas en vez de recortarse.
+            anchoAuto
+            multilinea
+            options={[
+              { value: TODOS, label: 'Todos los cursos' },
+              ...(cursos?.data ?? []).map(c => ({ value: c.id, label: c.nombre })),
+            ]}
+          />
+        </div>
       </div>
 
       {/* Desglose por asesor — solo cuando el admin mira a todos */}
