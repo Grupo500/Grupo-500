@@ -114,6 +114,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
   const [diaActivo, setDiaActivo] = useState<number | null>(null)
   const [diaFijado, setDiaFijado] = useState<string | null>(null)
   const rielRef = useRef<HTMLDivElement>(null)
+  const tactoReciente = useRef(false)
 
   const { inicio, fin } = useMemo(() => rangoDelMes(offset), [offset])
   const esMesActual = offset === 0
@@ -189,20 +190,39 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
     const riel = rielRef.current
     const dias = r?.dias?.length ?? 0
     if (!riel || dias === 0) return
-    const x = 'touches' in e ? e.touches[0]?.clientX : e.clientX
+    const esTacto = 'touches' in e
+    // El mousemove sintético que sigue al touchend movería la selección justo
+    // después de haberla fijado.
+    if (!esTacto && tactoReciente.current) return
+    const x = esTacto ? e.touches[0]?.clientX : e.clientX
     if (x == null) return
     const { left, width } = riel.getBoundingClientRect()
     const i = Math.floor(((x - left) / width) * dias)
     setDiaActivo(Math.min(dias - 1, Math.max(0, i)))
   }
 
-  // Al soltar (o hacer clic) el día queda fijado y la lista se filtra a él.
-  // Volver a elegir el mismo día lo deselecciona.
+  // Al soltar el dedo (o hacer clic) el día queda fijado y la lista se filtra
+  // a él. Para quitar el filtro está el botón "Ver todo el mes": deseleccionar
+  // con un segundo toque se disparaba solo por el click fantasma.
   function fijarDia() {
     const d = diaActivo != null ? r?.dias?.[diaActivo] : null
     if (!d) return
-    setDiaFijado(prev => (prev === d.fecha ? null : d.fecha))
+    setDiaFijado(d.fecha)
     setPagina(1)
+  }
+
+  // Tras un `touchend`, el navegador móvil emite además un `click` sintético
+  // en el mismo punto. Sin esta guarda, el gesto se procesaba dos veces y la
+  // selección se deshacía sola.
+  function fijarPorTacto() {
+    tactoReciente.current = true
+    fijarDia()
+    setTimeout(() => { tactoReciente.current = false }, 600)
+  }
+
+  function fijarPorClic() {
+    if (tactoReciente.current) return
+    fijarDia()
   }
 
   function cambiarMes(delta: number) {
@@ -288,10 +308,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                 ref={rielRef}
                 onTouchStart={scrub}
                 onTouchMove={scrub}
-                onTouchEnd={fijarDia}
+                onTouchEnd={fijarPorTacto}
                 onMouseMove={scrub}
-                onMouseLeave={() => setDiaActivo(null)}
-                onClick={fijarDia}
+                onMouseLeave={() => { if (!tactoReciente.current) setDiaActivo(null) }}
+                onClick={fijarPorClic}
                 // pan-y deja el scroll vertical de la página intacto y nos reserva
                 // el gesto horizontal para recorrer los días.
                 style={{ touchAction: 'pan-y' }}
