@@ -381,10 +381,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                       style={{ width: `${Math.round((a.vendido / maxVendido) * 100)}%` }}
                     />
                   </span>
-                  <span className={`${mono.className} text-[13px] text-on-surface w-[104px] text-right shrink-0`}>
+                  <span className={`${mono.className} text-[13px] font-bold text-on-surface w-[104px] text-right shrink-0`}>
                     {formatCOP(a.vendido)}
                   </span>
-                  <span className={`${mono.className} hidden sm:block text-[12px] w-[92px] text-right shrink-0`} style={{ color: '#16a34a' }}>
+                  <span className={`${mono.className} hidden sm:block text-[12px] font-semibold w-[92px] text-right shrink-0`} style={{ color: '#16a34a' }}>
                     {formatCOP(a.comision)}
                   </span>
                   <span className={`${mono.className} text-[11.5px] text-on-surface-variant w-8 text-right shrink-0`}>{a.cantidad}</span>
@@ -464,9 +464,9 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                     )}
                   </div>
                   <div className="text-right whitespace-nowrap">
-                    <p className={`${mono.className} text-[16px] text-on-surface`}>{formatCOP(v.monto)}</p>
+                    <p className={`${mono.className} text-[16px] font-bold text-on-surface`}>{formatCOP(v.monto)}</p>
                     {v.comisionAsesor != null && (
-                      <p className={`${mono.className} text-[12px] mt-1`} style={{ color: '#16a34a' }}>
+                      <p className={`${mono.className} text-[12px] font-semibold mt-1`} style={{ color: '#16a34a' }}>
                         +{formatCOP(v.comisionAsesor)}
                       </p>
                     )}
