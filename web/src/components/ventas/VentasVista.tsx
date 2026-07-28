@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
 import {
   ChevronLeft, ChevronRight, Search, Repeat2, Loader2, Receipt, AlertTriangle,
-  TrendingUp, Wallet, Target, type LucideIcon,
+  TrendingUp, Wallet, Target, X, type LucideIcon,
 } from 'lucide-react'
 
 // Los montos se comparan en columna: cifras tabulares para que cada dígito
@@ -101,7 +101,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
   const [cursoId, setCursoId] = useState('')
   const [asesorId, setAsesorId] = useState('')
   const [pagina, setPagina] = useState(1)
+  // `diaActivo` es el que estás recorriendo con el dedo (solo la lupa).
+  // `diaFijado` es el que quedó elegido al soltar, y ese sí filtra la lista.
   const [diaActivo, setDiaActivo] = useState<number | null>(null)
+  const [diaFijado, setDiaFijado] = useState<string | null>(null)
   const rielRef = useRef<HTMLDivElement>(null)
 
   const { inicio, fin } = useMemo(() => rangoDelMes(offset), [offset])
@@ -112,6 +115,13 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
   const rangoQS = `desde=${encodeURIComponent(iso(inicio))}&hasta=${encodeURIComponent(iso(fin))}`
 
+  // La gráfica y las tarjetas siempre son del mes; solo el listado se acota
+  // al día fijado, para poder ver a quién le vendiste ese día.
+  const rangoLista = diaFijado
+    ? `desde=${encodeURIComponent(new Date(`${diaFijado}T00:00:00.000Z`).toISOString())}` +
+      `&hasta=${encodeURIComponent(new Date(`${diaFijado}T23:59:59.999Z`).toISOString())}`
+    : rangoQS
+
   const qsAsesor = esAdmin && asesorId ? `&asesorId=${asesorId}` : ''
 
   const { data: resumen, isLoading: cargandoResumen } = useQuery<{ data: Resumen }>({
@@ -121,10 +131,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
   })
 
   const { data: lista, isLoading: cargandoLista } = useQuery<{ data: Venta[]; meta?: { total: number; totalPages: number } }>({
-    queryKey: ['ventas-lista', modo, offset, busqueda, cursoId, asesorId, pagina],
+    queryKey: ['ventas-lista', modo, offset, busqueda, cursoId, asesorId, pagina, diaFijado],
     queryFn: () =>
       fetcher(
-        `/pagos?porFechaPago=true&estado=PAGADO&${rangoQS}&page=${pagina}&limit=20${qsAsesor}` +
+        `/pagos?porFechaPago=true&estado=PAGADO&${rangoLista}&page=${pagina}&limit=20${qsAsesor}` +
           (busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : '') +
           (cursoId ? `&cursoId=${cursoId}` : '')
       ),
@@ -149,6 +159,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
   const maxDia = Math.max(1, ...(r?.dias ?? []).map(d => d.monto))
   const hoyISO = new Date().toISOString().slice(0, 10)
+  const totalDias = r?.dias?.length ?? 0
   const diaSeleccionado = diaActivo != null ? r?.dias?.[diaActivo] ?? null : null
 
   // Recorrer la gráfica con el dedo (o el mouse): la posición horizontal dentro
@@ -164,10 +175,20 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
     setDiaActivo(Math.min(dias - 1, Math.max(0, i)))
   }
 
+  // Al soltar (o hacer clic) el día queda fijado y la lista se filtra a él.
+  // Volver a elegir el mismo día lo deselecciona.
+  function fijarDia() {
+    const d = diaActivo != null ? r?.dias?.[diaActivo] : null
+    if (!d) return
+    setDiaFijado(prev => (prev === d.fecha ? null : d.fecha))
+    setPagina(1)
+  }
+
   function cambiarMes(delta: number) {
     setOffset(o => Math.max(0, o + delta))
     setPagina(1)
     setDiaActivo(null)
+    setDiaFijado(null)
   }
 
   return (
@@ -176,14 +197,6 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
         title={esAdmin ? 'Ventas' : 'Mis ventas'}
         subtitle={esAdmin ? 'Todas las ventas del equipo, con su atribución' : 'Cada venta que cerraste, con su comisión'}
       />
-
-      {/* Tarjetas de resumen — mismo formato que el dashboard */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Kpi icon={TrendingUp} label="Vendido" valor={formatCOP(r?.vendido ?? 0)} cargando={cargandoResumen} />
-        <Kpi icon={Wallet} label="Comisión" valor={formatCOP(r?.comision ?? 0)} valColor="#16a34a" cargando={cargandoResumen} />
-        <Kpi icon={Receipt} label="Ventas" valor={String(r?.cantidad ?? 0)} cargando={cargandoResumen} />
-        <Kpi icon={Target} label="Ticket promedio" valor={formatCOP(r?.ticketPromedio ?? 0)} cargando={cargandoResumen} />
-      </div>
 
       {/* Ritmo del mes */}
       <div className="card p-5">
@@ -217,57 +230,94 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
           <div className="h-16 rounded-xl bg-surface-high animate-pulse" />
         ) : (
           <>
-            <div
-              ref={rielRef}
-              onTouchStart={scrub}
-              onTouchMove={scrub}
-              onMouseLeave={() => setDiaActivo(null)}
-              onMouseMove={scrub}
-              // pan-y deja el scroll vertical de la página intacto y nos reserva
-              // el gesto horizontal para recorrer los días.
-              style={{ touchAction: 'pan-y' }}
-              className="flex items-end gap-[3px] h-16 cursor-crosshair"
-              role="img"
-              aria-label={`Ventas por día de ${MESES[inicio.getMonth()]}`}
-            >
-              {(r?.dias ?? []).map((d, i) => {
-                const esHoy = d.fecha === hoyISO
-                const futuro = d.fecha > hoyISO
-                const activo = i === diaActivo
-                const alto = d.monto > 0 ? Math.max(6, (d.monto / maxDia) * 100) : 4
-                return (
+            <div className="relative">
+              {/* Lupa flotante: el dedo tapa la barra, así que el día
+                  seleccionado se amplía en una burbuja sobre el riel. */}
+              {diaSeleccionado && totalDias > 0 && (
+                <div
+                  className="absolute z-10 pointer-events-none animate-fade-in"
+                  style={{
+                    bottom: 'calc(100% + 10px)',
+                    left: `${((diaActivo! + 0.5) / totalDias) * 100}%`,
+                    transform: 'translateX(-50%)',
+                  }}
+                >
                   <div
-                    key={d.fecha}
-                    title={`${d.fecha} · ${formatCOP(d.monto)}`}
-                    className="flex-1 rounded-t-[2px] transition-all"
+                    className="rounded-xl px-3.5 py-2 text-center whitespace-nowrap"
                     style={{
-                      height: `${alto}%`,
-                      background: activo || esHoy ? 'var(--on-surface)' : 'var(--primary)',
-                      opacity: activo ? 1 : futuro ? 0.15 : d.monto > 0 ? 1 : 0.25,
+                      background: 'var(--on-surface)',
+                      color: 'var(--surface-lowest)',
+                      boxShadow: '0 8px 22px -6px rgba(0,29,61,0.45)',
                     }}
+                  >
+                    <p className="text-[19px] font-bold tabular-nums leading-none">
+                      {Number(diaSeleccionado.fecha.slice(8, 10))}
+                      <span className="text-[11px] font-semibold opacity-70"> {MESES[inicio.getMonth()].slice(0, 3)}</span>
+                    </p>
+                    <p className="text-[12.5px] font-semibold tabular-nums mt-1">{formatCOP(diaSeleccionado.monto)}</p>
+                  </div>
+                  <div
+                    className="w-2 h-2 rotate-45 mx-auto -mt-1"
+                    style={{ background: 'var(--on-surface)' }}
                   />
-                )
-              })}
+                </div>
+              )}
+
+              <div
+                ref={rielRef}
+                onTouchStart={scrub}
+                onTouchMove={scrub}
+                onTouchEnd={fijarDia}
+                onMouseMove={scrub}
+                onMouseLeave={() => setDiaActivo(null)}
+                onClick={fijarDia}
+                // pan-y deja el scroll vertical de la página intacto y nos reserva
+                // el gesto horizontal para recorrer los días.
+                style={{ touchAction: 'pan-y' }}
+                className="flex items-end gap-[3px] h-16 cursor-crosshair select-none"
+                role="img"
+                aria-label={`Ventas por día de ${MESES[inicio.getMonth()]}`}
+              >
+                {(r?.dias ?? []).map((d, i) => {
+                  const esHoy = d.fecha === hoyISO
+                  const futuro = d.fecha > hoyISO
+                  const activo = i === diaActivo || d.fecha === diaFijado
+                  const alto = d.monto > 0 ? Math.max(6, (d.monto / maxDia) * 100) : 4
+                  return (
+                    <div
+                      key={d.fecha}
+                      title={`${d.fecha} · ${formatCOP(d.monto)}`}
+                      className="flex-1 rounded-t-[2px] transition-all"
+                      style={{
+                        height: activo ? '100%' : `${alto}%`,
+                        background: activo || esHoy ? 'var(--on-surface)' : 'var(--primary)',
+                        opacity: activo ? 1 : futuro ? 0.15 : d.monto > 0 ? 1 : 0.25,
+                        ...(activo && {
+                          // La barra activa se estira a todo el alto como guía,
+                          // con su valor real marcado en color sólido.
+                          background: `linear-gradient(to top, var(--on-surface) ${alto}%, color-mix(in srgb, var(--on-surface) 14%, transparent) ${alto}%)`,
+                        }),
+                      }}
+                    />
+                  )
+                })}
+              </div>
             </div>
             <div className={`${mono.className} flex justify-between mt-1.5 text-[10.5px] text-on-surface-variant`}>
-              {diaSeleccionado ? (
-                <>
-                  <span className="text-on-surface font-semibold">
-                    {Number(diaSeleccionado.fecha.slice(8, 10))} de {MESES[inicio.getMonth()]}
-                  </span>
-                  <span className="text-on-surface font-semibold">{formatCOP(diaSeleccionado.monto)}</span>
-                </>
-              ) : (
-                <>
-                  <span>1</span>
-                  {esMesActual && <span className="text-on-surface">hoy · {new Date().getDate()}</span>}
-                  <span>{fin.getDate()}</span>
-                </>
-              )}
+              <span>1</span>
+              {esMesActual && <span className="text-on-surface">hoy · {new Date().getDate()}</span>}
+              <span>{fin.getDate()}</span>
             </div>
           </>
         )}
+      </div>
 
+      {/* Tarjetas de resumen — mismo formato que el dashboard */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Kpi icon={TrendingUp} label="Vendido" valor={formatCOP(r?.vendido ?? 0)} cargando={cargandoResumen} />
+        <Kpi icon={Wallet} label="Comisión" valor={formatCOP(r?.comision ?? 0)} valColor="#16a34a" cargando={cargandoResumen} />
+        <Kpi icon={Receipt} label="Ventas" valor={String(r?.cantidad ?? 0)} cargando={cargandoResumen} />
+        <Kpi icon={Target} label="Ticket promedio" valor={formatCOP(r?.ticketPromedio ?? 0)} cargando={cargandoResumen} />
       </div>
 
       {/* Filtros */}
@@ -347,6 +397,19 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
       {/* Movimientos */}
       <div className="card p-5">
+        {diaFijado && (
+          <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-surface-high">
+            <p className="text-[13px] font-semibold text-on-surface">
+              Ventas del {Number(diaFijado.slice(8, 10))} de {MESES[inicio.getMonth()]}
+            </p>
+            <button
+              onClick={() => { setDiaFijado(null); setPagina(1) }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold text-on-surface-variant hover:bg-surface-high transition-colors cursor-pointer shrink-0"
+            >
+              Ver todo el mes <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
         {cargandoLista ? (
           <div className="flex items-center justify-center py-14 text-on-surface-variant">
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -354,9 +417,15 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
         ) : ventas.length === 0 ? (
           <div className="flex flex-col items-center text-center py-14 px-6">
             <Receipt className="w-8 h-8 text-on-surface-variant/50 mb-3" />
-            <p className="text-[14px] font-semibold text-on-surface">Sin ventas en {MESES[inicio.getMonth()]}</p>
+            <p className="text-[14px] font-semibold text-on-surface">
+              {diaFijado
+                ? `Sin ventas el ${Number(diaFijado.slice(8, 10))} de ${MESES[inicio.getMonth()]}`
+                : `Sin ventas en ${MESES[inicio.getMonth()]}`}
+            </p>
             <p className="text-[12.5px] text-on-surface-variant mt-1 max-w-[280px]">
-              Cuando cierres una venta aparece aquí con su comisión, en cuanto Hotmart confirme el pago.
+              {diaFijado
+                ? 'Elige otro día en la gráfica o vuelve a ver todo el mes.'
+                : 'Cuando cierres una venta aparece aquí con su comisión, en cuanto Hotmart confirme el pago.'}
             </p>
           </div>
         ) : (
