@@ -124,9 +124,13 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
   // La gráfica y las tarjetas siempre son del mes; solo el listado se acota
   // al día fijado, para poder ver a quién le vendiste ese día.
+  //
+  // Sin la `Z` la fecha se interpreta en la zona del navegador (Colombia), que
+  // es la misma en la que el backend agrupa los días. Con `Z` el rango se
+  // corría cinco horas y arrastraba ventas de la noche anterior.
   const rangoLista = diaFijado
-    ? `desde=${encodeURIComponent(new Date(`${diaFijado}T00:00:00.000Z`).toISOString())}` +
-      `&hasta=${encodeURIComponent(new Date(`${diaFijado}T23:59:59.999Z`).toISOString())}`
+    ? `desde=${encodeURIComponent(new Date(`${diaFijado}T00:00:00`).toISOString())}` +
+      `&hasta=${encodeURIComponent(new Date(`${diaFijado}T23:59:59.999`).toISOString())}`
     : rangoQS
 
   const qsAsesor = esAdmin && asesorId ? `&asesorId=${asesorId}` : ''
@@ -165,7 +169,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
   const totalPaginas = lista?.meta?.totalPages ?? 1
 
   const maxDia = Math.max(1, ...(r?.dias ?? []).map(d => d.monto))
-  const hoyISO = new Date().toISOString().slice(0, 10)
+  // 'en-CA' da el formato YYYY-MM-DD en la zona del navegador, igual que la
+  // clave de día que arma el backend. `toISOString()` daría el día en UTC, que
+  // a partir de las 7 p.m. en Colombia ya es el día siguiente.
+  const hoyISO = new Date().toLocaleDateString('en-CA')
   const totalDias = r?.dias?.length ?? 0
   const diaSeleccionado = diaActivo != null ? r?.dias?.[diaActivo] ?? null : null
 

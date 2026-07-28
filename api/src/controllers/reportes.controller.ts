@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
-import { construirRanking, hoyColombia, emailKey } from '../services/ranking'
+import { construirRanking, hoyColombia, diaColombia, emailKey } from '../services/ranking'
 
 export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
@@ -103,13 +103,17 @@ export async function misVentasResumen(req: Request, res: Response) {
   // acota al último día de ese mes para que un 31 no se desborde al siguiente.
   const ahora = new Date()
   const corte = fin < ahora ? fin : ahora
-  const diasCorridos = corte.getDate()
-  const inicioPrevio = new Date(inicio.getFullYear(), inicio.getMonth() - 1, 1)
-  const ultimoDiaPrevio = new Date(inicio.getFullYear(), inicio.getMonth(), 0).getDate()
-  const finPrevio = new Date(
-    inicioPrevio.getFullYear(), inicioPrevio.getMonth(),
-    Math.min(diasCorridos, ultimoDiaPrevio), 23, 59, 59
-  )
+  // Los días se cuentan en Colombia, y el periodo previo se deriva del rango
+  // recibido (que ya viene en medianoche colombiana) en vez de reconstruirse
+  // con el reloj del servidor, que corre en UTC.
+  const diasCorridos = Number(diaColombia(corte)!.slice(8, 10))
+  const inicioPrevio = new Date(inicio)
+  inicioPrevio.setMonth(inicioPrevio.getMonth() - 1)
+  const [anioPrev, mesPrev] = diaColombia(inicioPrevio)!.split('-').map(Number)
+  const ultimoDiaPrevio = new Date(Date.UTC(anioPrev, mesPrev, 0)).getUTCDate()
+  const finPrevio = new Date(inicioPrevio)
+  finPrevio.setDate(Math.min(diasCorridos, ultimoDiaPrevio) + 1)
+  finPrevio.setMilliseconds(-1)
   const wherePrevio = { ...filtroAsesor, estado: 'PAGADO' as const, fechaPago: { gte: inicioPrevio, lte: finPrevio } }
 
   const [agg, pagos, aggPrevio] = await Promise.all([
@@ -123,19 +127,27 @@ export async function misVentasResumen(req: Request, res: Response) {
 
   // Un punto por día del periodo, aunque no haya ventas — la gráfica necesita
   // los días vacíos para que el ritmo del mes se lea completo.
+  //
+  // El día se calcula en hora de Colombia, no en UTC: una venta de las 9 p.m.
+  // cae al día siguiente en UTC y aparecería en la barra equivocada (y como
+  // "vendido hoy" cuando en realidad fue anoche).
   const porDia = new Map<string, number>()
   for (const p of pagos) {
-    if (!p.fechaPago) continue
-    const clave = p.fechaPago.toISOString().slice(0, 10)
+    const clave = diaColombia(p.fechaPago ?? null)
+    if (!clave) continue
     porDia.set(clave, (porDia.get(clave) ?? 0) + p.monto)
   }
 
   const dias: { fecha: string; monto: number }[] = []
-  const cursor = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate())
-  while (cursor <= fin) {
+  const claveInicio = diaColombia(inicio)!
+  const claveFin = diaColombia(fin)!
+  // Se avanza sobre el mediodía UTC para que sumar 24 h nunca cruce de día.
+  const cursor = new Date(`${claveInicio}T12:00:00.000Z`)
+  const tope = new Date(`${claveFin}T12:00:00.000Z`)
+  while (cursor <= tope) {
     const clave = cursor.toISOString().slice(0, 10)
     dias.push({ fecha: clave, monto: porDia.get(clave) ?? 0 })
-    cursor.setDate(cursor.getDate() + 1)
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
   }
 
   // Desglose por asesor: solo para el ADMIN cuando mira a todos a la vez.
