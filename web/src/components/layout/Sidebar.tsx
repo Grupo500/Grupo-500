@@ -26,6 +26,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard, adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/mis-ventas',      label: 'Mis ventas',      icon: Receipt,         adminOnly: false, soloAsesor: true },
+  { type: 'link',    href: '/ventas',          label: 'Ventas',          icon: Receipt,         adminOnly: true  },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: false },

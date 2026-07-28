@@ -40,8 +40,9 @@ export async function listar(req: Request, res: Response) {
     // VENDEDORs only see their own payments
     ...(!isAdmin && req.asesorId && { asesorId: req.asesorId }),
     ...(estudianteId && { estudianteId: String(estudianteId) }),
-    // Admins can filter by any asesorId; vendedors can't override the scope above
-    ...(isAdmin && asesorId && { asesorId: String(asesorId) }),
+    // Admins can filter by any asesorId; vendedors can't override the scope above.
+    // El valor especial "sin-asesor" aísla las ventas que quedaron sin atribuir.
+    ...(isAdmin && asesorId && (asesorId === 'sin-asesor' ? { asesorId: null } : { asesorId: String(asesorId) })),
     ...(estado && { estado: String(estado) as any }),
     ...(rango && (porFechaPago === 'true' ? { fechaPago: rango } : { fechaVencimiento: rango })),
     ...(cursoId && { estudiante: { cursos: { some: { cursoId: String(cursoId) } } } }),

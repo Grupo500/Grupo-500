@@ -76,21 +76,26 @@ export async function dashboard(req: Request, res: Response) {
 // Atribuye por `pago.asesorId` (quién hizo la venta), no por el asesor del
 // estudiante — un asesor puede venderle a un estudiante que trajo otro.
 export async function misVentasResumen(req: Request, res: Response) {
-  const yo = req.asesorId
-  const { desde, hasta } = req.query
+  const isAdmin = req.userRole === 'ADMIN'
+  const { desde, hasta, asesorId } = req.query
+
+  // Un VENDEDOR siempre ve lo suyo. Un ADMIN ve a quien pida, o a todos.
+  const filtroAsesor = isAdmin
+    ? (asesorId ? (asesorId === 'sin-asesor' ? { asesorId: null } : { asesorId: String(asesorId) }) : {})
+    : { asesorId: req.asesorId ?? '__sin_asesor__' }
 
   const hoy = new Date()
   const inicio = desde ? new Date(String(desde)) : new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const fin = hasta ? new Date(String(hasta)) : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
 
-  if (!yo) {
+  if (!isAdmin && !req.asesorId) {
     return ApiResponse.success(res, {
       vendido: 0, comision: 0, cantidad: 0, ticketPromedio: 0,
-      dias: [], desde: inicio, hasta: fin,
+      dias: [], porAsesor: [], desde: inicio, hasta: fin,
     })
   }
 
-  const where = { asesorId: yo, estado: 'PAGADO' as const, fechaPago: { gte: inicio, lte: fin } }
+  const where = { ...filtroAsesor, estado: 'PAGADO' as const, fechaPago: { gte: inicio, lte: fin } }
 
   const [agg, pagos] = await Promise.all([
     prisma.pago.aggregate({ where, _sum: { monto: true, comisionAsesor: true }, _count: true }),
@@ -117,12 +122,37 @@ export async function misVentasResumen(req: Request, res: Response) {
     cursor.setDate(cursor.getDate() + 1)
   }
 
+  // Desglose por asesor: solo para el ADMIN cuando mira a todos a la vez.
+  let porAsesor: { id: string; nombre: string; vendido: number; comision: number; cantidad: number }[] = []
+  if (isAdmin && !asesorId) {
+    const [grupos, asesores] = await Promise.all([
+      prisma.pago.groupBy({
+        by: ['asesorId'],
+        where: { estado: 'PAGADO', fechaPago: { gte: inicio, lte: fin }, asesorId: { not: null } },
+        _sum: { monto: true, comisionAsesor: true },
+        _count: true,
+      }),
+      prisma.asesor.findMany({ select: { id: true, nombre: true } }),
+    ])
+    const nombreDe = new Map(asesores.map(a => [a.id, a.nombre]))
+    porAsesor = grupos
+      .map(g => ({
+        id: g.asesorId as string,
+        nombre: nombreDe.get(g.asesorId as string) ?? 'Asesor',
+        vendido: g._sum.monto ?? 0,
+        comision: g._sum.comisionAsesor ?? 0,
+        cantidad: g._count,
+      }))
+      .sort((a, b) => b.vendido - a.vendido)
+  }
+
   return ApiResponse.success(res, {
     vendido,
     comision: agg._sum.comisionAsesor ?? 0,
     cantidad,
     ticketPromedio: cantidad > 0 ? Math.round(vendido / cantidad) : 0,
     dias,
+    porAsesor,
     desde: inicio,
     hasta: fin,
   })

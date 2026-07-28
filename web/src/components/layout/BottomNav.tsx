@@ -26,6 +26,7 @@ const primaryItems: NavItem[] = [
 
 const moreItems: NavItem[] = [
   { href: '/mis-ventas',      label: 'Mis ventas',       icon: Receipt,       adminOnly: false, soloAsesor: true },
+  { href: '/ventas',          label: 'Ventas',           icon: Receipt,       adminOnly: true  },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
   { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
