@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
+import { useCountUp } from '@/hooks/useCountUp'
 import {
   ChevronLeft, ChevronRight, Search, Repeat2, Loader2, Receipt, AlertTriangle,
   TrendingUp, Wallet, Target, X, type LucideIcon,
@@ -168,6 +169,12 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
   const ventas = lista?.data ?? []
   const totalPaginas = lista?.meta?.totalPages ?? 1
 
+  // Los totales cuentan hacia arriba al cargar, igual que en el dashboard.
+  const animVendido = useCountUp(cargandoResumen ? 0 : r?.vendido ?? 0)
+  const animComision = useCountUp(cargandoResumen ? 0 : r?.comision ?? 0)
+  const animCantidad = useCountUp(cargandoResumen ? 0 : r?.cantidad ?? 0)
+  const animTicket = useCountUp(cargandoResumen ? 0 : r?.ticketPromedio ?? 0)
+
   const maxDia = Math.max(1, ...(r?.dias ?? []).map(d => d.monto))
   // 'en-CA' da el formato YYYY-MM-DD en la zona del navegador, igual que la
   // clave de día que arma el backend. `toISOString()` daría el día en UTC, que
@@ -292,29 +299,18 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                 role="img"
                 aria-label={`Ventas por día de ${MESES[inicio.getMonth()]}`}
               >
-                {(r?.dias ?? []).map((d, i) => {
-                  const esHoy = d.fecha === hoyISO
-                  const futuro = d.fecha > hoyISO
-                  const activo = i === diaActivo || d.fecha === diaFijado
-                  const alto = d.monto > 0 ? Math.max(6, (d.monto / maxDia) * 100) : 4
-                  return (
-                    <div
-                      key={d.fecha}
-                      title={`${d.fecha} · ${formatCOP(d.monto)}`}
-                      className="flex-1 rounded-t-[2px] transition-all"
-                      style={{
-                        height: activo ? '100%' : `${alto}%`,
-                        background: activo || esHoy ? 'var(--on-surface)' : 'var(--primary)',
-                        opacity: activo ? 1 : futuro ? 0.15 : d.monto > 0 ? 1 : 0.25,
-                        ...(activo && {
-                          // La barra activa se estira a todo el alto como guía,
-                          // con su valor real marcado en color sólido.
-                          background: `linear-gradient(to top, var(--on-surface) ${alto}%, color-mix(in srgb, var(--on-surface) 14%, transparent) ${alto}%)`,
-                        }),
-                      }}
-                    />
-                  )
-                })}
+                {(r?.dias ?? []).map((d, i) => (
+                  <BarraDia
+                    key={d.fecha}
+                    dia={d}
+                    alto={d.monto > 0 ? Math.max(6, (d.monto / maxDia) * 100) : 4}
+                    activo={i === diaActivo || d.fecha === diaFijado}
+                    esHoy={d.fecha === hoyISO}
+                    futuro={d.fecha > hoyISO}
+                    // Escalonado corto: 31 barras a 70 ms se harían eternas.
+                    delay={i * 14}
+                  />
+                ))}
               </div>
             </div>
             <div className={`${mono.className} flex justify-between mt-1.5 text-[10.5px] text-on-surface-variant`}>
@@ -328,10 +324,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
       {/* Tarjetas de resumen — mismo formato que el dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Kpi icon={TrendingUp} label="Vendido" valor={formatCOP(r?.vendido ?? 0)} variacion={r?.variacion?.vendido} cargando={cargandoResumen} />
-        <Kpi icon={Wallet} label="Comisión" valor={formatCOP(r?.comision ?? 0)} valColor="#16a34a" variacion={r?.variacion?.comision} cargando={cargandoResumen} />
-        <Kpi icon={Receipt} label="Ventas" valor={String(r?.cantidad ?? 0)} variacion={r?.variacion?.cantidad} cargando={cargandoResumen} />
-        <Kpi icon={Target} label="Ticket promedio" valor={formatCOP(r?.ticketPromedio ?? 0)} variacion={r?.variacion?.ticketPromedio} cargando={cargandoResumen} />
+        <Kpi icon={TrendingUp} label="Vendido" valor={formatCOP(animVendido)} variacion={r?.variacion?.vendido} cargando={cargandoResumen} />
+        <Kpi icon={Wallet} label="Comisión" valor={formatCOP(animComision)} valColor="#16a34a" variacion={r?.variacion?.comision} cargando={cargandoResumen} />
+        <Kpi icon={Receipt} label="Ventas" valor={String(animCantidad)} variacion={r?.variacion?.cantidad} cargando={cargandoResumen} />
+        <Kpi icon={Target} label="Ticket promedio" valor={formatCOP(animTicket)} variacion={r?.variacion?.ticketPromedio} cargando={cargandoResumen} />
       </div>
 
       {/* Filtros */}
@@ -450,7 +446,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
               return (
                 <div
                   key={v.id}
-                  className={`flex gap-4 items-start py-4 ${i > 0 ? 'border-t border-dashed border-surface-high' : 'pt-0'}`}
+                  // Entran escalonadas; solo las primeras, para que al paginar
+                  // no haya que esperar a que caiga la fila 20.
+                  className={`animate-card-enter flex gap-4 items-start py-4 ${i > 0 ? 'border-t border-dashed border-surface-high' : 'pt-0'}`}
+                  style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-[14.5px] font-semibold text-on-surface leading-snug">{v.estudiante.nombre}</p>
@@ -514,6 +513,44 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
         )}
       </div>
     </div>
+  )
+}
+
+// Barra de un día del mes. Crece desde cero al montar, con un retardo según su
+// posición, igual que la serie de 6 meses del dashboard.
+function BarraDia({
+  dia, alto, activo, esHoy, futuro, delay,
+}: {
+  dia: { fecha: string; monto: number }
+  alto: number
+  activo: boolean
+  esHoy: boolean
+  futuro: boolean
+  delay: number
+}) {
+  const [montada, setMontada] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setMontada(true), delay)
+    return () => clearTimeout(t)
+  }, [delay])
+
+  const altoFinal = activo ? 100 : alto
+
+  return (
+    <div
+      title={`${dia.fecha} · ${formatCOP(dia.monto)}`}
+      className="flex-1 rounded-t-[2px]"
+      style={{
+        height: montada ? `${altoFinal}%` : '0%',
+        transition: 'height 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms, background 200ms',
+        opacity: activo ? 1 : futuro ? 0.15 : dia.monto > 0 ? 1 : 0.25,
+        background: activo
+          // La barra activa se estira a todo el alto como guía, con su valor
+          // real marcado en color sólido y el resto apenas insinuado.
+          ? `linear-gradient(to top, var(--on-surface) ${alto}%, color-mix(in srgb, var(--on-surface) 14%, transparent) ${alto}%)`
+          : esHoy ? 'var(--on-surface)' : 'var(--primary)',
+      }}
+    />
   )
 }
 
