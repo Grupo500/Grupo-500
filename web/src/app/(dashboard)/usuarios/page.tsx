@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { InputPassword } from '@/components/ui/InputPassword'
 import { formatDate, cn } from '@/lib/utils'
 import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp } from 'lucide-react'
 
@@ -396,14 +397,12 @@ export default function UsuariosPage() {
                   Contraseña temporal
                   <span className="ml-1.5 text-[10px] text-on-surface-variant/60 font-normal">(dejar vacío para no cambiar)</span>
                 </label>
-                <input
-                  type="password"
+                <InputPassword
                   value={editPassword}
                   onChange={e => setEditPassword(e.target.value)}
                   placeholder="Nueva contraseña..."
                   minLength={8}
                   autoComplete="new-password"
-                  className="input-base"
                 />
                 {editPassword && editPassword.length < 8 && (
                   <p className="text-[11px] text-[var(--error)] mt-1">Mínimo 8 caracteres</p>
@@ -481,13 +480,11 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Contraseña temporal</label>
-                <input
-                  type="password"
+                <InputPassword
                   value={formPassword}
                   onChange={e => { setFormPassword(e.target.value); setFormError('') }}
                   placeholder="Mínimo 8 caracteres"
                   autoComplete="new-password"
-                  className="input-base"
                 />
               </div>
               <div>
