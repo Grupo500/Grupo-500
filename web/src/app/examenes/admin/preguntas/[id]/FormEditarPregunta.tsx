@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Save } from 'lucide-react'
 import { editarPregunta } from './acciones'
+import { Select } from '@/components/ui/Select'
 
 type Inicial = {
   enunciado: string
@@ -84,14 +85,11 @@ export default function FormEditarPregunta({ preguntaId, inicial }: { preguntaId
       {/* Área */}
       <div>
         <label className="block text-xs font-semibold text-on-surface-variant mb-1">Área</label>
-        <select
+        <Select
           value={form.area}
-          onChange={e => set('area', e.target.value)}
-          className="w-full rounded-lg border border-outline-variant bg-surface-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary transition-colors"
-        >
-          <option value="">Sin área</option>
-          {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
-        </select>
+          onValueChange={v => set('area', v)}
+          options={[{ value: '', label: 'Sin área' }, ...AREAS.map(a => ({ value: a, label: a }))]}
+        />
       </div>
 
       {/* Contexto */}

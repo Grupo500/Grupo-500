@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { Poppins } from 'next/font/google'
+import { Select as SelectBase } from '@/components/ui/Select'
 import {
   ChevronLeft, ChevronRight, Check, Upload, Loader2,
   User, MapPin, Users, BookOpen, CreditCard, Heart,
@@ -139,16 +140,28 @@ function Input({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   )
 }
 
-function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+// Envuelve el Select de la app conservando el estilo claro de la landing:
+// borde grueso gris, fondo blanco y acento celeste al enfocar.
+function Select({ value, onValueChange, options, disabled, multilinea }: {
+  value: string
+  onValueChange: (v: string) => void
+  options: { value: string; label: string }[]
+  disabled?: boolean
+  multilinea?: boolean
+}) {
   return (
-    <select
-      {...props}
-      className={`w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-800 text-sm
-        focus:outline-none focus:border-[#21b9f7] transition-colors cursor-pointer
-        disabled:bg-slate-50 ${props.className ?? ''}`}
-    >
-      {children}
-    </select>
+    <SelectBase
+      value={value}
+      onValueChange={onValueChange}
+      options={options}
+      disabled={disabled}
+      multilinea={multilinea}
+      className="px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-800 focus:border-[#21b9f7]"
+      // Esta landing es blanca aunque el visitante tenga el celular en modo
+      // oscuro, así que el panel no puede heredar los tokens del tema.
+      contentClassName="bg-white border-slate-200"
+      itemClassName="text-slate-800 data-[highlighted]:bg-[#21b9f7]/10 data-[highlighted]:text-[#0b7fb0]"
+    />
   )
 }
 
@@ -564,13 +577,13 @@ export default function FormularioPage() {
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Tipo de documento" error={errors.tipoDocumento}>
-                  <Select value={form.tipoDocumento} onChange={e => set('tipoDocumento', e.target.value)}>
-                    <option value="TI">Tarjeta de Identidad</option>
-                    <option value="CC">Cédula de Ciudadanía</option>
-                    <option value="CE">Cédula Extranjería</option>
-                    <option value="PA">Pasaporte</option>
-                    <option value="Otro">Otro</option>
-                  </Select>
+                  <Select value={form.tipoDocumento} onValueChange={v => set('tipoDocumento', v)} options={[
+                    { value: 'TI', label: 'Tarjeta de Identidad' },
+                    { value: 'CC', label: 'Cédula de Ciudadanía' },
+                    { value: 'CE', label: 'Cédula Extranjería' },
+                    { value: 'PA', label: 'Pasaporte' },
+                    { value: 'Otro', label: 'Otro' },
+                  ]} />
                 </Field>
                 <Field label="Número de documento" error={errors.documento}>
                   <Input value={form.documento} onChange={e => set('documento', e.target.value)}
@@ -591,34 +604,34 @@ export default function FormularioPage() {
                 ¿Dónde vives?
               </h2>
               <Field label="Departamento" error={errors.departamento}>
-                <Select value={form.departamento} onChange={e => {
-                  set('departamento', e.target.value)
-                  set('ciudad', '')
-                }}>
-                  <option value="">Selecciona tu departamento</option>
-                  {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
-                </Select>
+                <Select
+                  value={form.departamento}
+                  onValueChange={v => { set('departamento', v); set('ciudad', '') }}
+                  options={[{ value: '', label: 'Selecciona tu departamento' }, ...DEPARTAMENTOS.map(d => ({ value: d, label: d }))]}
+                />
               </Field>
               <Field label="Municipio" error={errors.ciudad}>
-                <Select value={form.ciudad} onChange={e => set('ciudad', e.target.value)}
-                  disabled={!form.departamento}>
-                  <option value="">
-                    {form.departamento ? 'Selecciona tu municipio' : 'Primero selecciona el departamento'}
-                  </option>
-                  {municipios.map(m => <option key={m} value={m}>{m}</option>)}
-                </Select>
+                <Select
+                  value={form.ciudad}
+                  onValueChange={v => set('ciudad', v)}
+                  disabled={!form.departamento}
+                  options={[
+                    { value: '', label: form.departamento ? 'Selecciona tu municipio' : 'Primero selecciona el departamento' },
+                    ...municipios.map(m => ({ value: m, label: m })),
+                  ]}
+                />
               </Field>
               <Field label="¿En qué colegio estudias o estudiaste?" error={errors.colegio}>
                 <Input value={form.colegio} onChange={e => set('colegio', e.target.value)}
                   placeholder="Nombre completo del colegio" />
               </Field>
               <Field label="Grado actual" error={errors.grado}>
-                <Select value={form.grado} onChange={e => set('grado', e.target.value)}>
-                  <option value="">Selecciona tu grado</option>
-                  <option value="10°">10°</option>
-                  <option value="11°">11°</option>
-                  <option value="Egresado">Ya me gradué (egresado)</option>
-                </Select>
+                <Select value={form.grado} onValueChange={v => set('grado', v)} options={[
+                  { value: '', label: 'Selecciona tu grado' },
+                  { value: '10°', label: '10°' },
+                  { value: '11°', label: '11°' },
+                  { value: 'Egresado', label: 'Ya me gradué (egresado)' },
+                ]} />
               </Field>
             </>
           )}
@@ -634,11 +647,11 @@ export default function FormularioPage() {
                   placeholder="Nombres y apellidos completos" />
               </Field>
               <Field label="Parentesco" error={errors.acudienteParentesco}>
-                <Select value={form.acudienteParentesco} onChange={e => set('acudienteParentesco', e.target.value)}>
-                  <option value="Mamá">Mamá</option>
-                  <option value="Papá">Papá</option>
-                  <option value="Otro">Otro</option>
-                </Select>
+                <Select value={form.acudienteParentesco} onValueChange={v => set('acudienteParentesco', v)} options={[
+                  { value: 'Mamá', label: 'Mamá' },
+                  { value: 'Papá', label: 'Papá' },
+                  { value: 'Otro', label: 'Otro' },
+                ]} />
               </Field>
               {form.acudienteParentesco === 'Otro' && (
                 <Field label="Especifica el parentesco">
@@ -653,12 +666,12 @@ export default function FormularioPage() {
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Tipo documento acudiente">
-                  <Select value={form.acudienteTipoDocumento} onChange={e => set('acudienteTipoDocumento', e.target.value)}>
-                    <option value="CC">Cédula Ciudadanía</option>
-                    <option value="CE">Cédula Extranjería</option>
-                    <option value="PA">Pasaporte</option>
-                    <option value="Otro">Otro</option>
-                  </Select>
+                  <Select value={form.acudienteTipoDocumento} onValueChange={v => set('acudienteTipoDocumento', v)} options={[
+                    { value: 'CC', label: 'Cédula Ciudadanía' },
+                    { value: 'CE', label: 'Cédula Extranjería' },
+                    { value: 'PA', label: 'Pasaporte' },
+                    { value: 'Otro', label: 'Otro' },
+                  ]} />
                 </Field>
                 <Field label="Número documento" error={errors.acudienteNumeroDocumento}>
                   <Input value={form.acudienteNumeroDocumento}
@@ -701,20 +714,22 @@ export default function FormularioPage() {
               {form.interesSalud && (
                 <Field label="¿Te gustaría inscribirte en nuestro curso Premédico?"
                   hint="Anatomía, Fisiología, Histología, Bioquímica y más. Precio especial por ser parte de Grupo 500">
-                  <Select value={form.interesPremedico} onChange={e => set('interesPremedico', e.target.value)}>
-                    <option value="">Selecciona una opción</option>
-                    <option value="Sí, mándame la información">Sí, mándame la información</option>
-                    <option value="Tal vez, si me gusta el preicfes me inscribo">Tal vez, si me gusta el preicfes me inscribo</option>
-                    <option value="Tal vez, ahorita no tengo el dinero pero en un futuro miramos">Tal vez, en un futuro miramos</option>
-                    <option value="No, mi carrera no necesita esos conocimientos">No, mi carrera no necesita esos conocimientos</option>
-                  </Select>
+                  <Select value={form.interesPremedico} onValueChange={v => set('interesPremedico', v)} multilinea options={[
+                    { value: '', label: 'Selecciona una opción' },
+                    { value: 'Sí, mándame la información', label: 'Sí, mándame la información' },
+                    { value: 'Tal vez, si me gusta el preicfes me inscribo', label: 'Tal vez, si me gusta el preicfes me inscribo' },
+                    { value: 'Tal vez, ahorita no tengo el dinero pero en un futuro miramos', label: 'Tal vez, en un futuro miramos' },
+                    { value: 'No, mi carrera no necesita esos conocimientos', label: 'No, mi carrera no necesita esos conocimientos' },
+                  ]} />
                 </Field>
               )}
               <Field label="¿A qué universidad quisieras ingresar?">
-                <Select value={form.universidadInteres} onChange={e => set('universidadInteres', e.target.value)}>
-                  <option value="">Selecciona tu universidad</option>
-                  {UNIVERSIDADES.map(u => <option key={u} value={u}>{u}</option>)}
-                </Select>
+                <Select
+                  value={form.universidadInteres}
+                  onValueChange={v => set('universidadInteres', v)}
+                  multilinea
+                  options={[{ value: '', label: 'Selecciona tu universidad' }, ...UNIVERSIDADES.map(u => ({ value: u, label: u }))]}
+                />
               </Field>
               {form.universidadInteres === 'Otra' && (
                 <Field label="¿Cuál universidad?">
@@ -732,12 +747,10 @@ export default function FormularioPage() {
                 Información de pago
               </h2>
               <Field label="¿A qué cuenta consignaste el dinero?">
-                <Select value={form.cuentaPago} onChange={e => set('cuentaPago', e.target.value)}>
-                  <option value="Bancolombia - GRUPO 500 EDUCACION S.A.S">
-                    Bancolombia — GRUPO 500 EDUCACION S.A.S
-                  </option>
-                  <option value="Otra">Otra cuenta</option>
-                </Select>
+                <Select value={form.cuentaPago} onValueChange={v => set('cuentaPago', v)} multilinea options={[
+                  { value: 'Bancolombia - GRUPO 500 EDUCACION S.A.S', label: 'Bancolombia — GRUPO 500 EDUCACION S.A.S' },
+                  { value: 'Otra', label: 'Otra cuenta' },
+                ]} />
               </Field>
 
               <UploadField
@@ -771,10 +784,11 @@ export default function FormularioPage() {
                 Casi listo 🎯
               </h2>
               <Field label="¿Cómo te enteraste de Grupo 500?" error={errors.fuenteContacto as string}>
-                <Select value={form.fuenteContacto} onChange={e => set('fuenteContacto', e.target.value)}>
-                  <option value="">Selecciona una opción</option>
-                  {FUENTES.map(f => <option key={f} value={f}>{f}</option>)}
-                </Select>
+                <Select
+                  value={form.fuenteContacto}
+                  onValueChange={v => set('fuenteContacto', v)}
+                  options={[{ value: '', label: 'Selecciona una opción' }, ...FUENTES.map(f => ({ value: f, label: f }))]}
+                />
               </Field>
               {form.fuenteContacto === 'Otro' && (
                 <Field label="¿Cómo exactamente?">

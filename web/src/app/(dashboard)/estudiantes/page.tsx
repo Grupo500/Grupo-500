@@ -7,6 +7,7 @@ import { getClientToken, apiFetch } from '@/lib/api'
 import Link from 'next/link'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { Select } from '@/components/ui/Select'
 import { formatCOP } from '@/lib/utils'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
@@ -724,9 +725,8 @@ const subirComprobante = async (file: File) => {
                   </div>
                   <div>
                     <label className={labelCls}>Tipo doc.</label>
-                    <select className={inputCls} value={form.tipoDocumento} onChange={e => setForm(p => ({ ...p, tipoDocumento: e.target.value }))}>
-                      {['CC','TI','CE','PA','RC'].map(t => <option key={t}>{t}</option>)}
-                    </select>
+                    <Select className={inputCls} value={form.tipoDocumento} onValueChange={v => setForm(p => ({ ...p, tipoDocumento: v }))}
+                      options={['CC','TI','CE','PA','RC'].map(t => ({ value: t, label: t }))} />
                   </div>
                   <div>
                     <label className={labelCls}>Número de documento</label>
@@ -765,41 +765,31 @@ const subirComprobante = async (file: File) => {
                   </div>
                   <div>
                     <label className={labelCls}>Colegio</label>
-                    <select className={inputCls} value={form.colegioId} onChange={e => setForm(p => ({ ...p, colegioId: e.target.value }))}>
-                      <option value="">Sin colegio</option>
-                      {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                    </select>
+                    <Select className={inputCls} value={form.colegioId} onValueChange={v => setForm(p => ({ ...p, colegioId: v }))}
+                      options={[{ value: '', label: 'Sin colegio' }, ...colegios.map(c => ({ value: c.id, label: c.nombre }))]} />
                   </div>
                   <div>
                     <label className={labelCls}>Departamento</label>
-                    <select className={inputCls} value={form.departamento} onChange={e => setForm(p => ({ ...p, departamento: e.target.value, ciudad: '' }))}>
-                      <option value="">Seleccionar</option>
-                      {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
+                    <Select className={inputCls} value={form.departamento} onValueChange={v => setForm(p => ({ ...p, departamento: v, ciudad: '' }))}
+                      options={[{ value: '', label: 'Seleccionar' }, ...DEPARTAMENTOS.map(d => ({ value: d, label: d }))]} />
                   </div>
                   <div>
                     <label className={labelCls}>Ciudad</label>
-                    <select className={inputCls} value={form.ciudad} onChange={e => setForm(p => ({ ...p, ciudad: e.target.value }))} disabled={!form.departamento}>
-                      <option value="">Seleccionar</option>
-                      {getMunicipios(form.departamento).map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
+                    <Select className={inputCls} value={form.ciudad} onValueChange={v => setForm(p => ({ ...p, ciudad: v }))} disabled={!form.departamento}
+                      options={[{ value: '', label: 'Seleccionar' }, ...getMunicipios(form.departamento).map(m => ({ value: m, label: m }))]} />
                   </div>
                   {isAdmin && (
                     <div>
                       <label className={labelCls}>Asesor</label>
-                      <select className={inputCls} value={form.asesorId} onChange={e => setForm(p => ({ ...p, asesorId: e.target.value }))}>
-                        <option value="">Sin asignar</option>
-                        {asesores.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-                      </select>
+                      <Select className={inputCls} value={form.asesorId} onValueChange={v => setForm(p => ({ ...p, asesorId: v }))}
+                        options={[{ value: '', label: 'Sin asignar' }, ...asesores.map(a => ({ value: a.id, label: a.nombre }))]} />
                     </div>
                   )}
                   {isAdmin && (
                     <div>
                       <label className={labelCls}>Línea autorizada</label>
-                      <select className={inputCls} value={form.lineaAutorizada} onChange={e => setForm(p => ({ ...p, lineaAutorizada: e.target.value }))}>
-                        <option value="">Sin asignar</option>
-                        {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Línea {n}</option>)}
-                      </select>
+                      <Select className={inputCls} value={form.lineaAutorizada} onValueChange={v => setForm(p => ({ ...p, lineaAutorizada: v }))}
+                        options={[{ value: '', label: 'Sin asignar' }, ...[1,2,3,4,5,6].map(n => ({ value: String(n), label: `Línea ${n}` }))]} />
                     </div>
                   )}
                 </div>
@@ -820,9 +810,8 @@ const subirComprobante = async (file: File) => {
                   </div>
                   <div className="col-span-2">
                     <label className={labelCls}>Relación</label>
-                    <select className={inputCls} value={form.acudienteRelacion} onChange={e => setForm(p => ({ ...p, acudienteRelacion: e.target.value }))}>
-                      {['Padre','Madre','Tutor','Hermano/a','Otro'].map(r => <option key={r}>{r}</option>)}
-                    </select>
+                    <Select className={inputCls} value={form.acudienteRelacion} onValueChange={v => setForm(p => ({ ...p, acudienteRelacion: v }))}
+                      options={['Padre','Madre','Tutor','Hermano/a','Otro'].map(r => ({ value: r, label: r }))} />
                   </div>
                 </div>
               </>
@@ -835,10 +824,8 @@ const subirComprobante = async (file: File) => {
                 <div className="space-y-3">
                   <div>
                     <label className={labelCls}>Curso</label>
-                    <select className={inputCls} value={form.cursoId} onChange={e => setForm(p => ({ ...p, cursoId: e.target.value, descuentoValor: '0' }))}>
-                      <option value="">Sin curso por ahora</option>
-                      {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre} — {formatCOP(c.precio)}</option>)}
-                    </select>
+                    <Select className={inputCls} value={form.cursoId} onValueChange={v => setForm(p => ({ ...p, cursoId: v, descuentoValor: '0' }))} anchoAuto multilinea
+                      options={[{ value: '', label: 'Sin curso por ahora' }, ...cursos.map(c => ({ value: c.id, label: `${c.nombre} — ${formatCOP(c.precio)}` }))]} />
                   </div>
                   {form.cursoId && (
                     <>
@@ -872,9 +859,8 @@ const subirComprobante = async (file: File) => {
                         <>
                           <div>
                             <label className={labelCls}>Método de pago</label>
-                            <select className={inputCls} value={form.metodoPago} onChange={e => setForm(p => ({ ...p, metodoPago: e.target.value }))}>
-                              {['TRANSFERENCIA','TARJETA','EFECTIVO','OTRO'].map(m => <option key={m}>{m}</option>)}
-                            </select>
+                            <Select className={inputCls} value={form.metodoPago} onValueChange={v => setForm(p => ({ ...p, metodoPago: v }))}
+                              options={['TRANSFERENCIA','TARJETA','EFECTIVO','OTRO'].map(m => ({ value: m, label: m }))} />
                           </div>
                           <div>
                             <label className={labelCls}>Fecha del pago *</label>

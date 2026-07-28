@@ -18,16 +18,39 @@ interface SelectProps {
   anchoAuto?: boolean
   /** Deja que las opciones largas ocupen varias líneas en vez de cortarse. */
   multilinea?: boolean
+  disabled?: boolean
+  id?: string
+  /**
+   * Estilos del panel desplegable. Necesario en superficies que no siguen el
+   * tema de la app (la landing de inscripción es blanca siempre, así que el
+   * panel no puede heredar los colores del modo oscuro).
+   */
+  contentClassName?: string
+  itemClassName?: string
 }
 
+// Radix reserva la cadena vacía para "sin selección", así que una opción no
+// puede valer ''. Como en la app abundan los `<option value="">Sin colegio</option>`,
+// el componente traduce '' a un centinela por dentro y lo devuelve como ''
+// al consumidor, que así no tiene que enterarse.
+const VACIO = '__vacio__'
+
 export function Select({
-  value, onValueChange, options, className, placeholder, anchoAuto, multilinea,
+  value, onValueChange, options, className, placeholder, anchoAuto, multilinea, disabled, id,
+  contentClassName, itemClassName,
 }: SelectProps) {
+  const hayOpcionVacia = options.some(o => o.value === '')
+
   return (
-    <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
+    <SelectPrimitive.Root
+      value={value === '' && hayOpcionVacia ? VACIO : value}
+      onValueChange={v => onValueChange(v === VACIO ? '' : v)}
+      disabled={disabled}
+    >
       <SelectPrimitive.Trigger
+        id={id}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-outline-variant bg-surface-lowest text-sm text-on-surface outline-none focus:border-primary transition-colors data-[placeholder]:text-on-surface-variant',
+          'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-outline-variant bg-surface-lowest text-sm text-on-surface outline-none focus:border-primary transition-colors data-[placeholder]:text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
           className,
         )}
       >
@@ -44,7 +67,10 @@ export function Select({
           position="popper"
           sideOffset={4}
           collisionPadding={12}
-          className="z-50 overflow-hidden rounded-lg border border-outline-variant bg-surface-lowest shadow-float animate-fade-in"
+          className={cn(
+            'z-50 overflow-hidden rounded-lg border border-outline-variant bg-surface-lowest shadow-float animate-fade-in',
+            contentClassName,
+          )}
           style={
             anchoAuto
               ? { minWidth: 'var(--radix-select-trigger-width)', maxWidth: 'min(420px, calc(100vw - 24px))' }
@@ -55,10 +81,11 @@ export function Select({
             {options.map(opt => (
               <SelectPrimitive.Item
                 key={opt.value}
-                value={opt.value}
+                value={opt.value === '' ? VACIO : opt.value}
                 className={cn(
                   'relative flex items-center gap-2 pl-7 pr-3 py-2 rounded-md text-sm text-on-surface cursor-pointer select-none outline-none data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary data-[state=checked]:font-semibold',
                   multilinea && 'items-start',
+                  itemClassName,
                 )}
               >
                 <SelectPrimitive.ItemIndicator className={cn('absolute left-2 flex items-center', multilinea && 'top-2.5')}>

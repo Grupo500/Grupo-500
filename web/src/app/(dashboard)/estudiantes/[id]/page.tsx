@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
+import { Select } from '@/components/ui/Select'
 import { isBefore, parseISO, isToday } from 'date-fns'
 import { TIPOS as TIPOS_CERTIFICADO, generarPDF, type Certificado, type Firmas } from '@/lib/certificados'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
@@ -638,9 +639,8 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
         </div>
         <div>
           <label className={labelCls}>Tipo doc.</label>
-          <select className={inputCls} value={form.tipoDocumento} onChange={e => f('tipoDocumento')(e.target.value)}>
-            {['CC','TI','CE','PA','RC'].map(t => <option key={t}>{t}</option>)}
-          </select>
+          <Select className={inputCls} value={form.tipoDocumento} onValueChange={f('tipoDocumento')}
+            options={['CC','TI','CE','PA','RC'].map(t => ({ value: t, label: t }))} />
         </div>
         <div>
           <label className={labelCls}>Número documento</label>
@@ -660,47 +660,35 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
         </div>
         <div>
           <label className={labelCls}>Colegio</label>
-          <select className={inputCls} value={form.colegioId} onChange={e => f('colegioId')(e.target.value)}>
-            <option value="">Sin colegio</option>
-            {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-          </select>
+          <Select className={inputCls} value={form.colegioId} onValueChange={f('colegioId')}
+            options={[{ value: '', label: 'Sin colegio' }, ...colegios.map(c => ({ value: c.id, label: c.nombre }))]} />
         </div>
         <div>
           <label className={labelCls}>Departamento</label>
-          <select className={inputCls} value={form.departamento} onChange={e => { f('departamento')(e.target.value); f('ciudad')('') }}>
-            <option value="">Seleccionar</option>
-            {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
+          <Select className={inputCls} value={form.departamento} onValueChange={v => { f('departamento')(v); f('ciudad')('') }}
+            options={[{ value: '', label: 'Seleccionar' }, ...DEPARTAMENTOS.map(d => ({ value: d, label: d }))]} />
         </div>
         <div>
           <label className={labelCls}>Ciudad</label>
-          <select className={inputCls} value={form.ciudad} onChange={e => f('ciudad')(e.target.value)} disabled={!form.departamento}>
-            <option value="">Seleccionar</option>
-            {getMunicipios(form.departamento).map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
+          <Select className={inputCls} value={form.ciudad} onValueChange={f('ciudad')} disabled={!form.departamento}
+            options={[{ value: '', label: 'Seleccionar' }, ...getMunicipios(form.departamento).map(m => ({ value: m, label: m }))]} />
         </div>
         {isAdmin && (
           <>
             <div>
               <label className={labelCls}>Asesor</label>
-              <select className={inputCls} value={form.asesorId} onChange={e => f('asesorId')(e.target.value)}>
-                <option value="">Sin asignar</option>
-                {asesores.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-              </select>
+              <Select className={inputCls} value={form.asesorId} onValueChange={f('asesorId')}
+                options={[{ value: '', label: 'Sin asignar' }, ...asesores.map(a => ({ value: a.id, label: a.nombre }))]} />
             </div>
             <div>
               <label className={labelCls}>Línea autorizada</label>
-              <select className={inputCls} value={form.lineaAutorizada} onChange={e => f('lineaAutorizada')(e.target.value)}>
-                <option value="">Sin asignar</option>
-                {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Línea {n}</option>)}
-              </select>
+              <Select className={inputCls} value={form.lineaAutorizada} onValueChange={f('lineaAutorizada')}
+                options={[{ value: '', label: 'Sin asignar' }, ...[1,2,3,4,5,6].map(n => ({ value: String(n), label: `Línea ${n}` }))]} />
             </div>
             <div>
               <label className={labelCls}>Agregado</label>
-              <select className={inputCls} value={form.agregado} onChange={e => f('agregado')(e.target.value)}>
-                <option value="no">No</option>
-                <option value="si">Sí</option>
-              </select>
+              <Select className={inputCls} value={form.agregado} onValueChange={f('agregado')}
+                options={[{ value: 'no', label: 'No' }, { value: 'si', label: 'Sí' }]} />
             </div>
             {form.agregado === 'si' && (
               <div>
@@ -710,10 +698,8 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             )}
             <div>
               <label className={labelCls}>Curso</label>
-              <select className={inputCls} value={form.cursoId} onChange={e => f('cursoId')(e.target.value)}>
-                <option value="">Sin curso</option>
-                {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-              </select>
+              <Select className={inputCls} value={form.cursoId} onValueChange={f('cursoId')} anchoAuto multilinea
+                options={[{ value: '', label: 'Sin curso' }, ...cursos.map(c => ({ value: c.id, label: c.nombre }))]} />
             </div>
           </>
         )}
@@ -735,9 +721,8 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
           </div>
           <div>
             <label className={labelCls}>Relación</label>
-            <select className={inputCls} value={form.acudienteRelacion} onChange={e => f('acudienteRelacion')(e.target.value)}>
-              {['Padre','Madre','Tutor','Hermano/a','Otro'].map(r => <option key={r}>{r}</option>)}
-            </select>
+            <Select className={inputCls} value={form.acudienteRelacion} onValueChange={f('acudienteRelacion')}
+              options={['Padre','Madre','Tutor','Hermano/a','Otro'].map(r => ({ value: r, label: r }))} />
           </div>
         </div>
       </div>
@@ -1539,13 +1524,12 @@ function TabCertificados({ e, fetcher, onRefresh }: {
         )}
 
         <div className="grid grid-cols-[100px_1fr] gap-2">
-          <select
+          <Select
             value={tipoDocInput}
-            onChange={e => setTipoDocInput(e.target.value)}
-            className="bg-surface-high border border-outline-variant rounded-lg px-2 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50"
-          >
-            {['CC', 'TI', 'CE', 'PA', 'RC'].map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
+            onValueChange={setTipoDocInput}
+            className="bg-surface-high w-auto"
+            options={['CC', 'TI', 'CE', 'PA', 'RC'].map(t => ({ value: t, label: t }))}
+          />
           <input
             type="text"
             placeholder="Número de documento"

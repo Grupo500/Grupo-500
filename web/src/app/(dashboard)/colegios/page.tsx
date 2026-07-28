@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { Select } from '@/components/ui/Select'
 import { formatDate, cn } from '@/lib/utils'
 import {
   School, Plus, X, Loader2, MapPin, Users,
@@ -914,9 +915,12 @@ export default function ColegiosPage() {
       </div>
       <div>
         <label className={labelCls}>Etapa</label>
-        <select className={inputCls} value={f.etapa} onChange={e => onChange({ ...f, etapa: e.target.value as Etapa })}>
-          {ETAPAS.map(c => <option key={c.etapa} value={c.etapa}>{c.label}</option>)}
-        </select>
+        <Select
+          className={inputCls}
+          value={f.etapa}
+          onValueChange={v => onChange({ ...f, etapa: v as Etapa })}
+          options={ETAPAS.map(c => ({ value: c.etapa, label: c.label }))}
+        />
       </div>
       {f.etapa !== 'PROSPECTO' && (
         <div className="grid grid-cols-2 gap-3">
@@ -1112,20 +1116,15 @@ export default function ColegiosPage() {
 
             {/* ── Selector móvil ── */}
             <div className="md:hidden">
-              <select
+              <Select
                 value={etapaActiva}
-                onChange={e => setEtapaActiva(e.target.value as Etapa)}
-                className="w-full bg-surface-lowest border border-outline-variant rounded-xl px-4 py-3 text-sm font-medium text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-              >
-                {ETAPAS.map(cfg => {
+                onValueChange={v => setEtapaActiva(v as Etapa)}
+                className="rounded-xl px-4 py-3 font-medium"
+                options={ETAPAS.map(cfg => {
                   const count = negociaciones.filter(n => n.etapa === cfg.etapa).length
-                  return (
-                    <option key={cfg.etapa} value={cfg.etapa}>
-                      {cfg.label}{count > 0 ? ` (${count})` : ''}
-                    </option>
-                  )
+                  return { value: cfg.etapa, label: `${cfg.label}${count > 0 ? ` (${count})` : ''}` }
                 })}
-              </select>
+              />
             </div>
 
             {/* ── Barra de pipeline — solo desktop ── */}

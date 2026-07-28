@@ -60,10 +60,6 @@ interface Resumen {
 }
 interface AsesorRef { id: string; nombre: string }
 
-// Radix Select no acepta la cadena vacía como valor de una opción, así que el
-// "sin filtro" viaja con un centinela y se traduce a '' en el estado.
-const TODOS = '__todos__'
-
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
 function rangoDelMes(offset: number) {
@@ -369,11 +365,11 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
         {esAdmin && (
           <div className="sm:w-[220px] shrink-0">
             <Select
-              value={asesorId || TODOS}
-              onValueChange={v => { setAsesorId(v === TODOS ? '' : v); setPagina(1) }}
+              value={asesorId}
+              onValueChange={v => { setAsesorId(v); setPagina(1) }}
               className="py-2.5 rounded-xl border-surface-high text-[13px]"
               options={[
-                { value: TODOS, label: 'Todos los asesores' },
+                { value: '', label: 'Todos los asesores' },
                 { value: 'sin-asesor', label: 'Sin asesor asignado' },
                 ...(asesores?.data ?? []).map(a => ({ value: a.id, label: a.nombre })),
               ]}
@@ -382,15 +378,15 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
         )}
         <div className="sm:w-[240px] shrink-0">
           <Select
-            value={cursoId || TODOS}
-            onValueChange={v => { setCursoId(v === TODOS ? '' : v); setPagina(1) }}
+            value={cursoId}
+            onValueChange={v => { setCursoId(v); setPagina(1) }}
             className="py-2.5 rounded-xl border-surface-high text-[13px]"
             // Los nombres de curso son largos: el panel crece y las opciones
             // se parten en varias líneas en vez de recortarse.
             anchoAuto
             multilinea
             options={[
-              { value: TODOS, label: 'Todos los cursos' },
+              { value: '', label: 'Todos los cursos' },
               ...(cursos?.data ?? []).map(c => ({ value: c.id, label: c.nombre })),
             ]}
           />

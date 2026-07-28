@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { InputPassword } from '@/components/ui/InputPassword'
+import { Select } from '@/components/ui/Select'
 import { formatDate, cn } from '@/lib/utils'
 import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp } from 'lucide-react'
 
@@ -289,15 +290,18 @@ export default function UsuariosPage() {
 
                 {/* Acciones */}
                 <div className="pt-2 border-t border-outline-variant/40 flex items-center gap-1.5">
-                  <select
-                    value={u.role}
-                    disabled={cambiarRol.isPending}
-                    onChange={e => cambiarRol.mutate({ id: u.id, role: e.target.value as 'ADMIN' | 'VENDEDOR' })}
-                    className="flex-1 text-[10px] md:text-xs font-medium px-2 py-1.5 rounded-lg border bg-surface-high border-outline-variant text-on-surface focus:outline-none disabled:opacity-50 cursor-pointer"
-                  >
-                    <option value="VENDEDOR">Asesor</option>
-                    <option value="ADMIN">Admin</option>
-                  </select>
+                  <div className="flex-1 min-w-0">
+                    <Select
+                      value={u.role}
+                      disabled={cambiarRol.isPending}
+                      onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as 'ADMIN' | 'VENDEDOR' })}
+                      className="text-[10px] md:text-xs font-medium px-2 py-1.5 bg-surface-high"
+                      options={[
+                        { value: 'VENDEDOR', label: 'Asesor' },
+                        { value: 'ADMIN', label: 'Admin' },
+                      ]}
+                    />
+                  </div>
                   {u.asesor && (
                     <button
                       onClick={() => { setEditAsesor({ asesorId: (u.asesor as any).id, userId: u.id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email, codigosHotmart: (u.asesor!.codigosHotmart ?? []).join(', ') }); setEditPassword('') }}
@@ -489,14 +493,15 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Rol</label>
-                <select
+                <Select
                   value={formRole}
-                  onChange={e => setFormRole(e.target.value as 'VENDEDOR' | 'ADMIN')}
+                  onValueChange={v => setFormRole(v as 'VENDEDOR' | 'ADMIN')}
                   className="input-base"
-                >
-                  <option value="VENDEDOR">Asesor</option>
-                  <option value="ADMIN">Administrador</option>
-                </select>
+                  options={[
+                    { value: 'VENDEDOR', label: 'Asesor' },
+                    { value: 'ADMIN', label: 'Administrador' },
+                  ]}
+                />
               </div>
               {formError && <p className="text-xs text-[var(--error)]">{formError}</p>}
             </div>
