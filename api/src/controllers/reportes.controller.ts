@@ -462,8 +462,19 @@ export async function cursosMasVendidos(req: Request, res: Response) {
 export async function pendientesPorCobrar(req: Request, res: Response) {
   const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
 
+  // El rango acota *qué se vendió* en el período, no qué se pagó: el saldo de
+  // una inscripción sigue siendo su saldo completo aunque los abonos hayan
+  // caído fuera de las fechas elegidas.
+  const { desde, hasta } = req.query
+  const rangoCompra = desde && hasta
+    ? { gte: new Date(String(desde) + 'T00:00:00'), lte: new Date(String(hasta) + 'T23:59:59') }
+    : undefined
+
   const inscripciones = await prisma.cursoEstudiante.findMany({
-    where: filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {},
+    where: {
+      ...(filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}),
+      ...(rangoCompra ? { fechaCompra: rangoCompra } : {}),
+    },
     include: {
       curso: { select: { nombre: true, precio: true } },
       estudiante: {

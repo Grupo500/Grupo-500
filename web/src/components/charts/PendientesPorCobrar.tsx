@@ -23,12 +23,12 @@ interface PorCobrar {
   }[]
 }
 
-export function PendientesPorCobrar() {
+export function PendientesPorCobrar({ desde, hasta }: { desde: string; hasta: string }) {
   const [abierto, setAbierto] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['pendientes-por-cobrar'],
-    queryFn: async () => apiFetch('/reportes/por-cobrar') as Promise<{ data: PorCobrar }>,
+    queryKey: ['pendientes-por-cobrar', desde, hasta],
+    queryFn: async () => apiFetch(`/reportes/por-cobrar?desde=${desde}&hasta=${hasta}`) as Promise<{ data: PorCobrar }>,
     staleTime: 60_000,
   })
 
@@ -56,7 +56,7 @@ export function PendientesPorCobrar() {
           <h3 className="text-[15px] font-semibold text-on-surface">Pendiente por cobrar</h3>
         </div>
         <p className="text-[13px] text-on-surface-variant text-center py-6">
-          Todo al día. No hay saldos abiertos.
+          Todo al día. Sin saldos abiertos de lo vendido en este período.
         </p>
       </div>
     )

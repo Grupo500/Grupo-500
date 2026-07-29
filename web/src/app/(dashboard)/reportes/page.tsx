@@ -291,7 +291,7 @@ export default function ReportesPage() {
       {/* ── FILA 3: Cursos más vendidos + pendientes por cobrar ─────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <CursosVendidosRanked desde={desde} hasta={hasta} />
-        <PendientesPorCobrar />
+        <PendientesPorCobrar desde={desde} hasta={hasta} />
       </div>
 
       {/* ── FILA 4: Medios de pago (ancho completo) ─────────────────── */}
