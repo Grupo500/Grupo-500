@@ -9,10 +9,11 @@ import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   FileBarChart2, BarChart3,
-  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt, Landmark,
+  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { FINANZAS_TABS } from '@/lib/finanzasNav'
 
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor.
 type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean }
@@ -34,7 +35,6 @@ const moreItems: NavItem[] = [
   { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
-  { href: '/finanzas',        label: 'Finanzas',         icon: Landmark,      adminOnly: true  },
 ]
 
 interface BottomNavProps { role?: 'ADMIN' | 'VENDEDOR' }
@@ -58,8 +58,19 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
 
   const isDark = theme === 'dark'
   const porRol = (i: NavItem) => (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN')
-  const visiblePrimary = primaryItems.filter(porRol)
-  const visibleMore = moreItems.filter(porRol)
+  // Dentro de Finanzas la barra muestra las secciones del área, no las de
+  // Ventas: son áreas distintas y mezclarlas deja al usuario sin forma de
+  // moverse por donde está.
+  const enFinanzas = pathname === '/finanzas' || pathname.startsWith('/finanzas/')
+  const finanzasDisponibles = FINANZAS_TABS.filter(t => !t.proximamente)
+
+  const visiblePrimary = enFinanzas
+    ? finanzasDisponibles.slice(0, 4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
+    : primaryItems.filter(porRol)
+
+  const visibleMore = enFinanzas
+    ? finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
+    : moreItems.filter(porRol)
   const isMoreActive = visibleMore.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
   const handleClose = () => setMoreOpen(false)
 

@@ -1,0 +1,41 @@
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
+import { Sidebar } from '@/components/layout/Sidebar'
+import { BottomNav } from '@/components/layout/BottomNav'
+import { QueryProvider } from '@/components/layout/QueryProvider'
+
+/**
+ * Finanzas es un área propia, al mismo nivel que Ventas, Simulacros y Brito:
+ * se entra desde el selector de módulos, no desde adentro de Ventas.
+ *
+ * Reutiliza el Sidebar y el BottomNav de la app, que al detectar una ruta
+ * `/finanzas` cambian solos a la navegación del área. El layout no monta
+ * SSEProvider porque aquí no hay eventos en vivo que escuchar.
+ */
+export default async function FinanzasLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth()
+  if (!session?.user) redirect('/sign-in')
+
+  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE'
+
+  // Muro de acceso: son cifras de dirección, no se segmentan por asesor.
+  if (role !== 'ADMIN') redirect('/inicio')
+
+  return (
+    <QueryProvider>
+      <div className="flex h-dvh">
+        <div className="hidden md:flex">
+          <Sidebar role={role} />
+        </div>
+
+        <main className="flex-1 overflow-y-auto edu-bg-pattern">
+          <div className="p-4 md:p-6 max-w-container mx-auto pb-20 md:pb-6">
+            {children}
+          </div>
+        </main>
+
+        <BottomNav role={role} />
+      </div>
+    </QueryProvider>
+  )
+}

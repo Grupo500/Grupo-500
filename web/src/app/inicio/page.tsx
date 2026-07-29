@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2 } from 'lucide-react'
+import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
 
 export default async function InicioPage() {
@@ -21,8 +21,10 @@ export default async function InicioPage() {
   const verVentas     = role === 'ADMIN' || role === 'VENDEDOR'
   const verSimulacros = role === 'ADMIN' || role === 'ESTUDIANTE'
   const verBrito      = true
+  // Finanzas es una vista de dirección: no se segmenta por asesor.
+  const verFinanzas   = role === 'ADMIN'
 
-  const totalModulos = [verVentas, verSimulacros, verBrito].filter(Boolean).length
+  const totalModulos = [verVentas, verSimulacros, verBrito, verFinanzas].filter(Boolean).length
 
   return (
     <main
@@ -38,7 +40,7 @@ export default async function InicioPage() {
         <LogoutButton />
       </div>
 
-      <div className={`relative z-10 w-full flex flex-col items-center gap-6 ${totalModulos >= 3 ? 'max-w-2xl' : 'max-w-md'}`}>
+      <div className={`relative z-10 w-full flex flex-col items-center gap-6 ${totalModulos >= 4 ? 'max-w-4xl' : totalModulos === 3 ? 'max-w-2xl' : 'max-w-md'}`}>
 
         {/* Saludo */}
         <div className="text-center animate-card-enter">
@@ -49,7 +51,14 @@ export default async function InicioPage() {
         </div>
 
         {/* Tarjetas de módulos */}
-        <div className={`w-full grid gap-4 ${totalModulos >= 3 ? 'sm:grid-cols-3' : totalModulos === 2 ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
+        {/* Con cuatro módulos se pasa a 2×2 en tablet y a una fila en escritorio:
+            cuatro tarjetas en tres columnas dejan una huérfana abajo. */}
+        <div className={`w-full grid gap-4 ${
+          totalModulos >= 4 ? 'sm:grid-cols-2 lg:grid-cols-4'
+          : totalModulos === 3 ? 'sm:grid-cols-3'
+          : totalModulos === 2 ? 'sm:grid-cols-2'
+          : 'grid-cols-1'
+        }`}>
 
           {verVentas && (
             <Link
@@ -104,6 +113,25 @@ export default async function InicioPage() {
               </div>
               <p className="text-[13px] text-[#2a4172] leading-relaxed">
                 Practica ICFES en modo juego: lecciones cortas, racha, XP y ranking. Con Brito te vas a convertir en cerebrito.
+              </p>
+            </Link>
+          )}
+
+          {verFinanzas && (
+            <Link
+              href="/finanzas"
+              className="group bg-white rounded-2xl p-5 shadow-[0_16px_40px_-8px_rgba(0,30,60,0.45)] border border-white/60 hover:-translate-y-1 hover:shadow-[0_24px_48px_-8px_rgba(0,30,60,0.5)] transition-all duration-200 active:scale-[0.98] animate-card-enter"
+              style={{ animationDelay: '0.32s' }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #0f766e, #14b8a6)' }}>
+                  <Landmark className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-base font-bold text-[#001d3d]">Finanzas</span>
+                <ArrowRight className="w-4 h-4 text-[#5a74a8] ml-auto opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0" />
+              </div>
+              <p className="text-[13px] text-[#2a4172] leading-relaxed">
+                Indicadores de dirección: ritmo de ventas, mix comercial, saldos por cobrar y cierre mensual.
               </p>
             </Link>
           )}

@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   BookOpen, School, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Landmark,
+  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -35,7 +35,6 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
   { type: 'link',    href: '/brito-admin',     label: 'Brito',           icon: Gamepad2,        adminOnly: true  },
   { type: 'link',    href: '/reportes',        label: 'Analíticas',      icon: BarChart3,       adminOnly: false },
-  { type: 'link',    href: '/finanzas',        label: 'Finanzas',        icon: Landmark,        adminOnly: true  },
 ]
 
 interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }
@@ -144,6 +143,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const subNav = dentroDe('/ajustes')
     ? {
         titulo: 'Ajustes',
+        // Ajustes es una sección de Ventas: se vuelve al dashboard.
+        volverA: '/dashboard',
         tabs: AJUSTES_TABS
           .filter(t => !t.adminOnly || role === 'ADMIN')
           .map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),
@@ -151,6 +152,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     : dentroDe('/finanzas') && role === 'ADMIN'
     ? {
         titulo: 'Finanzas',
+        // Finanzas es un área propia: se sale al selector de módulos.
+        volverA: '/inicio',
         tabs: FINANZAS_TABS.map(t => ({
           href: t.href, label: t.label, icon: t.icon, proximamente: t.proximamente ?? false,
         })),
@@ -295,7 +298,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
             <div key="sub-nav" className="space-y-2 animate-nav-in-right">
             {/* ── Modo sub-navegación: el área reemplaza el nav principal ── */}
             <Link
-              href="/dashboard"
+              href={subNav.volverA}
               title={collapsed ? 'Volver' : undefined}
               className="relative flex items-center rounded-md text-[13px] font-semibold text-slate-100 hover:bg-white/[0.05] transition-colors mb-1"
             >
