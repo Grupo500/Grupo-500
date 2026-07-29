@@ -122,6 +122,7 @@ model Asesor {
   estudiantes   Estudiante[]
   negociaciones Negociacion[]
   pagos         Pago[]
+  alias         AliasAsesor[]
 }
 
 model Colegio {
@@ -299,6 +300,12 @@ model Pago {
   enPartes         Boolean    @default(false) // offer.payment_mode = MULTIPLE_PAYMENTS
   cuotaNumero      Int?       // purchase.recurrency_number — qué cuota es este cargo
   cuotasTotal      Int?       // purchase.payment.installments_number
+  // Cupón aplicado en la compra, si lo hubo. Hotmart no lo enviaba a la app
+  // y por eso el indicador de ventas con descuento no existía.
+  cupon            String?
+  // Nombre del afiliado tal como llega de Hotmart. Se guarda aunque no se
+  // logre vincular al asesor: sin él no hay forma de homologarlo después.
+  afiliadoHotmart  String?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   asesor           Asesor?    @relation(fields: [asesorId], references: [id])
@@ -668,4 +675,18 @@ model ParametroFinanzas {
   updatedAt   DateTime @updatedAt
 
   @@map("finanzas_parametros")
+}
+
+/// Homologación de nombres de afiliado de Hotmart a un asesor.
+/// Hotmart manda el nombre escrito como lo tenga el afiliado ("juan gomez",
+/// "Luis alejandro"), y no siempre coincide con el correo del perfil. Sin esta
+/// tabla esas ventas quedan sin atribución y no le suman a nadie.
+model AliasAsesor {
+  alias     String   @id
+  asesorId  String
+  createdAt DateTime @default(now())
+  asesor    Asesor   @relation(fields: [asesorId], references: [id], onDelete: Cascade)
+
+  @@index([asesorId])
+  @@map("finanzas_alias_asesor")
 }

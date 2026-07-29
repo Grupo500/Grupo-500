@@ -26,7 +26,10 @@ interface HotmartPurchase {
   payment?: { type?: string; method?: string; installments_number?: number }
   // payment_mode de la oferta: PAY_IN_FULL / UNIQUE_PAYMENT (cae completo)
   // o MULTIPLE_PAYMENTS (cae por partes; este cargo es solo una cuota)
-  offer?: { payment_mode?: string; code?: string }
+  offer?: { payment_mode?: string; code?: string; coupon_code?: string }
+  // Hotmart no es consistente con dónde manda el cupón: a veces va en la
+  // oferta y a veces al nivel de la compra. Se leen las dos.
+  coupon_code?: string
   // Qué cuota representa este cargo dentro del total (1, 2, 3...)
   recurrency_number?: number
   approved_date?: number
@@ -227,6 +230,18 @@ export async function webhook(req: Request, res: Response) {
     })
   }
 
+  // Último recurso: el nombre del afiliado homologado a mano. Hotmart lo manda
+  // escrito como lo tenga cada quien ("juan gomez", "Luis alejandro") y a veces
+  // no coincide con el correo del perfil; sin esto la venta queda sin dueño.
+  const nombreAfiliado = affiliates?.[0]?.affiliate_name?.trim() || null
+  if (!asesor && nombreAfiliado) {
+    const alias = await prisma.aliasAsesor.findUnique({
+      where: { alias: nombreAfiliado.toLowerCase() },
+      include: { asesor: true },
+    })
+    if (alias) asesor = alias.asesor
+  }
+
   if (asesor) {
     asesorId = asesor.id
     logger.info(`[Hotmart] Asesor identificado: ${asesor.nombre}`)
@@ -288,6 +303,10 @@ export async function webhook(req: Request, res: Response) {
       fechaPago,
       notas: notaPago,
       enPartes: esEnPartes,
+      cupon: purchase.offer?.coupon_code ?? purchase.coupon_code ?? null,
+      // Se guarda siempre, no solo cuando falla el match: es lo que permite
+      // homologar después sin volver a leer el postback crudo.
+      afiliadoHotmart: nombreAfiliado,
       ...(esEnPartes && { cuotasTotal: installments, cuotaNumero: cuotaNumero ?? 1 }),
       ...(asesorId && { asesorId }),
     },

@@ -175,7 +175,7 @@ export async function precioYCambio(req: Request, res: Response) {
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: desde, lte: corte } },
       select: {
-        monto: true, trm: true, fechaPago: true,
+        monto: true, trm: true, fechaPago: true, cupon: true,
         enPartes: true, cuotaNumero: true, cuotasTotal: true,
         estudiante: { select: { cursos: { select: { curso: { select: { id: true, nombre: true, precio: true } } } } } },
       },
@@ -199,10 +199,23 @@ export async function precioYCambio(req: Request, res: Response) {
 
   const porCurso = new Map<string, { nombre: string; observados: number[]; oficial: number | null }>()
   const trms: number[] = []
+  const cupones = new Map<string, number>()
+  let ventasNuevas = 0
+  let conCupon = 0
 
   for (const p of pagos) {
     if (p.trm && p.trm > 0) trms.push(p.trm)
     if (!esVentaNueva(p)) continue
+
+    ventasNuevas++
+    // Un cupón vacío o el literal "(none)" que a veces manda Hotmart cuentan
+    // como venta sin descuento.
+    const cupon = p.cupon?.trim()
+    if (cupon && cupon.toLowerCase() !== '(none)') {
+      conCupon++
+      cupones.set(cupon, (cupones.get(cupon) ?? 0) + 1)
+    }
+
     const curso = p.estudiante.cursos[0]?.curso
     if (!curso) continue
 
@@ -249,6 +262,15 @@ export async function precioYCambio(req: Request, res: Response) {
       minima: trms.length > 0 ? Math.min(...trms) : null,
       maxima: trms.length > 0 ? Math.max(...trms) : null,
       transacciones: trms.length,
+    },
+    cupones: {
+      ventasNuevas,
+      conCupon,
+      porcentaje: ventasNuevas > 0 ? conCupon / ventasNuevas : 0,
+      masUsados: [...cupones.entries()]
+        .map(([codigo, veces]) => ({ codigo, veces }))
+        .sort((a, b) => b.veces - a.veces)
+        .slice(0, 8),
     },
     // Los precios oficiales con vigencia se administran en Parámetros.
     preciosOficiales: cursos

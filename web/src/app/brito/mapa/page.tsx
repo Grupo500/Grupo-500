@@ -264,6 +264,19 @@ export default async function MapaBritoPage({
             imagenUrl={(session?.user as any)?.image ?? null}
             variante="navitem"
           />
+
+          {/* Salida al selector de módulos. Va al final y separada: es la única
+              opción que saca de Brito, y arriba competiría con la navegación
+              del propio juego. */}
+          <Link
+            href="/inicio"
+            className="flex items-center gap-3 px-3 py-2.5 mt-auto rounded-[10px] text-[#57564f] text-sm font-semibold hover:bg-[#F4F3EE] transition-colors"
+          >
+            <span className="w-8 h-8 flex items-center justify-center shrink-0">
+              <ArrowLeft className="w-[18px] h-[18px]" />
+            </span>
+            Otros módulos
+          </Link>
         </aside>
 
         {/* Sendero central */}

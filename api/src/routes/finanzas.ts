@@ -5,6 +5,7 @@ import * as ctrl from '../controllers/finanzas.controller'
 import * as clientes from '../controllers/finanzasClientes.controller'
 import * as marketing from '../controllers/finanzasMarketing.controller'
 import * as calidad from '../controllers/finanzasCalidad.controller'
+import * as atribucion from '../controllers/finanzasAtribucion.controller'
 
 const router = Router()
 
@@ -30,5 +31,10 @@ router.get('/parametros',     asyncHandler(calidad.parametros))
 router.put('/parametros/umbrales', asyncHandler(calidad.actualizarUmbrales))
 router.post('/precios-oficiales',  asyncHandler(calidad.crearPrecioOficial))
 router.delete('/precios-oficiales/:id', asyncHandler(calidad.eliminarPrecioOficial))
+
+router.get('/atribucion',            asyncHandler(atribucion.atribucion))
+router.post('/atribucion/asignar',   asyncHandler(atribucion.asignarAsesor))
+router.post('/atribucion/homologar', asyncHandler(atribucion.homologarAfiliado))
+router.delete('/atribucion/alias/:alias', asyncHandler(atribucion.eliminarAlias))
 
 export default router

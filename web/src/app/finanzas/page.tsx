@@ -8,6 +8,7 @@ import { MonthPicker, type DateRange } from '@/components/ui/MonthPicker'
 import { formatCOP } from '@/lib/utils'
 import { TarjetaKPI, rangoDelMes, nombreMes, pct, numero } from '@/components/finanzas/comunes'
 import { SerieDiaria } from '@/components/finanzas/SerieDiaria'
+import { TablaIndicadores } from '@/components/finanzas/TablaIndicadores'
 import { CircleDollarSign, Info } from 'lucide-react'
 
 interface Totales {
@@ -58,6 +59,12 @@ export default function FinanzasResumenPage() {
   const v = d?.variaciones ?? {}
 
   const etiquetaMes = nombreMes((mes ?? desde).slice(0, 7))
+  // Mes anterior al seleccionado, para rotular la columna de comparación.
+  const mesAnterior = (() => {
+    const [a, m] = (mes ?? desde).slice(0, 7).split('-').map(Number)
+    const d = new Date(a, m - 2, 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })()
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -252,6 +259,16 @@ export default function FinanzasResumenPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Cuadro completo de indicadores ──────────────────────────────── */}
+      {d && (
+        <TablaIndicadores
+          periodo={d.periodo}
+          anterior={d.anterior}
+          acumulado={d.acumulado}
+          etiquetaAnterior={`${nombreMes(mesAnterior)} a igual día`}
+        />
+      )}
     </div>
   )
 }

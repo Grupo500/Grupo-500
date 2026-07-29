@@ -17,6 +17,10 @@ interface PrecioData {
   }[]
   fueraDePrecio: number
   trm: { promedio: number | null; minima: number | null; maxima: number | null; transacciones: number }
+  cupones: {
+    ventasNuevas: number; conCupon: number; porcentaje: number
+    masUsados: { codigo: string; veces: number }[]
+  }
   preciosOficiales: { cursoId: string; nombre: string; historial: { precio: number; vigenteDesde: string | null }[] }[]
 }
 
@@ -57,12 +61,20 @@ export default function PrecioYCambioPage() {
             alerta: (d?.fueraDePrecio ?? 0) > 0,
           },
           {
+            e: 'Ventas con cupón',
+            v: numero(d?.cupones.conCupon ?? 0),
+            n: d ? `${pct(d.cupones.porcentaje)} de las ventas del mes` : '',
+          },
+          {
             e: 'Tasa de cambio promedio',
             v: d?.trm.promedio ? `$${numero(d.trm.promedio)}` : 'Sin dato',
             n: 'Pesos por dólar, de las propias transacciones',
           },
-          { e: 'Tasa mínima observada', v: d?.trm.minima ? `$${numero(d.trm.minima)}` : '—' },
-          { e: 'Tasa máxima observada', v: d?.trm.maxima ? `$${numero(d.trm.maxima)}` : '—' },
+          {
+            e: 'Rango de la tasa',
+            v: d?.trm.minima && d?.trm.maxima ? `$${numero(d.trm.minima)} – $${numero(d.trm.maxima)}` : '—',
+            n: d?.trm.transacciones ? `${numero(d.trm.transacciones)} transacciones con tasa` : '',
+          },
         ].map(k => (
           <div key={k.e} className="card p-4">
             <div className="flex items-center gap-1.5">
@@ -142,6 +154,28 @@ export default function PrecioYCambioPage() {
           </p>
         </div>
       </div>
+
+      {(d?.cupones.masUsados.length ?? 0) > 0 && (
+        <div className="card p-5">
+          <h3 className="text-[15px] font-semibold text-on-surface mb-1">Cupones más usados</h3>
+          <p className="text-[11.5px] text-on-surface-variant mb-4">
+            Un cupón explica buena parte de las desviaciones de precio de arriba.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {d!.cupones.masUsados.map(c => (
+              <span
+                key={c.codigo}
+                className="flex items-center gap-2 text-[12px] px-3 py-1.5 rounded-lg bg-surface-low"
+              >
+                <span className="font-medium text-on-surface">{c.codigo}</span>
+                <span className="text-on-surface-variant tabular-nums">
+                  {numero(c.veces)} {c.veces === 1 ? 'venta' : 'ventas'}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {(d?.preciosOficiales.length ?? 0) > 0 && (
         <div className="card p-5">
