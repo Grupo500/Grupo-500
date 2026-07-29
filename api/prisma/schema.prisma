@@ -245,6 +245,7 @@ model Curso {
   // deducirla del texto en cada consulta rompería al renombrar un curso.
   familia           String?
   estudiantes       CursoEstudiante[]
+  preciosOficiales  PrecioOficial[]
 }
 
 model Formulario {
@@ -613,4 +614,58 @@ model IntentoExamen {
 
   @@unique([estudianteId, examenId])
   @@map("sim_intentos")
+}
+
+// ── Finanzas ────────────────────────────────────────────────────────────────
+
+/// Gasto publicitario por campaña y período.
+/// Se carga a mano desde los reportes de cada plataforma; las APIs entran
+/// después sin cambiar esta forma. Los reportes de Google y TikTok no traen
+/// fechas, por eso el período se guarda aquí en vez de deducirse.
+model InversionPublicitaria {
+  id           String   @id @default(cuid())
+  plataforma   String   // GOOGLE | META | TIKTOK
+  campania     String
+  desde        DateTime
+  hasta        DateTime
+  gastoCOP     Float
+  impresiones  Int      @default(0)
+  clics        Int      @default(0)
+  /// Conversiones que declara la plataforma. No se usan para el CAC: no hay
+  /// atribución real entre el clic y la venta en Hotmart.
+  conversiones Int      @default(0)
+  estado       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([plataforma, desde, hasta])
+  @@map("finanzas_inversion_publicitaria")
+}
+
+/// Precio oficial de un curso con su fecha de vigencia.
+/// Para cambiar un precio se agrega una fila nueva, nunca se edita la anterior:
+/// cada venta se compara contra el precio que regía el día en que ocurrió.
+model PrecioOficial {
+  id            String   @id @default(cuid())
+  cursoId       String
+  precio        Float
+  vigenteDesde  DateTime
+  nota          String?
+  createdAt     DateTime @default(now())
+  curso         Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+
+  @@unique([cursoId, vigenteDesde])
+  @@index([cursoId, vigenteDesde])
+  @@map("finanzas_precios_oficiales")
+}
+
+/// Parámetros editables del modelo (umbrales RFV, fecha de inicio, etc.).
+/// Clave-valor para no migrar la base cada vez que aparece un umbral nuevo.
+model ParametroFinanzas {
+  clave       String   @id
+  valor       String
+  descripcion String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("finanzas_parametros")
 }
