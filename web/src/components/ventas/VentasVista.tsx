@@ -28,6 +28,9 @@ interface Venta {
   comisionAsesor: number | null
   asesorId: string | null
   asesor: { id: string; nombre: string } | null
+  enPartes?: boolean
+  cuotaNumero?: number | null
+  cuotasTotal?: number | null
   estudiante: {
     id: string
     nombre: string
@@ -477,7 +480,17 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                   style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14.5px] font-semibold text-on-surface leading-snug">{v.estudiante.nombre}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-[14.5px] font-semibold text-on-surface leading-snug">{v.estudiante.nombre}</p>
+                      {v.enPartes && (v.cuotasTotal ?? 0) > 1 && (
+                        <span
+                          className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                          style={{ background: 'var(--primary-container)', color: 'var(--primary)' }}
+                        >
+                          Cuota {v.cuotaNumero ?? 1} de {v.cuotasTotal}
+                        </span>
+                      )}
+                    </div>
                     {curso && <p className="text-[12.5px] text-on-surface-variant mt-0.5">{curso}</p>}
                     <p className={`${mono.className} text-[11px] text-on-surface-variant/70 mt-1.5`}>
                       {fmtFechaHora(v.fechaPago)} · {v.referenciaPago ?? 'sin referencia'}
