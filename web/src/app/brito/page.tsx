@@ -1,88 +1,139 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { auth } from '@/auth'
+import { Nunito } from 'next/font/google'
 import { ArrowLeft } from 'lucide-react'
+
+const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 export const metadata = {
   title: 'Brito — Con Brito te vas a convertir en cerebrito',
   description: 'Practica ICFES en modo juego: lecciones cortas, racha, corazones y ranking.',
 }
 
+/** Lo que hace distinto a Brito, con los mismos íconos que se ven jugando. */
+const GANCHOS = [
+  { icono: '/brito/icons/racha.png',  titulo: 'Racha diaria',  texto: 'Un poco cada día suma más que un maratón el domingo.' },
+  { icono: '/brito/icons/vidas.png',  titulo: 'Corazones',     texto: 'Fallar cuesta, así que se piensa antes de responder.' },
+  { icono: '/brito/icons/trofeo.png', titulo: 'Ligas',         texto: 'Compites con estudiantes de tu mismo nivel, no contra todos.' },
+]
+
+/**
+ * Botón grueso con relieve, igual al del juego: el borde inferior más oscuro
+ * hace de sombra y desaparece al presionar, así el clic se siente físico.
+ */
+function BotonPrincipal({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="block w-full text-center rounded-2xl py-3.5 text-[15px] font-extrabold text-white transition-all active:translate-y-[3px] active:shadow-none"
+      style={{
+        background: 'linear-gradient(180deg, #F5A623 0%, #E8940D 100%)',
+        boxShadow: '0 4px 0 #C97E1E',
+      }}
+    >
+      {children}
+    </Link>
+  )
+}
+
+function BotonSecundario({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="block w-full text-center rounded-2xl py-3.5 text-[15px] font-bold text-[#2B2B28] bg-white border-2 border-[#E3E0D6] transition-all hover:bg-[#FAF9F5] active:translate-y-[2px] active:shadow-none"
+      style={{ boxShadow: '0 3px 0 #E3E0D6' }}
+    >
+      {children}
+    </Link>
+  )
+}
+
 export default async function BritoLandingPage() {
   const session = await auth()
   const role = (session?.user as any)?.role as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE' | undefined
 
-  return (
-    <main
-      className="min-h-dvh relative overflow-hidden flex flex-col items-center justify-center px-4 py-10"
-      style={{ background: 'linear-gradient(160deg, #003060 0%, #2094ff 55%, #21b9f7 100%)' }}
-    >
-      <div className="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-[#ffb703]/25 blur-3xl pointer-events-none" aria-hidden />
-      <div className="absolute -bottom-28 -right-16 w-96 h-96 rounded-full bg-[#95daff]/20 blur-3xl pointer-events-none" aria-hidden />
+  // Cada quien llega con una intención distinta: el estudiante a seguir donde
+  // quedó, el admin a administrar, y quien no tiene cuenta a crearla.
+  const acciones =
+    role === 'ESTUDIANTE'
+      ? { principal: { href: '/brito/mapa', texto: 'Continuar mis lecciones' }, secundaria: null }
+      : role === 'ADMIN'
+      ? { principal: { href: '/brito-admin', texto: 'Administrar el juego' }, secundaria: { href: '/brito/mapa', texto: 'Entrar a jugar' } }
+      : { principal: { href: '/brito/registro', texto: 'Crear cuenta gratis' }, secundaria: { href: '/sign-in', texto: 'Ya tengo cuenta' } }
 
-      <Link href="/inicio" className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Volver
+  return (
+    <main className={`${nunito.className} min-h-dvh relative overflow-hidden bg-[#F7F5EF]`}>
+      {/* Manchas suaves en los colores del juego. Dan calidez sin robarle
+          protagonismo a la mascota, que es lo único que debe destacar. */}
+      <div className="absolute -top-32 -left-24 w-[420px] h-[420px] rounded-full bg-[#F5A623]/12 blur-3xl pointer-events-none" aria-hidden />
+      <div className="absolute -bottom-40 -right-28 w-[480px] h-[480px] rounded-full bg-[#1E5FA8]/10 blur-3xl pointer-events-none" aria-hidden />
+
+      <Link
+        href="/inicio"
+        className="absolute top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/85 backdrop-blur border border-[#E3E0D6] text-[13px] font-bold text-[#57564f] hover:text-[#2B2B28] hover:bg-white transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Volver
       </Link>
 
-      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-6 text-center">
-        <div className="w-40 h-40 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shadow-2xl">
-          <Image src="/brito/brito-hero.jpg" alt="Brito" width={160} height={160} className="object-cover w-full h-full" priority />
-        </div>
+      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center px-5 py-14">
+        <div className="w-full max-w-[440px] flex flex-col items-center text-center">
 
-        <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">Brito</h1>
-          <p className="text-sm text-white/80 mt-1 font-medium">Con Brito te vas a convertir en cerebrito</p>
-        </div>
-
-        <div className="w-full bg-white rounded-2xl p-5 shadow-[0_16px_40px_-8px_rgba(0,30,60,0.45)] border border-white/60">
-          <p className="text-sm text-[#2a4172] leading-relaxed mb-4">
-            Practica para el ICFES con lecciones cortas tipo juego: gana XP, mantén tu racha,
-            cuida tus corazones y sube en el ranking.
-          </p>
-
-          <div className="flex items-center justify-center gap-5 text-[#001d3d] mb-5">
-            <span className="flex items-center gap-1.5 text-xs font-semibold"><img src="/brito/icons/racha.png" alt="" className="w-5 h-5 object-contain" /> Racha</span>
-            <span className="flex items-center gap-1.5 text-xs font-semibold"><img src="/brito/icons/vidas.png" alt="" className="w-5 h-5 object-contain" /> Corazones</span>
-            <span className="flex items-center gap-1.5 text-xs font-semibold"><img src="/brito/icons/trofeo.png" alt="" className="w-5 h-5 object-contain" /> Ranking</span>
+          {/* ── Mascota ──────────────────────────────────────────────────── */}
+          {/* Sin recorte circular ni marco: la ilustración ya tiene su forma y
+              encerrarla la hacía ver como una foto de perfil. */}
+          <div className="relative animate-card-enter">
+            <div className="absolute inset-x-6 bottom-2 h-4 rounded-full bg-[#2B2B28]/10 blur-xl" aria-hidden />
+            <Image
+              src="/brito/brito-hero.jpg"
+              alt="Brito, la mascota"
+              width={200} height={200}
+              className="relative w-[170px] h-[170px] sm:w-[200px] sm:h-[200px] object-cover rounded-full"
+              priority
+            />
           </div>
 
-          {role === 'ESTUDIANTE' ? (
-            <Link
-              href="/brito/mapa"
-              className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
-            >
-              Ir a mis lecciones
-            </Link>
-          ) : role === 'ADMIN' ? (
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/brito-admin"
-                className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
+          <h1 className="text-[42px] sm:text-[52px] font-extrabold text-[#1E5FA8] leading-none tracking-tight mt-5 animate-card-enter" style={{ animationDelay: '0.05s' }}>
+            Brito
+          </h1>
+          <p className="text-[15px] font-bold text-[#57564f] mt-2 animate-card-enter" style={{ animationDelay: '0.1s' }}>
+            Con Brito te vas a convertir en cerebrito
+          </p>
+          <p className="text-[14px] text-[#7a7970] mt-3 leading-relaxed max-w-[380px] animate-card-enter" style={{ animationDelay: '0.15s' }}>
+            Practica para el ICFES con lecciones cortas. Cinco minutos al día rinden más que
+            una tarde entera la semana del examen.
+          </p>
+
+          {/* ── Qué lo hace distinto ─────────────────────────────────────── */}
+          <div className="w-full flex flex-col gap-2 mt-7">
+            {GANCHOS.map((g, i) => (
+              <div
+                key={g.titulo}
+                className="flex items-center gap-3.5 bg-white rounded-2xl border border-[#ECEAE2] px-4 py-3 text-left animate-card-enter"
+                style={{ animationDelay: `${0.2 + i * 0.06}s` }}
               >
-                Administrar panel
-              </Link>
-              <Link
-                href="/brito/mapa"
-                className="w-full block text-center border border-black/[0.10] hover:bg-black/[0.03] text-[#001d3d] font-medium rounded-xl py-2.5 text-sm transition-all active:scale-[0.97]"
-              >
-                Jugar
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/brito/registro"
-                className="w-full block text-center bg-gradient-to-r from-[#ffb703] to-[#fb8500] hover:brightness-105 text-white font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-[0.97] shadow-[0_8px_20px_-6px_rgba(251,133,0,0.5)]"
-              >
-                Crear cuenta gratis
-              </Link>
-              <Link
-                href="/sign-in"
-                className="w-full block text-center border border-black/[0.10] hover:bg-black/[0.03] text-[#001d3d] font-medium rounded-xl py-2.5 text-sm transition-all active:scale-[0.97]"
-              >
-                Ya tengo cuenta
-              </Link>
-            </div>
+                <img src={g.icono} alt="" className="w-9 h-9 object-contain shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[14px] font-extrabold text-[#2B2B28] leading-tight">{g.titulo}</p>
+                  <p className="text-[12.5px] text-[#7a7970] leading-snug mt-0.5">{g.texto}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Acciones ─────────────────────────────────────────────────── */}
+          <div className="w-full flex flex-col gap-2.5 mt-7 animate-card-enter" style={{ animationDelay: '0.4s' }}>
+            <BotonPrincipal href={acciones.principal.href}>{acciones.principal.texto}</BotonPrincipal>
+            {acciones.secundaria && (
+              <BotonSecundario href={acciones.secundaria.href}>{acciones.secundaria.texto}</BotonSecundario>
+            )}
+          </div>
+
+          {!role && (
+            <p className="text-[12px] text-[#9a998f] mt-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+              Gratis, sin tarjeta. Solo tu nombre y tu correo.
+            </p>
           )}
         </div>
       </div>
