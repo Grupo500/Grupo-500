@@ -240,6 +240,10 @@ model Curso {
   visibleEnLanding  Boolean           @default(false)
   cuposDisponibles  Int?
   hotmartProductId  String?           @unique
+  // Línea de producto para agrupar en reportes (Intensivo, Calendario, Combo,
+  // Año 500, Premédico, Ruta 500). Se siembra desde el nombre pero es editable:
+  // deducirla del texto en cada consulta rompería al renombrar un curso.
+  familia           String?
   estudiantes       CursoEstudiante[]
 }
 

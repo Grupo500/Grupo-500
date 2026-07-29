@@ -456,6 +456,76 @@ export async function cursosMasVendidos(req: Request, res: Response) {
   return ApiResponse.success(res, ordenados)
 }
 
+// Saldos abiertos. Distingue lo que Hotmart cobra solo (cuotas programadas del
+// Smart Installment) de lo que alguien tiene que ir a cobrar: meter ambos en un
+// mismo total da una cifra que asusta y no dice qué hacer.
+export async function pendientesPorCobrar(req: Request, res: Response) {
+  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+
+  const inscripciones = await prisma.cursoEstudiante.findMany({
+    where: filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {},
+    include: {
+      curso: { select: { nombre: true, precio: true } },
+      estudiante: {
+        select: {
+          id: true, nombre: true, telefono: true,
+          asesor: { select: { nombre: true } },
+          pagos: { select: { monto: true, estado: true, enPartes: true, cuotaNumero: true, cuotasTotal: true } },
+        },
+      },
+    },
+  })
+
+  const UMBRAL = 1000 // céntimos de redondeo por conversión de divisa, no deuda
+
+  let automatico = { monto: 0, estudiantes: 0 }
+  let gestion    = { monto: 0, estudiantes: 0 }
+  const cuotasFaltantes: Record<number, number> = {}
+  const porGestionar: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null }[] = []
+
+  for (const ins of inscripciones) {
+    const precio = ins.precioAcordado ?? ins.curso.precio ?? 0
+    if (!precio) continue
+
+    const pagados = ins.estudiante.pagos.filter(p => p.estado === 'PAGADO')
+    const pagado = pagados.reduce((s, p) => s + p.monto, 0)
+    const saldo = Math.round(precio - pagado)
+    if (saldo <= UMBRAL) continue
+
+    const cuota = pagados.find(p => p.enPartes && (p.cuotasTotal ?? 0) > 1)
+    if (cuota) {
+      automatico.monto += saldo
+      automatico.estudiantes++
+      const faltan = (cuota.cuotasTotal ?? 0) - (cuota.cuotaNumero ?? 1)
+      if (faltan > 0) cuotasFaltantes[faltan] = (cuotasFaltantes[faltan] ?? 0) + 1
+    } else {
+      gestion.monto += saldo
+      gestion.estudiantes++
+      porGestionar.push({
+        estudianteId: ins.estudiante.id,
+        nombre: ins.estudiante.nombre,
+        telefono: ins.estudiante.telefono,
+        curso: ins.curso.nombre,
+        saldo,
+        asesor: ins.estudiante.asesor?.nombre ?? null,
+      })
+    }
+  }
+
+  porGestionar.sort((a, b) => b.saldo - a.saldo)
+
+  return ApiResponse.success(res, {
+    total: automatico.monto + gestion.monto,
+    estudiantes: automatico.estudiantes + gestion.estudiantes,
+    automatico,
+    gestion,
+    cuotasFaltantes: Object.entries(cuotasFaltantes)
+      .map(([faltan, estudiantes]) => ({ faltan: Number(faltan), estudiantes }))
+      .sort((a, b) => a.faltan - b.faltan),
+    porGestionar: porGestionar.slice(0, 50),
+  })
+}
+
 // Financiero por período: totales del período activo + serie temporal
 export async function financieroPeriodo(req: Request, res: Response) {
   const hoy = new Date()

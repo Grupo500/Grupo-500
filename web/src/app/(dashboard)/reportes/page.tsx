@@ -10,6 +10,7 @@ import { formatCOP } from '@/lib/utils'
 import { IngresosMensualesChart } from '@/components/charts/IngresosMensualesChart'
 import { RankingAsesores } from '@/components/charts/RankingAsesores'
 import { CursosVendidosRanked } from '@/components/charts/CursosVendidosRanked'
+import { PendientesPorCobrar } from '@/components/charts/PendientesPorCobrar'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts'
 import { Users, UserPlus, TrendingUp, Receipt, Landmark, Wallet } from 'lucide-react'
@@ -287,8 +288,11 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* ── FILA 3: Cursos más vendidos (ancho completo) ────────────── */}
-      <CursosVendidosRanked desde={desde} hasta={hasta} />
+      {/* ── FILA 3: Cursos más vendidos + pendientes por cobrar ─────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <CursosVendidosRanked desde={desde} hasta={hasta} />
+        <PendientesPorCobrar />
+      </div>
 
       {/* ── FILA 4: Medios de pago (ancho completo) ─────────────────── */}
       <div className="card p-5">

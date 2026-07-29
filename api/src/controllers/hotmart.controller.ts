@@ -6,6 +6,7 @@ import { logger } from '../utils/logger'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
 import { horasPorNombreCurso } from '../utils/cursoHoras'
+import { familiaDesdeNombre } from '../utils/familiaCurso'
 
 // ---------------------------------------------------------------------------
 // Tipos del payload de Hotmart
@@ -172,6 +173,7 @@ export async function webhook(req: Request, res: Response) {
         activo: true,
         duracionHoras: horasPorNombreCurso(product.name),
         hotmartProductId: productId,
+        familia: familiaDesdeNombre(product.name),
       },
     })
     logger.info(`[Hotmart] Curso creado automáticamente: ${product.name} (ID: ${productId})`)
