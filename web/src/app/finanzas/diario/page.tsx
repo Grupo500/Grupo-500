@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { formatCOP } from '@/lib/utils'
-import { numero, pct } from '@/components/finanzas/comunes'
+import { numero, FilaParticipacion } from '@/components/finanzas/comunes'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 
 interface DiarioData {
@@ -34,36 +34,32 @@ function enLetras(iso: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
-function Tabla({ titulo, filas, etiquetaPrimera }: {
+function Tabla({ titulo, filas, color }: {
   titulo: string
   filas: { nombre: string; ventas: number; valor: number; participacion: number }[]
-  etiquetaPrimera: string
+  color?: string
 }) {
+  // Escala contra el líder del día: contra el total, un día con muchos
+  // productos deja todas las barras igual de cortas.
+  const mayor = Math.max(...filas.map(f => f.valor), 1)
+
   return (
     <div className="card p-5">
-      <h3 className="text-[15px] font-semibold text-on-surface mb-3">{titulo}</h3>
+      <h3 className="text-[15px] font-semibold text-on-surface mb-2">{titulo}</h3>
       {filas.length === 0 ? (
         <p className="text-[13px] text-on-surface-variant text-center py-6">Sin ventas este día</p>
       ) : (
-        <div className="space-y-0.5">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3 pb-1.5 border-b border-surface-high">
-            <span className="text-[11px] font-semibold text-on-surface-variant">{etiquetaPrimera}</span>
-            <span className="text-[11px] font-semibold text-on-surface-variant text-right w-14">Ventas</span>
-            <span className="text-[11px] font-semibold text-on-surface-variant text-right w-28">Valor</span>
-          </div>
+        <div className="divide-y divide-surface-high">
           {filas.map(f => (
-            <div key={f.nombre} className="relative grid grid-cols-[1fr_auto_auto] gap-3 items-center py-2 px-1 rounded-md overflow-hidden">
-              <span
-                className="absolute inset-y-0 left-0 rounded-md pointer-events-none"
-                style={{ width: `${f.participacion * 100}%`, background: 'rgba(26,125,224,0.10)' }}
-              />
-              <span className="relative text-[12.5px] text-on-surface truncate">{f.nombre}</span>
-              <span className="relative text-[12.5px] tabular-nums text-on-surface-variant text-right w-14">{numero(f.ventas)}</span>
-              <span className="relative text-right tabular-nums w-28 whitespace-nowrap">
-                <span className="text-[12.5px] font-semibold text-on-surface">{formatCOP(f.valor)}</span>
-                <span className="block text-[10px] font-normal text-on-surface-variant">{pct(f.participacion)}</span>
-              </span>
-            </div>
+            <FilaParticipacion
+              key={f.nombre}
+              nombre={f.nombre}
+              monto={formatCOP(f.valor)}
+              participacion={f.participacion}
+              proporcion={f.valor / mayor}
+              color={color}
+              detalle={`${numero(f.ventas)} ${f.ventas === 1 ? 'venta' : 'ventas'}`}
+            />
           ))}
         </div>
       )}
@@ -165,8 +161,8 @@ export default function ReporteDiarioPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Tabla titulo="Desglose por producto" filas={d?.productos ?? []} etiquetaPrimera="Producto" />
-        <Tabla titulo="Desglose por asesor o canal" filas={d?.asesores ?? []} etiquetaPrimera="Asesor o canal" />
+        <Tabla titulo="Desglose por producto" filas={d?.productos ?? []} />
+        <Tabla titulo="Desglose por asesor o canal" filas={d?.asesores ?? []} color="#0f766e" />
       </div>
     </div>
   )

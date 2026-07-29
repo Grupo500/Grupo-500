@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, type DateRange } from '@/components/ui/MonthPicker'
 import { formatCOP } from '@/lib/utils'
-import { rangoDelMes, nombreMes, pct, numero } from '@/components/finanzas/comunes'
+import { rangoDelMes, nombreMes, pct, numero, FilaParticipacion } from '@/components/finanzas/comunes'
 import { cn } from '@/lib/utils'
 
 interface MixData {
@@ -71,7 +71,11 @@ export default function MixComercialPage() {
   const totalBase = base === 'valor' ? (d?.totalValor ?? 0) : (d?.totalVentas ?? 0)
   const mostrar = (v: number) => (base === 'valor' ? formatCOP(v) : numero(v))
 
+  // Las barras se escalan contra el líder de cada lista, no contra el total:
+  // con participaciones bajas todas quedarían igual de cortas y no se
+  // distinguiría al segundo del décimo.
   const mayorProducto = Math.max(...(d?.productos ?? []).map(porBase), 1)
+  const mayorAsesor = Math.max(...(d?.asesores ?? []).map(porBase), 1)
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -116,26 +120,17 @@ export default function MixComercialPage() {
           ) : (d?.productos.length ?? 0) === 0 ? (
             <p className="text-[13px] text-on-surface-variant text-center py-8">Sin ventas en este período</p>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-surface-high">
               {d!.productos.map(p => (
-                <div key={p.nombre} className="grid grid-cols-[92px_1fr_auto] sm:grid-cols-[120px_1fr_auto] items-center gap-2.5">
-                  <span className="text-[12.5px] font-semibold text-on-surface truncate">{p.nombre}</span>
-                  <span className="h-[22px] rounded bg-surface-high overflow-hidden block">
-                    <span
-                      className="block h-full rounded transition-all duration-500"
-                      style={{
-                        width: `${Math.max(2, (porBase(p) / mayorProducto) * 100)}%`,
-                        background: COLOR[p.nombre] ?? COLOR['Otros'],
-                      }}
-                    />
-                  </span>
-                  <span className="text-right tabular-nums whitespace-nowrap">
-                    <span className="text-[12.5px] font-semibold text-on-surface">{mostrar(porBase(p))}</span>
-                    <span className="text-[10.5px] font-normal text-on-surface-variant ml-1.5">
-                      {pct(totalBase > 0 ? porBase(p) / totalBase : null)}
-                    </span>
-                  </span>
-                </div>
+                <FilaParticipacion
+                  key={p.nombre}
+                  nombre={p.nombre}
+                  monto={mostrar(porBase(p))}
+                  participacion={totalBase > 0 ? porBase(p) / totalBase : 0}
+                  proporcion={porBase(p) / mayorProducto}
+                  color={COLOR[p.nombre] ?? COLOR['Otros']}
+                  detalle={`${numero(p.ventas)} ${p.ventas === 1 ? 'venta' : 'ventas'}`}
+                />
               ))}
             </div>
           )}
@@ -154,27 +149,17 @@ export default function MixComercialPage() {
           ) : (d?.asesores.length ?? 0) === 0 ? (
             <p className="text-[13px] text-on-surface-variant text-center py-8">Sin ventas en este período</p>
           ) : (
-            <div className="space-y-0.5 max-h-[420px] overflow-y-auto">
-              {d!.asesores.map(a => {
-                const parte = totalBase > 0 ? porBase(a) / totalBase : 0
-                return (
-                  <div key={a.id} className="relative grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2 px-2 rounded-md overflow-hidden">
-                    {/* La barra va de fondo para que la fila siga leyéndose como texto */}
-                    <span
-                      className="absolute inset-y-0 left-0 rounded-md pointer-events-none"
-                      style={{ width: `${parte * 100}%`, background: 'rgba(26,125,224,0.10)' }}
-                    />
-                    <span className="relative text-[12.5px] font-medium text-on-surface truncate">{a.nombre}</span>
-                    <span className="relative text-[11px] text-on-surface-variant tabular-nums whitespace-nowrap">
-                      {numero(a.ventas)} {a.ventas === 1 ? 'venta' : 'ventas'}
-                    </span>
-                    <span className="relative text-right tabular-nums whitespace-nowrap">
-                      <span className="text-[12.5px] font-semibold text-on-surface">{mostrar(porBase(a))}</span>
-                      <span className="text-[10.5px] font-normal text-on-surface-variant ml-1.5">{pct(parte)}</span>
-                    </span>
-                  </div>
-                )
-              })}
+            <div className="divide-y divide-surface-high max-h-[440px] overflow-y-auto pr-1">
+              {d!.asesores.map(a => (
+                <FilaParticipacion
+                  key={a.id}
+                  nombre={a.nombre}
+                  monto={mostrar(porBase(a))}
+                  participacion={totalBase > 0 ? porBase(a) / totalBase : 0}
+                  proporcion={porBase(a) / mayorAsesor}
+                  detalle={`${numero(a.ventas)} ${a.ventas === 1 ? 'venta' : 'ventas'}`}
+                />
+              ))}
             </div>
           )}
 

@@ -6,10 +6,8 @@ import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, type DateRange } from '@/components/ui/MonthPicker'
 import { formatCOP } from '@/lib/utils'
-import { TarjetaKPI, Variacion, rangoDelMes, nombreMes, pct, numero } from '@/components/finanzas/comunes'
-import {
-  BarChart, Bar, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
-} from 'recharts'
+import { TarjetaKPI, rangoDelMes, nombreMes, pct, numero } from '@/components/finanzas/comunes'
+import { SerieDiaria } from '@/components/finanzas/SerieDiaria'
 import { CircleDollarSign, Info } from 'lucide-react'
 
 interface Totales {
@@ -159,36 +157,11 @@ export default function FinanzasResumenPage() {
         {isLoading ? (
           <div className="h-56 rounded-xl bg-surface-high animate-pulse" />
         ) : (
-          <ResponsiveContainer width="100%" height={240}>
-            <ComposedChart data={d?.dias ?? []} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-high)" vertical={false} />
-              <XAxis
-                dataKey="fecha" tickLine={false} axisLine={false}
-                tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }}
-                tickFormatter={f => f.slice(8, 10)}
-              />
-              <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }} />
-              <Tooltip
-                contentStyle={{
-                  background: 'var(--surface-container-lowest)',
-                  border: '1px solid var(--surface-high)',
-                  borderRadius: 12, fontSize: 12,
-                }}
-                labelFormatter={f => `Día ${String(f).slice(8, 10)}`}
-                formatter={(valor: number, nombre: string) => {
-                  if (nombre === 'valor') return [formatCOP(valor), 'Valor vendido']
-                  if (nombre === 'pm7') return [valor.toFixed(1).replace('.', ','), 'Promedio 7 días']
-                  return [numero(valor), 'Ventas']
-                }}
-              />
-              <Bar dataKey="ventas" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={22} />
-              <Line type="monotone" dataKey="pm7" stroke="#0f172a" strokeWidth={2} dot={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <SerieDiaria dias={d?.dias ?? []} altura={250} />
         )}
 
         {d && (
-          <p className="text-[10.5px] text-on-surface-variant mt-3">
+          <p className="text-[10.5px] text-on-surface-variant mt-1">
             La proyección es una estimación lineal sobre {d.diasTranscurridos} de {d.diasDelMes} días.
             No considera estacionalidad ni campañas.
           </p>

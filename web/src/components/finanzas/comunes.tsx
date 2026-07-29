@@ -66,6 +66,64 @@ export function Variacion({ valor, bajarEsBueno = false, className }: {
   )
 }
 
+/**
+ * Fila de participación: nombre y monto arriba, barra fina debajo.
+ *
+ * Reemplaza al intento anterior de poner la barra como fondo de la fila: con
+ * participaciones bajas quedaba un bloque de color suelto detrás del nombre,
+ * desconectado de las cifras y con aspecto de error de maquetación. Aquí la
+ * barra es un elemento propio, alineado a lo ancho de la fila, y se escala
+ * contra el líder para que las diferencias se noten.
+ */
+export function FilaParticipacion({
+  nombre, monto, participacion, proporcion, color = 'var(--primary)', detalle, etiqueta,
+}: {
+  nombre: string
+  monto: string
+  /** Peso sobre el total, para el porcentaje que se muestra. */
+  participacion: number
+  /** Ancho de la barra, 0 a 1, relativo al mayor de la lista. */
+  proporcion: number
+  color?: string
+  /** Texto pequeño a la derecha de la barra (por ejemplo "12 ventas"). */
+  detalle?: string
+  /** Pastilla opcional junto al nombre. */
+  etiqueta?: string
+}) {
+  return (
+    <div className="py-2 group">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[12.5px] font-medium text-on-surface truncate min-w-0">
+          {nombre}
+          {etiqueta && (
+            <span className="ml-1.5 text-[9.5px] px-1.5 py-0.5 rounded-full bg-surface-high text-on-surface-variant font-medium align-middle">
+              {etiqueta}
+            </span>
+          )}
+        </span>
+        <span className="tabular-nums whitespace-nowrap shrink-0">
+          <span className="text-[12.5px] font-semibold text-on-surface">{monto}</span>
+          <span className="text-[10.5px] font-normal text-on-surface-variant ml-1.5">{pct(participacion)}</span>
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2.5 mt-1.5">
+        <span className="h-1.5 rounded-full bg-surface-high overflow-hidden block flex-1">
+          <span
+            className="block h-full rounded-full transition-all duration-500"
+            style={{ width: `${Math.max(1.5, proporcion * 100)}%`, background: color }}
+          />
+        </span>
+        {detalle && (
+          <span className="text-[10.5px] text-on-surface-variant tabular-nums whitespace-nowrap shrink-0 w-[62px] text-right">
+            {detalle}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /** Tarjeta de indicador con cifra animada, acumulado y variación. */
 export function TarjetaKPI({
   etiqueta, valor, formato = 'moneda', acumulado, variacion, bajarEsBueno, nota, cargando,
