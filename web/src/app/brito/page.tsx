@@ -81,15 +81,16 @@ export default async function BritoLandingPage() {
         <div className="w-full max-w-[440px] flex flex-col items-center text-center">
 
           {/* ── Mascota ──────────────────────────────────────────────────── */}
-          {/* Sin recorte circular ni marco: la ilustración ya tiene su forma y
-              encerrarla la hacía ver como una foto de perfil. */}
+          {/* Ilustración con fondo transparente y sin recorte circular: la
+              versión anterior traía un disco blanco pintado dentro del archivo,
+              que era el "marco" que la hacía ver como foto de perfil. */}
           <div className="relative animate-card-enter">
-            <div className="absolute inset-x-6 bottom-2 h-4 rounded-full bg-[#2B2B28]/10 blur-xl" aria-hidden />
+            <div className="absolute inset-x-10 bottom-3 h-4 rounded-full bg-[#2B2B28]/12 blur-xl" aria-hidden />
             <Image
-              src="/brito/brito-hero.jpg"
+              src="/brito/brito-mascota.png"
               alt="Brito, la mascota"
-              width={200} height={200}
-              className="relative w-[170px] h-[170px] sm:w-[200px] sm:h-[200px] object-cover rounded-full"
+              width={220} height={220}
+              className="relative w-[185px] h-[185px] sm:w-[220px] sm:h-[220px] object-contain"
               priority
             />
           </div>
