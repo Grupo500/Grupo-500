@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
@@ -27,8 +28,12 @@ export function BotonJugar({ href, children, variante = 'principal' }: {
 }) {
   const router = useRouter()
   const [corriendo, setCorriendo] = useState(false)
+  const [montado, setMontado] = useState(false)
   const rutaRef = useRef<SVGPathElement>(null)
   const britoRef = useRef<HTMLDivElement>(null)
+
+  // El portal necesita `document`, que no existe al renderizar en el servidor.
+  useEffect(() => setMontado(true), [])
 
   // Se precarga la ruta al montar: así el trazo y la descarga del mapa corren
   // en paralelo y la animación no queda esperando a la red.
@@ -70,10 +75,11 @@ export function BotonJugar({ href, children, variante = 'principal' }: {
       if (inicio === null) inicio = t
       const avance = Math.min((t - inicio) / DURACION, 1)
       const p = ruta.getPointAtLength(avance * largo)
-      // El SVG usa un lienzo de 1000x400 escalado al viewport; se traduce a
-      // porcentajes para que la mascota siga la curva en cualquier pantalla.
+      // El lienzo del SVG es 1000x340 y se escala al ancho disponible. Se
+      // traduce a porcentajes para que la mascota siga la curva en cualquier
+      // pantalla; con píxeles quedaría desfasada al cambiar de tamaño.
       brito.style.left = `${(p.x / 1000) * 100}%`
-      brito.style.top = `${(p.y / 400) * 100}%`
+      brito.style.top = `${(p.y / 340) * 100}%`
       if (avance < 1) cuadro = requestAnimationFrame(paso)
     }
     cuadro = requestAnimationFrame(paso)
@@ -102,54 +108,61 @@ export function BotonJugar({ href, children, variante = 'principal' }: {
         {children}
       </button>
 
-      {corriendo && (
+      {/* El overlay se monta en `body` mediante un portal.
+          Dentro del árbol de la portada quedaba atrapado: la columna que lo
+          contiene usa `animate-card-enter`, y una animación con transform deja
+          un transform fijado al terminar. Un ancestro con transform convierte
+          `position: fixed` en relativo a él, así que el overlay se dibujaba
+          dentro de la columna en vez de cubrir la pantalla. */}
+      {corriendo && montado && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-[#F7F5EF] flex items-center justify-center animate-fade-in"
+          className="fixed inset-0 z-[100] bg-[#F7F5EF] flex flex-col items-center justify-center animate-fade-in"
           role="status"
           aria-live="polite"
         >
-          <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full bg-[#F5A623]/12 blur-3xl" aria-hidden />
-          <div className="absolute -bottom-32 -right-24 w-[460px] h-[460px] rounded-full bg-[#1E5FA8]/10 blur-3xl" aria-hidden />
+          <div className="absolute -top-32 -left-32 w-[520px] h-[520px] rounded-full bg-[#F5A623]/12 blur-3xl pointer-events-none" aria-hidden />
+          <div className="absolute -bottom-40 -right-32 w-[560px] h-[560px] rounded-full bg-[#1E5FA8]/10 blur-3xl pointer-events-none" aria-hidden />
 
-          <div className="relative w-full max-w-[900px] px-6">
+          <div className="relative w-full max-w-[820px] px-6">
             {/* El sendero replica la curva del mapa, así que la transición
                 anticipa la pantalla que está por aparecer. */}
-            <div className="relative w-full" style={{ aspectRatio: '1000 / 400' }}>
-              <svg viewBox="0 0 1000 400" className="w-full h-full" aria-hidden>
+            <div className="relative w-full" style={{ aspectRatio: '1000 / 340' }}>
+              <svg viewBox="0 0 1000 340" className="w-full h-full overflow-visible" aria-hidden>
                 <path
                   ref={rutaRef}
-                  d="M80 300 C 240 110, 380 350, 520 210 S 800 80, 930 190"
+                  d="M70 250 C 230 80, 370 300, 510 170 S 790 50, 930 150"
                   fill="none"
                   stroke="#DCD8C9"
-                  strokeWidth="10"
+                  strokeWidth="11"
                   strokeLinecap="round"
                 />
-                <circle cx="80" cy="300" r="17" fill="#22C56E" />
-                <circle cx="520" cy="210" r="17" fill="#22C56E" />
-                <circle cx="930" cy="190" r="20" fill="#F5A623" />
+                <circle cx="70" cy="250" r="16" fill="#22C56E" />
+                <circle cx="510" cy="170" r="16" fill="#22C56E" />
+                <circle cx="930" cy="150" r="19" fill="#F5A623" />
               </svg>
 
               <div
                 ref={britoRef}
-                className="absolute w-[76px] h-[76px] -translate-x-1/2 -translate-y-[68%] pointer-events-none"
-                style={{ left: '8%', top: '75%', animation: 'brincoBrito 620ms ease-in-out infinite' }}
+                className="absolute w-[92px] h-[92px] pointer-events-none"
+                style={{ left: '7%', top: '73%', animation: 'brincoBrito 620ms ease-in-out infinite' }}
               >
-                <Image src="/brito/brito-mascota.png" alt="" width={76} height={76} className="w-full h-full object-contain" priority />
+                <Image src="/brito/brito-mascota.png" alt="" width={92} height={92} className="w-full h-full object-contain" priority />
               </div>
             </div>
 
-            <p className="text-center text-[15px] font-bold text-[#57564f] mt-2">
+            <p className="text-center text-[17px] font-extrabold text-[#57564f] mt-6">
               Preparando tu juego
             </p>
           </div>
 
           <style>{`
             @keyframes brincoBrito {
-              0%, 100% { transform: translate(-50%, -68%) }
-              50%      { transform: translate(-50%, -80%) }
+              0%, 100% { transform: translate(-50%, -70%) }
+              50%      { transform: translate(-50%, -84%) }
             }
           `}</style>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )
