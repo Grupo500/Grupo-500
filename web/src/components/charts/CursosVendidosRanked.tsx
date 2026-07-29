@@ -127,9 +127,11 @@ export function CursosVendidosRanked({ desde, hasta }: { desde: string; hasta: s
                     />
                   </span>
 
-                  <span className="text-[12.5px] text-right tabular-nums text-on-surface">
-                    {f.total}
-                    <span className="text-on-surface-variant ml-1.5">{pct}%</span>
+                  {/* La cantidad manda; el porcentaje va más liviano y chico
+                      para que no se lean como dos números del mismo rango. */}
+                  <span className="text-right tabular-nums">
+                    <span className="text-[13px] font-semibold text-on-surface">{f.total}</span>
+                    <span className="text-[11px] font-normal text-on-surface-variant ml-1.5">{pct}%</span>
                   </span>
                 </button>
 
