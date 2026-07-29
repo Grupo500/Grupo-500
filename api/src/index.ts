@@ -26,6 +26,7 @@ import pagosRoutes from './routes/pagos'
 import certificadosRoutes from './routes/certificados'
 import simulacrosRoutes from './routes/simulacros'
 import reportesRoutes from './routes/reportes'
+import finanzasRoutes from './routes/finanzas'
 import webhookRoutes from './routes/webhooks'
 import trengoRoutes from './routes/trengo'
 import hubspotRoutes from './routes/hubspot'
@@ -176,6 +177,7 @@ app.use('/api/pagos', pagosRoutes)
 app.use('/api/certificados', certificadosRoutes)
 app.use('/api/simulacros', simulacrosRoutes)
 app.use('/api/reportes', reportesRoutes)
+app.use('/api/finanzas', finanzasRoutes)
 app.use('/api/upload',  uploadRoutes)
 app.use('/api/config',       configRoutes)
 app.use('/api/negociaciones', negociacionesRoutes)

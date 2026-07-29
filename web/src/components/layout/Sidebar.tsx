@@ -10,11 +10,12 @@ import {
   LayoutDashboard, Users, CalendarDays,
   BookOpen, School, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt,
+  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Landmark,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AJUSTES_TABS } from '@/lib/ajustesNav'
+import { FINANZAS_TABS } from '@/lib/finanzasNav'
 
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor
 // que un ADMIN no necesita ver (él tiene sus propias vistas globales).
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
   { type: 'link',    href: '/brito-admin',     label: 'Brito',           icon: Gamepad2,        adminOnly: true  },
   { type: 'link',    href: '/reportes',        label: 'Analíticas',      icon: BarChart3,       adminOnly: false },
+  { type: 'link',    href: '/finanzas',        label: 'Finanzas',        icon: Landmark,        adminOnly: true  },
 ]
 
 interface SidebarProps { role?: 'ADMIN' | 'VENDEDOR' }
@@ -129,11 +131,31 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { theme } = useTheme()
 
-  const isAjustesMode = pathname === '/ajustes' || pathname.startsWith('/ajustes/')
   const visibleItems = navItems.filter(
     item => (!item.adminOnly || role === 'ADMIN') && (!item.soloAsesor || role !== 'ADMIN')
   )
-  const visibleAjustesTabs = AJUSTES_TABS.filter(t => !t.adminOnly || role === 'ADMIN')
+
+  // ── Modo sub-navegación ────────────────────────────────────────────────
+  // Algunas áreas reemplazan el nav principal por el suyo, con un botón de
+  // regreso arriba. Antes esto era exclusivo de Ajustes; ahora es genérico
+  // para que Finanzas (y lo que venga) no duplique el bloque de renderizado.
+  const dentroDe = (base: string) => pathname === base || pathname.startsWith(base + '/')
+
+  const subNav = dentroDe('/ajustes')
+    ? {
+        titulo: 'Ajustes',
+        tabs: AJUSTES_TABS
+          .filter(t => !t.adminOnly || role === 'ADMIN')
+          .map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),
+      }
+    : dentroDe('/finanzas') && role === 'ADMIN'
+    ? {
+        titulo: 'Finanzas',
+        tabs: FINANZAS_TABS.map(t => ({
+          href: t.href, label: t.label, icon: t.icon, proximamente: t.proximamente ?? false,
+        })),
+      }
+    : null
   const isDark = theme === 'dark'
 
   const width = collapsed ? 60 : 220
@@ -269,9 +291,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
             {!collapsed && <span className="text-[12px] font-medium">Contraer</span>}
           </button>
 
-          {isAjustesMode ? (
-            <div key="ajustes-nav" className="space-y-2 animate-nav-in-right">
-            {/* ── Modo sub-navegación: Ajustes ── */}
+          {subNav ? (
+            <div key="sub-nav" className="space-y-2 animate-nav-in-right">
+            {/* ── Modo sub-navegación: el área reemplaza el nav principal ── */}
             <Link
               href="/dashboard"
               title={collapsed ? 'Volver' : undefined}
@@ -280,12 +302,36 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
               <span className="w-11 h-10 flex items-center justify-center shrink-0">
                 <ChevronLeft className="w-[17px] h-[17px]" />
               </span>
-              {!collapsed && <span className="flex-1 truncate">Ajustes</span>}
+              {!collapsed && <span className="flex-1 truncate">{subNav.titulo}</span>}
             </Link>
 
-            {visibleAjustesTabs.map(tab => {
+            {subNav.tabs.map(tab => {
               const Icon = tab.icon
               const isActive = pathname === tab.href
+              // Una sección anunciada pero sin construir no navega: llevar a un
+              // 404 se lee como que la app está rota, no como que falta.
+              if (tab.proximamente) {
+                return (
+                  <div
+                    key={tab.href}
+                    title={collapsed ? `${tab.label} · próximamente` : undefined}
+                    className={cn(
+                      'relative flex items-center rounded-md text-[13px] font-medium text-slate-600 cursor-default',
+                      !collapsed && 'pr-3',
+                    )}
+                  >
+                    <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                      <Icon className="w-[17px] h-[17px] text-slate-600" />
+                    </span>
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 truncate">{tab.label}</span>
+                        <span className="text-[9px] text-slate-500 shrink-0">Pronto</span>
+                      </>
+                    )}
+                  </div>
+                )
+              }
               return (
                 <Link
                   key={tab.href}

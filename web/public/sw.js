@@ -1,7 +1,14 @@
-// Service Worker — Grupo 500 PWA v2
-// Solo cachea íconos/imágenes estáticas. NO cachea páginas ni JS de Next.js.
+// Service Worker — Grupo 500 PWA v4
+// Solo guarda imágenes como respaldo sin conexión. NO cachea páginas ni JS.
+//
+// v4 corrige un error real: antes las imágenes se servían "cache-first" sin
+// caducidad, así que un ícono que ya estuviera guardado no volvía a pedirse
+// nunca. Al cambiar la mascota o las insignias de Brito, el usuario seguía
+// viendo las viejas y solo un Ctrl+Shift+R (que salta el service worker) las
+// actualizaba. Los archivos de /public conservan su URL cuando cambian de
+// contenido, así que cache-first es justo la estrategia equivocada para ellos.
 
-const STATIC_CACHE = 'grupo500-static-v3'
+const STATIC_CACHE = 'grupo500-static-v4'
 
 const PRECACHE_ASSETS = [
   '/favicon.ico',
@@ -48,22 +55,25 @@ self.addEventListener('fetch', (event) => {
     return // red directa, sin caché
   }
 
-  // Solo iconos e imágenes estáticas: cache-first
+  // Imágenes: la red manda, el caché es solo el respaldo sin conexión.
+  //
+  // Vercel ya las sirve con `max-age=0, must-revalidate` y ETag, así que una
+  // imagen sin cambios se resuelve con un 304 diminuto: no se gana casi nada
+  // sirviéndola desde el caché, y sí se pierde la garantía de que esté al día.
   if (
     request.destination === 'image' ||
     url.pathname.match(/\.(png|jpg|jpeg|svg|ico|webp)$/)
   ) {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached
-        return fetch(request).then((res) => {
+      fetch(request)
+        .then((res) => {
           if (res.ok) {
-            const resClone = res.clone()   // clonar ANTES de retornar (evita "body already used")
-            caches.open(STATIC_CACHE).then((c) => c.put(request, resClone))
+            const copia = res.clone()   // clonar ANTES de devolver: el cuerpo se consume una sola vez
+            caches.open(STATIC_CACHE).then((c) => c.put(request, copia))
           }
           return res
         })
-      })
+        .catch(() => caches.match(request).then((cached) => cached ?? Response.error()))
     )
   }
 })
