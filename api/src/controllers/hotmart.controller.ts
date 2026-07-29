@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 import { logger } from '../utils/logger'
@@ -21,10 +22,12 @@ interface HotmartPurchase {
   transaction: string
   status: string
   price: { value: number; currency_value?: string }
-  payment?: { type?: string; installments_number?: number }
+  payment?: { type?: string; method?: string; installments_number?: number }
   // payment_mode de la oferta: PAY_IN_FULL / UNIQUE_PAYMENT (cae completo)
   // o MULTIPLE_PAYMENTS (cae por partes; este cargo es solo una cuota)
   offer?: { payment_mode?: string; code?: string }
+  // Qué cuota representa este cargo dentro del total (1, 2, 3...)
+  recurrency_number?: number
   approved_date?: number
   // Códigos de rastreo del link usado en la compra (?src= y ?sck=)
   origin?: { xcod?: string; sck?: string; src?: string }
@@ -78,6 +81,19 @@ export async function webhook(req: Request, res: Response) {
 
   const { event, data } = body
 
+  // Guardar el postback tal cual llegó. Cuando algo no cuadra —como que las
+  // ventas a cuotas no se detectaran— sin esto no hay forma de saber qué mandó
+  // Hotmart. No debe tumbar el webhook si falla.
+  prisma.hotmartWebhookLog
+    .create({
+      data: {
+        evento: event ?? null,
+        transaccion: data?.purchase?.transaction ?? null,
+        payload: body as unknown as Prisma.InputJsonValue,
+      },
+    })
+    .catch(e => logger.warn(`[Hotmart] No se pudo registrar el postback: ${e.message}`))
+
   // Solo procesar compras completadas
   if (event !== 'PURCHASE_COMPLETE' && event !== 'PURCHASE_APPROVED') {
     logger.info(`[Hotmart] Evento ignorado: ${event}`)
@@ -93,7 +109,20 @@ export async function webhook(req: Request, res: Response) {
   // es el monto de ESTE cargo, no el total del curso.
   const paymentMode  = purchase.offer?.payment_mode ?? null
   const installments = purchase.payment?.installments_number ?? 1
+  const cuotaNumero  = purchase.recurrency_number ?? null
+  // Solo `payment_mode` distingue las dos cosas que Hotmart mezcla:
+  //  - MULTIPLE_PAYMENTS: el producto se vendió a cuotas y el dinero entra por
+  //    partes; este cargo es una cuota.
+  //  - UNIQUE_PAYMENT con installments_number > 1: el comprador difirió con su
+  //    tarjeta, pero el productor cobra todo de una. El cargo ES el total.
+  // Guiarse por installments_number mezcla ambos casos y multiplica precios
+  // por 12 sin razón.
   const esEnPartes   = paymentMode === 'MULTIPLE_PAYMENTS'
+
+  logger.info(
+    `[Hotmart] ${transaccion} — payment_mode: ${paymentMode ?? 'sin dato'} | ` +
+    `cuotas: ${installments} | cuota nº: ${cuotaNumero ?? 'sin dato'} | en partes: ${esEnPartes}`
+  )
 
   logger.info(`[Hotmart] Procesando compra ${transaccion} de ${buyer.email}`)
 
@@ -256,6 +285,8 @@ export async function webhook(req: Request, res: Response) {
       fechaVencimiento: fechaPago,
       fechaPago,
       notas: notaPago,
+      enPartes: esEnPartes,
+      ...(esEnPartes && { cuotasTotal: installments, cuotaNumero: cuotaNumero ?? 1 }),
       ...(asesorId && { asesorId }),
     },
   })

@@ -289,10 +289,30 @@ model Pago {
   comisionAsesor   Float?     // comisión del afiliado/asesor
   montoNeto        Float?     // neto que recibe el productor
   trm              Float?     // TRM oficial usada para la conversión
+  // Pagos en partes de Hotmart (Smart Installment): el cargo que llega es una
+  // cuota, no el precio del curso. Datos tal como los reporta Hotmart.
+  enPartes         Boolean    @default(false) // offer.payment_mode = MULTIPLE_PAYMENTS
+  cuotaNumero      Int?       // purchase.recurrency_number — qué cuota es este cargo
+  cuotasTotal      Int?       // purchase.payment.installments_number
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   asesor           Asesor?    @relation(fields: [asesorId], references: [id])
   estudiante       Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+}
+
+// Registro crudo de los postbacks de Hotmart. Sin esto no hay forma de saber
+// qué mandó realmente la plataforma cuando algo no cuadra — fue justo lo que
+// impidió diagnosticar por qué las ventas a cuotas no se detectaban.
+model HotmartWebhookLog {
+  id          String   @id @default(cuid())
+  evento      String?
+  transaccion String?
+  payload     Json
+  createdAt   DateTime @default(now())
+
+  @@index([transaccion])
+  @@index([createdAt])
+  @@map("hotmart_webhook_logs")
 }
 
 model Certificado {
