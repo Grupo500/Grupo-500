@@ -3,8 +3,12 @@ import Link from 'next/link'
 import { auth } from '@/auth'
 import { Nunito } from 'next/font/google'
 import { ArrowLeft } from 'lucide-react'
+import { BotonJugar } from './BotonJugar'
 
 const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
+
+/** Destino del juego. Es lo que decide si el botón lleva la transición. */
+const MAPA = '/brito/mapa'
 
 export const metadata = {
   title: 'Brito — Con Brito te vas a convertir en cerebrito',
@@ -57,9 +61,9 @@ export default async function BritoLandingPage() {
   // quedó, el admin a administrar, y quien no tiene cuenta a crearla.
   const acciones =
     role === 'ESTUDIANTE'
-      ? { principal: { href: '/brito/mapa', texto: 'Continuar mis lecciones' }, secundaria: null }
+      ? { principal: { href: MAPA, texto: 'Continuar mis lecciones' }, secundaria: null }
       : role === 'ADMIN'
-      ? { principal: { href: '/brito-admin', texto: 'Administrar el juego' }, secundaria: { href: '/brito/mapa', texto: 'Entrar a jugar' } }
+      ? { principal: { href: '/brito-admin', texto: 'Administrar el juego' }, secundaria: { href: MAPA, texto: 'Entrar a jugar' } }
       : { principal: { href: '/brito/registro', texto: 'Crear cuenta gratis' }, secundaria: { href: '/sign-in', texto: 'Ya tengo cuenta' } }
 
   return (
@@ -124,10 +128,23 @@ export default async function BritoLandingPage() {
           </div>
 
           {/* ── Acciones ─────────────────────────────────────────────────── */}
+          {/* La transición del sendero solo tiene sentido cuando el destino es
+              el mapa: entrar al panel de administración no es "empezar a
+              jugar". Por eso se decide por el destino y no por la jerarquía
+              del botón. */}
           <div className="w-full flex flex-col gap-2.5 mt-7 animate-card-enter" style={{ animationDelay: '0.4s' }}>
-            <BotonPrincipal href={acciones.principal.href}>{acciones.principal.texto}</BotonPrincipal>
+            {acciones.principal.href === MAPA ? (
+              <BotonJugar href={MAPA}>{acciones.principal.texto}</BotonJugar>
+            ) : (
+              <BotonPrincipal href={acciones.principal.href}>{acciones.principal.texto}</BotonPrincipal>
+            )}
+
             {acciones.secundaria && (
-              <BotonSecundario href={acciones.secundaria.href}>{acciones.secundaria.texto}</BotonSecundario>
+              acciones.secundaria.href === MAPA ? (
+                <BotonJugar href={MAPA} variante="secundario">{acciones.secundaria.texto}</BotonJugar>
+              ) : (
+                <BotonSecundario href={acciones.secundaria.href}>{acciones.secundaria.texto}</BotonSecundario>
+              )
             )}
           </div>
 
