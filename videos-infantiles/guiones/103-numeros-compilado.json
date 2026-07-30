@@ -1,0 +1,2200 @@
+{
+  "id": "103-numeros-compilado",
+  "titulo": "LOS NÚMEROS EN ESPAÑOL E INGLÉS",
+  "canal": "Lulo y sus amigos",
+  "edad": "2-4 anos",
+  "fps": 30,
+  "musica": {
+    "estilo": "juguetona",
+    "volumen": 0.3,
+    "semilla": 17
+  },
+  "youtube": {
+    "hechoParaNinos": true,
+    "descripcion": "Aprende los números con Lulo, en español y en inglés. Video tranquilo y repetitivo, con objetos grandes y palabras claras, pensado para niños de 2 a 4 años. 22 minutos de contenido.",
+    "etiquetas": [
+      "numeros para ninos",
+      "contar del 1 al 10",
+      "numbers for kids",
+      "aprender a contar",
+      "videos educativos 2 anos"
+    ]
+  },
+  "_generado": {
+    "tema": "numeros",
+    "rondas": 8,
+    "escenas": 106,
+    "duracionEstimada": "22:01",
+    "nota": "Generado por guiones/armar.mjs. La duracion final crece si la narracion es mas larga que lo declarado."
+  },
+  "escenas": [
+    {
+      "tipo": "intro",
+      "duracion": 8,
+      "titulo": "LOS NÚMEROS",
+      "subtitulo": "del 1 al 10",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Hola amiguitos! Yo soy Lulo. Hoy vamos a aprender los números en español y en inglés. ¿Estás listo?"
+        },
+        {
+          "idioma": "en",
+          "texto": "Hello friends! I am Lulo. Today we are going to learn. Are you ready?"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno manzanas! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One apples."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "pelota:rojo",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos pelotas! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two balls."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "estrella:amarillo",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres estrellas! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three stars."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "flor",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro flores! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "globo:azul",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco globos! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "pez:naranja",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis peces! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six fish."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "fresa",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete fresas! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "naranja",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho naranjas! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "corazon:rosado",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve corazones! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "banano",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez bananos! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "flor",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno flores! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "globo:azul",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos globos! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "pez:naranja",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres peces! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three fish."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "fresa",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro fresas! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "naranja",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco naranjas! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "corazon:rosado",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis corazones! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "banano",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete bananos! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "manzana",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho manzanas! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight apples."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "pelota:rojo",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve pelotas! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine balls."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "estrella:amarillo",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez estrellas! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten stars."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno fresas! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "naranja",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos naranjas! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "corazon:rosado",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres corazones! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "banano",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro bananos! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "manzana",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco manzanas! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five apples."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "pelota:rojo",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis pelotas! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six balls."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "estrella:amarillo",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete estrellas! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven stars."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "flor",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho flores! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "globo:azul",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve globos! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "pez:naranja",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez peces! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten fish."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "banano",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno bananos! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "manzana",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos manzanas! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two apples."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "pelota:rojo",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres pelotas! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three balls."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "estrella:amarillo",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro estrellas! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four stars."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "flor",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco flores! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "globo:azul",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis globos! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "pez:naranja",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete peces! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven fish."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "fresa",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho fresas! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "naranja",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve naranjas! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "corazon:rosado",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez corazones! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "estrella:amarillo",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno estrellas! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One stars."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "flor",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos flores! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "globo:azul",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres globos! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "pez:naranja",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro peces! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four fish."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "fresa",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco fresas! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "naranja",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis naranjas! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "corazon:rosado",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete corazones! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "banano",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho bananos! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "manzana",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve manzanas! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine apples."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "pelota:rojo",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez pelotas! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten balls."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "pez:naranja",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno peces! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One fish."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "fresa",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos fresas! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "naranja",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres naranjas! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "corazon:rosado",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro corazones! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "banano",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco bananos! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "manzana",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis manzanas! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six apples."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "pelota:rojo",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete pelotas! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven balls."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "estrella:amarillo",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho estrellas! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight stars."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "flor",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve flores! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "globo:azul",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez globos! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "corazon:rosado",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno corazones! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "banano",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos bananos! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "manzana",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres manzanas! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three apples."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "pelota:rojo",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro pelotas! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four balls."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "estrella:amarillo",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco estrellas! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five stars."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "flor",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis flores! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "globo:azul",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete globos! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "pez:naranja",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho peces! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight fish."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "fresa",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve fresas! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "naranja",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez naranjas! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 9,
+      "objeto": "pelota:rojo",
+      "hasta": 1,
+      "palabra": "uno",
+      "palabraEn": "one",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. ¡Uno pelotas! Uno."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One. Uno is one. One balls."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 10,
+      "objeto": "estrella:amarillo",
+      "hasta": 2,
+      "palabra": "dos",
+      "palabraEn": "two",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. ¡Dos estrellas! Dos."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two. Dos is two. Two stars."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 11,
+      "objeto": "flor",
+      "hasta": 3,
+      "palabra": "tres",
+      "palabraEn": "three",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. ¡Tres flores! Tres."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three. Tres is three. Three flowers."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 12,
+      "objeto": "globo:azul",
+      "hasta": 4,
+      "palabra": "cuatro",
+      "palabraEn": "four",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. ¡Cuatro globos! Cuatro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four balloons."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 14,
+      "objeto": "pez:naranja",
+      "hasta": 5,
+      "palabra": "cinco",
+      "palabraEn": "five",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. ¡Cinco peces! Cinco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five fish."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 15,
+      "objeto": "fresa",
+      "hasta": 6,
+      "palabra": "seis",
+      "palabraEn": "six",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. ¡Seis fresas! Seis."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six strawberries."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 16,
+      "objeto": "naranja",
+      "hasta": 7,
+      "palabra": "siete",
+      "palabraEn": "seven",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. ¡Siete naranjas! Siete."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven oranges."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 17,
+      "objeto": "corazon:rosado",
+      "hasta": 8,
+      "palabra": "ocho",
+      "palabraEn": "eight",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. ¡Ocho corazones! Ocho."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight hearts."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 18,
+      "objeto": "banano",
+      "hasta": 9,
+      "palabra": "nueve",
+      "palabraEn": "nine",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. ¡Nueve bananos! Nueve."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine bananas."
+        }
+      ]
+    },
+    {
+      "tipo": "contar",
+      "duracion": 19,
+      "objeto": "manzana",
+      "hasta": 10,
+      "palabra": "diez",
+      "palabraEn": "ten",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Vamos a contar. Uno. Dos. Tres. Cuatro. Cinco. Seis. Siete. Ocho. Nueve. Diez. ¡Diez manzanas! Diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten apples."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 14,
+      "titulo": "CONTAMOS HASTA 10",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "1",
+          "etiquetaEn": "one"
+        },
+        {
+          "objeto": "pelota:rojo",
+          "etiqueta": "2",
+          "etiquetaEn": "two"
+        },
+        {
+          "objeto": "estrella:amarillo",
+          "etiqueta": "3",
+          "etiquetaEn": "three"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "4",
+          "etiquetaEn": "four"
+        },
+        {
+          "objeto": "globo:azul",
+          "etiqueta": "5",
+          "etiquetaEn": "five"
+        },
+        {
+          "objeto": "pez:naranja",
+          "etiqueta": "6",
+          "etiquetaEn": "six"
+        },
+        {
+          "objeto": "fresa",
+          "etiqueta": "7",
+          "etiquetaEn": "seven"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "8",
+          "etiquetaEn": "eight"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Contemos otra vez: uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us count again: one, two, three, four, five, six, seven, eight, nine, ten."
+        }
+      ]
+    },
+    {
+      "tipo": "despedida",
+      "duracion": 7,
+      "texto": "¡HASTA PRONTO!",
+      "canal": "Lulo y sus amigos",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Gracias por jugar conmigo. Nos vemos en el próximo video. ¡Adiós!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Thank you for playing with me. See you next time. Bye bye!"
+        }
+      ]
+    }
+  ]
+}

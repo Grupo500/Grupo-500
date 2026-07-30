@@ -1,0 +1,3249 @@
+{
+  "id": "102-formas-compilado",
+  "titulo": "LAS FORMAS EN ESPAÑOL E INGLÉS",
+  "canal": "Lulo y sus amigos",
+  "edad": "2-4 anos",
+  "fps": 30,
+  "musica": {
+    "estilo": "alegre",
+    "volumen": 0.3,
+    "semilla": 17
+  },
+  "youtube": {
+    "hechoParaNinos": true,
+    "descripcion": "Aprende las formas con Lulo, en español y en inglés. Video tranquilo y repetitivo, con objetos grandes y palabras claras, pensado para niños de 2 a 4 años. 22 minutos de contenido.",
+    "etiquetas": [
+      "formas para ninos",
+      "figuras geometricas ninos",
+      "shapes for kids",
+      "aprender formas",
+      "videos educativos 3 anos"
+    ]
+  },
+  "_generado": {
+    "tema": "formas",
+    "rondas": 7,
+    "escenas": 135,
+    "duracionEstimada": "21:31",
+    "nota": "Generado por guiones/armar.mjs. La duracion final crece si la narracion es mas larga que lo declarado."
+  },
+  "escenas": [
+    {
+      "tipo": "intro",
+      "duracion": 8,
+      "titulo": "LAS FORMAS",
+      "subtitulo": "en español e inglés",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Hola amiguitos! Yo soy Lulo. Hoy vamos a aprender las formas en español y en inglés. ¿Estás listo?"
+        },
+        {
+          "idioma": "en",
+          "texto": "Hello friends! I am Lulo. Today we are going to learn. Are you ready?"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:azul",
+      "etiqueta": "círculo",
+      "etiquetaEn": "circle",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un círculo. Círculo. Es redondo como una pelota."
+        },
+        {
+          "idioma": "en",
+          "texto": "Circle. This is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CÍRCULO?",
+      "opciones": [
+        {
+          "objeto": "triangulo:rojo"
+        },
+        {
+          "objeto": "circulo:azul"
+        },
+        {
+          "objeto": "rombo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un círculo? Piénsalo. ¡Muy bien! Ese es un círculo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the circle? Yes! That is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:rojo",
+      "etiqueta": "cuadrado",
+      "etiquetaEn": "square",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un cuadrado. Cuadrado. Tiene cuatro lados iguales."
+        },
+        {
+          "idioma": "en",
+          "texto": "Square. This is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CUADRADO?",
+      "opciones": [
+        {
+          "objeto": "triangulo:amarillo"
+        },
+        {
+          "objeto": "cuadrado:rojo"
+        },
+        {
+          "objeto": "rombo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un cuadrado? Piénsalo. ¡Muy bien! Ese es un cuadrado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the square? Yes! That is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "triangulo:amarillo",
+      "etiqueta": "triángulo",
+      "etiquetaEn": "triangle",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un triángulo. Triángulo. Tiene tres puntas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Triangle. This is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TRIÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:verde"
+        },
+        {
+          "objeto": "triangulo:amarillo"
+        },
+        {
+          "objeto": "rombo:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un triángulo? Piénsalo. ¡Muy bien! Ese es un triángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the triangle? Yes! That is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:verde",
+      "etiqueta": "estrella",
+      "etiquetaEn": "star",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es una estrella. Estrella. Brilla en el cielo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Star. This is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ESTRELLA?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:morado"
+        },
+        {
+          "objeto": "estrella:verde"
+        },
+        {
+          "objeto": "rombo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es una estrella? Piénsalo. ¡Muy bien! Ese es una estrella."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the star? Yes! That is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:morado",
+      "etiqueta": "corazón",
+      "etiquetaEn": "heart",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un corazón. Corazón. Es para dar amor."
+        },
+        {
+          "idioma": "en",
+          "texto": "Heart. This is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CORAZÓN?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:naranja"
+        },
+        {
+          "objeto": "corazon:morado"
+        },
+        {
+          "objeto": "rombo:azul"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un corazón? Piénsalo. ¡Muy bien! Ese es un corazón."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the heart? Yes! That is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:naranja",
+      "etiqueta": "rombo",
+      "etiquetaEn": "diamond",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rombo. Rombo. Parece una cometa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Diamond. This is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ROMBO?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:rosado"
+        },
+        {
+          "objeto": "rombo:naranja"
+        },
+        {
+          "objeto": "corazon:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rombo? Piénsalo. ¡Muy bien! Ese es un rombo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the diamond? Yes! That is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rectangulo:rosado",
+      "etiqueta": "rectángulo",
+      "etiquetaEn": "rectangle",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rectángulo. Rectángulo. Es como una puerta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Rectangle. This is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL RECTÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:azul"
+        },
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "corazon:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rectángulo? Piénsalo. ¡Muy bien! Ese es un rectángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the rectangle? Yes! That is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:azul",
+      "etiqueta": "óvalo",
+      "etiquetaEn": "oval",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un óvalo. Óvalo. Es como un huevo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Oval. This is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ÓVALO?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:rojo"
+        },
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "corazon:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un óvalo? Piénsalo. ¡Muy bien! Ese es un óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the oval? Yes! That is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LAS FORMAS QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "circulo:azul",
+          "etiqueta": "círculo",
+          "etiquetaEn": "circle"
+        },
+        {
+          "objeto": "cuadrado:rojo",
+          "etiqueta": "cuadrado",
+          "etiquetaEn": "square"
+        },
+        {
+          "objeto": "triangulo:amarillo",
+          "etiqueta": "triángulo",
+          "etiquetaEn": "triangle"
+        },
+        {
+          "objeto": "estrella:verde",
+          "etiqueta": "estrella",
+          "etiquetaEn": "star"
+        },
+        {
+          "objeto": "corazon:morado",
+          "etiqueta": "corazón",
+          "etiquetaEn": "heart"
+        },
+        {
+          "objeto": "rombo:naranja",
+          "etiqueta": "rombo",
+          "etiquetaEn": "diamond"
+        },
+        {
+          "objeto": "rectangulo:rosado",
+          "etiqueta": "rectángulo",
+          "etiquetaEn": "rectangle"
+        },
+        {
+          "objeto": "ovalo:azul",
+          "etiqueta": "óvalo",
+          "etiquetaEn": "oval"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos las formas: círculo, cuadrado, triángulo, estrella, corazón, rombo, rectángulo, óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review the shapes: circle, square, triangle, star, heart, diamond, rectangle, oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:rojo",
+      "etiqueta": "cuadrado",
+      "etiquetaEn": "square",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un cuadrado. Cuadrado. Tiene cuatro lados iguales."
+        },
+        {
+          "idioma": "en",
+          "texto": "Square. This is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CUADRADO?",
+      "opciones": [
+        {
+          "objeto": "corazon:rojo"
+        },
+        {
+          "objeto": "cuadrado:rojo"
+        },
+        {
+          "objeto": "ovalo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un cuadrado? Piénsalo. ¡Muy bien! Ese es un cuadrado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the square? Yes! That is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "triangulo:amarillo",
+      "etiqueta": "triángulo",
+      "etiquetaEn": "triangle",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un triángulo. Triángulo. Tiene tres puntas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Triangle. This is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TRIÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "corazon:amarillo"
+        },
+        {
+          "objeto": "triangulo:amarillo"
+        },
+        {
+          "objeto": "ovalo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un triángulo? Piénsalo. ¡Muy bien! Ese es un triángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the triangle? Yes! That is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:verde",
+      "etiqueta": "estrella",
+      "etiquetaEn": "star",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es una estrella. Estrella. Brilla en el cielo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Star. This is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ESTRELLA?",
+      "opciones": [
+        {
+          "objeto": "corazon:verde"
+        },
+        {
+          "objeto": "estrella:verde"
+        },
+        {
+          "objeto": "ovalo:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es una estrella? Piénsalo. ¡Muy bien! Ese es una estrella."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the star? Yes! That is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:morado",
+      "etiqueta": "corazón",
+      "etiquetaEn": "heart",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un corazón. Corazón. Es para dar amor."
+        },
+        {
+          "idioma": "en",
+          "texto": "Heart. This is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CORAZÓN?",
+      "opciones": [
+        {
+          "objeto": "estrella:morado"
+        },
+        {
+          "objeto": "corazon:morado"
+        },
+        {
+          "objeto": "ovalo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un corazón? Piénsalo. ¡Muy bien! Ese es un corazón."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the heart? Yes! That is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:naranja",
+      "etiqueta": "rombo",
+      "etiquetaEn": "diamond",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rombo. Rombo. Parece una cometa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Diamond. This is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ROMBO?",
+      "opciones": [
+        {
+          "objeto": "estrella:naranja"
+        },
+        {
+          "objeto": "rombo:naranja"
+        },
+        {
+          "objeto": "ovalo:azul"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rombo? Piénsalo. ¡Muy bien! Ese es un rombo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the diamond? Yes! That is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rectangulo:rosado",
+      "etiqueta": "rectángulo",
+      "etiquetaEn": "rectangle",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rectángulo. Rectángulo. Es como una puerta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Rectangle. This is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL RECTÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "estrella:rosado"
+        },
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "ovalo:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rectángulo? Piénsalo. ¡Muy bien! Ese es un rectángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the rectangle? Yes! That is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:azul",
+      "etiqueta": "óvalo",
+      "etiquetaEn": "oval",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un óvalo. Óvalo. Es como un huevo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Oval. This is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ÓVALO?",
+      "opciones": [
+        {
+          "objeto": "estrella:azul"
+        },
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "rectangulo:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un óvalo? Piénsalo. ¡Muy bien! Ese es un óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the oval? Yes! That is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:rojo",
+      "etiqueta": "círculo",
+      "etiquetaEn": "circle",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un círculo. Círculo. Es redondo como una pelota."
+        },
+        {
+          "idioma": "en",
+          "texto": "Circle. This is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CÍRCULO?",
+      "opciones": [
+        {
+          "objeto": "estrella:rojo"
+        },
+        {
+          "objeto": "circulo:rojo"
+        },
+        {
+          "objeto": "rectangulo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un círculo? Piénsalo. ¡Muy bien! Ese es un círculo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the circle? Yes! That is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LAS FORMAS QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "circulo:azul",
+          "etiqueta": "círculo",
+          "etiquetaEn": "circle"
+        },
+        {
+          "objeto": "cuadrado:rojo",
+          "etiqueta": "cuadrado",
+          "etiquetaEn": "square"
+        },
+        {
+          "objeto": "triangulo:amarillo",
+          "etiqueta": "triángulo",
+          "etiquetaEn": "triangle"
+        },
+        {
+          "objeto": "estrella:verde",
+          "etiqueta": "estrella",
+          "etiquetaEn": "star"
+        },
+        {
+          "objeto": "corazon:morado",
+          "etiqueta": "corazón",
+          "etiquetaEn": "heart"
+        },
+        {
+          "objeto": "rombo:naranja",
+          "etiqueta": "rombo",
+          "etiquetaEn": "diamond"
+        },
+        {
+          "objeto": "rectangulo:rosado",
+          "etiqueta": "rectángulo",
+          "etiquetaEn": "rectangle"
+        },
+        {
+          "objeto": "ovalo:azul",
+          "etiqueta": "óvalo",
+          "etiquetaEn": "oval"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos las formas: círculo, cuadrado, triángulo, estrella, corazón, rombo, rectángulo, óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review the shapes: circle, square, triangle, star, heart, diamond, rectangle, oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "triangulo:amarillo",
+      "etiqueta": "triángulo",
+      "etiquetaEn": "triangle",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un triángulo. Triángulo. Tiene tres puntas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Triangle. This is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TRIÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:rojo"
+        },
+        {
+          "objeto": "triangulo:amarillo"
+        },
+        {
+          "objeto": "cuadrado:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un triángulo? Piénsalo. ¡Muy bien! Ese es un triángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the triangle? Yes! That is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:verde",
+      "etiqueta": "estrella",
+      "etiquetaEn": "star",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es una estrella. Estrella. Brilla en el cielo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Star. This is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ESTRELLA?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:amarillo"
+        },
+        {
+          "objeto": "estrella:verde"
+        },
+        {
+          "objeto": "cuadrado:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es una estrella? Piénsalo. ¡Muy bien! Ese es una estrella."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the star? Yes! That is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:morado",
+      "etiqueta": "corazón",
+      "etiquetaEn": "heart",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un corazón. Corazón. Es para dar amor."
+        },
+        {
+          "idioma": "en",
+          "texto": "Heart. This is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CORAZÓN?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:verde"
+        },
+        {
+          "objeto": "corazon:morado"
+        },
+        {
+          "objeto": "cuadrado:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un corazón? Piénsalo. ¡Muy bien! Ese es un corazón."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the heart? Yes! That is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:naranja",
+      "etiqueta": "rombo",
+      "etiquetaEn": "diamond",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rombo. Rombo. Parece una cometa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Diamond. This is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ROMBO?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:morado"
+        },
+        {
+          "objeto": "rombo:naranja"
+        },
+        {
+          "objeto": "cuadrado:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rombo? Piénsalo. ¡Muy bien! Ese es un rombo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the diamond? Yes! That is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rectangulo:rosado",
+      "etiqueta": "rectángulo",
+      "etiquetaEn": "rectangle",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rectángulo. Rectángulo. Es como una puerta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Rectangle. This is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL RECTÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "rombo:naranja"
+        },
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "cuadrado:azul"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rectángulo? Piénsalo. ¡Muy bien! Ese es un rectángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the rectangle? Yes! That is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:azul",
+      "etiqueta": "óvalo",
+      "etiquetaEn": "oval",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un óvalo. Óvalo. Es como un huevo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Oval. This is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ÓVALO?",
+      "opciones": [
+        {
+          "objeto": "rombo:rosado"
+        },
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "cuadrado:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un óvalo? Piénsalo. ¡Muy bien! Ese es un óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the oval? Yes! That is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:rojo",
+      "etiqueta": "círculo",
+      "etiquetaEn": "circle",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un círculo. Círculo. Es redondo como una pelota."
+        },
+        {
+          "idioma": "en",
+          "texto": "Circle. This is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CÍRCULO?",
+      "opciones": [
+        {
+          "objeto": "rombo:azul"
+        },
+        {
+          "objeto": "circulo:rojo"
+        },
+        {
+          "objeto": "cuadrado:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un círculo? Piénsalo. ¡Muy bien! Ese es un círculo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the circle? Yes! That is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:amarillo",
+      "etiqueta": "cuadrado",
+      "etiquetaEn": "square",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un cuadrado. Cuadrado. Tiene cuatro lados iguales."
+        },
+        {
+          "idioma": "en",
+          "texto": "Square. This is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CUADRADO?",
+      "opciones": [
+        {
+          "objeto": "rombo:rojo"
+        },
+        {
+          "objeto": "cuadrado:amarillo"
+        },
+        {
+          "objeto": "circulo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un cuadrado? Piénsalo. ¡Muy bien! Ese es un cuadrado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the square? Yes! That is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LAS FORMAS QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "circulo:azul",
+          "etiqueta": "círculo",
+          "etiquetaEn": "circle"
+        },
+        {
+          "objeto": "cuadrado:rojo",
+          "etiqueta": "cuadrado",
+          "etiquetaEn": "square"
+        },
+        {
+          "objeto": "triangulo:amarillo",
+          "etiqueta": "triángulo",
+          "etiquetaEn": "triangle"
+        },
+        {
+          "objeto": "estrella:verde",
+          "etiqueta": "estrella",
+          "etiquetaEn": "star"
+        },
+        {
+          "objeto": "corazon:morado",
+          "etiqueta": "corazón",
+          "etiquetaEn": "heart"
+        },
+        {
+          "objeto": "rombo:naranja",
+          "etiqueta": "rombo",
+          "etiquetaEn": "diamond"
+        },
+        {
+          "objeto": "rectangulo:rosado",
+          "etiqueta": "rectángulo",
+          "etiquetaEn": "rectangle"
+        },
+        {
+          "objeto": "ovalo:azul",
+          "etiqueta": "óvalo",
+          "etiquetaEn": "oval"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos las formas: círculo, cuadrado, triángulo, estrella, corazón, rombo, rectángulo, óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review the shapes: circle, square, triangle, star, heart, diamond, rectangle, oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:verde",
+      "etiqueta": "estrella",
+      "etiquetaEn": "star",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es una estrella. Estrella. Brilla en el cielo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Star. This is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ESTRELLA?",
+      "opciones": [
+        {
+          "objeto": "circulo:rojo"
+        },
+        {
+          "objeto": "estrella:verde"
+        },
+        {
+          "objeto": "corazon:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es una estrella? Piénsalo. ¡Muy bien! Ese es una estrella."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the star? Yes! That is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:morado",
+      "etiqueta": "corazón",
+      "etiquetaEn": "heart",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un corazón. Corazón. Es para dar amor."
+        },
+        {
+          "idioma": "en",
+          "texto": "Heart. This is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CORAZÓN?",
+      "opciones": [
+        {
+          "objeto": "circulo:amarillo"
+        },
+        {
+          "objeto": "corazon:morado"
+        },
+        {
+          "objeto": "estrella:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un corazón? Piénsalo. ¡Muy bien! Ese es un corazón."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the heart? Yes! That is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:naranja",
+      "etiqueta": "rombo",
+      "etiquetaEn": "diamond",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rombo. Rombo. Parece una cometa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Diamond. This is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ROMBO?",
+      "opciones": [
+        {
+          "objeto": "circulo:verde"
+        },
+        {
+          "objeto": "rombo:naranja"
+        },
+        {
+          "objeto": "estrella:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rombo? Piénsalo. ¡Muy bien! Ese es un rombo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the diamond? Yes! That is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rectangulo:rosado",
+      "etiqueta": "rectángulo",
+      "etiquetaEn": "rectangle",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rectángulo. Rectángulo. Es como una puerta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Rectangle. This is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL RECTÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "circulo:morado"
+        },
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "estrella:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rectángulo? Piénsalo. ¡Muy bien! Ese es un rectángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the rectangle? Yes! That is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:azul",
+      "etiqueta": "óvalo",
+      "etiquetaEn": "oval",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un óvalo. Óvalo. Es como un huevo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Oval. This is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ÓVALO?",
+      "opciones": [
+        {
+          "objeto": "circulo:naranja"
+        },
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "estrella:azul"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un óvalo? Piénsalo. ¡Muy bien! Ese es un óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the oval? Yes! That is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:rojo",
+      "etiqueta": "círculo",
+      "etiquetaEn": "circle",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un círculo. Círculo. Es redondo como una pelota."
+        },
+        {
+          "idioma": "en",
+          "texto": "Circle. This is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CÍRCULO?",
+      "opciones": [
+        {
+          "objeto": "ovalo:rosado"
+        },
+        {
+          "objeto": "circulo:rojo"
+        },
+        {
+          "objeto": "estrella:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un círculo? Piénsalo. ¡Muy bien! Ese es un círculo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the circle? Yes! That is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:amarillo",
+      "etiqueta": "cuadrado",
+      "etiquetaEn": "square",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un cuadrado. Cuadrado. Tiene cuatro lados iguales."
+        },
+        {
+          "idioma": "en",
+          "texto": "Square. This is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CUADRADO?",
+      "opciones": [
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "cuadrado:amarillo"
+        },
+        {
+          "objeto": "estrella:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un cuadrado? Piénsalo. ¡Muy bien! Ese es un cuadrado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the square? Yes! That is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "triangulo:verde",
+      "etiqueta": "triángulo",
+      "etiquetaEn": "triangle",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un triángulo. Triángulo. Tiene tres puntas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Triangle. This is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TRIÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "ovalo:rojo"
+        },
+        {
+          "objeto": "triangulo:verde"
+        },
+        {
+          "objeto": "estrella:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un triángulo? Piénsalo. ¡Muy bien! Ese es un triángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the triangle? Yes! That is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LAS FORMAS QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "circulo:azul",
+          "etiqueta": "círculo",
+          "etiquetaEn": "circle"
+        },
+        {
+          "objeto": "cuadrado:rojo",
+          "etiqueta": "cuadrado",
+          "etiquetaEn": "square"
+        },
+        {
+          "objeto": "triangulo:amarillo",
+          "etiqueta": "triángulo",
+          "etiquetaEn": "triangle"
+        },
+        {
+          "objeto": "estrella:verde",
+          "etiqueta": "estrella",
+          "etiquetaEn": "star"
+        },
+        {
+          "objeto": "corazon:morado",
+          "etiqueta": "corazón",
+          "etiquetaEn": "heart"
+        },
+        {
+          "objeto": "rombo:naranja",
+          "etiqueta": "rombo",
+          "etiquetaEn": "diamond"
+        },
+        {
+          "objeto": "rectangulo:rosado",
+          "etiqueta": "rectángulo",
+          "etiquetaEn": "rectangle"
+        },
+        {
+          "objeto": "ovalo:azul",
+          "etiqueta": "óvalo",
+          "etiquetaEn": "oval"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos las formas: círculo, cuadrado, triángulo, estrella, corazón, rombo, rectángulo, óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review the shapes: circle, square, triangle, star, heart, diamond, rectangle, oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:morado",
+      "etiqueta": "corazón",
+      "etiquetaEn": "heart",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un corazón. Corazón. Es para dar amor."
+        },
+        {
+          "idioma": "en",
+          "texto": "Heart. This is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CORAZÓN?",
+      "opciones": [
+        {
+          "objeto": "triangulo:rojo"
+        },
+        {
+          "objeto": "corazon:morado"
+        },
+        {
+          "objeto": "rectangulo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un corazón? Piénsalo. ¡Muy bien! Ese es un corazón."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the heart? Yes! That is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:naranja",
+      "etiqueta": "rombo",
+      "etiquetaEn": "diamond",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rombo. Rombo. Parece una cometa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Diamond. This is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ROMBO?",
+      "opciones": [
+        {
+          "objeto": "triangulo:amarillo"
+        },
+        {
+          "objeto": "rombo:naranja"
+        },
+        {
+          "objeto": "rectangulo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rombo? Piénsalo. ¡Muy bien! Ese es un rombo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the diamond? Yes! That is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rectangulo:rosado",
+      "etiqueta": "rectángulo",
+      "etiquetaEn": "rectangle",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rectángulo. Rectángulo. Es como una puerta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Rectangle. This is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL RECTÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "triangulo:verde"
+        },
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "rombo:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rectángulo? Piénsalo. ¡Muy bien! Ese es un rectángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the rectangle? Yes! That is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:azul",
+      "etiqueta": "óvalo",
+      "etiquetaEn": "oval",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un óvalo. Óvalo. Es como un huevo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Oval. This is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ÓVALO?",
+      "opciones": [
+        {
+          "objeto": "triangulo:morado"
+        },
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "rombo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un óvalo? Piénsalo. ¡Muy bien! Ese es un óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the oval? Yes! That is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:rojo",
+      "etiqueta": "círculo",
+      "etiquetaEn": "circle",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un círculo. Círculo. Es redondo como una pelota."
+        },
+        {
+          "idioma": "en",
+          "texto": "Circle. This is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CÍRCULO?",
+      "opciones": [
+        {
+          "objeto": "triangulo:naranja"
+        },
+        {
+          "objeto": "circulo:rojo"
+        },
+        {
+          "objeto": "rombo:azul"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un círculo? Piénsalo. ¡Muy bien! Ese es un círculo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the circle? Yes! That is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:amarillo",
+      "etiqueta": "cuadrado",
+      "etiquetaEn": "square",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un cuadrado. Cuadrado. Tiene cuatro lados iguales."
+        },
+        {
+          "idioma": "en",
+          "texto": "Square. This is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CUADRADO?",
+      "opciones": [
+        {
+          "objeto": "triangulo:rosado"
+        },
+        {
+          "objeto": "cuadrado:amarillo"
+        },
+        {
+          "objeto": "rombo:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un cuadrado? Piénsalo. ¡Muy bien! Ese es un cuadrado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the square? Yes! That is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "triangulo:verde",
+      "etiqueta": "triángulo",
+      "etiquetaEn": "triangle",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un triángulo. Triángulo. Tiene tres puntas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Triangle. This is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TRIÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:azul"
+        },
+        {
+          "objeto": "triangulo:verde"
+        },
+        {
+          "objeto": "rombo:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un triángulo? Piénsalo. ¡Muy bien! Ese es un triángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the triangle? Yes! That is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:morado",
+      "etiqueta": "estrella",
+      "etiquetaEn": "star",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es una estrella. Estrella. Brilla en el cielo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Star. This is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ESTRELLA?",
+      "opciones": [
+        {
+          "objeto": "cuadrado:rojo"
+        },
+        {
+          "objeto": "estrella:morado"
+        },
+        {
+          "objeto": "rombo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es una estrella? Piénsalo. ¡Muy bien! Ese es una estrella."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the star? Yes! That is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LAS FORMAS QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "circulo:azul",
+          "etiqueta": "círculo",
+          "etiquetaEn": "circle"
+        },
+        {
+          "objeto": "cuadrado:rojo",
+          "etiqueta": "cuadrado",
+          "etiquetaEn": "square"
+        },
+        {
+          "objeto": "triangulo:amarillo",
+          "etiqueta": "triángulo",
+          "etiquetaEn": "triangle"
+        },
+        {
+          "objeto": "estrella:verde",
+          "etiqueta": "estrella",
+          "etiquetaEn": "star"
+        },
+        {
+          "objeto": "corazon:morado",
+          "etiqueta": "corazón",
+          "etiquetaEn": "heart"
+        },
+        {
+          "objeto": "rombo:naranja",
+          "etiqueta": "rombo",
+          "etiquetaEn": "diamond"
+        },
+        {
+          "objeto": "rectangulo:rosado",
+          "etiqueta": "rectángulo",
+          "etiquetaEn": "rectangle"
+        },
+        {
+          "objeto": "ovalo:azul",
+          "etiqueta": "óvalo",
+          "etiquetaEn": "oval"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos las formas: círculo, cuadrado, triángulo, estrella, corazón, rombo, rectángulo, óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review the shapes: circle, square, triangle, star, heart, diamond, rectangle, oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:naranja",
+      "etiqueta": "rombo",
+      "etiquetaEn": "diamond",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rombo. Rombo. Parece una cometa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Diamond. This is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ROMBO?",
+      "opciones": [
+        {
+          "objeto": "corazon:rojo"
+        },
+        {
+          "objeto": "rombo:naranja"
+        },
+        {
+          "objeto": "circulo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rombo? Piénsalo. ¡Muy bien! Ese es un rombo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the diamond? Yes! That is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rectangulo:rosado",
+      "etiqueta": "rectángulo",
+      "etiquetaEn": "rectangle",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rectángulo. Rectángulo. Es como una puerta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Rectangle. This is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL RECTÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "corazon:amarillo"
+        },
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "circulo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rectángulo? Piénsalo. ¡Muy bien! Ese es un rectángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the rectangle? Yes! That is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:azul",
+      "etiqueta": "óvalo",
+      "etiquetaEn": "oval",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un óvalo. Óvalo. Es como un huevo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Oval. This is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ÓVALO?",
+      "opciones": [
+        {
+          "objeto": "corazon:verde"
+        },
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "circulo:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un óvalo? Piénsalo. ¡Muy bien! Ese es un óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the oval? Yes! That is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:rojo",
+      "etiqueta": "círculo",
+      "etiquetaEn": "circle",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un círculo. Círculo. Es redondo como una pelota."
+        },
+        {
+          "idioma": "en",
+          "texto": "Circle. This is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CÍRCULO?",
+      "opciones": [
+        {
+          "objeto": "corazon:morado"
+        },
+        {
+          "objeto": "circulo:rojo"
+        },
+        {
+          "objeto": "ovalo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un círculo? Piénsalo. ¡Muy bien! Ese es un círculo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the circle? Yes! That is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:amarillo",
+      "etiqueta": "cuadrado",
+      "etiquetaEn": "square",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un cuadrado. Cuadrado. Tiene cuatro lados iguales."
+        },
+        {
+          "idioma": "en",
+          "texto": "Square. This is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CUADRADO?",
+      "opciones": [
+        {
+          "objeto": "corazon:naranja"
+        },
+        {
+          "objeto": "cuadrado:amarillo"
+        },
+        {
+          "objeto": "ovalo:azul"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un cuadrado? Piénsalo. ¡Muy bien! Ese es un cuadrado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the square? Yes! That is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "triangulo:verde",
+      "etiqueta": "triángulo",
+      "etiquetaEn": "triangle",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un triángulo. Triángulo. Tiene tres puntas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Triangle. This is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TRIÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "corazon:rosado"
+        },
+        {
+          "objeto": "triangulo:verde"
+        },
+        {
+          "objeto": "ovalo:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un triángulo? Piénsalo. ¡Muy bien! Ese es un triángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the triangle? Yes! That is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:morado",
+      "etiqueta": "estrella",
+      "etiquetaEn": "star",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es una estrella. Estrella. Brilla en el cielo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Star. This is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ESTRELLA?",
+      "opciones": [
+        {
+          "objeto": "corazon:azul"
+        },
+        {
+          "objeto": "estrella:morado"
+        },
+        {
+          "objeto": "ovalo:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es una estrella? Piénsalo. ¡Muy bien! Ese es una estrella."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the star? Yes! That is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:naranja",
+      "etiqueta": "corazón",
+      "etiquetaEn": "heart",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un corazón. Corazón. Es para dar amor."
+        },
+        {
+          "idioma": "en",
+          "texto": "Heart. This is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CORAZÓN?",
+      "opciones": [
+        {
+          "objeto": "estrella:rojo"
+        },
+        {
+          "objeto": "corazon:naranja"
+        },
+        {
+          "objeto": "ovalo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un corazón? Piénsalo. ¡Muy bien! Ese es un corazón."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the heart? Yes! That is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LAS FORMAS QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "circulo:azul",
+          "etiqueta": "círculo",
+          "etiquetaEn": "circle"
+        },
+        {
+          "objeto": "cuadrado:rojo",
+          "etiqueta": "cuadrado",
+          "etiquetaEn": "square"
+        },
+        {
+          "objeto": "triangulo:amarillo",
+          "etiqueta": "triángulo",
+          "etiquetaEn": "triangle"
+        },
+        {
+          "objeto": "estrella:verde",
+          "etiqueta": "estrella",
+          "etiquetaEn": "star"
+        },
+        {
+          "objeto": "corazon:morado",
+          "etiqueta": "corazón",
+          "etiquetaEn": "heart"
+        },
+        {
+          "objeto": "rombo:naranja",
+          "etiqueta": "rombo",
+          "etiquetaEn": "diamond"
+        },
+        {
+          "objeto": "rectangulo:rosado",
+          "etiqueta": "rectángulo",
+          "etiquetaEn": "rectangle"
+        },
+        {
+          "objeto": "ovalo:azul",
+          "etiqueta": "óvalo",
+          "etiquetaEn": "oval"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos las formas: círculo, cuadrado, triángulo, estrella, corazón, rombo, rectángulo, óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review the shapes: circle, square, triangle, star, heart, diamond, rectangle, oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rectangulo:rosado",
+      "etiqueta": "rectángulo",
+      "etiquetaEn": "rectangle",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rectángulo. Rectángulo. Es como una puerta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Rectangle. This is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL RECTÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "ovalo:rojo"
+        },
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "triangulo:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rectángulo? Piénsalo. ¡Muy bien! Ese es un rectángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the rectangle? Yes! That is a rectangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:azul",
+      "etiqueta": "óvalo",
+      "etiquetaEn": "oval",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un óvalo. Óvalo. Es como un huevo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Oval. This is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ÓVALO?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:amarillo"
+        },
+        {
+          "objeto": "ovalo:azul"
+        },
+        {
+          "objeto": "triangulo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un óvalo? Piénsalo. ¡Muy bien! Ese es un óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the oval? Yes! That is a oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:rojo",
+      "etiqueta": "círculo",
+      "etiquetaEn": "circle",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un círculo. Círculo. Es redondo como una pelota."
+        },
+        {
+          "idioma": "en",
+          "texto": "Circle. This is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CÍRCULO?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:verde"
+        },
+        {
+          "objeto": "circulo:rojo"
+        },
+        {
+          "objeto": "triangulo:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un círculo? Piénsalo. ¡Muy bien! Ese es un círculo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the circle? Yes! That is a circle."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:amarillo",
+      "etiqueta": "cuadrado",
+      "etiquetaEn": "square",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un cuadrado. Cuadrado. Tiene cuatro lados iguales."
+        },
+        {
+          "idioma": "en",
+          "texto": "Square. This is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CUADRADO?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:morado"
+        },
+        {
+          "objeto": "cuadrado:amarillo"
+        },
+        {
+          "objeto": "triangulo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un cuadrado? Piénsalo. ¡Muy bien! Ese es un cuadrado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the square? Yes! That is a square."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "triangulo:verde",
+      "etiqueta": "triángulo",
+      "etiquetaEn": "triangle",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un triángulo. Triángulo. Tiene tres puntas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Triangle. This is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TRIÁNGULO?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:naranja"
+        },
+        {
+          "objeto": "triangulo:verde"
+        },
+        {
+          "objeto": "cuadrado:azul"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un triángulo? Piénsalo. ¡Muy bien! Ese es un triángulo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the triangle? Yes! That is a triangle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:morado",
+      "etiqueta": "estrella",
+      "etiquetaEn": "star",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es una estrella. Estrella. Brilla en el cielo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Star. This is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ESTRELLA?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:rosado"
+        },
+        {
+          "objeto": "estrella:morado"
+        },
+        {
+          "objeto": "cuadrado:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es una estrella? Piénsalo. ¡Muy bien! Ese es una estrella."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the star? Yes! That is a star."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:naranja",
+      "etiqueta": "corazón",
+      "etiquetaEn": "heart",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un corazón. Corazón. Es para dar amor."
+        },
+        {
+          "idioma": "en",
+          "texto": "Heart. This is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CORAZÓN?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:azul"
+        },
+        {
+          "objeto": "corazon:naranja"
+        },
+        {
+          "objeto": "cuadrado:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un corazón? Piénsalo. ¡Muy bien! Ese es un corazón."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the heart? Yes! That is a heart."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:rosado",
+      "etiqueta": "rombo",
+      "etiquetaEn": "diamond",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Esta figura es un rombo. Rombo. Parece una cometa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Diamond. This is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL ROMBO?",
+      "opciones": [
+        {
+          "objeto": "rectangulo:rojo"
+        },
+        {
+          "objeto": "rombo:rosado"
+        },
+        {
+          "objeto": "cuadrado:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estas figuras es un rombo? Piénsalo. ¡Muy bien! Ese es un rombo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the diamond? Yes! That is a diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 14,
+      "titulo": "LAS FORMAS QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "circulo:azul",
+          "etiqueta": "círculo",
+          "etiquetaEn": "circle"
+        },
+        {
+          "objeto": "cuadrado:rojo",
+          "etiqueta": "cuadrado",
+          "etiquetaEn": "square"
+        },
+        {
+          "objeto": "triangulo:amarillo",
+          "etiqueta": "triángulo",
+          "etiquetaEn": "triangle"
+        },
+        {
+          "objeto": "estrella:verde",
+          "etiqueta": "estrella",
+          "etiquetaEn": "star"
+        },
+        {
+          "objeto": "corazon:morado",
+          "etiqueta": "corazón",
+          "etiquetaEn": "heart"
+        },
+        {
+          "objeto": "rombo:naranja",
+          "etiqueta": "rombo",
+          "etiquetaEn": "diamond"
+        },
+        {
+          "objeto": "rectangulo:rosado",
+          "etiqueta": "rectángulo",
+          "etiquetaEn": "rectangle"
+        },
+        {
+          "objeto": "ovalo:azul",
+          "etiqueta": "óvalo",
+          "etiquetaEn": "oval"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos las formas: círculo, cuadrado, triángulo, estrella, corazón, rombo, rectángulo, óvalo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review the shapes: circle, square, triangle, star, heart, diamond, rectangle, oval."
+        }
+      ]
+    },
+    {
+      "tipo": "despedida",
+      "duracion": 7,
+      "texto": "¡HASTA PRONTO!",
+      "canal": "Lulo y sus amigos",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Gracias por jugar conmigo. Nos vemos en el próximo video. ¡Adiós!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Thank you for playing with me. See you next time. Bye bye!"
+        }
+      ]
+    }
+  ]
+}

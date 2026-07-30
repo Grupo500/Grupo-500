@@ -274,10 +274,16 @@ const PLANTILLAS = {
 
     // La palabra va dentro de una pastilla blanca: siempre legible, sin importar
     // el fondo, y con el aire de una tarjeta didactica.
+    // Si el guion trae `etiquetaEn`, debajo aparece la palabra en ingles.
     const pastilla = nuevo('div', 'pastilla');
     const etiqueta = textoAnimado((def.etiqueta ?? def.objeto).toUpperCase(), 'etiqueta');
     if (def.color) etiqueta.el.style.color = resolverColor(def.color);
     pastilla.appendChild(etiqueta.el);
+
+    const etiquetaEn = def.etiquetaEn
+      ? textoAnimado(def.etiquetaEn.toUpperCase(), 'etiqueta-en')
+      : null;
+    if (etiquetaEn) pastilla.appendChild(etiquetaEn.el);
     raiz.appendChild(pastilla);
 
     const eco = def.sonido ?? SONIDOS[String(def.objeto).split(':')[0]] ?? '';
@@ -306,6 +312,8 @@ const PLANTILLAS = {
         pastilla.style.opacity = pe.toFixed(3);
         pastilla.style.transform = `translateX(-50%) scale(${rebotePop(pe || 0.0001).toFixed(3)})`;
         etiqueta.animar(tramo(tl, 1.05, 2.15), tl);
+        // El ingles entra despues, cuando la palabra en espanol ya se dijo.
+        if (etiquetaEn) etiquetaEn.animar(tramo(tl, Math.min(2.8, dur * 0.4), Math.min(3.8, dur * 0.55)), tl);
         destellos.animar(tramo(tl, 0.5, 1.8));
         if (burbuja) {
           const p = tramo(tl, Math.min(2.4, dur * 0.45), Math.min(3.2, dur * 0.6));
@@ -336,14 +344,31 @@ const PLANTILLAS = {
     const items = [];
     for (let i = 0; i < total; i++) {
       const c = nuevo('div', 'item', dibujar(def.objeto, def.color ? { color: resolverColor(def.color) } : {}));
-      c.style.width = `${Math.min(240, 1500 / total)}px`;
+      // Los objetos ocupan todo el ancho util: cuantos menos hay, mas grandes.
+      c.style.width = `${Math.min(360, 1580 / total)}px`;
       fila.appendChild(c);
       items.push(c);
     }
     raiz.appendChild(fila);
 
+    // El numero y su palabra van en una misma fila, no apilados: en 1080p no
+    // hay altura para poner los objetos, el numero grande y la pastilla debajo.
+    const fila2 = nuevo('div', 'fila-numero');
     const numero = nuevo('div', 'numero-grande', '');
-    raiz.appendChild(numero);
+    fila2.appendChild(numero);
+
+    let pastilla = null, palabra = null, palabraEn = null;
+    if (def.palabra) {
+      pastilla = nuevo('div', 'pastilla');
+      palabra = textoAnimado(def.palabra.toUpperCase(), 'etiqueta');
+      pastilla.appendChild(palabra.el);
+      if (def.palabraEn) {
+        palabraEn = textoAnimado(def.palabraEn.toUpperCase(), 'etiqueta-en');
+        pastilla.appendChild(palabraEn.el);
+      }
+      fila2.appendChild(pastilla);
+    }
+    raiz.appendChild(fila2);
 
     const mascota = montarMascota(0.7);
     mascota.classList.add('mascota-lado');
@@ -354,7 +379,9 @@ const PLANTILLAS = {
       animar(tl, dur) {
         fondo.animar(tl);
         const arranque = 0.7;
-        const paso = Math.max(0.6, (dur - arranque - 1.2) / total);
+        // Un objeto cada ~1,2 s: suficiente para seguir el conteo sin aburrir,
+        // reservando el final de la escena para mostrar la palabra del numero.
+        const paso = Math.min(1.6, Math.max(0.9, (dur - arranque - 3.5) / total));
         let visibles = 0;
         items.forEach((c, i) => {
           const t0 = arranque + i * paso;
@@ -367,8 +394,18 @@ const PLANTILLAS = {
         numero.textContent = visibles > 0 ? String(visibles) : '';
         const tNum = arranque + (visibles - 1) * paso;
         const pulso = visibles > 0 ? rebotePop(tramo(tl, tNum, tNum + 0.4)) : 0;
-        numero.style.transform = `translateX(-50%) scale(${(0.8 + pulso * 0.35).toFixed(3)})`;
+        numero.style.transform = `scale(${(0.8 + pulso * 0.35).toFixed(3)})`;
         numero.style.opacity = visibles > 0 ? '1' : '0';
+
+        // La palabra aparece cuando ya se contaron todos los objetos.
+        if (pastilla) {
+          const tFin = arranque + total * paso;
+          const pp = tramo(tl, tFin, tFin + 0.5);
+          pastilla.style.opacity = pp.toFixed(3);
+          pastilla.style.transform = `scale(${rebotePop(pp || 0.0001).toFixed(3)})`;
+          palabra.animar(tramo(tl, tFin + 0.1, tFin + 0.9), tl);
+          if (palabraEn) palabraEn.animar(tramo(tl, tFin + 0.9, tFin + 1.7), tl);
+        }
 
         animarMascota(mascota, {
           rebote: Math.sin(tl * 4) * 0.5 + 0.5,
@@ -411,7 +448,11 @@ const PLANTILLAS = {
         fondo.animar(tl);
         enunciado.animar(tramo(tl, 0.2, 1.4), tl);
 
-        const tRevela = def.revelarEn ?? Math.max(2.6, dur - 3.2);
+        // revelarEn menor o igual a 1 se interpreta como fraccion de la escena,
+        // para que la respuesta siga cuadrando si la narracion estira la duracion.
+        const tRevela = def.revelarEn == null
+          ? Math.max(2.6, dur - 3.2)
+          : def.revelarEn <= 1 ? def.revelarEn * dur : def.revelarEn;
         tarjetas.forEach((t, i) => {
           const t0 = 1.0 + i * 0.32;
           const q = rebotePop(tramo(tl, t0, t0 + 0.5));
@@ -495,6 +536,9 @@ const PLANTILLAS = {
         const e = nuevo('div', 'celda-etiqueta', String(etiqueta).toUpperCase());
         if (typeof it === 'object' && it.color) e.style.color = resolverColor(it.color);
         celda.appendChild(e);
+      }
+      if (typeof it === 'object' && it.etiquetaEn) {
+        celda.appendChild(nuevo('div', 'celda-etiqueta-en', String(it.etiquetaEn).toUpperCase()));
       }
       rejilla.appendChild(celda);
       return celda;

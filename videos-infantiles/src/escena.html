@@ -35,7 +35,8 @@
   .colinas { position: absolute; bottom: 0; left: 0; width: 100%; height: 420px; }
 
   /* ---------- texto ---------- */
-  .titulo, .subtitulo, .etiqueta, .enunciado, .burbuja, .numero-grande, .canal, .celda-etiqueta {
+  .titulo, .subtitulo, .etiqueta, .etiqueta-en, .enunciado, .burbuja,
+  .numero-grande, .canal, .celda-etiqueta, .celda-etiqueta-en {
     font-weight: 800;
     color: #FFFFFF;
     -webkit-text-stroke: 12px var(--trazo);
@@ -61,7 +62,15 @@
     border-radius: 80px; padding: 4px 58px 22px;
     transform-origin: center center;
   }
-  .etiqueta { font-size: 132px; white-space: nowrap; }
+  .etiqueta { font-size: 132px; white-space: nowrap; text-align: center; }
+  /* Palabra en ingles: mas pequena y en azul, para que no compita con el espanol. */
+  .etiqueta-en {
+    font-size: 68px; white-space: nowrap; text-align: center;
+    color: #1D7FE0; -webkit-text-stroke-width: 8px;
+    margin-top: -6px; padding-bottom: 4px;
+  }
+  /* Variante para las escenas de conteo, donde la pastilla va mas abajo. */
+  .pastilla-baja { top: 838px; }
   .burbuja {
     position: absolute; top: 132px; left: 0; width: 100%;
     text-align: center; font-size: 104px; color: #FFD23F;
@@ -70,11 +79,19 @@
     position: absolute; top: 78px; left: 0; width: 100%;
     text-align: center; font-size: 94px;
   }
+  /* Fila inferior de las escenas de conteo: el número y su palabra, lado a lado. */
+  .fila-numero {
+    position: absolute; top: 660px; left: 0; width: 100%; height: 300px;
+    display: flex; align-items: center; justify-content: center; gap: 64px;
+  }
   .numero-grande {
-    position: absolute; top: 690px; left: 50%;
-    font-size: 250px; color: #FFD23F;
+    font-size: 244px; color: #FFD23F;
     -webkit-text-stroke-width: 16px;
-    transform-origin: center top;
+    transform-origin: center center;
+  }
+  .fila-numero .pastilla {
+    position: static; transform: none;
+    padding: 4px 46px 20px;
   }
 
   /* ---------- objeto principal ---------- */
@@ -89,8 +106,8 @@
 
   /* ---------- contar ---------- */
   .fila-objetos {
-    position: absolute; top: 330px; left: 0; width: 100%;
-    display: flex; justify-content: center; align-items: flex-end; gap: 26px;
+    position: absolute; top: 250px; left: 0; width: 100%;
+    display: flex; justify-content: center; align-items: center; gap: 22px;
   }
   .item { height: auto; aspect-ratio: 1; will-change: transform, opacity; }
 
@@ -122,11 +139,13 @@
   }
   .celda .objeto { width: 100%; height: 280px; }
   .celda-etiqueta { font-size: 56px; -webkit-text-stroke-width: 7px; }
+  .celda-etiqueta-en { font-size: 34px; -webkit-text-stroke-width: 5px; color: #1D7FE0; }
   /* Con mas de 4 fichas se arma en dos filas y todo se reduce para que quepa. */
   .rejilla-compacta { top: 230px; gap: 22px; }
   .rejilla-compacta .celda { border-radius: 34px; padding: 16px 12px 8px; }
   .rejilla-compacta .celda .objeto { height: 190px; }
   .rejilla-compacta .celda-etiqueta { font-size: 42px; -webkit-text-stroke-width: 6px; }
+  .rejilla-compacta .celda-etiqueta-en { font-size: 28px; -webkit-text-stroke-width: 4px; }
 
   /* ---------- mascota ---------- */
   .mascota { position: absolute; will-change: transform; }

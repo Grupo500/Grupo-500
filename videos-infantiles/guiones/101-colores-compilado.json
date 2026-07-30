@@ -1,0 +1,3286 @@
+{
+  "id": "101-colores-compilado",
+  "titulo": "LOS COLORES EN ESPAÑOL E INGLÉS",
+  "canal": "Lulo y sus amigos",
+  "edad": "2-4 anos",
+  "fps": 30,
+  "musica": {
+    "estilo": "alegre",
+    "volumen": 0.3,
+    "semilla": 17
+  },
+  "youtube": {
+    "hechoParaNinos": true,
+    "descripcion": "Aprende los colores con Lulo, en español y en inglés. Video tranquilo y repetitivo, con objetos grandes y palabras claras, pensado para niños de 2 a 4 años. 23 minutos de contenido.",
+    "etiquetas": [
+      "colores para ninos",
+      "aprender colores",
+      "colores en ingles y espanol",
+      "videos educativos 2 anos",
+      "bilingue ninos"
+    ]
+  },
+  "_generado": {
+    "tema": "colores",
+    "rondas": 6,
+    "escenas": 146,
+    "duracionEstimada": "22:47",
+    "nota": "Generado por guiones/armar.mjs. La duracion final crece si la narracion es mas larga que lo declarado."
+  },
+  "escenas": [
+    {
+      "tipo": "intro",
+      "duracion": 8,
+      "titulo": "LOS COLORES",
+      "subtitulo": "en español e inglés",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Hola amiguitos! Yo soy Lulo. Hoy vamos a aprender los colores en español y en inglés. ¿Estás listo?"
+        },
+        {
+          "idioma": "en",
+          "texto": "Hello friends! I am Lulo. Today we are going to learn. Are you ready?"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROJO?",
+      "opciones": [
+        {
+          "objeto": "pelota:azul"
+        },
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "flor:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rojo? Piénsalo. ¡Muy bien! La manzana es roja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is red? Apple! Yes, the apple is red."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sol",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. El sol. El sol es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow sun."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow banana."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AMARILLO?",
+      "opciones": [
+        {
+          "objeto": "pelota:azul"
+        },
+        {
+          "objeto": "sol"
+        },
+        {
+          "objeto": "flor:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es amarillo? Piénsalo. ¡Muy bien! El sol es amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is yellow? Sun! Yes, the sun is yellow."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue ball."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pez:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un pez. El pez es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue fish."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AZUL?",
+      "opciones": [
+        {
+          "objeto": "sol"
+        },
+        {
+          "objeto": "pelota:azul"
+        },
+        {
+          "objeto": "flor:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es azul? Piénsalo. ¡Muy bien! La pelota es azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is blue? Ball! Yes, the ball is blue."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "arbol",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un árbol. El árbol es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green tree."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rana",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una rana. La rana es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green frog."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES VERDE?",
+      "opciones": [
+        {
+          "objeto": "sol"
+        },
+        {
+          "objeto": "arbol"
+        },
+        {
+          "objeto": "flor:naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es verde? Piénsalo. ¡Muy bien! El árbol es verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is green? Tree! Yes, the tree is green."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES NARANJA?",
+      "opciones": [
+        {
+          "objeto": "sol"
+        },
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "cuadrado:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es naranja? Piénsalo. ¡Muy bien! La naranja es naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is orange? Orange! Yes, the orange is orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas es morada. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es morado. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES MORADO?",
+      "opciones": [
+        {
+          "objeto": "sol"
+        },
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "cuadrado:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! Las uvas es morada."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is purple? Grapes! Yes, the grapes is purple."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "flor",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una flor. La flor es rosada. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink flower."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cerdo",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un cerdito. El cerdito es rosado. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink pig."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROSADO?",
+      "opciones": [
+        {
+          "objeto": "sol"
+        },
+        {
+          "objeto": "flor"
+        },
+        {
+          "objeto": "cuadrado:verde"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rosado? Piénsalo. ¡Muy bien! La flor es rosada."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is pink? Flower! Yes, the flower is pink."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LOS COLORES QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "rojo",
+          "etiquetaEn": "red",
+          "color": "rojo"
+        },
+        {
+          "objeto": "sol",
+          "etiqueta": "amarillo",
+          "etiquetaEn": "yellow",
+          "color": "amarillo"
+        },
+        {
+          "objeto": "pelota:azul",
+          "etiqueta": "azul",
+          "etiquetaEn": "blue",
+          "color": "azul"
+        },
+        {
+          "objeto": "arbol",
+          "etiqueta": "verde",
+          "etiquetaEn": "green",
+          "color": "verde"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange",
+          "color": "naranja"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "morado",
+          "etiquetaEn": "purple",
+          "color": "morado"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "rosado",
+          "etiquetaEn": "pink",
+          "color": "rosado"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: rojo, amarillo, azul, verde, naranja, morado, rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: red, yellow, blue, green, orange, purple, pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:amarillo",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una estrella. La estrella es amarilla. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow star."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pato",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un pato. El pato es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow duck."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AMARILLO?",
+      "opciones": [
+        {
+          "objeto": "globo:naranja"
+        },
+        {
+          "objeto": "estrella:amarillo"
+        },
+        {
+          "objeto": "globo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es amarillo? Piénsalo. ¡Muy bien! La estrella es amarilla."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is yellow? Star! Yes, the star is yellow."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un círculo. El círculo es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue circle."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AZUL?",
+      "opciones": [
+        {
+          "objeto": "globo:naranja"
+        },
+        {
+          "objeto": "globo:azul"
+        },
+        {
+          "objeto": "globo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es azul? Piénsalo. ¡Muy bien! El globo es azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is blue? Balloon! Yes, the balloon is blue."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:verde",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un cuadrado. El cuadrado es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green square."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren:verde",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green train."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES VERDE?",
+      "opciones": [
+        {
+          "objeto": "globo:naranja"
+        },
+        {
+          "objeto": "cuadrado:verde"
+        },
+        {
+          "objeto": "globo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es verde? Piénsalo. ¡Muy bien! El cuadrado es verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is green? Square! Yes, the square is green."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "flor:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una flor. La flor es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange flower."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un óvalo. El óvalo es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange oval."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES NARANJA?",
+      "opciones": [
+        {
+          "objeto": "rana"
+        },
+        {
+          "objeto": "flor:naranja"
+        },
+        {
+          "objeto": "globo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es naranja? Piénsalo. ¡Muy bien! La flor es naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is orange? Flower! Yes, the flower is orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un rombo. El rombo es morado. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "flor:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una flor. La flor es morada. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple flower."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES MORADO?",
+      "opciones": [
+        {
+          "objeto": "rana"
+        },
+        {
+          "objeto": "rombo:morado"
+        },
+        {
+          "objeto": "globo:rosado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! El rombo es morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is purple? Diamond! Yes, the diamond is purple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:rosado",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un corazón. El corazón es rosado. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink heart."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:rosado",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es rosado. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROSADO?",
+      "opciones": [
+        {
+          "objeto": "rana"
+        },
+        {
+          "objeto": "corazon:rosado"
+        },
+        {
+          "objeto": "flor:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rosado? Piénsalo. ¡Muy bien! El corazón es rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is pink? Heart! Yes, the heart is pink."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:rojo",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un corazón. El corazón es rojo. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red heart."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro:rojo",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro es rojo. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red car."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROJO?",
+      "opciones": [
+        {
+          "objeto": "rana"
+        },
+        {
+          "objeto": "corazon:rojo"
+        },
+        {
+          "objeto": "flor:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rojo? Piénsalo. ¡Muy bien! El corazón es rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is red? Heart! Yes, the heart is red."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LOS COLORES QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "rojo",
+          "etiquetaEn": "red",
+          "color": "rojo"
+        },
+        {
+          "objeto": "sol",
+          "etiqueta": "amarillo",
+          "etiquetaEn": "yellow",
+          "color": "amarillo"
+        },
+        {
+          "objeto": "pelota:azul",
+          "etiqueta": "azul",
+          "etiquetaEn": "blue",
+          "color": "azul"
+        },
+        {
+          "objeto": "arbol",
+          "etiqueta": "verde",
+          "etiquetaEn": "green",
+          "color": "verde"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange",
+          "color": "naranja"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "morado",
+          "etiquetaEn": "purple",
+          "color": "morado"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "rosado",
+          "etiquetaEn": "pink",
+          "color": "rosado"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: rojo, amarillo, azul, verde, naranja, morado, rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: red, yellow, blue, green, orange, purple, pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue ball."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AZUL?",
+      "opciones": [
+        {
+          "objeto": "corazon:rosado"
+        },
+        {
+          "objeto": "carro:azul"
+        },
+        {
+          "objeto": "bus:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es azul? Piénsalo. ¡Muy bien! El carro es azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is blue? Car! Yes, the car is blue."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:verde",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green ball."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "arbol",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un árbol. El árbol es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green tree."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES VERDE?",
+      "opciones": [
+        {
+          "objeto": "corazon:rosado"
+        },
+        {
+          "objeto": "pelota:verde"
+        },
+        {
+          "objeto": "bus:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es verde? Piénsalo. ¡Muy bien! La pelota es verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is green? Ball! Yes, the ball is green."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange ball."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange orange."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES NARANJA?",
+      "opciones": [
+        {
+          "objeto": "corazon:rosado"
+        },
+        {
+          "objeto": "pelota:naranja"
+        },
+        {
+          "objeto": "bus:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es naranja? Piénsalo. ¡Muy bien! La pelota es naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is orange? Ball! Yes, the ball is orange."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una estrella. La estrella es morada. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple star."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas es morada. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES MORADO?",
+      "opciones": [
+        {
+          "objeto": "corazon:rosado"
+        },
+        {
+          "objeto": "estrella:morado"
+        },
+        {
+          "objeto": "bus:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! La estrella es morada."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is purple? Star! Yes, the star is purple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:rosado",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es rosada. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink ball."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "flor",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una flor. La flor es rosada. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink flower."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROSADO?",
+      "opciones": [
+        {
+          "objeto": "rombo:morado"
+        },
+        {
+          "objeto": "pelota:rosado"
+        },
+        {
+          "objeto": "bus:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rosado? Piénsalo. ¡Muy bien! La pelota es rosada."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is pink? Ball! Yes, the ball is pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:rojo",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red ball."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red apple."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROJO?",
+      "opciones": [
+        {
+          "objeto": "rombo:morado"
+        },
+        {
+          "objeto": "pelota:rojo"
+        },
+        {
+          "objeto": "bus:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rojo? Piénsalo. ¡Muy bien! La pelota es roja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is red? Ball! Yes, the ball is red."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus:amarillo",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sol",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. El sol. El sol es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow sun."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AMARILLO?",
+      "opciones": [
+        {
+          "objeto": "rombo:morado"
+        },
+        {
+          "objeto": "bus:amarillo"
+        },
+        {
+          "objeto": "pelota:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es amarillo? Piénsalo. ¡Muy bien! El bus es amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is yellow? Bus! Yes, the bus is yellow."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LOS COLORES QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "rojo",
+          "etiquetaEn": "red",
+          "color": "rojo"
+        },
+        {
+          "objeto": "sol",
+          "etiqueta": "amarillo",
+          "etiquetaEn": "yellow",
+          "color": "amarillo"
+        },
+        {
+          "objeto": "pelota:azul",
+          "etiqueta": "azul",
+          "etiquetaEn": "blue",
+          "color": "azul"
+        },
+        {
+          "objeto": "arbol",
+          "etiqueta": "verde",
+          "etiquetaEn": "green",
+          "color": "verde"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange",
+          "color": "naranja"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "morado",
+          "etiquetaEn": "purple",
+          "color": "morado"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "rosado",
+          "etiquetaEn": "pink",
+          "color": "rosado"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: rojo, amarillo, azul, verde, naranja, morado, rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: red, yellow, blue, green, orange, purple, pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rana",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una rana. La rana es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green frog."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cuadrado:verde",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un cuadrado. El cuadrado es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green square."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES VERDE?",
+      "opciones": [
+        {
+          "objeto": "pato"
+        },
+        {
+          "objeto": "rana"
+        },
+        {
+          "objeto": "naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es verde? Piénsalo. ¡Muy bien! La rana es verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is green? Frog! Yes, the frog is green."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "flor:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una flor. La flor es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange flower."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES NARANJA?",
+      "opciones": [
+        {
+          "objeto": "pato"
+        },
+        {
+          "objeto": "globo:naranja"
+        },
+        {
+          "objeto": "arbol"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es naranja? Piénsalo. ¡Muy bien! El globo es naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is orange? Balloon! Yes, the balloon is orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es morado. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rombo:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un rombo. El rombo es morado. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple diamond."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES MORADO?",
+      "opciones": [
+        {
+          "objeto": "pato"
+        },
+        {
+          "objeto": "globo:morado"
+        },
+        {
+          "objeto": "arbol"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! El globo es morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is purple? Balloon! Yes, the balloon is purple."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cerdo",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un cerdito. El cerdito es rosado. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink pig."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:rosado",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un corazón. El corazón es rosado. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROSADO?",
+      "opciones": [
+        {
+          "objeto": "pato"
+        },
+        {
+          "objeto": "cerdo"
+        },
+        {
+          "objeto": "arbol"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rosado? Piénsalo. ¡Muy bien! El cerdito es rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is pink? Pig! Yes, the pig is pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "corazon:rojo",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un corazón. El corazón es rojo. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red heart."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROJO?",
+      "opciones": [
+        {
+          "objeto": "pato"
+        },
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "arbol"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rojo? Piénsalo. ¡Muy bien! La fresa es roja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is red? Strawberry! Yes, the strawberry is red."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:amarillo",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una estrella. La estrella es amarilla. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AMARILLO?",
+      "opciones": [
+        {
+          "objeto": "carro:rojo"
+        },
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "arbol"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es amarillo? Piénsalo. ¡Muy bien! El banano es amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is yellow? Banana! Yes, the banana is yellow."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pez:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un pez. El pez es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue fish."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AZUL?",
+      "opciones": [
+        {
+          "objeto": "carro:rojo"
+        },
+        {
+          "objeto": "pez:azul"
+        },
+        {
+          "objeto": "arbol"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es azul? Piénsalo. ¡Muy bien! El pez es azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is blue? Fish! Yes, the fish is blue."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LOS COLORES QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "rojo",
+          "etiquetaEn": "red",
+          "color": "rojo"
+        },
+        {
+          "objeto": "sol",
+          "etiqueta": "amarillo",
+          "etiquetaEn": "yellow",
+          "color": "amarillo"
+        },
+        {
+          "objeto": "pelota:azul",
+          "etiqueta": "azul",
+          "etiquetaEn": "blue",
+          "color": "azul"
+        },
+        {
+          "objeto": "arbol",
+          "etiqueta": "verde",
+          "etiquetaEn": "green",
+          "color": "verde"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange",
+          "color": "naranja"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "morado",
+          "etiquetaEn": "purple",
+          "color": "morado"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "rosado",
+          "etiquetaEn": "pink",
+          "color": "rosado"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: rojo, amarillo, azul, verde, naranja, morado, rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: red, yellow, blue, green, orange, purple, pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "ovalo:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un óvalo. El óvalo es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange oval."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange ball."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES NARANJA?",
+      "opciones": [
+        {
+          "objeto": "pelota:verde"
+        },
+        {
+          "objeto": "ovalo:naranja"
+        },
+        {
+          "objeto": "cerdo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es naranja? Piénsalo. ¡Muy bien! El óvalo es naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is orange? Oval! Yes, the oval is orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "flor:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una flor. La flor es morada. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple flower."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "estrella:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una estrella. La estrella es morada. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple star."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES MORADO?",
+      "opciones": [
+        {
+          "objeto": "pelota:verde"
+        },
+        {
+          "objeto": "flor:morado"
+        },
+        {
+          "objeto": "cerdo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! La flor es morada."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is purple? Flower! Yes, the flower is purple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:rosado",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es rosado. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:rosado",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es rosada. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink ball."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROSADO?",
+      "opciones": [
+        {
+          "objeto": "pelota:verde"
+        },
+        {
+          "objeto": "globo:rosado"
+        },
+        {
+          "objeto": "globo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rosado? Piénsalo. ¡Muy bien! El globo es rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is pink? Balloon! Yes, the balloon is pink."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro:rojo",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro es rojo. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:rojo",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red ball."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROJO?",
+      "opciones": [
+        {
+          "objeto": "pelota:verde"
+        },
+        {
+          "objeto": "carro:rojo"
+        },
+        {
+          "objeto": "globo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rojo? Piénsalo. ¡Muy bien! El carro es rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is red? Car! Yes, the car is red."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pato",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un pato. El pato es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow duck."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus:amarillo",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow bus."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AMARILLO?",
+      "opciones": [
+        {
+          "objeto": "pelota:verde"
+        },
+        {
+          "objeto": "pato"
+        },
+        {
+          "objeto": "globo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es amarillo? Piénsalo. ¡Muy bien! El pato es amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is yellow? Duck! Yes, the duck is yellow."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "circulo:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un círculo. El círculo es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue circle."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue car."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AZUL?",
+      "opciones": [
+        {
+          "objeto": "pelota:verde"
+        },
+        {
+          "objeto": "circulo:azul"
+        },
+        {
+          "objeto": "globo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es azul? Piénsalo. ¡Muy bien! El círculo es azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is blue? Circle! Yes, the circle is blue."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren:verde",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:verde",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green ball."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES VERDE?",
+      "opciones": [
+        {
+          "objeto": "carro:azul"
+        },
+        {
+          "objeto": "tren:verde"
+        },
+        {
+          "objeto": "globo:morado"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es verde? Piénsalo. ¡Muy bien! El tren es verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is green? Train! Yes, the train is green."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LOS COLORES QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "rojo",
+          "etiquetaEn": "red",
+          "color": "rojo"
+        },
+        {
+          "objeto": "sol",
+          "etiqueta": "amarillo",
+          "etiquetaEn": "yellow",
+          "color": "amarillo"
+        },
+        {
+          "objeto": "pelota:azul",
+          "etiqueta": "azul",
+          "etiquetaEn": "blue",
+          "color": "azul"
+        },
+        {
+          "objeto": "arbol",
+          "etiqueta": "verde",
+          "etiquetaEn": "green",
+          "color": "verde"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange",
+          "color": "naranja"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "morado",
+          "etiquetaEn": "purple",
+          "color": "morado"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "rosado",
+          "etiquetaEn": "pink",
+          "color": "rosado"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: rojo, amarillo, azul, verde, naranja, morado, rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: red, yellow, blue, green, orange, purple, pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas es morada. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:morado",
+      "etiqueta": "morado",
+      "etiquetaEn": "purple",
+      "color": "morado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es morado. Morado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Purple. A purple balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES MORADO?",
+      "opciones": [
+        {
+          "objeto": "flor"
+        },
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "estrella:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! Las uvas es morada."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is purple? Grapes! Yes, the grapes is purple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "flor",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una flor. La flor es rosada. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink flower."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "cerdo",
+      "etiqueta": "rosado",
+      "etiquetaEn": "pink",
+      "color": "rosado",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un cerdito. El cerdito es rosado. Rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Pink. A pink pig."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROSADO?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "flor"
+        },
+        {
+          "objeto": "estrella:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rosado? Piénsalo. ¡Muy bien! La flor es rosada."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is pink? Flower! Yes, the flower is pink."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "rojo",
+      "etiquetaEn": "red",
+      "color": "rojo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es roja. Rojo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Red. A red strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES ROJO?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "estrella:amarillo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es rojo? Piénsalo. ¡Muy bien! La manzana es roja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is red? Apple! Yes, the apple is red."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sol",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. El sol. El sol es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow sun."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "amarillo",
+      "etiquetaEn": "yellow",
+      "color": "amarillo",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es amarillo. Amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yellow. A yellow banana."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AMARILLO?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "sol"
+        },
+        {
+          "objeto": "corazon:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es amarillo? Piénsalo. ¡Muy bien! El sol es amarillo."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is yellow? Sun! Yes, the sun is yellow."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una pelota. La pelota es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue ball."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pez:azul",
+      "etiqueta": "azul",
+      "etiquetaEn": "blue",
+      "color": "azul",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un pez. El pez es azul. Azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Blue. A blue fish."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES AZUL?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "pelota:azul"
+        },
+        {
+          "objeto": "corazon:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es azul? Piénsalo. ¡Muy bien! La pelota es azul."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is blue? Ball! Yes, the ball is blue."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "arbol",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un árbol. El árbol es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green tree."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "rana",
+      "etiqueta": "verde",
+      "etiquetaEn": "green",
+      "color": "verde",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una rana. La rana es verde. Verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Green. A green frog."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES VERDE?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "arbol"
+        },
+        {
+          "objeto": "corazon:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es verde? Piénsalo. ¡Muy bien! El árbol es verde."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is green? Tree! Yes, the tree is green."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "globo:naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "color": "naranja",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un globo. El globo es naranja. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. A orange balloon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES NARANJA?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "corazon:rojo"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál de estos es naranja? Piénsalo. ¡Muy bien! La naranja es naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is orange? Orange! Yes, the orange is orange."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 14,
+      "titulo": "LOS COLORES QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "rojo",
+          "etiquetaEn": "red",
+          "color": "rojo"
+        },
+        {
+          "objeto": "sol",
+          "etiqueta": "amarillo",
+          "etiquetaEn": "yellow",
+          "color": "amarillo"
+        },
+        {
+          "objeto": "pelota:azul",
+          "etiqueta": "azul",
+          "etiquetaEn": "blue",
+          "color": "azul"
+        },
+        {
+          "objeto": "arbol",
+          "etiqueta": "verde",
+          "etiquetaEn": "green",
+          "color": "verde"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange",
+          "color": "naranja"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "morado",
+          "etiquetaEn": "purple",
+          "color": "morado"
+        },
+        {
+          "objeto": "flor",
+          "etiqueta": "rosado",
+          "etiquetaEn": "pink",
+          "color": "rosado"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: rojo, amarillo, azul, verde, naranja, morado, rosado."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: red, yellow, blue, green, orange, purple, pink."
+        }
+      ]
+    },
+    {
+      "tipo": "despedida",
+      "duracion": 7,
+      "texto": "¡HASTA PRONTO!",
+      "canal": "Lulo y sus amigos",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Gracias por jugar conmigo. Nos vemos en el próximo video. ¡Adiós!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Thank you for playing with me. See you next time. Bye bye!"
+        }
+      ]
+    }
+  ]
+}

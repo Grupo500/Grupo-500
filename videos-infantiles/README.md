@@ -56,7 +56,33 @@ Tiempo de render: ~3 s de proceso por cada segundo de video en 1080p
 | `--sin-audio` | video mudo |
 | `--salida <ruta>` | ruta del mp4 |
 
-## 3. El guion
+## 3. Compilados de 15–30 minutos
+
+Un compilado tiene más de 100 escenas, así que se generan con un script en vez
+de escribirlos a mano:
+
+```bash
+node guiones/armar.mjs --tema colores --minutos 20
+node guiones/armar.mjs --todos --minutos 20      # los cuatro temas de una vez
+```
+
+Temas disponibles: `colores`, `formas`, `numeros`, `frutas-vehiculos`.
+
+Cada tema se arma en **rondas**: presentar → presentar → pregunta, y cada ronda
+rota los objetos, de modo que la repetición (que a esta edad refuerza el
+aprendizaje) no sea literalmente la misma escena dos veces. El script agrega
+rondas hasta acercarse a los minutos pedidos e intercala repasos.
+
+La narración bilingüe sale ya redactada, con la concordancia de género correcta
+en español (*la manzana es roja* / *el carro es rojo*).
+
+Para agregar un tema nuevo o cambiar los textos: los datos y las plantillas de
+narración están en `guiones/armar.mjs`.
+
+> Un compilado de 20 min tarda cerca de una hora en renderizar en 1080p. Para
+> revisar antes de comprometer ese tiempo: `--escala 0.5 --hasta 180`.
+
+## 4. El guion
 
 Un video es una lista de escenas. La duración de cada escena se estira
 automáticamente si la narración es más larga que lo declarado.
@@ -82,15 +108,21 @@ automáticamente si la narración es más larga que lo declarado.
 | tipo | qué muestra | campos propios |
 |---|---|---|
 | `intro` | portada con título y la mascota saludando | `titulo`, `subtitulo` |
-| `presentar` | un objeto grande + su palabra en una pastilla | `objeto`, `etiqueta`, `color`, `sonido` |
-| `contar` | aparecen N objetos uno por uno con el número | `objeto`, `hasta` (1–10), `color` |
+| `presentar` | un objeto grande + su palabra en una pastilla | `objeto`, `etiqueta`, `etiquetaEn`, `color`, `sonido` |
+| `contar` | aparecen N objetos uno por uno con el número | `objeto`, `hasta` (1–10), `palabra`, `palabraEn`, `color` |
 | `pregunta` | 3 opciones, pausa, y se marca la correcta | `enunciado`, `opciones[]`, `correcta`, `revelarEn` |
 | `celebrar` | confeti y la mascota festejando | `texto` |
 | `repaso` | rejilla con todo lo aprendido (hasta 8) | `titulo`, `items[]` |
 | `despedida` | cierre con el nombre del canal | `texto`, `canal` |
 
-Campos comunes a todas: `duracion` (segundos), `narracion` (texto que se lee),
-`fondo` (`pradera`, `cielo`, `arcoiris`, `cuarto`).
+Campos comunes a todas: `duracion` (segundos), `narracion` (texto o lista de
+segmentos bilingües), `fondo` (`pradera`, `cielo`, `arcoiris`, `cuarto`).
+
+Los campos que terminan en `En` son la palabra en inglés: aparece debajo de la
+española, más pequeña y en azul, y entra unos segundos después para no competir
+con ella. En `pregunta`, `revelarEn` menor o igual a 1 se interpreta como
+fracción de la escena, así la respuesta sigue cuadrando si la narración estira
+la duración.
 
 ### Catálogo de objetos
 
@@ -113,7 +145,7 @@ Los que son de un solo color aceptan color: `"objeto": "pelota:azul"` o
 Para agregar un objeto nuevo: una función más en `src/assets/objetos.js`
 (viewBox 200×200, trazo grueso oscuro, colores planos).
 
-## 4. Audio
+## 5. Audio
 
 ### Música
 Se sintetiza con numpy sobre escala pentatonaria (nunca desafina) con marimba,
@@ -125,30 +157,49 @@ python3 audio/musica.py --segundos 90 --estilo suave --salida temporal/prueba.wa
 ```
 
 ### Narración
-Tres caminos, en orden de recomendación:
 
-1. **Voz propia grabada** — la mejor opción para un canal infantil: es contenido
-   original y suena cercana. Grabar una línea por escena y guardarlas como
-   `voz/<id-guion>/01.wav`, `02.wav`, … El render ajusta la duración de cada
-   escena a la grabación.
-2. **Edge TTS** (gratis, voces neuronales, sin API key):
-   ```bash
-   python3 audio/voz.py --guion guiones/001-los-colores.json --voz es-CO-SalomeNeural
-   ```
-   Voces sugeridas: `es-CO-SalomeNeural`, `es-CO-GonzaloNeural`,
-   `es-MX-DaliaNeural`.
-   ⚠️ Este servidor tiene bloqueado `speech.platform.bing.com` por política de
-   red, así que **este paso hay que correrlo en un computador propio**. Los
-   `.mp3` resultantes se copian a `voz/<id-guion>/`.
-3. **Piper** (neuronal, 100% local, sin internet): requiere descargar un modelo
-   `.onnx` de voz española a `voz/modelos/` y usar `--motor piper`.
+**Google Cloud TTS (`--motor google`) — el único servicio de voz con IA que
+funciona desde este servidor.** Los demás (Edge, ElevenLabs, OpenAI, Azure,
+Deepgram) están bloqueados por la política de red del entorno.
 
-Los archivos que ya existen nunca se sobrescriben: se puede mezclar TTS con
-líneas regrabadas a mano.
+```bash
+export GOOGLE_TTS_API_KEY=...
+python3 audio/voz.py --guion guiones/101-colores-compilado.json
+python3 audio/voz.py --listar-voces          # ver todas las voces disponibles
+```
+
+Cómo obtener la key: `console.cloud.google.com` → crear proyecto → habilitar
+**Cloud Text-to-Speech API** → APIs y servicios → Credenciales → Crear clave de
+API. Las voces Neural2 traen 1 millón de caracteres gratis al mes; un compilado
+de 20 minutos consume unos 7 mil, así que alcanza de sobra.
+
+Otras opciones, todas compatibles con el mismo pipeline:
+
+- **Voz propia grabada** — grabar una línea por escena y guardarla como
+  `voz/<id-guion>/01.wav`, `02.wav`, … El render ajusta la duración de cada
+  escena a la grabación.
+- **Edge TTS** (`--motor edge`, gratis y sin key), pero hay que correrlo en un
+  computador propio y copiar los audios a `voz/<id-guion>/`.
+- **Piper** (`--motor piper`, 100% local): requiere bajar un modelo `.onnx` de
+  voz española a `voz/modelos/`.
+
+Los archivos que ya existen nunca se sobrescriben, así que se puede mezclar TTS
+con líneas regrabadas a mano.
+
+**Narración bilingüe:** el campo `narracion` acepta una lista de segmentos con
+su idioma. Cada segmento se sintetiza con una voz de ese idioma y se unen en un
+solo audio por escena, con una pausa corta en medio.
+
+```json
+"narracion": [
+  { "idioma": "es", "texto": "Mira. Una manzana. La manzana es roja. Rojo." },
+  { "idioma": "en", "texto": "Red. A red apple." }
+]
+```
 
 La mezcla final baja la música automáticamente cuando hay voz (ducking).
 
-## 5. Publicar en YouTube
+## 6. Publicar en YouTube
 
 - Marcar el video como **hecho para niños** (obligatorio por COPPA cuando el
   público objetivo son menores). Consecuencia: YouTube desactiva comentarios,
@@ -158,7 +209,7 @@ La mezcla final baja la música automáticamente cuando hay voz (ducking).
 - `guion.youtube` guarda título, descripción y etiquetas sugeridas para no
   tener que reescribirlas al subir.
 
-## 6. Criterios de diseño para 2–4 años
+## 7. Criterios de diseño para 2–4 años
 
 Lo que está aplicado en las plantillas, por si se agregan nuevas:
 
@@ -172,7 +223,7 @@ Lo que está aplicado en las plantillas, por si se agregan nuevas:
 - **Sin texto pequeño ni frases largas:** una sola palabra por pantalla.
 - **Duración total sugerida:** 2–5 minutos.
 
-## 7. Estructura
+## 8. Estructura
 
 ```
 videos-infantiles/
