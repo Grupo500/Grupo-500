@@ -49,6 +49,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import base64
+import hashlib
 import json
 import os
 import subprocess
@@ -66,6 +67,18 @@ GOOGLE_URL = "https://texttospeech.googleapis.com/v1"
 
 # Pausa entre segmentos de distinto idioma.
 PAUSA = 0.35
+
+# Cache de audio por contenido. La clave es el texto mas la configuracion de
+# voz, no el numero de escena: asi, al alargar un compilado con mas rondas, los
+# textos que se repiten no se vuelven a sintetizar. Sin esto, agregar una escena
+# al principio invalidaria toda la numeracion y habria que rehacer el video
+# entero.
+CACHE = RAIZ / "voz" / "_cache"
+
+
+def clave_cache(motor: str, voz: str, velocidad: float, texto: str) -> str:
+    crudo = f"{motor}|{voz}|{velocidad:.3f}|{texto}"
+    return hashlib.sha1(crudo.encode("utf-8")).hexdigest()[:20]
 
 # Voces por defecto: calidas y claras, buenas para publico infantil.
 VOZ_POR_DEFECTO = {"es": "es-US-Neural2-A", "en": "en-US-Neural2-F"}
@@ -456,11 +469,22 @@ def main() -> None:
     silencio = np.zeros(int(PAUSA * SR))
     modelo_piper = a.modelo or "voz/modelos/es_MX-claude-high.onnx"
 
+    CACHE.mkdir(parents=True, exist_ok=True)
+    reusados = 0
+    sintetizados = 0
+
     try:
         for numero, segs in pendientes:
             partes = []
             for s in segs:
                 idioma = s["idioma"] if s["idioma"] in voces else "es"
+
+                guardado = CACHE / f"{clave_cache(a.motor, voces[idioma], a.velocidad, s['texto'])}.wav"
+                if guardado.exists():
+                    partes.append(leer_audio(guardado))
+                    reusados += 1
+                    continue
+
                 if a.motor == "kokoro":
                     audio = voz_kokoro(s["texto"], voces[idioma], idioma, a.velocidad)
                 elif a.motor == "elevenlabs":
@@ -476,15 +500,19 @@ def main() -> None:
                                                  f"{int(a.tono * 5):+d}Hz"))
                 else:
                     audio = voz_piper(s["texto"], modelo_piper)
+
+                escribir_wav(guardado, audio, estereo=False)
+                sintetizados += 1
                 partes.append(audio)
 
             completo = partes[0]
             for p in partes[1:]:
                 completo = np.concatenate([completo, silencio, p])
 
+            # Dos digitos como minimo, igual que la busqueda en comun.py.
             escribir_wav(carpeta / f"{numero:02d}.wav", completo, estereo=False)
-            resumen = " | ".join(f"[{s['idioma']}] {s['texto'][:34]}" for s in segs)
-            print(f"  {numero:02d}  {len(completo)/SR:5.1f}s  {resumen}")
+            if numero % 20 == 0 or numero == pendientes[-1][0]:
+                print(f"  escena {numero:>3}  ({reusados} reusadas, {sintetizados} nuevas)")
 
     except Exception as e:
         print(f"\nFALLO la generacion de voz: {type(e).__name__}: {e}", file=sys.stderr)

@@ -482,7 +482,7 @@ function armar(nombreTema, minutos, canal, id) {
   let acumulado = fijas;
   let ronda = 0;
   const rondas = [];
-  while (ronda < 12) {
+  while (ronda < 40) {
     const bloque = tema.ronda(ronda);
     const dur = bloque.reduce((s, e) => s + e.duracion, 0);
     // Si agregar la ronda pasa mas de un 12% del objetivo, se corta.

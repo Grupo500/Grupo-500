@@ -19,6 +19,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,8 +36,9 @@ function leerArgs(argv) {
     guion: null, escala: 1, fps: null, crf: 20, preset: 'medium',
     salida: null, sinAudio: false, sinVoz: false, sinEfectos: false,
     desde: 0, hasta: null, foto: null, fotos: null, calidadCuadro: 96, sinMiniatura: false,
+    trabajadores: 0,
   };
-  const numeros = new Set(['escala', 'fps', 'crf', 'desde', 'hasta', 'foto', 'calidadCuadro']);
+  const numeros = new Set(['escala', 'fps', 'crf', 'desde', 'hasta', 'foto', 'calidadCuadro', 'trabajadores']);
   const alias = {
     'sin-audio': 'sinAudio', 'sin-voz': 'sinVoz', 'sin-efectos': 'sinEfectos',
     'calidad-cuadro': 'calidadCuadro', 'sin-miniatura': 'sinMiniatura',
@@ -229,37 +231,104 @@ async function main() {
   console.log(`\n${guion.titulo || guion.id}`);
   console.log(`  ${info.escenas.length} escenas | ${duracion.toFixed(1)}s | ${ancho}x${alto} @ ${fps}fps | ${cuadros} cuadros`);
 
-  // 3) ffmpeg recibe los cuadros por tuberia.
-  const cmd = [
-    '-y', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(fps), '-i', 'pipe:0',
+  // 3) Render por tramos en paralelo.
+  //
+  // Capturar un cuadro es trabajo de CPU (rasterizar + comprimir a JPEG) y con
+  // un solo proceso se desaprovechan los demas nucleos. Como __ir(t) no depende
+  // del cuadro anterior, el video se puede partir en tramos contiguos que se
+  // renderizan a la vez y se unen despues sin recodificar.
+  const trabajadores = Math.max(1, Math.min(args.trabajadores || Math.max(1, os.cpus().length - 1), 8));
+  const tmp = path.join(RAIZ, 'temporal', guion.id);
+  fs.mkdirSync(tmp, { recursive: true });
+
+  const porTramo = Math.ceil(cuadros / trabajadores);
+  const tramos = [];
+  for (let inicio = 0; inicio < cuadros; inicio += porTramo) {
+    tramos.push({ desde: inicio, cantidad: Math.min(porTramo, cuadros - inicio) });
+  }
+
+  console.log(`  ${tramos.length} tramo(s) en paralelo sobre ${os.cpus().length} nucleos`);
+
+  const hechos = new Array(tramos.length).fill(0);
+  const inicioReloj = Date.now();
+  let ultimoAviso = 0;
+
+  function avisar() {
+    const total = hechos.reduce((a, b) => a + b, 0);
+    const ahora = Date.now();
+    if (ahora - ultimoAviso < 2000 && total < cuadros) return;
+    ultimoAviso = ahora;
+    const seg = (ahora - inicioReloj) / 1000;
+    const falta = total ? (seg / total) * (cuadros - total) : 0;
+    const min = Math.floor(falta / 60);
+    process.stdout.write(
+      `\r  renderizando ${((total / cuadros) * 100).toFixed(0).padStart(3)}%  ` +
+      `(faltan ~${min > 0 ? `${min} min` : `${Math.ceil(falta)} s`})      `
+    );
+  }
+
+  async function renderizarTramo(tramo, indice) {
+    const p = await navegador.newPage({ viewport: { width: ancho, height: alto }, deviceScaleFactor: 1 });
+    p.on('pageerror', (e) => console.error('Error en la escena:', e.message));
+    await p.goto(`http://127.0.0.1:${puerto}/`, { waitUntil: 'load' });
+    await p.waitForFunction('window.__listo === true', null, { timeout: 30000 });
+    await p.evaluate(() => document.fonts.ready);
+    await p.evaluate((k) => { document.getElementById('lienzo').style.transform = `scale(${k})`; }, args.escala);
+    await p.evaluate((g) => window.__montar(g), guion);
+
+    const destino = path.join(tmp, `tramo-${String(indice).padStart(2, '0')}.mp4`);
+    const ff = spawn(ffmpegBin(), [
+      '-y', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(fps), '-i', 'pipe:0',
+      '-c:v', 'libx264', '-preset', args.preset, '-crf', String(args.crf),
+      '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-g', String(fps * 2), destino,
+    ], { stdio: ['pipe', 'ignore', 'pipe'] });
+
+    let log = '';
+    ff.stderr.on('data', (d) => { log += d.toString(); if (log.length > 20000) log = log.slice(-10000); });
+    ff.stdin.on('error', () => { /* se reporta al cerrar */ });
+    const termino = once(ff, 'close');
+
+    for (let i = 0; i < tramo.cantidad; i++) {
+      const t = desde + (tramo.desde + i) / fps;
+      await p.evaluate((tt) => window.__ir(tt), t);
+      const buf = await p.screenshot({ type: 'jpeg', quality: args.calidadCuadro });
+      if (!ff.stdin.write(buf)) await once(ff.stdin, 'drain');
+      hechos[indice] = i + 1;
+      if (i % 15 === 0) avisar();
+    }
+    ff.stdin.end();
+    await p.close();
+
+    const [codigo] = await termino;
+    if (codigo !== 0) throw new Error(`ffmpeg del tramo ${indice} fallo (${codigo}):\n${log.slice(-1500)}`);
+    return destino;
+  }
+
+  const partes = await Promise.all(tramos.map((tr, i) => renderizarTramo(tr, i)));
+  avisar();
+  process.stdout.write('\n');
+
+  // Unir los tramos sin recodificar y pegarle el audio.
+  let video = partes[0];
+  if (partes.length > 1) {
+    const lista = path.join(tmp, 'tramos.txt');
+    fs.writeFileSync(lista, partes.map((p) => `file '${p.replace(/'/g, "'\\''")}'`).join('\n'), 'utf8');
+    video = path.join(tmp, 'video.mp4');
+    execFileSync(ffmpegBin(), ['-y', '-v', 'error', '-f', 'concat', '-safe', '0',
+      '-i', lista, '-c', 'copy', video]);
+  }
+
+  execFileSync(ffmpegBin(), [
+    '-y', '-v', 'error', '-i', video,
     ...(audioWav ? ['-i', audioWav, '-map', '0:v', '-map', '1:a'] : []),
-    '-c:v', 'libx264', '-preset', args.preset, '-crf', String(args.crf),
-    '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-g', String(fps * 2),
+    '-c:v', 'copy',
     ...(audioWav ? ['-c:a', 'aac', '-b:a', '192k', '-ar', '44100', '-shortest'] : []),
     '-movflags', '+faststart', salida,
-  ];
-  const ff = spawn(ffmpegBin(), cmd, { stdio: ['pipe', 'ignore', 'pipe'] });
-  let logFf = '';
-  ff.stderr.on('data', (d) => { logFf += d.toString(); if (logFf.length > 40000) logFf = logFf.slice(-20000); });
-  const terminoFf = once(ff, 'close');
-  ff.stdin.on('error', () => { /* se reporta al cerrar */ });
+  ]);
 
-  const inicio = Date.now();
-  for (let i = 0; i < cuadros; i++) {
-    const t = desde + i / fps;
-    await pagina.evaluate((tt) => window.__ir(tt), t);
-    const buf = await pagina.screenshot({ type: 'jpeg', quality: args.calidadCuadro });
-    if (!ff.stdin.write(buf)) await once(ff.stdin, 'drain');
-
-    if (i % Math.max(1, Math.floor(cuadros / 40)) === 0 || i === cuadros - 1) {
-      const p = ((i + 1) / cuadros) * 100;
-      const seg = (Date.now() - inicio) / 1000;
-      const falta = seg / (i + 1) * (cuadros - i - 1);
-      process.stdout.write(`\r  renderizando ${p.toFixed(0).padStart(3)}%  (faltan ~${Math.ceil(falta)}s)   `);
-    }
-  }
-  ff.stdin.end();
-  process.stdout.write('\n');
+  for (const p of partes) fs.rmSync(p, { force: true });
+  fs.rmSync(path.join(tmp, 'video.mp4'), { force: true });
+  fs.rmSync(path.join(tmp, 'tramos.txt'), { force: true });
 
   // 4) Miniatura tomada de la portada, donde el titulo ya esta completo.
   if (!args.sinMiniatura) {
@@ -276,15 +345,10 @@ async function main() {
   await navegador.close();
   servidor.close();
 
-  const [codigo] = await terminoFf;
-  if (codigo !== 0) {
-    console.error(logFf.slice(-3000));
-    throw new Error(`ffmpeg termino con codigo ${codigo}`);
-  }
-
   const mb = (fs.statSync(salida).size / 1e6).toFixed(1);
-  const seg = ((Date.now() - inicio) / 1000).toFixed(0);
-  console.log(`\nListo: ${path.relative(RAIZ, salida)}  (${mb} MB, ${duracion.toFixed(1)}s de video, render en ${seg}s)`);
+  const seg = (Date.now() - inicioReloj) / 1000;
+  const reloj = seg > 90 ? `${Math.floor(seg / 60)} min ${Math.round(seg % 60)} s` : `${seg.toFixed(0)} s`;
+  console.log(`\nListo: ${path.relative(RAIZ, salida)}  (${mb} MB, ${duracion.toFixed(1)}s de video, render en ${reloj})`);
 }
 
 main().catch((e) => {

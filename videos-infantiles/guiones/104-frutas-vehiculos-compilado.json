@@ -11,7 +11,7 @@
   },
   "youtube": {
     "hechoParaNinos": true,
-    "descripcion": "Aprende frutas y vehículos con Lulo, en español y en inglés. Video tranquilo y repetitivo, con objetos grandes y palabras claras, pensado para niños de 2 a 4 años. 23 minutos de contenido.",
+    "descripcion": "Aprende frutas y vehículos con Lulo, en español y en inglés. Video tranquilo y repetitivo, con objetos grandes y palabras claras, pensado para niños de 2 a 4 años. 50 minutos de contenido.",
     "etiquetas": [
       "frutas para ninos",
       "vehiculos para ninos",
@@ -22,9 +22,9 @@
   },
   "_generado": {
     "tema": "frutas-vehiculos",
-    "rondas": 9,
-    "escenas": 146,
-    "duracionEstimada": "22:38",
+    "rondas": 20,
+    "escenas": 322,
+    "duracionEstimada": "49:57",
     "nota": "Generado por guiones/armar.mjs. La duracion final crece si la narracion es mas larga que lo declarado."
   },
   "escenas": [
@@ -3116,6 +3116,3834 @@
         {
           "idioma": "en",
           "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA FRESA?",
+      "opciones": [
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "manzana"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la fresa? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the strawberry? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁN LAS UVAS?",
+      "opciones": [
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "fresa"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde están las uvas? Piénsalo. ¡Muy bien! Ahí están."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where are the grapes? Yes! There they are."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL BUS?",
+      "opciones": [
+        {
+          "objeto": "carro"
+        },
+        {
+          "objeto": "bus"
+        },
+        {
+          "objeto": "barco"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el bus? Piénsalo. ¡Muy bien! Ese es un bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the bus? Yes! That is the bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA MANZANA?",
+      "opciones": [
+        {
+          "objeto": "sandia"
+        },
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "banano"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la manzana? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the apple? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA NARANJA?",
+      "opciones": [
+        {
+          "objeto": "sandia"
+        },
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "manzana"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la naranja? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the orange? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL AVIÓN?",
+      "opciones": [
+        {
+          "objeto": "bus"
+        },
+        {
+          "objeto": "avion"
+        },
+        {
+          "objeto": "tren"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el avión? Piénsalo. ¡Muy bien! Ese es un avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the airplane? Yes! That is the airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ EL BANANO?",
+      "opciones": [
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "uva"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está el banano? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the banana? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA SANDÍA?",
+      "opciones": [
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "sandia"
+        },
+        {
+          "objeto": "banano"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la sandía? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the watermelon? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL BARCO?",
+      "opciones": [
+        {
+          "objeto": "avion"
+        },
+        {
+          "objeto": "barco"
+        },
+        {
+          "objeto": "carro"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el barco? Piénsalo. ¡Muy bien! Ese es un barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the boat? Yes! That is the boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁN LAS UVAS?",
+      "opciones": [
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde están las uvas? Piénsalo. ¡Muy bien! Ahí están."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where are the grapes? Yes! There they are."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA FRESA?",
+      "opciones": [
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "uva"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la fresa? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the strawberry? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TREN?",
+      "opciones": [
+        {
+          "objeto": "barco"
+        },
+        {
+          "objeto": "tren"
+        },
+        {
+          "objeto": "bus"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el tren? Piénsalo. ¡Muy bien! Ese es un tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the train? Yes! That is the train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA NARANJA?",
+      "opciones": [
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "sandia"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la naranja? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the orange? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA MANZANA?",
+      "opciones": [
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la manzana? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the apple? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CARRO?",
+      "opciones": [
+        {
+          "objeto": "tren"
+        },
+        {
+          "objeto": "carro"
+        },
+        {
+          "objeto": "avion"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el carro? Piénsalo. ¡Muy bien! Ese es un carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the car? Yes! That is the car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA SANDÍA?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "sandia"
+        },
+        {
+          "objeto": "fresa"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la sandía? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the watermelon? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ EL BANANO?",
+      "opciones": [
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "sandia"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está el banano? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the banana? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL BUS?",
+      "opciones": [
+        {
+          "objeto": "carro"
+        },
+        {
+          "objeto": "bus"
+        },
+        {
+          "objeto": "barco"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el bus? Piénsalo. ¡Muy bien! Ese es un bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the bus? Yes! That is the bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA FRESA?",
+      "opciones": [
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "manzana"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la fresa? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the strawberry? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁN LAS UVAS?",
+      "opciones": [
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "fresa"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde están las uvas? Piénsalo. ¡Muy bien! Ahí están."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where are the grapes? Yes! There they are."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL AVIÓN?",
+      "opciones": [
+        {
+          "objeto": "bus"
+        },
+        {
+          "objeto": "avion"
+        },
+        {
+          "objeto": "tren"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el avión? Piénsalo. ¡Muy bien! Ese es un avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the airplane? Yes! That is the airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA MANZANA?",
+      "opciones": [
+        {
+          "objeto": "sandia"
+        },
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "banano"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la manzana? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the apple? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA NARANJA?",
+      "opciones": [
+        {
+          "objeto": "sandia"
+        },
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "manzana"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la naranja? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the orange? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Lo lograste! ¡Muy bien!"
+        },
+        {
+          "idioma": "en",
+          "texto": "Great job!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL BARCO?",
+      "opciones": [
+        {
+          "objeto": "avion"
+        },
+        {
+          "objeto": "barco"
+        },
+        {
+          "objeto": "carro"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el barco? Piénsalo. ¡Muy bien! Ese es un barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the boat? Yes! That is the boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ EL BANANO?",
+      "opciones": [
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "uva"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está el banano? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the banana? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA SANDÍA?",
+      "opciones": [
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "sandia"
+        },
+        {
+          "objeto": "banano"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la sandía? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the watermelon? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡EXCELENTE!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Excelente! Sigue así."
+        },
+        {
+          "idioma": "en",
+          "texto": "Excellent!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL TREN?",
+      "opciones": [
+        {
+          "objeto": "barco"
+        },
+        {
+          "objeto": "tren"
+        },
+        {
+          "objeto": "bus"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el tren? Piénsalo. ¡Muy bien! Ese es un tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the train? Yes! That is the train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁN LAS UVAS?",
+      "opciones": [
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "uva"
+        },
+        {
+          "objeto": "naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde están las uvas? Piénsalo. ¡Muy bien! Ahí están."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where are the grapes? Yes! There they are."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA FRESA?",
+      "opciones": [
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "fresa"
+        },
+        {
+          "objeto": "uva"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la fresa? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the strawberry? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡BRAVO!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Bravo! Qué bien lo haces."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bravo!"
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL CARRO?",
+      "opciones": [
+        {
+          "objeto": "tren"
+        },
+        {
+          "objeto": "carro"
+        },
+        {
+          "objeto": "avion"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el carro? Piénsalo. ¡Muy bien! Ese es un carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the car? Yes! That is the car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 12,
+      "titulo": "LO QUE APRENDIMOS",
+      "items": [
+        {
+          "objeto": "manzana",
+          "etiqueta": "manzana",
+          "etiquetaEn": "apple"
+        },
+        {
+          "objeto": "banano",
+          "etiqueta": "banano",
+          "etiquetaEn": "banana"
+        },
+        {
+          "objeto": "uva",
+          "etiqueta": "uvas",
+          "etiquetaEn": "grapes"
+        },
+        {
+          "objeto": "naranja",
+          "etiqueta": "naranja",
+          "etiquetaEn": "orange"
+        },
+        {
+          "objeto": "carro",
+          "etiqueta": "carro",
+          "etiquetaEn": "car"
+        },
+        {
+          "objeto": "bus",
+          "etiqueta": "bus",
+          "etiquetaEn": "bus"
+        },
+        {
+          "objeto": "avion",
+          "etiqueta": "avión",
+          "etiquetaEn": "airplane"
+        },
+        {
+          "objeto": "barco",
+          "etiqueta": "barco",
+          "etiquetaEn": "boat"
+        }
+      ],
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Repasemos: manzana, banano, uvas, naranja, sandía, fresa, carro, bus, avión, barco, tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Let us review: apple, banana, grapes, orange, watermelon, strawberry, car, bus, airplane, boat, train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "banano",
+      "etiqueta": "banano",
+      "etiquetaEn": "banana",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un banano. El banano es suave. Banano."
+        },
+        {
+          "idioma": "en",
+          "texto": "Banana. This is a banana."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "uva",
+      "etiqueta": "uvas",
+      "etiquetaEn": "grapes",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
+        },
+        {
+          "idioma": "en",
+          "texto": "Grapes. These are grapes."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "naranja",
+      "etiqueta": "naranja",
+      "etiquetaEn": "orange",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una naranja. La naranja es jugosa. Naranja."
+        },
+        {
+          "idioma": "en",
+          "texto": "Orange. This is an orange."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA NARANJA?",
+      "opciones": [
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "naranja"
+        },
+        {
+          "objeto": "sandia"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la naranja? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the orange? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sandia",
+      "etiqueta": "sandía",
+      "etiquetaEn": "watermelon",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una sandía. La sandía es fresca. Sandía."
+        },
+        {
+          "idioma": "en",
+          "texto": "Watermelon. This is a watermelon."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "fresa",
+      "etiqueta": "fresa",
+      "etiquetaEn": "strawberry",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una fresa. La fresa es dulce. Fresa."
+        },
+        {
+          "idioma": "en",
+          "texto": "Strawberry. This is a strawberry."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "manzana",
+      "etiquetaEn": "apple",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Una manzana. La manzana es dulce. Manzana."
+        },
+        {
+          "idioma": "en",
+          "texto": "Apple. This is an apple."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿DÓNDE ESTÁ LA MANZANA?",
+      "opciones": [
+        {
+          "objeto": "banano"
+        },
+        {
+          "objeto": "manzana"
+        },
+        {
+          "objeto": "naranja"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Dónde está la manzana? Piénsalo. ¡Muy bien! Ahí está."
+        },
+        {
+          "idioma": "en",
+          "texto": "Where is the apple? Yes! There it is."
+        }
+      ]
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡SÍ!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¡Sí! Esa era la respuesta."
+        },
+        {
+          "idioma": "en",
+          "texto": "Yes! That is right."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "tren",
+      "etiqueta": "tren",
+      "etiquetaEn": "train",
+      "sonido": "¡CHU CHU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un tren. El tren hace CHU CHU. Tren."
+        },
+        {
+          "idioma": "en",
+          "texto": "Train. This is a train."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "carro",
+      "etiqueta": "carro",
+      "etiquetaEn": "car",
+      "sonido": "¡BRUM BRUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un carro. El carro hace BRUM BRUM. Carro."
+        },
+        {
+          "idioma": "en",
+          "texto": "Car. This is a car."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "bus",
+      "etiqueta": "bus",
+      "etiquetaEn": "bus",
+      "sonido": "¡PIII PIII!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un bus. El bus hace PIII PIII. Bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Bus. This is a bus."
+        }
+      ]
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 11,
+      "enunciado": "¿CUÁL ES EL BUS?",
+      "opciones": [
+        {
+          "objeto": "carro"
+        },
+        {
+          "objeto": "bus"
+        },
+        {
+          "objeto": "barco"
+        }
+      ],
+      "correcta": 1,
+      "revelarEn": 0.62,
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "¿Cuál es el bus? Piénsalo. ¡Muy bien! Ese es un bus."
+        },
+        {
+          "idioma": "en",
+          "texto": "Which one is the bus? Yes! That is the bus."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "avion",
+      "etiqueta": "avión",
+      "etiquetaEn": "airplane",
+      "sonido": "¡FIUUUM!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un avión. El avión hace FIUUUM. Avión."
+        },
+        {
+          "idioma": "en",
+          "texto": "Airplane. This is an airplane."
+        }
+      ]
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "barco",
+      "etiqueta": "barco",
+      "etiquetaEn": "boat",
+      "sonido": "¡TUUU TUUU!",
+      "narracion": [
+        {
+          "idioma": "es",
+          "texto": "Mira. Un barco. El barco hace TUUU TUUU. Barco."
+        },
+        {
+          "idioma": "en",
+          "texto": "Boat. This is a boat."
         }
       ]
     },
