@@ -24,7 +24,7 @@ const ESTRELLAS = [
  * texto ni conteo. Al tocarla se abre la escena de recolección — las monedas
  * caen a la ranura del marranito, que rebota feliz entre estrellitas.
  */
-export function BolsilloQuinis() {
+export function BolsilloQuinis({ quinis }: { quinis: number }) {
   const [abierto, setAbierto] = useState(false)
   const [montado, setMontado] = useState(false)
 
@@ -42,10 +42,14 @@ export function BolsilloQuinis() {
       <button
         onClick={() => setAbierto(true)}
         aria-label="Bolsillo de Quinis"
-        className="rounded-2xl p-4 flex items-center justify-center cursor-pointer transition-transform hover:-translate-y-0.5"
+        className="rounded-2xl p-4 flex items-center gap-3.5 text-left cursor-pointer transition-transform hover:-translate-y-0.5"
         style={{ background: '#FDF3DF', border: '1px solid #F5DFB3' }}
       >
-        <img src="/brito/icons/quini.png" alt="" className="w-14 h-14 object-contain drop-shadow-sm" />
+        <img src="/brito/icons/quini.png" alt="" className="w-12 h-12 shrink-0 object-contain drop-shadow-sm" />
+        <span className="min-w-0">
+          <span className="block font-bold text-base text-[#2f2e29]">{quinis} Quinis</span>
+          <span className="block text-[11px] text-[#a3814a] font-medium leading-snug">Pronto podrás canjearlas en Recompensas.</span>
+        </span>
       </button>
 
       {abierto && montado && createPortal(

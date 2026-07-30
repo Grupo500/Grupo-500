@@ -652,7 +652,7 @@ export default async function MapaBritoPage({
 
           {/* Bolsillo de Quinis: solo la moneda, sin texto ni conteo. Al
               tocarla se abre la escena del marranito recogiendo monedas. */}
-          <BolsilloQuinis />
+          <BolsilloQuinis quinis={perfil.quinis ?? 0} />
 
           <RankingModal estado={estadoLiga} miId={estudianteId} />
         </aside>
