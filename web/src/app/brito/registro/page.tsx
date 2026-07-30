@@ -54,9 +54,7 @@ export default function RegistroBritoPage() {
       </Link>
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-5">
-        <div className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shadow-xl">
-          <Image src="/brito/brito-hero.jpg" alt="Brito" width={80} height={80} className="object-cover w-full h-full" priority />
-        </div>
+        <Image src="/brito/brito-mascota.png" alt="Brito" width={96} height={96} className="w-24 h-24 object-contain drop-shadow-xl" priority />
 
         <div className="text-center">
           <h1 className="text-2xl font-extrabold text-white tracking-tight">Crea tu cuenta</h1>

@@ -29,18 +29,14 @@ export default async function ResultadoLeccionPage({
       style={{ background: '#EEF2F7', color: '#2B2B28' }}
     >
       <div className="flex w-full max-w-sm flex-col items-center animate-card-enter">
-        <div
-          className="mb-5 h-32 w-32 overflow-hidden rounded-full border-4 border-white"
-          style={{ boxShadow: `0 10px 26px -6px ${acento.color}55` }}
-        >
-          <Image
-            src="/brito/brito-hero.jpg"
-            alt="Brito"
-            width={128}
-            height={128}
-            className={`h-full w-full object-cover ${buenDesempeno ? '' : 'grayscale'}`}
-          />
-        </div>
+        <Image
+          src="/brito/brito-mascota.png"
+          alt="Brito"
+          width={128}
+          height={128}
+          className="mb-5 h-32 w-32 object-contain"
+          style={{ filter: buenDesempeno ? `drop-shadow(0 10px 18px ${acento.color}55)` : 'grayscale(1)' }}
+        />
 
         <h1 className="mb-1 text-2xl font-bold tracking-tight">
           {buenDesempeno ? '¡Muy bien!' : '¡Sigue practicando!'}

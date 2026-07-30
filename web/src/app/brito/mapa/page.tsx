@@ -187,9 +187,7 @@ export default async function MapaBritoPage({
             <Link href="/inicio" title="Volver al inicio" className="text-[#6b6a63] hover:text-[#2B2B28] transition-colors shrink-0">
               <ArrowLeft className="w-4.5 h-4.5" />
             </Link>
-            <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
-              <Image src="/brito/brito-hero.jpg" alt="Brito" width={36} height={36} className="object-cover w-full h-full" />
-            </div>
+            <Image src="/brito/brito-mascota.png" alt="Brito" width={36} height={36} className="w-9 h-9 object-contain shrink-0" />
             <span className="text-[#2B2B28] font-extrabold text-sm">Brito</span>
           </div>
 
@@ -232,7 +230,7 @@ export default async function MapaBritoPage({
         {/* Nav lateral izquierda — solo desktop */}
         <aside className="hidden lg:flex flex-col gap-1.5 bg-white border-r border-[#ECEAE2] p-6">
           <div className="flex items-center gap-2.5 pb-5 mb-2 border-b border-[#ECEAE2]">
-            <div className="w-8 h-8 rounded-[10px] bg-[#1E5FA8] text-white flex items-center justify-center font-extrabold text-sm">B</div>
+            <Image src="/brito/brito-mascota.png" alt="Brito" width={36} height={36} className="w-9 h-9 object-contain" />
             <span className="font-extrabold text-lg text-[#2B2B28]">Brito</span>
           </div>
 
@@ -326,9 +324,7 @@ export default async function MapaBritoPage({
 
           {bloques.length === 0 ? (
             <div className="flex flex-col items-center text-center py-20 gap-4 px-6">
-              <div className="w-20 h-20 rounded-full overflow-hidden shadow-md">
-                <Image src="/brito/brito-hero.jpg" alt="Brito" width={80} height={80} className="object-cover w-full h-full" />
-              </div>
+              <Image src="/brito/brito-mascota.png" alt="Brito" width={96} height={96} className="w-24 h-24 object-contain" />
               <div>
                 <p className="text-[#2B2B28] font-bold text-sm">Brito está preparando tus lecciones</p>
                 <p className="text-[#6b6a63] text-xs mt-1 max-w-[240px]">Todavía no hay lecciones publicadas. Vuelve pronto para empezar a practicar.</p>

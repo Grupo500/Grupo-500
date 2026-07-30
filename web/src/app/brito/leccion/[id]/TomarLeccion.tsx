@@ -84,9 +84,7 @@ export function TomarLeccion({
     return (
       <main className="min-h-dvh flex flex-col items-center justify-center px-4 text-center animate-fade-in" style={{ background: '#EEF2F7' }}>
         <div className="animate-card-enter flex flex-col items-center">
-          <div className="mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
-            <Image src="/brito/brito-hero.jpg" alt="Brito" width={96} height={96} className="h-full w-full object-cover grayscale" />
-          </div>
+          <Image src="/brito/brito-mascota.png" alt="Brito" width={96} height={96} className="mb-4 h-24 w-24 object-contain grayscale" />
           <h1 className="mb-2 text-xl font-bold text-[#2B2B28]">Te quedaste sin corazones</h1>
           <p className="mb-6 max-w-xs text-sm font-medium text-[#6b6a63]">
             Se regeneran 1 cada 4 horas. Vuelve pronto para seguir practicando.
@@ -239,9 +237,7 @@ export function TomarLeccion({
           }
         >
           <div className="mx-auto flex max-w-5xl items-center gap-3.5 px-4 py-4">
-            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm">
-              <Image src="/brito/brito-hero.jpg" alt="Brito" width={48} height={48} className={`h-full w-full object-cover ${feedback.correcta ? '' : 'grayscale'}`} />
-            </div>
+            <Image src="/brito/brito-mascota.png" alt="Brito" width={48} height={48} className={`h-12 w-12 shrink-0 object-contain ${feedback.correcta ? '' : 'grayscale'}`} />
             <div className="min-w-0 flex-1">
               <p className="text-[15px] font-bold" style={{ color: feedback.correcta ? '#12704A' : '#A32F2F' }}>
                 {feedback.correcta ? '¡Correcto!' : 'Incorrecto'}
