@@ -340,7 +340,7 @@ export default async function MapaBritoPage({
 
         {/* Sendero central: la hoja de cuaderno */}
         <div
-          className="lg:overflow-y-auto"
+          className="lg:overflow-y-auto overflow-x-hidden"
           style={{
             background: '#FAF8F0',
             backgroundImage:
@@ -417,8 +417,17 @@ export default async function MapaBritoPage({
                   <div
                     key={i}
                     aria-hidden
-                    className="absolute pointer-events-none"
-                    style={{ top: d.top, [d.lado]: 0, transform: `rotate(${d.rot}deg)`, color: 'rgba(87,86,79,0.14)' }}
+                    className={`absolute pointer-events-none ${d.lado === 'left' ? 'brito-doodle-izq' : 'brito-doodle-der'}`}
+                    style={{
+                      top: d.top,
+                      [d.lado]: 0,
+                      // En escritorio la hoja es ancha: los garabatos se corren
+                      // hacia afuera (distancia alterna para que no formen fila).
+                      ['--rot' as string]: `${d.rot}deg`,
+                      ['--desp' as string]: `${i % 3 === 0 ? 150 : i % 3 === 1 ? 90 : 120}px`,
+                      transform: `rotate(${d.rot}deg)`,
+                      color: 'rgba(87,86,79,0.14)',
+                    }}
                   >
                     {d.texto ? (
                       <span className="italic font-medium text-base whitespace-nowrap" style={{ color: 'rgba(87,86,79,0.18)' }}>{d.texto}</span>
@@ -658,6 +667,10 @@ export default async function MapaBritoPage({
           85% { transform: rotate(5deg); }
         }
         .brito-nodo:hover img { animation: saludoBrito 0.6s ease-in-out; }
+        @media (min-width: 1024px) {
+          .brito-doodle-izq { transform: translateX(calc(var(--desp) * -1)) rotate(var(--rot)) !important; }
+          .brito-doodle-der { transform: translateX(var(--desp)) rotate(var(--rot)) !important; }
+        }
         @media (prefers-reduced-motion: reduce) {
           .brito-halo, .brito-nodo:hover img { animation: none; }
         }
