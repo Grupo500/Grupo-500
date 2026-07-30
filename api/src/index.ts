@@ -43,6 +43,7 @@ import publicRoutes from './routes/public'
 import apiKeysRoutes from './routes/apiKeys'
 import { reconciliarAsesores } from './jobs/reconciliarAsesores'
 import { backfillComisiones } from './jobs/backfillComisiones'
+import { sincronizarGoogleAds } from './jobs/sincronizarGoogleAds'
 
 const app = express()
 
@@ -214,6 +215,13 @@ app.listen(PORT, () => {
   // es la red de seguridad por si la comisión no estaba lista en Hotmart aún).
   setTimeout(() => { void backfillComisiones() }, 3 * 60 * 1000)
   setInterval(() => { void backfillComisiones() }, QUINCE_MIN)
+
+  // Inversión publicitaria de Google Ads. Cada 4 horas basta: el gasto del día
+  // en curso es una estimación que Google sigue ajustando, y consultar más
+  // seguido solo quemaría cuota sin traer cifras más firmes.
+  const CUATRO_HORAS = 4 * 60 * 60 * 1000
+  setTimeout(() => { void sincronizarGoogleAds() }, 4 * 60 * 1000)
+  setInterval(() => { void sincronizarGoogleAds() }, CUATRO_HORAS)
 })
 
 export default app

@@ -633,6 +633,10 @@ model IntentoExamen {
 model InversionPublicitaria {
   id           String   @id @default(cuid())
   plataforma   String   // GOOGLE | META | TIKTOK
+  /// Id de la campaña en la plataforma. Solo lo traen las filas que llegan por
+  /// API; las cargadas a mano lo dejan nulo. Es la mitad de la clave que evita
+  /// duplicados al re-sincronizar, y aguanta que la campaña cambie de nombre.
+  campaniaId   String?
   campania     String
   desde        DateTime
   hasta        DateTime
@@ -643,9 +647,15 @@ model InversionPublicitaria {
   /// atribución real entre el clic y la venta en Hotmart.
   conversiones Int      @default(0)
   estado       String?
+  /// MANUAL | API. Distingue lo que tecleó una persona de lo que trajo la
+  /// sincronización, para no contar dos veces el mismo gasto.
+  fuente       String   @default("MANUAL")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  /// En Postgres los nulos no colisionan en un índice único, así que las filas
+  /// manuales (sin campaniaId) quedan libres y solo se deduplican las de API.
+  @@unique([plataforma, campaniaId, desde])
   @@index([plataforma, desde, hasta])
   @@map("finanzas_inversion_publicitaria")
 }
