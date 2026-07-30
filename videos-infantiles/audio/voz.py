@@ -14,11 +14,9 @@ Cada segmento se sintetiza con una voz del idioma correspondiente y luego se
 unen en un solo archivo por escena, con una pausa corta en medio.
 
 Motores:
-  kokoro      Kokoro-82M, modelo abierto que corre 100% local: sin cuenta, sin
-              API y sin costo por generacion. Buena calidad y voces en espanol
-              e ingles. Los pesos se bajan de HuggingFace la primera vez, que
-              esta bloqueado en el servidor de Claude Code: correr en equipo
-              propio.
+  kokoro      Kokoro-82M en ONNX. Corre 100% local: sin cuenta, sin API y sin
+              costo por generacion. Es el motor por defecto. Los pesos (~338 MB)
+              se bajan solos la primera vez desde releases de GitHub.
   elevenlabs  La mejor calidad. Necesita ELEVENLABS_API_KEY. El modelo
               multilingue pronuncia bien espanol e ingles con la misma voz, asi
               que el video bilingue queda con un solo narrador.
@@ -35,13 +33,15 @@ Los archivos que ya existen no se sobrescriben, asi que se puede reemplazar
 cualquier linea por una grabacion propia y volver a correr todo.
 
 Uso:
+    pip install kokoro-onnx soundfile
+    python3 audio/voz.py --guion guiones/101-colores-compilado.json
+    python3 audio/voz.py --guion ... --voz-es em_alex --velocidad 0.78
+
     export ELEVENLABS_API_KEY=...
-    python3 audio/voz.py --guion guiones/101-colores-compilado.json --motor elevenlabs
-    python3 audio/voz.py --motor elevenlabs --listar-voces
+    python3 audio/voz.py --guion ... --motor elevenlabs --listar-voces
 
     export GOOGLE_TTS_API_KEY=...
-    python3 audio/voz.py --guion guiones/001-los-colores.json --motor google
-    python3 audio/voz.py --guion ... --voz-es es-US-Neural2-A --voz-en en-US-Neural2-F
+    python3 audio/voz.py --guion ... --motor google
 """
 
 from __future__ import annotations
@@ -76,11 +76,20 @@ VOCES_EDGE = {
     "en": "en-US-AriaNeural",
 }
 
-# Kokoro-82M: modelo abierto que corre local, sin cuenta ni costo por uso.
-# Los codigos de idioma son de una letra: 'e' espanol, 'a' ingles americano.
-KOKORO_IDIOMA = {"es": "e", "en": "a"}
+# Kokoro-82M en su version ONNX: corre local, sin cuenta ni costo por uso.
+# Se usa kokoro-onnx y no el paquete `kokoro` porque este ultimo baja los pesos
+# de HuggingFace, mientras que kokoro-onnx los publica en releases de GitHub.
+KOKORO_IDIOMA = {"es": "es", "en": "en-us"}
 KOKORO_VOZ = {"es": "ef_dora", "en": "af_heart"}
 KOKORO_SR = 24000  # el modelo entrega 24 kHz; se remuestrea a 44.1 al leerlo
+
+KOKORO_MODELOS = RAIZ / "voz" / "modelos"
+KOKORO_BASE_URL = ("https://github.com/thewh1teagle/kokoro-onnx/releases/"
+                   "download/model-files-v1.0")
+KOKORO_ARCHIVOS = {
+    "kokoro-v1.0.onnx": 311_000_000,
+    "voices-v1.0.bin": 27_000_000,
+}
 
 ELEVEN_URL = "https://api.elevenlabs.io/v1"
 # El modelo multilingue maneja los dos idiomas con la misma voz, que es lo que
@@ -232,56 +241,86 @@ async def voz_edge(texto: str, voz: str, velocidad: str, tono: str) -> np.ndarra
 
 # -------------------------------------------------------------------- Kokoro
 
-_KOKORO_CACHE: dict[str, object] = {}
+_KOKORO = None
 
 
-def _pipeline_kokoro(codigo: str):
-    """Un pipeline por idioma; cargar el modelo es lento, asi que se reutiliza."""
-    if codigo not in _KOKORO_CACHE:
+def _bajar_modelo_kokoro() -> None:
+    """Baja los pesos la primera vez (releases de GitHub, ~338 MB en total)."""
+    KOKORO_MODELOS.mkdir(parents=True, exist_ok=True)
+    for archivo, tamano_aprox in KOKORO_ARCHIVOS.items():
+        destino = KOKORO_MODELOS / archivo
+        if destino.exists() and destino.stat().st_size > tamano_aprox * 0.9:
+            continue
+        print(f"  bajando {archivo} (~{tamano_aprox // 1_000_000} MB, solo la primera vez)...")
         try:
-            from kokoro import KPipeline
-        except ImportError:
+            with urllib.request.urlopen(f"{KOKORO_BASE_URL}/{archivo}", timeout=900) as r, \
+                 open(destino, "wb") as f:
+                while trozo := r.read(1 << 20):
+                    f.write(trozo)
+        except Exception as e:
+            destino.unlink(missing_ok=True)
             raise RuntimeError(
-                "Falta el paquete kokoro. Instalalo con:\n"
-                "  pip install kokoro soundfile 'misaki[es]'\n"
-                "Y para los idiomas distintos del ingles hace falta espeak-ng:\n"
-                "  Linux:  sudo apt install espeak-ng\n"
-                "  macOS:  brew install espeak-ng\n"
-                "  Windows: choco install espeak-ng"
+                f"No se pudo bajar {archivo}: {e}\n"
+                f"Descargalo a mano desde {KOKORO_BASE_URL}/{archivo}\n"
+                f"y guardalo en {KOKORO_MODELOS}"
             ) from None
-        _KOKORO_CACHE[codigo] = KPipeline(lang_code=codigo)
-    return _KOKORO_CACHE[codigo]
+
+
+def _cargar_kokoro():
+    """Carga el modelo una sola vez por proceso: tarda unos segundos."""
+    global _KOKORO
+    if _KOKORO is not None:
+        return _KOKORO
+
+    try:
+        import espeakng_loader
+        from phonemizer.backend.espeak.wrapper import EspeakWrapper
+        from kokoro_onnx import Kokoro
+    except ImportError:
+        raise RuntimeError(
+            "Falta kokoro-onnx. Instalalo con:\n"
+            "  pip install kokoro-onnx soundfile\n"
+            "Trae espeak-ng incluido (espeakng-loader), no hace falta instalarlo aparte."
+        ) from None
+
+    # espeak-ng hace la conversion de texto a fonemas para todo idioma que no sea
+    # ingles. espeakng_loader trae la libreria empaquetada, asi que se le indica
+    # su ruta en vez de depender de una instalacion del sistema.
+    EspeakWrapper.set_library(espeakng_loader.get_library_path())
+    EspeakWrapper.set_data_path(espeakng_loader.get_data_path())
+
+    _bajar_modelo_kokoro()
+    _KOKORO = Kokoro(
+        str(KOKORO_MODELOS / "kokoro-v1.0.onnx"),
+        str(KOKORO_MODELOS / "voices-v1.0.bin"),
+    )
+    return _KOKORO
 
 
 def voz_kokoro(texto: str, voz: str, idioma: str, velocidad: float) -> np.ndarray:
     import wave as _wave
 
-    codigo = KOKORO_IDIOMA.get(idioma, "e")
-    pipeline = _pipeline_kokoro(codigo)
-
-    trozos = []
-    for resultado in pipeline(texto, voice=voz, speed=velocidad):
-        # La API devuelve (grafemas, fonemas, audio); segun la version puede ser
-        # una tupla o un objeto con .audio.
-        audio = resultado[2] if isinstance(resultado, (tuple, list)) else resultado.audio
-        trozos.append(np.asarray(audio, dtype=np.float64).reshape(-1))
-    if not trozos:
+    kokoro = _cargar_kokoro()
+    audio, sr = kokoro.create(
+        texto, voice=voz, speed=velocidad, lang=KOKORO_IDIOMA.get(idioma, "es")
+    )
+    audio = np.asarray(audio, dtype=np.float64).reshape(-1)
+    if audio.size == 0:
         raise RuntimeError(f"Kokoro no genero audio para: {texto[:60]}")
 
-    completo = np.concatenate(trozos)
-
-    # Se escribe a 24 kHz y se relee con ffmpeg, que remuestrea a 44.1 kHz.
+    # Se escribe a la frecuencia del modelo y se relee con ffmpeg, que remuestrea
+    # a los 44.1 kHz del resto de la banda sonora.
     tmp = RAIZ / "temporal" / "_voz_tmp.wav"
     tmp.parent.mkdir(parents=True, exist_ok=True)
-    pcm = (np.clip(completo, -1.0, 1.0) * 32767).astype("<i2")
+    pcm = (np.clip(audio, -1.0, 1.0) * 32767).astype("<i2")
     with _wave.open(str(tmp), "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
-        w.setframerate(KOKORO_SR)
+        w.setframerate(int(sr))
         w.writeframes(pcm.tobytes())
-    audio = leer_audio(tmp)
+    salida = leer_audio(tmp)
     tmp.unlink(missing_ok=True)
-    return audio
+    return salida
 
 
 # --------------------------------------------------------------------- Piper
@@ -309,13 +348,13 @@ def voz_piper(texto: str, modelo: str) -> np.ndarray:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Genera la narracion del guion")
     ap.add_argument("--guion")
-    ap.add_argument("--motor", default="google",
+    ap.add_argument("--motor", default="kokoro",
                     choices=["kokoro", "elevenlabs", "google", "edge", "piper"])
     ap.add_argument("--voz-es", default=None,
                     help="google: nombre de voz. elevenlabs: voice_id")
     ap.add_argument("--voz-en", default=None,
                     help="si se omite en elevenlabs se usa la misma voz (el modelo es multilingue)")
-    ap.add_argument("--velocidad", type=float, default=0.88,
+    ap.add_argument("--velocidad", type=float, default=0.82,
                     help="1.0 es normal; mas lento ayuda a los mas pequenos")
     ap.add_argument("--tono", type=float, default=2.0, help="google: semitonos")
     ap.add_argument("--modelo", default=None,

@@ -193,6 +193,18 @@ async function main() {
     }
   }
 
+  // Nivelacion al estandar de YouTube. Va al final, cuando la banda sonora ya
+  // tiene voz, musica y efectos: medir antes daria un valor que no corresponde.
+  if (audioWav) {
+    try {
+      process.stdout.write(execFileSync(comandoPython(),
+        ['audio/nivelar.py', '--guion', args.guion], { cwd: RAIZ, encoding: 'utf8' }));
+    } catch (e) {
+      console.error('No se pudo nivelar el audio:\n' + (e.stderr || e.message));
+      throw e;
+    }
+  }
+
   // Modo foto: una sola imagen para revisar el diseno rapido.
   if (esFoto) {
     for (const t of instantes) {
