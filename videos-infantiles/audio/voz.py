@@ -14,6 +14,11 @@ Cada segmento se sintetiza con una voz del idioma correspondiente y luego se
 unen en un solo archivo por escena, con una pausa corta en medio.
 
 Motores:
+  kokoro      Kokoro-82M, modelo abierto que corre 100% local: sin cuenta, sin
+              API y sin costo por generacion. Buena calidad y voces en espanol
+              e ingles. Los pesos se bajan de HuggingFace la primera vez, que
+              esta bloqueado en el servidor de Claude Code: correr en equipo
+              propio.
   elevenlabs  La mejor calidad. Necesita ELEVENLABS_API_KEY. El modelo
               multilingue pronuncia bien espanol e ingles con la misma voz, asi
               que el video bilingue queda con un solo narrador.
@@ -70,6 +75,12 @@ VOCES_EDGE = {
     "es": "es-CO-SalomeNeural",
     "en": "en-US-AriaNeural",
 }
+
+# Kokoro-82M: modelo abierto que corre local, sin cuenta ni costo por uso.
+# Los codigos de idioma son de una letra: 'e' espanol, 'a' ingles americano.
+KOKORO_IDIOMA = {"es": "e", "en": "a"}
+KOKORO_VOZ = {"es": "ef_dora", "en": "af_heart"}
+KOKORO_SR = 24000  # el modelo entrega 24 kHz; se remuestrea a 44.1 al leerlo
 
 ELEVEN_URL = "https://api.elevenlabs.io/v1"
 # El modelo multilingue maneja los dos idiomas con la misma voz, que es lo que
@@ -219,6 +230,60 @@ async def voz_edge(texto: str, voz: str, velocidad: str, tono: str) -> np.ndarra
     return audio
 
 
+# -------------------------------------------------------------------- Kokoro
+
+_KOKORO_CACHE: dict[str, object] = {}
+
+
+def _pipeline_kokoro(codigo: str):
+    """Un pipeline por idioma; cargar el modelo es lento, asi que se reutiliza."""
+    if codigo not in _KOKORO_CACHE:
+        try:
+            from kokoro import KPipeline
+        except ImportError:
+            raise RuntimeError(
+                "Falta el paquete kokoro. Instalalo con:\n"
+                "  pip install kokoro soundfile 'misaki[es]'\n"
+                "Y para los idiomas distintos del ingles hace falta espeak-ng:\n"
+                "  Linux:  sudo apt install espeak-ng\n"
+                "  macOS:  brew install espeak-ng\n"
+                "  Windows: choco install espeak-ng"
+            ) from None
+        _KOKORO_CACHE[codigo] = KPipeline(lang_code=codigo)
+    return _KOKORO_CACHE[codigo]
+
+
+def voz_kokoro(texto: str, voz: str, idioma: str, velocidad: float) -> np.ndarray:
+    import wave as _wave
+
+    codigo = KOKORO_IDIOMA.get(idioma, "e")
+    pipeline = _pipeline_kokoro(codigo)
+
+    trozos = []
+    for resultado in pipeline(texto, voice=voz, speed=velocidad):
+        # La API devuelve (grafemas, fonemas, audio); segun la version puede ser
+        # una tupla o un objeto con .audio.
+        audio = resultado[2] if isinstance(resultado, (tuple, list)) else resultado.audio
+        trozos.append(np.asarray(audio, dtype=np.float64).reshape(-1))
+    if not trozos:
+        raise RuntimeError(f"Kokoro no genero audio para: {texto[:60]}")
+
+    completo = np.concatenate(trozos)
+
+    # Se escribe a 24 kHz y se relee con ffmpeg, que remuestrea a 44.1 kHz.
+    tmp = RAIZ / "temporal" / "_voz_tmp.wav"
+    tmp.parent.mkdir(parents=True, exist_ok=True)
+    pcm = (np.clip(completo, -1.0, 1.0) * 32767).astype("<i2")
+    with _wave.open(str(tmp), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(KOKORO_SR)
+        w.writeframes(pcm.tobytes())
+    audio = leer_audio(tmp)
+    tmp.unlink(missing_ok=True)
+    return audio
+
+
 # --------------------------------------------------------------------- Piper
 
 def voz_piper(texto: str, modelo: str) -> np.ndarray:
@@ -244,7 +309,8 @@ def voz_piper(texto: str, modelo: str) -> np.ndarray:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Genera la narracion del guion")
     ap.add_argument("--guion")
-    ap.add_argument("--motor", default="google", choices=["elevenlabs", "google", "edge", "piper"])
+    ap.add_argument("--motor", default="google",
+                    choices=["kokoro", "elevenlabs", "google", "edge", "piper"])
     ap.add_argument("--voz-es", default=None,
                     help="google: nombre de voz. elevenlabs: voice_id")
     ap.add_argument("--voz-en", default=None,
@@ -309,7 +375,12 @@ def main() -> None:
         )
 
     # Resolucion de voces por motor.
-    if a.motor == "elevenlabs":
+    if a.motor == "kokoro":
+        voces = {
+            "es": a.voz_es or KOKORO_VOZ["es"],
+            "en": a.voz_en or KOKORO_VOZ["en"],
+        }
+    elif a.motor == "elevenlabs":
         voz_es = a.voz_es
         if not voz_es:
             disponibles = voces_eleven(clave_eleven)
@@ -351,7 +422,9 @@ def main() -> None:
             partes = []
             for s in segs:
                 idioma = s["idioma"] if s["idioma"] in voces else "es"
-                if a.motor == "elevenlabs":
+                if a.motor == "kokoro":
+                    audio = voz_kokoro(s["texto"], voces[idioma], idioma, a.velocidad)
+                elif a.motor == "elevenlabs":
                     audio = voz_eleven(s["texto"], voces[idioma], clave_eleven,
                                        a.velocidad, a.modelo or ELEVEN_MODELO)
                 elif a.motor == "google":

@@ -186,10 +186,25 @@ se sobrescriben, así que se puede mezclar TTS con líneas regrabadas a mano.
 
 | Motor | Calidad | Costo | Corre en el servidor de Claude Code |
 |---|---|---|---|
-| `elevenlabs` | la mejor | por caracteres | **no** (host bloqueado) |
+| `kokoro` | buena | **gratis e ilimitado**, sin cuenta | no (pesos en HuggingFace, bloqueado) |
+| `elevenlabs` | la mejor | por caracteres | no (host bloqueado) |
 | `google` | muy buena | 1M caracteres/mes gratis | **sí** |
-| `edge` | muy buena | gratis, sin key | **no** (host bloqueado) |
+| `edge` | muy buena | gratis, sin key | no (host bloqueado) |
 | `piper` | aceptable | gratis, sin internet | no (modelos bloqueados) |
+
+**Kokoro-82M** — la mejor relación calidad/costo para producir en serie: modelo
+abierto de 82M parámetros que corre local, sin cuenta ni límite de caracteres.
+Una vez bajados los pesos (~330 MB, la primera vez) funciona sin internet.
+
+```bash
+pip install kokoro soundfile 'misaki[es]'
+sudo apt install espeak-ng        # necesario para español (macOS: brew install espeak-ng)
+
+python3 audio/voz.py --motor kokoro --guion guiones/101-colores-compilado.json
+```
+
+Voces por defecto: `ef_dora` en español y `af_heart` en inglés. Se cambian con
+`--voz-es` / `--voz-en` (otras en español: `em_alex`, `em_santa`).
 
 **ElevenLabs** — mejor opción si hay presupuesto. El modelo multilingüe
 pronuncia bien español e inglés **con la misma voz**, así que el video bilingüe
