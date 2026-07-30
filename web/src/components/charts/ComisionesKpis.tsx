@@ -35,7 +35,7 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
   ]
 
   return (
-    <div className="rounded-2xl border border-[var(--outline)] bg-[var(--surface)] p-4 md:h-full flex flex-col justify-center">
+    <div className="card p-4 md:h-full flex flex-col justify-center">
       {/* La columna es angosta: cada renglón apila etiqueta arriba y monto
           debajo, en vez de lado a lado, para que nada se monte. */}
       {descuentos.map(({ label, valor, color, Icon }, i) => (
