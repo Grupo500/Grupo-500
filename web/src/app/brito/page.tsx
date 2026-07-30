@@ -78,7 +78,7 @@ export default async function BritoLandingPage() {
         Volver
       </Link>
 
-      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center px-5 py-14">
+      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center px-5 py-6">
         <div className="w-full max-w-[440px] flex flex-col items-center text-center">
 
           {/* ── Mascota ──────────────────────────────────────────────────── */}
@@ -91,28 +91,28 @@ export default async function BritoLandingPage() {
               src="/brito/brito-mascota.png"
               alt="Brito, la mascota"
               width={220} height={220}
-              className="relative w-[185px] h-[185px] sm:w-[220px] sm:h-[220px] object-contain"
+              className="relative w-[130px] h-[130px] sm:w-[150px] sm:h-[150px] object-contain"
               priority
             />
           </div>
 
-          <h1 className="text-[42px] sm:text-[52px] font-extrabold text-[#1E5FA8] leading-none tracking-tight mt-5 animate-card-enter" style={{ animationDelay: '0.05s' }}>
+          <h1 className="text-[34px] sm:text-[40px] font-extrabold text-[#1E5FA8] leading-none tracking-tight mt-3 animate-card-enter" style={{ animationDelay: '0.05s' }}>
             Brito
           </h1>
-          <p className="text-[15px] font-bold text-[#57564f] mt-2 animate-card-enter" style={{ animationDelay: '0.1s' }}>
+          <p className="text-[14px] font-bold text-[#57564f] mt-1.5 animate-card-enter" style={{ animationDelay: '0.1s' }}>
             Con Brito te vas a convertir en cerebrito
           </p>
-          <p className="text-[14px] text-[#7a7970] mt-3 leading-relaxed max-w-[380px] animate-card-enter" style={{ animationDelay: '0.15s' }}>
+          <p className="text-[13px] text-[#7a7970] mt-2 leading-snug max-w-[400px] animate-card-enter" style={{ animationDelay: '0.15s' }}>
             Practica para el ICFES con lecciones cortas. Cinco minutos al día rinden más que
             una tarde entera la semana del examen.
           </p>
 
           {/* ── Qué lo hace distinto ─────────────────────────────────────── */}
-          <div className="w-full flex flex-col gap-2 mt-7">
+          <div className="w-full flex flex-col gap-1.5 mt-4">
             {GANCHOS.map((g, i) => (
               <div
                 key={g.titulo}
-                className="flex items-center gap-3.5 bg-white rounded-2xl border border-[#ECEAE2] px-4 py-3 text-left animate-card-enter"
+                className="flex items-center gap-3.5 bg-white rounded-2xl border border-[#ECEAE2] px-4 py-2 text-left animate-card-enter"
                 style={{ animationDelay: `${0.2 + i * 0.06}s` }}
               >
                 <img src={g.icono} alt="" className="w-9 h-9 object-contain shrink-0" />
@@ -129,7 +129,7 @@ export default async function BritoLandingPage() {
               el mapa: entrar al panel de administración no es "empezar a
               jugar". Por eso se decide por el destino y no por la jerarquía
               del botón. */}
-          <div className="w-full flex flex-col gap-2.5 mt-7 animate-card-enter" style={{ animationDelay: '0.4s' }}>
+          <div className="w-full flex flex-col gap-2 mt-4 animate-card-enter" style={{ animationDelay: '0.4s' }}>
             {acciones.principal.href === MAPA ? (
               <BotonJugar href={MAPA}>{acciones.principal.texto}</BotonJugar>
             ) : (

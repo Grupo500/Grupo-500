@@ -9,7 +9,7 @@ import { RankingModal } from '../RankingModal'
 import { MATERIAS, MATERIA_INFO } from '@/lib/britoMaterias'
 import {
   Lock, ArrowLeft, ChevronLeft, ChevronRight, Star, Rocket, BookOpen, Orbit,
-  Lightbulb, PencilLine,
+  Lightbulb, PencilLine, FlaskConical, Landmark, Atom,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
@@ -37,9 +37,9 @@ const TOP_PAD = 28
 const BOTTOM_PAD = 60
 const CHEST_BLOCK = 150
 const OFFSETS = [-58, 62, -46, 66, -60, 48, -66, 54]
-// Tope de ancho de la tarjeta de materia. Debe dar cabida al título más
-// largo ("Sociales y Ciudadanas") en una sola línea.
-const CARD_MAX_W = 200
+// Tope de ancho de la tarjeta de materia. Debe dar cabida al título y a la
+// descripción más largos ("Ecuaciones y operaciones básicas") en una línea.
+const CARD_MAX_W = 240
 
 function smoothPath(pts: [number, number][]): string {
   if (!pts.length) return ''
@@ -199,13 +199,22 @@ export default async function MapaBritoPage({
   // Siempre van en el borde del lado hacia el que se desplaza el nodo — el
   // lado contrario es el de la tarjeta blanca de la materia, así ningún
   // garabato queda tapado por ella.
+  // Mezcla garabatos de todas las materias: matemáticas, inglés, ciencias,
+  // sociales y lectura, más útiles de estudiante.
   const GARABATOS = [
     { texto: 'a² + b² = c²' },
+    { icono: FlaskConical },
+    { texto: 'Hello, world!' },
+    { icono: Landmark },
+    { texto: 'érase una vez...' },
     { icono: Rocket },
     { texto: 'E = mc²' },
     { icono: BookOpen },
+    { texto: 'ABC' },
+    { icono: Atom },
     { texto: '√144 = 12' },
     { icono: Orbit },
+    { texto: 'good morning' },
     { icono: Lightbulb },
     { texto: 'x + y = 10' },
     { icono: PencilLine },
@@ -467,7 +476,7 @@ export default async function MapaBritoPage({
                         : 0
                       const circulo = (
                         <div
-                          className={`relative transition-transform ${nodo.status !== 'locked' ? 'brito-nodo hover:translate-y-[3px] cursor-pointer' : ''} ${nodo.status === 'current' ? 'brito-halo' : ''}`}
+                          className={`relative ${nodo.status !== 'locked' ? 'brito-nodo cursor-pointer' : ''} ${nodo.status === 'current' ? 'brito-halo' : ''}`}
                           style={{ width: NODE, height: NODE, borderRadius: '50%' }}
                         >
                           <svg width={NODE} height={NODE} style={{ transform: 'rotate(-90deg)' }}>
@@ -545,8 +554,8 @@ export default async function MapaBritoPage({
                               ...(nodo.cardSide === 'left' ? { right: NODE + 16 } : { left: NODE + 16 }),
                             }}
                           >
-                            <div className="font-bold text-[13px] whitespace-nowrap" style={{ color: subjectColor }}>{nodo.materia}</div>
-                            <div className="text-[11px] text-[#8b8a80] mt-0.5">{nodo.titulo}</div>
+                            <div className="font-bold text-[13px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: subjectColor }}>{nodo.materia}</div>
+                            <div className="text-[11px] text-[#8b8a80] mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{nodo.titulo}</div>
                           </div>
                         </div>
                       )
