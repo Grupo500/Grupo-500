@@ -14,7 +14,8 @@ guion (.json)  ──►  Chromium dibuja cada cuadro  ──►  ffmpeg (H.264 
 
 ## 1. Instalación
 
-Requisitos previos: **Node 18+**, **Python 3.10+** y ~1 GB libre por video.
+Requisitos previos: **Node 18+**, **Python 3.10 a 3.13** (kokoro-onnx todavía no
+soporta 3.14) y ~1 GB libre por video.
 
 ```powershell
 # Windows (PowerShell)
@@ -26,15 +27,19 @@ powershell -ExecutionPolicy Bypass -File instalar.ps1
 bash instalar.sh
 ```
 
-El instalador resuelve Playwright, ffmpeg, el motor de voz Kokoro y espeak-ng.
-A mano sería:
+El instalador resuelve Playwright, ffmpeg y el motor de voz, y comprueba que
+carga antes de terminar. A mano sería:
 
 ```bash
-npm install                                  # playwright + tipografía Baloo 2
-pip install numpy imageio-ffmpeg             # audio + ffmpeg completo
-pip install kokoro soundfile 'misaki[es]'    # voz local (opcional)
-npx playwright install chromium              # solo si no hay Chromium en el sistema
+npm install                            # playwright + tipografía Baloo 2
+pip install numpy imageio-ffmpeg       # audio + ffmpeg completo
+pip install kokoro-onnx soundfile      # voz local
+npx playwright install chromium        # solo si no hay Chromium en el sistema
 ```
+
+Ojo con el nombre: es **`kokoro-onnx`**, no `kokoro`. El segundo baja los pesos de
+HuggingFace; el primero los publica en releases de GitHub y trae espeak-ng
+empaquetado, así que no hay que instalar nada más para que lea español.
 
 ## 2. Producir todo de una vez
 
@@ -65,8 +70,9 @@ node render.mjs --guion guiones/001-los-colores.json
 Salidas en `salida/`: el `.mp4` y una miniatura `.jpg` de 1280×720 tomada de la
 portada.
 
-Tiempo de render: ~3 s de proceso por cada segundo de video en 1080p
-(un video de 3 minutos toma unos 9 minutos).
+Tiempo de render: el video se parte en tramos que se renderizan en paralelo, uno
+por núcleo disponible. Con 4 núcleos son unos 2 s de proceso por cada segundo de
+video en 1080p. Se puede fijar con `--trabajadores N`.
 
 ### Opciones de `render.mjs`
 
@@ -81,17 +87,21 @@ Tiempo de render: ~3 s de proceso por cada segundo de video en 1080p
 | `--sin-voz` | ignora `voz/` y deja música y efectos |
 | `--sin-efectos` | quita los efectos de sonido |
 | `--sin-audio` | video mudo |
+| `--trabajadores N` | tramos en paralelo (por defecto, núcleos − 1) |
 | `--salida <ruta>` | ruta del mp4 |
 
-## 4. Compilados de 15–30 minutos
+## 4. Compilados largos
 
 Un compilado tiene más de 100 escenas, así que se generan con un script en vez
 de escribirlos a mano:
 
 ```bash
-node guiones/armar.mjs --tema colores --minutos 20
-node guiones/armar.mjs --todos --minutos 20      # los cuatro temas de una vez
+node guiones/armar.mjs --tema colores --minutos 45
+node guiones/armar.mjs --todos --minutos 45      # los cuatro temas de una vez
 ```
+
+Los cuatro guiones del repositorio están armados a **~49 minutos**, que es la
+duración habitual de los compilados en canales infantiles.
 
 Temas disponibles: `colores`, `formas`, `numeros`, `frutas-vehiculos`.
 
@@ -106,8 +116,9 @@ en español (*la manzana es roja* / *el carro es rojo*).
 Para agregar un tema nuevo o cambiar los textos: los datos y las plantillas de
 narración están en `guiones/armar.mjs`.
 
-> Un compilado de 20 min tarda cerca de una hora en renderizar en 1080p. Para
-> revisar antes de comprometer ese tiempo: `--escala 0.5 --hasta 180`.
+> Un compilado de 49 min tarda una hora y media larga en renderizar en 1080p,
+> según los núcleos del equipo. Para revisar antes de comprometer ese tiempo:
+> `--escala 0.5 --hasta 180`.
 
 ## 5. El guion
 
@@ -200,21 +211,20 @@ se sobrescriben, así que se puede mezclar TTS con líneas regrabadas a mano.
 
 | Motor | Calidad | Costo | Corre en el servidor de Claude Code |
 |---|---|---|---|
-| `kokoro` | buena | **gratis e ilimitado**, sin cuenta | no (pesos en HuggingFace, bloqueado) |
+| `kokoro` | buena | **gratis e ilimitado**, sin cuenta | **sí** |
 | `elevenlabs` | la mejor | por caracteres | no (host bloqueado) |
 | `google` | muy buena | 1M caracteres/mes gratis | **sí** |
 | `edge` | muy buena | gratis, sin key | no (host bloqueado) |
 | `piper` | aceptable | gratis, sin internet | no (modelos bloqueados) |
 
-**Kokoro-82M** — la mejor relación calidad/costo para producir en serie: modelo
-abierto de 82M parámetros que corre local, sin cuenta ni límite de caracteres.
-Una vez bajados los pesos (~330 MB, la primera vez) funciona sin internet.
+**Kokoro-82M** — el motor por defecto y la mejor relación calidad/costo para
+producir en serie: modelo abierto de 82M parámetros que corre local, sin cuenta
+ni límite de caracteres. Los pesos (~338 MB) se bajan solos la primera vez desde
+releases de GitHub; después funciona sin internet.
 
 ```bash
-pip install kokoro soundfile 'misaki[es]'
-sudo apt install espeak-ng        # necesario para español (macOS: brew install espeak-ng)
-
-python3 audio/voz.py --motor kokoro --guion guiones/101-colores-compilado.json
+pip install kokoro-onnx soundfile
+python3 audio/voz.py --guion guiones/101-colores-compilado.json
 ```
 
 Voces por defecto: `ef_dora` en español y `af_heart` en inglés. Se cambian con

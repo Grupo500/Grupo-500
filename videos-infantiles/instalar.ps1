@@ -4,8 +4,10 @@
 #   powershell -ExecutionPolicy Bypass -File instalar.ps1
 #   node producir.mjs --motor kokoro
 #
-# Requisitos previos: Node 18+ (nodejs.org) y Python 3.10+ (python.org,
-# marcando "Add Python to PATH" durante la instalacion).
+# Requisitos previos:
+#   Node 18+       nodejs.org
+#   Python 3.10-3.13  python.org, marcando "Add Python to PATH" al instalar
+#                     (kokoro-onnx todavia no soporta Python 3.14)
 
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
@@ -13,18 +15,18 @@ Set-Location $PSScriptRoot
 function Resolver-Python {
     foreach ($c in @('python', 'py', 'python3')) {
         try {
-            $v = & $c --version 2>&1
+            & $c -c 'import sys; sys.exit(0 if (3,10) <= sys.version_info < (3,14) else 1)' 2>$null
             if ($LASTEXITCODE -eq 0) { return $c }
         } catch { }
     }
-    throw "No se encontro Python. Instalalo desde python.org marcando 'Add Python to PATH'."
+    throw "No se encontro Python 3.10-3.13. Instalalo desde python.org marcando 'Add Python to PATH'."
 }
 
 Write-Host "==> Node y Python" -ForegroundColor Cyan
 node --version
 $py = Resolver-Python
 & $py --version
-Write-Host "    (usando '$py' como comando de Python)"
+Write-Host "    (usando '$py')"
 
 Write-Host "`n==> Dependencias de Node (Playwright y la tipografia)" -ForegroundColor Cyan
 npm install
@@ -35,42 +37,31 @@ try {
 }
 
 Write-Host "`n==> Dependencias de Python (audio y ffmpeg)" -ForegroundColor Cyan
-& $py -m pip install --upgrade pip
+# Actualizar pip no es necesario y puede fallar segun como este instalado Python.
+try { & $py -m pip install --upgrade pip } catch { Write-Host "    (no se pudo actualizar pip, se continua)" -ForegroundColor Yellow }
 & $py -m pip install numpy imageio-ffmpeg
 
 Write-Host "`n==> Motor de voz Kokoro-82M" -ForegroundColor Cyan
-& $py -m pip install kokoro soundfile "misaki[es]"
+# kokoro-onnx (no "kokoro"): publica los pesos en releases de GitHub y trae
+# espeak-ng empaquetado en espeakng-loader, asi que en Windows no hay que
+# instalar espeak-ng aparte ni configurar ninguna variable de entorno.
+& $py -m pip install kokoro-onnx soundfile
 
-Write-Host "`n==> espeak-ng (necesario para el espanol)" -ForegroundColor Cyan
-if (Get-Command espeak-ng -ErrorAction SilentlyContinue) {
-    Write-Host "    ya esta instalado"
-} elseif (Get-Command choco -ErrorAction SilentlyContinue) {
-    choco install espeak-ng -y
-} elseif (Get-Command winget -ErrorAction SilentlyContinue) {
-    winget install --id eSpeak-NG.eSpeak-NG --accept-source-agreements --accept-package-agreements
-} else {
-    Write-Host "    ATENCION: instalalo a mano, sin esto Kokoro no puede leer espanol." -ForegroundColor Yellow
-    Write-Host "    Descarga el instalador .msi de: github.com/espeak-ng/espeak-ng/releases"
-}
-
-# Kokoro busca la libreria de espeak por variable de entorno en Windows.
-$dll = "$env:ProgramFiles\eSpeak NG\libespeak-ng.dll"
-if (Test-Path $dll) {
-    Write-Host "`n==> Configurando PHONEMIZER_ESPEAK_LIBRARY" -ForegroundColor Cyan
-    [Environment]::SetEnvironmentVariable('PHONEMIZER_ESPEAK_LIBRARY', $dll, 'User')
-    $env:PHONEMIZER_ESPEAK_LIBRARY = $dll
-    Write-Host "    $dll"
-}
+Write-Host "`n==> Comprobando que el motor de voz carga" -ForegroundColor Cyan
+& $py -c "import espeakng_loader, onnxruntime, soundfile; from kokoro_onnx import Kokoro; print('    kokoro-onnx OK, espeak-ng incluido')"
 
 Write-Host "`n======================================================================" -ForegroundColor Green
 Write-Host "Listo. Para producir los cuatro compilados (voz + video):"
 Write-Host ""
 Write-Host "    node producir.mjs --motor kokoro" -ForegroundColor White
 Write-Host ""
-Write-Host "La primera vez Kokoro baja sus pesos (~330 MB); despues trabaja sin"
-Write-Host "internet. Cada compilado de 20 min tarda cerca de una hora en render."
+Write-Host "La primera vez baja los pesos del modelo (~338 MB) desde releases de"
+Write-Host "GitHub; despues trabaja sin internet. Cada compilado de 49 minutos"
+Write-Host "tarda una hora y media larga, segun los nucleos del equipo."
 Write-Host ""
 Write-Host "Para probar rapido antes de comprometer ese tiempo:"
 Write-Host ""
 Write-Host "    node producir.mjs --motor kokoro --guion guiones/001-los-colores.json" -ForegroundColor White
+Write-Host ""
+Write-Host "Los MP4 y las miniaturas quedan en:  videos-infantiles\salida\" -ForegroundColor White
 Write-Host "======================================================================" -ForegroundColor Green
