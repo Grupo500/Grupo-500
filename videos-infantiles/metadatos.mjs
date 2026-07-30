@@ -37,26 +37,48 @@ const TITULOS = {
   'frutas-vehiculos': 'FRUTAS y VEHÍCULOS en Español e Inglés 🍎🚗 | Primeras Palabras para Niños de 2 a 4 años',
 };
 
-function minutos(guion) {
-  const s = guion.escenas.reduce((a, e) => a + (Number(e.duracion) || 0), 0);
-  return `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+/**
+ * Duraciones reales de cada escena. Las del guion son las pedidas; las de
+ * verdad salen de tiempos.json, porque cada escena se estira para que quepa su
+ * narracion. En un video de 49 minutos ignorar eso corre todos los capitulos.
+ */
+function duracionesReales(guion) {
+  const ruta = path.join(RAIZ, 'temporal', guion.id, 'tiempos.json');
+  if (fs.existsSync(ruta)) {
+    const t = JSON.parse(fs.readFileSync(ruta, 'utf8'));
+    if (Array.isArray(t.duraciones) && t.duraciones.length === guion.escenas.length) {
+      return { duraciones: t.duraciones, medidas: true };
+    }
+  }
+  return { duraciones: guion.escenas.map((e) => Number(e.duracion) || 0), medidas: false };
 }
 
-function capitulos(guion) {
-  // Los capítulos ayudan a que los padres salten a un color o número concreto.
-  // YouTube los toma solo si el primero está en 0:00 y hay al menos tres.
+function reloj(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const seg = Math.round(s % 60);
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(seg).padStart(2, '0')}`
+    : `${m}:${String(seg).padStart(2, '0')}`;
+}
+
+function capitulos(guion, duraciones) {
+  // Los capítulos sirven para que un papá salte directo a un color o a un número.
+  // Solo se marca la PRIMERA vez que aparece cada concepto: el compilado repite
+  // los mismos en cada ronda, y listarlos todos daría noventa entradas iguales.
+  // YouTube exige que el primero esté en 0:00 y que haya al menos tres.
   const filas = [];
+  const vistos = new Set();
   let t = 0;
-  let ultimaEtiqueta = null;
-  for (const e of guion.escenas) {
+  for (const [i, e] of guion.escenas.entries()) {
     const etiqueta = e.etiqueta || e.palabra || (e.tipo === 'intro' ? 'Inicio' : null);
-    if (etiqueta && etiqueta !== ultimaEtiqueta) {
-      const m = Math.floor(t / 60);
-      const s = Math.round(t % 60);
-      filas.push(`${m}:${String(s).padStart(2, '0')} ${String(etiqueta).charAt(0).toUpperCase() + String(etiqueta).slice(1)}`);
-      ultimaEtiqueta = etiqueta;
+    const clave = etiqueta && String(etiqueta).toLowerCase();
+    if (clave && !vistos.has(clave)) {
+      vistos.add(clave);
+      const nombre = String(etiqueta).charAt(0).toUpperCase() + String(etiqueta).slice(1);
+      filas.push(`${filas.length === 0 ? '0:00' : reloj(t)} ${nombre}`);
     }
-    t += Number(e.duracion) || 0;
+    t += duraciones[i] || 0;
   }
   return filas;
 }
@@ -68,14 +90,16 @@ for (const ruta of rutas) {
   const tema = guion._generado?.tema || guion.id;
   const titulo = TITULOS[tema] || guion.titulo;
   const yt = guion.youtube || {};
-  const caps = capitulos(guion);
+  const { duraciones, medidas } = duracionesReales(guion);
+  const total = duraciones.reduce((a, b) => a + b, 0);
+  const caps = capitulos(guion, duraciones);
 
   bloques.push(`
 ## ${guion.id}
 
 **Archivo:** \`salida/${guion.id}.mp4\`
 **Miniatura:** \`salida/${guion.id}-miniatura.jpg\`
-**Duración:** ${minutos(guion)}  ·  ${guion.escenas.length} escenas
+**Duración:** ${reloj(total)}${medidas ? '' : ' (estimada: falta renderizar)'}  ·  ${guion.escenas.length} escenas
 
 ### Título
 \`\`\`
@@ -106,7 +130,9 @@ ${(yt.etiquetas || []).join(', ')}
   YouTube desactiva entonces comentarios, pantallas finales, tarjetas y
   anuncios personalizados — es esperado, no es un error.
 - **Categoría:** Educación
-- **Idioma del video:** Español · **Subtítulos:** no aplica (no hay narración aún)
+- **Idioma del video:** Español · Contiene también vocabulario en inglés
+- **Subtítulos:** conviene subir los del guion; el texto de la narración está en
+  el campo \`narracion\` de \`guiones/${guion.id}.json\`
 `);
 }
 
