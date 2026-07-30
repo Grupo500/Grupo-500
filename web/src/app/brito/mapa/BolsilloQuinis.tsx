@@ -67,8 +67,10 @@ export function BolsilloQuinis({ quinis }: { quinis: number }) {
                 key={i}
                 src="/brito/icons/quini.png"
                 alt=""
-                className="quini-cae absolute w-12 h-12 object-contain"
-                style={{ left: '50%', top: 0, animationDelay: `${delay}s` }}
+                // Encima del marranito (z-10): la moneda viaja por delante y se
+                // aplasta al colarse por la ranura, no desaparece detrás.
+                className="quini-cae absolute z-10 w-12 h-12 object-contain"
+                style={{ left: '55%', top: 0, animationDelay: `${delay}s` }}
               />
             ))}
 
@@ -96,9 +98,11 @@ export function BolsilloQuinis({ quinis }: { quinis: number }) {
             @keyframes quiniCae {
               0%   { transform: translate(-50%, -40px) rotate(-8deg) scale(0.7); opacity: 0; }
               12%  { opacity: 1; transform: translate(-50%, 0) rotate(0deg) scale(1); }
-              68%  { transform: translate(-50%, 168px) rotate(10deg) scale(1); opacity: 1; }
-              84%  { transform: translate(-50%, 196px) rotate(12deg) scale(0.35); opacity: 0.9; }
-              100% { transform: translate(-50%, 200px) scale(0.2); opacity: 0; }
+              70%  { transform: translate(-50%, 146px) rotate(6deg) scale(1); opacity: 1; }
+              /* Al llegar a la ranura la moneda se aplasta verticalmente,
+                 como colándose por la rendija de la alcancía. */
+              86%  { transform: translate(-50%, 166px) rotate(0deg) scale(1, 0.45); opacity: 1; }
+              100% { transform: translate(-50%, 176px) scale(0.85, 0.06); opacity: 0; }
             }
             .quini-cae { opacity: 0; animation: quiniCae 1.1s cubic-bezier(.45,.02,.6,1) forwards; }
 
