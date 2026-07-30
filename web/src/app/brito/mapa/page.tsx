@@ -9,6 +9,7 @@ import { RankingModal } from '../RankingModal'
 import { MATERIAS, MATERIA_INFO } from '@/lib/britoMaterias'
 import {
   Lock, ArrowLeft, ChevronLeft, ChevronRight, Star, Rocket, BookOpen, Orbit,
+  Lightbulb, PencilLine,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
@@ -36,7 +37,9 @@ const TOP_PAD = 28
 const BOTTOM_PAD = 60
 const CHEST_BLOCK = 150
 const OFFSETS = [-58, 62, -46, 66, -60, 48, -66, 54]
-const CARD_W = 150
+// Tope de ancho de la tarjeta de materia. Debe dar cabida al título más
+// largo ("Sociales y Ciudadanas") en una sola línea.
+const CARD_MAX_W = 200
 
 function smoothPath(pts: [number, number][]): string {
   if (!pts.length) return ''
@@ -192,16 +195,29 @@ export default async function MapaBritoPage({
 
   const sinCorazones = perfil.plan !== 'PREMIUM' && perfil.corazones <= 0
 
-  // Garabatos de cuaderno a lo largo del sendero. Van anclados al inicio del
-  // camino (debajo del banner): con posiciones porcentuales la fórmula caía
-  // justo detrás de la nota adhesiva y quedaba invisible.
-  const inicioSendero = TOP_PAD + SIGN_BLOCK
-  const doodles = [
-    { top: inicioSendero + 10, lado: 'left' as const, rot: -8, tipo: 'formula' as const },
-    { top: inicioSendero + 340, lado: 'right' as const, rot: 14, tipo: 'cohete' as const },
-    { top: inicioSendero + 660, lado: 'left' as const, rot: -10, tipo: 'libro' as const },
-    { top: inicioSendero + 900, lado: 'right' as const, rot: 9, tipo: 'planeta' as const },
-  ]
+  // Garabatos de cuaderno: uno por fila de lección, rotando el repertorio.
+  // Siempre van en el borde del lado hacia el que se desplaza el nodo — el
+  // lado contrario es el de la tarjeta blanca de la materia, así ningún
+  // garabato queda tapado por ella.
+  const GARABATOS = [
+    { texto: 'a² + b² = c²' },
+    { icono: Rocket },
+    { texto: 'E = mc²' },
+    { icono: BookOpen },
+    { texto: '√144 = 12' },
+    { icono: Orbit },
+    { icono: Lightbulb },
+    { texto: 'x + y = 10' },
+    { icono: PencilLine },
+  ] as { texto?: string; icono?: typeof Rocket }[]
+  const doodles = bloques.flatMap(b => b.nodos).map((nodo, i) => ({
+    // En la franja entre filas: debajo del nodo y por encima de la tarjeta
+    // de la siguiente lección.
+    top: nodo.top + 116,
+    lado: (nodo.left + NODE / 2 < CONTENT_W / 2 ? 'left' : 'right') as 'left' | 'right',
+    rot: i % 2 === 0 ? -9 : 11,
+    ...GARABATOS[i % GARABATOS.length],
+  }))
 
   return (
     <main className="min-h-dvh" style={{ background: '#FAF8F0', color: '#2B2B28' }}>
@@ -380,17 +396,13 @@ export default async function MapaBritoPage({
                     key={i}
                     aria-hidden
                     className="absolute pointer-events-none"
-                    style={{ top: d.top, [d.lado]: -8, transform: `rotate(${d.rot}deg)`, color: 'rgba(87,86,79,0.14)' }}
+                    style={{ top: d.top, [d.lado]: 0, transform: `rotate(${d.rot}deg)`, color: 'rgba(87,86,79,0.14)' }}
                   >
-                    {d.tipo === 'formula' ? (
-                      <span className="italic font-medium text-base" style={{ color: 'rgba(87,86,79,0.18)' }}>a² + b² = c²</span>
-                    ) : d.tipo === 'cohete' ? (
-                      <Rocket className="w-10 h-10" />
-                    ) : d.tipo === 'libro' ? (
-                      <BookOpen className="w-10 h-10" />
-                    ) : (
-                      <Orbit className="w-10 h-10" />
-                    )}
+                    {d.texto ? (
+                      <span className="italic font-medium text-base whitespace-nowrap" style={{ color: 'rgba(87,86,79,0.18)' }}>{d.texto}</span>
+                    ) : d.icono ? (
+                      <d.icono className="w-10 h-10" />
+                    ) : null}
                   </div>
                 ))}
 
@@ -455,7 +467,7 @@ export default async function MapaBritoPage({
                         : 0
                       const circulo = (
                         <div
-                          className={`relative transition-transform ${nodo.status !== 'locked' ? 'hover:translate-y-[3px] cursor-pointer' : ''} ${nodo.status === 'current' ? 'brito-halo' : ''}`}
+                          className={`relative transition-transform ${nodo.status !== 'locked' ? 'brito-nodo hover:translate-y-[3px] cursor-pointer' : ''} ${nodo.status === 'current' ? 'brito-halo' : ''}`}
                           style={{ width: NODE, height: NODE, borderRadius: '50%' }}
                         >
                           <svg width={NODE} height={NODE} style={{ transform: 'rotate(-90deg)' }}>
@@ -525,12 +537,15 @@ export default async function MapaBritoPage({
                             style={{
                               top: NODE / 2,
                               transform: 'translateY(-50%)',
-                              width: CARD_W,
+                              // Ancho al contenido, con tope: el título nunca se parte
+                              // en dos líneas; la descripción sí puede si hace falta.
+                              width: 'max-content',
+                              maxWidth: CARD_MAX_W,
                               textAlign: nodo.cardSide === 'left' ? 'right' : 'left',
                               ...(nodo.cardSide === 'left' ? { right: NODE + 16 } : { left: NODE + 16 }),
                             }}
                           >
-                            <div className="font-bold text-[13px]" style={{ color: subjectColor }}>{nodo.materia}</div>
+                            <div className="font-bold text-[13px] whitespace-nowrap" style={{ color: subjectColor }}>{nodo.materia}</div>
                             <div className="text-[11px] text-[#8b8a80] mt-0.5">{nodo.titulo}</div>
                           </div>
                         </div>
@@ -603,8 +618,16 @@ export default async function MapaBritoPage({
           50% { box-shadow: 0 0 0 14px rgba(245,166,35,0.06); }
         }
         .brito-halo { animation: britoHalo 2.4s ease-in-out infinite; }
+        @keyframes saludoBrito {
+          0%, 100% { transform: rotate(0); }
+          20% { transform: rotate(-14deg); }
+          45% { transform: rotate(12deg); }
+          70% { transform: rotate(-8deg); }
+          85% { transform: rotate(5deg); }
+        }
+        .brito-nodo:hover img { animation: saludoBrito 0.6s ease-in-out; }
         @media (prefers-reduced-motion: reduce) {
-          .brito-halo { animation: none; }
+          .brito-halo, .brito-nodo:hover img { animation: none; }
         }
       `}</style>
     </main>
