@@ -54,11 +54,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno manzanas! Uno."
+          "texto": "Vamos a contar. Uno. ¡Una manzana! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One apples."
+          "texto": "Let's count. One. One apple. One."
         }
       ]
     },
@@ -76,7 +76,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two balls."
+          "texto": "Let's count. One, Two. Two balls. Two."
         }
       ]
     },
@@ -94,7 +94,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three stars."
+          "texto": "Let's count. One, Two, Three. Three stars. Three."
         }
       ]
     },
@@ -112,7 +112,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four flowers."
+          "texto": "Let's count. One, Two, Three, Four. Four flowers. Four."
         }
       ]
     },
@@ -145,7 +145,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five balloons."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five balloons. Five."
         }
       ]
     },
@@ -163,7 +163,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six fish."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six fish. Six."
         }
       ]
     },
@@ -181,7 +181,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven strawberries."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven strawberries. Seven."
         }
       ]
     },
@@ -199,7 +199,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight oranges."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight oranges. Eight."
         }
       ]
     },
@@ -232,7 +232,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine hearts."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine hearts. Nine."
         }
       ]
     },
@@ -250,7 +250,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten bananas."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten bananas. Ten."
         }
       ]
     },
@@ -321,11 +321,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno flores! Uno."
+          "texto": "Vamos a contar. Uno. ¡Una flor! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One flowers."
+          "texto": "Let's count. One. One flower. One."
         }
       ]
     },
@@ -343,7 +343,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two balloons."
+          "texto": "Let's count. One, Two. Two balloons. Two."
         }
       ]
     },
@@ -361,7 +361,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three fish."
+          "texto": "Let's count. One, Two, Three. Three fish. Three."
         }
       ]
     },
@@ -379,7 +379,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four strawberries."
+          "texto": "Let's count. One, Two, Three, Four. Four strawberries. Four."
         }
       ]
     },
@@ -412,7 +412,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five oranges."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five oranges. Five."
         }
       ]
     },
@@ -430,7 +430,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six hearts."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six hearts. Six."
         }
       ]
     },
@@ -448,7 +448,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven bananas."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven bananas. Seven."
         }
       ]
     },
@@ -466,7 +466,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight apples."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight apples. Eight."
         }
       ]
     },
@@ -499,7 +499,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine balls."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine balls. Nine."
         }
       ]
     },
@@ -517,7 +517,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten stars."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten stars. Ten."
         }
       ]
     },
@@ -588,11 +588,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno fresas! Uno."
+          "texto": "Vamos a contar. Uno. ¡Una fresa! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One strawberries."
+          "texto": "Let's count. One. One strawberry. One."
         }
       ]
     },
@@ -610,7 +610,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two oranges."
+          "texto": "Let's count. One, Two. Two oranges. Two."
         }
       ]
     },
@@ -628,7 +628,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three hearts."
+          "texto": "Let's count. One, Two, Three. Three hearts. Three."
         }
       ]
     },
@@ -646,7 +646,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four bananas."
+          "texto": "Let's count. One, Two, Three, Four. Four bananas. Four."
         }
       ]
     },
@@ -679,7 +679,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five apples."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five apples. Five."
         }
       ]
     },
@@ -697,7 +697,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six balls."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six balls. Six."
         }
       ]
     },
@@ -715,7 +715,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven stars."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven stars. Seven."
         }
       ]
     },
@@ -733,7 +733,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight flowers."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight flowers. Eight."
         }
       ]
     },
@@ -766,7 +766,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine balloons."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine balloons. Nine."
         }
       ]
     },
@@ -784,7 +784,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten fish."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten fish. Ten."
         }
       ]
     },
@@ -855,11 +855,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno bananos! Uno."
+          "texto": "Vamos a contar. Uno. ¡Un banano! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One bananas."
+          "texto": "Let's count. One. One banana. One."
         }
       ]
     },
@@ -877,7 +877,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two apples."
+          "texto": "Let's count. One, Two. Two apples. Two."
         }
       ]
     },
@@ -895,7 +895,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three balls."
+          "texto": "Let's count. One, Two, Three. Three balls. Three."
         }
       ]
     },
@@ -913,7 +913,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four stars."
+          "texto": "Let's count. One, Two, Three, Four. Four stars. Four."
         }
       ]
     },
@@ -946,7 +946,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five flowers."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five flowers. Five."
         }
       ]
     },
@@ -964,7 +964,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six balloons."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six balloons. Six."
         }
       ]
     },
@@ -982,7 +982,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven fish."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven fish. Seven."
         }
       ]
     },
@@ -1000,7 +1000,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight strawberries."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight strawberries. Eight."
         }
       ]
     },
@@ -1033,7 +1033,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine oranges."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine oranges. Nine."
         }
       ]
     },
@@ -1051,7 +1051,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten hearts."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten hearts. Ten."
         }
       ]
     },
@@ -1122,11 +1122,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno estrellas! Uno."
+          "texto": "Vamos a contar. Uno. ¡Una estrella! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One stars."
+          "texto": "Let's count. One. One star. One."
         }
       ]
     },
@@ -1144,7 +1144,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two flowers."
+          "texto": "Let's count. One, Two. Two flowers. Two."
         }
       ]
     },
@@ -1162,7 +1162,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three balloons."
+          "texto": "Let's count. One, Two, Three. Three balloons. Three."
         }
       ]
     },
@@ -1180,7 +1180,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four fish."
+          "texto": "Let's count. One, Two, Three, Four. Four fish. Four."
         }
       ]
     },
@@ -1213,7 +1213,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five strawberries."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five strawberries. Five."
         }
       ]
     },
@@ -1231,7 +1231,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six oranges."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six oranges. Six."
         }
       ]
     },
@@ -1249,7 +1249,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven hearts."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven hearts. Seven."
         }
       ]
     },
@@ -1267,7 +1267,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight bananas."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight bananas. Eight."
         }
       ]
     },
@@ -1300,7 +1300,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine apples."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine apples. Nine."
         }
       ]
     },
@@ -1318,7 +1318,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten balls."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten balls. Ten."
         }
       ]
     },
@@ -1389,11 +1389,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno peces! Uno."
+          "texto": "Vamos a contar. Uno. ¡Un pez! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One fish."
+          "texto": "Let's count. One. One fish. One."
         }
       ]
     },
@@ -1411,7 +1411,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two strawberries."
+          "texto": "Let's count. One, Two. Two strawberries. Two."
         }
       ]
     },
@@ -1429,7 +1429,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three oranges."
+          "texto": "Let's count. One, Two, Three. Three oranges. Three."
         }
       ]
     },
@@ -1447,7 +1447,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four hearts."
+          "texto": "Let's count. One, Two, Three, Four. Four hearts. Four."
         }
       ]
     },
@@ -1480,7 +1480,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five bananas."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five bananas. Five."
         }
       ]
     },
@@ -1498,7 +1498,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six apples."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six apples. Six."
         }
       ]
     },
@@ -1516,7 +1516,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven balls."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven balls. Seven."
         }
       ]
     },
@@ -1534,7 +1534,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight stars."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight stars. Eight."
         }
       ]
     },
@@ -1567,7 +1567,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine flowers."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine flowers. Nine."
         }
       ]
     },
@@ -1585,7 +1585,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten balloons."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten balloons. Ten."
         }
       ]
     },
@@ -1656,11 +1656,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno corazones! Uno."
+          "texto": "Vamos a contar. Uno. ¡Un corazón! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One hearts."
+          "texto": "Let's count. One. One heart. One."
         }
       ]
     },
@@ -1678,7 +1678,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two bananas."
+          "texto": "Let's count. One, Two. Two bananas. Two."
         }
       ]
     },
@@ -1696,7 +1696,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three apples."
+          "texto": "Let's count. One, Two, Three. Three apples. Three."
         }
       ]
     },
@@ -1714,7 +1714,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four balls."
+          "texto": "Let's count. One, Two, Three, Four. Four balls. Four."
         }
       ]
     },
@@ -1747,7 +1747,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five stars."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five stars. Five."
         }
       ]
     },
@@ -1765,7 +1765,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six flowers."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six flowers. Six."
         }
       ]
     },
@@ -1783,7 +1783,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven balloons."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven balloons. Seven."
         }
       ]
     },
@@ -1801,7 +1801,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight fish."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight fish. Eight."
         }
       ]
     },
@@ -1834,7 +1834,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine strawberries."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine strawberries. Nine."
         }
       ]
     },
@@ -1852,7 +1852,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten oranges."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten oranges. Ten."
         }
       ]
     },
@@ -1923,11 +1923,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Vamos a contar. Uno. ¡Uno pelotas! Uno."
+          "texto": "Vamos a contar. Uno. ¡Una pelota! Uno."
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One. Uno is one. One balls."
+          "texto": "Let's count. One. One ball. One."
         }
       ]
     },
@@ -1945,7 +1945,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two. Dos is two. Two stars."
+          "texto": "Let's count. One, Two. Two stars. Two."
         }
       ]
     },
@@ -1963,7 +1963,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three. Tres is three. Three flowers."
+          "texto": "Let's count. One, Two, Three. Three flowers. Three."
         }
       ]
     },
@@ -1981,7 +1981,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four. Cuatro is four. Four balloons."
+          "texto": "Let's count. One, Two, Three, Four. Four balloons. Four."
         }
       ]
     },
@@ -2014,7 +2014,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five. Cinco is five. Five fish."
+          "texto": "Let's count. One, Two, Three, Four, Five. Five fish. Five."
         }
       ]
     },
@@ -2032,7 +2032,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six. Seis is six. Six strawberries."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six. Six strawberries. Six."
         }
       ]
     },
@@ -2050,7 +2050,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Siete is seven. Seven oranges."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven. Seven oranges. Seven."
         }
       ]
     },
@@ -2068,7 +2068,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Ocho is eight. Eight hearts."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight. Eight hearts. Eight."
         }
       ]
     },
@@ -2101,7 +2101,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nueve is nine. Nine bananas."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine. Nine bananas. Nine."
         }
       ]
     },
@@ -2119,7 +2119,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Diez is ten. Ten apples."
+          "texto": "Let's count. One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten. Ten apples. Ten."
         }
       ]
     },

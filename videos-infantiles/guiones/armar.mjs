@@ -81,7 +81,7 @@ const COLORES = [
   {
     es: 'morado', esF: 'morada', en: 'purple', clave: 'morado',
     objetos: [
-      { o: 'uva', n: 'unas uvas', d: 'las uvas', g: 'f', en: 'grapes' },
+      { o: 'uva', n: 'unas uvas', d: 'las uvas', g: 'f', pl: true, en: 'grapes' },
       { o: 'globo:morado', n: 'un globo', d: 'el globo', g: 'm', en: 'balloon' },
       { o: 'rombo:morado', n: 'un rombo', d: 'el rombo', g: 'm', en: 'diamond' },
       { o: 'flor:morado', n: 'una flor', d: 'la flor', g: 'f', en: 'flower' },
@@ -119,24 +119,26 @@ const NUMEROS = [
   { n: 9, es: 'nueve', en: 'nine' }, { n: 10, es: 'diez', en: 'ten' },
 ];
 
-// Objetos que se usan para contar, con su plural en los dos idiomas.
+// Objetos que se usan para contar. Hacen falta singular y plural en los dos
+// idiomas, y el artículo español, porque "¡Uno manzanas!" no se puede publicar
+// en un video que enseña a hablar.
 const CONTABLES = [
-  { o: 'manzana', pl: 'manzanas', plEn: 'apples' },
-  { o: 'pelota:rojo', pl: 'pelotas', plEn: 'balls' },
-  { o: 'estrella:amarillo', pl: 'estrellas', plEn: 'stars' },
-  { o: 'flor', pl: 'flores', plEn: 'flowers' },
-  { o: 'globo:azul', pl: 'globos', plEn: 'balloons' },
-  { o: 'pez:naranja', pl: 'peces', plEn: 'fish' },
-  { o: 'fresa', pl: 'fresas', plEn: 'strawberries' },
-  { o: 'naranja', pl: 'naranjas', plEn: 'oranges' },
-  { o: 'corazon:rosado', pl: 'corazones', plEn: 'hearts' },
-  { o: 'banano', pl: 'bananos', plEn: 'bananas' },
+  { o: 'manzana', art: 'una', sing: 'manzana', pl: 'manzanas', singEn: 'apple', plEn: 'apples' },
+  { o: 'pelota:rojo', art: 'una', sing: 'pelota', pl: 'pelotas', singEn: 'ball', plEn: 'balls' },
+  { o: 'estrella:amarillo', art: 'una', sing: 'estrella', pl: 'estrellas', singEn: 'star', plEn: 'stars' },
+  { o: 'flor', art: 'una', sing: 'flor', pl: 'flores', singEn: 'flower', plEn: 'flowers' },
+  { o: 'globo:azul', art: 'un', sing: 'globo', pl: 'globos', singEn: 'balloon', plEn: 'balloons' },
+  { o: 'pez:naranja', art: 'un', sing: 'pez', pl: 'peces', singEn: 'fish', plEn: 'fish' },
+  { o: 'fresa', art: 'una', sing: 'fresa', pl: 'fresas', singEn: 'strawberry', plEn: 'strawberries' },
+  { o: 'naranja', art: 'una', sing: 'naranja', pl: 'naranjas', singEn: 'orange', plEn: 'oranges' },
+  { o: 'corazon:rosado', art: 'un', sing: 'corazón', pl: 'corazones', singEn: 'heart', plEn: 'hearts' },
+  { o: 'banano', art: 'un', sing: 'banano', pl: 'bananos', singEn: 'banana', plEn: 'bananas' },
 ];
 
 const FRUTAS = [
   { o: 'manzana', es: 'manzana', en: 'apple', art: 'una', d: 'la manzana', sabor: 'dulce' },
   { o: 'banano', es: 'banano', en: 'banana', art: 'un', d: 'el banano', sabor: 'suave' },
-  { o: 'uva', es: 'uvas', en: 'grapes', art: 'unas', d: 'las uvas', sabor: 'dulces' },
+  { o: 'uva', es: 'uvas', en: 'grapes', art: 'unas', d: 'las uvas', sabor: 'dulces', pl: true },
   { o: 'naranja', es: 'naranja', en: 'orange', art: 'una', d: 'la naranja', sabor: 'jugosa' },
   { o: 'sandia', es: 'sandía', en: 'watermelon', art: 'una', d: 'la sandía', sabor: 'fresca' },
   { o: 'fresa', es: 'fresa', en: 'strawberry', art: 'una', d: 'la fresa', sabor: 'dulce' },
@@ -154,6 +156,35 @@ const VEHICULOS = [
 
 /** Rota un arreglo n posiciones: sirve para variar las rondas. */
 const rotar = (arr, n) => arr.map((_, i) => arr[(i + n) % arr.length]);
+
+/**
+ * Concordancia de un adjetivo español en género y número.
+ *   concordar('rojo', 'f', false) -> 'roja'
+ *   concordar('azul', 'm', true)  -> 'azules'
+ * Es imprescindible: el video enseña idioma, y "las uvas es morada" no se puede
+ * publicar.
+ */
+function concordar(base, genero, plural) {
+  let s = base;
+  if (base.endsWith('o')) s = genero === 'f' ? `${base.slice(0, -1)}a` : base;
+  if (!plural) return s;
+  return /[aeiou]$/.test(s) ? `${s}s` : `${s}es`;
+}
+
+/** "es" o "son" según el número del sujeto. */
+const serEs = (plural) => (plural ? 'son' : 'es');
+
+/**
+ * Artículo indefinido inglés. Depende de la palabra que sigue, no del sustantivo:
+ * "a red apple" pero "an orange ball". Los plurales no llevan artículo.
+ */
+function artEn(siguiente, plural = false) {
+  if (plural) return '';
+  return /^[aeiou]/i.test(siguiente) ? 'an ' : 'a ';
+}
+
+/** "This is" / "These are" según el número. */
+const esteEn = (plural) => (plural ? 'These are' : 'This is');
 
 function narrar(es, en) {
   return [{ idioma: 'es', texto: es }, { idioma: 'en', texto: en }];
@@ -183,7 +214,7 @@ function armarColores(ronda) {
   const colores = rotar(COLORES, ronda);
 
   for (const [i, c] of colores.entries()) {
-    const adj = (obj) => (obj.g === 'f' ? c.esF : c.es);
+    const adj = (obj) => concordar(c.es, obj.g, !!obj.pl);
     // Dos objetos por color en cada ronda, rotando el punto de partida.
     const objetos = [0, 1].map((k) => c.objetos[(ronda * 2 + k) % c.objetos.length]);
 
@@ -192,8 +223,10 @@ function armarColores(ronda) {
         tipo: 'presentar', duracion: 9,
         objeto: obj.o, etiqueta: c.es, etiquetaEn: c.en, color: c.clave,
         narracion: narrar(
-          `Mira. ${cap(obj.n)}. ${cap(obj.d)} es ${adj(obj)}. ${cap(c.es)}.`,
-          `${cap(c.en)}. A ${c.en} ${obj.en}.`
+          `Mira. ${cap(obj.n)}. ${cap(obj.d)} ${serEs(obj.pl)} ${adj(obj)}. ${cap(c.es)}.`,
+          // Se arma la frase y se capitaliza al final: con plural no hay
+          // articulo, y capitalizar el articulo dejaria la frase en minuscula.
+          `${cap(c.en)}. ${cap(`${artEn(c.en, obj.pl)}${c.en} ${obj.en}`)}.`
         ),
       });
     }
@@ -210,8 +243,8 @@ function armarColores(ronda) {
     ];
     escenas.push(pregunta(
       `¿CUÁL ES ${c.es.toUpperCase()}?`, opciones, 1,
-      `¿Cuál de estos es ${c.es}? Piénsalo. ¡Muy bien! ${cap(correcto.d)} es ${adj(correcto)}.`,
-      `Which one is ${c.en}? ${cap(correcto.en)}! Yes, the ${obj_en(correcto)} is ${c.en}.`
+      `¿Cuál de estos es ${c.es}? Piénsalo. ¡Muy bien! ${cap(correcto.d)} ${serEs(correcto.pl)} ${adj(correcto)}.`,
+      `Which one is ${c.en}? Yes! The ${correcto.en} ${correcto.pl ? 'are' : 'is'} ${c.en}.`
     ));
 
     if (i % 3 === 2) {
@@ -222,7 +255,6 @@ function armarColores(ronda) {
   return escenas;
 }
 
-const obj_en = (o) => o.en;
 
 function armarFormas(ronda) {
   const escenas = [];
@@ -236,20 +268,21 @@ function armarFormas(ronda) {
       objeto: `${f.o}:${color}`, etiqueta: f.es, etiquetaEn: f.en, color,
       narracion: narrar(
         `Esta figura es ${f.art} ${f.es}. ${cap(f.es)}. ${cap(f.pista)}.`,
-        `${cap(f.en)}. This is a ${f.en}.`
+        `${cap(f.en)}. This is ${artEn(f.en)}${f.en}.`
       ),
     });
 
     const otras = formas.filter((x) => x.o !== f.o);
+    const fem = f.art === 'una';
     escenas.push(pregunta(
-      `¿CUÁL ES EL ${f.es.toUpperCase()}?`,
+      `¿CUÁL ES ${fem ? 'LA' : 'EL'} ${f.es.toUpperCase()}?`,
       [
         { objeto: `${otras[(ronda + 1) % otras.length].o}:${paleta[(i + 1) % paleta.length]}` },
         { objeto: `${f.o}:${color}` },
         { objeto: `${otras[(ronda + 4) % otras.length].o}:${paleta[(i + 3) % paleta.length]}` },
       ], 1,
-      `¿Cuál de estas figuras es ${f.art} ${f.es}? Piénsalo. ¡Muy bien! Ese es ${f.art} ${f.es}.`,
-      `Which one is the ${f.en}? Yes! That is a ${f.en}.`
+      `¿Cuál de estas figuras es ${f.art} ${f.es}? Piénsalo. ¡Muy bien! ${fem ? 'Esa' : 'Ese'} es ${f.art} ${f.es}.`,
+      `Which one is the ${f.en}? Yes! That is ${artEn(f.en)}${f.en}.`
     ));
 
     if (i % 3 === 2) {
@@ -266,15 +299,22 @@ function armarNumeros(ronda) {
     const c = CONTABLES[(ronda * 3 + i) % CONTABLES.length];
     // Contar despacio: mas objetos, mas tiempo.
     const duracion = 8 + num.n * 1.1;
+    // Con uno va el artículo y el singular ("¡Una manzana!"); de dos en adelante,
+    // el numeral y el plural ("¡Tres manzanas!").
+    const cuentaEs = NUMEROS.slice(0, num.n).map((x) => cap(x.es)).join('. ');
+    const cuentaEn = NUMEROS.slice(0, num.n).map((x) => cap(x.en)).join(', ');
+    const totalEs = num.n === 1 ? `${cap(c.art)} ${c.sing}` : `${cap(num.es)} ${c.pl}`;
+    const totalEn = num.n === 1 ? `One ${c.singEn}` : `${cap(num.en)} ${c.plEn}`;
+
     escenas.push({
       tipo: 'contar', duracion: Math.round(duracion),
       objeto: c.o, hasta: num.n,
       palabra: num.es, palabraEn: num.en,
+      // Cada segmento se queda en su idioma: la palabra en el otro idioma ya
+      // aparece en pantalla, y meterla en el audio la hace sonar mal.
       narracion: narrar(
-        `Vamos a contar. ${NUMEROS.slice(0, num.n).map((x) => cap(x.es)).join('. ')}. `
-        + `¡${cap(num.es)} ${c.pl}! ${cap(num.es)}.`,
-        `Let's count. ${NUMEROS.slice(0, num.n).map((x) => cap(x.en)).join(', ')}. `
-        + `${cap(num.es)} is ${num.en}. ${cap(num.en)} ${c.plEn}.`
+        `Vamos a contar. ${cuentaEs}. ¡${totalEs}! ${cap(num.es)}.`,
+        `Let's count. ${cuentaEn}. ${totalEn}. ${cap(num.en)}.`
       ),
     });
 
@@ -296,17 +336,17 @@ function armarFrutasVehiculos(ronda) {
       tipo: 'presentar', duracion: 9,
       objeto: f.o, etiqueta: f.es, etiquetaEn: f.en,
       narracion: narrar(
-        `Mira. ${cap(f.art)} ${f.es}. ${cap(f.d)} es ${f.sabor}. ${cap(f.es)}.`,
-        `${cap(f.en)}. This is ${f.art === 'unas' ? '' : 'a '}${f.en}.`
+        `Mira. ${cap(f.art)} ${f.es}. ${cap(f.d)} ${serEs(f.pl)} ${f.sabor}. ${cap(f.es)}.`,
+        `${cap(f.en)}. ${esteEn(f.pl)} ${artEn(f.en, f.pl)}${f.en}.`
       ),
     });
     if (i % 3 === 2) {
       const otras = frutas.filter((x) => x.o !== f.o);
       escenas.push(pregunta(
-        `¿DÓNDE ESTÁ LA ${f.es.toUpperCase()}?`,
+        `¿DÓNDE ${f.pl ? 'ESTÁN' : 'ESTÁ'} ${f.d.toUpperCase()}?`,
         [{ objeto: otras[0].o }, { objeto: f.o }, { objeto: otras[2].o }], 1,
-        `¿Dónde está ${f.art} ${f.es}? Piénsalo. ¡Muy bien! Ahí está.`,
-        `Where is the ${f.en}? Yes! There it is.`
+        `¿Dónde ${f.pl ? 'están' : 'está'} ${f.d}? Piénsalo. ¡Muy bien! Ahí ${f.pl ? 'están' : 'está'}.`,
+        `Where ${f.pl ? 'are' : 'is'} the ${f.en}? Yes! There ${f.pl ? 'they are' : 'it is'}.`
       ));
     }
   }
@@ -320,15 +360,15 @@ function armarFrutasVehiculos(ronda) {
       objeto: v.o, etiqueta: v.es, etiquetaEn: v.en, sonido: v.sonido,
       narracion: narrar(
         `Mira. ${cap(v.art)} ${v.es}. ${cap(v.d)} hace ${v.sonido.replace(/[¡!]/g, '')}. ${cap(v.es)}.`,
-        `${cap(v.en)}. This is a ${v.en}.`
+        `${cap(v.en)}. This is ${artEn(v.en)}${v.en}.`
       ),
     });
     if (i % 3 === 2) {
       const otros = vehiculos.filter((x) => x.o !== v.o);
       escenas.push(pregunta(
-        `¿CUÁL ES EL ${v.es.toUpperCase()}?`,
+        `¿CUÁL ES ${v.d.toUpperCase()}?`,
         [{ objeto: otros[1].o }, { objeto: v.o }, { objeto: otros[3].o }], 1,
-        `¿Cuál es ${v.art} ${v.es}? Piénsalo. ¡Muy bien! Ese es ${v.art} ${v.es}.`,
+        `¿Cuál es ${v.d}? Piénsalo. ¡Muy bien! Ese es ${v.art} ${v.es}.`,
         `Which one is the ${v.en}? Yes! That is the ${v.en}.`
       ));
     }

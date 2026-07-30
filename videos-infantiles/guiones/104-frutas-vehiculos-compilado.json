@@ -57,7 +57,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -87,18 +87,18 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
     {
       "tipo": "pregunta",
       "duracion": 11,
-      "enunciado": "¿DÓNDE ESTÁ LA UVAS?",
+      "enunciado": "¿DÓNDE ESTÁN LAS UVAS?",
       "opciones": [
         {
           "objeto": "manzana"
@@ -115,11 +115,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está unas uvas? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde están las uvas? Piénsalo. ¡Muy bien! Ahí están."
         },
         {
           "idioma": "en",
-          "texto": "Where is the grapes? Yes! There it is."
+          "texto": "Where are the grapes? Yes! There they are."
         }
       ]
     },
@@ -136,7 +136,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -194,7 +194,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una fresa? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la fresa? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -267,7 +267,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -291,7 +291,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un avión? Piénsalo. ¡Muy bien! Ese es un avión."
+          "texto": "¿Cuál es el avión? Piénsalo. ¡Muy bien! Ese es un avión."
         },
         {
           "idioma": "en",
@@ -418,11 +418,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
@@ -439,7 +439,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -463,7 +463,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una naranja? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la naranja? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -518,7 +518,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -542,7 +542,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una manzana? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la manzana? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -597,7 +597,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -639,7 +639,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un barco? Piénsalo. ¡Muy bien! Ese es un barco."
+          "texto": "¿Cuál es el barco? Piénsalo. ¡Muy bien! Ese es un barco."
         },
         {
           "idioma": "en",
@@ -749,11 +749,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
@@ -770,7 +770,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -811,7 +811,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una sandía? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la sandía? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -849,7 +849,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -873,7 +873,7 @@
     {
       "tipo": "pregunta",
       "duracion": 11,
-      "enunciado": "¿DÓNDE ESTÁ LA BANANO?",
+      "enunciado": "¿DÓNDE ESTÁ EL BANANO?",
       "opciones": [
         {
           "objeto": "uva"
@@ -890,7 +890,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está un banano? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está el banano? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -927,7 +927,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -987,7 +987,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un tren? Piénsalo. ¡Muy bien! Ese es un tren."
+          "texto": "¿Cuál es el tren? Piénsalo. ¡Muy bien! Ese es un tren."
         },
         {
           "idioma": "en",
@@ -1101,7 +1101,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -1159,7 +1159,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una fresa? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la fresa? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -1180,7 +1180,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -1210,18 +1210,18 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
     {
       "tipo": "pregunta",
       "duracion": 11,
-      "enunciado": "¿DÓNDE ESTÁ LA UVAS?",
+      "enunciado": "¿DÓNDE ESTÁN LAS UVAS?",
       "opciones": [
         {
           "objeto": "naranja"
@@ -1238,11 +1238,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está unas uvas? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde están las uvas? Piénsalo. ¡Muy bien! Ahí están."
         },
         {
           "idioma": "en",
-          "texto": "Where is the grapes? Yes! There it is."
+          "texto": "Where are the grapes? Yes! There they are."
         }
       ]
     },
@@ -1335,7 +1335,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un carro? Piénsalo. ¡Muy bien! Ese es un carro."
+          "texto": "¿Cuál es el carro? Piénsalo. ¡Muy bien! Ese es un carro."
         },
         {
           "idioma": "en",
@@ -1375,7 +1375,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -1483,7 +1483,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -1507,7 +1507,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una manzana? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la manzana? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -1541,11 +1541,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
@@ -1562,7 +1562,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -1586,7 +1586,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una naranja? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la naranja? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -1683,7 +1683,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un bus? Piénsalo. ¡Muy bien! Ese es un bus."
+          "texto": "¿Cuál es el bus? Piénsalo. ¡Muy bien! Ese es un bus."
         },
         {
           "idioma": "en",
@@ -1705,7 +1705,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -1814,7 +1814,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -1838,7 +1838,7 @@
     {
       "tipo": "pregunta",
       "duracion": 11,
-      "enunciado": "¿DÓNDE ESTÁ LA BANANO?",
+      "enunciado": "¿DÓNDE ESTÁ EL BANANO?",
       "opciones": [
         {
           "objeto": "fresa"
@@ -1855,7 +1855,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está un banano? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está el banano? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -1872,11 +1872,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
@@ -1893,7 +1893,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -1934,7 +1934,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una sandía? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la sandía? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -2007,7 +2007,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -2031,7 +2031,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un avión? Piénsalo. ¡Muy bien! Ese es un avión."
+          "texto": "¿Cuál es el avión? Piénsalo. ¡Muy bien! Ese es un avión."
         },
         {
           "idioma": "en",
@@ -2145,7 +2145,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -2175,18 +2175,18 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
     {
       "tipo": "pregunta",
       "duracion": 11,
-      "enunciado": "¿DÓNDE ESTÁ LA UVAS?",
+      "enunciado": "¿DÓNDE ESTÁN LAS UVAS?",
       "opciones": [
         {
           "objeto": "manzana"
@@ -2203,11 +2203,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está unas uvas? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde están las uvas? Piénsalo. ¡Muy bien! Ahí están."
         },
         {
           "idioma": "en",
-          "texto": "Where is the grapes? Yes! There it is."
+          "texto": "Where are the grapes? Yes! There they are."
         }
       ]
     },
@@ -2224,7 +2224,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -2282,7 +2282,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una fresa? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la fresa? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -2337,7 +2337,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -2379,7 +2379,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un barco? Piénsalo. ¡Muy bien! Ese es un barco."
+          "texto": "¿Cuál es el barco? Piénsalo. ¡Muy bien! Ese es un barco."
         },
         {
           "idioma": "en",
@@ -2506,11 +2506,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
@@ -2527,7 +2527,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -2551,7 +2551,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una naranja? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la naranja? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -2606,7 +2606,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -2630,7 +2630,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una manzana? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la manzana? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -2667,7 +2667,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },
@@ -2727,7 +2727,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un tren? Piénsalo. ¡Muy bien! Ese es un tren."
+          "texto": "¿Cuál es el tren? Piénsalo. ¡Muy bien! Ese es un tren."
         },
         {
           "idioma": "en",
@@ -2837,11 +2837,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es dulces. Uvas."
+          "texto": "Mira. Unas uvas. Las uvas son dulces. Uvas."
         },
         {
           "idioma": "en",
-          "texto": "Grapes. This is grapes."
+          "texto": "Grapes. These are grapes."
         }
       ]
     },
@@ -2858,7 +2858,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. This is a orange."
+          "texto": "Orange. This is an orange."
         }
       ]
     },
@@ -2899,7 +2899,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está una sandía? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está la sandía? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -2937,7 +2937,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Apple. This is a apple."
+          "texto": "Apple. This is an apple."
         }
       ]
     },
@@ -2961,7 +2961,7 @@
     {
       "tipo": "pregunta",
       "duracion": 11,
-      "enunciado": "¿DÓNDE ESTÁ LA BANANO?",
+      "enunciado": "¿DÓNDE ESTÁ EL BANANO?",
       "opciones": [
         {
           "objeto": "uva"
@@ -2978,7 +2978,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Dónde está un banano? Piénsalo. ¡Muy bien! Ahí está."
+          "texto": "¿Dónde está el banano? Piénsalo. ¡Muy bien! Ahí está."
         },
         {
           "idioma": "en",
@@ -3075,7 +3075,7 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál es un carro? Piénsalo. ¡Muy bien! Ese es un carro."
+          "texto": "¿Cuál es el carro? Piénsalo. ¡Muy bien! Ese es un carro."
         },
         {
           "idioma": "en",
@@ -3115,7 +3115,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Airplane. This is a airplane."
+          "texto": "Airplane. This is an airplane."
         }
       ]
     },

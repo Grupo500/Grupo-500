@@ -104,7 +104,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is red? Apple! Yes, the apple is red."
+          "texto": "Which one is red? Yes! The apple is red."
         }
       ]
     },
@@ -168,7 +168,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is yellow? Sun! Yes, the sun is yellow."
+          "texto": "Which one is yellow? Yes! The sun is yellow."
         }
       ]
     },
@@ -232,7 +232,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is blue? Ball! Yes, the ball is blue."
+          "texto": "Which one is blue? Yes! The ball is blue."
         }
       ]
     },
@@ -311,7 +311,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is green? Tree! Yes, the tree is green."
+          "texto": "Which one is green? Yes! The tree is green."
         }
       ]
     },
@@ -329,7 +329,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange orange."
+          "texto": "Orange. An orange orange."
         }
       ]
     },
@@ -347,7 +347,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange balloon."
+          "texto": "Orange. An orange balloon."
         }
       ]
     },
@@ -375,7 +375,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is orange? Orange! Yes, the orange is orange."
+          "texto": "Which one is orange? Yes! The orange is orange."
         }
       ]
     },
@@ -389,11 +389,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es morada. Morado."
+          "texto": "Mira. Unas uvas. Las uvas son moradas. Morado."
         },
         {
           "idioma": "en",
-          "texto": "Purple. A purple grapes."
+          "texto": "Purple. Purple grapes."
         }
       ]
     },
@@ -435,11 +435,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! Las uvas es morada."
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! Las uvas son moradas."
         },
         {
           "idioma": "en",
-          "texto": "Which one is purple? Grapes! Yes, the grapes is purple."
+          "texto": "Which one is purple? Yes! The grapes are purple."
         }
       ]
     },
@@ -518,7 +518,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is pink? Flower! Yes, the flower is pink."
+          "texto": "Which one is pink? Yes! The flower is pink."
         }
       ]
     },
@@ -641,7 +641,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is yellow? Star! Yes, the star is yellow."
+          "texto": "Which one is yellow? Yes! The star is yellow."
         }
       ]
     },
@@ -705,7 +705,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is blue? Balloon! Yes, the balloon is blue."
+          "texto": "Which one is blue? Yes! The balloon is blue."
         }
       ]
     },
@@ -769,7 +769,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is green? Square! Yes, the square is green."
+          "texto": "Which one is green? Yes! The square is green."
         }
       ]
     },
@@ -802,7 +802,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange flower."
+          "texto": "Orange. An orange flower."
         }
       ]
     },
@@ -820,7 +820,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange oval."
+          "texto": "Orange. An orange oval."
         }
       ]
     },
@@ -848,7 +848,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is orange? Flower! Yes, the flower is orange."
+          "texto": "Which one is orange? Yes! The flower is orange."
         }
       ]
     },
@@ -912,7 +912,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is purple? Diamond! Yes, the diamond is purple."
+          "texto": "Which one is purple? Yes! The diamond is purple."
         }
       ]
     },
@@ -976,7 +976,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is pink? Heart! Yes, the heart is pink."
+          "texto": "Which one is pink? Yes! The heart is pink."
         }
       ]
     },
@@ -1055,7 +1055,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is red? Heart! Yes, the heart is red."
+          "texto": "Which one is red? Yes! The heart is red."
         }
       ]
     },
@@ -1178,7 +1178,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is blue? Car! Yes, the car is blue."
+          "texto": "Which one is blue? Yes! The car is blue."
         }
       ]
     },
@@ -1242,7 +1242,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is green? Ball! Yes, the ball is green."
+          "texto": "Which one is green? Yes! The ball is green."
         }
       ]
     },
@@ -1260,7 +1260,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange ball."
+          "texto": "Orange. An orange ball."
         }
       ]
     },
@@ -1278,7 +1278,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange orange."
+          "texto": "Orange. An orange orange."
         }
       ]
     },
@@ -1306,7 +1306,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is orange? Ball! Yes, the ball is orange."
+          "texto": "Which one is orange? Yes! The ball is orange."
         }
       ]
     },
@@ -1353,11 +1353,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es morada. Morado."
+          "texto": "Mira. Unas uvas. Las uvas son moradas. Morado."
         },
         {
           "idioma": "en",
-          "texto": "Purple. A purple grapes."
+          "texto": "Purple. Purple grapes."
         }
       ]
     },
@@ -1385,7 +1385,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is purple? Star! Yes, the star is purple."
+          "texto": "Which one is purple? Yes! The star is purple."
         }
       ]
     },
@@ -1449,7 +1449,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is pink? Ball! Yes, the ball is pink."
+          "texto": "Which one is pink? Yes! The ball is pink."
         }
       ]
     },
@@ -1513,7 +1513,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is red? Ball! Yes, the ball is red."
+          "texto": "Which one is red? Yes! The ball is red."
         }
       ]
     },
@@ -1592,7 +1592,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is yellow? Bus! Yes, the bus is yellow."
+          "texto": "Which one is yellow? Yes! The bus is yellow."
         }
       ]
     },
@@ -1715,7 +1715,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is green? Frog! Yes, the frog is green."
+          "texto": "Which one is green? Yes! The frog is green."
         }
       ]
     },
@@ -1733,7 +1733,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange balloon."
+          "texto": "Orange. An orange balloon."
         }
       ]
     },
@@ -1751,7 +1751,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange flower."
+          "texto": "Orange. An orange flower."
         }
       ]
     },
@@ -1779,7 +1779,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is orange? Balloon! Yes, the balloon is orange."
+          "texto": "Which one is orange? Yes! The balloon is orange."
         }
       ]
     },
@@ -1843,7 +1843,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is purple? Balloon! Yes, the balloon is purple."
+          "texto": "Which one is purple? Yes! The balloon is purple."
         }
       ]
     },
@@ -1922,7 +1922,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is pink? Pig! Yes, the pig is pink."
+          "texto": "Which one is pink? Yes! The pig is pink."
         }
       ]
     },
@@ -1986,7 +1986,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is red? Strawberry! Yes, the strawberry is red."
+          "texto": "Which one is red? Yes! The strawberry is red."
         }
       ]
     },
@@ -2050,7 +2050,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is yellow? Banana! Yes, the banana is yellow."
+          "texto": "Which one is yellow? Yes! The banana is yellow."
         }
       ]
     },
@@ -2129,7 +2129,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is blue? Fish! Yes, the fish is blue."
+          "texto": "Which one is blue? Yes! The fish is blue."
         }
       ]
     },
@@ -2206,7 +2206,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange oval."
+          "texto": "Orange. An orange oval."
         }
       ]
     },
@@ -2224,7 +2224,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange ball."
+          "texto": "Orange. An orange ball."
         }
       ]
     },
@@ -2252,7 +2252,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is orange? Oval! Yes, the oval is orange."
+          "texto": "Which one is orange? Yes! The oval is orange."
         }
       ]
     },
@@ -2316,7 +2316,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is purple? Flower! Yes, the flower is purple."
+          "texto": "Which one is purple? Yes! The flower is purple."
         }
       ]
     },
@@ -2380,7 +2380,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is pink? Balloon! Yes, the balloon is pink."
+          "texto": "Which one is pink? Yes! The balloon is pink."
         }
       ]
     },
@@ -2459,7 +2459,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is red? Car! Yes, the car is red."
+          "texto": "Which one is red? Yes! The car is red."
         }
       ]
     },
@@ -2523,7 +2523,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is yellow? Duck! Yes, the duck is yellow."
+          "texto": "Which one is yellow? Yes! The duck is yellow."
         }
       ]
     },
@@ -2587,7 +2587,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is blue? Circle! Yes, the circle is blue."
+          "texto": "Which one is blue? Yes! The circle is blue."
         }
       ]
     },
@@ -2666,7 +2666,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is green? Train! Yes, the train is green."
+          "texto": "Which one is green? Yes! The train is green."
         }
       ]
     },
@@ -2739,11 +2739,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "Mira. Unas uvas. Las uvas es morada. Morado."
+          "texto": "Mira. Unas uvas. Las uvas son moradas. Morado."
         },
         {
           "idioma": "en",
-          "texto": "Purple. A purple grapes."
+          "texto": "Purple. Purple grapes."
         }
       ]
     },
@@ -2785,11 +2785,11 @@
       "narracion": [
         {
           "idioma": "es",
-          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! Las uvas es morada."
+          "texto": "¿Cuál de estos es morado? Piénsalo. ¡Muy bien! Las uvas son moradas."
         },
         {
           "idioma": "en",
-          "texto": "Which one is purple? Grapes! Yes, the grapes is purple."
+          "texto": "Which one is purple? Yes! The grapes are purple."
         }
       ]
     },
@@ -2853,7 +2853,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is pink? Flower! Yes, the flower is pink."
+          "texto": "Which one is pink? Yes! The flower is pink."
         }
       ]
     },
@@ -2917,7 +2917,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is red? Apple! Yes, the apple is red."
+          "texto": "Which one is red? Yes! The apple is red."
         }
       ]
     },
@@ -2996,7 +2996,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is yellow? Sun! Yes, the sun is yellow."
+          "texto": "Which one is yellow? Yes! The sun is yellow."
         }
       ]
     },
@@ -3060,7 +3060,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is blue? Ball! Yes, the ball is blue."
+          "texto": "Which one is blue? Yes! The ball is blue."
         }
       ]
     },
@@ -3124,7 +3124,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is green? Tree! Yes, the tree is green."
+          "texto": "Which one is green? Yes! The tree is green."
         }
       ]
     },
@@ -3157,7 +3157,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange orange."
+          "texto": "Orange. An orange orange."
         }
       ]
     },
@@ -3175,7 +3175,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Orange. A orange balloon."
+          "texto": "Orange. An orange balloon."
         }
       ]
     },
@@ -3203,7 +3203,7 @@
         },
         {
           "idioma": "en",
-          "texto": "Which one is orange? Orange! Yes, the orange is orange."
+          "texto": "Which one is orange? Yes! The orange is orange."
         }
       ]
     },
