@@ -35,37 +35,36 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
   ]
 
   return (
-    <div className="card p-4 md:h-full flex flex-col justify-center">
-      {/* La columna es angosta: cada renglón apila etiqueta arriba y monto
-          debajo, en vez de lado a lado, para que nada se monte. */}
-      {descuentos.map(({ label, valor, color, Icon }, i) => (
-        <div
-          key={label}
-          className={`py-2.5 ${i > 0 ? 'border-t border-dashed border-[var(--outline)]' : ''}`}
-        >
-          <span className="flex items-center gap-2 text-[12px] font-medium text-on-surface-variant">
-            <span className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${color}1f` }}>
-              <Icon className="w-3 h-3" style={{ color }} />
-            </span>
-            {label}
-          </span>
-          {isLoading
-            ? <span className="block h-4 w-24 rounded bg-[var(--surface-high)] animate-pulse mt-1.5 ml-8" />
-            : <span className="block text-[14px] font-semibold tabular-nums mt-1 ml-8" style={{ color }}>−{formatCOP(valor)}</span>}
+    <div className="card p-5 md:h-full flex flex-col">
+      {/* Misma cabecera que las demás tarjetas del dashboard: chip de ícono
+          en el contenedor primario y título en 15px seminegrita. */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
+          <Wallet className="w-3.5 h-3.5 text-primary" />
         </div>
-      ))}
+        <h3 className="text-[15px] font-semibold text-on-surface">Comisiones</h3>
+      </div>
 
-      {/* Línea de total: borde sólido más marcado, como el total de un recibo. */}
-      <div className="pt-3 mt-0.5 border-t-2 border-[var(--outline-variant)]">
-        <span className="flex items-center gap-2 text-[12px] font-bold text-on-surface">
-          <span className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${verde}1f` }}>
-            <Wallet className="w-3 h-3" style={{ color: verde }} />
-          </span>
-          Neto recibido
-        </span>
-        {isLoading
-          ? <span className="block h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse mt-1.5 ml-8" />
-          : <span className="block text-[17px] font-bold tabular-nums mt-1 ml-8" style={{ color: verde }}>{formatCOP(d.neto)}</span>}
+      <div className="flex-1 flex flex-col justify-center">
+        {descuentos.map(({ label, valor, color }, i) => (
+          <div
+            key={label}
+            className={`py-2.5 ${i > 0 ? 'border-t border-dashed border-[var(--outline-variant)]' : ''}`}
+          >
+            <span className="block text-[11px] text-on-surface-variant">{label}</span>
+            {isLoading
+              ? <span className="block h-4 w-24 rounded bg-[var(--surface-high)] animate-pulse mt-1" />
+              : <span className="block text-[14px] font-semibold tabular-nums mt-0.5" style={{ color }}>−{formatCOP(valor)}</span>}
+          </div>
+        ))}
+
+        {/* Línea de total: borde sólido más marcado, como el total de un recibo. */}
+        <div className="pt-3 mt-0.5 border-t-2 border-[var(--outline-variant)]">
+          <span className="block text-[11px] font-medium text-on-surface">Neto recibido</span>
+          {isLoading
+            ? <span className="block h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse mt-1" />
+            : <span className="block text-[17px] font-bold tabular-nums mt-0.5" style={{ color: verde }}>{formatCOP(d.neto)}</span>}
+        </div>
       </div>
     </div>
   )
