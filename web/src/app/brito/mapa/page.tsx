@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
+import { NodoLink } from './NodoLink'
 
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
 
@@ -191,12 +192,15 @@ export default async function MapaBritoPage({
 
   const sinCorazones = perfil.plan !== 'PREMIUM' && perfil.corazones <= 0
 
-  // Garabatos de cuaderno repartidos a lo largo del sendero.
+  // Garabatos de cuaderno a lo largo del sendero. Van anclados al inicio del
+  // camino (debajo del banner): con posiciones porcentuales la fórmula caía
+  // justo detrás de la nota adhesiva y quedaba invisible.
+  const inicioSendero = TOP_PAD + SIGN_BLOCK
   const doodles = [
-    { top: totalHeight * 0.12, lado: 'left' as const, rot: -8, tipo: 'formula' as const },
-    { top: totalHeight * 0.38, lado: 'right' as const, rot: 14, tipo: 'cohete' as const },
-    { top: totalHeight * 0.62, lado: 'left' as const, rot: -10, tipo: 'libro' as const },
-    { top: totalHeight * 0.84, lado: 'right' as const, rot: 9, tipo: 'planeta' as const },
+    { top: inicioSendero + 10, lado: 'left' as const, rot: -8, tipo: 'formula' as const },
+    { top: inicioSendero + 340, lado: 'right' as const, rot: 14, tipo: 'cohete' as const },
+    { top: inicioSendero + 660, lado: 'left' as const, rot: -10, tipo: 'libro' as const },
+    { top: inicioSendero + 900, lado: 'right' as const, rot: 9, tipo: 'planeta' as const },
   ]
 
   return (
@@ -500,7 +504,7 @@ export default async function MapaBritoPage({
                           {nodo.esRepaso || nodo.status === 'locked' ? (
                             circulo
                           ) : (
-                            <Link href={`/brito/leccion/${nodo.id}`}>{circulo}</Link>
+                            <NodoLink href={`/brito/leccion/${nodo.id}`}>{circulo}</NodoLink>
                           )}
 
                           {nodo.status === 'completed' && nodo.estrellas !== undefined && (
