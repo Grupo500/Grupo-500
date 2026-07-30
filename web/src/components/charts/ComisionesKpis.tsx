@@ -9,9 +9,9 @@ import { Landmark, Users, Wallet } from 'lucide-react'
 interface Desglose { bruto: number; comisionHotmart: number; comisionAsesor: number; neto: number }
 
 /**
- * Recibo de liquidación del periodo: los dos descuentos y la línea de total.
- * Una sola tarjeta que se lee como cuenta de cobro — la resta se entiende
- * sola, y el neto (el número que importa) cierra con el mayor peso visual.
+ * Las tres tarjetas de comisiones junto a la gráfica de facturación: los dos
+ * descuentos y el neto. Tarjetas blancas como el resto del dashboard; el
+ * color vive solo en el ícono y la cifra.
  */
 export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string }) {
   const { resolvedTheme } = useTheme()
@@ -25,47 +25,31 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
 
   const d = data?.data?.desglose ?? { bruto: 0, comisionHotmart: 0, comisionAsesor: 0, neto: 0 }
 
-  const ambar = isDark ? '#fbbf24' : '#b45309'
-  const rojo = isDark ? '#f87171' : '#b91c1c'
-  const verde = isDark ? '#6ee7b7' : '#15803d'
-
-  const descuentos = [
-    { label: 'Comisión Hotmart', valor: d.comisionHotmart, color: ambar, Icon: Landmark },
-    { label: 'Comisión asesores', valor: d.comisionAsesor, color: rojo, Icon: Users },
+  const cards = [
+    { label: 'Comisión Hotmart',  valor: d.comisionHotmart, color: isDark ? '#fbbf24' : '#b45309', Icon: Landmark, negativo: true },
+    { label: 'Comisión asesores', valor: d.comisionAsesor,  color: isDark ? '#f87171' : '#b91c1c', Icon: Users,    negativo: true },
+    { label: 'Neto recibido',     valor: d.neto,            color: isDark ? '#6ee7b7' : '#15803d', Icon: Wallet,   negativo: false },
   ]
 
   return (
-    <div className="card p-5 md:h-full flex flex-col">
-      {/* Misma cabecera que las demás tarjetas del dashboard: chip de ícono
-          en el contenedor primario y título en 15px seminegrita. */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
-          <Wallet className="w-3.5 h-3.5 text-primary" />
-        </div>
-        <h3 className="text-[15px] font-semibold text-on-surface">Comisiones</h3>
-      </div>
-
-      <div className="flex-1 flex flex-col justify-center">
-        {descuentos.map(({ label, valor, color }, i) => (
-          <div
-            key={label}
-            className={`py-2.5 ${i > 0 ? 'border-t border-dashed border-[var(--outline-variant)]' : ''}`}
-          >
-            <span className="block text-[11px] text-on-surface-variant">{label}</span>
+    <div className="grid grid-cols-2 md:flex md:flex-col gap-3 md:h-full">
+      {cards.map(({ label, valor, color, Icon, negativo }, i) => {
+        const esNeto = i === 2
+        return (
+          <div key={label}
+            className={`card p-4 flex flex-col justify-center items-center text-center md:items-stretch md:text-left md:flex-1 ${esNeto ? 'col-span-2 md:col-span-1' : ''}`}>
+            <div className="flex items-center gap-2 mb-2 justify-center md:justify-start">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}1f` }}>
+                <Icon className="w-3.5 h-3.5" style={{ color }} />
+              </div>
+              <span className="text-[12px] font-medium text-on-surface-variant leading-tight">{label}</span>
+            </div>
             {isLoading
-              ? <span className="block h-4 w-24 rounded bg-[var(--surface-high)] animate-pulse mt-1" />
-              : <span className="block text-[14px] font-semibold tabular-nums mt-0.5" style={{ color }}>−{formatCOP(valor)}</span>}
+              ? <div className="h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse" />
+              : <p className="text-[18px] font-bold tabular-nums" style={{ color }}>{negativo ? '−' : ''}{formatCOP(valor)}</p>}
           </div>
-        ))}
-
-        {/* Línea de total: borde sólido más marcado, como el total de un recibo. */}
-        <div className="pt-3 mt-0.5 border-t-2 border-[var(--outline-variant)]">
-          <span className="block text-[11px] font-medium text-on-surface">Neto recibido</span>
-          {isLoading
-            ? <span className="block h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse mt-1" />
-            : <span className="block text-[17px] font-bold tabular-nums mt-0.5" style={{ color: verde }}>{formatCOP(d.neto)}</span>}
-        </div>
-      </div>
+        )
+      })}
     </div>
   )
 }
