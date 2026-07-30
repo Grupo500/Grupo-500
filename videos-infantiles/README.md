@@ -14,16 +14,42 @@ guion (.json)  ──►  Chromium dibuja cada cuadro  ──►  ffmpeg (H.264 
 
 ## 1. Instalación
 
-```bash
-cd videos-infantiles
-npm install                      # playwright + tipografía Baloo 2
-pip install numpy imageio-ffmpeg # síntesis de audio + ffmpeg completo
-npx playwright install chromium  # solo si no tienes Chromium en el sistema
+Requisitos previos: **Node 18+**, **Python 3.10+** y ~1 GB libre por video.
+
+```powershell
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File instalar.ps1
 ```
 
-Requisitos: Node 18+, Python 3.10+, ~1 GB libre por video.
+```bash
+# Linux / macOS
+bash instalar.sh
+```
 
-## 2. Hacer un video
+El instalador resuelve Playwright, ffmpeg, el motor de voz Kokoro y espeak-ng.
+A mano sería:
+
+```bash
+npm install                                  # playwright + tipografía Baloo 2
+pip install numpy imageio-ffmpeg             # audio + ffmpeg completo
+pip install kokoro soundfile 'misaki[es]'    # voz local (opcional)
+npx playwright install chromium              # solo si no hay Chromium en el sistema
+```
+
+## 2. Producir todo de una vez
+
+```bash
+node producir.mjs --motor kokoro
+```
+
+Genera la narración y el video de cada guion, uno tras otro. Si uno falla sigue
+con el siguiente y reporta al final. Para un solo video:
+
+```bash
+node producir.mjs --motor kokoro --guion guiones/101-colores-compilado.json
+```
+
+## 3. Hacer un video
 
 ```bash
 # borrador rápido (media resolución, para revisar ritmo y textos)
@@ -42,18 +68,6 @@ portada.
 Tiempo de render: ~3 s de proceso por cada segundo de video en 1080p
 (un video de 3 minutos toma unos 9 minutos).
 
-### Todo de una vez
-
-`producir.mjs` hace la narración y el render de cada guion, uno tras otro. Si
-uno falla sigue con el siguiente y reporta al final:
-
-```bash
-export GOOGLE_TTS_API_KEY=...
-node producir.mjs                                    # todos los guiones
-node producir.mjs --guion guiones/101-colores-compilado.json
-node producir.mjs --sin-voz --escala 0.5              # borradores mudos
-```
-
 ### Opciones de `render.mjs`
 
 | Opción | Para qué sirve |
@@ -69,7 +83,7 @@ node producir.mjs --sin-voz --escala 0.5              # borradores mudos
 | `--sin-audio` | video mudo |
 | `--salida <ruta>` | ruta del mp4 |
 
-## 3. Compilados de 15–30 minutos
+## 4. Compilados de 15–30 minutos
 
 Un compilado tiene más de 100 escenas, así que se generan con un script en vez
 de escribirlos a mano:
@@ -95,7 +109,7 @@ narración están en `guiones/armar.mjs`.
 > Un compilado de 20 min tarda cerca de una hora en renderizar en 1080p. Para
 > revisar antes de comprometer ese tiempo: `--escala 0.5 --hasta 180`.
 
-## 4. El guion
+## 5. El guion
 
 Un video es una lista de escenas. La duración de cada escena se estira
 automáticamente si la narración es más larga que lo declarado.
@@ -158,7 +172,7 @@ Los que son de un solo color aceptan color: `"objeto": "pelota:azul"` o
 Para agregar un objeto nuevo: una función más en `src/assets/objetos.js`
 (viewBox 200×200, trazo grueso oscuro, colores planos).
 
-## 5. Audio
+## 6. Audio
 
 ### Música
 Se sintetiza con numpy sobre escala pentatonaria (nunca desafina) con marimba,
@@ -181,7 +195,7 @@ con el rebote y no un cuadro después. Para desactivarlos: `--sin-efectos`.
 
 ### Narración
 
-Cuatro motores, todos con el mismo pipeline. Los archivos que ya existen nunca
+Cinco motores, todos con el mismo pipeline. Los archivos que ya existen nunca
 se sobrescriben, así que se puede mezclar TTS con líneas regrabadas a mano.
 
 | Motor | Calidad | Costo | Corre en el servidor de Claude Code |
@@ -256,7 +270,7 @@ solo audio por escena, con una pausa corta en medio.
 
 La mezcla final baja la música automáticamente cuando hay voz (ducking).
 
-## 6. Publicar en YouTube
+## 7. Publicar en YouTube
 
 - Marcar el video como **hecho para niños** (obligatorio por COPPA cuando el
   público objetivo son menores). Consecuencia: YouTube desactiva comentarios,
@@ -266,7 +280,7 @@ La mezcla final baja la música automáticamente cuando hay voz (ducking).
 - `guion.youtube` guarda título, descripción y etiquetas sugeridas para no
   tener que reescribirlas al subir.
 
-## 7. Criterios de diseño para 2–4 años
+## 8. Criterios de diseño para 2–4 años
 
 Lo que está aplicado en las plantillas, por si se agregan nuevas:
 
@@ -280,7 +294,7 @@ Lo que está aplicado en las plantillas, por si se agregan nuevas:
 - **Sin texto pequeño ni frases largas:** una sola palabra por pantalla.
 - **Duración total sugerida:** 2–5 minutos.
 
-## 8. Estructura
+## 9. Estructura
 
 ```
 videos-infantiles/

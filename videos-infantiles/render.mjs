@@ -22,6 +22,8 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { candidatosChromium, comandoPython, ffmpegBin } from './lib/entorno.mjs';
+
 const RAIZ = path.dirname(fileURLToPath(import.meta.url));
 const ANCHO_BASE = 1920;
 const ALTO_BASE = 1080;
@@ -57,22 +59,6 @@ function leerArgs(argv) {
   return a;
 }
 
-/* ---------------- herramientas externas ---------------- */
-
-function ffmpegBin() {
-  if (process.env.FFMPEG) return process.env.FFMPEG;
-  for (const intento of [
-    () => execFileSync('bash', ['-lc', 'command -v ffmpeg'], { encoding: 'utf8' }).trim(),
-    () => execFileSync('python3', ['-c', 'import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())'], { encoding: 'utf8' }).trim(),
-  ]) {
-    try {
-      const r = intento();
-      if (r) return r;
-    } catch { /* siguiente intento */ }
-  }
-  throw new Error('No se encontro ffmpeg. Instalalo con: pip install imageio-ffmpeg');
-}
-
 /**
  * Abre Chromium. Si la version de Playwright no trae su navegador descargado,
  * reutiliza uno del sistema en vez de exigir "npx playwright install".
@@ -90,22 +76,6 @@ async function abrirNavegador() {
     }
     throw e;
   }
-}
-
-function candidatosChromium() {
-  const lista = [process.env.CHROMIUM];
-  const base = process.env.PLAYWRIGHT_BROWSERS_PATH;
-  if (base && fs.existsSync(base)) {
-    for (const dir of fs.readdirSync(base)) {
-      if (dir.startsWith('chromium-')) lista.push(path.join(base, dir, 'chrome-linux/chrome'));
-    }
-  }
-  for (const nombre of ['chromium', 'chromium-browser', 'google-chrome', 'google-chrome-stable']) {
-    try {
-      lista.push(execFileSync('bash', ['-lc', `command -v ${nombre}`], { encoding: 'utf8' }).trim());
-    } catch { /* no esta */ }
-  }
-  return lista.filter(Boolean);
 }
 
 /* ---------------- servidor local ---------------- */
@@ -156,7 +126,7 @@ function prepararAudio(rutaGuion, sinVoz) {
   const args = ['audio/preparar.py', '--guion', rutaGuion];
   if (sinVoz) args.push('--sin-voz');
   try {
-    const salida = execFileSync('python3', args, { cwd: RAIZ, encoding: 'utf8' });
+    const salida = execFileSync(comandoPython(), args, { cwd: RAIZ, encoding: 'utf8' });
     process.stdout.write(salida);
   } catch (e) {
     console.error('Fallo la preparacion del audio:\n' + (e.stderr || e.message));
@@ -214,7 +184,7 @@ async function main() {
     const rutaEventos = path.join(RAIZ, 'temporal', guion.id, 'eventos.json');
     fs.writeFileSync(rutaEventos, JSON.stringify(info.eventos), 'utf8');
     try {
-      process.stdout.write(execFileSync('python3', [
+      process.stdout.write(execFileSync(comandoPython(), [
         'audio/efectos.py', '--guion', args.guion, '--eventos', path.relative(RAIZ, rutaEventos),
       ], { cwd: RAIZ, encoding: 'utf8' }));
     } catch (e) {

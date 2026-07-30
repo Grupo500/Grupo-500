@@ -11,6 +11,8 @@
  */
 
 import { spawnSync } from 'node:child_process';
+
+import { comandoPython } from './lib/entorno.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -71,7 +73,7 @@ for (const [i, guion] of guiones.entries()) {
     if (vozEs) argsVoz.push('--voz-es', vozEs);
     if (vozEn) argsVoz.push('--voz-en', vozEn);
     if (velocidad) argsVoz.push('--velocidad', velocidad);
-    if (!correr('python3', argsVoz, `narración (${motor})`)) {
+    if (!correr(comandoPython(), argsVoz, `narración (${motor})`)) {
       resultados.push({ nombre, estado: 'falló la narración' });
       continue;
     }
