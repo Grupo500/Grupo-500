@@ -14,21 +14,29 @@ Cada segmento se sintetiza con una voz del idioma correspondiente y luego se
 unen en un solo archivo por escena, con una pausa corta en medio.
 
 Motores:
-  google  Google Cloud Text-to-Speech. Necesita GOOGLE_TTS_API_KEY.
-          Es el unico servicio de voz con IA alcanzable desde este servidor.
-  edge    Voces neuronales de Microsoft Edge (gratis, sin key), pero
-          speech.platform.bing.com esta bloqueado aqui: correr en equipo propio.
-  piper   Motor neuronal local, sin internet. Requiere modelo .onnx descargado.
+  elevenlabs  La mejor calidad. Necesita ELEVENLABS_API_KEY. El modelo
+              multilingue pronuncia bien espanol e ingles con la misma voz, asi
+              que el video bilingue queda con un solo narrador.
+              api.elevenlabs.io esta bloqueado en el servidor de Claude Code:
+              correr en equipo propio.
+  google      Google Cloud Text-to-Speech. Necesita GOOGLE_TTS_API_KEY.
+              Es el unico servicio de voz con IA alcanzable desde ese servidor.
+  edge        Voces neuronales de Microsoft Edge (gratis, sin key), pero
+              speech.platform.bing.com tambien esta bloqueado alli.
+  piper       Motor neuronal local, sin internet. Requiere modelo .onnx.
 
 Salida: voz/<id-guion>/01.wav, 02.wav, ...
 Los archivos que ya existen no se sobrescriben, asi que se puede reemplazar
 cualquier linea por una grabacion propia y volver a correr todo.
 
 Uso:
+    export ELEVENLABS_API_KEY=...
+    python3 audio/voz.py --guion guiones/101-colores-compilado.json --motor elevenlabs
+    python3 audio/voz.py --motor elevenlabs --listar-voces
+
     export GOOGLE_TTS_API_KEY=...
-    python3 audio/voz.py --guion guiones/001-los-colores.json
+    python3 audio/voz.py --guion guiones/001-los-colores.json --motor google
     python3 audio/voz.py --guion ... --voz-es es-US-Neural2-A --voz-en en-US-Neural2-F
-    python3 audio/voz.py --guion ... --listar-voces
 """
 
 from __future__ import annotations
@@ -62,6 +70,11 @@ VOCES_EDGE = {
     "es": "es-CO-SalomeNeural",
     "en": "en-US-AriaNeural",
 }
+
+ELEVEN_URL = "https://api.elevenlabs.io/v1"
+# El modelo multilingue maneja los dos idiomas con la misma voz, que es lo que
+# hace que el video bilingue no suene como dos narradores distintos.
+ELEVEN_MODELO = "eleven_multilingual_v2"
 
 
 def segmentos_de(escena: dict) -> list[dict]:
@@ -131,6 +144,66 @@ def listar_voces_google(clave: str) -> None:
             print(f"  {n}")
 
 
+# ---------------------------------------------------------------- ElevenLabs
+
+def _pedir_eleven(ruta: str, clave: str, cuerpo: dict | None = None) -> bytes:
+    pedido = urllib.request.Request(
+        f"{ELEVEN_URL}/{ruta}",
+        data=json.dumps(cuerpo).encode() if cuerpo is not None else None,
+        headers={"xi-api-key": clave, "Content-Type": "application/json"},
+        method="POST" if cuerpo is not None else "GET",
+    )
+    try:
+        with urllib.request.urlopen(pedido, timeout=120) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        detalle = e.read().decode(errors="replace")[:400]
+        raise RuntimeError(f"ElevenLabs respondio {e.code}: {detalle}") from None
+
+
+def voces_eleven(clave: str) -> list[dict]:
+    datos = json.loads(_pedir_eleven("voices", clave))
+    return datos.get("voices", [])
+
+
+def listar_voces_eleven(clave: str) -> None:
+    voces = voces_eleven(clave)
+    print(f"{len(voces)} voces en la cuenta:\n")
+    for v in voces:
+        etiquetas = v.get("labels") or {}
+        detalle = ", ".join(f"{k}={x}" for k, x in etiquetas.items() if k in
+                            ("gender", "age", "accent", "description", "use_case"))
+        print(f"  {v['voice_id']}  {v.get('name', ''):22} {detalle}")
+    print("\nElegir con: --voz-es <voice_id>  (y --voz-en si se quiere otra para el ingles)")
+
+
+def voz_eleven(texto: str, voice_id: str, clave: str, velocidad: float,
+               modelo: str = ELEVEN_MODELO) -> np.ndarray:
+    ajustes = {"stability": 0.45, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True}
+    if abs(velocidad - 1.0) > 0.01:
+        ajustes["speed"] = round(max(0.7, min(1.2, velocidad)), 2)
+
+    cuerpo = {"text": texto, "model_id": modelo, "voice_settings": ajustes}
+    try:
+        crudo = _pedir_eleven(f"text-to-speech/{voice_id}?output_format=mp3_44100_128", clave, cuerpo)
+    except RuntimeError as e:
+        # Algunos modelos no aceptan "speed": se reintenta sin ese ajuste antes
+        # de darse por vencido, para no fallar por un detalle de configuracion.
+        if "speed" in str(e) and "speed" in ajustes:
+            ajustes.pop("speed")
+            cuerpo["voice_settings"] = ajustes
+            crudo = _pedir_eleven(f"text-to-speech/{voice_id}?output_format=mp3_44100_128", clave, cuerpo)
+        else:
+            raise
+
+    tmp = RAIZ / "temporal" / "_voz_tmp.mp3"
+    tmp.parent.mkdir(parents=True, exist_ok=True)
+    tmp.write_bytes(crudo)
+    audio = leer_audio(tmp)
+    tmp.unlink(missing_ok=True)
+    return audio
+
+
 # ---------------------------------------------------------------------- Edge
 
 async def voz_edge(texto: str, voz: str, velocidad: str, tono: str) -> np.ndarray:
@@ -171,23 +244,40 @@ def voz_piper(texto: str, modelo: str) -> np.ndarray:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Genera la narracion del guion")
     ap.add_argument("--guion")
-    ap.add_argument("--motor", default="google", choices=["google", "edge", "piper"])
-    ap.add_argument("--voz-es", default=VOZ_POR_DEFECTO["es"])
-    ap.add_argument("--voz-en", default=VOZ_POR_DEFECTO["en"])
+    ap.add_argument("--motor", default="google", choices=["elevenlabs", "google", "edge", "piper"])
+    ap.add_argument("--voz-es", default=None,
+                    help="google: nombre de voz. elevenlabs: voice_id")
+    ap.add_argument("--voz-en", default=None,
+                    help="si se omite en elevenlabs se usa la misma voz (el modelo es multilingue)")
     ap.add_argument("--velocidad", type=float, default=0.88,
-                    help="google: 1.0 es normal, mas lento ayuda a los mas pequenos")
+                    help="1.0 es normal; mas lento ayuda a los mas pequenos")
     ap.add_argument("--tono", type=float, default=2.0, help="google: semitonos")
-    ap.add_argument("--modelo", default="voz/modelos/es_MX-claude-high.onnx")
+    ap.add_argument("--modelo", default=None,
+                    help="elevenlabs: model_id. piper: ruta al .onnx")
     ap.add_argument("--sobrescribir", action="store_true")
     ap.add_argument("--listar-voces", action="store_true")
     a = ap.parse_args()
 
-    clave = os.environ.get("GOOGLE_TTS_API_KEY", "")
+    clave_google = os.environ.get("GOOGLE_TTS_API_KEY", "")
+    clave_eleven = os.environ.get("ELEVENLABS_API_KEY", "")
 
     if a.listar_voces:
-        if not clave:
-            sys.exit("Falta GOOGLE_TTS_API_KEY para listar voces.")
-        listar_voces_google(clave)
+        try:
+            if a.motor == "elevenlabs":
+                if not clave_eleven:
+                    sys.exit("Falta ELEVENLABS_API_KEY.")
+                listar_voces_eleven(clave_eleven)
+            else:
+                if not clave_google:
+                    sys.exit("Falta GOOGLE_TTS_API_KEY para listar voces.")
+                listar_voces_google(clave_google)
+        except (urllib.error.URLError, RuntimeError) as e:
+            sys.exit(
+                f"No se pudo consultar las voces: {e}\n\n"
+                "Si el mensaje dice 'Tunnel connection failed: 403', el host esta\n"
+                "bloqueado por la politica de red de este equipo. Corre este comando\n"
+                "en tu computador personal."
+            )
         return
 
     if not a.guion:
@@ -197,7 +287,7 @@ def main() -> None:
     carpeta = RAIZ / "voz" / guion["id"]
     carpeta.mkdir(parents=True, exist_ok=True)
 
-    if a.motor == "google" and not clave:
+    if a.motor == "google" and not clave_google:
         sys.exit(
             "Falta la variable GOOGLE_TTS_API_KEY.\n\n"
             "Como obtenerla:\n"
@@ -208,6 +298,32 @@ def main() -> None:
             "Las voces Neural2 tienen 1 millon de caracteres gratis al mes; un video\n"
             "de 20 minutos usa cerca de 7 mil, asi que alcanza de sobra."
         )
+
+    if a.motor == "elevenlabs" and not clave_eleven:
+        sys.exit(
+            "Falta la variable ELEVENLABS_API_KEY.\n\n"
+            "  export ELEVENLABS_API_KEY=...\n"
+            "  python3 audio/voz.py --motor elevenlabs --listar-voces\n\n"
+            "OJO: ElevenLabs cobra por caracteres. Los cuatro compilados suman unos\n"
+            "51 mil caracteres, asi que conviene revisar el plan antes de lanzarlos."
+        )
+
+    # Resolucion de voces por motor.
+    if a.motor == "elevenlabs":
+        voz_es = a.voz_es
+        if not voz_es:
+            disponibles = voces_eleven(clave_eleven)
+            if not disponibles:
+                sys.exit("La cuenta de ElevenLabs no tiene voces disponibles.")
+            voz_es = disponibles[0]["voice_id"]
+            print(f"Voz no indicada, se usa '{disponibles[0].get('name')}' ({voz_es}).")
+            print("Para elegir otra: --motor elevenlabs --listar-voces")
+        voces = {"es": voz_es, "en": a.voz_en or voz_es}
+    else:
+        voces = {
+            "es": a.voz_es or VOZ_POR_DEFECTO["es"],
+            "en": a.voz_en or VOZ_POR_DEFECTO["en"],
+        }
 
     existentes = {p.stem for p in carpeta.glob("*.*")}
     pendientes = []
@@ -227,24 +343,27 @@ def main() -> None:
     print(f"Generando {len(pendientes)} escenas con motor '{a.motor}'"
           + (f" ({saltadas} ya existian)" if saltadas else "") + "...")
 
-    voces = {'es': a.voz_es, 'en': a.voz_en}
     silencio = np.zeros(int(PAUSA * SR))
+    modelo_piper = a.modelo or "voz/modelos/es_MX-claude-high.onnx"
 
     try:
         for numero, segs in pendientes:
             partes = []
             for s in segs:
                 idioma = s["idioma"] if s["idioma"] in voces else "es"
-                if a.motor == "google":
+                if a.motor == "elevenlabs":
+                    audio = voz_eleven(s["texto"], voces[idioma], clave_eleven,
+                                       a.velocidad, a.modelo or ELEVEN_MODELO)
+                elif a.motor == "google":
                     audio = voz_google(s["texto"], voces[idioma],
-                                       IDIOMA_A_CODIGO[idioma], clave,
+                                       IDIOMA_A_CODIGO[idioma], clave_google,
                                        a.velocidad, a.tono)
                 elif a.motor == "edge":
                     audio = asyncio.run(voz_edge(s["texto"], VOCES_EDGE[idioma],
                                                  f"{int((a.velocidad - 1) * 100):+d}%",
                                                  f"{int(a.tono * 5):+d}Hz"))
                 else:
-                    audio = voz_piper(s["texto"], a.modelo)
+                    audio = voz_piper(s["texto"], modelo_piper)
                 partes.append(audio)
 
             completo = partes[0]

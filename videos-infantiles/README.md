@@ -181,33 +181,52 @@ con el rebote y no un cuadro después. Para desactivarlos: `--sin-efectos`.
 
 ### Narración
 
-**Google Cloud TTS (`--motor google`) — el único servicio de voz con IA que
-funciona desde este servidor.** Los demás (Edge, ElevenLabs, OpenAI, Azure,
-Deepgram) están bloqueados por la política de red del entorno.
+Cuatro motores, todos con el mismo pipeline. Los archivos que ya existen nunca
+se sobrescriben, así que se puede mezclar TTS con líneas regrabadas a mano.
+
+| Motor | Calidad | Costo | Corre en el servidor de Claude Code |
+|---|---|---|---|
+| `elevenlabs` | la mejor | por caracteres | **no** (host bloqueado) |
+| `google` | muy buena | 1M caracteres/mes gratis | **sí** |
+| `edge` | muy buena | gratis, sin key | **no** (host bloqueado) |
+| `piper` | aceptable | gratis, sin internet | no (modelos bloqueados) |
+
+**ElevenLabs** — mejor opción si hay presupuesto. El modelo multilingüe
+pronuncia bien español e inglés **con la misma voz**, así que el video bilingüe
+queda con un solo narrador en vez de dos.
+
+```bash
+export ELEVENLABS_API_KEY=...
+python3 audio/voz.py --motor elevenlabs --listar-voces        # elegir voz
+python3 audio/voz.py --motor elevenlabs --guion guiones/101-colores-compilado.json \
+                     --voz-es <voice_id>
+```
+
+Si no se indica `--voz-es`, toma la primera voz de la cuenta. Los cuatro
+compilados suman ~51 mil caracteres: conviene revisar el plan antes de lanzarlos.
+
+**Google Cloud TTS** — gratis y es el único que funciona desde el servidor de
+Claude Code.
 
 ```bash
 export GOOGLE_TTS_API_KEY=...
-python3 audio/voz.py --guion guiones/101-colores-compilado.json
-python3 audio/voz.py --listar-voces          # ver todas las voces disponibles
+python3 audio/voz.py --motor google --guion guiones/101-colores-compilado.json
+python3 audio/voz.py --motor google --listar-voces
 ```
 
 Cómo obtener la key: `console.cloud.google.com` → crear proyecto → habilitar
-**Cloud Text-to-Speech API** → APIs y servicios → Credenciales → Crear clave de
-API. Las voces Neural2 traen 1 millón de caracteres gratis al mes; un compilado
-de 20 minutos consume unos 7 mil, así que alcanza de sobra.
+**Cloud Text-to-Speech API** → Credenciales → Crear clave de API. Importante: si
+se le pone restricción de API, hay que marcar Cloud Text-to-Speech en la lista, o
+devuelve `API_KEY_SERVICE_BLOCKED`. Las voces Neural2 traen 1 millón de
+caracteres gratis al mes y un compilado de 20 min usa unos 7 mil.
 
-Otras opciones, todas compatibles con el mismo pipeline:
+**Voz propia grabada** — grabar una línea por escena y guardarla como
+`voz/<id-guion>/01.wav`, `02.wav`, … El render ajusta la duración de cada escena
+a la grabación. Es la opción más original y no cuesta nada.
 
-- **Voz propia grabada** — grabar una línea por escena y guardarla como
-  `voz/<id-guion>/01.wav`, `02.wav`, … El render ajusta la duración de cada
-  escena a la grabación.
-- **Edge TTS** (`--motor edge`, gratis y sin key), pero hay que correrlo en un
-  computador propio y copiar los audios a `voz/<id-guion>/`.
-- **Piper** (`--motor piper`, 100% local): requiere bajar un modelo `.onnx` de
-  voz española a `voz/modelos/`.
-
-Los archivos que ya existen nunca se sobrescriben, así que se puede mezclar TTS
-con líneas regrabadas a mano.
+**Edge TTS** (`--motor edge`) es gratis y sin key, pero hay que correrlo en un
+equipo propio. **Piper** (`--motor piper`) funciona sin internet, bajando un
+modelo `.onnx` de voz española a `voz/modelos/`.
 
 **Narración bilingüe:** el campo `narracion` acepta una lista de segmentos con
 su idioma. Cada segmento se sintetiza con una voz de ese idioma y se unen en un
