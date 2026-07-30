@@ -31,16 +31,22 @@ const ALTO_BASE = 1080;
 function leerArgs(argv) {
   const a = {
     guion: null, escala: 1, fps: null, crf: 20, preset: 'medium',
-    salida: null, sinAudio: false, sinVoz: false,
+    salida: null, sinAudio: false, sinVoz: false, sinEfectos: false,
     desde: 0, hasta: null, foto: null, fotos: null, calidadCuadro: 96, sinMiniatura: false,
   };
   const numeros = new Set(['escala', 'fps', 'crf', 'desde', 'hasta', 'foto', 'calidadCuadro']);
-  const alias = { 'sin-audio': 'sinAudio', 'sin-voz': 'sinVoz', 'calidad-cuadro': 'calidadCuadro', 'sin-miniatura': 'sinMiniatura' };
+  const alias = {
+    'sin-audio': 'sinAudio', 'sin-voz': 'sinVoz', 'sin-efectos': 'sinEfectos',
+    'calidad-cuadro': 'calidadCuadro', 'sin-miniatura': 'sinMiniatura',
+  };
   for (let i = 2; i < argv.length; i++) {
     if (!argv[i].startsWith('--')) continue;
     const bruto = argv[i].slice(2);
     const clave = alias[bruto] ?? bruto;
-    if (clave === 'sinAudio' || clave === 'sinVoz' || clave === 'sinMiniatura') { a[clave] = true; continue; }
+    if (clave === 'sinAudio' || clave === 'sinVoz' || clave === 'sinMiniatura' || clave === 'sinEfectos') {
+      a[clave] = true;
+      continue;
+    }
     const valor = argv[++i];
     a[clave] = numeros.has(clave) ? Number(valor) : valor;
   }
@@ -201,6 +207,21 @@ async function main() {
   const duracion = info.duracion;
 
   fs.mkdirSync(path.join(RAIZ, 'salida'), { recursive: true });
+
+  // Los efectos se mezclan despues de montar, porque los tiempos exactos los
+  // reporta el motor (que sabe en que segundo aparece cada objeto).
+  if (audioWav && !args.sinEfectos && info.eventos?.length) {
+    const rutaEventos = path.join(RAIZ, 'temporal', guion.id, 'eventos.json');
+    fs.writeFileSync(rutaEventos, JSON.stringify(info.eventos), 'utf8');
+    try {
+      process.stdout.write(execFileSync('python3', [
+        'audio/efectos.py', '--guion', args.guion, '--eventos', path.relative(RAIZ, rutaEventos),
+      ], { cwd: RAIZ, encoding: 'utf8' }));
+    } catch (e) {
+      console.error('No se pudieron mezclar los efectos:\n' + (e.stderr || e.message));
+      throw e;
+    }
+  }
 
   // Modo foto: una sola imagen para revisar el diseno rapido.
   if (esFoto) {

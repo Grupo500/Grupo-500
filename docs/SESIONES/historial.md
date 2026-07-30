@@ -766,8 +766,37 @@ Admin/Asesor revisa → presiona "Confirmar matrícula" → ✓ Verificado
 | 017 | SVG con figuras superpuestas | Nubes, melenas y copas de árbol mostraban los contornos internos de cada círculo | Helper `silueta()`: pinta el grupo con trazo doble y encima el relleno, dejando solo el contorno exterior |
 | 018 | Audio determinista | `hash()` de str en Python cambia entre procesos, la música salía distinta en cada corrida | Usar `zlib.crc32()` para la semilla |
 
+### Sesión 013b — bilingüe, compilados y efectos
+
+- **Bilingüe español-inglés:** campos `etiquetaEn` / `palabraEn`. La palabra inglesa
+  va debajo de la española, más pequeña y en azul, y entra unos segundos después.
+  La narración se sintetiza en dos segmentos, uno por idioma, para que el inglés
+  no salga con fonética española.
+- **Compilados:** `guiones/armar.mjs` genera guiones de 15–30 min por tema. Se
+  armaron los cuatro (colores, formas, números, frutas-vehículos), de 106 a 146
+  escenas cada uno, con la narración ya redactada y concordancia de género correcta.
+- **Efectos de sonido sintetizados** (`audio/efectos.py`): pop, campanita, arpegio
+  de respuesta correcta y fanfarria. Los tiempos los reporta el motor de animación,
+  no se escriben a mano, así que el sonido cae exacto con la animación.
+- **`producir.mjs`:** narración + render de varios guiones en un solo comando.
+
+### Voz con IA: estado
+
+Se probaron seis servicios. Solo **Google Cloud TTS** es alcanzable desde el
+entorno de Claude Code; ElevenLabs, OpenAI, Azure, Deepgram, Cartesia y Edge TTS
+están bloqueados por la política de red, igual que HuggingFace (modelos locales).
+La integración con Google quedó escrita y verificada contra la API, pero la clave
+entregada quedó con restricción de API que bloquea Text-to-Speech
+(`API_KEY_SERVICE_BLOCKED`), así que la narración quedó pendiente.
+
+### Errores registrados
+| # | Contexto | Error | Solución |
+|---|----------|-------|----------|
+| 019 | Conversión a mono con ffmpeg | `-ac 1` no promedia los canales: aplica normalización de potencia (×1.414 al bajar de estéreo, ×0.707 al subir de mono). Al leer y reescribir el mismo WAV, la mezcla subía 3 dB por pasada y descuadraba el balance música/voz/efectos | Detectar los canales reales y promediar con pesos explícitos (`pan=mono|c0=0.5*c0+0.5*c1`). Verificado: ganancia 0.9997 tras 5 ciclos |
+
 ### Pendientes
 - Definir nombre y línea gráfica definitiva del canal
-- Grabar la voz de la narración (o correr Edge TTS en equipo propio)
-- Elegir los primeros 10 temas de la serie
-- Efectos de sonido puntuales (pop, campanita) — hoy solo hay música de fondo
+- Narración: habilitar la key de Google TTS sin restricción, o correr Edge TTS
+  en equipo propio y subir los WAV a `voz/<id-guion>/`
+- Volver a renderizar los compilados cuando exista la narración (las duraciones
+  de escena cambian para que quepa el audio)

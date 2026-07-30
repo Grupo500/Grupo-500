@@ -213,6 +213,21 @@ function montarDestellos(semilla, cx, cy, radio = 300) {
   };
 }
 
+/* ---------------- tiempos compartidos ---------------- */
+/* Estas dos funciones las usan tanto la animacion como la lista de eventos de
+   sonido. Estan aparte para que no se puedan desincronizar. */
+
+/** Cada cuanto aparece un objeto en las escenas de conteo. */
+function pasoConteo(dur, total) {
+  return Math.min(1.6, Math.max(0.9, (dur - 0.7 - 3.5) / total));
+}
+
+/** Segundo en que se marca la respuesta correcta de una pregunta. */
+function tiempoRevelacion(def, dur) {
+  if (def.revelarEn == null) return Math.max(2.6, dur - 3.2);
+  return def.revelarEn <= 1 ? def.revelarEn * dur : def.revelarEn;
+}
+
 /* ---------------- plantillas de escena ---------------- */
 
 const PLANTILLAS = {
@@ -238,6 +253,7 @@ const PLANTILLAS = {
 
     return {
       el: raiz,
+      eventos: [{ t: 0.18, tipo: 'aparece' }, { t: 1.5, tipo: 'chime' }],
       animar(tl, dur) {
         fondo.animar(tl);
         titulo.animar(tramo(tl, 0.3, 1.9), tl);
@@ -297,8 +313,18 @@ const PLANTILLAS = {
     const destellos = montarDestellos(semillaDe('p' + def.objeto), ANCHO / 2, 470, 330);
     raiz.appendChild(destellos.el);
 
+    const durPresentar = Number(def.duracion) || 9;
+
     return {
       el: raiz,
+      eventos: [
+        { t: 0.14, tipo: 'pop' },
+        { t: 0.58, tipo: 'sparkle' },
+        { t: 1.1, tipo: 'ding' },
+        ...(def.etiquetaEn
+          ? [{ t: Math.min(2.8, durPresentar * 0.4) + 0.05, tipo: 'ding-alto' }]
+          : []),
+      ],
       animar(tl, dur) {
         fondo.animar(tl);
         const entra = rebotePop(tramo(tl, 0.1, 0.95));
@@ -374,14 +400,22 @@ const PLANTILLAS = {
     mascota.classList.add('mascota-lado');
     raiz.appendChild(mascota);
 
+    const durContar = Number(def.duracion) || 10;
+    const pasoContar = pasoConteo(durContar, total);
+
     return {
       el: raiz,
+      eventos: [
+        // Una campanita por cada objeto que aparece: refuerza el conteo al oido.
+        ...Array.from({ length: total }, (_, i) => ({ t: 0.7 + i * pasoContar + 0.06, tipo: 'ding' })),
+        ...(def.palabra ? [{ t: 0.7 + total * pasoContar + 0.18, tipo: 'chime' }] : []),
+      ],
       animar(tl, dur) {
         fondo.animar(tl);
         const arranque = 0.7;
         // Un objeto cada ~1,2 s: suficiente para seguir el conteo sin aburrir,
         // reservando el final de la escena para mostrar la palabra del numero.
-        const paso = Math.min(1.6, Math.max(0.9, (dur - arranque - 3.5) / total));
+        const paso = pasoConteo(dur, total);
         let visibles = 0;
         items.forEach((c, i) => {
           const t0 = arranque + i * paso;
@@ -442,17 +476,23 @@ const PLANTILLAS = {
     const destellos = montarDestellos(semillaDe('q' + def.enunciado), 0, 0, 240);
     raiz.appendChild(destellos.el);
 
+    const durPregunta = Number(def.duracion) || 11;
+    const revelaPregunta = tiempoRevelacion(def, durPregunta);
+
     return {
       el: raiz,
+      eventos: [
+        ...tarjetas.map((_, i) => ({ t: 1.0 + i * 0.32 + 0.06, tipo: 'pop' })),
+        { t: revelaPregunta + 0.05, tipo: 'chime' },
+        { t: revelaPregunta + 0.22, tipo: 'sparkle' },
+      ],
       animar(tl, dur) {
         fondo.animar(tl);
         enunciado.animar(tramo(tl, 0.2, 1.4), tl);
 
         // revelarEn menor o igual a 1 se interpreta como fraccion de la escena,
         // para que la respuesta siga cuadrando si la narracion estira la duracion.
-        const tRevela = def.revelarEn == null
-          ? Math.max(2.6, dur - 3.2)
-          : def.revelarEn <= 1 ? def.revelarEn * dur : def.revelarEn;
+        const tRevela = tiempoRevelacion(def, dur);
         tarjetas.forEach((t, i) => {
           const t0 = 1.0 + i * 0.32;
           const q = rebotePop(tramo(tl, t0, t0 + 0.5));
@@ -499,6 +539,7 @@ const PLANTILLAS = {
 
     return {
       el: raiz,
+      eventos: [{ t: 0.12, tipo: 'fanfare' }],
       animar(tl) {
         fondo.animar(tl);
         texto.animar(tramo(tl, 0.1, 1.0), tl);
@@ -545,8 +586,11 @@ const PLANTILLAS = {
     });
     raiz.appendChild(rejilla);
 
+    const pasoRepaso = Math.max(0.3, ((Number(def.duracion) || 14) - 1.8) / Math.max(1, celdas.length));
+
     return {
       el: raiz,
+      eventos: celdas.map((_, i) => ({ t: 0.8 + i * pasoRepaso + 0.06, tipo: 'pop' })),
       animar(tl, dur) {
         fondo.animar(tl);
         titulo.animar(tramo(tl, 0.1, 1.0), tl);
@@ -581,6 +625,7 @@ const PLANTILLAS = {
 
     return {
       el: raiz,
+      eventos: [{ t: 0.25, tipo: 'chime' }],
       animar(tl, dur) {
         fondo.animar(tl);
         texto.animar(tramo(tl, 0.2, 1.3), tl);
@@ -645,9 +690,23 @@ export function montar(guion) {
   }
 
   DURACION = reloj;
+
+  // Eventos de sonido en tiempo absoluto del video. Los calcula cada plantilla,
+  // que es la que sabe en que segundo aparece cada cosa.
+  const eventos = [];
+  for (const e of ESCENAS) {
+    for (const ev of e.inst.eventos || []) {
+      if (ev.t >= 0 && ev.t < e.dur) {
+        eventos.push({ t: Number((e.inicio + ev.t).toFixed(3)), tipo: ev.tipo });
+      }
+    }
+  }
+  eventos.sort((a, b) => a.t - b.t);
+
   return {
     duracion: DURACION,
     escenas: ESCENAS.map((e) => ({ tipo: e.def.tipo, inicio: e.inicio, dur: e.dur })),
+    eventos,
   };
 }
 

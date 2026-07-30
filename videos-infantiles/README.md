@@ -64,7 +64,8 @@ node producir.mjs --sin-voz --escala 0.5              # borradores mudos
 | `--fps 30` | cuadros por segundo |
 | `--fotos "3,11"` | solo exporta PNG en esos segundos, sin video |
 | `--desde` / `--hasta` | renderiza un tramo en segundos |
-| `--sin-voz` | ignora `voz/` y deja solo música |
+| `--sin-voz` | ignora `voz/` y deja música y efectos |
+| `--sin-efectos` | quita los efectos de sonido |
 | `--sin-audio` | video mudo |
 | `--salida <ruta>` | ruta del mp4 |
 
@@ -167,6 +168,16 @@ Con la misma `semilla` sale idéntica; cambiándola sale otra melodía.
 ```bash
 python3 audio/musica.py --segundos 90 --estilo suave --salida temporal/prueba.wav
 ```
+
+### Efectos de sonido
+
+Se sintetizan igual que la música y se mezclan solos durante el render: un *pop*
+cuando aparece cada objeto, una campanita por cada número que se cuenta, un
+arpegio al marcar la respuesta correcta y una fanfarria en las celebraciones.
+
+Los tiempos no se escriben a mano: los reporta el motor de animación, que es el
+único que sabe en qué segundo exacto aparece cada cosa, así que el sonido cae
+con el rebote y no un cuadro después. Para desactivarlos: `--sin-efectos`.
 
 ### Narración
 
