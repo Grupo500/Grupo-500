@@ -42,6 +42,18 @@ portada.
 Tiempo de render: ~3 s de proceso por cada segundo de video en 1080p
 (un video de 3 minutos toma unos 9 minutos).
 
+### Todo de una vez
+
+`producir.mjs` hace la narración y el render de cada guion, uno tras otro. Si
+uno falla sigue con el siguiente y reporta al final:
+
+```bash
+export GOOGLE_TTS_API_KEY=...
+node producir.mjs                                    # todos los guiones
+node producir.mjs --guion guiones/101-colores-compilado.json
+node producir.mjs --sin-voz --escala 0.5              # borradores mudos
+```
+
 ### Opciones de `render.mjs`
 
 | Opción | Para qué sirve |
