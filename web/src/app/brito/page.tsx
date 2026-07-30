@@ -1,11 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { auth } from '@/auth'
-import { Nunito } from 'next/font/google'
 import { ArrowLeft } from 'lucide-react'
 import { BotonJugar } from './BotonJugar'
-
-const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 /** Destino del juego. Es lo que decide si el botón lleva la transición. */
 const MAPA = '/brito/mapa'
@@ -67,7 +64,7 @@ export default async function BritoLandingPage() {
       : { principal: { href: '/brito/registro', texto: 'Crear cuenta gratis' }, secundaria: { href: '/sign-in', texto: 'Ya tengo cuenta' } }
 
   return (
-    <main className={`${nunito.className} min-h-dvh relative overflow-hidden bg-[#F7F5EF]`}>
+    <main className="min-h-dvh relative overflow-hidden bg-[#F7F5EF]">
       {/* Manchas suaves en los colores del juego. Dan calidez sin robarle
           protagonismo a la mascota, que es lo único que debe destacar. */}
       <div className="absolute -top-32 -left-24 w-[420px] h-[420px] rounded-full bg-[#F5A623]/12 blur-3xl pointer-events-none" aria-hidden />

@@ -2,9 +2,6 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Nunito } from 'next/font/google'
-
-const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 export default async function ResultadoLeccionPage({
   searchParams,
@@ -28,7 +25,7 @@ export default async function ResultadoLeccionPage({
 
   return (
     <main
-      className={`${nunito.className} flex min-h-dvh flex-col items-center justify-center px-4 py-10 text-center animate-fade-in`}
+      className="flex min-h-dvh flex-col items-center justify-center px-4 py-10 text-center animate-fade-in"
       style={{ background: '#EEF2F7', color: '#2B2B28' }}
     >
       <div className="flex w-full max-w-sm flex-col items-center animate-card-enter">

@@ -4,12 +4,9 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Nunito } from 'next/font/google'
 import { X, Check, XCircle, Loader2 } from 'lucide-react'
 import { materiaInfo } from '@/lib/britoMaterias'
 import { responderPregunta, finalizarLeccion } from '../../acciones'
-
-const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 interface Opcion { letra: string; texto: string }
 interface Pregunta {
@@ -85,7 +82,7 @@ export function TomarLeccion({
 
   if (sinCorazones) {
     return (
-      <main className={`${nunito.className} min-h-dvh flex flex-col items-center justify-center px-4 text-center animate-fade-in`} style={{ background: '#EEF2F7' }}>
+      <main className="min-h-dvh flex flex-col items-center justify-center px-4 text-center animate-fade-in" style={{ background: '#EEF2F7' }}>
         <div className="animate-card-enter flex flex-col items-center">
           <div className="mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
             <Image src="/brito/brito-hero.jpg" alt="Brito" width={96} height={96} className="h-full w-full object-cover grayscale" />
@@ -107,7 +104,7 @@ export function TomarLeccion({
   }
 
   return (
-    <main className={`${nunito.className} flex min-h-dvh flex-col animate-fade-in`} style={{ background: '#EEF2F7', color: '#2B2B28' }}>
+    <main className="flex min-h-dvh flex-col animate-fade-in" style={{ background: '#EEF2F7', color: '#2B2B28' }}>
       {/* Cabecera con progreso */}
       <header className="sticky top-0 z-10 border-b border-[#E1E6EE] bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">

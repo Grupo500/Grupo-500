@@ -2,7 +2,6 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Nunito } from 'next/font/google'
 import { prisma } from '@/lib/prisma'
 import { obtenerPerfilActual } from '../acciones'
 import { obtenerEstadoLiga } from '../ligas'
@@ -13,8 +12,6 @@ import {
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
-
-const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] })
 
 const ROLES_PERMITIDOS = ['ESTUDIANTE', 'ADMIN']
 
@@ -182,7 +179,7 @@ export default async function MapaBritoPage({
   const sinCorazones = perfil.plan !== 'PREMIUM' && perfil.corazones <= 0
 
   return (
-    <main className={`${nunito.className} min-h-dvh`} style={{ background: '#FAFAF7', color: '#2B2B28' }}>
+    <main className="min-h-dvh" style={{ background: '#FAFAF7', color: '#2B2B28' }}>
       {/* Header móvil */}
       <div className="lg:hidden sticky top-0 z-10 backdrop-blur-md bg-white/90 border-b border-[#ECEAE2]">
         <div className="relative max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
