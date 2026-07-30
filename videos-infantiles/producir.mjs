@@ -5,9 +5,8 @@
  * Es el atajo para no correr voz.py y render.mjs a mano por cada guion.
  * Si un guion falla, sigue con el siguiente y reporta todo al final.
  *
- *   export GOOGLE_TTS_API_KEY=...
- *   node producir.mjs                                   # todos los compilados
- *   node producir.mjs --guion guiones/101-colores-compilado.json
+ *   node producir.mjs --motor kokoro                    # todos, voz local y gratis
+ *   node producir.mjs --motor kokoro --guion guiones/101-colores-compilado.json
  *   node producir.mjs --sin-voz --escala 0.5            # borradores mudos
  */
 
@@ -41,6 +40,11 @@ if (!guiones.length) {
 const sinVoz = bandera('sin-voz');
 const escala = valor('escala', null);
 const crf = valor('crf', null);
+// Todo lo relativo a la voz se pasa tal cual a voz.py.
+const motor = valor('motor', 'kokoro');
+const vozEs = valor('voz-es', null);
+const vozEn = valor('voz-en', null);
+const velocidad = valor('velocidad', null);
 
 function correr(comando, argumentos, etiqueta) {
   const inicio = Date.now();
@@ -63,7 +67,11 @@ for (const [i, guion] of guiones.entries()) {
   console.log('═'.repeat(66));
 
   if (!sinVoz) {
-    if (!correr('python3', ['audio/voz.py', '--guion', path.relative(RAIZ, guion)], 'narración')) {
+    const argsVoz = ['audio/voz.py', '--guion', path.relative(RAIZ, guion), '--motor', motor];
+    if (vozEs) argsVoz.push('--voz-es', vozEs);
+    if (vozEn) argsVoz.push('--voz-en', vozEn);
+    if (velocidad) argsVoz.push('--velocidad', velocidad);
+    if (!correr('python3', argsVoz, `narración (${motor})`)) {
       resultados.push({ nombre, estado: 'falló la narración' });
       continue;
     }
