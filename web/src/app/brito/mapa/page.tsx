@@ -9,7 +9,7 @@ import { RankingModal } from '../RankingModal'
 import { MATERIAS, MATERIA_INFO } from '@/lib/britoMaterias'
 import {
   Lock, ArrowLeft, ChevronLeft, ChevronRight, Star, Rocket, BookOpen, Orbit,
-  Lightbulb, PencilLine, FlaskConical, Landmark, Atom,
+  Lightbulb, PencilLine, FlaskConical, Landmark, Atom, GraduationCap,
 } from 'lucide-react'
 import { CerrarSesionIcono } from '../CerrarSesionIcono'
 import { PerfilMenu } from '../PerfilMenu'
@@ -218,15 +218,28 @@ export default async function MapaBritoPage({
     { icono: Lightbulb },
     { texto: 'x + y = 10' },
     { icono: PencilLine },
+    { texto: 'H₂O' },
+    { texto: 'past simple' },
+    { icono: GraduationCap },
+    { texto: '¿por qué?' },
   ] as { texto?: string; icono?: typeof Rocket }[]
-  const doodles = bloques.flatMap(b => b.nodos).map((nodo, i) => ({
-    // En la franja entre filas: debajo del nodo y por encima de la tarjeta
-    // de la siguiente lección.
-    top: nodo.top + 116,
-    lado: (nodo.left + NODE / 2 < CONTENT_W / 2 ? 'left' : 'right') as 'left' | 'right',
-    rot: i % 2 === 0 ? -9 : 11,
-    ...GARABATOS[i % GARABATOS.length],
-  }))
+  // Dos garabatos por fila (uno a cada lado, escalonados) en la franja entre
+  // filas: debajo del nodo y por encima de la tarjeta de la siguiente
+  // lección, donde no chocan ni con nodos ni con tarjetas blancas.
+  const doodles = bloques.flatMap(b => b.nodos).flatMap((nodo, i) => {
+    const ladoNodo = (nodo.left + NODE / 2 < CONTENT_W / 2 ? 'left' : 'right') as 'left' | 'right'
+    const ladoOpuesto = ladoNodo === 'left' ? 'right' as const : 'left' as const
+    return [
+      { top: nodo.top + 105, lado: ladoNodo, rot: i % 2 === 0 ? -9 : 11, ...GARABATOS[(i * 2) % GARABATOS.length] },
+      { top: nodo.top + 148, lado: ladoOpuesto, rot: i % 2 === 0 ? 12 : -10, ...GARABATOS[(i * 2 + 1) % GARABATOS.length] },
+    ]
+  }).concat(
+    // Compañía para el cofre: un garabato a cada lado del final de la sección.
+    bloques.flatMap(b => [
+      { top: b.chestTop + 18, lado: 'left' as const, rot: -8, ...GARABATOS[(b.sesion * 5) % GARABATOS.length] },
+      { top: b.chestTop + 52, lado: 'right' as const, rot: 10, ...GARABATOS[(b.sesion * 5 + 3) % GARABATOS.length] },
+    ])
+  )
 
   return (
     <main className="min-h-dvh" style={{ background: '#FAF8F0', color: '#2B2B28' }}>
@@ -561,22 +574,32 @@ export default async function MapaBritoPage({
                       )
                     })}
 
-                    {/* Cofre al final de la sección */}
+                    {/* Cofre al final de la sección: mismo nodo que las lecciones,
+                        con el regalo adentro y su letrero debajo. */}
                     <div
-                      className="absolute flex flex-col items-center gap-2"
+                      className="absolute flex flex-col items-center gap-1.5"
                       style={{ top: bloque.chestTop, left: '50%', transform: 'translateX(-50%)' }}
                     >
-                      <div
-                        className="flex items-center justify-center rounded-full transition-transform hover:translate-y-[3px]"
-                        style={{
-                          width: 92, height: 92,
-                          background: bloque.completa ? '#FDEBC8' : '#FDF3DF',
-                          border: '3px solid #F5A623',
-                          boxShadow: '0 5px 0 #E0C68E',
-                          filter: bloque.completa ? 'none' : 'saturate(0.75)',
-                        }}
-                      >
-                        <img src="/brito/icons/regalo.png" alt="" className="w-12 h-12 object-contain" />
+                      <div className={`relative ${bloque.completa ? 'brito-nodo' : ''}`} style={{ width: NODE, height: NODE, borderRadius: '50%' }}>
+                        <svg width={NODE} height={NODE} style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx={NODE / 2} cy={NODE / 2} r={RING_R} fill="none" stroke="#E7E4D8" strokeWidth={6} />
+                          <circle
+                            cx={NODE / 2} cy={NODE / 2} r={RING_R} fill="none"
+                            stroke="#F5A623" strokeWidth={6} strokeLinecap="round"
+                            strokeDasharray={`${(bloque.hechas / bloque.totalNodos) * CIRC} 500`}
+                          />
+                        </svg>
+                        <div
+                          className="absolute flex items-center justify-center rounded-full"
+                          style={{
+                            top: 12, left: 12, width: NODE - 24, height: NODE - 24,
+                            background: bloque.completa ? '#F5A623' : '#FAF8F0',
+                            boxShadow: bloque.completa ? '0 3px 0 rgba(0,0,0,0.12)' : 'inset 0 0 0 1px #E7E4D8',
+                            filter: bloque.completa ? 'none' : 'saturate(0.6)',
+                          }}
+                        >
+                          <img src="/brito/icons/regalo.png" alt="" className="w-10 h-10 object-contain" />
+                        </div>
                       </div>
                       <div className="bg-white border border-[#E5E2D6] rounded-[10px] px-3.5 py-1 text-[12px] font-semibold text-[#57564f] whitespace-nowrap">
                         {bloque.completa ? '¡Sección completada!' : 'Termina la sección'}
