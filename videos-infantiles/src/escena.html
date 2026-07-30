@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Escena</title>
+<link rel="stylesheet" href="/fuentes/baloo.css">
+<style>
+  :root {
+    --trazo: #2E2A3B;
+    --crema: #FFF6E8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #000;
+    font-family: 'Baloo 2', 'DejaVu Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* El video se diseña siempre en 1920x1080 y se escala al tamaño de salida. */
+  #lienzo {
+    position: absolute; top: 0; left: 0;
+    width: 1920px; height: 1080px;
+    transform-origin: top left;
+    overflow: hidden;
+  }
+
+  .escena { position: absolute; inset: 0; overflow: hidden; }
+
+  /* ---------- fondos ---------- */
+  .fondo { position: absolute; inset: 0; }
+  .cielo { position: absolute; inset: 0; }
+  .nubes { position: absolute; inset: 0; }
+  .nube { position: absolute; top: 0; left: 0; opacity: 0.72; will-change: transform; }
+  .colinas { position: absolute; bottom: 0; left: 0; width: 100%; height: 420px; }
+
+  /* ---------- texto ---------- */
+  .titulo, .subtitulo, .etiqueta, .enunciado, .burbuja, .numero-grande, .canal, .celda-etiqueta {
+    font-weight: 800;
+    color: #FFFFFF;
+    -webkit-text-stroke: 12px var(--trazo);
+    paint-order: stroke fill;
+    letter-spacing: 2px;
+    line-height: 1.05;
+  }
+  .letra { display: inline-block; will-change: transform, opacity; }
+
+  .bloque-titulo { position: absolute; top: 96px; left: 0; width: 100%; text-align: center; }
+  .titulo { font-size: 148px; }
+  .subtitulo { font-size: 78px; -webkit-text-stroke-width: 9px; color: #FFE9A8; margin-top: 14px; }
+  .canal {
+    font-size: 54px; -webkit-text-stroke-width: 7px; color: #CFF0FF;
+    margin-top: 18px; opacity: 0.95;
+  }
+
+  /* Pastilla blanca que contiene la palabra clave de la escena. */
+  .pastilla {
+    position: absolute; top: 772px; left: 50%;
+    transform: translateX(-50%);
+    background: #FFFFFF; border: 10px solid var(--trazo);
+    border-radius: 80px; padding: 4px 58px 22px;
+    transform-origin: center center;
+  }
+  .etiqueta { font-size: 132px; white-space: nowrap; }
+  .burbuja {
+    position: absolute; top: 132px; left: 0; width: 100%;
+    text-align: center; font-size: 104px; color: #FFD23F;
+  }
+  .enunciado {
+    position: absolute; top: 78px; left: 0; width: 100%;
+    text-align: center; font-size: 94px;
+  }
+  .numero-grande {
+    position: absolute; top: 690px; left: 50%;
+    font-size: 250px; color: #FFD23F;
+    -webkit-text-stroke-width: 16px;
+    transform-origin: center top;
+  }
+
+  /* ---------- objeto principal ---------- */
+  .marco-objeto {
+    position: absolute; top: 470px; left: 50%;
+    width: 540px; height: 540px;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+  .objeto, .item, .celda .objeto { width: 100%; height: 100%; }
+  .objeto svg, .item svg, .nube svg, .destello svg { width: 100%; height: 100%; display: block; }
+
+  /* ---------- contar ---------- */
+  .fila-objetos {
+    position: absolute; top: 330px; left: 0; width: 100%;
+    display: flex; justify-content: center; align-items: flex-end; gap: 26px;
+  }
+  .item { height: auto; aspect-ratio: 1; will-change: transform, opacity; }
+
+  /* ---------- pregunta ---------- */
+  .fila-opciones {
+    position: absolute; top: 300px; left: 0; width: 100%;
+    display: flex; justify-content: center; align-items: center; gap: 84px;
+  }
+  .tarjeta {
+    width: 390px; height: 390px; padding: 34px;
+    background: #FFFFFF; border: 11px solid var(--trazo); border-radius: 56px;
+    display: flex; align-items: center; justify-content: center;
+    will-change: transform, opacity;
+  }
+  .tarjeta.correcta { background: #FFF6DC; border-color: #2FA355; }
+  .tarjeta .objeto { width: 100%; height: 100%; }
+
+  /* ---------- repaso ---------- */
+  .rejilla {
+    position: absolute; top: 290px; left: 110px; width: 1700px;
+    display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 30px;
+  }
+  .celda {
+    width: 400px;
+    background: #FFFFFF; border: 9px solid var(--trazo);
+    border-radius: 44px; padding: 24px 16px 14px;
+    display: flex; flex-direction: column; align-items: center;
+    will-change: transform, opacity;
+  }
+  .celda .objeto { width: 100%; height: 280px; }
+  .celda-etiqueta { font-size: 56px; -webkit-text-stroke-width: 7px; }
+  /* Con mas de 4 fichas se arma en dos filas y todo se reduce para que quepa. */
+  .rejilla-compacta { top: 230px; gap: 22px; }
+  .rejilla-compacta .celda { border-radius: 34px; padding: 16px 12px 8px; }
+  .rejilla-compacta .celda .objeto { height: 190px; }
+  .rejilla-compacta .celda-etiqueta { font-size: 42px; -webkit-text-stroke-width: 6px; }
+
+  /* ---------- mascota ---------- */
+  .mascota { position: absolute; will-change: transform; }
+  .mascota svg { width: 100%; height: auto; display: block; }
+  .mascota-intro { left: 72px; bottom: 24px; transform-origin: bottom left; }
+  .mascota-lado { right: 72px; bottom: 24px; transform-origin: bottom right; }
+  .mascota-centro { left: 50%; bottom: 24px; transform-origin: bottom center; }
+
+  /* ---------- efectos ---------- */
+  .confeti, .destellos { position: absolute; inset: 0; pointer-events: none; }
+  .pieza { position: absolute; top: 0; left: 0; will-change: transform, opacity; }
+  .destello { position: absolute; top: 0; left: 0; will-change: transform, opacity; }
+
+  /* Velo de transición entre escenas (crema, nunca blanco puro ni negro). */
+  #velo {
+    position: absolute; inset: 0; background: var(--crema);
+    opacity: 0; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <div id="lienzo"></div>
+  <div id="velo"></div>
+  <script type="module">
+    import './motor.js';
+    // El renderizador espera window.__listo antes de pedir cuadros.
+  </script>
+</body>
+</html>

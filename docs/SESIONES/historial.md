@@ -724,3 +724,50 @@ Admin/Asesor revisa → presiona "Confirmar matrícula" → ✓ Verificado
 - Formularios Cal B y Cal C
 - Twilio WhatsApp real
 - Exportar reportes CSV/PDF
+
+---
+
+## Sesión 013 — 2026-07-30
+
+**Objetivo:** Montar una fábrica de videos infantiles (nicho 2–4 años) para YouTube.
+
+### Lo que se hizo
+- Nuevo módulo independiente `videos-infantiles/` (no entra al workspace de pnpm).
+- **Pipeline completo guion JSON → MP4 1080p H.264/AAC**: Chromium dibuja cada cuadro
+  y los envía por tubería a ffmpeg. Render determinista (sin animaciones CSS ni
+  `Math.random()` sin semilla): el mismo guion produce el mismo video.
+- **7 plantillas de escena**: `intro`, `presentar`, `contar`, `pregunta`, `celebrar`,
+  `repaso`, `despedida`.
+- **Catálogo de ~35 objetos en SVG** (animales con onomatopeya, frutas, formas,
+  vehículos) + mascota animable propia: **Lulo**, personaje redondo naranja
+  inspirado en la fruta colombiana (parpadeo, saludo, habla, rebote).
+- **Música sintetizada con numpy** (marimba + caja musical + bajo + maraca sobre
+  escala pentatónica, 4 estilos). Original: sin licencias ni riesgo de Content ID.
+- **Narración**: soporte para voz grabada propia, Edge TTS y Piper. La duración de
+  cada escena se estira sola para que quepa su narración, y la música baja de
+  volumen cuando hay voz (ducking).
+- Miniatura 1280×720 generada automáticamente desde la portada.
+- Video de muestra renderizado: `001-los-colores` (73 s, 9 escenas).
+
+### Decisiones tomadas
+- **No reutilizar a Brito** como mascota: un cerebro con birrete apunta a público
+  adolescente/ICFES, no a 2–4 años. Se creó Lulo para este canal.
+- **Sin Remotion:** su licencia exige contrato para empresas de más de 3 personas.
+  Se escribió un renderizador propio (Playwright + ffmpeg), sin ese costo.
+- **Tipografía Baloo 2** vía `@fontsource` (SIL OFL, uso comercial permitido).
+- **Voz por fuera del servidor:** `speech.platform.bing.com` y `huggingface.co`
+  están bloqueados por la política de red de este entorno, así que el TTS se
+  genera en un equipo propio y los audios se copian a `voz/<id-guion>/`.
+
+### Errores registrados
+| # | Contexto | Error | Solución |
+|---|----------|-------|----------|
+| 016 | Playwright | La versión instalada (1.62) pide el build 1234 de Chromium y el entorno trae el 1194 | `render.mjs` cae a `executablePath` con el Chromium del sistema en vez de exigir `playwright install` |
+| 017 | SVG con figuras superpuestas | Nubes, melenas y copas de árbol mostraban los contornos internos de cada círculo | Helper `silueta()`: pinta el grupo con trazo doble y encima el relleno, dejando solo el contorno exterior |
+| 018 | Audio determinista | `hash()` de str en Python cambia entre procesos, la música salía distinta en cada corrida | Usar `zlib.crc32()` para la semilla |
+
+### Pendientes
+- Definir nombre y línea gráfica definitiva del canal
+- Grabar la voz de la narración (o correr Edge TTS en equipo propio)
+- Elegir los primeros 10 temas de la serie
+- Efectos de sonido puntuales (pop, campanita) — hoy solo hay música de fondo

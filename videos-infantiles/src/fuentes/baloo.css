@@ -1,0 +1,16 @@
+/* Baloo 2 (SIL Open Font License 1.1) — redondeada, gruesa y muy legible.
+   Los archivos los sirve render.mjs desde node_modules/@fontsource. */
+@font-face {
+  font-family: 'Baloo 2';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url('/fuentes/baloo-2-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Baloo 2';
+  font-style: normal;
+  font-weight: 800;
+  font-display: block;
+  src: url('/fuentes/baloo-2-latin-800-normal.woff2') format('woff2');
+}

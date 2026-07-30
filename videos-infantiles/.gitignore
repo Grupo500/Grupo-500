@@ -1,0 +1,7 @@
+node_modules/
+salida/
+temporal/
+__pycache__/
+*.pyc
+voz/*/
+!voz/.gitkeep

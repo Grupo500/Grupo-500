@@ -1,0 +1,92 @@
+{
+  "id": "001-los-colores",
+  "titulo": "APRENDE LOS COLORES",
+  "canal": "Lulo y sus amigos",
+  "edad": "2-4 anos",
+  "fps": 30,
+  "musica": { "estilo": "alegre", "volumen": 0.34, "semilla": 11 },
+  "youtube": {
+    "hechoParaNinos": true,
+    "descripcion": "Aprende los colores con Lulo: rojo, amarillo, azul y verde con objetos grandes y faciles de reconocer. Video tranquilo y repetitivo, pensado para ninos de 2 a 4 anos.",
+    "etiquetas": ["colores para ninos", "aprender colores", "videos educativos 2 anos", "espanol para ninos", "lulo"]
+  },
+  "escenas": [
+    {
+      "tipo": "intro",
+      "duracion": 6,
+      "titulo": "LOS COLORES",
+      "subtitulo": "con Lulo",
+      "narracion": "Hola amiguitos. Yo soy Lulo. Hoy vamos a aprender los colores. ¿Estas listo?"
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "manzana",
+      "etiqueta": "ROJO",
+      "color": "rojo",
+      "narracion": "Mira. Una manzana. La manzana es roja. Ro-jo. Rojo."
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "sol",
+      "etiqueta": "AMARILLO",
+      "color": "amarillo",
+      "sonido": "¡BRILLA!",
+      "narracion": "Ahora el sol. El sol es amarillo. A-ma-ri-llo. Amarillo."
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "pelota:azul",
+      "etiqueta": "AZUL",
+      "color": "azul",
+      "narracion": "Una pelota. La pelota es azul. A-zul. Azul."
+    },
+    {
+      "tipo": "presentar",
+      "duracion": 9,
+      "objeto": "arbol",
+      "etiqueta": "VERDE",
+      "color": "verde",
+      "narracion": "Y este arbol. El arbol es verde. Ver-de. Verde."
+    },
+    {
+      "tipo": "pregunta",
+      "duracion": 10,
+      "enunciado": "¿CUAL ES ROJO?",
+      "opciones": [
+        { "objeto": "pelota:azul" },
+        { "objeto": "manzana" },
+        { "objeto": "pelota:amarillo" }
+      ],
+      "correcta": 1,
+      "revelarEn": 6,
+      "narracion": "¿Cual de estos es rojo? Piensalo... ¡Muy bien! La manzana es roja."
+    },
+    {
+      "tipo": "celebrar",
+      "duracion": 5,
+      "texto": "¡MUY BIEN!",
+      "narracion": "¡Lo lograste! ¡Que bien lo hiciste!"
+    },
+    {
+      "tipo": "repaso",
+      "duracion": 10,
+      "titulo": "LOS COLORES QUE APRENDIMOS",
+      "items": [
+        { "objeto": "manzana", "etiqueta": "rojo", "color": "rojo" },
+        { "objeto": "sol", "etiqueta": "amarillo", "color": "amarillo" },
+        { "objeto": "pelota:azul", "etiqueta": "azul", "color": "azul" },
+        { "objeto": "arbol", "etiqueta": "verde", "color": "verde" }
+      ],
+      "narracion": "Repasemos. Rojo. Amarillo. Azul. Y verde."
+    },
+    {
+      "tipo": "despedida",
+      "duracion": 6,
+      "texto": "¡HASTA PRONTO!",
+      "narracion": "Gracias por jugar conmigo. Nos vemos en el proximo video. Adios."
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "videos-infantiles",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fabrica de videos infantiles (2-4 anos) para YouTube: guion JSON -> MP4 1080p",
+  "scripts": {
+    "render": "node render.mjs",
+    "borrador": "node render.mjs --escala 0.5 --crf 28",
+    "musica": "python3 audio/musica.py",
+    "voz": "python3 audio/voz.py",
+    "mezclar": "python3 audio/mezclar.py"
+  },
+  "dependencies": {
+    "@fontsource/baloo-2": "^5.2.5",
+    "@fontsource/nunito": "^5.2.6",
+    "playwright": "^1.56.0"
+  }
+}
