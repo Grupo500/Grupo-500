@@ -557,6 +557,7 @@ model BritoPerfil {
   liga             Int      @default(0)
   ligaSemana       String?
   semanasInactivas Int      @default(0)
+  quinis           Int      @default(0)
   createdAt       DateTime  @default(now())
   estudiante      EstudianteExamen @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
 

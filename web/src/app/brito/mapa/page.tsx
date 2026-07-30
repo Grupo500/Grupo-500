@@ -649,6 +649,19 @@ export default async function MapaBritoPage({
             </div>
           </div>
 
+          {/* Bolsillo de Quinis: la moneda del juego. Se ganan jugando y
+              pronto se canjearán en Recompensas. */}
+          <div
+            className="rounded-2xl p-4 flex items-center gap-3.5"
+            style={{ background: '#FDF3DF', border: '1px solid #F5DFB3' }}
+          >
+            <img src="/brito/icons/quini.png" alt="" className="w-12 h-12 object-contain drop-shadow-sm" />
+            <div className="min-w-0">
+              <div className="font-bold text-base text-[#2f2e29]">{perfil.quinis ?? 0} Quinis</div>
+              <div className="text-[11px] text-[#a3814a] font-medium leading-snug">Tu bolsillo de monedas. Pronto podrás canjearlas en Recompensas.</div>
+            </div>
+          </div>
+
           <RankingModal estado={estadoLiga} miId={estudianteId} />
         </aside>
       </div>
