@@ -487,7 +487,7 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
         select: {
           id: true, nombre: true, telefono: true,
           asesor: { select: { nombre: true } },
-          pagos: { select: { monto: true, estado: true, enPartes: true, cuotaNumero: true, cuotasTotal: true } },
+          pagos: { select: { monto: true, estado: true, enPartes: true, cuotaNumero: true, cuotasTotal: true, metodo: true, fechaPago: true } },
         },
       },
     },
@@ -498,8 +498,8 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
   let automatico = { monto: 0, estudiantes: 0 }
   let gestion    = { monto: 0, estudiantes: 0 }
   const cuotasFaltantes: Record<number, number> = {}
-  const porGestionar: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null }[] = []
-  const porAutomatico: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; cuotaNumero: number; cuotasTotal: number }[] = []
+  const porGestionar: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; metodo: string | null }[] = []
+  const porAutomatico: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; cuotaNumero: number; cuotasTotal: number; metodo: string | null }[] = []
 
   for (const ins of inscripciones) {
     const precio = ins.precioAcordado ?? ins.curso.precio ?? 0
@@ -525,10 +525,15 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
         asesor: ins.estudiante.asesor?.nombre ?? null,
         cuotaNumero: cuota.cuotaNumero ?? 1,
         cuotasTotal: cuota.cuotasTotal ?? 1,
+        metodo: cuota.metodo,
       })
     } else {
       gestion.monto += saldo
       gestion.estudiantes++
+      // El más reciente, para reflejar cómo pagó el último abono si hubo varios.
+      const ultimoPago = [...pagados].sort(
+        (a, b) => (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
+      )[0]
       porGestionar.push({
         estudianteId: ins.estudiante.id,
         nombre: ins.estudiante.nombre,
@@ -536,6 +541,7 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
         curso: ins.curso.nombre,
         saldo,
         asesor: ins.estudiante.asesor?.nombre ?? null,
+        metodo: ultimoPago?.metodo ?? null,
       })
     }
   }

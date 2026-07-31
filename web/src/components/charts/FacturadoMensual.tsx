@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -26,6 +27,10 @@ export function FacturadoMensual() {
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
+  const { data: session } = useSession()
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === 'ADMIN'
+  const [diag, setDiag] = useState<string | null>(null)
+  const [diagCargando, setDiagCargando] = useState(false)
 
   const now           = new Date()
   const inicioActual  = toISO(startOfMonth(now))
@@ -131,6 +136,37 @@ export function FacturadoMensual() {
               fill="url(#gradFactActual)" dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} connectNulls />
           </AreaChart>
         </ResponsiveContainer>
+      )}
+
+      {/* Diagnóstico temporal — por qué la línea de "Mes actual" corta antes de
+          fin de mes. Solo admin. Quitar cuando quede resuelto. */}
+      {isAdmin && (
+        <div className="mt-3 pt-3 border-t border-surface-high">
+          <button
+            onClick={async () => {
+              setDiagCargando(true)
+              try {
+                const r = await apiFetch<{ data: unknown }>(
+                  `/reportes/diagnostico-facturado?desde=${inicioActual}&hasta=${finActual}`
+                )
+                setDiag(JSON.stringify(r.data, null, 2))
+              } catch (e) {
+                setDiag(`Error: ${e instanceof Error ? e.message : String(e)}`)
+              } finally {
+                setDiagCargando(false)
+              }
+            }}
+            disabled={diagCargando}
+            className="text-[11px] font-semibold text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {diagCargando ? 'Consultando…' : 'Diagnosticar corte de la gráfica'}
+          </button>
+          {diag && (
+            <pre className="mt-2 p-3 rounded-lg bg-surface-low text-[10.5px] overflow-auto max-h-[400px] whitespace-pre-wrap">
+              {diag}
+            </pre>
+          )}
+        </div>
       )}
     </div>
   )

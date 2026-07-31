@@ -5,37 +5,87 @@ import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { useCountUp } from '@/hooks/useCountUp'
-import { CircleDollarSign, ChevronDown } from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
+import { CircleDollarSign, ChevronRight, Phone } from 'lucide-react'
 
+interface PersonaGestion {
+  estudianteId: string
+  nombre: string
+  telefono: string
+  curso: string
+  saldo: number
+  asesor: string | null
+  metodo: string | null
+}
+interface PersonaAutomatico extends PersonaGestion {
+  cuotaNumero: number
+  cuotasTotal: number
+}
 interface PorCobrar {
   total: number
   estudiantes: number
   automatico: { monto: number; estudiantes: number }
   gestion: { monto: number; estudiantes: number }
   cuotasFaltantes: { faltan: number; estudiantes: number }[]
-  porGestionar: {
-    estudianteId: string
-    nombre: string
-    telefono: string
-    curso: string
-    saldo: number
-    asesor: string | null
-  }[]
-  porAutomatico: {
-    estudianteId: string
-    nombre: string
-    telefono: string
-    curso: string
-    saldo: number
-    asesor: string | null
-    cuotaNumero: number
-    cuotasTotal: number
-  }[]
+  porGestionar: PersonaGestion[]
+  porAutomatico: PersonaAutomatico[]
+}
+
+// El método llega tal cual lo reporta Hotmart o el formulario de inscripción
+// (CREDIT_CARD, PIX, Nequi, Efecty...) — solo se pareja mayúscula/espaciado.
+function metodoLegible(metodo: string | null) {
+  if (!metodo) return 'Método sin registrar'
+  return metodo
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function Fila({ p, tipo }: { p: PersonaGestion | PersonaAutomatico; tipo: 'automatico' | 'gestion' }) {
+  const esAutomatico = tipo === 'automatico'
+  return (
+    <div className="flex items-start gap-3 py-3 border-t border-surface-high first:border-t-0 first:pt-0">
+      <div className="min-w-0 flex-1">
+        <p className="text-[13.5px] font-semibold text-on-surface truncate">{p.nombre}</p>
+        <p className="text-[11.5px] text-on-surface-variant truncate mt-0.5">
+          {p.curso}{p.asesor && ` · ${p.asesor}`}
+        </p>
+        <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+          <span
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: 'var(--surface-high)', color: 'var(--on-surface-variant)' }}
+          >
+            {metodoLegible(p.metodo)}
+          </span>
+          {esAutomatico && (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: 'var(--primary-container)', color: 'var(--primary)' }}
+            >
+              Cuota {(p as PersonaAutomatico).cuotaNumero} de {(p as PersonaAutomatico).cuotasTotal}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-[13.5px] font-bold tabular-nums text-on-surface">{formatCOP(p.saldo)}</p>
+        {p.telefono && (
+          <a
+            href={`https://wa.me/57${p.telefono.replace(/\D/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[10.5px] text-primary hover:underline mt-1.5"
+          >
+            <Phone className="w-3 h-3" /> Contactar
+          </a>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function PendientesPorCobrar({ desde, hasta }: { desde: string; hasta: string }) {
-  const [abierto, setAbierto] = useState(false)
-  const [abiertoAuto, setAbiertoAuto] = useState(false)
+  const [modal, setModal] = useState<'automatico' | 'gestion' | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['pendientes-por-cobrar', desde, hasta],
@@ -107,97 +157,65 @@ export function PendientesPorCobrar({ desde, hasta }: { desde: string; hasta: st
         <div className="h-2 rounded-r flex-1" style={{ background: '#f59e0b' }} />
       </div>
 
-      <div className="rounded-xl bg-surface-low p-3.5 mb-2.5">
+      <button
+        onClick={() => d.porAutomatico.length > 0 && setModal('automatico')}
+        disabled={d.porAutomatico.length === 0}
+        className="w-full text-left rounded-xl bg-surface-low p-3.5 mb-2.5 transition-colors enabled:hover:bg-surface-high enabled:cursor-pointer disabled:cursor-default"
+      >
         <div className="flex items-center justify-between gap-3">
           <span className="text-[13px] font-semibold text-on-surface flex items-center gap-2">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--primary)' }} />
             Hotmart lo cobra solo
           </span>
-          <span className="text-[15px] font-semibold tabular-nums text-on-surface">{formatCOP(d.automatico.monto)}</span>
+          <span className="flex items-center gap-1 text-[15px] font-semibold tabular-nums text-on-surface">
+            {formatCOP(d.automatico.monto)}
+            {d.porAutomatico.length > 0 && <ChevronRight className="w-3.5 h-3.5 text-on-surface-variant" />}
+          </span>
         </div>
         <p className="text-[11.5px] text-on-surface-variant mt-1 ml-4">
           {d.automatico.estudiantes} con cuotas programadas{cuotasTexto && ` · ${cuotasTexto}`}
         </p>
-
-        {d.porAutomatico.length > 0 && (
-          <>
-            <button
-              onClick={() => setAbiertoAuto(v => !v)}
-              aria-expanded={abiertoAuto}
-              className="w-full flex items-center justify-center gap-1.5 mt-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold text-primary hover:bg-surface-high transition-colors cursor-pointer"
-            >
-              {abiertoAuto ? 'Ocultar seguimiento' : 'Ver seguimiento'}
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${abiertoAuto ? 'rotate-180' : ''}`} />
-            </button>
-
-            {abiertoAuto && (
-              <div className="mt-1 animate-fade-in">
-                {d.porAutomatico.map(p => (
-                  <div key={p.estudianteId + p.curso} className="flex items-center gap-3 py-2 border-t border-surface-high">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-on-surface truncate">{p.nombre}</p>
-                      <p className="text-[11.5px] text-on-surface-variant truncate">
-                        {p.curso}{p.asesor && ` · ${p.asesor}`} · Cuota {p.cuotaNumero} de {p.cuotasTotal}
-                      </p>
-                    </div>
-                    <span className="text-[13px] font-semibold tabular-nums text-on-surface shrink-0">
-                      {formatCOP(p.saldo)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      </button>
 
       {d.gestion.estudiantes > 0 && (
-        <div className="rounded-xl p-3.5" style={{ background: 'rgba(245,158,11,0.12)' }}>
+        <button
+          onClick={() => setModal('gestion')}
+          className="w-full text-left rounded-xl p-3.5 transition-opacity hover:opacity-90 cursor-pointer"
+          style={{ background: 'rgba(245,158,11,0.12)' }}
+        >
           <div className="flex items-center justify-between gap-3">
             <span className="text-[13px] font-semibold flex items-center gap-2" style={{ color: '#b45309' }}>
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#f59e0b' }} />
               Requiere gestión
             </span>
-            <span className="text-[15px] font-semibold tabular-nums" style={{ color: '#b45309' }}>
+            <span className="flex items-center gap-1 text-[15px] font-semibold tabular-nums" style={{ color: '#b45309' }}>
               {formatCOP(d.gestion.monto)}
+              <ChevronRight className="w-3.5 h-3.5" style={{ color: '#b45309', opacity: 0.7 }} />
             </span>
           </div>
           <p className="text-[11.5px] mt-1 ml-4" style={{ color: '#b45309', opacity: 0.85 }}>
             {d.gestion.estudiantes} estudiante{d.gestion.estudiantes !== 1 ? 's' : ''} sin plan de cuotas automático
           </p>
-        </div>
+        </button>
       )}
 
-      {d.porGestionar.length > 0 && (
-        <>
-          <button
-            onClick={() => setAbierto(v => !v)}
-            aria-expanded={abierto}
-            className="w-full flex items-center justify-center gap-1.5 mt-3 py-2 rounded-lg text-[12.5px] font-semibold text-on-surface-variant hover:bg-surface-high transition-colors cursor-pointer"
-          >
-            {abierto ? 'Ocultar' : `Ver los ${d.porGestionar.length} por gestionar`}
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${abierto ? 'rotate-180' : ''}`} />
-          </button>
+      <Modal
+        abierto={modal === 'automatico'}
+        onClose={() => setModal(null)}
+        titulo="Hotmart lo cobra solo"
+        subtitulo={`${d.porAutomatico.length} estudiante${d.porAutomatico.length !== 1 ? 's' : ''} con cuotas programadas`}
+      >
+        {d.porAutomatico.map(p => <Fila key={p.estudianteId + p.curso} p={p} tipo="automatico" />)}
+      </Modal>
 
-          {abierto && (
-            <div className="mt-1 animate-fade-in">
-              {d.porGestionar.map(p => (
-                <div key={p.estudianteId + p.curso} className="flex items-center gap-3 py-2 border-t border-surface-high">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-on-surface truncate">{p.nombre}</p>
-                    <p className="text-[11.5px] text-on-surface-variant truncate">
-                      {p.curso}{p.asesor && ` · ${p.asesor}`}
-                    </p>
-                  </div>
-                  <span className="text-[13px] font-semibold tabular-nums text-on-surface shrink-0">
-                    {formatCOP(p.saldo)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+      <Modal
+        abierto={modal === 'gestion'}
+        onClose={() => setModal(null)}
+        titulo="Requiere gestión"
+        subtitulo="Sin plan de cuotas automático — hay que contactarlos"
+      >
+        {d.porGestionar.map(p => <Fila key={p.estudianteId + p.curso} p={p} tipo="gestion" />)}
+      </Modal>
     </div>
   )
 }
