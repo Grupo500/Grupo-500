@@ -42,9 +42,14 @@ interface Venta {
 interface FilaAsesor {
   id: string
   nombre: string
+  image: string | null
   vendido: number
   comision: number
   cantidad: number
+}
+
+function iniciales(nombre: string) {
+  return nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
 interface Resumen {
   vendido: number
@@ -272,10 +277,10 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
         </div>
 
         {cargandoResumen ? (
-          <div className="h-16 rounded-xl bg-surface-high animate-pulse" />
+          <div className="h-28 rounded-xl bg-surface-high animate-pulse" />
         ) : (
           <>
-            <div className="relative">
+            <div className="relative pb-px" style={{ borderBottom: '1px solid var(--surface-high)' }}>
               {/* Lupa flotante: el dedo tapa la barra, así que el día
                   seleccionado se amplía en una burbuja sobre el riel. */}
               {diaSeleccionado && totalDias > 0 && (
@@ -319,7 +324,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                 // pan-y deja el scroll vertical de la página intacto y nos reserva
                 // el gesto horizontal para recorrer los días.
                 style={{ touchAction: 'pan-y' }}
-                className="flex items-end gap-[3px] h-16 cursor-crosshair select-none"
+                className="flex items-end gap-[3px] h-28 cursor-crosshair select-none"
                 role="img"
                 aria-label={`Ventas por día de ${MESES[inicio.getMonth()]}`}
               >
@@ -412,6 +417,11 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                   className="w-full flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg hover:bg-surface-high transition-colors cursor-pointer text-left"
                 >
                   <span className={`${mono.className} text-[11.5px] text-on-surface-variant w-5 shrink-0`}>{i + 1}</span>
+                  <span className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10 shrink-0">
+                    {a.image
+                      ? <img src={a.image} alt={a.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      : <span className="text-[10px] font-bold text-primary">{iniciales(a.nombre)}</span>}
+                  </span>
                   <span className="text-[13.5px] font-semibold text-on-surface truncate flex-1 min-w-0">{a.nombre}</span>
                   <span className="hidden sm:block w-24 h-1.5 rounded-full bg-surface-high overflow-hidden shrink-0">
                     <span
@@ -577,7 +587,7 @@ function BarraDia({
   return (
     <div
       title={`${dia.fecha} · ${formatCOP(dia.monto)}`}
-      className="flex-1 rounded-t-[2px]"
+      className="flex-1 rounded-t-[3px]"
       style={{
         height: montada ? `${altoFinal}%` : '0%',
         transition: 'height 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms, background 200ms',
@@ -586,7 +596,11 @@ function BarraDia({
           // La barra activa se estira a todo el alto como guía, con su valor
           // real marcado en color sólido y el resto apenas insinuado.
           ? `linear-gradient(to top, var(--on-surface) ${alto}%, color-mix(in srgb, var(--on-surface) 14%, transparent) ${alto}%)`
-          : esHoy ? 'var(--on-surface)' : 'var(--primary)',
+          : esHoy
+            ? 'var(--on-surface)'
+            // Gradiente sutil de arriba a abajo, igual tratamiento que la
+            // gráfica de Finanzas: le da cuerpo a la barra sin perder el color de marca.
+            : 'linear-gradient(to top, color-mix(in srgb, var(--primary) 65%, transparent), var(--primary))',
       }}
     />
   )

@@ -151,7 +151,7 @@ export async function misVentasResumen(req: Request, res: Response) {
   }
 
   // Desglose por asesor: solo para el ADMIN cuando mira a todos a la vez.
-  let porAsesor: { id: string; nombre: string; vendido: number; comision: number; cantidad: number }[] = []
+  let porAsesor: { id: string; nombre: string; image: string | null; vendido: number; comision: number; cantidad: number }[] = []
   if (isAdmin && !asesorId) {
     const [grupos, asesores] = await Promise.all([
       prisma.pago.groupBy({
@@ -160,17 +160,21 @@ export async function misVentasResumen(req: Request, res: Response) {
         _sum: { monto: true, comisionAsesor: true },
         _count: true,
       }),
-      prisma.asesor.findMany({ select: { id: true, nombre: true } }),
+      prisma.asesor.findMany({ select: { id: true, nombre: true, user: { select: { image: true } } } }),
     ])
-    const nombreDe = new Map(asesores.map(a => [a.id, a.nombre]))
+    const asesorDe = new Map(asesores.map(a => [a.id, a]))
     porAsesor = grupos
-      .map(g => ({
-        id: g.asesorId as string,
-        nombre: nombreDe.get(g.asesorId as string) ?? 'Asesor',
-        vendido: g._sum.monto ?? 0,
-        comision: g._sum.comisionAsesor ?? 0,
-        cantidad: g._count,
-      }))
+      .map(g => {
+        const asesor = asesorDe.get(g.asesorId as string)
+        return {
+          id: g.asesorId as string,
+          nombre: asesor?.nombre ?? 'Asesor',
+          image: asesor?.user.image ?? null,
+          vendido: g._sum.monto ?? 0,
+          comision: g._sum.comisionAsesor ?? 0,
+          cantidad: g._count,
+        }
+      })
       .sort((a, b) => b.vendido - a.vendido)
   }
 
@@ -981,4 +985,33 @@ export async function estudiantesPorMes(req: Request, res: Response) {
 
   const total = resultados.reduce((s, r) => s + r.cantidad, 0)
   return ApiResponse.success(res, { puntos: resultados, total })
+}
+
+// Diagnóstico: ventas de Hotmart que llegaron con nombre de afiliado pero no
+// se pudieron atribuir a ningún asesor (ni por email, ni por código de
+// rastreo, ni por alias). Sirve para detectar qué alias faltan crear en
+// AliasAsesor cuando un asesor reporta que le faltan ventas.
+export async function diagnosticoAtribucion(_req: Request, res: Response) {
+  const [huerfanas, aliasExistentes] = await Promise.all([
+    prisma.pago.groupBy({
+      by: ['afiliadoHotmart'],
+      where: { asesorId: null, afiliadoHotmart: { not: null } },
+      _sum: { monto: true },
+      _count: true,
+      orderBy: { _count: { afiliadoHotmart: 'desc' } },
+    }),
+    prisma.aliasAsesor.findMany({ select: { alias: true, asesor: { select: { nombre: true } } } }),
+  ])
+
+  const totalSinAsesor = await prisma.pago.count({ where: { asesorId: null } })
+
+  return ApiResponse.success(res, {
+    totalPagosSinAsesor: totalSinAsesor,
+    porAfiliadoNoReconocido: huerfanas.map(h => ({
+      afiliadoHotmart: h.afiliadoHotmart,
+      cantidad: h._count,
+      montoTotal: h._sum.monto ?? 0,
+    })),
+    aliasYaRegistrados: aliasExistentes.map(a => ({ alias: a.alias, asesor: a.asesor.nombre })),
+  })
 }
