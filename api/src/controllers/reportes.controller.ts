@@ -1071,3 +1071,43 @@ export async function resolverAtribucion(req: Request, res: Response) {
 
   return ApiResponse.success(res, { reasignados: pendientes.length, asesor: asesor.nombre })
 }
+
+// Diagnóstico temporal: por qué la serie diaria de "Total facturado" corta
+// antes de fin de mes. Reporta la fecha "hoy" que ve el servidor (para
+// descartar un problema de zona horaria) y el detalle de pagos del primer
+// día del mes (para ver si el pico inicial es venta real o un import masivo).
+export async function diagnosticoFacturado(req: Request, res: Response) {
+  const hoy = new Date()
+  const { desde, hasta } = req.query
+  const desdeTotales = new Date(String(desde ?? '') + 'T00:00:00')
+  const hastaTotales = new Date(String(hasta ?? '') + 'T23:59:59')
+  const hoyFin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+  const efectivoHasta = hastaTotales > hoyFin ? hoyFin : hastaTotales
+  const diasRango = Math.round((efectivoHasta.getTime() - desdeTotales.getTime()) / 86400000) + 1
+
+  const finPrimerDia = new Date(desdeTotales)
+  finPrimerDia.setHours(23, 59, 59)
+  const pagosPrimerDia = await prisma.pago.findMany({
+    where: { estado: 'PAGADO', fechaPago: { gte: desdeTotales, lte: finPrimerDia } },
+    select: {
+      id: true, monto: true, metodo: true, notas: true, asesorId: true,
+      afiliadoHotmart: true, enPartes: true, createdAt: true,
+      estudiante: { select: { nombre: true } },
+    },
+    orderBy: { monto: 'desc' },
+  })
+
+  return ApiResponse.success(res, {
+    servidor: { TZ: process.env.TZ ?? null, hoyISO: hoy.toISOString(), hoyLocal: hoy.toString() },
+    rangoRecibido: { desde: String(desde), hasta: String(hasta) },
+    hoyFin: hoyFin.toISOString(),
+    efectivoHasta: efectivoHasta.toISOString(),
+    diasRangoResultante: diasRango,
+    primerDia: {
+      rango: { desde: desdeTotales.toISOString(), hasta: finPrimerDia.toISOString() },
+      cantidadPagos: pagosPrimerDia.length,
+      totalMonto: pagosPrimerDia.reduce((s, p) => s + p.monto, 0),
+      pagos: pagosPrimerDia.slice(0, 20),
+    },
+  })
+}
