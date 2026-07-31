@@ -620,7 +620,15 @@ export async function financieroPeriodo(req: Request, res: Response) {
   type Punto = { label: string; desde: Date; hasta: Date }
   const puntos: Punto[] = []
 
-  const diasRango = Math.round((hastaTotales.getTime() - desdeTotales.getTime()) / 86400000) + 1
+  // Contar días de calendario, no restar milisegundos crudos: desde queda a
+  // las 00:00:00 y hasta a las 23:59:59, así que un mes de 31 días da
+  // 30d 23h 59m 59s (30.99999...), que Math.round subía a 31 y el +1 lo
+  // volvía 32 — un día de más que empujaba el rango fuera de la rama
+  // "un punto por día" (<=31) y lo mandaba a la de "un punto por semana",
+  // colapsando el mes completo en ~5 puntos que la gráfica pintaba como si
+  // fueran los primeros 5 días.
+  const medianoche = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const diasRango = Math.round((medianoche(hastaTotales) - medianoche(desdeTotales)) / 86400000) + 1
 
   if (desdeQ && hastaQ) {
     if (diasRango <= 31) {
@@ -1076,44 +1084,4 @@ export async function resolverAtribucion(req: Request, res: Response) {
   })
 
   return ApiResponse.success(res, { reasignados: pendientes.length, asesor: asesor.nombre })
-}
-
-// Diagnóstico temporal: por qué la serie diaria de "Total facturado" corta
-// antes de fin de mes. Reporta la fecha "hoy" que ve el servidor (para
-// descartar un problema de zona horaria) y el detalle de pagos del primer
-// día del mes (para ver si el pico inicial es venta real o un import masivo).
-export async function diagnosticoFacturado(req: Request, res: Response) {
-  const hoy = new Date()
-  const { desde, hasta } = req.query
-  const desdeTotales = new Date(String(desde ?? '') + 'T00:00:00')
-  const hastaTotales = new Date(String(hasta ?? '') + 'T23:59:59')
-  const hoyFin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
-  const efectivoHasta = hastaTotales > hoyFin ? hoyFin : hastaTotales
-  const diasRango = Math.round((efectivoHasta.getTime() - desdeTotales.getTime()) / 86400000) + 1
-
-  const finPrimerDia = new Date(desdeTotales)
-  finPrimerDia.setHours(23, 59, 59)
-  const pagosPrimerDia = await prisma.pago.findMany({
-    where: { estado: 'PAGADO', fechaPago: { gte: desdeTotales, lte: finPrimerDia } },
-    select: {
-      id: true, monto: true, metodo: true, notas: true, asesorId: true,
-      afiliadoHotmart: true, enPartes: true, createdAt: true,
-      estudiante: { select: { nombre: true } },
-    },
-    orderBy: { monto: 'desc' },
-  })
-
-  return ApiResponse.success(res, {
-    servidor: { TZ: process.env.TZ ?? null, hoyISO: hoy.toISOString(), hoyLocal: hoy.toString() },
-    rangoRecibido: { desde: String(desde), hasta: String(hasta) },
-    hoyFin: hoyFin.toISOString(),
-    efectivoHasta: efectivoHasta.toISOString(),
-    diasRangoResultante: diasRango,
-    primerDia: {
-      rango: { desde: desdeTotales.toISOString(), hasta: finPrimerDia.toISOString() },
-      cantidadPagos: pagosPrimerDia.length,
-      totalMonto: pagosPrimerDia.reduce((s, p) => s + p.monto, 0),
-      pagos: pagosPrimerDia.slice(0, 20),
-    },
-  })
 }

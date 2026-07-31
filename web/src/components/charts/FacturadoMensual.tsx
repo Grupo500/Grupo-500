@@ -1,8 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -27,10 +26,6 @@ export function FacturadoMensual() {
   const { resolvedTheme: theme } = useTheme()
   const isDark    = theme === 'dark'
   const temaListo = theme !== undefined
-  const { data: session } = useSession()
-  const isAdmin = (session?.user as { role?: string } | undefined)?.role === 'ADMIN'
-  const [diag, setDiag] = useState<string | null>(null)
-  const [diagCargando, setDiagCargando] = useState(false)
 
   const now           = new Date()
   const inicioActual  = toISO(startOfMonth(now))
@@ -44,15 +39,22 @@ export function FacturadoMensual() {
   const sombra  = isDark ? 'rgba(148,167,190,0.45)' : 'rgba(100,116,139,0.40)'
   const tickFill = { fill: isDark ? '#95c8f0' : '#2a4172', fontSize: 10, fontFamily: 'Poppins, system-ui, sans-serif' }
 
+  // El rango de fechas (desde/hasta) no cambia dentro del mismo mes, así que
+  // React Query nunca lo ve como una query nueva — sin refetch activo, una
+  // pestaña abierta desde principios de mes se queda con el corte de ese día
+  // para siempre si el evento SSE de 'pago-registrado' no le llega.
   const { data: actualData, isLoading: la } = useQuery({
     queryKey: ['financiero-periodo', inicioActual, finActual],
     queryFn: async () => apiFetch(`/reportes/financiero-periodo?desde=${inicioActual}&hasta=${finActual}`) as Promise<{ data: PeriodoResp }>,
     staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5 * 60_000,
   })
   const { data: antData, isLoading: lp } = useQuery({
     queryKey: ['financiero-periodo', inicioAnt, finAnt],
     queryFn: async () => apiFetch(`/reportes/financiero-periodo?desde=${inicioAnt}&hasta=${finAnt}`) as Promise<{ data: PeriodoResp }>,
     staleTime: 30_000,
+    refetchOnWindowFocus: true,
   })
 
   const isLoading = la || lp
@@ -136,37 +138,6 @@ export function FacturadoMensual() {
               fill="url(#gradFactActual)" dot={false} activeDot={{ r: 5, fill: color, strokeWidth: 0 }} connectNulls />
           </AreaChart>
         </ResponsiveContainer>
-      )}
-
-      {/* Diagnóstico temporal — por qué la línea de "Mes actual" corta antes de
-          fin de mes. Solo admin. Quitar cuando quede resuelto. */}
-      {isAdmin && (
-        <div className="mt-3 pt-3 border-t border-surface-high">
-          <button
-            onClick={async () => {
-              setDiagCargando(true)
-              try {
-                const r = await apiFetch<{ data: unknown }>(
-                  `/reportes/diagnostico-facturado?desde=${inicioActual}&hasta=${finActual}`
-                )
-                setDiag(JSON.stringify(r.data, null, 2))
-              } catch (e) {
-                setDiag(`Error: ${e instanceof Error ? e.message : String(e)}`)
-              } finally {
-                setDiagCargando(false)
-              }
-            }}
-            disabled={diagCargando}
-            className="text-[11px] font-semibold text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer disabled:opacity-50"
-          >
-            {diagCargando ? 'Consultando…' : 'Diagnosticar corte de la gráfica'}
-          </button>
-          {diag && (
-            <pre className="mt-2 p-3 rounded-lg bg-surface-low text-[10.5px] overflow-auto max-h-[400px] whitespace-pre-wrap">
-              {diag}
-            </pre>
-          )}
-        </div>
       )}
     </div>
   )
