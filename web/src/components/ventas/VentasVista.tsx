@@ -154,7 +154,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
     enabled: !!token,
   })
 
-  const { data: lista, isLoading: cargandoLista } = useQuery<{ data: Venta[]; meta?: { total: number; totalPages: number } }>({
+  const { data: lista, isLoading: cargandoLista } = useQuery<{ data: Venta[]; pagination?: { total: number; totalPages: number } }>({
     queryKey: ['ventas-lista', modo, offset, busqueda, cursoId, asesorId, pagina, diaFijado],
     queryFn: () =>
       fetcher(
@@ -202,7 +202,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
   const r = resumen?.data
   const ventas = lista?.data ?? []
-  const totalPaginas = lista?.meta?.totalPages ?? 1
+  const totalPaginas = lista?.pagination?.totalPages ?? 1
 
   // Los totales cuentan hacia arriba al cargar, igual que en el dashboard.
   const animVendido = useCountUp(cargandoResumen ? 0 : r?.vendido ?? 0)
@@ -525,19 +525,25 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
       {/* Movimientos */}
       <div className="card p-5">
-        {diaFijado && (
-          <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-surface-high">
+        <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-surface-high">
+          {diaFijado ? (
             <p className="text-[13px] font-semibold text-on-surface">
               Ventas del {Number(diaFijado.slice(8, 10))} de {MESES[inicio.getMonth()]}
             </p>
+          ) : (
+            <p className="text-[11px] text-on-surface-variant font-semibold">
+              Movimientos de {MESES[inicio.getMonth()]}
+            </p>
+          )}
+          {diaFijado && (
             <button
               onClick={() => { setDiaFijado(null); setPagina(1) }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold text-on-surface-variant hover:bg-surface-high transition-colors cursor-pointer shrink-0"
             >
               Ver todo el mes <X className="w-3.5 h-3.5" />
             </button>
-          </div>
-        )}
+          )}
+        </div>
         {cargandoLista ? (
           <div className="flex items-center justify-center py-14 text-on-surface-variant">
             <Loader2 className="w-5 h-5 animate-spin" />
