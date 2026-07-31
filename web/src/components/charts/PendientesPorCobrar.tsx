@@ -21,10 +21,21 @@ interface PorCobrar {
     saldo: number
     asesor: string | null
   }[]
+  porAutomatico: {
+    estudianteId: string
+    nombre: string
+    telefono: string
+    curso: string
+    saldo: number
+    asesor: string | null
+    cuotaNumero: number
+    cuotasTotal: number
+  }[]
 }
 
 export function PendientesPorCobrar({ desde, hasta }: { desde: string; hasta: string }) {
   const [abierto, setAbierto] = useState(false)
+  const [abiertoAuto, setAbiertoAuto] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['pendientes-por-cobrar', desde, hasta],
@@ -107,6 +118,37 @@ export function PendientesPorCobrar({ desde, hasta }: { desde: string; hasta: st
         <p className="text-[11.5px] text-on-surface-variant mt-1 ml-4">
           {d.automatico.estudiantes} con cuotas programadas{cuotasTexto && ` · ${cuotasTexto}`}
         </p>
+
+        {d.porAutomatico.length > 0 && (
+          <>
+            <button
+              onClick={() => setAbiertoAuto(v => !v)}
+              aria-expanded={abiertoAuto}
+              className="w-full flex items-center justify-center gap-1.5 mt-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold text-primary hover:bg-surface-high transition-colors cursor-pointer"
+            >
+              {abiertoAuto ? 'Ocultar seguimiento' : 'Ver seguimiento'}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${abiertoAuto ? 'rotate-180' : ''}`} />
+            </button>
+
+            {abiertoAuto && (
+              <div className="mt-1 animate-fade-in">
+                {d.porAutomatico.map(p => (
+                  <div key={p.estudianteId + p.curso} className="flex items-center gap-3 py-2 border-t border-surface-high">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-on-surface truncate">{p.nombre}</p>
+                      <p className="text-[11.5px] text-on-surface-variant truncate">
+                        {p.curso}{p.asesor && ` · ${p.asesor}`} · Cuota {p.cuotaNumero} de {p.cuotasTotal}
+                      </p>
+                    </div>
+                    <span className="text-[13px] font-semibold tabular-nums text-on-surface shrink-0">
+                      {formatCOP(p.saldo)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {d.gestion.estudiantes > 0 && (

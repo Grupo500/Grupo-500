@@ -499,6 +499,7 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
   let gestion    = { monto: 0, estudiantes: 0 }
   const cuotasFaltantes: Record<number, number> = {}
   const porGestionar: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null }[] = []
+  const porAutomatico: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; cuotaNumero: number; cuotasTotal: number }[] = []
 
   for (const ins of inscripciones) {
     const precio = ins.precioAcordado ?? ins.curso.precio ?? 0
@@ -515,6 +516,16 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
       automatico.estudiantes++
       const faltan = (cuota.cuotasTotal ?? 0) - (cuota.cuotaNumero ?? 1)
       if (faltan > 0) cuotasFaltantes[faltan] = (cuotasFaltantes[faltan] ?? 0) + 1
+      porAutomatico.push({
+        estudianteId: ins.estudiante.id,
+        nombre: ins.estudiante.nombre,
+        telefono: ins.estudiante.telefono,
+        curso: ins.curso.nombre,
+        saldo,
+        asesor: ins.estudiante.asesor?.nombre ?? null,
+        cuotaNumero: cuota.cuotaNumero ?? 1,
+        cuotasTotal: cuota.cuotasTotal ?? 1,
+      })
     } else {
       gestion.monto += saldo
       gestion.estudiantes++
@@ -530,6 +541,7 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
   }
 
   porGestionar.sort((a, b) => b.saldo - a.saldo)
+  porAutomatico.sort((a, b) => b.saldo - a.saldo)
 
   return ApiResponse.success(res, {
     total: automatico.monto + gestion.monto,
@@ -540,6 +552,7 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
       .map(([faltan, estudiantes]) => ({ faltan: Number(faltan), estudiantes }))
       .sort((a, b) => a.faltan - b.faltan),
     porGestionar: porGestionar.slice(0, 50),
+    porAutomatico: porAutomatico.slice(0, 50),
   })
 }
 
