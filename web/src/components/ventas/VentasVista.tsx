@@ -682,11 +682,10 @@ function BarraDia({
           // La barra activa se estira a todo el alto como guía, con su valor
           // real marcado en color sólido y el resto apenas insinuado.
           ? `linear-gradient(to top, var(--on-surface) ${alto}%, color-mix(in srgb, var(--on-surface) 14%, transparent) ${alto}%)`
-          : esHoy
-            ? 'var(--on-surface)'
-            // Gradiente sutil de arriba a abajo, igual tratamiento que la
-            // gráfica de Finanzas: le da cuerpo a la barra sin perder el color de marca.
-            : 'linear-gradient(to top, color-mix(in srgb, var(--primary) 65%, transparent), var(--primary))',
+          // Color sólido de marca. Mezclar hacia transparent aquí deja ver el
+          // blanco de la tarjeta detrás y la barra se lee "lavada" — para una
+          // sola serie el color de marca sin degradar es lo correcto.
+          : esHoy ? 'var(--on-surface)' : 'var(--primary)',
       }}
     />
   )
