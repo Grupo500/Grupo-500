@@ -724,3 +724,241 @@ Admin/Asesor revisa → presiona "Confirmar matrícula" → ✓ Verificado
 - Formularios Cal B y Cal C
 - Twilio WhatsApp real
 - Exportar reportes CSV/PDF
+
+---
+
+> **Nota sobre las sesiones 013 en adelante:** este bloque fue reconstruido el 2026-07-31 a partir del historial de `git log` (no hay notas de sesión originales para este período de ~2 meses). El detalle es más grueso que el de las sesiones anteriores — resume commits agrupados por fecha/tema, no decisiones discutidas en vivo. Ver también `docs/ARQUITECTURA.md`, actualizado en la misma auditoría.
+
+## Sesión 013 — 2026-06-12 (parte 1)
+
+**Objetivo:** Endurecer seguridad y mejorar dashboard/reportes.
+
+### Lo que se hizo
+- **Seguridad:** Sentry (`@sentry/node` + `@sentry/nextjs`), `reqId` de correlación por request, health check profundo (`SELECT 1` antes de responder 200), CSP con `frame-ancestors`, `eslint-security`, certificados restringidos a VENDEDOR.
+- **Dashboard:** tabs de período reemplazadas por `MonthPicker` (rango de fechas), gráfica anual + gráfica de estudiantes por mes, comparación contra el mismo corte de días del período anterior.
+- **Reportes:** mapa de Colombia con geometría real (GeoJSON vía `react-simple-maps`), inset de San Andrés y Providencia, Top 10 ciudades como ranking con barras de progreso (reemplaza el donut).
+
+---
+
+## Sesión 014 — 2026-06-12 (parte 2)
+
+**Objetivo:** Integrar Hotmart como fuente real de ventas, reemplazando HubSpot/Typeform en el flujo de inscripción.
+
+### Lo que se hizo
+- Sincronización de productos Hotmart + webhook de compras, con creación automática de curso si no existe.
+- Asesor identificado automáticamente por código de rastreo Hotmart (`src`/`sck`) en el webhook.
+- **Eliminadas:** integración HubSpot (como fuente de inscripción) y Typeform — ambas reemplazadas por Hotmart. (HubSpot vuelve más adelante, sesión 023, pero solo como fuente de leads para tasa de cierre, no de inscripción.)
+- Eventos SSE emitidos en el webhook de Hotmart para actualización en tiempo real del dashboard.
+- `precioAcordado` en `CursoEstudiante` — saldo real para compras Hotmart con descuento.
+- Fix: rate limit incorrecto en `/api/auth` que bloqueaba la gestión de usuarios.
+
+### Pendiente
+- Precios de matrícula real vs. precio de lista, seguir afinando
+
+---
+
+## Sesión 015 — 2026-06-14
+
+**Objetivo:** Simplificar el acceso público y corregir inconsistencias de auth/timezone.
+
+### Lo que se hizo
+- **Landing pública eliminada** — la raíz (`/`) ahora redirige directo a login/dashboard.
+- Login insensible a mayúsculas, normalización de email a minúsculas en todo el sistema.
+- Zona horaria Colombia aplicada consistentemente en el backend.
+- Reconciliación automática de asesores como job de fondo (red de seguridad si el webhook de Hotmart no capta el afiliado).
+- Reportes: serie financiera por día correcta en rangos mensuales, scroll horizontal con eje Y fijo en gráficas diarias.
+
+---
+
+## Sesión 016 — 2026-06-15
+
+**Objetivo:** Simplificación grande del dominio — eliminar módulos que ya no reflejan cómo se cobra (Hotmart lo hace), y rediseñar el dashboard.
+
+### Lo que se hizo
+- **Eliminados por completo:** `Financiamiento`/`Cuota`, calendario de `Cobros`, recordatorios de WhatsApp, sección Marketing y Demografía de reportes. El negocio pasó a que Hotmart gestione cuotas/cobros; la app solo refleja el estado vía `Pago` (con `enPartes`, `cuotaNumero`, `cuotasTotal`).
+- Desglose de comisiones en COP calculado server-side (`comisionHotmart`, `comisionAsesor`, `montoNeto`, `trm`).
+- **Rediseño del dashboard** a layout 30/70 (resumen mensual sin filtros), alineado a un sistema de diseño nuevo documentado en `DESIGN.md` (raíz del repo).
+- Dona de cursos top 5 + rebanada "Otros", Top 5 asesores en tarjetas individuales con foto, KPIs de comisión con color.
+- **Reportes:** reestructuración completa — donut de cursos, medios de pago como barras verticales, ranking de asesores paginado con tasa de cierre y comisión, gráfica de ingresos con granularidad adaptativa según el rango del datepicker.
+
+### Nota importante
+Este es el punto donde `docs/API.md` empezó a quedar desactualizado (documentaba `/financiamientos`, `/cuotas`, `/cobros`, `/whatsapp`, que dejaron de existir aquí).
+
+---
+
+## Sesión 017 — 2026-06-16
+
+**Objetivo:** Rediseño del sidebar y del dashboard de asesor; consolidar Hotmart.
+
+### Lo que se hizo
+- **Sidebar:** rediseño oscuro con módulo activo flotante, curva SVG deformable animada, toggle expandir/contraer integrado (reemplaza el botón flotante).
+- **Dashboard asesor:** rediseño con ventas, comisión, posición y ranking; botón de actualizar visible en todos los dispositivos.
+- Hotmart: mapeo de `checkout_phone` al teléfono del estudiante; se intentó un backfill de teléfonos desde historial y se revirtió (la API de Hotmart no expone teléfono de ventas pasadas).
+- **Estudiantes:** exportar base a Excel (reemplaza el botón "Importar"); eliminado el botón "Mi enlace".
+- Fix de tiempo real: ventas y comisiones se actualizaban con delay — corregido.
+- Vercel Analytics y Speed Insights agregados.
+
+---
+
+## Sesión 018 — 2026-06-18/19
+
+**Objetivo:** Notificaciones push cuando cambia el ranking de asesores.
+
+### Lo que se hizo
+- Notificaciones push (Web Push, modelo `PushSubscription`) cuando un asesor es rebasado en el ranking, con ascensos y cambios de podio para todos los asesores.
+- Botón "Activar notificaciones" compatible con iOS.
+- Varios reverts/reintentos el mismo día por un incidente de auth en producción (errores de BD se disfrazaban como 401) — diagnosticado y corregido (`fix(auth): no disfrazar errores de BD como 401`).
+
+---
+
+## Sesión 019 — 2026-06-22/24
+
+**Objetivo:** Mejoras de búsqueda/sincronización en Estudiantes y primera versión de tasa de cierre.
+
+### Lo que se hizo
+- Buscar estudiantes por correo/teléfono, sincronizar correo desde Hotmart.
+- Botones de sincronización manual con Hotmart (individual y general) con mensaje de resultado.
+- Módulo Formularios habilitado para asesores (solo lectura + su propio enlace).
+- Ranking de asesores: **tasa de cierre**, score 0-100, primera integración con Trengo (leads por WhatsApp).
+- Perf: eliminada una conexión SSE duplicada en el dashboard del asesor.
+
+---
+
+## Sesión 020 — 2026-06-25/26
+
+**Objetivo:** Fixes de Hotmart/certificados y arranque del módulo Simulacros Saber 11.
+
+### Lo que se hizo
+- Fix: pagos en partes (Smart Installment de Hotmart) ya no se marcaban como completos antes de tiempo.
+- Certificados: razón social "GRUPO 500 EDUCACIÓN S.A.S.", firma única del representante legal, nombre de curso y horas correctas.
+- **Arranca el módulo de Simulacros Saber 11** (motor de examen online): fusión de la BD de la app Supabase separada (`simulacros-grupo500`) en este monorepo, migración de 22 imágenes de preguntas de Supabase Storage a Cloudinary, muro de acceso (estudiantes fuera del backoffice de ventas), primer panel de admin (estadísticas + gestión de imágenes).
+
+---
+
+## Sesión 021 — 2026-06-27/30
+
+**Objetivo:** Construir el motor de examen completo.
+
+### Lo que se hizo
+- Motor de examen: réplica exacta del `ExamenCliente` de la app original.
+- Login único para todos los estudiantes en `/sign-in`.
+- Edición de preguntas desde el panel de admin, con preview idéntico al examen real, soporte de opciones A-H (preguntas de emparejamiento), botones de sesión S1/S2.
+- Examen responsivo para celular.
+- **Rediseño del login:** gradiente azul, animaciones, Poppins como fuente global (arrastrado luego a Brito también).
+- Hoja de respuestas con porcentaje prominente, chips de área con colores únicos.
+
+---
+
+## Sesión 022 — 2026-07-01/02
+
+**Objetivo:** Pulir la experiencia del examen y evitar trampa.
+
+### Lo que se hizo
+- Fix de imágenes en preguntas sin opciones de texto, enunciado sobre la imagen con labels de contexto estilo "cuadernillo" ICFES real.
+- Rediseño de animaciones del examen (filosofía Emil Kowalski).
+- Cronómetro pausable de 4:30h por sesión + retroalimentación por opción incorrecta.
+- Formato de texto tipo cuadernillo en móvil, guardado robusto de respuestas.
+- Anti-cheat: bloqueo de clic derecho y atajos de DevTools durante el examen.
+- Se inició un glosario compartido de términos de git/programación/IA en `docs/`.
+
+---
+
+## Sesión 023 — 2026-07-03/04
+
+**Objetivo:** Fixes de datos, HubSpot como fuente de leads, y primer elemento 3D en la landing pública.
+
+### Lo que se hizo
+- Fixes: exportar Excel bajaba vacío (blob revocado antes de tiempo), nombres de cursos de Hotmart, comparación de variación de asesores contra el mismo corte de días del mes anterior.
+- **HubSpot reintegrado**, pero solo como fuente de leads para tasa de cierre — se descubrió que los leads reales están en **Tickets**, no en Contactos (26 contactos históricos vs. miles de tickets).
+- Reportes renombrado a **"Analíticas"** en la UI, reorganizado, botones de sync manual removidos.
+- **Hero 3D animado con GSAP + Three.js** (`@react-three/fiber`) en `/inscripcion` — causó un conflicto de tipos (`icon: React.ElementType`) que rompió el build de Vercel; resuelto usando `LucideIcon` en vez del tipo genérico (ver memoria del conflicto).
+- Fix: bucle infinito en el hook `beforeExit` de Prisma.
+
+---
+
+## Sesión 024 — 2026-07-06
+
+**Objetivo:** Widget de ventas semanales para asesores.
+
+### Lo que se hizo
+- Widget "Ventas de la semana" en el dashboard de asesores, con días seleccionables y el mejor día resaltado; cambiado de gráfico de barras a puntos.
+
+---
+
+## Sesión 025 — 2026-07-11
+
+**Objetivo:** Exponer una API pública de solo lectura.
+
+### Lo que se hizo
+- API pública de solo lectura en `/api/public/v1`, autenticada con `ApiKey` (hash + scopes + revocación) — ver `docs/API_PUBLICA.md`.
+- Script de importación de ventas faltantes de Hotmart.
+- Fix del cálculo de porcentaje de comisión en Analíticas.
+
+---
+
+## Sesión 026 — 2026-07-14
+
+**Objetivo:** Reorganizar certificados y crear un módulo de Ajustes unificado.
+
+### Lo que se hizo
+- Certificados movidos a un tab dentro del perfil del estudiante (antes módulo aparte); firma del certificado agrandada; se pide número de documento antes de generar.
+- **Nuevo módulo Ajustes**, unificando: mi perfil (nombre/teléfono/contraseña/correo de solo lectura/foto), firma, y gestión de API Keys — antes dispersos. Movido al footer del sidebar.
+- Rediseño de Ajustes estilo Vercel: sub-navegación en el sidebar, contenido a ancho completo, insignias por sección, animación de transición del sidebar al entrar/salir.
+
+---
+
+## Sesión 027 — 2026-07-21/22
+
+**Objetivo:** Publicar la app en tiendas móviles y cumplir requisitos legales de privacidad.
+
+### Lo que se hizo
+- **Nuevo workspace `mobile/`** con Capacitor, para publicar en Google Play y App Store — ver `docs/APP_STORES.md`.
+- Fix: `@capacitor/assets` quitado como dependencia permanente (rompía el build de Vercel al quedar en el lockfile compartido).
+- Página pública de Política de Privacidad en `grupo500educacion.co/privacidad`.
+
+---
+
+## Sesión 028 — 2026-07-23/26
+
+**Objetivo:** Construir el juego Brito completo — capa de gamificación sobre el banco de preguntas del motor de exámenes.
+
+### Lo que se hizo
+- Registro, mapa de lecciones, lecciones jugables, ranking — juego completo de punta a punta.
+- Panel `/brito-admin`: tarjetas por materia, constructor de lecciones, formulario de preguntas nuevas (con imagen), selector de sesión, eliminar lecciones.
+- Mapa: agrupado por sección global, sendero estilo Duolingo, sidebar (Aprender/Ligas/Recompensas/Perfil), modal de perfil (vía portal a `document.body` para evitar recortes), tema claro tipo "mapa del tesoro".
+- **Sistema de ligas semanales** con ascenso y descenso (`BritoGrupoLiga`/`BritoMiembroLiga`).
+- Iconografía: iteración varias veces hasta llegar a un set "caricatura" coherente (vía Magnific), reemplazando placeholders.
+- Tarjeta "Juega con Brito" agregada al hub principal de módulos; ADMIN puede entrar a revisar el juego.
+- Cruce de leads corregido para el caso de un asesor con correo distinto en el CRM (Sara Duarte) — ver memoria de matching Trengo/HubSpot.
+
+---
+
+## Sesión 029 — 2026-07-28/29
+
+**Objetivo:** Separar Ventas y Finanzas en módulos propios, con diseño corporativo.
+
+### Lo que se hizo
+- **Nuevo módulo Ventas** (admin y "Mis ventas" para asesor): tarjetas tipo dashboard, gráfica con scrub táctil ("Ritmo del mes"), lupa al deslizar, filtro de clientes por día, variación vs. mes anterior con mismo corte de días.
+- Hotmart: se empiezan a registrar pagos a cuotas con el postback crudo guardado; "Cuota 1 de 3" visible en el listado de ventas.
+- Reportes/Analíticas: cursos agrupados por línea de producto (familia), tarjeta de "pendiente por cobrar" que responde al selector de fechas.
+- **Finanzas pasa a ser un área propia**, no una sección de Ventas: resumen, evolución, mix, cierre mensual, precios oficiales, cupones, atribución — diez secciones en total.
+- Rediseño de la pantalla posterior al login (hub de módulos).
+- Todos los desplegables nativos reemplazados por el `Select` propio de la app.
+
+---
+
+## Sesión 030 — 2026-07-29/30
+
+**Objetivo:** Pulir visualmente Brito y las comisiones; automatizar Google Ads en Finanzas.
+
+### Lo que se hizo
+- Brito: mascota nueva con fondo transparente (reemplaza el logo "B" y la imagen vieja en todo el juego), mapa con diseño de "cuaderno" (aprobado en sesión de diseño), moneda **"Quinis"** con bolsillo animado y modal de canje (`BritoPerfil.quinis`), Poppins heredada globalmente (se quita el reemplazo por Nunito que quedaba en portada/mapa/lección/resultado).
+- Comisiones del dashboard rediseñadas como "recibo de liquidación" — iteración varias veces hasta llegar a tres tarjetas blancas con el patrón visual de las tarjetas del dashboard.
+- **Google Ads entra automáticamente a Finanzas** (sincronización cada 4h) — ver memoria de la integración para las dos cuentas independientes y el pendiente de acceso básico del developer token.
+
+### Pendientes vigentes (confirmar si siguen abiertos)
+- Filtrar broadcast SSE por `asesorId` (sigue siendo global)
+- Meta y TikTok en `InversionPublicitaria`
+- Exportar reportes CSV/PDF
+- Rediseño corporativo en Stitch del resto de módulos (más allá de Ventas)
+- `docs/API.md` sigue sin actualizar — pendiente para una próxima sesión

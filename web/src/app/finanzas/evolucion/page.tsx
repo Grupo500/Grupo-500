@@ -117,9 +117,9 @@ export default function EvolucionPage() {
         </p>
 
         {isLoading ? (
-          <div className="h-64 rounded-xl bg-surface-high animate-pulse" />
+          <div className="h-[340px] rounded-xl bg-surface-high animate-pulse" />
         ) : (
-          <SerieDiaria dias={d?.dias ?? []} altura={300} />
+          <SerieDiaria dias={d?.dias ?? []} altura={340} />
         )}
       </div>
 

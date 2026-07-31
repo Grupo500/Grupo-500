@@ -73,7 +73,7 @@ function Globo({ active, payload, label }: {
   )
 }
 
-export function SerieDiaria({ dias, altura = 280 }: { dias: DiaSerie[]; altura?: number }) {
+export function SerieDiaria({ dias, altura = 320 }: { dias: DiaSerie[]; altura?: number }) {
   const promedio = dias.length > 0 ? dias.reduce((s, d) => s + d.ventas, 0) / dias.length : 0
 
   return (
@@ -95,7 +95,7 @@ export function SerieDiaria({ dias, altura = 280 }: { dias: DiaSerie[]; altura?:
       </div>
 
       <ResponsiveContainer width="100%" height={altura}>
-        <ComposedChart data={dias} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+        <ComposedChart data={dias} margin={{ top: 8, right: 8, left: -16, bottom: 4 }}>
           <defs>
             <linearGradient id="barraVentas" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--primary)" stopOpacity={1} />
@@ -105,16 +105,18 @@ export function SerieDiaria({ dias, altura = 280 }: { dias: DiaSerie[]; altura?:
 
           <CartesianGrid strokeDasharray="2 4" stroke="var(--surface-high)" vertical={false} />
           <XAxis
-            dataKey="fecha" tickLine={false} axisLine={false}
+            dataKey="fecha" tickLine={false}
+            axisLine={{ stroke: 'var(--surface-high)' }}
             tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }}
             tickFormatter={f => String(f).slice(8, 10)}
             interval="preserveStartEnd"
             minTickGap={8}
+            padding={{ left: 4, right: 4 }}
           />
           <YAxis
             tickLine={false} axisLine={false}
             tick={{ fontSize: 10, fill: 'var(--on-surface-variant)' }}
-            width={40}
+            width={44}
           />
           <Tooltip
             content={<Globo />}
@@ -123,7 +125,7 @@ export function SerieDiaria({ dias, altura = 280 }: { dias: DiaSerie[]; altura?:
             cursor={{ fill: 'var(--surface-high)', fillOpacity: 0.45 }}
           />
 
-          <Bar dataKey="ventas" radius={[3, 3, 0, 0]} maxBarSize={26}>
+          <Bar dataKey="ventas" radius={[4, 4, 0, 0]} maxBarSize={30}>
             {dias.map(d => (
               // Los fines de semana van atenuados: sin eso, un domingo flojo se
               // lee como una caída del ritmo y no lo es.

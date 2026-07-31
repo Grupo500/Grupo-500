@@ -162,9 +162,9 @@ export default function FinanzasResumenPage() {
         </div>
 
         {isLoading ? (
-          <div className="h-56 rounded-xl bg-surface-high animate-pulse" />
+          <div className="h-80 rounded-xl bg-surface-high animate-pulse" />
         ) : (
-          <SerieDiaria dias={d?.dias ?? []} altura={250} />
+          <SerieDiaria dias={d?.dias ?? []} altura={320} />
         )}
 
         {d && (
