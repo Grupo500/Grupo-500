@@ -1,6 +1,8 @@
 import { Request, Response } from 'express'
+import { z } from 'zod'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
+import { NotFoundError } from '../utils/errors'
 import { construirRanking, hoyColombia, diaColombia, emailKey } from '../services/ranking'
 
 export async function dashboard(req: Request, res: Response) {
@@ -1014,4 +1016,45 @@ export async function diagnosticoAtribucion(_req: Request, res: Response) {
     })),
     aliasYaRegistrados: aliasExistentes.map(a => ({ alias: a.alias, asesor: a.asesor.nombre })),
   })
+}
+
+const resolverAtribucionSchema = z.object({
+  afiliadoHotmart: z.string().min(1),
+  asesorId: z.string().min(1),
+})
+
+// Vincula un nombre de afiliado de Hotmart no reconocido a un asesor: crea el
+// alias (para que las ventas futuras con ese nombre se atribuyan solas, igual
+// que en hotmart.controller.ts:webhook) y reasigna retroactivamente todas las
+// que ya quedaron guardadas sin asesor bajo ese mismo nombre.
+export async function resolverAtribucion(req: Request, res: Response) {
+  const { afiliadoHotmart, asesorId } = resolverAtribucionSchema.parse(req.body)
+
+  const asesor = await prisma.asesor.findUnique({ where: { id: asesorId } })
+  if (!asesor) throw new NotFoundError('Asesor no encontrado')
+
+  await prisma.aliasAsesor.upsert({
+    where: { alias: afiliadoHotmart.toLowerCase() },
+    create: { alias: afiliadoHotmart.toLowerCase(), asesorId },
+    update: { asesorId },
+  })
+
+  const pendientes = await prisma.pago.findMany({
+    where: { asesorId: null, afiliadoHotmart },
+    select: { id: true, estudianteId: true },
+  })
+
+  await prisma.pago.updateMany({
+    where: { id: { in: pendientes.map(p => p.id) } },
+    data: { asesorId },
+  })
+
+  // Completar el asesor del estudiante solo si aún no tiene uno, igual que el webhook.
+  const estudianteIds = [...new Set(pendientes.map(p => p.estudianteId))]
+  await prisma.estudiante.updateMany({
+    where: { id: { in: estudianteIds }, asesorId: null },
+    data: { asesorId },
+  })
+
+  return ApiResponse.success(res, { reasignados: pendientes.length, asesor: asesor.nombre })
 }

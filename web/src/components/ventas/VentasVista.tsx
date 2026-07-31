@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -10,7 +10,7 @@ import { useCountUp } from '@/hooks/useCountUp'
 import { Select } from '@/components/ui/Select'
 import {
   ChevronLeft, ChevronRight, Search, Repeat2, Loader2, Receipt, AlertTriangle,
-  TrendingUp, Wallet, Target, X, type LucideIcon,
+  TrendingUp, Wallet, Target, X, UserPlus, type LucideIcon,
 } from 'lucide-react'
 
 // Los montos se comparan en columna: cifras tabulares para que cada dígito
@@ -67,6 +67,8 @@ interface Resumen {
   }
 }
 interface AsesorRef { id: string; nombre: string }
+interface AfiliadoNoReconocido { afiliadoHotmart: string; cantidad: number; montoTotal: number }
+interface DiagnosticoAtribucion { totalPagosSinAsesor: number; porAfiliadoNoReconocido: AfiliadoNoReconocido[] }
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
@@ -173,6 +175,29 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
     queryKey: ['asesores-filtro'],
     queryFn: () => fetcher('/asesores'),
     enabled: !!token && esAdmin,
+  })
+
+  const queryClient = useQueryClient()
+
+  // Ventas de Hotmart que llegaron con un afiliado que no se pudo reconocer
+  // (ni por email, ni por código de rastreo, ni por alias) — quedaron sin
+  // asesor. Solo el admin puede verlas y vincularlas.
+  const { data: diagnostico } = useQuery<{ data: DiagnosticoAtribucion }>({
+    queryKey: ['diagnostico-atribucion'],
+    queryFn: () => fetcher('/reportes/diagnostico-atribucion'),
+    enabled: !!token && esAdmin,
+  })
+
+  const [asesorPorAfiliado, setAsesorPorAfiliado] = useState<Record<string, string>>({})
+
+  const resolverAtribucion = useMutation({
+    mutationFn: (payload: { afiliadoHotmart: string; asesorId: string }) =>
+      fetcher('/reportes/resolver-atribucion', { method: 'POST', body: JSON.stringify(payload) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['diagnostico-atribucion'] })
+      queryClient.invalidateQueries({ queryKey: ['ventas-resumen'] })
+      queryClient.invalidateQueries({ queryKey: ['ventas-lista'] })
+    },
   })
 
   const r = resumen?.data
@@ -439,6 +464,61 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                 </button>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Ventas sin asesor — solo admin, solo si hay pendientes por vincular */}
+      {esAdmin && (diagnostico?.data.porAfiliadoNoReconocido.length ?? 0) > 0 && (
+        <div className="card p-5" style={{ borderColor: '#f59e0b40' }}>
+          <div className="flex items-center gap-2 mb-1">
+            <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: '#b45309' }} />
+            <p className="text-[13px] font-semibold text-on-surface">Ventas sin asesor</p>
+          </div>
+          <p className="text-[11.5px] text-on-surface-variant mb-3.5">
+            Hotmart mandó estas ventas con un nombre de afiliado que no coincide con ningún asesor.
+            Vincúlalas para atribuirlas ya — las próximas ventas con el mismo nombre entrarán solas.
+          </p>
+          <div className="space-y-2">
+            {diagnostico!.data.porAfiliadoNoReconocido.map(f => (
+              <div
+                key={f.afiliadoHotmart}
+                className="flex flex-col sm:flex-row sm:items-center gap-2.5 py-2.5 px-3 rounded-xl bg-surface-high/40"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-on-surface truncate">{f.afiliadoHotmart}</p>
+                  <p className={`${mono.className} text-[11px] text-on-surface-variant mt-0.5`}>
+                    {f.cantidad} venta{f.cantidad !== 1 ? 's' : ''} · {formatCOP(f.montoTotal)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="w-[200px]">
+                    <Select
+                      value={asesorPorAfiliado[f.afiliadoHotmart] ?? ''}
+                      onValueChange={v => setAsesorPorAfiliado(prev => ({ ...prev, [f.afiliadoHotmart]: v }))}
+                      className="py-2 rounded-lg border-surface-high text-[12.5px]"
+                      options={[
+                        { value: '', label: 'Elige un asesor' },
+                        ...(asesores?.data ?? []).map(a => ({ value: a.id, label: a.nombre })),
+                      ]}
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      const asesorId = asesorPorAfiliado[f.afiliadoHotmart]
+                      if (!asesorId) return
+                      resolverAtribucion.mutate({ afiliadoHotmart: f.afiliadoHotmart, asesorId })
+                    }}
+                    disabled={!asesorPorAfiliado[f.afiliadoHotmart] || resolverAtribucion.isPending}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12.5px] font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-default cursor-pointer shrink-0"
+                    style={{ background: 'var(--primary)' }}
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    Vincular
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
