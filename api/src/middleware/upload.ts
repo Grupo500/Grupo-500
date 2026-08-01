@@ -16,6 +16,7 @@ const ALLOWED_IMAGE_MIMES = new Set([
 ])
 const ALLOWED_PDF_MIMES = new Set(['application/pdf'])
 const ALLOWED_FIRMA_MIMES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])
+const ALLOWED_VIDEO_MIMES = new Set(['video/mp4', 'video/quicktime', 'video/webm', 'video/x-matroska'])
 
 /* ─── Filtros ─────────────────────────────────────────────────────────────── */
 function filterImage(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
@@ -31,6 +32,11 @@ function filterPdf(_req: Request, file: Express.Multer.File, cb: FileFilterCallb
 function filterFirma(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
   if (ALLOWED_FIRMA_MIMES.has(file.mimetype)) return cb(null, true)
   cb(new Error(`Solo se permiten imágenes JPG/PNG/WebP para firma. Recibido: ${file.mimetype}`))
+}
+
+function filterVideo(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
+  if (ALLOWED_VIDEO_MIMES.has(file.mimetype)) return cb(null, true)
+  cb(new Error(`Tipo de video no permitido: ${file.mimetype}. Solo MP4, MOV, WebM o MKV.`))
 }
 
 /* ─── Storages ────────────────────────────────────────────────────────────── */
@@ -70,6 +76,16 @@ const firmaStorage = new CloudinaryStorage({
   } as any,
 })
 
+const videoStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder:          'grupo500/marketing',
+    resource_type:   'video',
+    use_filename:    true,
+    unique_filename: true,
+  } as any,
+})
+
 /* ─── Excel / XLSX (memoria, sin Cloudinary) ─────────────────────────────── */
 const ALLOWED_EXCEL_MIMES = new Set([
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
@@ -104,4 +120,12 @@ export const uploadFirma = multer({
   storage:    firmaStorage,
   fileFilter: filterFirma,
   limits:     { fileSize: 5 * 1024 * 1024, files: 1 },   // 5 MB máx
+})
+
+// Límite del lado de multer — el plan de Cloudinary contratado puede topar
+// uploads individuales antes de llegar aquí (verificar si un video real falla).
+export const uploadVideo = multer({
+  storage:    videoStorage,
+  fileFilter: filterVideo,
+  limits:     { fileSize: 200 * 1024 * 1024, files: 1 }, // 200 MB máx
 })

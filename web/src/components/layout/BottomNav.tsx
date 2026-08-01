@@ -8,15 +8,19 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
-  FileBarChart2, BarChart3,
+  FileBarChart2, BarChart3, Megaphone,
   ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FINANZAS_TABS } from '@/lib/finanzasNav'
+import { MARKETING_TABS } from '@/lib/marketingNav'
+
+type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING'
 
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor.
-type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean }
+// `roles`, cuando está presente, manda como lista blanca explícita.
+type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean; roles?: Rol[] }
 
 // Las ventas son el uso diario del asesor en el celular, así que ocupan un
 // puesto fijo en la barra; Cursos se consulta poco y pasa al menú "Más".
@@ -32,12 +36,13 @@ const moreItems: NavItem[] = [
   { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
+  { href: '/marketing',       label: 'Marketing',        icon: Megaphone,     adminOnly: false, roles: ['ADMIN', 'MARKETING'] },
   { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
 ]
 
-interface BottomNavProps { role?: 'ADMIN' | 'VENDEDOR' }
+interface BottomNavProps { role?: Rol }
 
 export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   const pathname = usePathname()
@@ -57,19 +62,26 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   }, [moreOpen])
 
   const isDark = theme === 'dark'
-  const porRol = (i: NavItem) => (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN')
-  // Dentro de Finanzas la barra muestra las secciones del área, no las de
-  // Ventas: son áreas distintas y mezclarlas deja al usuario sin forma de
-  // moverse por donde está.
+  const porRol = (i: NavItem) => i.roles
+    ? i.roles.includes(role)
+    : (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN') && role !== 'MARKETING'
+  // Dentro de Finanzas/Marketing la barra muestra las secciones del área, no
+  // las de Ventas: son áreas distintas y mezclarlas deja al usuario sin forma
+  // de moverse por donde está.
   const enFinanzas = pathname === '/finanzas' || pathname.startsWith('/finanzas/')
   const finanzasDisponibles = FINANZAS_TABS.filter(t => !t.proximamente)
+  const enMarketing = pathname === '/marketing' || pathname.startsWith('/marketing/')
 
   const visiblePrimary = enFinanzas
     ? finanzasDisponibles.slice(0, 4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
+    : enMarketing
+    ? MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: false }))
     : primaryItems.filter(porRol)
 
   const visibleMore = enFinanzas
     ? finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
+    : enMarketing
+    ? []
     : moreItems.filter(porRol)
   const isMoreActive = visibleMore.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
   const handleClose = () => setMoreOpen(false)

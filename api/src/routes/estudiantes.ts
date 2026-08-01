@@ -9,7 +9,7 @@ import { ApiResponse } from '../utils/response'
 
 const router = Router()
 
-router.use(authenticate)
+router.use(authenticate, requireRole('ADMIN', 'VENDEDOR'))
 
 router.get('/', asyncHandler(ctrl.listar))
 router.post('/', asyncHandler(ctrl.crear))

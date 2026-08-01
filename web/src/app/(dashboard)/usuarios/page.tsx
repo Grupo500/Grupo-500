@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { InputPassword } from '@/components/ui/InputPassword'
 import { Select } from '@/components/ui/Select'
 import { formatDate, cn } from '@/lib/utils'
-import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp } from 'lucide-react'
+import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp, Megaphone } from 'lucide-react'
 
 interface Asesor {
   id: string; nombre: string; telefono: string
@@ -17,7 +17,7 @@ interface Asesor {
 interface Usuario {
   id: string; email: string
   nombre: string | null; image: string | null
-  role: 'ADMIN' | 'VENDEDOR'; asesor: Asesor | null; createdAt: string
+  role: 'ADMIN' | 'VENDEDOR' | 'MARKETING'; asesor: Asesor | null; createdAt: string
 }
 
 export default function UsuariosPage() {
@@ -28,7 +28,7 @@ export default function UsuariosPage() {
   const [formNombre, setFormNombre] = useState('')
   const [formPassword, setFormPassword] = useState('')
   const [formTelefono, setFormTelefono] = useState('')
-  const [formRole, setFormRole] = useState<'VENDEDOR' | 'ADMIN'>('VENDEDOR')
+  const [formRole, setFormRole] = useState<'VENDEDOR' | 'ADMIN' | 'MARKETING'>('VENDEDOR')
   const [formError, setFormError] = useState('')
 
   // Modal editar asesor
@@ -47,7 +47,7 @@ export default function UsuariosPage() {
   })
 
   const cambiarRol = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: 'ADMIN' | 'VENDEDOR' }) =>
+    mutationFn: ({ id, role }: { id: string; role: 'ADMIN' | 'VENDEDOR' | 'MARKETING' }) =>
       fetcher(`/auth/usuarios/${id}/rol`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -143,8 +143,9 @@ export default function UsuariosPage() {
     u.email.toLowerCase().includes(busqueda.toLowerCase()) ||
     u.asesor?.nombre.toLowerCase().includes(busqueda.toLowerCase())
   )
-  const totalAdmin    = usuariosTodos.filter(u => u.role === 'ADMIN').length
-  const totalVendedor = usuariosTodos.filter(u => u.role === 'VENDEDOR').length
+  const totalAdmin     = usuariosTodos.filter(u => u.role === 'ADMIN').length
+  const totalVendedor  = usuariosTodos.filter(u => u.role === 'VENDEDOR').length
+  const totalMarketing = usuariosTodos.filter(u => u.role === 'MARKETING').length
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -160,11 +161,12 @@ export default function UsuariosPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Total usuarios',  sublabel: 'Usuarios registrados', value: usuariosTodos.length, icon: Users,     accent: '#1a7de0' },
           { label: 'Administradores', sublabel: 'Con acceso total',      value: totalAdmin,            icon: Shield,    accent: '#7c3aed' },
           { label: 'Asesores',        sublabel: 'Vendedores activos',    value: totalVendedor,         icon: UserCheck, accent: '#16a34a' },
+          { label: 'Marketing',       sublabel: 'Equipo de contenido',   value: totalMarketing,         icon: Megaphone, accent: '#d97706' },
         ].map(({ label, sublabel, value, icon: Icon, accent }) => (
           <div
             key={label}
@@ -250,12 +252,14 @@ export default function UsuariosPage() {
                     </p>
                     <span className={cn(
                       'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5',
-                      u.role === 'ADMIN'
-                        ? 'bg-tertiary text-white'
+                      u.role === 'ADMIN' ? 'bg-tertiary text-white'
+                        : u.role === 'MARKETING' ? 'bg-[#d97706] text-white'
                         : 'bg-primary text-white',
                     )}>
-                      {u.role === 'ADMIN' ? <Shield className="w-2.5 h-2.5" /> : <UserCheck className="w-2.5 h-2.5" />}
-                      {u.role === 'ADMIN' ? 'Admin' : 'Asesor'}
+                      {u.role === 'ADMIN' ? <Shield className="w-2.5 h-2.5" />
+                        : u.role === 'MARKETING' ? <Megaphone className="w-2.5 h-2.5" />
+                        : <UserCheck className="w-2.5 h-2.5" />}
+                      {u.role === 'ADMIN' ? 'Admin' : u.role === 'MARKETING' ? 'Marketing' : 'Asesor'}
                     </span>
                   </div>
                 </div>
@@ -294,11 +298,12 @@ export default function UsuariosPage() {
                     <Select
                       value={u.role}
                       disabled={cambiarRol.isPending}
-                      onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as 'ADMIN' | 'VENDEDOR' })}
+                      onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as 'ADMIN' | 'VENDEDOR' | 'MARKETING' })}
                       className="text-[10px] md:text-xs font-medium px-2 py-1.5 bg-surface-high"
                       options={[
                         { value: 'VENDEDOR', label: 'Asesor' },
                         { value: 'ADMIN', label: 'Admin' },
+                        { value: 'MARKETING', label: 'Marketing' },
                       ]}
                     />
                   </div>
@@ -495,11 +500,12 @@ export default function UsuariosPage() {
                 <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Rol</label>
                 <Select
                   value={formRole}
-                  onValueChange={v => setFormRole(v as 'VENDEDOR' | 'ADMIN')}
+                  onValueChange={v => setFormRole(v as 'VENDEDOR' | 'ADMIN' | 'MARKETING')}
                   className="input-base"
                   options={[
                     { value: 'VENDEDOR', label: 'Asesor' },
                     { value: 'ADMIN', label: 'Administrador' },
+                    { value: 'MARKETING', label: 'Marketing' },
                   ]}
                 />
               </div>

@@ -30,6 +30,7 @@ import finanzasRoutes from './routes/finanzas'
 import webhookRoutes from './routes/webhooks'
 import trengoRoutes from './routes/trengo'
 import hubspotRoutes from './routes/hubspot'
+import marketingRoutes from './routes/marketing'
 import uploadRoutes from './routes/upload'
 import configRoutes from './routes/config'
 import negociacionesRoutes from './routes/negociaciones'
@@ -190,6 +191,7 @@ app.use('/api/hotmart',     hotmartRoutes)
 app.use('/api/notificaciones', notificacionesRoutes)
 app.use('/api/trengo',       trengoRoutes)
 app.use('/api/hubspot',      hubspotRoutes)
+app.use('/api/marketing',    marketingRoutes)
 app.use('/api/apikeys',      apiKeysRoutes)
 app.use('/api/public/v1',    publicRoutes)
 

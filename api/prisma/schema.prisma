@@ -21,6 +21,7 @@ model User {
   hashedPassword String?
   accounts       Account[]
   asesor         Asesor?
+  marketing      MiembroMarketing?
   passkeys       Passkey[]
   sessions       Session[]
   pushSubs       PushSubscription[]
@@ -386,9 +387,94 @@ model Negociacion {
   colegio           Colegio          @relation(fields: [colegioId], references: [id], onDelete: Cascade)
 }
 
+// ── Marketing: planificación de contenido, guiones y entregables publicados ──
+model MiembroMarketing {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  nombre    String
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asignados ContenidoMarketing[] @relation("AsignadoA")
+  guiones   Guion[]
+
+  @@map("marketing_miembros")
+}
+
+enum TipoContenidoMarketing {
+  VIDEO
+  GUION
+  PUBLICACION
+  OTRO
+}
+
+enum EstadoContenidoMarketing {
+  PLANIFICADO
+  EN_PROCESO
+  PUBLICADO
+}
+
+model ContenidoMarketing {
+  id          String                    @id @default(cuid())
+  titulo      String
+  tipo        TipoContenidoMarketing
+  fecha       DateTime // día planificado en el calendario
+  estado      EstadoContenidoMarketing  @default(PLANIFICADO)
+  notas       String?
+  asignadoAId String?
+  guionId     String?
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  asignadoA   MiembroMarketing? @relation("AsignadoA", fields: [asignadoAId], references: [id])
+  guion       Guion?            @relation(fields: [guionId], references: [id])
+  entregables Entregable[]
+
+  @@map("marketing_contenidos")
+}
+
+enum PlataformaEntregable {
+  YOUTUBE
+  INSTAGRAM
+  TIKTOK
+  FACEBOOK
+  DRIVE
+  OTRO
+}
+
+model Entregable {
+  id          String               @id @default(cuid())
+  contenidoId String
+  plataforma  PlataformaEntregable
+  url         String? // link externo (YouTube/IG/TikTok/Drive)
+  videoUrl    String? // URL de Cloudinary si se subió el video directo
+  publicadoEn DateTime             @default(now())
+  createdAt   DateTime             @default(now())
+
+  contenido ContenidoMarketing @relation(fields: [contenidoId], references: [id], onDelete: Cascade)
+
+  @@map("marketing_entregables")
+}
+
+model Guion {
+  id        String   @id @default(cuid())
+  titulo    String
+  contenido String   @db.Text
+  autorId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  autor   MiembroMarketing     @relation(fields: [autorId], references: [id])
+  usadoEn ContenidoMarketing[]
+
+  @@map("marketing_guiones")
+}
+
 enum Role {
   ADMIN
   VENDEDOR
+  MARKETING
 }
 
 enum EstadoPago {

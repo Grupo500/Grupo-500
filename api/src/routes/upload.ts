@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { authenticate } from '../middleware/auth'
-import { uploadPdf, uploadImage, uploadExcel } from '../middleware/upload'
+import { uploadPdf, uploadImage, uploadExcel, uploadVideo } from '../middleware/upload'
 import { ApiResponse } from '../utils/response'
 
 const router = Router()
@@ -56,6 +56,13 @@ router.post('/imagen', checkCloudinary, multerHandler(uploadImage), (req: Reques
   if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió ningún archivo' })
   const file = req.file as Express.Multer.File & { path: string; filename: string }
   return ApiResponse.success(res, { url: file.path, filename: file.filename })
+})
+
+// Upload de video (entregables de Marketing)
+router.post('/video', checkCloudinary, multerHandler(uploadVideo), (req: Request, res: Response) => {
+  if (!req.file) return res.status(400).json({ success: false, error: 'No se recibió ningún archivo' })
+  const file = req.file as Express.Multer.File & { path: string; filename: string }
+  return ApiResponse.success(res, { url: file.path, filename: file.filename, tipo: 'video' })
 })
 
 export default router

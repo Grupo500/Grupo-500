@@ -6,9 +6,9 @@ import * as ctrl from '../controllers/reportes.controller'
 
 const router = Router()
 
-router.use(authenticate)
+router.use(authenticate, requireRole('ADMIN', 'VENDEDOR'))
 
-// Accesibles para todos los roles (los controllers filtran por asesorId si es VENDEDOR)
+// Accesibles para ADMIN/VENDEDOR (los controllers filtran por asesorId si es VENDEDOR)
 router.get('/dashboard',       asyncHandler(ctrl.dashboard))
 router.get('/mi-resumen',      asyncHandler(ctrl.miResumenAsesor))
 router.get('/mis-ventas',      asyncHandler(ctrl.misVentasResumen))

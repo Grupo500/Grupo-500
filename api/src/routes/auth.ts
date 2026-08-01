@@ -60,7 +60,7 @@ const crearSchema = z.object({
   password: z.string().min(8),
   nombre:   z.string().min(2),
   telefono: z.string().min(7).optional(),
-  role:     z.enum(['ADMIN', 'VENDEDOR']).default('VENDEDOR'),
+  role:     z.enum(['ADMIN', 'VENDEDOR', 'MARKETING']).default('VENDEDOR'),
 })
 
 // ── Crear usuario (solo ADMIN) ───────────────────────────────────────────────
@@ -81,15 +81,13 @@ router.post('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async 
       nombre: data.nombre,
       role:   data.role,
       hashedPassword,
-      asesor: {
-        create: {
-          nombre:   data.nombre,
-          email:    data.email,
-          telefono: data.telefono ?? '000-000-0000',
-        },
-      },
+      // MARKETING no tiene perfil de Asesor (no vende ni gestiona estudiantes);
+      // ADMIN/VENDEDOR sí, como siempre.
+      ...(data.role === 'MARKETING'
+        ? { marketing: { create: { nombre: data.nombre } } }
+        : { asesor: { create: { nombre: data.nombre, email: data.email, telefono: data.telefono ?? '000-000-0000' } } }),
     },
-    include: { asesor: true },
+    include: { asesor: true, marketing: true },
   })
 
   const { hashedPassword: _, ...userSafe } = user
@@ -99,7 +97,7 @@ router.post('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async 
 // ── Cambiar rol (solo ADMIN) ─────────────────────────────────────────────────
 router.patch('/usuarios/:id/rol', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const { role } = req.body
-  if (!['ADMIN', 'VENDEDOR'].includes(role)) {
+  if (!['ADMIN', 'VENDEDOR', 'MARKETING'].includes(role)) {
     return res.status(400).json({ error: 'Rol inválido' })
   }
   const user = await prisma.user.update({ where: { id: req.params.id }, data: { role } })
