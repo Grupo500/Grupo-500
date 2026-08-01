@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
-import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark } from 'lucide-react'
+import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
 
 /** Fecha de hoy en Colombia, con el día y el mes capitalizados. */
@@ -56,7 +56,7 @@ export default async function InicioPage() {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE'
+  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'ESTUDIANTE'
 
   function primerNombre(nombreCompleto: string): string {
     const partes = nombreCompleto.trim().split(/\s+/)
@@ -71,6 +71,7 @@ export default async function InicioPage() {
   const verBrito      = true
   // Finanzas es una vista de dirección: no se segmenta por asesor.
   const verFinanzas   = role === 'ADMIN'
+  const verMarketing  = role === 'ADMIN' || role === 'MARKETING'
 
   const cifras = verVentas ? await cifrasDeVentas((session.user as any).id ?? '', role === 'ADMIN') : null
 
@@ -90,6 +91,13 @@ export default async function InicioPage() {
         texto: 'Exámenes tipo Saber 11 en dos sesiones, con calificación automática y resultados por área.',
         accion: 'Entrar a Simulacros',
       }
+    : verMarketing
+    ? {
+        href: '/marketing', titulo: 'Marketing', icono: Megaphone,
+        de: '#d97706', a: '#f59e0b',
+        texto: 'Calendario de contenido, guiones y entregables publicados por el equipo.',
+        accion: 'Entrar a Marketing',
+      }
     : null
 
   const secundarios = [
@@ -107,6 +115,11 @@ export default async function InicioPage() {
       href: '/finanzas', titulo: 'Finanzas', icono: Landmark,
       de: '#0f766e', a: '#14b8a6', borde: '#14b8a6',
       texto: 'Ritmo de ventas, mix comercial y cierre mensual.',
+    },
+    verMarketing && {
+      href: '/marketing', titulo: 'Marketing', icono: Megaphone,
+      de: '#d97706', a: '#f59e0b', borde: '#f59e0b',
+      texto: 'Calendario de contenido, guiones y entregables del equipo.',
     },
   ].filter(Boolean).filter(m => (m as { href: string }).href !== destacado?.href) as {
     href: string; titulo: string; icono: typeof Wallet

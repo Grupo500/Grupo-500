@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   BookOpen, School, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Megaphone,
+  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -21,19 +21,18 @@ import { MARKETING_TABS } from '@/lib/marketingNav'
 type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING'
 
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor
-// que un ADMIN no necesita ver (él tiene sus propias vistas globales).
-// `roles`, cuando está presente, manda como lista blanca explícita — así un
-// rol nuevo (MARKETING) no hereda por accidente ítems pensados para ventas.
+// que un ADMIN no necesita ver (él tiene sus propias vistas globales). Este
+// nav es exclusivo de Ventas — MARKETING nunca lo ve (vive en su propia área,
+// ver `dentroDe('/marketing')` más abajo).
 type NavItem =
-  | { type: 'link';    href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean; roles?: Rol[] }
-  | { type: 'section'; label: string; adminOnly: boolean; soloAsesor?: boolean; roles?: Rol[] }
+  | { type: 'link';    href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean }
+  | { type: 'section'; label: string; adminOnly: boolean; soloAsesor?: boolean }
 
 const navItems: NavItem[] = [
   { type: 'link',    href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard, adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/mis-ventas',      label: 'Mis ventas',      icon: Receipt,         adminOnly: false, soloAsesor: true },
   { type: 'link',    href: '/ventas',          label: 'Ventas',          icon: Receipt,         adminOnly: true  },
-  { type: 'link',    href: '/marketing',       label: 'Marketing',       icon: Megaphone,       adminOnly: false, roles: ['ADMIN', 'MARKETING'] },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: false },
@@ -136,9 +135,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { theme } = useTheme()
 
-  const visibleItems = navItems.filter(item => item.roles
-    ? item.roles.includes(role)
-    : (!item.adminOnly || role === 'ADMIN') && (!item.soloAsesor || role !== 'ADMIN') && role !== 'MARKETING'
+  const visibleItems = navItems.filter(
+    item => (!item.adminOnly || role === 'ADMIN') && (!item.soloAsesor || role !== 'ADMIN')
   )
 
   // ── Modo sub-navegación ────────────────────────────────────────────────

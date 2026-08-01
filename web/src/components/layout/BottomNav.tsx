@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
-  FileBarChart2, BarChart3, Megaphone,
+  FileBarChart2, BarChart3,
   ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt,
   type LucideIcon,
 } from 'lucide-react'
@@ -19,8 +19,9 @@ import { MARKETING_TABS } from '@/lib/marketingNav'
 type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING'
 
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor.
-// `roles`, cuando está presente, manda como lista blanca explícita.
-type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean; roles?: Rol[] }
+// Este nav es exclusivo de Ventas — MARKETING vive en su propia área (ver
+// `enMarketing` más abajo), nunca ve estos ítems.
+type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boolean; soloAsesor?: boolean }
 
 // Las ventas son el uso diario del asesor en el celular, así que ocupan un
 // puesto fijo en la barra; Cursos se consulta poco y pasa al menú "Más".
@@ -36,7 +37,6 @@ const moreItems: NavItem[] = [
   { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
-  { href: '/marketing',       label: 'Marketing',        icon: Megaphone,     adminOnly: false, roles: ['ADMIN', 'MARKETING'] },
   { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
   { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
@@ -62,9 +62,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   }, [moreOpen])
 
   const isDark = theme === 'dark'
-  const porRol = (i: NavItem) => i.roles
-    ? i.roles.includes(role)
-    : (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN') && role !== 'MARKETING'
+  const porRol = (i: NavItem) => (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN')
   // Dentro de Finanzas/Marketing la barra muestra las secciones del área, no
   // las de Ventas: son áreas distintas y mezclarlas deja al usuario sin forma
   // de moverse por donde está.
