@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { VolverInicioButton } from '@/components/ui/VolverInicioButton'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Search, Plus, FileText, Trash2, Loader2 } from 'lucide-react'
@@ -36,9 +37,12 @@ export default function GuionesPage() {
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <PageHeader title="Guiones" subtitle="Biblioteca de guiones del equipo" />
-        <Button onClick={() => setSeleccionado('nuevo')}>
-          <Plus className="w-4 h-4" /> Nuevo guion
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setSeleccionado('nuevo')}>
+            <Plus className="w-4 h-4" /> Nuevo guion
+          </Button>
+          <VolverInicioButton />
+        </div>
       </div>
 
       <div className="relative max-w-sm">

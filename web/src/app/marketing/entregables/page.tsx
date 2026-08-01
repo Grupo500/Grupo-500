@@ -6,6 +6,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { VolverInicioButton } from '@/components/ui/VolverInicioButton'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Link2, Loader2 } from 'lucide-react'
@@ -70,6 +71,7 @@ export default function EntregablesPage() {
             onChange={(m, r) => { setMonth(m); setDateRange(r) }}
             alignRight
           />
+          <VolverInicioButton />
         </div>
       </div>
 

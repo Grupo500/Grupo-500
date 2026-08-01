@@ -145,7 +145,16 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   // para que Finanzas (y lo que venga) no duplique el bloque de renderizado.
   const dentroDe = (base: string) => pathname === base || pathname.startsWith(base + '/')
 
-  const subNav = dentroDe('/ajustes')
+  type SubNav = {
+    titulo: string
+    // Sin `volverA` el sidebar no dibuja el renglón de regreso — el área
+    // resuelve su propio botón "volver al inicio" en el header de página
+    // (igual que Ventas, ver DashboardWrapper), no ocupando un renglón fijo.
+    volverA?: string
+    tabs: { href: string; label: string; icon: LucideIcon; proximamente: boolean }[]
+  }
+
+  const subNav: SubNav | null = dentroDe('/ajustes')
     ? {
         titulo: 'Ajustes',
         // Ajustes es una sección de Ventas: se vuelve al dashboard.
@@ -166,7 +175,6 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     : dentroDe('/marketing') && (role === 'ADMIN' || role === 'MARKETING')
     ? {
         titulo: 'Marketing',
-        volverA: '/dashboard',
         tabs: MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),
       }
     : null
@@ -308,16 +316,18 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           {subNav ? (
             <div key="sub-nav" className="space-y-2 animate-nav-in-right">
             {/* ── Modo sub-navegación: el área reemplaza el nav principal ── */}
-            <Link
-              href={subNav.volverA}
-              title={collapsed ? 'Volver' : undefined}
-              className="relative flex items-center rounded-md text-[13px] font-semibold text-slate-100 hover:bg-white/[0.05] transition-colors mb-1"
-            >
-              <span className="w-11 h-10 flex items-center justify-center shrink-0">
-                <ChevronLeft className="w-[17px] h-[17px]" />
-              </span>
-              {!collapsed && <span className="flex-1 truncate">{subNav.titulo}</span>}
-            </Link>
+            {subNav.volverA && (
+              <Link
+                href={subNav.volverA}
+                title={collapsed ? 'Volver' : undefined}
+                className="relative flex items-center rounded-md text-[13px] font-semibold text-slate-100 hover:bg-white/[0.05] transition-colors mb-1"
+              >
+                <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                  <ChevronLeft className="w-[17px] h-[17px]" />
+                </span>
+                {!collapsed && <span className="flex-1 truncate">{subNav.titulo}</span>}
+              </Link>
+            )}
 
             {subNav.tabs.map(tab => {
               const Icon = tab.icon
