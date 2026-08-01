@@ -182,10 +182,21 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
 
   const width = collapsed ? 60 : 220
 
+  // Los ítems de un área con sub-nav (Ajustes/Finanzas/Marketing) se renderizan
+  // con exactamente el mismo bloque que el nav principal de Ventas — mismo
+  // círculo activo, mismo indicador flotante — así ninguna área nueva se ve
+  // ni se comporta distinto; solo cambia qué ítems trae.
+  type RenderItem =
+    | { type: 'link'; href: string; label: string; icon: LucideIcon; adminOnly?: boolean; proximamente?: boolean }
+    | { type: 'section'; label: string }
+  const itemsToRender: RenderItem[] = subNav
+    ? subNav.tabs.map(t => ({ type: 'link', href: t.href, label: t.label, icon: t.icon, proximamente: t.proximamente }))
+    : visibleItems
+
   // Ítem activo
-  const activeItem = visibleItems.find(
+  const activeItem = itemsToRender.find(
     it => it.type === 'link' && (pathname === it.href || pathname.startsWith(it.href + '/'))
-  ) as Extract<NavItem, { type: 'link' }> | undefined
+  ) as Extract<RenderItem, { type: 'link' }> | undefined
   const ActiveIcon = activeItem?.icon
 
   // ── Íconos fijos; el indicador (círculo + curva) se desliza al activo ──
@@ -313,10 +324,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
             {!collapsed && <span className="text-[12px] font-medium">Contraer</span>}
           </button>
 
-          {subNav ? (
-            <div key="sub-nav" className="space-y-2 animate-nav-in-right">
-            {/* ── Modo sub-navegación: el área reemplaza el nav principal ── */}
-            {subNav.volverA && (
+          <div key={subNav ? 'sub-nav' : 'main-nav'} className={cn('space-y-2', subNav ? 'animate-nav-in-right' : 'animate-nav-in-left')}>
+            {/* Botón de regreso, solo cuando el área lo define (Ajustes/Finanzas) */}
+            {subNav?.volverA && (
               <Link
                 href={subNav.volverA}
                 title={collapsed ? 'Volver' : undefined}
@@ -329,16 +339,28 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
               </Link>
             )}
 
-            {subNav.tabs.map(tab => {
-              const Icon = tab.icon
-              const isActive = pathname === tab.href
+            {/* Mismo bloque para el nav principal de Ventas y para el sub-nav de
+                cualquier área (Ajustes/Finanzas/Marketing/...) — así todas se
+                ven y se comportan igual; lo único que cambia son los ítems. */}
+            {itemsToRender.map((item, i) => {
+              if (item.type === 'section') {
+                return collapsed
+                  ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
+                  : <p key={i} className="pt-3 pb-0.5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
+                      {item.label}
+                    </p>
+              }
+
+              const { href, label, icon: Icon, adminOnly, proximamente } = item
+              const isActive = pathname === href || pathname.startsWith(href + '/')
+
               // Una sección anunciada pero sin construir no navega: llevar a un
               // 404 se lee como que la app está rota, no como que falta.
-              if (tab.proximamente) {
+              if (proximamente) {
                 return (
                   <div
-                    key={tab.href}
-                    title={collapsed ? `${tab.label} · próximamente` : undefined}
+                    key={href}
+                    title={collapsed ? `${label} · próximamente` : undefined}
                     className={cn(
                       'relative flex items-center rounded-md text-[13px] font-medium text-slate-600 cursor-default',
                       !collapsed && 'pr-3',
@@ -349,105 +371,72 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
                     </span>
                     {!collapsed && (
                       <>
-                        <span className="flex-1 truncate">{tab.label}</span>
+                        <span className="flex-1 truncate">{label}</span>
                         <span className="text-[9px] text-slate-500 shrink-0">Pronto</span>
                       </>
                     )}
                   </div>
                 )
               }
+
+              // ── Activo + colapsado: placeholder (el círculo se dibuja aparte) ──
+              if (isActive && collapsed) {
+                return (
+                  <Link key={href} ref={activeRef} href={href} title={label} className="relative flex items-center">
+                    <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                      <Icon className="w-[17px] h-[17px] opacity-0" />
+                    </span>
+                  </Link>
+                )
+              }
+
+              // ── Activo (expandido): círculo cian en la caja + label ──
+              if (isActive) {
+                return (
+                  <Link key={href} href={href} className="relative flex items-center pr-3 rounded-md text-[13px] font-medium text-white">
+                    <span className="w-11 h-10 flex items-center justify-center shrink-0">
+                      <span
+                        style={{ background: ACTIVE, boxShadow: '0 4px 12px rgba(33,185,247,0.4)' }}
+                        className="w-[34px] h-[34px] rounded-full flex items-center justify-center"
+                      >
+                        <Icon className="w-[17px] h-[17px] text-white" />
+                      </span>
+                    </span>
+                    <span className="flex-1 truncate">{label}</span>
+                    {adminOnly && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#21b9f7]/20 text-[#7fd4fb] font-bold tracking-wide">ADMIN</span>
+                    )}
+                  </Link>
+                )
+              }
+
+              // ── Ítem inactivo ──
               return (
                 <Link
-                  key={tab.href}
-                  href={tab.href}
-                  title={collapsed ? tab.label : undefined}
+                  key={href}
+                  href={href}
+                  title={collapsed ? label : undefined}
                   className={cn(
                     'relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150 group',
-                    isActive ? 'bg-white/[0.08] text-white' : 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
+                    'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
                     !collapsed && 'pr-3',
                   )}
                 >
                   <span className="w-11 h-10 flex items-center justify-center shrink-0">
-                    <Icon className={cn('w-[17px] h-[17px]', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-100')} />
+                    <Icon className="w-[17px] h-[17px] text-slate-400 group-hover:text-slate-100" />
                   </span>
-                  {!collapsed && <span className="flex-1 truncate">{tab.label}</span>}
-                </Link>
-              )
-            })}
-            </div>
-          ) : (
-            <div key="main-nav" className="space-y-2 animate-nav-in-left">
-            {visibleItems.map((item, i) => {
-            if (item.type === 'section') {
-              return collapsed
-                ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
-                : <p key={i} className="pt-3 pb-0.5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
-                    {item.label}
-                  </p>
-            }
-
-            const { href, label, icon: Icon, adminOnly } = item
-            const isActive = pathname === href || pathname.startsWith(href + '/')
-
-            // ── Activo + colapsado: placeholder (el círculo se dibuja aparte) ──
-            if (isActive && collapsed) {
-              return (
-                <Link key={href} ref={activeRef} href={href} title={label} className="relative flex items-center">
-                  <span className="w-11 h-10 flex items-center justify-center shrink-0">
-                    <Icon className="w-[17px] h-[17px] opacity-0" />
-                  </span>
-                </Link>
-              )
-            }
-
-            // ── Activo (expandido): círculo cian en la caja + label ──
-            if (isActive) {
-              return (
-                <Link key={href} href={href} className="relative flex items-center pr-3 rounded-md text-[13px] font-medium text-white">
-                  <span className="w-11 h-10 flex items-center justify-center shrink-0">
-                    <span
-                      style={{ background: ACTIVE, boxShadow: '0 4px 12px rgba(33,185,247,0.4)' }}
-                      className="w-[34px] h-[34px] rounded-full flex items-center justify-center"
-                    >
-                      <Icon className="w-[17px] h-[17px] text-white" />
-                    </span>
-                  </span>
-                  <span className="flex-1 truncate">{label}</span>
-                  {adminOnly && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#21b9f7]/20 text-[#7fd4fb] font-bold tracking-wide">ADMIN</span>
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 truncate">{label}</span>
+                      {adminOnly && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-white/[0.08] text-slate-300 font-bold tracking-wide">ADMIN</span>
+                      )}
+                    </>
                   )}
                 </Link>
               )
-            }
-
-            // ── Ítem inactivo ──
-            return (
-              <Link
-                key={href}
-                href={href}
-                title={collapsed ? label : undefined}
-                className={cn(
-                  'relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150 group',
-                  'text-slate-400 hover:bg-white/[0.05] hover:text-slate-100',
-                  !collapsed && 'pr-3',
-                )}
-              >
-                <span className="w-11 h-10 flex items-center justify-center shrink-0">
-                  <Icon className="w-[17px] h-[17px] text-slate-400 group-hover:text-slate-100" />
-                </span>
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 truncate">{label}</span>
-                    {adminOnly && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-white/[0.08] text-slate-300 font-bold tracking-wide">ADMIN</span>
-                    )}
-                  </>
-                )}
-              </Link>
-            )
             })}
-            </div>
-          )}
+          </div>
         </div>
       </nav>
 
