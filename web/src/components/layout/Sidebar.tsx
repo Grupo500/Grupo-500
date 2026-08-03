@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/ventas',          label: 'Ventas',          icon: Receipt,         adminOnly: true  },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
-  { type: 'link',    href: '/enlaces',         label: 'Enlaces',         icon: Link2,           adminOnly: false },
+  { type: 'link',    href: '/enlaces',         label: 'Enlaces',         icon: Link2,           adminOnly: false, soloAsesor: true },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: false },
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
