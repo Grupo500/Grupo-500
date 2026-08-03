@@ -34,6 +34,19 @@ function fmtFecha(iso?: string | null) {
   return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+const GRUPOS_ORDEN = ['Años 500', 'Combos', 'Calendarios', 'Intensivos', 'Ruta 500', 'Premédico', 'Otros'] as const
+
+function grupoDe(c: Curso): typeof GRUPOS_ORDEN[number] {
+  const n = c.nombre.toLowerCase()
+  if (n.startsWith('año 500'))    return 'Años 500'
+  if (n.startsWith('combo'))      return 'Combos'
+  if (n.startsWith('calendario')) return 'Calendarios'
+  if (n.startsWith('intensivo'))  return 'Intensivos'
+  if (n.startsWith('ruta 500'))   return 'Ruta 500'
+  if (n.startsWith('premédico') || n.startsWith('premedico')) return 'Premédico'
+  return 'Otros'
+}
+
 function EstadoBadge({ fechaInicio, fechaFin }: { fechaInicio?: string | null; fechaFin?: string | null }) {
   if (!fechaInicio && !fechaFin) return null
   const ahora = new Date()
@@ -363,17 +376,33 @@ export default function CursosPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {cursos.map((c, idx) => (
-            <CursoCard
-              key={c.id}
-              c={c}
-              isAdmin={isAdmin}
-              idx={idx}
-              onToggle={(id, activo) => toggleActivoMutation.mutate({ id, activo })}
-              onEditarFechas={abrirEditarFechas}
-            />
-          ))}
+        <div className="space-y-8">
+          {GRUPOS_ORDEN.map(grupo => {
+            const items = cursos.filter(c => grupoDe(c) === grupo)
+            if (items.length === 0) return null
+            return (
+              <div key={grupo} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-on-surface">{grupo}</h2>
+                  <span className="text-[11px] font-semibold text-on-surface-variant bg-surface-high px-1.5 py-0.5 rounded-full tabular-nums">
+                    {items.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {items.map((c, idx) => (
+                    <CursoCard
+                      key={c.id}
+                      c={c}
+                      isAdmin={isAdmin}
+                      idx={idx}
+                      onToggle={(id, activo) => toggleActivoMutation.mutate({ id, activo })}
+                      onEditarFechas={abrirEditarFechas}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
