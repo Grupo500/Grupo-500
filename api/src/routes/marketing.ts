@@ -5,7 +5,7 @@ import * as ctrl from '../controllers/marketing.controller'
 
 const router = Router()
 
-router.use(authenticate, requireRole('ADMIN', 'MARKETING'))
+router.use(authenticate, requireRole('ADMIN', 'MARKETING', 'EDITOR', 'COMMUNITY'))
 
 router.get('/miembros', asyncHandler(ctrl.listarMiembros))
 

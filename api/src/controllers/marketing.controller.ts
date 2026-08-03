@@ -42,13 +42,19 @@ export async function listarContenidos(req: Request, res: Response) {
   return ApiResponse.success(res, contenidos)
 }
 
+const TIPO_CONTENIDO = ['VIDEO', 'VSL', 'CARRUSEL', 'CARRUMEME', 'TIKTOKERO', 'GUION', 'PUBLICACION', 'OTRO'] as const
+const DESTINO = ['SEBASTIAN_PERSONAL', 'ANDRES_PERSONAL', 'PREICFES', 'PREMEDICO'] as const
+const CLASIFICACION = ['ORGANICO', 'PAUTA'] as const
+
 const crearContenidoSchema = z.object({
-  titulo:      z.string().min(2),
-  tipo:        z.enum(['VIDEO', 'GUION', 'PUBLICACION', 'OTRO']),
-  fecha:       z.string(),
-  asignadoAId: z.string().optional().nullable(),
-  guionId:     z.string().optional().nullable(),
-  notas:       z.string().optional().nullable(),
+  titulo:        z.string().min(2),
+  tipo:          z.enum(TIPO_CONTENIDO),
+  destino:       z.enum(DESTINO).optional().nullable(),
+  clasificacion: z.enum(CLASIFICACION).optional(),
+  fecha:         z.string(),
+  asignadoAId:   z.string().optional().nullable(),
+  guionId:       z.string().optional().nullable(),
+  notas:         z.string().optional().nullable(),
 })
 
 export async function crearContenido(req: Request, res: Response) {
@@ -61,13 +67,15 @@ export async function crearContenido(req: Request, res: Response) {
 }
 
 const actualizarContenidoSchema = z.object({
-  titulo:      z.string().min(2).optional(),
-  tipo:        z.enum(['VIDEO', 'GUION', 'PUBLICACION', 'OTRO']).optional(),
-  fecha:       z.string().optional(),
-  estado:      z.enum(['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO']).optional(),
-  asignadoAId: z.string().optional().nullable(),
-  guionId:     z.string().optional().nullable(),
-  notas:       z.string().optional().nullable(),
+  titulo:        z.string().min(2).optional(),
+  tipo:          z.enum(TIPO_CONTENIDO).optional(),
+  destino:       z.enum(DESTINO).optional().nullable(),
+  clasificacion: z.enum(CLASIFICACION).optional(),
+  fecha:         z.string().optional(),
+  estado:        z.enum(['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO']).optional(),
+  asignadoAId:   z.string().optional().nullable(),
+  guionId:       z.string().optional().nullable(),
+  notas:         z.string().optional().nullable(),
 })
 
 export async function actualizarContenido(req: Request, res: Response) {

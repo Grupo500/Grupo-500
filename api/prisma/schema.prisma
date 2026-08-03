@@ -425,7 +425,11 @@ model MiembroMarketing {
 }
 
 enum TipoContenidoMarketing {
-  VIDEO
+  VIDEO // se muestra como "Reel" en la UI — se conserva el nombre para no romper contenidos ya guardados
+  VSL
+  CARRUSEL
+  CARRUMEME
+  TIKTOKERO
   GUION
   PUBLICACION
   OTRO
@@ -437,17 +441,31 @@ enum EstadoContenidoMarketing {
   PUBLICADO
 }
 
+enum DestinoContenido {
+  SEBASTIAN_PERSONAL
+  ANDRES_PERSONAL
+  PREICFES
+  PREMEDICO
+}
+
+enum ClasificacionContenido {
+  ORGANICO
+  PAUTA
+}
+
 model ContenidoMarketing {
-  id          String                    @id @default(cuid())
-  titulo      String
-  tipo        TipoContenidoMarketing
-  fecha       DateTime // día planificado en el calendario
-  estado      EstadoContenidoMarketing  @default(PLANIFICADO)
-  notas       String?
-  asignadoAId String?
-  guionId     String?
-  createdAt   DateTime                  @default(now())
-  updatedAt   DateTime                  @updatedAt
+  id            String                    @id @default(cuid())
+  titulo        String
+  tipo          TipoContenidoMarketing
+  destino       DestinoContenido?
+  clasificacion ClasificacionContenido    @default(ORGANICO)
+  fecha         DateTime // día planificado en el calendario
+  estado        EstadoContenidoMarketing  @default(PLANIFICADO)
+  notas         String?
+  asignadoAId   String?
+  guionId       String?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
 
   asignadoA   MiembroMarketing? @relation("AsignadoA", fields: [asignadoAId], references: [id])
   guion       Guion?            @relation(fields: [guionId], references: [id])
@@ -497,6 +515,8 @@ enum Role {
   ADMIN
   VENDEDOR
   MARKETING
+  EDITOR    // acceso solo al area de Marketing, igual que MARKETING
+  COMMUNITY // acceso solo al area de Marketing, igual que MARKETING
 }
 
 enum EstadoPago {

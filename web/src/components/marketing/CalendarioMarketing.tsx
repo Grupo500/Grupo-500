@@ -20,7 +20,9 @@ interface EntregableDto { id: string; plataforma: string; url: string | null; vi
 interface Contenido {
   id: string
   titulo: string
-  tipo: 'VIDEO' | 'GUION' | 'PUBLICACION' | 'OTRO'
+  tipo: 'VIDEO' | 'VSL' | 'CARRUSEL' | 'CARRUMEME' | 'TIKTOKERO' | 'GUION' | 'PUBLICACION' | 'OTRO'
+  destino: 'SEBASTIAN_PERSONAL' | 'ANDRES_PERSONAL' | 'PREICFES' | 'PREMEDICO' | null
+  clasificacion: 'ORGANICO' | 'PAUTA'
   fecha: string
   estado: 'PLANIFICADO' | 'EN_PROCESO' | 'PUBLICADO'
   notas: string | null
@@ -29,14 +31,27 @@ interface Contenido {
   entregables: EntregableDto[]
 }
 
-const TIPO_LABEL: Record<Contenido['tipo'], string> = { VIDEO: 'Video', GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro' }
+const TIPO_LABEL: Record<Contenido['tipo'], string> = {
+  VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme', TIKTOKERO: 'TikTokero',
+  GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
+}
 const ESTADO_LABEL: Record<Contenido['estado'], string> = { PLANIFICADO: 'Planificado', EN_PROCESO: 'En proceso', PUBLICADO: 'Publicado' }
 const ESTADO_COLOR: Record<Contenido['estado'], string> = {
   PLANIFICADO: 'var(--outline)',
   EN_PROCESO:  '#f59e0b',
   PUBLICADO:   '#16a34a',
 }
+const DESTINO_LABEL: Record<NonNullable<Contenido['destino']>, string> = {
+  SEBASTIAN_PERSONAL: 'Sebastián personal',
+  ANDRES_PERSONAL: 'Andrés personal',
+  PREICFES: 'Preicfes',
+  PREMEDICO: 'Premédico',
+}
+const CLASIFICACION_LABEL: Record<Contenido['clasificacion'], string> = { ORGANICO: 'Orgánico', PAUTA: 'Pauta' }
 const PLATAFORMAS = ['YOUTUBE', 'INSTAGRAM', 'TIKTOK', 'FACEBOOK', 'DRIVE', 'OTRO']
+const PLATAFORMA_LABEL: Record<string, string> = {
+  YOUTUBE: 'YouTube', INSTAGRAM: 'Instagram', TIKTOK: 'TikTok', FACEBOOK: 'Facebook', DRIVE: 'Drive', OTRO: 'Otro',
+}
 
 function iniciales(n: string) {
   return n.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
@@ -258,6 +273,8 @@ function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
   const esEdicion = !!contenido
   const [titulo, setTitulo]         = useState(contenido?.titulo ?? '')
   const [tipo, setTipo]             = useState<Contenido['tipo']>(contenido?.tipo ?? 'VIDEO')
+  const [destino, setDestino]       = useState(contenido?.destino ?? '')
+  const [clasificacion, setClasificacion] = useState<Contenido['clasificacion']>(contenido?.clasificacion ?? 'ORGANICO')
   const [estado, setEstado]         = useState<Contenido['estado']>(contenido?.estado ?? 'PLANIFICADO')
   const [fechaStr, setFechaStr]     = useState(toISO(contenido ? new Date(contenido.fecha) : fecha ?? new Date()))
   const [asignadoAId, setAsignadoAId] = useState(contenido?.asignadoA?.id ?? '')
@@ -271,7 +288,11 @@ function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
 
   const guardar = useMutation({
     mutationFn: () => {
-      const body = { titulo, tipo, fecha: fechaStr, asignadoAId: asignadoAId || null, notas: notas || null, ...(esEdicion ? { estado } : {}) }
+      const body = {
+        titulo, tipo, clasificacion, fecha: fechaStr,
+        destino: destino || null, asignadoAId: asignadoAId || null, notas: notas || null,
+        ...(esEdicion ? { estado } : {}),
+      }
       return esEdicion
         ? apiFetch(`/marketing/contenidos/${contenido!.id}`, { method: 'PATCH', body: JSON.stringify(body) })
         : apiFetch('/marketing/contenidos', { method: 'POST', body: JSON.stringify(body) })
@@ -347,8 +368,30 @@ function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Fecha</label>
+            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Fecha de entrega</label>
             <input type="date" value={fechaStr} onChange={e => setFechaStr(e.target.value)} className="input-base" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Destino</label>
+            <Select
+              value={destino}
+              onValueChange={setDestino}
+              className="input-base"
+              placeholder="Sin definir"
+              options={[{ value: '', label: 'Sin definir' }, ...Object.entries(DESTINO_LABEL).map(([value, label]) => ({ value, label }))]}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Tipo de contenido</label>
+            <Select
+              value={clasificacion}
+              onValueChange={v => setClasificacion(v as Contenido['clasificacion'])}
+              className="input-base"
+              options={Object.entries(CLASIFICACION_LABEL).map(([value, label]) => ({ value, label }))}
+            />
           </div>
         </div>
 
@@ -402,7 +445,7 @@ function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-[12px] text-primary hover:underline"
                 >
-                  <Link2 className="w-3 h-3 shrink-0" /> {e.plataforma} · {e.url ? 'link' : 'video subido'}
+                  <Link2 className="w-3 h-3 shrink-0" /> {PLATAFORMA_LABEL[e.plataforma] ?? e.plataforma} · {e.url ? 'link' : 'video subido'}
                 </a>
               ))}
             </div>
@@ -411,7 +454,7 @@ function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
                 value={plataforma}
                 onValueChange={setPlataforma}
                 className="w-[120px] text-[12px] py-1.5"
-                options={PLATAFORMAS.map(p => ({ value: p, label: p }))}
+                options={PLATAFORMAS.map(p => ({ value: p, label: PLATAFORMA_LABEL[p] }))}
               />
               <input
                 value={url}
