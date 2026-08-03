@@ -20,6 +20,7 @@ interface Curso {
   fechaInicio?: string | null
   fechaFin?: string | null
   hotmartProductId?: string | null
+  linkAfiliacion?: string | null
   _count?: { estudiantes: number }
 }
 
@@ -233,11 +234,13 @@ export default function CursosPage() {
   const [editandoCurso, setEditandoCurso] = useState<Curso | null>(null)
   const [fechaInicioForm, setFechaInicioForm] = useState('')
   const [fechaFinForm, setFechaFinForm] = useState('')
+  const [linkAfiliacionForm, setLinkAfiliacionForm] = useState('')
 
   function abrirEditarFechas(c: Curso) {
     setEditandoCurso(c)
     setFechaInicioForm(toDateInput(c.fechaInicio))
     setFechaFinForm(toDateInput(c.fechaFin))
+    setLinkAfiliacionForm(c.linkAfiliacion ?? '')
   }
 
   const editarFechasMutation = useMutation({
@@ -247,6 +250,7 @@ export default function CursosPage() {
       body: JSON.stringify({
         fechaInicio: fechaInicioForm ? new Date(fechaInicioForm + 'T00:00:00').toISOString() : null,
         fechaFin:    fechaFinForm    ? new Date(fechaFinForm    + 'T00:00:00').toISOString() : null,
+        linkAfiliacion: linkAfiliacionForm.trim() || null,
       }),
     }),
     onSuccess: () => {
@@ -382,7 +386,7 @@ export default function CursosPage() {
           />
           <div className="relative w-full max-w-sm bg-surface-lowest border border-outline-variant rounded-2xl shadow-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-on-surface">Fechas del curso</p>
+              <p className="text-sm font-semibold text-on-surface">Editar curso</p>
               <button
                 onClick={() => setEditandoCurso(null)}
                 className="p-1 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-high"
@@ -410,6 +414,17 @@ export default function CursosPage() {
                   onChange={e => setFechaFinForm(e.target.value)}
                   className="w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Link de afiliación (Hotmart)</label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={linkAfiliacionForm}
+                  onChange={e => setLinkAfiliacionForm(e.target.value)}
+                  className="w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+                <p className="text-[10.5px] text-on-surface-variant mt-1">Se usa en Enlaces para que los asesores se afilien.</p>
               </div>
             </div>
 

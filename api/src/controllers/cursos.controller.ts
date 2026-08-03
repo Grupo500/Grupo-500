@@ -73,6 +73,7 @@ const actualizarSchema = z.object({
   tipoCurso:        z.enum(['INDIVIDUAL', 'COMBO']).optional(),
   visibleEnLanding: z.boolean().optional(),
   cuposDisponibles: z.number().int().min(0).optional().nullable(),
+  linkAfiliacion:   z.string().url().optional().nullable(),
 })
 
 export async function actualizar(req: Request, res: Response) {

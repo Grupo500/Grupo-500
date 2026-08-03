@@ -124,6 +124,7 @@ model Asesor {
   negociaciones Negociacion[]
   pagos         Pago[]
   alias         AliasAsesor[]
+  afiliaciones  AfiliacionAsesor[]
 }
 
 model Colegio {
@@ -246,8 +247,29 @@ model Curso {
   // Año 500, Premédico, Ruta 500). Se siembra desde el nombre pero es editable:
   // deducirla del texto en cada consulta rompería al renombrar un curso.
   familia           String?
+  // Link para que un asesor se afilie a este producto en Hotmart. No hay API
+  // de Hotmart para armarlo ni para saber quién ya está afiliado (confirmado
+  // con su soporte) — un admin lo copia una vez desde Hotmart y cada asesor
+  // marca su propio estado (ver AfiliacionAsesor).
+  linkAfiliacion    String?
   estudiantes       CursoEstudiante[]
   preciosOficiales  PrecioOficial[]
+  afiliaciones      AfiliacionAsesor[]
+}
+
+// Un asesor marca a mano que ya se afilió a un producto en Hotmart — no hay
+// forma de leerlo automáticamente (ver comentario en Curso.linkAfiliacion).
+model AfiliacionAsesor {
+  id        String   @id @default(cuid())
+  asesorId  String
+  cursoId   String
+  marcadoEn DateTime @default(now())
+
+  asesor Asesor @relation(fields: [asesorId], references: [id], onDelete: Cascade)
+  curso  Curso  @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+
+  @@unique([asesorId, cursoId])
+  @@map("ventas_afiliaciones_asesor")
 }
 
 model Formulario {
