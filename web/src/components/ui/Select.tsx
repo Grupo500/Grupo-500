@@ -68,7 +68,7 @@ export function Select({
           sideOffset={4}
           collisionPadding={12}
           className={cn(
-            'z-50 overflow-hidden rounded-lg border border-outline-variant bg-surface-lowest shadow-float animate-fade-in',
+            'z-[10000] overflow-hidden rounded-lg border border-outline-variant bg-surface-lowest shadow-float animate-fade-in',
             contentClassName,
           )}
           style={
