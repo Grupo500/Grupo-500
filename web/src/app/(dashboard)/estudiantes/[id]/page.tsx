@@ -1559,8 +1559,8 @@ function TabCertificados({ e, fetcher, onRefresh }: {
               className={cn(
                 'flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors',
                 tipoNuevo === tipo
-                  ? 'border-primary/40 bg-primary/10 text-primary'
-                  : 'border-outline-variant bg-surface-high text-on-surface-variant hover:bg-surface-highest'
+                  ? 'border-primary bg-primary text-on-primary shadow-sm'
+                  : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:bg-surface-high'
               )}
             >
               {tipo === 'CURSANDO' ? <Clock className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
