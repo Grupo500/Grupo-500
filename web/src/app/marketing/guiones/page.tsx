@@ -6,7 +6,6 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { VolverInicioButton } from '@/components/ui/VolverInicioButton'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Search, Plus, FileText, Trash2, Loader2 } from 'lucide-react'
@@ -41,7 +40,6 @@ export default function GuionesPage() {
           <Button onClick={() => setSeleccionado('nuevo')}>
             <Plus className="w-4 h-4" /> Nuevo guion
           </Button>
-          <VolverInicioButton />
         </div>
       </div>
 

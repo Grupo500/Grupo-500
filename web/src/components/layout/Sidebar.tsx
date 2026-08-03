@@ -166,8 +166,8 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     : dentroDe('/finanzas') && role === 'ADMIN'
     ? {
         titulo: 'Finanzas',
-        // Finanzas es un área propia: se sale al selector de módulos.
-        volverA: '/inicio',
+        // Finanzas es un área propia: el regreso a /inicio es el botón
+        // VolverInicioButton en el header de cada página, no un renglón fijo.
         tabs: FINANZAS_TABS.map(t => ({
           href: t.href, label: t.label, icon: t.icon, proximamente: t.proximamente ?? false,
         })),
