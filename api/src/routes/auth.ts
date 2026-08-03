@@ -55,12 +55,17 @@ router.get('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async (
   return ApiResponse.success(res, usuarios)
 }))
 
+// Roles que operan dentro del área de Marketing y usan un perfil MiembroMarketing
+// (no Asesor) — EDITOR/COMMUNITY tienen el mismo acceso que MARKETING, solo
+// cambia la etiqueta del rol para distinguir la especialidad de cada uno.
+const ROLES_MARKETING = ['MARKETING', 'EDITOR', 'COMMUNITY'] as const
+
 const crearSchema = z.object({
   email:    z.string().email().transform(e => e.toLowerCase().trim()),
   password: z.string().min(8),
   nombre:   z.string().min(2),
   telefono: z.string().min(7).optional(),
-  role:     z.enum(['ADMIN', 'VENDEDOR', 'MARKETING']).default('VENDEDOR'),
+  role:     z.enum(['ADMIN', 'VENDEDOR', 'MARKETING', 'EDITOR', 'COMMUNITY']).default('VENDEDOR'),
 })
 
 // ── Crear usuario (solo ADMIN) ───────────────────────────────────────────────
@@ -81,9 +86,9 @@ router.post('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async 
       nombre: data.nombre,
       role:   data.role,
       hashedPassword,
-      // MARKETING no tiene perfil de Asesor (no vende ni gestiona estudiantes);
-      // ADMIN/VENDEDOR sí, como siempre.
-      ...(data.role === 'MARKETING'
+      // Los roles de Marketing no tienen perfil de Asesor (no venden ni gestionan
+      // estudiantes); ADMIN/VENDEDOR sí, como siempre.
+      ...((ROLES_MARKETING as readonly string[]).includes(data.role)
         ? { marketing: { create: { nombre: data.nombre } } }
         : { asesor: { create: { nombre: data.nombre, email: data.email, telefono: data.telefono ?? '000-000-0000' } } }),
     },
@@ -97,7 +102,7 @@ router.post('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async 
 // ── Cambiar rol (solo ADMIN) ─────────────────────────────────────────────────
 router.patch('/usuarios/:id/rol', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const { role } = req.body
-  if (!['ADMIN', 'VENDEDOR', 'MARKETING'].includes(role)) {
+  if (!['ADMIN', 'VENDEDOR', 'MARKETING', 'EDITOR', 'COMMUNITY'].includes(role)) {
     return res.status(400).json({ error: 'Rol inválido' })
   }
   const user = await prisma.user.update({ where: { id: req.params.id }, data: { role } })

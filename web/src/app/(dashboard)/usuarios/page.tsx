@@ -17,7 +17,13 @@ interface Asesor {
 interface Usuario {
   id: string; email: string
   nombre: string | null; image: string | null
-  role: 'ADMIN' | 'VENDEDOR' | 'MARKETING'; asesor: Asesor | null; createdAt: string
+  role: 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY'; asesor: Asesor | null; createdAt: string
+}
+
+// Roles que operan dentro del área de Marketing (mismo acceso, distinta etiqueta).
+const ROLES_MARKETING: Usuario['role'][] = ['MARKETING', 'EDITOR', 'COMMUNITY']
+const ROLE_LABEL: Record<Usuario['role'], string> = {
+  ADMIN: 'Admin', VENDEDOR: 'Asesor', MARKETING: 'Marketing', EDITOR: 'Editor', COMMUNITY: 'Community',
 }
 
 export default function UsuariosPage() {
@@ -28,7 +34,7 @@ export default function UsuariosPage() {
   const [formNombre, setFormNombre] = useState('')
   const [formPassword, setFormPassword] = useState('')
   const [formTelefono, setFormTelefono] = useState('')
-  const [formRole, setFormRole] = useState<'VENDEDOR' | 'ADMIN' | 'MARKETING'>('VENDEDOR')
+  const [formRole, setFormRole] = useState<Usuario['role']>('VENDEDOR')
   const [formError, setFormError] = useState('')
 
   // Modal editar asesor
@@ -47,7 +53,7 @@ export default function UsuariosPage() {
   })
 
   const cambiarRol = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: 'ADMIN' | 'VENDEDOR' | 'MARKETING' }) =>
+    mutationFn: ({ id, role }: { id: string; role: 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' }) =>
       fetcher(`/auth/usuarios/${id}/rol`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -145,7 +151,7 @@ export default function UsuariosPage() {
   )
   const totalAdmin     = usuariosTodos.filter(u => u.role === 'ADMIN').length
   const totalVendedor  = usuariosTodos.filter(u => u.role === 'VENDEDOR').length
-  const totalMarketing = usuariosTodos.filter(u => u.role === 'MARKETING').length
+  const totalMarketing = usuariosTodos.filter(u => ROLES_MARKETING.includes(u.role)).length
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -253,13 +259,13 @@ export default function UsuariosPage() {
                     <span className={cn(
                       'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5',
                       u.role === 'ADMIN' ? 'bg-tertiary text-white'
-                        : u.role === 'MARKETING' ? 'bg-[#d97706] text-white'
+                        : ROLES_MARKETING.includes(u.role) ? 'bg-[#d97706] text-white'
                         : 'bg-primary text-white',
                     )}>
                       {u.role === 'ADMIN' ? <Shield className="w-2.5 h-2.5" />
-                        : u.role === 'MARKETING' ? <Megaphone className="w-2.5 h-2.5" />
+                        : ROLES_MARKETING.includes(u.role) ? <Megaphone className="w-2.5 h-2.5" />
                         : <UserCheck className="w-2.5 h-2.5" />}
-                      {u.role === 'ADMIN' ? 'Admin' : u.role === 'MARKETING' ? 'Marketing' : 'Asesor'}
+                      {ROLE_LABEL[u.role]}
                     </span>
                   </div>
                 </div>
@@ -298,12 +304,14 @@ export default function UsuariosPage() {
                     <Select
                       value={u.role}
                       disabled={cambiarRol.isPending}
-                      onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as 'ADMIN' | 'VENDEDOR' | 'MARKETING' })}
+                      onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' })}
                       className="text-[10px] md:text-xs font-medium px-2 py-1.5 bg-surface-high"
                       options={[
                         { value: 'VENDEDOR', label: 'Asesor' },
                         { value: 'ADMIN', label: 'Admin' },
                         { value: 'MARKETING', label: 'Marketing' },
+                        { value: 'EDITOR', label: 'Editor' },
+                        { value: 'COMMUNITY', label: 'Community' },
                       ]}
                     />
                   </div>
@@ -500,12 +508,14 @@ export default function UsuariosPage() {
                 <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Rol</label>
                 <Select
                   value={formRole}
-                  onValueChange={v => setFormRole(v as 'VENDEDOR' | 'ADMIN' | 'MARKETING')}
+                  onValueChange={v => setFormRole(v as Usuario['role'])}
                   className="input-base"
                   options={[
                     { value: 'VENDEDOR', label: 'Asesor' },
                     { value: 'ADMIN', label: 'Administrador' },
                     { value: 'MARKETING', label: 'Marketing' },
+                    { value: 'EDITOR', label: 'Editor' },
+                    { value: 'COMMUNITY', label: 'Community' },
                   ]}
                 />
               </div>

@@ -1,8 +1,8 @@
 import { DefaultSession, DefaultUser } from 'next-auth'
 import { DefaultJWT } from 'next-auth/jwt'
 
-// Roles del sistema: staff (ADMIN/VENDEDOR/MARKETING) + estudiantes de simulacros (ESTUDIANTE)
-type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'ESTUDIANTE'
+// Roles del sistema: staff (ADMIN/VENDEDOR/MARKETING/EDITOR/COMMUNITY) + estudiantes de simulacros (ESTUDIANTE)
+type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' | 'ESTUDIANTE'
 
 declare module 'next-auth' {
   interface Session {

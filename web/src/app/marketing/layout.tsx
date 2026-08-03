@@ -16,9 +16,9 @@ export default async function MarketingLayout({ children }: { children: React.Re
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'ESTUDIANTE'
+  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' | 'ESTUDIANTE'
 
-  if (role !== 'ADMIN' && role !== 'MARKETING') redirect('/inicio')
+  if (role !== 'ADMIN' && role !== 'MARKETING' && role !== 'EDITOR' && role !== 'COMMUNITY') redirect('/inicio')
 
   return (
     <QueryProvider>

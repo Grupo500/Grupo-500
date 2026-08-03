@@ -56,7 +56,7 @@ export default async function InicioPage() {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'ESTUDIANTE'
+  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' | 'ESTUDIANTE'
 
   function primerNombre(nombreCompleto: string): string {
     const partes = nombreCompleto.trim().split(/\s+/)
@@ -71,7 +71,7 @@ export default async function InicioPage() {
   const verBrito      = true
   // Finanzas es una vista de dirección: no se segmenta por asesor.
   const verFinanzas   = role === 'ADMIN'
-  const verMarketing  = role === 'ADMIN' || role === 'MARKETING'
+  const verMarketing  = role === 'ADMIN' || role === 'MARKETING' || role === 'EDITOR' || role === 'COMMUNITY'
 
   const cifras = verVentas ? await cifrasDeVentas((session.user as any).id ?? '', role === 'ADMIN') : null
 
