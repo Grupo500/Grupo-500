@@ -222,7 +222,7 @@ export default function EstudiantesPage() {
 
   const { data: cursosData } = useQuery({ queryKey: ['cursos-select'], queryFn: () => fetcher<any>('/cursos?limit=100'), staleTime: 5 * 60_000 })
 
-const cursos: { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
+const cursos: { id: string; nombre: string; precio: number }[] = (cursosData?.data ?? []).filter((c: { activo: boolean }) => c.activo)
 
   const { data, isLoading } = useQuery({
     queryKey: ['estudiantes', page, busqueda, soloMios],

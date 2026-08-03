@@ -1615,7 +1615,7 @@ export default function EstudianteDetallePage() {
 
   const colegios: { id: string; nombre: string }[] = colegiosData?.data ?? []
   const asesores: { id: string; nombre: string }[] = asesoresData?.data ?? []
-  const cursos:   { id: string; nombre: string; precio: number }[] = cursosData?.data ?? []
+  const cursos:   { id: string; nombre: string; precio: number }[] = (cursosData?.data ?? []).filter((c: { activo: boolean }) => c.activo)
 
   const eliminarMutation = useMutation({
     mutationFn: () => fetcher(`/estudiantes/${params.id}`, { method: 'DELETE' }),
