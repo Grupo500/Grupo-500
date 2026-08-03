@@ -1535,7 +1535,7 @@ function TabCertificados({ e, fetcher, onRefresh }: {
             placeholder="Número de documento"
             value={documentoInput}
             onChange={e => setDocumentoInput(e.target.value)}
-            className="bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+            className="w-full min-w-0 bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
           />
         </div>
         {documentoInput.trim() !== (e.documento ?? '') && (
