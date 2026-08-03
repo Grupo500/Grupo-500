@@ -262,28 +262,6 @@ export default function CursosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin])
 
-  // ── Diagnóstico temporal: prueba de humo del endpoint de afiliados de
-  // Hotmart, antes de construir el módulo "Enlaces". Quitar cuando quede
-  // resuelto si el permiso de las credenciales actuales lo permite o no.
-  const [afilCursoId, setAfilCursoId]     = useState('')
-  const [afilResultado, setAfilResultado] = useState<string | null>(null)
-  const [afilCargando, setAfilCargando]   = useState(false)
-
-  async function probarAfiliados() {
-    setAfilCargando(true)
-    setAfilResultado(null)
-    try {
-      const r = await fetcher<{ data: unknown }>(
-        `/hotmart/diagnostico-afiliados${afilCursoId ? `?cursoId=${afilCursoId}` : ''}`
-      )
-      setAfilResultado(JSON.stringify(r.data, null, 2))
-    } catch (e) {
-      setAfilResultado(`Error: ${e instanceof Error ? e.message : String(e)}`)
-    } finally {
-      setAfilCargando(false)
-    }
-  }
-
   const cursosTodos: Curso[] = data?.data ?? []
   const cursos = cursosTodos.filter(c => {
     if (filtroActivo === 'activos'   && !c.activo) return false
@@ -310,36 +288,6 @@ export default function CursosPage() {
           }
         />
       </div>
-
-      {/* Diagnóstico temporal — solo admin. Quitar cuando quede resuelto. */}
-      {isAdmin && (
-        <div className="rounded-xl border border-dashed border-outline-variant p-3.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={afilCursoId}
-              onChange={e => setAfilCursoId(e.target.value)}
-              className="text-[12px] bg-surface-lowest border border-outline-variant rounded-lg px-2 py-1.5 text-on-surface"
-            >
-              <option value="">Curso por defecto (primero con hotmartProductId)</option>
-              {cursosTodos.filter(c => c.hotmartProductId).map(c => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
-              ))}
-            </select>
-            <button
-              onClick={probarAfiliados}
-              disabled={afilCargando}
-              className="text-[11px] font-semibold text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer disabled:opacity-50"
-            >
-              {afilCargando ? 'Consultando…' : 'Probar endpoint de afiliados (Hotmart)'}
-            </button>
-          </div>
-          {afilResultado && (
-            <pre className="mt-2 p-3 rounded-lg bg-surface-low text-[10.5px] overflow-auto max-h-[400px] whitespace-pre-wrap">
-              {afilResultado}
-            </pre>
-          )}
-        </div>
-      )}
 
       {/* Barra de filtros — búsqueda arriba, tabs abajo */}
       <div className="flex flex-col gap-3">
