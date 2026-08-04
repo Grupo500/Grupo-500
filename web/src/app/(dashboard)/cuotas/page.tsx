@@ -165,12 +165,12 @@ export default function CuotasPage() {
               <tbody>
                 {filtradas.slice(0, 150).map(f => (
                   <tr key={f.estudianteId + f.curso} className="border-b border-surface-high hover:bg-surface-low transition-colors">
-                    <td className="px-2 py-2.5 min-w-[160px]">
-                      <Link href={`/estudiantes/${f.estudianteId}`} className="text-[12.5px] font-medium text-on-surface hover:text-primary truncate block">
+                    <td className="px-2 py-2.5 whitespace-nowrap">
+                      <Link href={`/estudiantes/${f.estudianteId}`} className="text-[12.5px] font-medium text-on-surface hover:text-primary">
                         {f.nombre}
                       </Link>
                     </td>
-                    <td className="px-2 py-2.5 text-[12px] text-on-surface-variant min-w-[200px] max-w-[320px] whitespace-normal leading-snug">{f.curso}</td>
+                    <td className="px-2 py-2.5 text-[12px] text-on-surface-variant whitespace-nowrap">{f.curso}</td>
                     {isAdmin && <td className="px-2 py-2.5 text-[12px] text-on-surface-variant whitespace-nowrap">{f.asesor ?? '—'}</td>}
                     <td className="px-2 py-2.5 text-center">
                       <span className="text-[11.5px] font-semibold tabular-nums text-on-surface whitespace-nowrap">
