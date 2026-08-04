@@ -19,6 +19,7 @@ interface VentaHotmart {
     payment?: { installments_number?: number }
     offer?: { payment_mode?: string }
     price?: { value?: number }
+    approved_date?: number
   }
 }
 
@@ -51,7 +52,7 @@ export async function backfillCuotas(aplicar = false, desdeISO = '2026-01-01') {
   console.log(`  ${ventas.length} ventas aprobadas`)
 
   // transacción -> datos de cuotas
-  const info = new Map<string, { cuotas: number; numero: number | null; enPartes: boolean; cargo: number }>()
+  const info = new Map<string, { cuotas: number; numero: number | null; enPartes: boolean; cargo: number; fechaUltimaCuota: Date | null }>()
   for (const v of ventas) {
     const p = v.purchase
     if (!p?.transaction) continue
@@ -61,7 +62,11 @@ export async function backfillCuotas(aplicar = false, desdeISO = '2026-01-01') {
     // entra por cuotas) de la financiacion con tarjeta del comprador, donde
     // installments_number tambien es > 1 pero el productor cobra todo de una.
     const enPartes = p.offer?.payment_mode === 'MULTIPLE_PAYMENTS'
-    info.set(p.transaction, { cuotas, numero, enPartes, cargo: p.price?.value ?? 0 })
+    // `approved_date` de este registro es el de la ÚLTIMA cuota cobrada, no
+    // el de la primera: la API de Hotmart reporta el estado vigente de la
+    // venta, no un historial por cuota (una sola fila por transacción).
+    const fechaUltimaCuota = p.approved_date ? new Date(p.approved_date) : null
+    info.set(p.transaction, { cuotas, numero, enPartes, cargo: p.price?.value ?? 0, fechaUltimaCuota })
   }
   const aCuotas = [...info.values()].filter(i => i.enPartes).length
   console.log(`  ${aCuotas} son a cuotas\n`)
@@ -82,7 +87,10 @@ export async function backfillCuotas(aplicar = false, desdeISO = '2026-01-01') {
     if (aplicar) {
       await prisma.pago.update({
         where: { id: pago.id },
-        data: { enPartes: true, cuotasTotal: i.cuotas, cuotaNumero: i.numero ?? 1 },
+        data: {
+          enPartes: true, cuotasTotal: i.cuotas, cuotaNumero: i.numero ?? 1,
+          ...(i.fechaUltimaCuota ? { fechaPago: i.fechaUltimaCuota } : {}),
+        },
       })
     }
     if (i.cuotas > 1) {
