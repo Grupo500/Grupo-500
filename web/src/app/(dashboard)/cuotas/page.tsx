@@ -3,11 +3,11 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { formatCOP } from '@/lib/utils'
-import { numero } from '@/components/finanzas/comunes'
 import { Search, Phone } from 'lucide-react'
 
 interface FilaCuota {
@@ -37,19 +37,24 @@ interface CuotasData {
 const ESTADO_LABEL: Record<FilaCuota['estado'], string> = { 'al-dia': 'Al día', atrasado: 'Atrasado', completado: 'Completado' }
 const ESTADO_COLOR: Record<FilaCuota['estado'], string> = { 'al-dia': '#1a7de0', atrasado: '#dc2626', completado: '#16a34a' }
 
+function numero(v: number) { return Math.round(v).toLocaleString('es-CO') }
+
 function fmtFecha(iso: string | null) {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export default function CuotasPage() {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
+
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState('')
   const [asesor, setAsesor] = useState('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['finanzas-cuotas'],
-    queryFn: async () => apiFetch('/finanzas/cuotas') as Promise<{ data: CuotasData }>,
+    queryKey: ['reportes-cuotas'],
+    queryFn: async () => apiFetch('/reportes/cuotas') as Promise<{ data: CuotasData }>,
     staleTime: 60_000,
   })
 
@@ -63,10 +68,10 @@ export default function CuotasPage() {
     const texto = busqueda.trim().toLowerCase()
     return (d?.filas ?? []).filter(f =>
       (!estado || f.estado === estado) &&
-      (!asesor || f.asesor === asesor) &&
+      (!isAdmin || !asesor || f.asesor === asesor) &&
       (!texto || f.nombre.toLowerCase().includes(texto) || f.curso.toLowerCase().includes(texto))
     )
-  }, [d?.filas, busqueda, estado, asesor])
+  }, [d?.filas, busqueda, estado, asesor, isAdmin])
 
   const r = d?.resumen
 
@@ -74,7 +79,9 @@ export default function CuotasPage() {
     <div className="space-y-5 animate-fade-in">
       <PageHeader
         title="Control de cuotas"
-        subtitle="Ventas a cuotas de Hotmart (Smart Installment): cuánto va pagado y quién se atrasó"
+        subtitle={isAdmin
+          ? 'Ventas a cuotas de Hotmart (Smart Installment) de todo el equipo: cuánto va pagado y quién se atrasó'
+          : 'Tus ventas a cuotas de Hotmart (Smart Installment): cuánto va pagado y quién se atrasó'}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -110,13 +117,15 @@ export default function CuotasPage() {
               ]}
               anchoAuto
             />
-            <Select
-              value={asesor}
-              onValueChange={setAsesor}
-              className="w-[170px]"
-              options={[{ value: '', label: 'Todos los asesores' }, ...asesores.map(a => ({ value: a, label: a }))]}
-              anchoAuto
-            />
+            {isAdmin && (
+              <Select
+                value={asesor}
+                onValueChange={setAsesor}
+                className="w-[170px]"
+                options={[{ value: '', label: 'Todos los asesores' }, ...asesores.map(a => ({ value: a, label: a }))]}
+                anchoAuto
+              />
+            )}
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant pointer-events-none" />
               <input
@@ -142,7 +151,7 @@ export default function CuotasPage() {
                 <tr className="border-b border-surface-high">
                   <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Estudiante</th>
                   <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Curso</th>
-                  <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Asesor</th>
+                  {isAdmin && <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Asesor</th>}
                   <th className="px-2 py-2 text-center text-[11.5px] font-semibold text-on-surface-variant whitespace-nowrap">Cuota</th>
                   <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant">Pagado</th>
                   <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant">Saldo</th>
@@ -160,7 +169,7 @@ export default function CuotasPage() {
                       </Link>
                     </td>
                     <td className="px-2 py-2.5 text-[12px] text-on-surface-variant max-w-[220px] truncate">{f.curso}</td>
-                    <td className="px-2 py-2.5 text-[12px] text-on-surface-variant whitespace-nowrap">{f.asesor ?? '—'}</td>
+                    {isAdmin && <td className="px-2 py-2.5 text-[12px] text-on-surface-variant whitespace-nowrap">{f.asesor ?? '—'}</td>}
                     <td className="px-2 py-2.5 text-center">
                       <span className="text-[11.5px] font-semibold tabular-nums text-on-surface whitespace-nowrap">
                         {f.cuotaNumero} de {f.cuotasTotal}

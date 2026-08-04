@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   BookOpen, School, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
-  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2,
+  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/mis-ventas',      label: 'Mis ventas',      icon: Receipt,         adminOnly: false, soloAsesor: true },
   { type: 'link',    href: '/ventas',          label: 'Ventas',          icon: Receipt,         adminOnly: true  },
+  { type: 'link',    href: '/cuotas',          label: 'Cuotas',          icon: CalendarCheck,   adminOnly: false },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/enlaces',         label: 'Enlaces',         icon: Link2,           adminOnly: false, soloAsesor: true },

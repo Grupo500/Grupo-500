@@ -6,7 +6,6 @@ import * as clientes from '../controllers/finanzasClientes.controller'
 import * as marketing from '../controllers/finanzasMarketing.controller'
 import * as calidad from '../controllers/finanzasCalidad.controller'
 import * as atribucion from '../controllers/finanzasAtribucion.controller'
-import * as cuotasCtrl from '../controllers/finanzasCuotas.controller'
 
 const router = Router()
 
@@ -18,8 +17,6 @@ router.use(requireRole('ADMIN'))
 router.get('/resumen', asyncHandler(ctrl.resumen))
 router.get('/cierre',  asyncHandler(ctrl.cierreMensual))
 router.get('/mix',     asyncHandler(ctrl.mixComercial))
-
-router.get('/cuotas',   asyncHandler(cuotasCtrl.cuotas))
 
 router.get('/clientes', asyncHandler(clientes.rfvClientes))
 router.get('/diario',   asyncHandler(clientes.reporteDiario))
