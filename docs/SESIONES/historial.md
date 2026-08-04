@@ -962,3 +962,25 @@ Este es el punto donde `docs/API.md` empezó a quedar desactualizado (documentab
 - Exportar reportes CSV/PDF
 - Rediseño corporativo en Stitch del resto de módulos (más allá de Ventas)
 - `docs/API.md` sigue sin actualizar — pendiente para una próxima sesión
+
+---
+
+## Sesión 031 — 2026-08-04
+
+**Objetivo:** Sumar los gastos internos de la agencia al módulo de Finanzas.
+
+### Lo que se hizo
+- **Nuevo panel `Finanzas > Gastos de agencia`** (`/finanzas/agencia`): lee en vivo el Google Sheet de contabilidad interna y muestra indicadores, gasto mensual apilado por categoría, comparación año contra año, participación con variación, observaciones redactadas desde el dato, producción y costo por pieza, nómina del corte y calidad del dato. Hereda el muro de ADMIN del layout de Finanzas.
+- **Backend:** `api/src/services/gastosAgencia.ts` (lectura y normalización del sheet, caché de 5 min en memoria) + `finanzasGastosAgencia.controller.ts` + ruta `GET /api/finanzas/gastos-agencia` (`?refrescar=1` salta la caché). Si el sheet no responde se sirve la última lectura buena marcada como desactualizada.
+- **Frontend:** `web/src/lib/gastosAgencia.ts` con el motor de análisis. El backend entrega el snapshot normalizado y el cálculo del periodo vive en el cliente: son doce puntos por categoría, así que filtrar por trimestre o apagar una categoría se recalcula al instante sin volver a pedir datos.
+- Filtro por periodo con presets (Todo, Últimos 3/6, T1–T4) y rango Desde/Hasta. Con rango parcial el KPI de cierre pasa a **"Ritmo anualizado"**: proyectar el año ignorando meses que ya tienen dato no es una proyección.
+
+### Decisiones que conviene no deshacer
+- **`GASTOS_AGENCIA_SHEET_ID` va por entorno, nunca en el código.** Este repositorio es público y el sheet contiene cédulas y números de cuenta.
+- **La cédula no se lee del sheet y de la cuenta solo salen los últimos 4 dígitos.** Lo que no se serializa no se puede filtrar; `api/scripts/probar-gastos-agencia.ts` verifica que no haya fugas.
+- El parseo del sheet es **por búsqueda de etiquetas**, no por fila/columna fija: el equipo edita ese sheet a diario (cambió tres veces mientras se construía esto).
+- Sin filtro de categorías los totales usan la **fila `Total` del sheet**, no la suma de categorías: junio 2025 tiene total sin desglose y sumar categorías se comía $21 M.
+
+### Pendiente para que el panel funcione
+- Definir `GASTOS_AGENCIA_SHEET_ID` en Railway. Hasta entonces el panel responde 503 con un aviso de "falta configurar".
+- El Google Sheet está compartido como "cualquiera con el link": el panel protege la PII, el sheet no. Conviene restringirlo (y entonces migrar la lectura a una cuenta de servicio de Google).
