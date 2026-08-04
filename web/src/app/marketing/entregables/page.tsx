@@ -30,6 +30,9 @@ function getRangeFromMonth(month: string | null): { desde: string; hasta: string
 }
 
 const PLATAFORMAS = ['YOUTUBE', 'INSTAGRAM', 'TIKTOK', 'FACEBOOK', 'DRIVE', 'OTRO']
+const PLATAFORMA_LABEL: Record<string, string> = {
+  YOUTUBE: 'YouTube', INSTAGRAM: 'Instagram', TIKTOK: 'TikTok', FACEBOOK: 'Facebook', DRIVE: 'Drive', OTRO: 'Otro',
+}
 
 export default function EntregablesPage() {
   const now = new Date()
@@ -61,7 +64,7 @@ export default function EntregablesPage() {
             onValueChange={setPlataforma}
             placeholder="Todas las plataformas"
             className="w-[180px]"
-            options={[{ value: '', label: 'Todas las plataformas' }, ...PLATAFORMAS.map(p => ({ value: p, label: p }))]}
+            options={[{ value: '', label: 'Todas las plataformas' }, ...PLATAFORMAS.map(p => ({ value: p, label: PLATAFORMA_LABEL[p] }))]}
           />
           <MonthPicker
             value={month}
@@ -100,7 +103,7 @@ export default function EntregablesPage() {
                   </p>
                 </div>
                 <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-surface-high text-on-surface-variant shrink-0">
-                  {e.plataforma}
+                  {PLATAFORMA_LABEL[e.plataforma] ?? e.plataforma}
                 </span>
               </a>
             ))}
