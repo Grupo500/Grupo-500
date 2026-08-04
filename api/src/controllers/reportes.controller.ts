@@ -1129,7 +1129,12 @@ export async function cuotas(req: Request, res: Response) {
 
     const cuotaNumero  = p.cuotaNumero ?? 1
     const cuotasTotal  = p.cuotasTotal ?? 1
-    const totalCurso   = ce?.precioAcordado ?? ce?.curso.precio ?? Math.round(p.monto * cuotasTotal)
+    // El total de una venta a cuotas es siempre valor-de-la-cuota × cantidad
+    // de cuotas — el mismo criterio que usa backfillCuotas.ts para corregir
+    // precioAcordado. No se usa precioAcordado/precio de lista aquí: si
+    // quedó mal guardado (ej. con el valor de una sola cuota), el saldo
+    // daba $0 y marcaba "Completado" aunque solo iba la cuota 1 o 2 de 3.
+    const totalCurso   = Math.round(p.monto * cuotasTotal)
     const totalPagado  = p.monto * cuotaNumero
     const saldo        = Math.max(0, Math.round(totalCurso - totalPagado))
     const completado   = cuotaNumero >= cuotasTotal || saldo <= 1000
