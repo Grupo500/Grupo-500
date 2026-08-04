@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
-import { formatCOP } from '@/lib/utils'
+import { formatCOP, montoPagadoPago } from '@/lib/utils'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
@@ -40,7 +40,7 @@ function NumericInput({ value, onChange, placeholder, className, disabled }: {
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface CuotaMin { monto: number; pagado: boolean; fechaVencimiento: string }
-interface PagoMin  { monto: number; estado: string;  fechaVencimiento: string }
+interface PagoMin  { monto: number; estado: string; fechaVencimiento: string; enPartes?: boolean; cuotaNumero?: number | null; cuotasTotal?: number | null }
 
 interface Estudiante {
   id: string
@@ -82,7 +82,7 @@ function calcFinanciero(e: Estudiante) {
     + (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
 
   const pagadoFin      = e.financiamientos?.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
-  const pagadoPagos    = e.pagos?.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0) ?? 0
+  const pagadoPagos    = e.pagos?.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0) ?? 0
   const totalPagado    = pagadoFin + pagadoPagos
   const totalPendiente = Math.max(0, totalGeneral - totalPagado)
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
@@ -101,7 +101,11 @@ function calcFinanciero(e: Estudiante) {
     totalGeneral > 0 || tieneCurso      ? 'al-dia'    :
                                           'sin-deuda'
 
-  return { totalGeneral, totalPagado, totalPendiente, totalMora, progreso, estado }
+  // Cuotas de Hotmart (Smart Installment) — cuántas van pagadas del total.
+  const cuota = e.pagos?.find(p => p.estado === 'PAGADO' && p.enPartes && (p.cuotasTotal ?? 0) > 1)
+  const cuotaInfo = cuota ? { numero: cuota.cuotaNumero ?? 1, total: cuota.cuotasTotal ?? 1 } : null
+
+  return { totalGeneral, totalPagado, totalPendiente, totalMora, progreso, estado, cuotaInfo }
 }
 
 const BADGE: Record<string, { label: string; cls: string }> = {
@@ -630,7 +634,7 @@ const subirComprobante = async (file: File) => {
                 {tieneDeuda && (
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] text-on-surface-variant">
-                      <span>Pagado</span>
+                      <span>Pagado{fin.cuotaInfo && ` · Cuota ${fin.cuotaInfo.numero} de ${fin.cuotaInfo.total}`}</span>
                       <span>{Math.round(fin.progreso)}%</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-surface-high overflow-hidden">

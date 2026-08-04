@@ -39,6 +39,17 @@ export function formatRelative(date: string | Date): string {
   return `Hace ${Math.abs(days)} días`
 }
 
+// Hotmart no reenvía un webhook por cada cuota de un Smart Installment — solo
+// llega el primer cargo, y `cuotaNumero` se corrige después con la API de
+// Hotmart. `monto` siempre es el valor de UNA cuota, no lo acumulado, así que
+// hay que multiplicar por cuántas cuotas van pagadas.
+export function montoPagadoPago(p: { monto: number; enPartes?: boolean; cuotaNumero?: number | null; cuotasTotal?: number | null }): number {
+  if (p.enPartes && (p.cuotasTotal ?? 0) > 1) {
+    return p.monto * (p.cuotaNumero ?? 1)
+  }
+  return p.monto
+}
+
 // Convierte un nombre de curso de MAYÚSCULAS a Tipo Título (genérico).
 // Ej: "PREICFES CALENDARIO A S-3" → "Preicfes Calendario A S-3"
 export function formatCurso(nombre: string): string {

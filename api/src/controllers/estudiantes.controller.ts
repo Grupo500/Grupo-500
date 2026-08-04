@@ -4,6 +4,7 @@ import { ApiResponse, parsePagination } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
+import { montoPagadoPago } from '../utils/pagos'
 import { z } from 'zod'
 import * as XLSX from 'xlsx'
 
@@ -70,7 +71,7 @@ export async function listar(req: Request, res: Response) {
         acudiente: true,
         asesor: true,
         cursos: { include: { curso: true } },
-        pagos: { select: { monto: true, estado: true, fechaVencimiento: true } },
+        pagos: { select: { monto: true, estado: true, fechaVencimiento: true, enPartes: true, cuotaNumero: true, cuotasTotal: true } },
       },
       skip,
       take: Number(limit),
@@ -391,14 +392,14 @@ export async function exportar(req: Request, res: Response) {
       pagos: {
         where: { estado: 'PAGADO' },
         orderBy: { fechaPago: 'desc' },
-        select: { monto: true, metodo: true, estado: true, fechaPago: true },
+        select: { monto: true, metodo: true, estado: true, fechaPago: true, enPartes: true, cuotaNumero: true, cuotasTotal: true },
       },
     },
   })
 
   const filas = estudiantes.map(e => {
     const ultimoPago = e.pagos[0]
-    const totalPagado = e.pagos.reduce((s, p) => s + p.monto, 0)
+    const totalPagado = e.pagos.reduce((s, p) => s + montoPagadoPago(p), 0)
     return {
       'Nombre':        e.nombre,
       'Email':         e.email,

@@ -4,6 +4,7 @@ import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
 import { construirRanking, hoyColombia, diaColombia, emailKey } from '../services/ranking'
+import { montoPagadoPago } from '../utils/pagos'
 
 export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
@@ -502,7 +503,7 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
     if (!precio) continue
 
     const pagados = ins.estudiante.pagos.filter(p => p.estado === 'PAGADO')
-    const pagado = pagados.reduce((s, p) => s + p.monto, 0)
+    const pagado = pagados.reduce((s, p) => s + montoPagadoPago(p), 0)
     const saldo = Math.round(precio - pagado)
     if (saldo <= UMBRAL) continue
 

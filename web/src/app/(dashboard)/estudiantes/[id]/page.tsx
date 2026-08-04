@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
-import { formatCOP, cn } from '@/lib/utils'
+import { formatCOP, cn, montoPagadoPago } from '@/lib/utils'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, Users, CreditCard, Award,
@@ -38,6 +38,7 @@ interface Pago {
   fechaPago?: string; comprobante?: string
   createdAt: string; notas?: string
   asesor?: { nombre: string }
+  enPartes?: boolean; cuotaNumero?: number | null; cuotasTotal?: number | null
 }
 interface EstudianteDetalle {
   id: string; nombre: string
@@ -1206,10 +1207,11 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
     : financiamientos.reduce((s, f) => s + f.montoTotal, 0) + pagos.reduce((s, p) => s + p.monto, 0)
 
   const pagadoFin      = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-  const pagadoPagosDir = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0)
+  const pagadoPagosDir = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0)
   const totalPagado    = pagadoFin + pagadoPagosDir
   const totalPendiente = Math.max(0, totalGeneral - totalPagado)
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
+  const cuotaHotmart    = pagos.find(p => p.estado === 'PAGADO' && p.enPartes && (p.cuotasTotal ?? 0) > 1)
   const totalMora      = financiamientos.flatMap(f => f.cuotas).filter(c =>
     !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
   ).reduce((s, c) => s + c.monto, 0) + pagos.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
@@ -1300,7 +1302,7 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total',     value: formatCOP(totalGeneral),   color: 'text-on-surface' },
-          { label: 'Pagado',    value: formatCOP(totalPagado),    color: 'text-[#16a34a]' },
+          { label: cuotaHotmart ? `Pagado · Cuota ${cuotaHotmart.cuotaNumero ?? 1} de ${cuotaHotmart.cuotasTotal ?? 1}` : 'Pagado', value: formatCOP(totalPagado), color: 'text-[#16a34a]' },
           { label: 'Pendiente', value: formatCOP(totalPendiente), color: totalPendiente > 0 ? 'text-[#d97706]' : 'text-on-surface-variant' },
           { label: 'En mora',   value: formatCOP(totalMora),      color: totalMora > 0 ? 'text-[#dc2626]' : 'text-on-surface-variant' },
         ].map(({ label, value, color }) => (
@@ -1660,7 +1662,7 @@ export default function EstudianteDetallePage() {
     : financiamientos.reduce((s, f) => s + f.montoTotal, 0) +
       pagos.filter(p => p.estado !== 'CANCELADO').reduce((s, p) => s + p.monto, 0)
   const pagadoFin     = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-  const pagadoDir     = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + p.monto, 0)
+  const pagadoDir     = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0)
   const totalPagado   = pagadoFin + pagadoDir
   const saldoPend     = Math.max(0, totalGeneral - totalPagado)
 

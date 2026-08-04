@@ -46,6 +46,7 @@ import apiKeysRoutes from './routes/apiKeys'
 import { reconciliarAsesores } from './jobs/reconciliarAsesores'
 import { backfillComisiones } from './jobs/backfillComisiones'
 import { sincronizarGoogleAds } from './jobs/sincronizarGoogleAds'
+import { backfillCuotas } from './jobs/backfillCuotas'
 
 const app = express()
 
@@ -226,6 +227,15 @@ app.listen(PORT, () => {
   const CUATRO_HORAS = 4 * 60 * 60 * 1000
   setTimeout(() => { void sincronizarGoogleAds() }, 4 * 60 * 1000)
   setInterval(() => { void sincronizarGoogleAds() }, CUATRO_HORAS)
+
+  // Cuotas de Hotmart (Smart Installment): el webhook solo avisa la primera,
+  // las siguientes no reenvían notificación — sin esto, cuotaNumero se queda
+  // congelado en 1 para siempre y el saldo pendiente queda inflado. Se
+  // reconsulta la API de Hotmart sobre los últimos 120 días nada más, no todo
+  // el historial, para no repetir trabajo ya resuelto en cada corrida.
+  const ventanaCuotas = () => new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  setTimeout(() => { void backfillCuotas(true, ventanaCuotas()) }, 5 * 60 * 1000)
+  setInterval(() => { void backfillCuotas(true, ventanaCuotas()) }, CUATRO_HORAS)
 })
 
 export default app
