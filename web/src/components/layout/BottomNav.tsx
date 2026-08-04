@@ -34,7 +34,6 @@ const primaryItems: NavItem[] = [
 ]
 
 const moreItems: NavItem[] = [
-  { href: '/cuotas',          label: 'Cuotas',           icon: CalendarCheck, adminOnly: false },
   { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
   { href: '/enlaces',         label: 'Enlaces',          icon: Link2,         adminOnly: false, soloAsesor: true },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
@@ -85,16 +84,24 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   const enFinanzas = pathname === '/finanzas' || pathname.startsWith('/finanzas/')
   const finanzasDisponibles = FINANZAS_TABS.filter(t => !t.proximamente)
   const enMarketing = pathname === '/marketing' || pathname.startsWith('/marketing/')
+  const enVentas = ['/ventas', '/mis-ventas', '/cuotas'].some(b => pathname === b || pathname.startsWith(b + '/'))
+  const ventasTabs = role === 'ADMIN'
+    ? [{ href: '/ventas',     label: 'Ventas generales', icon: Receipt,       adminOnly: false }, { href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
+    : [{ href: '/mis-ventas', label: 'Mis ventas',       icon: Receipt,       adminOnly: false }, { href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
 
   const visiblePrimary = enFinanzas
     ? finanzasDisponibles.slice(0, 4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
     : enMarketing
     ? MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: false }))
+    : enVentas
+    ? ventasTabs
     : primaryItems.filter(porRol)
 
   const visibleMore = enFinanzas
     ? finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
     : enMarketing
+    ? []
+    : enVentas
     ? []
     : moreItems.filter(porRol)
   const hrefActivoActual = hrefActivo(pathname, [...visiblePrimary, ...visibleMore].map(i => i.href))

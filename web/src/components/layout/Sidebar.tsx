@@ -33,7 +33,6 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/mis-ventas',      label: 'Mis ventas',      icon: Receipt,         adminOnly: false, soloAsesor: true },
   { type: 'link',    href: '/ventas',          label: 'Ventas',          icon: Receipt,         adminOnly: true  },
-  { type: 'link',    href: '/cuotas',          label: 'Cuotas',          icon: CalendarCheck,   adminOnly: false },
   { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/enlaces',         label: 'Enlaces',         icon: Link2,           adminOnly: false, soloAsesor: true },
@@ -192,6 +191,22 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     ? {
         titulo: 'Marketing',
         tabs: MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),
+      }
+    : (dentroDe('/ventas') || dentroDe('/mis-ventas') || dentroDe('/cuotas')) && (role === 'ADMIN' || role === 'VENDEDOR')
+    ? {
+        titulo: 'Ventas',
+        // Ventas/Cuotas son una sección de Ventas: se vuelve al dashboard,
+        // igual que Ajustes.
+        volverA: '/dashboard',
+        tabs: role === 'ADMIN'
+          ? [
+              { href: '/ventas', label: 'Ventas generales', icon: Receipt, proximamente: false },
+              { href: '/cuotas', label: 'Cuotas',            icon: CalendarCheck, proximamente: false },
+            ]
+          : [
+              { href: '/mis-ventas', label: 'Mis ventas', icon: Receipt, proximamente: false },
+              { href: '/cuotas',     label: 'Cuotas',      icon: CalendarCheck, proximamente: false },
+            ],
       }
     : null
   const isDark = theme === 'dark'
