@@ -26,6 +26,7 @@ interface FilaCuota {
   metodo: string
   fechaUltimaCuota: string | null
   diasSinPagar: number | null
+  proximaCuotaEstimada: string | null
   estado: 'al-dia' | 'atrasado' | 'completado'
 }
 
@@ -156,6 +157,7 @@ export default function CuotasPage() {
                   <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant">Pagado</th>
                   <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant">Saldo</th>
                   <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant whitespace-nowrap">Última cuota</th>
+                  <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant whitespace-nowrap">Próxima cuota</th>
                   <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Estado</th>
                   <th className="px-2 py-2" />
                 </tr>
@@ -168,7 +170,7 @@ export default function CuotasPage() {
                         {f.nombre}
                       </Link>
                     </td>
-                    <td className="px-2 py-2.5 text-[12px] text-on-surface-variant max-w-[220px] truncate">{f.curso}</td>
+                    <td className="px-2 py-2.5 text-[12px] text-on-surface-variant min-w-[200px] max-w-[320px] whitespace-normal leading-snug">{f.curso}</td>
                     {isAdmin && <td className="px-2 py-2.5 text-[12px] text-on-surface-variant whitespace-nowrap">{f.asesor ?? '—'}</td>}
                     <td className="px-2 py-2.5 text-center">
                       <span className="text-[11.5px] font-semibold tabular-nums text-on-surface whitespace-nowrap">
@@ -190,6 +192,10 @@ export default function CuotasPage() {
                       {f.diasSinPagar != null && f.estado !== 'completado' && (
                         <p className="text-[10px] text-on-surface-variant/70">hace {f.diasSinPagar}d</p>
                       )}
+                    </td>
+                    <td className="px-2 py-2.5 text-right text-[12px] tabular-nums whitespace-nowrap"
+                      style={{ color: f.estado === 'atrasado' ? '#dc2626' : 'var(--on-surface-variant)' }}>
+                      {f.estado === 'completado' ? '—' : fmtFecha(f.proximaCuotaEstimada)}
                     </td>
                     <td className="px-2 py-2.5">
                       <span

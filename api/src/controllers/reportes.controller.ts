@@ -1140,6 +1140,11 @@ export async function cuotas(req: Request, res: Response) {
     const completado   = cuotaNumero >= cuotasTotal || saldo <= 1000
     const diasSinPagar = p.fechaPago ? Math.floor((hoy - p.fechaPago.getTime()) / 86_400_000) : null
     const atrasado     = !completado && diasSinPagar != null && diasSinPagar > DIAS_GRACIA_CUOTAS
+    // Hotmart no reporta cuándo cae la próxima cuota — se estima a 30 días
+    // de la última confirmada, mismo ciclo mensual que usa DIAS_GRACIA_CUOTAS.
+    const proximaCuotaEstimada = !completado && p.fechaPago
+      ? new Date(p.fechaPago.getTime() + 30 * 86_400_000)
+      : null
 
     return {
       estudianteId: p.estudiante.id,
@@ -1157,6 +1162,7 @@ export async function cuotas(req: Request, res: Response) {
       metodo: p.metodo,
       fechaUltimaCuota: p.fechaPago,
       diasSinPagar,
+      proximaCuotaEstimada,
       estado: completado ? 'completado' : atrasado ? 'atrasado' : 'al-dia',
     }
   })
