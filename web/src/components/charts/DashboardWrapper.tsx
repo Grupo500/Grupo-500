@@ -9,6 +9,7 @@ import { CursosVendidosChart } from './CursosVendidosChart'
 import { FacturadoMensual } from './FacturadoMensual'
 import { ComisionesKpis } from './ComisionesKpis'
 import { TopAsesores } from './TopAsesores'
+import { PendientesPorCobrar } from './PendientesPorCobrar'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
@@ -84,6 +85,9 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
         </div>
 
       </div>
+
+      {/* Saldos abiertos — no depende del mes elegido arriba, es el total vigente */}
+      <PendientesPorCobrar />
     </div>
   )
 }

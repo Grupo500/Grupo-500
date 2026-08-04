@@ -9,6 +9,7 @@ import { formatCOP } from '@/lib/utils'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 import { VentasSemana } from './VentasSemana'
+import { PendientesPorCobrar } from './PendientesPorCobrar'
 import {
   TrendingUp, TrendingDown, Wallet, Users, Receipt,
   Trophy, Award, Crown,
@@ -151,6 +152,9 @@ export function AsesorDashboard() {
 
       {/* Ventas de la semana — pulso diario, exclusivo del dashboard de asesor */}
       <VentasSemana />
+
+      {/* Saldos abiertos de mis estudiantes — total vigente, no depende de ningún mes */}
+      <PendientesPorCobrar />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
