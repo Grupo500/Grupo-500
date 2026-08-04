@@ -12,12 +12,13 @@ import {
 
 /**
  * Panel de Edición: videos aprobados y en corrección por editor, en vivo desde
- * Trello. Los datos vienen del mismo endpoint que sirve el panel standalone
- * (panel.grupo500educacion.co) — una Netlify Function que agrega los tableros
+ * Trello. Los datos pasan por /api/marketing/panel-edicion (proxy interno con
+ * sesión — la CSP de la app no permite llamar dominios externos desde el
+ * navegador), que a su vez consulta la Netlify Function que agrega los tableros
  * "Grupo 500 videos" (editor = miembros de la tarjeta, listas "Aprobados …")
  * y "TEAM COMMUNITY" (editor = nombre de la lista, todas cuentan).
  */
-const STATS_URL = 'https://panel.grupo500educacion.co/api/stats'
+const STATS_URL = '/api/marketing/panel-edicion'
 
 interface Aprobado { name: string; url: string | null; approvedAt: string }
 interface Correccion { name: string; url: string | null; since: string; list?: string }
