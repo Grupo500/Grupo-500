@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
@@ -8,7 +8,9 @@ import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { formatCOP } from '@/lib/utils'
-import { Search, Phone } from 'lucide-react'
+import { Search, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
+
+const POR_PAGINA = 10
 
 interface FilaCuota {
   estudianteId: string
@@ -52,6 +54,7 @@ export default function CuotasPage() {
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState('')
   const [asesor, setAsesor] = useState('')
+  const [pagina, setPagina] = useState(1)
 
   const { data, isLoading } = useQuery({
     queryKey: ['reportes-cuotas'],
@@ -73,6 +76,11 @@ export default function CuotasPage() {
       (!texto || f.nombre.toLowerCase().includes(texto) || f.curso.toLowerCase().includes(texto))
     )
   }, [d?.filas, busqueda, estado, asesor, isAdmin])
+
+  useEffect(() => setPagina(1), [busqueda, estado, asesor])
+
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA))
+  const paginadas = filtradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
 
   const r = d?.resumen
 
@@ -163,7 +171,7 @@ export default function CuotasPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtradas.slice(0, 150).map(f => (
+                {paginadas.map(f => (
                   <tr key={f.estudianteId + f.curso} className="border-b border-surface-high hover:bg-surface-low transition-colors">
                     <td className="px-2 py-2.5 whitespace-nowrap">
                       <Link href={`/estudiantes/${f.estudianteId}`} className="text-[12.5px] font-medium text-on-surface hover:text-primary">
@@ -222,9 +230,23 @@ export default function CuotasPage() {
               </tbody>
             </table>
 
-            <p className="text-[11px] text-on-surface-variant mt-3">
-              Mostrando {numero(Math.min(filtradas.length, 150))} de {numero(filtradas.length)} filtrados
-            </p>
+            <div className="flex items-center justify-between pt-3">
+              <p className="text-[11px] text-on-surface-variant">
+                Página {pagina} de {totalPaginas} · {numero(filtradas.length)} filtrados
+              </p>
+              {totalPaginas > 1 && (
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={pagina === 1}
+                    className="p-2 rounded-lg border border-outline-variant hover:bg-surface-high disabled:opacity-40 transition-colors cursor-pointer">
+                    <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
+                  </button>
+                  <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
+                    className="p-2 rounded-lg border border-outline-variant hover:bg-surface-high disabled:opacity-40 transition-colors cursor-pointer">
+                    <ChevronRight className="w-4 h-4 text-on-surface-variant" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
