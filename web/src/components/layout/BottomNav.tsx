@@ -43,6 +43,20 @@ const moreItems: NavItem[] = [
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
 ]
 
+// Cuando el href de un ítem (ej. la pestaña "raíz" de un área, '/marketing')
+// es prefijo del href de otro ('/marketing/entregables'), comparar por
+// prefijo a secas marca a los dos como activos. Se resuelve quedándose con
+// la coincidencia exacta si existe, o si no, con el href más específico
+// (el más largo) entre los que matchean por prefijo.
+function hrefActivo(pathname: string, hrefs: string[]): string | undefined {
+  let mejor: string | undefined
+  for (const href of hrefs) {
+    if (pathname === href) return href
+    if (pathname.startsWith(href + '/') && (!mejor || href.length > mejor.length)) mejor = href
+  }
+  return mejor
+}
+
 interface BottomNavProps { role?: Rol }
 
 export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
@@ -82,7 +96,8 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     : enMarketing
     ? []
     : moreItems.filter(porRol)
-  const isMoreActive = visibleMore.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
+  const hrefActivoActual = hrefActivo(pathname, [...visiblePrimary, ...visibleMore].map(i => i.href))
+  const isMoreActive = visibleMore.some(i => i.href === hrefActivoActual)
   const handleClose = () => setMoreOpen(false)
 
   return (
@@ -120,7 +135,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
         <div className="grid grid-cols-4 gap-2 p-4">
           {visibleMore.map((item, i) => {
             const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            const isActive = item.href === hrefActivoActual
             return (
               <Link
                 key={item.href}
@@ -204,7 +219,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           {/* Ítems primarios */}
           {visiblePrimary.map((item, idx) => {
             const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            const isActive = item.href === hrefActivoActual
 
             // Ítem central (índice 1 = Estudiantes) con acento especial
             const isCentral = idx === 1

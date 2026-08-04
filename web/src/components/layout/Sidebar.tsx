@@ -146,6 +146,20 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   // para que Finanzas (y lo que venga) no duplique el bloque de renderizado.
   const dentroDe = (base: string) => pathname === base || pathname.startsWith(base + '/')
 
+  // Cuando el href de un ítem (ej. la pestaña "raíz" de un área, '/marketing')
+  // es prefijo del href de otro ('/marketing/entregables'), la comparación
+  // ingenua por prefijo los marca a los dos como activos. Se resuelve
+  // quedándose con la coincidencia exacta si existe, o si no, con el href
+  // más largo (más específico) entre los que matchean por prefijo.
+  function hrefActivo(pathname: string, hrefs: string[]): string | undefined {
+    let mejor: string | undefined
+    for (const href of hrefs) {
+      if (pathname === href) return href
+      if (pathname.startsWith(href + '/') && (!mejor || href.length > mejor.length)) mejor = href
+    }
+    return mejor
+  }
+
   type SubNav = {
     titulo: string
     // Sin `volverA` el sidebar no dibuja el renglón de regreso — el área
@@ -195,8 +209,9 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     : visibleItems
 
   // Ítem activo
+  const hrefActivoActual = hrefActivo(pathname, itemsToRender.filter(it => it.type === 'link').map(it => it.href))
   const activeItem = itemsToRender.find(
-    it => it.type === 'link' && (pathname === it.href || pathname.startsWith(it.href + '/'))
+    it => it.type === 'link' && it.href === hrefActivoActual
   ) as Extract<RenderItem, { type: 'link' }> | undefined
   const ActiveIcon = activeItem?.icon
 
@@ -353,7 +368,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
               }
 
               const { href, label, icon: Icon, adminOnly, proximamente } = item
-              const isActive = pathname === href || pathname.startsWith(href + '/')
+              const isActive = href === hrefActivoActual
 
               // Una sección anunciada pero sin construir no navega: llevar a un
               // 404 se lee como que la app está rota, no como que falta.
