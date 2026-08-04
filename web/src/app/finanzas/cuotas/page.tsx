@@ -101,6 +101,7 @@ export default function CuotasPage() {
             <Select
               value={estado}
               onValueChange={setEstado}
+              className="w-[160px]"
               options={[
                 { value: '', label: 'Todos los estados' },
                 { value: 'atrasado', label: 'Atrasado' },
@@ -112,6 +113,7 @@ export default function CuotasPage() {
             <Select
               value={asesor}
               onValueChange={setAsesor}
+              className="w-[170px]"
               options={[{ value: '', label: 'Todos los asesores' }, ...asesores.map(a => ({ value: a, label: a }))]}
               anchoAuto
             />
