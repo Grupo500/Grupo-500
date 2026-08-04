@@ -44,12 +44,16 @@ export async function backfillCuotas(aplicar = false, desdeISO = '2026-01-01') {
   const desde = new Date(desdeISO).getTime()
   const hasta = Date.now()
 
+  // Una venta a cuotas pasa de APPROVED a COMPLETE cuando termina de pagarse
+  // — si solo se pide APPROVED, los planes que ya se pagaron por completo
+  // (los más viejos, normalmente) quedan afuera y sus cuotas nunca se cuentan.
   console.log(`Consultando Hotmart desde ${desdeISO}...`)
-  const ventas = await paginar(
-    token,
-    `https://developers.hotmart.com/payments/api/v1/sales/history?transaction_status=APPROVED&start_date=${desde}&end_date=${hasta}`
-  )
-  console.log(`  ${ventas.length} ventas aprobadas`)
+  const [aprobadas, completas] = await Promise.all([
+    paginar(token, `https://developers.hotmart.com/payments/api/v1/sales/history?transaction_status=APPROVED&start_date=${desde}&end_date=${hasta}`),
+    paginar(token, `https://developers.hotmart.com/payments/api/v1/sales/history?transaction_status=COMPLETE&start_date=${desde}&end_date=${hasta}`),
+  ])
+  const ventas = [...aprobadas, ...completas]
+  console.log(`  ${aprobadas.length} aprobadas + ${completas.length} completadas = ${ventas.length} ventas`)
 
   // transacción -> datos de cuotas
   const info = new Map<string, { cuotas: number; numero: number | null; enPartes: boolean; cargo: number; fechaUltimaCuota: Date | null }>()
