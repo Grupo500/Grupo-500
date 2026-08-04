@@ -229,24 +229,26 @@ export default function CuotasPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
 
-            <div className="flex items-center justify-between pt-3">
-              <p className="text-[11px] text-on-surface-variant">
-                Página {pagina} de {totalPaginas} · {numero(filtradas.length)} filtrados
-              </p>
-              {totalPaginas > 1 && (
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={pagina === 1}
-                    className="p-2 rounded-lg border border-outline-variant hover:bg-surface-high disabled:opacity-40 transition-colors cursor-pointer">
-                    <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
-                  </button>
-                  <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
-                    className="p-2 rounded-lg border border-outline-variant hover:bg-surface-high disabled:opacity-40 transition-colors cursor-pointer">
-                    <ChevronRight className="w-4 h-4 text-on-surface-variant" />
-                  </button>
-                </div>
-              )}
-            </div>
+        {!isLoading && filtradas.length > 0 && (
+          <div className="flex items-center justify-between pt-3">
+            <p className="text-[11px] text-on-surface-variant">
+              Página {pagina} de {totalPaginas} · {numero(filtradas.length)} filtrados
+            </p>
+            {totalPaginas > 1 && (
+              <div className="flex items-center gap-2">
+                <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={pagina === 1}
+                  className="p-2 rounded-lg border border-outline-variant hover:bg-surface-high disabled:opacity-40 transition-colors cursor-pointer">
+                  <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
+                </button>
+                <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
+                  className="p-2 rounded-lg border border-outline-variant hover:bg-surface-high disabled:opacity-40 transition-colors cursor-pointer">
+                  <ChevronRight className="w-4 h-4 text-on-surface-variant" />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
