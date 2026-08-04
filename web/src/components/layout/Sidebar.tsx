@@ -323,7 +323,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
 
       {/* ── Nav ──────────────────────────────────── */}
       {/* Caja de ícono fija (w-11 h-10) → mismo tamaño/posición en colapsado y expandido */}
-      <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto">
+      <nav ref={navRef} className="relative z-10 flex-1 px-2 overflow-y-auto overflow-x-hidden">
         <div className="pt-2 pb-10 space-y-2">
           {/* Toggle expandir/contraer (no es módulo, solo alterna el sidebar) */}
           <button
