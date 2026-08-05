@@ -34,6 +34,12 @@ router.post('/precios-oficiales',  asyncHandler(calidad.crearPrecioOficial))
 router.delete('/precios-oficiales/:id', asyncHandler(calidad.eliminarPrecioOficial))
 
 router.get('/gastos-agencia', asyncHandler(gastosAgencia.gastosAgencia))
+// Escrituras: van directo al Google Sheet, que es la única fuente de verdad.
+router.put('/gastos-agencia/contabilidad', asyncHandler(gastosAgencia.editarContabilidad))
+router.put('/gastos-agencia/nomina',       asyncHandler(gastosAgencia.editarNomina))
+router.post('/gastos-agencia/nomina',      asyncHandler(gastosAgencia.crearPersonaNomina))
+router.put('/gastos-agencia/produccion',   asyncHandler(gastosAgencia.editarProduccion))
+router.put('/gastos-agencia/tarifario',    asyncHandler(gastosAgencia.editarTarifario))
 
 router.get('/atribucion',            asyncHandler(atribucion.atribucion))
 router.post('/atribucion/asignar',   asyncHandler(atribucion.asignarAsesor))

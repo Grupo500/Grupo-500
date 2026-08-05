@@ -15,6 +15,20 @@ import {
   analizarGastos, colorCategoria, etiquetaPeriodo, MESES_CORTOS, MESES_GASTOS,
   type GastosAgenciaData, type AnalisisGastos, type Tendencia,
 } from '@/lib/gastosAgencia'
+import {
+  TablaContabilidad, TablaNomina, TablaProduccion, TablaTarifario, AvisoSoloLectura,
+} from '@/components/finanzas/gastos/Tablas'
+
+/** Secciones del módulo. El resumen analiza; las demás permiten diligenciar. */
+const SECCIONES = [
+  { id: 'resumen', et: 'Resumen' },
+  { id: 'contabilidad', et: 'Contabilidad' },
+  { id: 'nomina', et: 'Nómina' },
+  { id: 'produccion', et: 'Producción' },
+  { id: 'tarifario', et: 'Tarifario' },
+] as const
+
+type Seccion = typeof SECCIONES[number]['id']
 
 /** Cifra corta para ejes: 45,8 M en vez de 45.800.000. */
 function corto(v: number): string {
@@ -92,6 +106,7 @@ function Globo({ active, payload, label, sufijo }: {
 }
 
 export default function GastosAgenciaPage() {
+  const [seccion, setSeccion] = useState<Seccion>('resumen')
   const [anio, setAnio] = useState<string | null>(null)
   const [apagadas, setApagadas] = useState<Set<string>>(new Set())
   const [desde, setDesde] = useState<number | null>(null)
@@ -241,8 +256,29 @@ export default function GastosAgenciaPage() {
         </div>
       )}
 
+      {/* ── Secciones del módulo ───────────────────────────────────────── */}
+      <div className="inline-flex flex-wrap rounded-lg bg-surface-low p-0.5">
+        {SECCIONES.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setSeccion(s.id)}
+            className={cn(
+              'px-3.5 py-1.5 rounded-md text-[12.5px] font-medium transition-colors cursor-pointer',
+              seccion === s.id
+                ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface',
+            )}
+          >
+            {s.et}
+          </button>
+        ))}
+      </div>
+
+      {/* Solo estorba en las tablas, que siempre muestran los doce meses. */}
+      {seccion !== 'resumen' && <AvisoSoloLectura visible={datos ? !datos.edicion : false} />}
+
       {/* ── Filtro por periodo ─────────────────────────────────────────── */}
-      {analisis && analisis.mesesDisponibles.length > 0 && (
+      {seccion === 'resumen' && analisis && analisis.mesesDisponibles.length > 0 && (
         <div className="card p-3 flex flex-wrap items-center gap-3">
           <div className="inline-flex flex-wrap rounded-lg bg-surface-low p-0.5">
             {PRESETS.map(p => {
@@ -297,7 +333,7 @@ export default function GastosAgenciaPage() {
         </div>
       )}
 
-      {(analisis?.filtradoPorCategoria || (analisis && !analisis.rangoCompleto)) && (
+      {seccion === 'resumen' && (analisis?.filtradoPorCategoria || (analisis && !analisis.rangoCompleto)) && (
         <div className="card p-3 border-l-2 border-l-amber-500">
           <p className="text-[12.5px] text-on-surface">
             Vista filtrada
@@ -308,6 +344,7 @@ export default function GastosAgenciaPage() {
         </div>
       )}
 
+      {seccion === 'resumen' && (<>
       {/* ── Indicadores ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <TarjetaKPI
@@ -630,57 +667,10 @@ export default function GastosAgenciaPage() {
         </div>
       )}
 
-      {/* ── Nómina y cuentas ──────────────────────────────────────────── */}
+      {/* ── Cuentas y calidad del dato ─────────────────────────────────── */}
       {datos && datos.nomina.personas.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="card p-5">
-            <h3 className="text-[15px] font-semibold text-on-surface">Nómina del corte</h3>
-            <p className="text-[11.5px] text-on-surface-variant mt-0.5 mb-3">
-              {datos.nomina.resumen.total} personas · {datos.nomina.resumen.pagados} pagadas por{' '}
-              {formatCOP(datos.nomina.resumen.montoPagado)} · {datos.nomina.resumen.pendientes} pendientes
-            </p>
-
-            <div className="overflow-x-auto -mx-1">
-              <table className="w-full text-[12px]">
-                <thead>
-                  <tr className="text-left text-[10px] uppercase tracking-wide text-on-surface-variant">
-                    <th className="py-1.5 px-1 font-medium">Persona</th>
-                    <th className="py-1.5 px-1 font-medium">Banco</th>
-                    <th className="py-1.5 px-1 font-medium text-right">Monto</th>
-                    <th className="py-1.5 px-1 font-medium text-center">Pago</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-high">
-                  {datos.nomina.personas.map((p, i) => (
-                    <tr key={`${p.nombre}-${i}`}>
-                      <td className="py-1.5 px-1 text-on-surface">{p.nombre}</td>
-                      <td className="py-1.5 px-1 text-on-surface-variant whitespace-nowrap">
-                        {p.banco || '—'}
-                        {p.cuenta && <span className="ml-1 tabular-nums opacity-70">{p.cuenta}</span>}
-                      </td>
-                      <td className="py-1.5 px-1 text-right tabular-nums text-on-surface whitespace-nowrap">
-                        {p.monto ? formatCOP(p.monto) : <span className="opacity-45">sin monto</span>}
-                      </td>
-                      <td className="py-1.5 px-1 text-center">
-                        <span className={cn(
-                          'text-[9.5px] px-1.5 py-0.5 rounded-full font-semibold',
-                          p.pagado ? 'bg-emerald-500/12 text-emerald-600' : 'bg-rose-500/12 text-rose-600',
-                        )}>
-                          {p.pagado ? 'Sí' : 'No'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <p className="text-[10.5px] text-on-surface-variant/80 mt-3">
-              La cédula no sale del servidor y de la cuenta solo viajan los últimos cuatro dígitos.
-            </p>
-          </div>
-
-          <div className="space-y-4">
+          {/* La nómina detallada vive en su propia pestaña, donde además se edita */}
             <div className="card p-5">
               <h3 className="text-[15px] font-semibold text-on-surface mb-1">Cuentas por banco</h3>
               <p className="text-[11.5px] text-on-surface-variant mb-3">
@@ -723,7 +713,27 @@ export default function GastosAgenciaPage() {
                 </div>
               </div>
             )}
-          </div>
+        </div>
+      )}
+      </>)}
+
+      {/* ── Tablas que se diligencian ──────────────────────────────────── */}
+      {datos && seccion === 'contabilidad' && anioActivo && (
+        <TablaContabilidad datos={datos} anio={anioActivo} editable={!!datos.edicion} />
+      )}
+      {datos && seccion === 'nomina' && (
+        <TablaNomina datos={datos} editable={!!datos.edicion} />
+      )}
+      {datos && seccion === 'produccion' && (
+        <TablaProduccion datos={datos} editable={!!datos.edicion} />
+      )}
+      {datos && seccion === 'tarifario' && (
+        <TablaTarifario datos={datos} editable={!!datos.edicion} />
+      )}
+
+      {isLoading && seccion !== 'resumen' && (
+        <div className="card p-5">
+          <div className="h-64 rounded bg-surface-high animate-pulse" />
         </div>
       )}
 

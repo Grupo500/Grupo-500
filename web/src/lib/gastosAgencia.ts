@@ -31,6 +31,8 @@ export interface AnioGastos {
 export interface GastosAgenciaData {
   leidoEn: string
   desactualizado?: boolean
+  /** El servidor tiene cuenta de servicio y las tablas se pueden editar. */
+  edicion?: boolean
   anios: Record<string, AnioGastos>
   produccion: Record<string, { titulo: string; anio: string | null; tipos: CategoriaAnual[] }>
   tarifario: Record<string, { items: { concepto: string; valor: number; seccion: string | null }[]; total: number }>

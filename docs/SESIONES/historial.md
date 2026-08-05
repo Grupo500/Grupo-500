@@ -984,3 +984,34 @@ Este es el punto donde `docs/API.md` empezó a quedar desactualizado (documentab
 ### Pendiente para que el panel funcione
 - Definir `GASTOS_AGENCIA_SHEET_ID` en Railway. Hasta entonces el panel responde 503 con un aviso de "falta configurar".
 - El Google Sheet está compartido como "cualquiera con el link": el panel protege la PII, el sheet no. Conviene restringirlo (y entonces migrar la lectura a una cuenta de servicio de Google).
+
+---
+
+## Sesión 032 — 2026-08-04
+
+**Objetivo:** Que las tablas de `Gastos de agencia` se puedan diligenciar desde la app y que app y sheet queden sincronizados.
+
+### Lo que se hizo
+- El panel pasó a **módulo con secciones**: Resumen (el análisis de antes) · Contabilidad · Nómina · Producción · Tarifario. Las cuatro últimas son **tablas editables**.
+- **Escritura real sobre el Google Sheet:** `api/src/services/googleSheets.ts` (cuenta de servicio, JWT firmado con `jsonwebtoken`, sin dependencias nuevas) y `gastosAgenciaEscritura.ts` con las operaciones. Rutas: `PUT/POST /api/finanzas/gastos-agencia/{contabilidad,nomina,produccion,tarifario}`.
+- La lectura pasa por la API de Sheets cuando hay cuenta de servicio, y cae al CSV público si no. Eso además deja el módulo funcionando si algún día se restringe el sheet.
+- Celdas editables en el sitio (Enter guarda, Escape cancela), interruptor Sí/No para el pago y alta de personas en la nómina.
+
+### La decisión de fondo: no hay segunda copia
+El sheet es la **única fuente de verdad**; la app no guarda copia en Postgres. Un "sync bidireccional" entre dos copias es exactamente donde se pierden datos: dos ediciones simultáneas se pisan sin avisar. Con un solo almacén no pueden divergir. El costo es que cada edición es una llamada a Google, que para este volumen no se nota.
+
+### Cómo se protege de pisar el trabajo de otro
+1. Cada escritura **relee la pestaña** (nunca desde caché).
+2. **Reubica la celda por etiqueta**, no por una posición guardada: si alguien insertó una fila en el sheet, la posición vieja apuntaría a otro dato.
+3. Compara con el valor que el cliente creía tener y responde **409 con el valor actual** si cambió. El panel muestra "en el sheet ahora dice X" en vez de sobreescribir.
+4. En la nómina además verifica que en esa fila siga estando la misma persona, para no cambiarle el pago a quien no es.
+5. Tras escribir invalida la caché de lectura.
+
+### Verificado
+- `api/scripts/probar-ubicacion-gastos.ts` prueba **en seco** los localizadores: para cada valor editable ubica su celda y compara con lo que reportó el parser. **637 coincidencias, 0 descuadres** (contabilidad de los dos años, 77 personas × 4 campos, producción y tarifario). Correr esto antes de tocar la ubicación de celdas.
+- `npx tsc --noEmit`: 0 errores en api y en web. `next build` completo.
+
+### Pendiente
+- Crear la cuenta de servicio de Google (Sheets API habilitada), compartir el sheet con su correo como **editor** y poner `GOOGLE_SHEETS_SA_EMAIL` y `GOOGLE_SHEETS_SA_PRIVATE_KEY` en Railway. Sin eso las tablas se ven pero salen en solo lectura con un aviso que lo explica.
+- La cédula y el número de cuenta **no se pueden editar desde la app** a propósito: el panel nunca los recibe completos. Se llenan en el sheet.
+- No se probó el camino de escritura contra el sheet real (falta la cuenta de servicio). Lo verificado es la ubicación de celdas y el manejo de errores.

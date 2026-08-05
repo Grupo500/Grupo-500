@@ -10,6 +10,7 @@
 // devuelven los últimos 4 dígitos. Lo que no se serializa no se puede filtrar.
 
 import { logger } from '../utils/logger'
+import { leerPestania, sheetsEscrituraConfigurada } from './googleSheets'
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -17,7 +18,7 @@ const MESES = [
 ] as const
 
 /** gid de cada pestaña; se pueden sobreescribir por entorno si el sheet cambia. */
-const GIDS = {
+export const GIDS = {
   nomina: process.env.GASTOS_AGENCIA_GID_NOMINA ?? '0',
   actual: process.env.GASTOS_AGENCIA_GID_ACTUAL ?? '1489175693',
   previo: process.env.GASTOS_AGENCIA_GID_PREVIO ?? '1461721508',
@@ -34,6 +35,8 @@ export interface CategoriaAnual {
 
 export interface Anio {
   anio: number
+  /** Pestaña de donde salió; la necesita la escritura para ubicar la celda. */
+  gid: string
   meses: string[]
   categorias: CategoriaAnual[]
   totalPorMes: (number | null)[]
@@ -108,11 +111,11 @@ function parseCSV(text: string): Grid {
   return rows
 }
 
-const at = (rows: Grid, r: number, c: number): string =>
+export const at = (rows: Grid, r: number, c: number): string =>
   rows[r] && rows[r][c] != null ? String(rows[r][c]).trim() : ''
 
 /** " COP $1,075,000" → 1075000 · "" → null */
-function money(v: string | null | undefined): number | null {
+export function money(v: string | null | undefined): number | null {
   if (v == null) return null
   const s = String(v).replace(/[^\d,.\-]/g, '').replace(/,/g, '')
   if (!s || s === '-' || s === '.') return null
@@ -120,7 +123,7 @@ function money(v: string | null | undefined): number | null {
   return Number.isFinite(n) ? Math.round(n) : null
 }
 
-function num(v: string | null | undefined): number | null {
+export function num(v: string | null | undefined): number | null {
   if (v == null || String(v).trim() === '') return null
   const s = String(v).replace(/[^\d.\-]/g, '')
   if (!s) return null
@@ -135,13 +138,13 @@ function enmascararCuenta(v: string): string {
   return d.length <= 4 ? '••••' : '••••' + d.slice(-4)
 }
 
-function indiceMes(label: string): number {
+export function indiceMes(label: string): number {
   const s = String(label ?? '').trim().toLowerCase()
   if (!s) return -1
   return MESES.findIndex(m => s.startsWith(m))
 }
 
-function buscarCelda(rows: Grid, needle: string): { r: number; c: number } | null {
+export function buscarCelda(rows: Grid, needle: string): { r: number; c: number } | null {
   const n = needle.toLowerCase()
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r] || []
@@ -159,7 +162,7 @@ function buscarCelda(rows: Grid, needle: string): { r: number; c: number } | nul
  * bonos y extras)" en 2026); sin normalizar, la comparación año contra año no
  * empareja nada.
  */
-function claveCategoria(nombre: string): string {
+export function claveCategoria(nombre: string): string {
   return String(nombre ?? '')
     .replace(/\([^)]*\)/g, ' ')
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -168,14 +171,30 @@ function claveCategoria(nombre: string): string {
 
 const suma = (xs: (number | null)[]): number => xs.reduce<number>((a, b) => a + (b || 0), 0)
 
-async function traerPestania(gid: string): Promise<Grid> {
+export function sheetId(): string {
   const id = process.env.GASTOS_AGENCIA_SHEET_ID
-  const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`
+  if (!id) throw new Error('GASTOS_AGENCIA_SHEET_ID no está configurado')
+  return id
+}
+
+/**
+ * Trae una pestaña como grilla.
+ *
+ * Con la cuenta de servicio configurada se lee por la API (que es además el
+ * único camino que sigue funcionando si el sheet deja de estar público, y el
+ * mismo que usa la escritura). Si no la hay, se cae al CSV público.
+ */
+export async function traerPestania(gid: string): Promise<Grid> {
+  if (sheetsEscrituraConfigurada()) {
+    return leerPestania(sheetId(), gid)
+  }
+
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId()}/export?format=csv&gid=${gid}`
   const res = await fetch(url, { redirect: 'follow' })
   if (!res.ok) throw new Error(`El sheet respondió ${res.status} en la pestaña gid=${gid}`)
   const text = await res.text()
   if (/<html/i.test(text.slice(0, 200))) {
-    throw new Error('El sheet devolvió HTML: probablemente perdió el permiso de lectura por link')
+    throw new Error('El sheet devolvió HTML: perdió el permiso de lectura por link y no hay cuenta de servicio configurada')
   }
   return parseCSV(text)
 }
@@ -183,7 +202,7 @@ async function traerPestania(gid: string): Promise<Grid> {
 // ── contabilidad anual ──────────────────────────────────────────────────
 
 /** Fila de encabezado = la primera con 6 o más nombres de mes. */
-function filaDeMeses(rows: Grid) {
+export function filaDeMeses(rows: Grid) {
   for (let r = 0; r < Math.min(rows.length, 12); r++) {
     const cols: { c: number; mi: number }[] = []
     ;(rows[r] || []).forEach((v, c) => {
@@ -204,7 +223,7 @@ function filaDeMeses(rows: Grid) {
   return null
 }
 
-function parsearContabilidad(rows: Grid, anio: number): Anio {
+function parsearContabilidad(rows: Grid, anio: number, gid: string): Anio {
   const head = filaDeMeses(rows)
   if (!head) throw new Error(`No encontré la fila de meses en la contabilidad ${anio}`)
 
@@ -265,6 +284,7 @@ function parsearContabilidad(rows: Grid, anio: number): Anio {
 
   return {
     anio,
+    gid,
     meses: [...MESES],
     categorias,
     totalPorMes,
@@ -481,11 +501,15 @@ export async function obtenerGastosAgencia(forzar = false): Promise<GastosAgenci
   // El año se toma del propio encabezado del sheet, no del reloj del servidor:
   // así el panel no se rompe el 1 de enero.
   const anios: Record<string, Anio> = {}
-  for (const [gidLabel, rows] of [['actual', actualRows], ['previo', previoRows]] as const) {
+  const hojas: [string, string, Grid][] = [
+    ['actual', GIDS.actual, actualRows],
+    ['previo', GIDS.previo, previoRows],
+  ]
+  for (const [etiqueta, gid, rows] of hojas) {
     const parsed = seguro(
-      () => parsearContabilidad(rows, anioDelEncabezado(rows)),
+      () => parsearContabilidad(rows, anioDelEncabezado(rows), gid),
       null,
-      `Contabilidad (${gidLabel})`,
+      `Contabilidad (${etiqueta})`,
     )
     if (parsed) anios[String(parsed.anio)] = parsed
   }
@@ -529,4 +553,14 @@ function anioDelEncabezado(rows: Grid): number {
 /** Para servir algo aunque el sheet esté caído. */
 export function ultimoSnapshot(): GastosAgencia | null {
   return cache?.datos ?? null
+}
+
+/**
+ * Tira la caché.
+ *
+ * Se llama después de cada escritura: si no, el panel seguiría mostrando el
+ * valor viejo hasta cinco minutos y parecería que la edición no se guardó.
+ */
+export function invalidarCache(): void {
+  cache = null
 }
