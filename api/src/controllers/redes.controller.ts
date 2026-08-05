@@ -57,6 +57,9 @@ export async function oauthUrl(req: Request, res: Response) {
     client_id: appId!,
     redirect_uri: redirectUri,
     response_type: 'code',
+    // sin esto, una autorización previa hace que Meta salte la pantalla de
+    // selección de páginas y devuelva un token sin activos (cero páginas)
+    auth_type: 'rerequest',
   })
   // Apps tipo Negocios (Login for Business): permisos vía Configuración; scopes sueltos dan "Invalid Scopes"
   if (configId) qs.set('config_id', configId)
