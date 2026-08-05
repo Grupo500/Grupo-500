@@ -1115,18 +1115,40 @@ export async function cuotas(req: Request, res: Response) {
     orderBy: { fechaPago: 'asc' },
   })
 
-  const hoy = Date.now()
-  const filas = pagos.map(p => {
-    // Un pago no dice a qué curso pertenece — se toma el más cercano en
-    // fecha, mismo criterio que backfillCuotas.ts.
+  // Un pago no dice a qué curso pertenece — se toma el más cercano en fecha,
+  // mismo criterio que backfillCuotas.ts.
+  function cursoDe(p: (typeof pagos)[number]) {
     const cursos = p.estudiante.cursos
     const t = p.fechaPago?.getTime() ?? 0
-    const ce = cursos.reduce<typeof cursos[number] | null>((mejor, c) => {
+    return cursos.reduce<typeof cursos[number] | null>((mejor, c) => {
       if (!c.fechaCompra) return mejor
       if (!mejor?.fechaCompra) return c
       return Math.abs(c.fechaCompra.getTime() - t) < Math.abs(mejor.fechaCompra.getTime() - t) ? c : mejor
     }, null)
+  }
 
+  // Hotmart no reutiliza la misma transacción para cada cuota de un plan:
+  // cada cargo puede llegar como un `Pago` propio, con su propia referencia.
+  // Sin agrupar, el mismo plan aparecía dos veces — una con el estado real
+  // (ej. "2 de 2") y otra con el primer cargo, congelado en "1 de 2" y
+  // marcado "Atrasado" aunque esa cuota ya se hubiera pagado hace rato. Se
+  // agrupa por estudiante+curso y de cada grupo se usa solo el cargo más
+  // avanzado (mayor cuotaNumero; si empatan, el más reciente).
+  const porPlan = new Map<string, { pago: (typeof pagos)[number]; curso: ReturnType<typeof cursoDe> }>()
+  for (const p of pagos) {
+    const ce = cursoDe(p)
+    const clave = `${p.estudiante.id}:${ce?.cursoId ?? 'sin-curso'}`
+    const actual = porPlan.get(clave)
+    const cuotaP = p.cuotaNumero ?? 1
+    if (!actual) { porPlan.set(clave, { pago: p, curso: ce }); continue }
+    const cuotaActual = actual.pago.cuotaNumero ?? 1
+    const esMasAvanzado = cuotaP > cuotaActual
+      || (cuotaP === cuotaActual && (p.fechaPago?.getTime() ?? 0) > (actual.pago.fechaPago?.getTime() ?? 0))
+    if (esMasAvanzado) porPlan.set(clave, { pago: p, curso: ce })
+  }
+
+  const hoy = Date.now()
+  const filas = [...porPlan.values()].map(({ pago: p, curso: ce }) => {
     const cuotaNumero  = p.cuotaNumero ?? 1
     const cuotasTotal  = p.cuotasTotal ?? 1
     // El total de una venta a cuotas es siempre valor-de-la-cuota × cantidad
