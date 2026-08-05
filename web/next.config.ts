@@ -26,7 +26,10 @@ const securityHeaders = [
       // Fuentes: Google Fonts
       "font-src 'self' https://fonts.gstatic.com",
       // Imágenes: mismo origen + Cloudinary + Google OAuth avatars + data URIs
-      "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://img.clerk.com https://purecatamphetamine.github.io https://flagcdn.com",
+      // + CDNs de Meta (avatares de páginas FB / cuentas IG en Marketing > Redes)
+      "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://img.clerk.com https://purecatamphetamine.github.io https://flagcdn.com https://*.fbcdn.net https://*.fbsbx.com https://*.cdninstagram.com",
+      // Video/audio: previews de media de Cloudinary (composer de Redes)
+      "media-src 'self' blob: https://res.cloudinary.com",
       // Conexiones: mismo origen + API + Google OAuth + Next-Auth
       "connect-src 'self' https://api-production-79572.up.railway.app https://accounts.google.com https://oauth2.googleapis.com",
       // Frames: Google OAuth + mismo origen (para el proxy PDF)

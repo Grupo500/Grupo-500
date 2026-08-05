@@ -836,3 +836,61 @@ model AliasAsesor {
   @@index([asesorId])
   @@map("finanzas_alias_asesor")
 }
+
+// ── Redes sociales: cuentas vinculadas y publicaciones programadas ───────────
+
+model RedSocialCuenta {
+  id            String              @id @default(cuid())
+  plataforma    RedSocialPlataforma
+  nombre        String
+  externalId    String              // IG user id o Page id de Facebook
+  accessToken   String              // page access token de larga duración (nunca se expone al cliente)
+  fotoUrl       String?
+  activa        Boolean             @default(true)
+  creadaEn      DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  publicaciones PublicacionRed[]
+
+  @@unique([plataforma, externalId])
+  @@map("redes_cuentas")
+}
+
+model PublicacionRed {
+  id             String               @id @default(cuid())
+  tipo           TipoPublicacionRed
+  caption        String?
+  mediaUrl       String?              // Cloudinary; la Graph API la lee por URL pública
+  mediaEsVideo   Boolean              @default(false)
+  programadaPara DateTime
+  estado         EstadoPublicacionRed @default(PROGRAMADA)
+  error          String?
+  externalId     String?              // id del post/media ya publicado en la red
+  publicadaEn    DateTime?
+  creadaEn       DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  cuentaId       String
+  cuenta         RedSocialCuenta      @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  creadaPorId    String?
+
+  @@index([estado, programadaPara])
+  @@map("redes_publicaciones")
+}
+
+enum RedSocialPlataforma {
+  INSTAGRAM
+  FACEBOOK
+}
+
+enum TipoPublicacionRed {
+  POST
+  HISTORIA
+  REEL
+}
+
+enum EstadoPublicacionRed {
+  PROGRAMADA
+  PUBLICANDO
+  PUBLICADA
+  ERROR
+  CANCELADA
+}

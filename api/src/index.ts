@@ -47,6 +47,8 @@ import { reconciliarAsesores } from './jobs/reconciliarAsesores'
 import { backfillComisiones } from './jobs/backfillComisiones'
 import { sincronizarGoogleAds } from './jobs/sincronizarGoogleAds'
 import { backfillCuotas } from './jobs/backfillCuotas'
+import redesRoutes from './routes/redes'
+import { publicarRedesPendientes } from './jobs/publicarRedes'
 
 const app = express()
 
@@ -194,6 +196,7 @@ app.use('/api/notificaciones', notificacionesRoutes)
 app.use('/api/trengo',       trengoRoutes)
 app.use('/api/hubspot',      hubspotRoutes)
 app.use('/api/marketing',    marketingRoutes)
+app.use('/api/redes',        redesRoutes)
 app.use('/api/afiliaciones', afiliacionesRoutes)
 app.use('/api/apikeys',      apiKeysRoutes)
 app.use('/api/public/v1',    publicRoutes)
@@ -236,6 +239,10 @@ app.listen(PORT, () => {
   const ventanaCuotas = () => new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   setTimeout(() => { void backfillCuotas(true, ventanaCuotas()) }, 5 * 60 * 1000)
   setInterval(() => { void backfillCuotas(true, ventanaCuotas()) }, CUATRO_HORAS)
+
+  // Publicador de redes sociales (Marketing > Redes): cada minuto revisa las
+  // publicaciones programadas vencidas y las sube a IG/FB vía la Graph API.
+  setInterval(() => { void publicarRedesPendientes() }, 60 * 1000)
 })
 
 export default app

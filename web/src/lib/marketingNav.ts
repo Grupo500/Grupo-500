@@ -1,4 +1,4 @@
-import { CalendarDays, Link2, FileText, Clapperboard, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Link2, FileText, Clapperboard, Share2, type LucideIcon } from 'lucide-react'
 
 export interface MarketingTab {
   href: string
@@ -12,4 +12,5 @@ export const MARKETING_TABS: MarketingTab[] = [
   { href: '/marketing/entregables',   label: 'Entregables',      icon: Link2 },
   { href: '/marketing/guiones',       label: 'Guiones',          icon: FileText },
   { href: '/marketing/panel-edicion', label: 'Panel de Edición', icon: Clapperboard },
+  { href: '/marketing/redes',         label: 'Redes',            icon: Share2 },
 ]
