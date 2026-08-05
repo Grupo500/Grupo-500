@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { prisma } from '../config/prisma'
 import { UnauthorizedError, ForbiddenError } from '../utils/errors'
 import { logSecurityEvent } from '../utils/logger'
+import { redactarUrl } from '../utils/redactar'
 import { Role, User, Asesor } from '@prisma/client'
 
 type UserWithAsesor = User & { asesor: Asesor | null }
@@ -57,7 +58,9 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       userId:    rawPayload?.sub   ?? 'desconocido',
       ip:        req.ip,
       userAgent: req.headers['user-agent'],
-      url:       req.originalUrl,
+      // Redactada: si algún día un endpoint con credencial en el query usa este
+      // middleware, un fallo de auth escribiría el secreto justo aquí.
+      url:       redactarUrl(req.originalUrl),
       method:    req.method,
       reason:    error instanceof Error ? error.message : 'token_invalid',
     })

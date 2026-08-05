@@ -17,6 +17,9 @@ const PARAMS_SENSIBLES = new Set([
   'password', 'clave', 'pass',
   'firma', 'signature', 'sig',
   'code', 'hottok',
+  // El ticket de SSE ya es de un solo uso y dura 30 s, pero mientras vive sirve
+  // para abrir una conexión: no hay razón para dejarlo escrito.
+  'ticket',
 ])
 
 /**
