@@ -77,7 +77,17 @@ export async function vincularCuentas(userToken: string) {
     fields: 'id,name,access_token,picture{url},instagram_business_account{id,username,profile_picture_url}',
     limit: '100',
   })
-  if (!data.length) throw new Error('Meta no devolvió páginas: revisa que autorizaste con la cuenta correcta y que administras las páginas')
+  if (!data.length) {
+    // diagnóstico: saber quién autorizó y qué permisos concedió realmente Meta
+    let detalle = ''
+    try {
+      const me = await graph<{ name?: string; id?: string }>('/me', { access_token: userToken, fields: 'name' })
+      const perms = await graph<{ data: { permission: string; status: string }[] }>('/me/permissions', { access_token: userToken })
+      const lista = perms.data.map(p => `${p.permission}=${p.status}`).join(', ') || 'NINGUNO'
+      detalle = ` Autorizó: ${me.name ?? me.id ?? '?'}. Permisos concedidos: ${lista}.`
+    } catch { /* el diagnóstico es opcional */ }
+    throw new Error(`Meta no devolvió páginas.${detalle} Si faltan permisos pages_*/instagram_*, la Configuración del Login for Business no los incluye o no se seleccionaron páginas al autorizar.`)
+  }
 
   const cuentas = []
   for (const pagina of data) {
