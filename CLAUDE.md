@@ -11,6 +11,7 @@ Grupo 500 es una plataforma SaaS para gestión y venta de cursos virtuales de pr
 - Generación de certificados
 - Importación y análisis de simulacros (PDFs)
 - Reportes avanzados con estadísticas de ventas y rendimiento
+- Área de Marketing: calendario de contenido, entregables, guiones, Panel de Edición (Trello) y Redes (programar publicaciones/historias en IG y FB)
 
 ## Stack Tecnológico
 
@@ -171,6 +172,15 @@ MARKETING / EDITOR / COMMUNITY
 ESTUDIANTE (role=ESTUDIANTE)
 - Módulo Brito (estudio)
 ```
+
+## Área de Marketing (agosto 2026)
+
+Vive en `web/src/app/marketing/` (tabs en `web/src/lib/marketingNav.ts`; roles ADMIN/MARKETING/EDITOR/COMMUNITY). Además de Calendario, Entregables y Guiones:
+
+- **Panel de Edición** (`marketing/panel-edicion`): videos aprobados y en corrección por editor, en vivo desde Trello. Los datos vienen de una Netlify Function externa (`panel.grupo500educacion.co/api/stats`) consumida vía el proxy interno `web/src/app/api/marketing/panel-edicion/route.ts` — la CSP de la app no deja al navegador llamar dominios externos. Las reglas de conteo de los tableros de Trello están en la Sesión 034 del historial.
+- **Redes** (`marketing/redes`): vincular páginas de Facebook e Instagram profesionales (OAuth de Meta con `config_id` de Facebook Login for Business — los scopes sueltos dan "Invalid Scopes") y programar posts/historias/reels. Backend en `api/src/{routes,controllers}/redes*` + `services/metaGraph.service.ts`; el job `jobs/publicarRedes.ts` publica cada minuto. Credenciales de la App de Meta en la tabla `ConfigApp` (claves `META_APP_ID`, `META_APP_SECRET`, `META_CONFIG_ID`), editables desde la propia pantalla (solo ADMIN). Media en Cloudinary vía `/api/upload/*`; IG exige JPEG/MP4 y la URL se transforma sola.
+
+Detalle completo y decisiones: `docs/SESIONES/historial.md`, Sesión 034.
 
 ## Información de Contacto
 
