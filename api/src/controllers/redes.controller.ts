@@ -21,22 +21,28 @@ const SELECT_PUBLICACION = {
 // ── Configuración de la App de Meta ──────────────────────────────────────────
 
 export async function estadoConfig(req: Request, res: Response) {
-  const { appId, configurada } = await getMetaConfig()
-  return ApiResponse.success(res, { configurada, appId })
+  const { appId, configId, configurada } = await getMetaConfig()
+  return ApiResponse.success(res, { configurada, appId, configId })
 }
 
 const configSchema = z.object({
   appId: z.string().min(5).regex(/^\d+$/, 'El App ID de Meta es numérico'),
   appSecret: z.string().min(16),
+  configId: z.string().regex(/^\d*$/, 'El Config ID de Meta es numérico').optional(),
 })
 
 export async function guardarConfig(req: Request, res: Response) {
-  const { appId, appSecret } = configSchema.parse(req.body)
-  await prisma.$transaction([
-    prisma.configApp.upsert({ where: { clave: 'META_APP_ID' }, create: { clave: 'META_APP_ID', valor: appId }, update: { valor: appId } }),
-    prisma.configApp.upsert({ where: { clave: 'META_APP_SECRET' }, create: { clave: 'META_APP_SECRET', valor: appSecret }, update: { valor: appSecret } }),
-  ])
-  return ApiResponse.success(res, { configurada: true, appId })
+  const { appId, appSecret, configId } = configSchema.parse(req.body)
+  const upsert = (clave: string, valor: string) =>
+    prisma.configApp.upsert({ where: { clave }, create: { clave, valor }, update: { valor } })
+  const ops = [upsert('META_APP_ID', appId), upsert('META_APP_SECRET', appSecret)]
+  if (configId !== undefined) {
+    ops.push(configId
+      ? upsert('META_CONFIG_ID', configId)
+      : prisma.configApp.upsert({ where: { clave: 'META_CONFIG_ID' }, create: { clave: 'META_CONFIG_ID', valor: '' }, update: { valor: '' } }))
+  }
+  await prisma.$transaction(ops)
+  return ApiResponse.success(res, { configurada: true, appId, configId: configId ?? null })
 }
 
 // ── OAuth ────────────────────────────────────────────────────────────────────
@@ -45,14 +51,16 @@ const oauthUrlSchema = z.object({ redirectUri: z.string().url().startsWith('http
 
 export async function oauthUrl(req: Request, res: Response) {
   const { redirectUri } = oauthUrlSchema.parse(req.query)
-  const { appId, configurada } = await getMetaConfig()
+  const { appId, configId, configurada } = await getMetaConfig()
   if (!configurada) return ApiResponse.error(res, 'Primero configura el App ID y App Secret de Meta', 409)
   const qs = new URLSearchParams({
     client_id: appId!,
     redirect_uri: redirectUri,
-    scope: META_SCOPES,
     response_type: 'code',
   })
+  // Apps tipo Negocios (Login for Business): permisos vía Configuración; scopes sueltos dan "Invalid Scopes"
+  if (configId) qs.set('config_id', configId)
+  else qs.set('scope', META_SCOPES)
   return ApiResponse.success(res, { url: `https://www.facebook.com/v21.0/dialog/oauth?${qs}` })
 }
 

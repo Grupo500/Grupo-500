@@ -71,12 +71,13 @@ function AvatarCuenta({ cuenta, size = 'w-9 h-9' }: { cuenta: Cuenta; size?: str
 function SetupMeta({ onListo }: { onListo: () => void }) {
   const [appId, setAppId] = useState('')
   const [appSecret, setAppSecret] = useState('')
+  const [configId, setConfigId] = useState('')
   const redirectUri = typeof window !== 'undefined' ? `${window.location.origin}/marketing/redes/callback` : ''
 
   const guardar = useMutation({
     mutationFn: () => apiFetch('/redes/config', {
       method: 'POST',
-      body: JSON.stringify({ appId: appId.trim(), appSecret: appSecret.trim() }),
+      body: JSON.stringify({ appId: appId.trim(), appSecret: appSecret.trim(), configId: configId.trim() }),
     }),
     onSuccess: onListo,
   })
@@ -96,10 +97,11 @@ function SetupMeta({ onListo }: { onListo: () => void }) {
         <li>En <b>Inicio de sesión de Facebook → Configuración</b>, pega esta URI en «URI de redireccionamiento de OAuth válidos»:<br />
           <code className="block mt-1 px-2 py-1.5 bg-surface-high rounded-md text-[12px] text-on-surface break-all select-all">{redirectUri}</code>
         </li>
+        <li>En <b>Inicio de sesión de Facebook para empresas → Configuraciones</b> crea una <b>Configuración</b> (tipo de token: <b>Token de acceso de usuario</b>) con los permisos: <code className="text-[11px]">pages_show_list, pages_manage_posts, pages_read_engagement, instagram_basic, instagram_content_publish, business_management</code>. Copia el <b>ID de configuración</b> — sin esto Meta rechaza los permisos con «Invalid Scopes».</li>
         <li>En <b>Configuración de la app → Información básica</b> copia el <b>Identificador de la app</b> y la <b>Clave secreta</b>, y pégalos abajo.</li>
         <li>Mientras la app esté «En desarrollo» solo pueden autorizar los administradores de la app — suficiente para las cuentas propias. Agrega como administradores en <b>Roles</b> a quienes vayan a vincular cuentas.</li>
       </ol>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-3 gap-3">
         <input
           value={appId}
           onChange={e => setAppId(e.target.value)}
@@ -111,6 +113,12 @@ function SetupMeta({ onListo }: { onListo: () => void }) {
           onChange={e => setAppSecret(e.target.value)}
           placeholder="App Secret"
           type="password"
+          className="h-9 px-3 rounded-lg border border-outline-variant bg-surface-lowest text-[13px] text-on-surface outline-none focus:border-primary"
+        />
+        <input
+          value={configId}
+          onChange={e => setConfigId(e.target.value)}
+          placeholder="Config ID (Login para empresas)"
           className="h-9 px-3 rounded-lg border border-outline-variant bg-surface-lowest text-[13px] text-on-surface outline-none focus:border-primary"
         />
       </div>
@@ -299,6 +307,7 @@ export default function RedesPage() {
   const qc = useQueryClient()
   const [composerAbierto, setComposerAbierto] = useState(false)
   const [conectando, setConectando] = useState(false)
+  const [mostrarSetup, setMostrarSetup] = useState(false)
 
   const { data: config, refetch: refetchConfig } = useQuery({
     queryKey: ['redes-config'],
@@ -387,6 +396,11 @@ export default function RedesPage() {
         subtitle="Cuentas vinculadas y publicaciones programadas"
         actions={
           <>
+            {configurada && esAdmin && (
+              <Button variant="ghost" size="icon" title="Configuración de la App de Meta" onClick={() => setMostrarSetup(s => !s)}>
+                <Settings2 className="w-4 h-4" />
+              </Button>
+            )}
             {configurada && (
               <Button variant="outline" onClick={() => void conectar()} disabled={conectando}>
                 {conectando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Link2 className="w-4 h-4 mr-1.5" />Conectar con Meta</>}
@@ -401,8 +415,8 @@ export default function RedesPage() {
         }
       />
 
-      {!configurada && (esAdmin
-        ? <SetupMeta onListo={() => void refetchConfig()} />
+      {(!configurada || mostrarSetup) && (esAdmin
+        ? <SetupMeta onListo={() => { setMostrarSetup(false); void refetchConfig() }} />
         : <div className="card text-[13px] text-on-surface-variant">Falta configurar la conexión con Meta — pídele al administrador que entre a esta pestaña.</div>
       )}
 

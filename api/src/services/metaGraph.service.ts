@@ -18,11 +18,16 @@ export const META_SCOPES = [
 
 export async function getMetaConfig() {
   const filas = await prisma.configApp.findMany({
-    where: { clave: { in: ['META_APP_ID', 'META_APP_SECRET'] } },
+    where: { clave: { in: ['META_APP_ID', 'META_APP_SECRET', 'META_CONFIG_ID'] } },
   })
-  const appId = filas.find(f => f.clave === 'META_APP_ID')?.valor ?? null
-  const appSecret = filas.find(f => f.clave === 'META_APP_SECRET')?.valor ?? null
-  return { appId, appSecret, configurada: Boolean(appId && appSecret) }
+  const valor = (clave: string) => filas.find(f => f.clave === clave)?.valor ?? null
+  const appId = valor('META_APP_ID')
+  const appSecret = valor('META_APP_SECRET')
+  // Config ID de "Facebook Login for Business": las apps tipo Negocios no aceptan
+  // scopes sueltos en el diálogo OAuth (da "Invalid Scopes") — exigen una
+  // Configuración creada en el producto, que agrupa los permisos.
+  const configId = valor('META_CONFIG_ID')
+  return { appId, appSecret, configId, configurada: Boolean(appId && appSecret) }
 }
 
 interface GraphError { error?: { message?: string; error_user_msg?: string } }
