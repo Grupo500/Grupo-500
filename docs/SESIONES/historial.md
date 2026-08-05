@@ -1097,3 +1097,34 @@ Programar posts, historias y reels en Instagram/Facebook vía la **Graph API de 
 - David crea la **Configuración** en *Facebook Login for Business* (token de usuario + los 6 permisos: `pages_show_list, pages_manage_posts, pages_read_engagement, instagram_basic, instagram_content_publish, business_management`) y guarda el **Config ID** en la pantalla de Redes → probar "Conectar con Meta" → primera publicación de prueba (sugerido: historia con imagen en IG).
 - La app de Meta está "En desarrollo": solo administradores de la app pueden autorizar (suficiente para páginas propias). Para páginas de terceros se necesitaría App Review.
 - Ideas siguientes del área Marketing: carruseles IG, integrar lo programado al Calendario de contenido, metas por editor en el Panel de Edición.
+
+---
+
+## Sesión 034 — 2026-08-05
+
+**Objetivo:** Cerrar del todo la fuga de tokens del SSE con un ticket de un solo uso.
+
+### Por qué hacía falta, si ya se redactaban los logs
+La sesión 033 dejó de escribir el JWT en **nuestros** logs y en Sentry. Pero el token seguía viajando en la URL, y eso lo puede registrar cualquier intermediario que no controlamos: el edge de Railway, un proxy corporativo, una extensión. Un JWT de sesión vive una hora; con eso alcanza para robar la sesión.
+
+### Cómo quedó
+`POST /api/eventos/ticket` autentica por cabecera `Authorization` (donde nadie la registra) y devuelve un **ticket opaco de 32 bytes, de un solo uso y 30 segundos de vida**. Eso es lo único que va en la URL del `EventSource`. Aunque quede registrado, ya no sirve.
+
+- `api/src/utils/ticketsSSE.ts` — emisión, consumo (borra antes de validar la caducidad, para que un ticket presentado tarde tampoco se pueda reintentar), purgado y techo de 5.000 entradas.
+- El almacén es **en memoria**, igual que `sseManager`, que ya guarda las conexiones en un `Set`. Los dos comparten el supuesto de una sola instancia; si algún día se escala a varias réplicas, el broadcast de SSE se rompe **antes** que esto, así que no es este archivo el que habría que cambiar primero.
+- `useSSE.ts` pide el ticket antes de cada conexión y cierra el `EventSource` a mano en `onerror`, para que no reintente solo con un ticket ya gastado y se quede en bucle de 401.
+
+### Transición
+Se mantiene la rama que acepta `?token=`, con un warning `sse_token_legado`. **Se justificó a los 20 segundos de desplegar:** un usuario real se reconectó por ahí porque su pestaña tenía el bundle viejo. Sin esa rama se habría quedado sin eventos en vivo hasta recargar. Cuando el warning deje de aparecer en los logs, se puede borrar la rama.
+
+### Dos fugas más que se cerraron de paso
+- `ticket` entró en `PARAMS_SENSIBLES`: ya es de un solo uso, pero mientras vive abre una conexión.
+- `logSecurityEvent` en `auth.ts` registraba `req.originalUrl` sin redactar. Hoy no filtraba nada porque ningún endpoint con credencial en el query usa ese middleware, pero lo haría en cuanto alguien añadiera uno.
+
+### Verificado en producción
+`/api/eventos` sin nada → "Ticket requerido". Con un ticket inventado → rechazado, y en los logs quedó `ticket=***`. `POST /eventos/ticket` sin sesión → 401. El preflight de CORS desde `grupo500educacion.co` devuelve 204 permitiendo `POST` con `Authorization` (era el eslabón que habría roto todo en silencio). `scripts/probar-tickets-sse.ts` cubre el ciclo: el segundo uso falla, los vencidos fallan, dos tickets no se interfieren y el mapa no acumula basura.
+
+**Lo que no se probó:** el navegador haciendo el ciclo completo. Requiere una sesión real y no se usó ninguna: mintear un JWT con `NEXTAUTH_SECRET` habría significado suplantar a un usuario existente. Se confirma recargando la app y viendo `via="ticket"` en los logs.
+
+### Nota aparte
+Un origen no permitido en CORS responde **500** en vez de 403, porque el rechazo se lanza como excepción y cae en el errorHandler. Además de ser un código engañoso, cada petición bloqueada genera un evento en Sentry. No se tocó por estar fuera de alcance.
