@@ -85,8 +85,17 @@ async function llamar<T>(ruta: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     const detalle = (cuerpo as { error?: { message?: string } })?.error?.message ?? texto.slice(0, 200)
+    // Un 403 tiene dos causas muy distintas y mandan a revisar sitios opuestos:
+    // que la API no esté habilitada en el proyecto, o que el sheet no esté
+    // compartido con la cuenta de servicio. Conviene no confundirlas.
     if (res.status === 403) {
-      throw new Error(`Google rechazó la operación (403). ¿El sheet está compartido como editor con ${process.env.GOOGLE_SHEETS_SA_EMAIL}? · ${detalle}`)
+      if (/has not been used in project|is disabled/i.test(detalle)) {
+        throw new Error(`La Google Sheets API no está habilitada en el proyecto de la cuenta de servicio. Habilítala y espera un par de minutos · ${detalle}`)
+      }
+      throw new Error(`Google negó el acceso al sheet. Compártelo como editor con ${process.env.GOOGLE_SHEETS_SA_EMAIL} · ${detalle}`)
+    }
+    if (res.status === 404) {
+      throw new Error(`Google no encuentra el sheet. Revisa GASTOS_AGENCIA_SHEET_ID · ${detalle}`)
     }
     throw new Error(`Google Sheets respondió ${res.status}: ${detalle}`)
   }
