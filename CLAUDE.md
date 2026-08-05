@@ -18,7 +18,7 @@ Grupo 500 es una plataforma SaaS para gestión y venta de cursos virtuales de pr
 - **Framework:** Next.js 15 + App Router
 - **Lenguaje:** TypeScript
 - **Estilos:** Tailwind CSS v4 + shadcn/ui
-- **Auth:** Clerk (@clerk/nextjs)
+- **Auth:** NextAuth v5 (Google OAuth) — ya NO es Clerk
 - **Datos:** TanStack Query
 - **Gráficas:** Recharts
 - **PDFs:** jsPDF, react-pdf
@@ -28,18 +28,19 @@ Grupo 500 es una plataforma SaaS para gestión y venta de cursos virtuales de pr
 ### Backend (Express)
 - **Framework:** Express.js 4 + TypeScript
 - **ORM:** Prisma
-- **Auth:** Clerk Backend SDK
-- **DB:** PostgreSQL (Neon)
+- **Auth:** JWT HS256 emitido por el web (`/api/auth/token`, secreto NEXTAUTH_SECRET compartido) — ya NO es Clerk
+- **DB:** PostgreSQL en Railway (servicio `Postgres` del mismo proyecto) — ya NO es Neon
 - **Colas:** Bull Queue
 - **Integraciones:** Twilio (WhatsApp), SendGrid (emails)
 - **Deploy:** Railway
 
 ### Infraestructura
 - Monorepo con `pnpm workspaces`
-- PostgreSQL en Neon
+- PostgreSQL en Railway (proyecto "App Grupo 500", servicios `Postgres` y `Backend`)
 - Cloudinary para assets
-- Railway para backend
-- Vercel para frontend
+- Railway para backend (`api-production-79572.up.railway.app`) — **el deploy NO corre migraciones**: aplicarlas a mano con `prisma migrate deploy` usando la `DATABASE_PUBLIC_URL` del servicio Postgres (Railway CLI; ver Sesión 034 del historial)
+- Vercel para frontend (dominio productivo: `grupo500educacion.co`)
+- Push a `main` despliega ambos automáticamente
 
 ## Estructura del Proyecto
 
@@ -161,13 +162,20 @@ VENDEDOR (role=VENDEDOR)
 - Registrar pagos
 - Ver mis estadísticas
 - Enviar recordatorios
+
+MARKETING / EDITOR / COMMUNITY
+- Área de Marketing: Calendario, Entregables, Guiones,
+  Panel de Edición (Trello) y Redes (programar publicaciones IG/FB)
+- Configurar la App de Meta y desvincular cuentas: solo ADMIN
+
+ESTUDIANTE (role=ESTUDIANTE)
+- Módulo Brito (estudio)
 ```
 
 ## Información de Contacto
 
-- **Usuario:** hodmanj59@gmail.com
-- **Empresa:** NexCode97
-- **WhatsApp:** +57 316 413 4212
+- **Responsable:** David Jaimes — pregrupo500@gmail.com (cuenta dueña de GitHub, Railway, Vercel, Netlify y la App de Meta)
+- NexCode97 (hodmanj59@gmail.com) desarrolló las fases iniciales y **ya no participa** en el proyecto (desde ago-2026)
 
 ## Links Útiles
 

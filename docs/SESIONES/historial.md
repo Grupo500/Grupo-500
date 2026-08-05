@@ -1048,3 +1048,52 @@ Se mandó una petición con un token centinela en la URL: respondió 401 (el tok
 
 ### Si se quiere ir más allá
 La redacción resuelve la fuga, pero el token sigue viajando en la URL y eso lo pueden registrar intermediarios que no controlamos (el edge de Railway, por ejemplo). El arreglo de fondo sería un **ticket de un solo uso y vida corta** para SSE: el cliente lo pide con `Authorization`, recibe un ticket de ~30 s y ese es el que va en el query string. Así, aunque quede registrado, no sirve para nada. Es un cambio más grande porque toca `useSSE.ts` y la ruta de eventos.
+
+---
+
+## Sesión 034 — 2026-08-04 / 2026-08-05
+
+**Objetivo:** Dos módulos nuevos en el área de Marketing — **Panel de Edición** (videos aprobados por editor desde Trello) y **Redes** (vincular Instagram/Facebook y programar publicaciones e historias) — más el traspaso operativo de la infraestructura (NexCode97 sale del proyecto).
+
+### Contexto: de dónde viene el Panel de Edición
+Antes de tocar este repo se construyó un dashboard standalone en Netlify (`panel.grupo500educacion.co`, sitio `grupo500-editores`) que lee **Trello en vivo**: cuando una líder pasa una tarjeta a una lista de "Aprobados", el panel la cuenta por editor. Ese sitio sigue vivo (acceso rápido sin login) y es la **fuente de datos** del módulo dentro de la app.
+
+Reglas de datos que hay que conocer para mantenerlo:
+- Tableros: **"Grupo 500 videos"** (editor = miembros de la tarjeta; cuentan las listas cuyo nombre contenga "aprobad"; las listas de corrección alimentan chips y alertas) y **"TEAM COMMUNITY"** (las tarjetas casi no tienen miembros: el editor es el **nombre de la lista**, y "X" + "X SUBIDOS" se fusionan como la misma persona).
+- Varias listas de corrección están escritas **"correción"** (una sola c) — el matcher cubre ambas grafías (`correcci|correci`).
+- Las listas "PUBLICADOS …" **no** cuentan como aprobados (decisión de David); ampliable con la env `APPROVED_MATCH` en Netlify.
+- La fecha real de aprobación sale del historial de acciones de Trello (máx. 1000): tarjetas viejas caen a `dateLastActivity`, por eso la matriz mensual tiene un pico artificial en jun-2026 que se corrige solo hacia adelante.
+- La función de Netlify pide cada tablero en 4 llamadas paralelas + caché en memoria de 55 s (pedir tarjetas lista por lista revienta el timeout de 10 s).
+- Credenciales de Trello (key + token) viven como env vars del sitio Netlify, cuenta pregrupo500@gmail.com.
+
+### Panel de Edición dentro de la app (commits `951fb5c`, `8c5fb03`)
+- Pestaña **Marketing > Panel de Edición** (`web/src/app/marketing/panel-edicion/page.tsx` + tab en `marketingNav.ts`): resumen (aprobados periodo/hoy/semana, editores activos, en corrección), alertas (🔴 >3 días en corrección, 🟠 3+ acumulados, 🟡 sin aprobados en la semana), ranking por tablero con detalle expandible y matriz mensual por editor (6 meses).
+- **Gotcha CSP**: `connect-src` de `next.config.ts` solo permite `'self'` + el API de Railway → el navegador NO puede llamar dominios externos. El panel se veía vacío hasta crear el proxy interno `web/src/app/api/marketing/panel-edicion/route.ts` (route handler con `auth()`, consulta la Netlify Function server-side y sirve same-origin).
+
+### Módulo Redes (commits `ae33cdd`, `533eb91`, `9797d57`)
+Programar posts, historias y reels en Instagram/Facebook vía la **Graph API de Meta** (v21.0), todo dentro de la app:
+- **Modelos** (`migración 20260805000000_redes_sociales`, YA APLICADA en producción): `redes_cuentas` (página FB o IG profesional, con su page access token — nunca sale del API) y `redes_publicaciones` (tipo POST/HISTORIA/REEL, media en Cloudinary, `programadaPara`, estado PROGRAMADA→PUBLICANDO→PUBLICADA/ERROR/CANCELADA).
+- **API** (`/api/redes`, roles ADMIN/MARKETING/EDITOR/COMMUNITY; config solo ADMIN): `routes/redes.ts`, `controllers/redes.controller.ts`, `services/metaGraph.service.ts`.
+- **OAuth**: la App de Meta es tipo Negocios → el diálogo NO acepta scopes sueltos ("Invalid Scopes"); usa una **Configuración** de *Facebook Login for Business* pasada como `config_id`. Credenciales en la tabla `ConfigApp` (claves `META_APP_ID`, `META_APP_SECRET`, `META_CONFIG_ID`) — se editan desde la propia pantalla de Redes (engranaje, solo admin). El callback aterriza en `/marketing/redes/callback`, que canjea el code en `POST /api/redes/conectar`; al autorizar se vinculan todas las páginas FB del usuario y sus IG profesionales (`/me/accounts`).
+- **Publicador**: `jobs/publicarRedes.ts` corre cada minuto (`setInterval` en `index.ts`); toma las programadas vencidas con candado por `updateMany` de estado, publica y marca resultado. Blindado para no tumbar el proceso si la BD falla.
+- Particularidades de Meta implementadas: IG exige JPEG/MP4 (la URL de Cloudinary se transforma sola con `f_jpg`/`vc_h264`); IG video usa media container + espera de procesado + `media_publish`; los videos de feed IG van como REELS; historias FB usan `photo_stories` / `video_stories` (flujo start→upload por `file_url`→finish).
+- **CSP ampliada**: `img-src` acepta CDNs de Meta (avatares) y se agregó `media-src` para previews de video de Cloudinary.
+- UI: pantalla Redes con setup guiado de la App de Meta, chips de cuentas vinculadas, composer (tipo, multi-cuenta, media, fecha/hora) y listas de próximas + historial con reintento/cancelar/eliminar.
+
+### Traspaso de infraestructura (importante para todo el equipo)
+- **NexCode97 ya no participa.** La operación queda en el equipo con la cuenta pregrupo500@gmail.com.
+- La BD de producción es el **Postgres del propio proyecto Railway "App Grupo 500"** (servicios `Postgres` y `Backend`), NO Neon como dicen los docs viejos.
+- **El deploy de Railway NO corre migraciones** (`build: prisma generate && tsc`). Se aplican a mano:
+  ```bash
+  cd api
+  railway link --project "App Grupo 500" && railway service Backend
+  DB=$(railway variables --service Postgres --json | python -c "import json,sys; print(json.load(sys.stdin)['DATABASE_PUBLIC_URL'])")
+  DATABASE_URL="$DB" DIRECT_URL="$DB" npx prisma migrate deploy
+  ```
+  (Railway CLI con sesión de pregrupo500@gmail.com. La URL interna `postgres.railway.internal` no sirve desde fuera; usar `DATABASE_PUBLIC_URL`.)
+- Vercel (proyecto `appgrupo-500`) y Railway despliegan solos con cada push a `main`. El remoto se mueve rápido: `git pull --rebase` antes de cada push.
+
+### Pendiente (próxima sesión)
+- David crea la **Configuración** en *Facebook Login for Business* (token de usuario + los 6 permisos: `pages_show_list, pages_manage_posts, pages_read_engagement, instagram_basic, instagram_content_publish, business_management`) y guarda el **Config ID** en la pantalla de Redes → probar "Conectar con Meta" → primera publicación de prueba (sugerido: historia con imagen en IG).
+- La app de Meta está "En desarrollo": solo administradores de la app pueden autorizar (suficiente para páginas propias). Para páginas de terceros se necesitaría App Review.
+- Ideas siguientes del área Marketing: carruseles IG, integrar lo programado al Calendario de contenido, metas por editor en el Panel de Edición.
