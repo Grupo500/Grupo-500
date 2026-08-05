@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit'
 import crypto from 'crypto'
 import { errorHandler } from './middleware/errorHandler'
 import { logger } from './utils/logger'
+import { redactarUrl } from './utils/redactar'
 import { validateEnv } from './utils/validateEnv'
 import { prisma } from './config/prisma'
 
@@ -128,8 +129,17 @@ app.use(compression())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Logging HTTP con reqId para trazabilidad
-app.use(morgan('combined', {
+// Logging HTTP con reqId para trazabilidad.
+//
+// La URL se redacta antes de escribirla: hay endpoints que reciben el token por
+// query string porque no les queda otra (SSE no admite cabeceras, los webhooks
+// de terceros solo dejan configurar una URL) y así el secreto no queda guardado.
+morgan.token('urlSegura', (req: Request) => redactarUrl(req.originalUrl || req.url))
+const FORMATO_COMBINED_SEGURO =
+  ':remote-addr - :remote-user [:date[clf]] ":method :urlSegura HTTP/:http-version"'
+  + ' :status :res[content-length] ":referrer" ":user-agent"'
+
+app.use(morgan(FORMATO_COMBINED_SEGURO, {
   stream: {
     write: (msg) => {
       logger.info(msg.trim())
@@ -139,7 +149,7 @@ app.use(morgan('combined', {
 
 // Loguear reqId en cada request entrante
 app.use((req: Request & { reqId?: string }, _res: Response, next: NextFunction) => {
-  logger.info({ reqId: req.reqId, method: req.method, url: req.url })
+  logger.info({ reqId: req.reqId, method: req.method, url: redactarUrl(req.url) })
   next()
 })
 

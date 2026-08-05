@@ -3,6 +3,7 @@ import { ZodError } from 'zod'
 import * as Sentry from '@sentry/node'
 import { AppError, ValidationError } from '../utils/errors'
 import { logger } from '../utils/logger'
+import { redactarUrl } from '../utils/redactar'
 
 type ReqWithId = Request & { reqId?: string }
 
@@ -34,13 +35,16 @@ export function errorHandler(err: Error, req: ReqWithId, res: Response, _next: N
     })
   }
 
-  // Error inesperado — loguear con reqId y reportar a Sentry
-  logger.error({ reqId, error: err.message, stack: err.stack, url: req.url, method: req.method })
+  // Error inesperado — loguear con reqId y reportar a Sentry.
+  // La URL va redactada: sin esto un fallo en un endpoint que recibe el token
+  // por query string mandaba el token a Sentry, que es un tercero.
+  const urlSegura = redactarUrl(req.originalUrl || req.url)
+  logger.error({ reqId, error: err.message, stack: err.stack, url: urlSegura, method: req.method })
 
   if (process.env.SENTRY_DSN) {
     Sentry.withScope(scope => {
       scope.setTag('reqId', reqId ?? 'unknown')
-      scope.setContext('request', { url: req.url, method: req.method })
+      scope.setContext('request', { url: urlSegura, method: req.method })
       Sentry.captureException(err)
     })
   }
