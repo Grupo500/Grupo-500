@@ -252,6 +252,13 @@ model Curso {
   // con su soporte) — un admin lo copia una vez desde Hotmart y cada asesor
   // marca su propio estado (ver AfiliacionAsesor).
   linkAfiliacion    String?
+  // Usados en el certificado (CertificadoTemplate.tsx): antes el texto de
+  // materias/horario estaba escrito fijo en el PDF, igual para todos los
+  // cursos. horarioTexto es libre porque algunos cursos (ej. Ruta 500) no
+  // son una franja semanal fija — mezclan sábados recurrentes con viernes o
+  // domingos puntuales que no entran en una grilla día/hora.
+  materias          String[]          @default([])
+  horarioTexto      String?
   estudiantes       CursoEstudiante[]
   preciosOficiales  PrecioOficial[]
   afiliaciones      AfiliacionAsesor[]

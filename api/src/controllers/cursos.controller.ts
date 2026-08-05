@@ -74,6 +74,8 @@ const actualizarSchema = z.object({
   visibleEnLanding: z.boolean().optional(),
   cuposDisponibles: z.number().int().min(0).optional().nullable(),
   linkAfiliacion:   z.string().url().optional().nullable(),
+  materias:         z.array(z.string().min(1)).optional(),
+  horarioTexto:     z.string().optional().nullable(),
 })
 
 export async function actualizar(req: Request, res: Response) {

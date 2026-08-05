@@ -21,6 +21,8 @@ interface Curso {
   fechaFin?: string | null
   hotmartProductId?: string | null
   linkAfiliacion?: string | null
+  materias?: string[]
+  horarioTexto?: string | null
   _count?: { estudiantes: number }
 }
 
@@ -248,12 +250,16 @@ export default function CursosPage() {
   const [fechaInicioForm, setFechaInicioForm] = useState('')
   const [fechaFinForm, setFechaFinForm] = useState('')
   const [linkAfiliacionForm, setLinkAfiliacionForm] = useState('')
+  const [materiasForm, setMateriasForm] = useState('')
+  const [horarioTextoForm, setHorarioTextoForm] = useState('')
 
   function abrirEditarFechas(c: Curso) {
     setEditandoCurso(c)
     setFechaInicioForm(toDateInput(c.fechaInicio))
     setFechaFinForm(toDateInput(c.fechaFin))
     setLinkAfiliacionForm(c.linkAfiliacion ?? '')
+    setMateriasForm((c.materias ?? []).join(', '))
+    setHorarioTextoForm(c.horarioTexto ?? '')
   }
 
   const editarFechasMutation = useMutation({
@@ -264,6 +270,8 @@ export default function CursosPage() {
         fechaInicio: fechaInicioForm ? new Date(fechaInicioForm + 'T00:00:00').toISOString() : null,
         fechaFin:    fechaFinForm    ? new Date(fechaFinForm    + 'T00:00:00').toISOString() : null,
         linkAfiliacion: linkAfiliacionForm.trim() || null,
+        materias: materiasForm.split(',').map(m => m.trim()).filter(Boolean),
+        horarioTexto: horarioTextoForm.trim() || null,
       }),
     }),
     onSuccess: () => {
@@ -454,6 +462,28 @@ export default function CursosPage() {
                   className="w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                 />
                 <p className="text-[10.5px] text-on-surface-variant mt-1">Se usa en Enlaces para que los asesores se afilien.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Materias (separadas por coma)</label>
+                <input
+                  type="text"
+                  placeholder="Matemáticas, Lectura Crítica, Ciencias Naturales, Sociales, Inglés"
+                  value={materiasForm}
+                  onChange={e => setMateriasForm(e.target.value)}
+                  className="w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+                <p className="text-[10.5px] text-on-surface-variant mt-1">Sale en el certificado del estudiante.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">Horario</label>
+                <textarea
+                  rows={3}
+                  placeholder="Ej. El horario de clases es de lunes a viernes de 4:00 p.m. a 8:00 p.m., y los sábados de 8:00 a.m. a 12:00 m. y de 2:00 p.m. a 6:00 p.m."
+                  value={horarioTextoForm}
+                  onChange={e => setHorarioTextoForm(e.target.value)}
+                  className="w-full bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 resize-none"
+                />
+                <p className="text-[10.5px] text-on-surface-variant mt-1">También sale en el certificado, tal cual se escriba aquí.</p>
               </div>
             </div>
 

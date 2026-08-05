@@ -1,7 +1,11 @@
 import { Clock, CheckCircle, type LucideIcon } from 'lucide-react'
 
 export interface CursoEstudiante {
-  curso: { nombre: string; duracionHoras: number; calendario: string; fechaInicio?: string | null; fechaFin?: string | null }
+  curso: {
+    nombre: string; duracionHoras: number; calendario: string
+    fechaInicio?: string | null; fechaFin?: string | null
+    materias?: string[]; simulacros?: number | null; horarioTexto?: string | null
+  }
 }
 export interface Certificado {
   id: string
@@ -74,6 +78,9 @@ export async function generarPDF(
         duracionHoras:    (cursoData?.duracionHoras && cursoData.duracionHoras > 0)
                             ? cursoData.duracionHoras
                             : horasPorNombreCurso(cursoData?.nombre ?? ''),
+        materias:         cursoData?.materias ?? [],
+        simulacros:       cursoData?.simulacros ?? null,
+        horarioTexto:     cursoData?.horarioTexto ?? null,
         fechaInicioCurso: cursoData?.fechaInicio ?? null,
         fechaFinCurso:    cursoData?.fechaFin    ?? null,
         tipo:             cert.tipo,

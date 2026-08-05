@@ -8,6 +8,9 @@ interface CertificadoData {
   ciudadColegio: string
   curso: string
   duracionHoras: number
+  materias?: string[]
+  simulacros?: number | null
+  horarioTexto?: string | null
   fechaInicioCurso?: string | null
   fechaFinCurso?: string | null
   tipo: 'CURSANDO' | 'COMPLETADO'
@@ -48,7 +51,8 @@ const CONTACTOS = [
 export function CertificadoTemplate({ data, innerRef }: Props) {
   const {
     nombreEstudiante, tipoDocumento, documento, curso,
-    duracionHoras, fechaInicioCurso, fechaFinCurso, tipo, fechaEmision, numeroCertificado,
+    duracionHoras, materias = [], simulacros, horarioTexto,
+    fechaInicioCurso, fechaFinCurso, tipo, fechaEmision, numeroCertificado,
     firmaAndres,
   } = data
 
@@ -63,6 +67,9 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
   } else if (fechaFinCurso) {
     fraseFechas = `, con fecha de finalización el ${formatFechaCorta(fechaFinCurso)}`
   }
+
+  // Materias, simulacros y horario vienen del curso — antes este párrafo era
+  // el mismo texto fijo para todos los certificados sin importar el curso real.
 
   return (
     <div
@@ -120,12 +127,11 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
 
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '32px' }}>
           Pertenece al programa <strong>{curso}</strong>{fraseFechas}.
-          El plan académico abarca un total de <strong>{duracionHoras} horas</strong>, e incluye
-          asignaturas como <em>lectura crítica, ciencias sociales, inglés, matemáticas, química y biología</em>.
-          El horario de las clases es de lunes a viernes de 6:00 p.m. a 8:00 p.m., mientras que los sábados
-          se imparten clases en dos bloques: de 8:00 a.m. a 12:00 m. y de 2:00 p.m. a 6:00 p.m.
-          Adicionalmente, se realizarán cuatro simulacros y cuatro sesiones de corrección en algunos domingos,
-          ocupando la jornada completa.
+          El plan académico abarca un total de <strong>{duracionHoras} horas</strong>
+          {materias.length > 0
+            ? <>, e incluye asignaturas como <em>{materias.join(', ')}</em>{simulacros ? ` y ${simulacros} simulacro${simulacros !== 1 ? 's' : ''} tipo prueba` : ''}.</>
+            : simulacros ? `, e incluye ${simulacros} simulacro${simulacros !== 1 ? 's' : ''} tipo prueba.` : '.'}
+          {' '}{horarioTexto ?? ''}
         </p>
 
         <p style={{ fontSize: '13px', marginBottom: '36px', fontStyle: 'italic' }}>Atentamente,</p>
