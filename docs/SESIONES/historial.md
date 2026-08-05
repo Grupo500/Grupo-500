@@ -1015,3 +1015,36 @@ El sheet es la **única fuente de verdad**; la app no guarda copia en Postgres. 
 - Crear la cuenta de servicio de Google (Sheets API habilitada), compartir el sheet con su correo como **editor** y poner `GOOGLE_SHEETS_SA_EMAIL` y `GOOGLE_SHEETS_SA_PRIVATE_KEY` en Railway. Sin eso las tablas se ven pero salen en solo lectura con un aviso que lo explica.
 - La cédula y el número de cuenta **no se pueden editar desde la app** a propósito: el panel nunca los recibe completos. Se llenan en el sheet.
 - No se probó el camino de escritura contra el sheet real (falta la cuenta de servicio). Lo verificado es la ubicación de celdas y el manejo de errores.
+
+---
+
+## Sesión 033 — 2026-08-05
+
+**Objetivo:** Dejar de escribir tokens de sesión en los logs y en Sentry.
+
+### El problema
+Los JWT de sesión quedaban en texto plano en los logs de producción, incluida al menos una sesión de ADMIN:
+
+```
+url="/api/eventos?token=eyJhbGciOiJIUzI1NiJ9..."
+"POST /api/trengo/webhook?secreto=de8215..."
+```
+
+Que viajen en la URL **no es un descuido**: `EventSource` no admite cabeceras custom y los webhooks de terceros solo dejan configurar una URL. Van cifrados por HTTPS. El problema era que quedaban **escritos**, y ahí siguen siendo válidos hasta que expiran: cualquiera con acceso a los logs podía tomar una sesión ajena.
+
+### Lo que se arregló
+`api/src/utils/redactar.ts` reemplaza el valor de los query params sensibles por `***`, aplicado en los cuatro sitios que los escribían:
+1. **morgan** — formato `combined` propio que usa un token `:urlSegura`.
+2. El middleware de request que loguea `method` y `url`.
+3. El **errorHandler**, que además los mandaba a Sentry a mano.
+4. **Sentry mismo** — este era el peor y el menos obvio: `setupExpressErrorHandler` adjunta los datos de la petición por su cuenta, así que redactar en el errorHandler no alcanzaba. Y con `tracesSampleRate: 0.2` la URL viajaba también en el nombre de la transacción y en los atributos de los spans, o sea **en peticiones que ni fallaron**. Se limpia con `beforeSend` y `beforeSendTransaction` en `instrument.ts`.
+
+Además se agregó `redact` de pino por nombre de campo (`token`, `secreto`, `authorization`, `password`…) como segunda red para cuando alguien loguee un objeto con credenciales dentro.
+
+**No cambia cómo se autentica nada**: solo deja de guardar el secreto.
+
+### Verificado en producción
+Se mandó una petición con un token centinela en la URL: respondió 401 (el token se sigue leyendo y validando) y en los logs quedó `url="/api/eventos?token=***"`, sin rastro del centinela. `scripts/probar-redaccion.ts` cubre los dos casos reales más los bordes (sin query, valor vacío, mayúsculas, y que `tokenizado` no se toque por parecerse a `token`).
+
+### Si se quiere ir más allá
+La redacción resuelve la fuga, pero el token sigue viajando en la URL y eso lo pueden registrar intermediarios que no controlamos (el edge de Railway, por ejemplo). El arreglo de fondo sería un **ticket de un solo uso y vida corta** para SSE: el cliente lo pide con `Authorization`, recibe un ticket de ~30 s y ese es el que va en el query string. Así, aunque quede registrado, no sirve para nada. Es un cambio más grande porque toca `useSSE.ts` y la ruta de eventos.
