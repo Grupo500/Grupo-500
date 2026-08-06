@@ -71,7 +71,9 @@ export async function listar(req: Request, res: Response) {
         acudiente: true,
         asesor: true,
         cursos: { include: { curso: true } },
-        pagos: { select: { monto: true, estado: true, fechaVencimiento: true, enPartes: true, cuotaNumero: true, cuotasTotal: true } },
+        // fechaPago es la referencia para proyectar las cuotas que faltan por
+        // cobrar; sin ella el listado tendría que adivinarla desde el vencimiento.
+        pagos: { select: { monto: true, estado: true, fechaVencimiento: true, fechaPago: true, enPartes: true, cuotaNumero: true, cuotasTotal: true } },
       },
       skip,
       take: Number(limit),
