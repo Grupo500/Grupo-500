@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { formatCOP } from '@/lib/utils'
 import {
   Search, Phone, ChevronLeft, ChevronRight, ChevronDown, Download,
-  SlidersHorizontal, ArrowUpDown, X, User, BookOpen, Calendar, MoreHorizontal,
+  SlidersHorizontal, ArrowUpDown, X, User, UserRound, BookOpen, Calendar, MoreHorizontal, Filter,
 } from 'lucide-react'
 
 const POR_PAGINA = 10
@@ -225,15 +225,29 @@ export default function CuotasPage() {
       </motion.div>
 
       <div className="card p-5">
+        <h3 className="text-[15px] font-semibold text-on-surface mb-3">Detalle por estudiante</h3>
+
+        {/* Fila 1: búsqueda a todo el ancho */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant pointer-events-none" />
+          <input
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            placeholder="Buscar por nombre o curso"
+            className="h-9 pl-9 pr-3 rounded-lg border border-surface-high bg-surface-container-lowest text-[12.5px] text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:border-primary w-full"
+          />
+        </div>
+
+        {/* Fila 2: filtros a la izquierda, acciones a la derecha */}
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-          <h3 className="text-[15px] font-semibold text-on-surface">Detalle por estudiante</h3>
           <div className="flex items-center gap-2 flex-wrap">
             <Select
               value={estado}
               onValueChange={setEstado}
-              className="w-[160px]"
+              className="w-[130px]"
+              icon={<Filter />}
               options={[
-                { value: '', label: 'Todos los estados' },
+                { value: '', label: 'Estado' },
                 { value: 'atrasado', label: 'Atrasado' },
                 { value: 'al-dia', label: 'Al día' },
                 { value: 'completado', label: 'Completado' },
@@ -244,21 +258,15 @@ export default function CuotasPage() {
               <Select
                 value={asesor}
                 onValueChange={setAsesor}
-                className="w-[170px]"
-                options={[{ value: '', label: 'Todos los asesores' }, ...asesores.map(a => ({ value: a, label: a }))]}
+                className="w-[130px]"
+                icon={<UserRound />}
+                options={[{ value: '', label: 'Asesor' }, ...asesores.map(a => ({ value: a, label: a }))]}
                 anchoAuto
               />
             )}
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant pointer-events-none" />
-              <input
-                value={busqueda}
-                onChange={e => setBusqueda(e.target.value)}
-                placeholder="Buscar por nombre o curso"
-                className="h-9 pl-8 pr-3 rounded-lg border border-surface-high bg-surface-container-lowest text-[12.5px] text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:border-primary w-[200px]"
-              />
-            </div>
+          </div>
 
+          <div className="flex items-center gap-2">
             {/* Ordenar */}
             <div className="relative">
               <button
@@ -286,6 +294,8 @@ export default function CuotasPage() {
                 </>
               )}
             </div>
+
+            <div className="w-px h-5 bg-outline-variant" />
 
             {/* Exportar */}
             <div className="relative">

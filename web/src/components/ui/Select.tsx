@@ -27,6 +27,8 @@ interface SelectProps {
    */
   contentClassName?: string
   itemClassName?: string
+  /** Ícono decorativo antes del valor seleccionado (16px, hereda el color del texto). */
+  icon?: React.ReactNode
 }
 
 // Radix reserva la cadena vacía para "sin selección", así que una opción no
@@ -37,7 +39,7 @@ const VACIO = '__vacio__'
 
 export function Select({
   value, onValueChange, options, className, placeholder, anchoAuto, multilinea, disabled, id,
-  contentClassName, itemClassName,
+  contentClassName, itemClassName, icon,
 }: SelectProps) {
   const hayOpcionVacia = options.some(o => o.value === '')
 
@@ -54,6 +56,7 @@ export function Select({
           className,
         )}
       >
+        {icon && <span className="shrink-0 text-on-surface-variant [&>svg]:w-3.5 [&>svg]:h-3.5">{icon}</span>}
         <span className="truncate text-left min-w-0">
           <SelectPrimitive.Value placeholder={placeholder} />
         </span>

@@ -350,4 +350,10 @@
     background-repeat: repeat;
     background-size: 200px 200px;
   }
+
+  /* ─── Fondo del área de Ventas — degradado de profundidad, sin íconos ─── */
+  .pro-bg-pattern {
+    background-color: var(--surface-low);
+    background-image: radial-gradient(120% 90% at 15% 0%, var(--surface-lowest) 0%, var(--surface-low) 45%, var(--surface) 100%);
+  }
 }
