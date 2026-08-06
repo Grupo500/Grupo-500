@@ -429,22 +429,16 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
       {/* Desglose por asesor — solo cuando el admin mira a todos */}
       {esAdmin && !asesorId && (resumen?.data.porAsesor?.length ?? 0) > 0 && (
         <div className="card p-5">
-          <p className="text-[11px] text-on-surface-variant font-semibold mb-3">
-            Por asesor
-          </p>
-
-          {/* Encabezado de columnas: sin él las tres cifras de la derecha son
-              números sueltos y hay que adivinar cuál es cuál. Los anchos y el
-              `gap` replican los de la fila para que cada rótulo caiga sobre su
-              columna. */}
-          <div className="flex items-center gap-3 px-2 -mx-2 pb-2 mb-1 border-b border-surface-high text-[10px] font-semibold text-on-surface-variant">
-            <span className="w-5 shrink-0" aria-hidden />
-            <span className="w-8 shrink-0" aria-hidden />
-            <span className="flex-1 min-w-0" aria-hidden />
-            <span className="hidden sm:block w-24 shrink-0">Participación</span>
-            <span className="w-[104px] text-right shrink-0">Vendido</span>
-            <span className="hidden sm:block w-[92px] text-right shrink-0">Comisión</span>
-            <span className="w-8 text-right shrink-0">Ventas</span>
+          {/* Título y encabezado de columnas en una sola fila: sin los rótulos
+              las tres cifras de la derecha son números sueltos y hay que
+              adivinar cuál es cuál. Los anchos y el `gap` replican los de la
+              fila, y cada rótulo va centrado sobre su columna. */}
+          <div className="flex items-baseline gap-3 px-2 -mx-2 pb-2 mb-1 border-b border-surface-high text-[10px] font-semibold text-on-surface-variant">
+            <span className="flex-1 min-w-0 text-[11px]">Por asesor</span>
+            <span className="hidden sm:block w-24 text-center shrink-0">Participación</span>
+            <span className="w-[104px] text-center shrink-0">Vendido</span>
+            <span className="hidden sm:block w-[92px] text-center shrink-0">Comisión</span>
+            <span className="w-11 text-center shrink-0">Ventas</span>
           </div>
 
           <div className="space-y-1">
@@ -469,13 +463,13 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                       style={{ width: `${Math.round((a.vendido / maxVendido) * 100)}%` }}
                     />
                   </span>
-                  <span className={`${mono.className} text-[13px] font-bold text-on-surface w-[104px] text-right shrink-0`}>
+                  <span className={`${mono.className} text-[13px] font-bold text-on-surface w-[104px] text-center shrink-0`}>
                     {formatCOP(a.vendido)}
                   </span>
-                  <span className={`${mono.className} hidden sm:block text-[12px] font-semibold w-[92px] text-right shrink-0`} style={{ color: '#16a34a' }}>
+                  <span className={`${mono.className} hidden sm:block text-[12px] font-semibold w-[92px] text-center shrink-0`} style={{ color: '#16a34a' }}>
                     {formatCOP(a.comision)}
                   </span>
-                  <span className={`${mono.className} text-[11.5px] text-on-surface-variant w-8 text-right shrink-0`}>{a.cantidad}</span>
+                  <span className={`${mono.className} text-[11.5px] text-on-surface-variant w-11 text-center shrink-0`}>{a.cantidad}</span>
                 </button>
               )
             })}
