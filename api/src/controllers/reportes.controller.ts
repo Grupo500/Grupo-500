@@ -1094,14 +1094,39 @@ const DIAS_GRACIA_CUOTAS = 37
 export async function cuotas(req: Request, res: Response) {
   const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
 
-  const pagos = await prisma.pago.findMany({
+  // Quién está en un plan de cuotas de Hotmart (al menos una fila enPartes).
+  const enPlan = await prisma.pago.findMany({
     where: {
       enPartes: true,
       cuotasTotal: { gt: 1 },
+      estado: 'PAGADO',
       ...(filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}),
     },
+    select: { estudianteId: true },
+    distinct: ['estudianteId'],
+  })
+  const estudianteIds = enPlan.map(p => p.estudianteId)
+
+  if (estudianteIds.length === 0) {
+    return ApiResponse.success(res, {
+      resumen: { total: 0, atrasados: 0, alDia: 0, completados: 0, saldoTotal: 0 },
+      filas: [],
+    })
+  }
+
+  // Una cuota también se puede abonar a mano (comprobante subido en la ficha
+  // del estudiante) sin la bandera enPartes — Hotmart simplemente no la vio,
+  // pero sigue siendo la misma cuota. Por eso se traen TODOS los pagos PAGADOS
+  // de quien ya está en un plan, no solo los que trae la bandera; el filtro de
+  // "¿esto es realmente un plan?" (abajo, tras agrupar por curso) es el que
+  // evita que un pago de contado de OTRO curso del mismo estudiante se cuele.
+  const pagos = await prisma.pago.findMany({
+    where: {
+      estudianteId: { in: estudianteIds },
+      estado: 'PAGADO',
+    },
     select: {
-      id: true, monto: true, cuotaNumero: true, cuotasTotal: true, fechaPago: true, metodo: true,
+      id: true, monto: true, cuotaNumero: true, cuotasTotal: true, fechaPago: true, metodo: true, enPartes: true,
       estudiante: {
         select: {
           id: true, nombre: true, telefono: true, email: true,
@@ -1144,18 +1169,34 @@ export async function cuotas(req: Request, res: Response) {
     actual.filas.push(p)
   }
 
+  // Solo cuenta como "plan" el grupo que trae al menos una cuota real de
+  // Hotmart — si el único pago del grupo es el abono suelto de contado de OTRO
+  // curso del mismo estudiante (se coló porque cursoDe() lo empareja por
+  // fecha), no pertenece a esta pantalla.
+  const gruposPlan = [...porPlan.values()].filter(
+    ({ filas }) => filas.some(f => f.enPartes && (f.cuotasTotal ?? 0) > 1)
+  )
+
   const hoy = Date.now()
-  const filas = [...porPlan.values()].map(({ filas: grupo, curso: ce }) => {
-    // La fila más avanzada (mayor cuotaNumero; si empatan, la más reciente)
-    // manda para el progreso mostrado y la fecha de referencia.
-    const masAvanzada = [...grupo].sort((a, b) => {
+  const filas = gruposPlan.map(({ filas: grupo, curso: ce }) => {
+    // El valor de referencia de la cuota (para el total del curso y el
+    // progreso) solo puede salir de una fila que Hotmart de verdad reportó
+    // como cuota — un abono manual puede ser un monto distinto (parcial, o
+    // redondeado distinto) y no sirve como "precio de la cuota".
+    const cuotasHotmart = grupo.filter(g => g.enPartes && (g.cuotasTotal ?? 0) > 1)
+    const cuotaMasAvanzada = [...cuotasHotmart].sort((a, b) => {
       const ca = a.cuotaNumero ?? 0, cb = b.cuotaNumero ?? 0
       if (ca !== cb) return cb - ca
       return (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
     })[0]
-    const p = masAvanzada
+    // La fecha/método a mostrar sí debe ser el pago más reciente del grupo,
+    // sea de Hotmart o un abono registrado a mano — si no, un abono manual más
+    // nuevo que la última cuota de Hotmart queda invisible y la fila se ve
+    // "atrasada hace meses" aunque se pagó hace unos días.
+    const ultimoPago = [...grupo].sort(
+      (a, b) => (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
+    )[0]
 
-    const cuotaNumero  = p.cuotaNumero ?? 1
     const cuotasTotal  = Math.max(...grupo.map(g => g.cuotasTotal ?? 1))
     const totalPagado  = grupo.reduce((s, g) => s + g.monto, 0)
     // El total de una venta a cuotas es valor-de-la-cuota-vigente × cantidad
@@ -1163,32 +1204,40 @@ export async function cuotas(req: Request, res: Response) {
     // precioAcordado. No se usa precioAcordado/precio de lista aquí: si
     // quedó mal guardado (ej. con el valor de una sola cuota), el saldo
     // daba $0 y marcaba "Completado" aunque solo iba la cuota 1 o 2 de 3.
-    const totalCurso   = Math.round(p.monto * cuotasTotal)
+    const totalCurso   = Math.round(cuotaMasAvanzada.monto * cuotasTotal)
     const saldo        = Math.max(0, Math.round(totalCurso - totalPagado))
+    // El número de cuota que reportó Hotmart se queda corto cuando después se
+    // abonó a mano (sin cuotaNumero): se toma el mayor entre lo que dice
+    // Hotmart y cuántas cuotas completas cubre ya lo realmente pagado, para
+    // que el progreso mostrado no contradiga el saldo.
+    const cuotaNumero  = Math.min(
+      cuotasTotal,
+      Math.max(cuotaMasAvanzada.cuotaNumero ?? 1, Math.round(totalPagado / cuotaMasAvanzada.monto)),
+    )
     const completado   = cuotaNumero >= cuotasTotal || saldo <= 1000
-    const diasSinPagar = p.fechaPago ? Math.floor((hoy - p.fechaPago.getTime()) / 86_400_000) : null
+    const diasSinPagar = ultimoPago.fechaPago ? Math.floor((hoy - ultimoPago.fechaPago.getTime()) / 86_400_000) : null
     const atrasado     = !completado && diasSinPagar != null && diasSinPagar > DIAS_GRACIA_CUOTAS
     // Hotmart no reporta cuándo cae la próxima cuota — se estima a 30 días
     // de la última confirmada, mismo ciclo mensual que usa DIAS_GRACIA_CUOTAS.
-    const proximaCuotaEstimada = !completado && p.fechaPago
-      ? new Date(p.fechaPago.getTime() + 30 * 86_400_000)
+    const proximaCuotaEstimada = !completado && ultimoPago.fechaPago
+      ? new Date(ultimoPago.fechaPago.getTime() + 30 * 86_400_000)
       : null
 
     return {
-      estudianteId: p.estudiante.id,
-      nombre: p.estudiante.nombre,
-      telefono: p.estudiante.telefono,
-      email: p.estudiante.email,
-      asesor: p.estudiante.asesor?.nombre ?? null,
+      estudianteId: ultimoPago.estudiante.id,
+      nombre: ultimoPago.estudiante.nombre,
+      telefono: ultimoPago.estudiante.telefono,
+      email: ultimoPago.estudiante.email,
+      asesor: ultimoPago.estudiante.asesor?.nombre ?? null,
       curso: ce?.curso.nombre ?? 'Sin curso',
       cuotaNumero,
       cuotasTotal,
-      montoCuota: p.monto,
+      montoCuota: cuotaMasAvanzada.monto,
       totalCurso,
       totalPagado,
       saldo,
-      metodo: p.metodo,
-      fechaUltimaCuota: p.fechaPago,
+      metodo: ultimoPago.metodo,
+      fechaUltimaCuota: ultimoPago.fechaPago,
       diasSinPagar,
       proximaCuotaEstimada,
       estado: completado ? 'completado' : atrasado ? 'atrasado' : 'al-dia',
