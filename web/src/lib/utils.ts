@@ -39,14 +39,11 @@ export function formatRelative(date: string | Date): string {
   return `Hace ${Math.abs(days)} días`
 }
 
-// Hotmart no reenvía un webhook por cada cuota de un Smart Installment — solo
-// llega el primer cargo, y `cuotaNumero` se corrige después con la API de
-// Hotmart. `monto` siempre es el valor de UNA cuota, no lo acumulado, así que
-// hay que multiplicar por cuántas cuotas van pagadas.
+// Cada fila de pago es un cargo real que ya ocurrió, incluidas las cuotas de un
+// Smart Installment: Hotmart manda un webhook por cada cobro, con su propia
+// referencia de transacción. Antes esto multiplicaba por el número de cuota
+// —asumiendo una sola fila por compra— y con una fila por cuota contaba de más.
 export function montoPagadoPago(p: { monto: number; enPartes?: boolean; cuotaNumero?: number | null; cuotasTotal?: number | null }): number {
-  if (p.enPartes && (p.cuotasTotal ?? 0) > 1) {
-    return p.monto * (p.cuotaNumero ?? 1)
-  }
   return p.monto
 }
 

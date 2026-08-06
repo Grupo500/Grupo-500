@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { formatCOP, cn, montoPagadoPago } from '@/lib/utils'
+import { planDeCuotas } from '@/lib/cuotas'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, Users, CreditCard, Award,
@@ -1206,15 +1207,23 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
     ? precioConDescuento
     : financiamientos.reduce((s, f) => s + f.montoTotal, 0) + pagos.reduce((s, p) => s + p.monto, 0)
 
+  // Compras a plazos: las cuotas que Hotmart aún no ha cobrado no existen como
+  // registro, así que se derivan aquí. Se recalcula en cada render, de modo que
+  // el atraso siempre corresponde al día de hoy sin depender de ningún proceso.
+  const plan = planDeCuotas(pagos)
+
   const pagadoFin      = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
   const pagadoPagosDir = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0)
   const totalPagado    = pagadoFin + pagadoPagosDir
-  const totalPendiente = Math.max(0, totalGeneral - totalPagado)
+  // Con plan a plazos lo pendiente es lo que falta por cobrar, que es más fiel
+  // que restar del precio del curso: puede haber diferencias de redondeo.
+  const totalPendiente = plan.enPlazos ? plan.pendiente : Math.max(0, totalGeneral - totalPagado)
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
-  const cuotaHotmart    = pagos.find(p => p.estado === 'PAGADO' && p.enPartes && (p.cuotasTotal ?? 0) > 1)
-  const totalMora      = financiamientos.flatMap(f => f.cuotas).filter(c =>
-    !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
-  ).reduce((s, c) => s + c.monto, 0) + pagos.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
+  const totalMora      = plan.mora
+    + financiamientos.flatMap(f => f.cuotas).filter(c =>
+        !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
+      ).reduce((s, c) => s + c.monto, 0)
+    + pagos.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
 
   const cuotasPendientes = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado))
   const [nuevoPagoAbierto, setNuevoPagoAbierto] = useState(false)
@@ -1302,7 +1311,7 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total',     value: formatCOP(totalGeneral),   color: 'text-on-surface' },
-          { label: cuotaHotmart ? `Pagado · Cuota ${cuotaHotmart.cuotaNumero ?? 1} de ${cuotaHotmart.cuotasTotal ?? 1}` : 'Pagado', value: formatCOP(totalPagado), color: 'text-[#16a34a]' },
+          { label: plan.enPlazos ? `Pagado · ${plan.cuotasPagadas} de ${plan.cuotasTotal} cuotas` : 'Pagado', value: formatCOP(totalPagado), color: 'text-[#16a34a]' },
           { label: 'Pendiente', value: formatCOP(totalPendiente), color: totalPendiente > 0 ? 'text-[#d97706]' : 'text-on-surface-variant' },
           { label: 'En mora',   value: formatCOP(totalMora),      color: totalMora > 0 ? 'text-[#dc2626]' : 'text-on-surface-variant' },
         ].map(({ label, value, color }) => (
@@ -1325,6 +1334,52 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
             style={{ width: `${progreso}%` }} />
         </div>
       </div>
+
+      {/* Cuotas por cobrar. No existen en la base —Hotmart solo registra lo que
+          ya cobró— así que se muestran derivadas del plan. */}
+      {plan.esperadas.length > 0 && (
+        <section className="space-y-2">
+          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+            Cuotas por cobrar
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
+            {plan.esperadas.map(c => (
+              <div
+                key={c.numero}
+                className={cn(
+                  'flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border',
+                  c.vencida
+                    ? 'border-[#dc2626]/30 bg-[#dc2626]/[0.06]'
+                    : 'border-outline-variant/60 bg-surface-high/40',
+                )}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {c.vencida
+                    ? <AlertTriangle className="w-4 h-4 shrink-0 text-[#dc2626]" />
+                    : <Clock className="w-4 h-4 shrink-0 text-on-surface-variant" />}
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-on-surface">
+                      Cuota {c.numero} de {plan.cuotasTotal}
+                    </p>
+                    <p className={cn('text-[11px]', c.vencida ? 'text-[#dc2626]' : 'text-on-surface-variant')}>
+                      {c.vencida
+                        ? `Vencida hace ${c.diasAtraso} ${c.diasAtraso === 1 ? 'día' : 'días'} · ${c.fechaEsperada.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}`
+                        : `Se cobra el ${c.fechaEsperada.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}`}
+                    </p>
+                  </div>
+                </div>
+                <span className={cn('text-[13px] font-bold tabular-nums shrink-0',
+                  c.vencida ? 'text-[#dc2626]' : 'text-on-surface')}>
+                  {formatCOP(c.monto)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-on-surface-variant">
+            Fechas estimadas a partir del último cobro. Hotmart registra la cuota cuando efectivamente la cobra.
+          </p>
+        </section>
+      )}
 
       {/* Financiamientos */}
       {financiamientos.map(fin => (
@@ -1666,15 +1721,19 @@ export default function EstudianteDetallePage() {
   const totalPagado   = pagadoFin + pagadoDir
   const saldoPend     = Math.max(0, totalGeneral - totalPagado)
 
-  // Hay mora si alguna cuota sin pagar ya venció, o hay un pago VENCIDO
-  const hasMora = financiamientos.flatMap(f => f.cuotas).some(c =>
-    !c.pagado && isBefore(parseISO(c.fechaVencimiento), new Date()) && !isToday(parseISO(c.fechaVencimiento))
-  ) || pagos.some(p => p.estado === 'VENCIDO')
+  // Hay mora si una cuota del plan a plazos ya debió cobrarse y no llegó, si
+  // alguna cuota de financiamiento venció, o si hay un pago marcado VENCIDO.
+  const planResumen = planDeCuotas(pagos)
+  const hasMora = planResumen.mora > 0
+    || financiamientos.flatMap(f => f.cuotas).some(c =>
+        !c.pagado && isBefore(parseISO(c.fechaVencimiento), new Date()) && !isToday(parseISO(c.fechaVencimiento))
+      )
+    || pagos.some(p => p.estado === 'VENCIDO')
 
   // Pendientes sin mora: cualquier cuota/pago sin pagar, o saldo del curso sin cubrir
   const cuotasPend = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado)).length
   const pagosPend  = pagos.filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO').length
-  const totalPend  = cuotasPend + pagosPend
+  const totalPend  = cuotasPend + pagosPend + planResumen.esperadas.length
 
   // Estado final: "Al día" solo si el saldo está completamente cubierto
   const tieneSaldo     = saldoPend > 0   // hay deuda aunque sea sin fecha

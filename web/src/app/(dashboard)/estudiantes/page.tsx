@@ -9,6 +9,7 @@ import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { formatCOP, montoPagadoPago } from '@/lib/utils'
+import { planDeCuotas } from '@/lib/cuotas'
 import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
@@ -87,11 +88,14 @@ function calcFinanciero(e: Estudiante) {
   const totalPendiente = Math.max(0, totalGeneral - totalPagado)
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
 
+  // Las cuotas de una compra a plazos que Hotmart aún no ha cobrado no existen
+  // como registro: se derivan para que una cuota atrasada no quede invisible.
+  const plan        = planDeCuotas(e.pagos ?? [], hoy)
   const moraFin     = e.financiamientos?.flatMap(f => f.cuotas).filter(c =>
     !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
   ).reduce((s, c) => s + c.monto, 0) ?? 0
   const moraPagos   = e.pagos?.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0) ?? 0
-  const totalMora   = moraFin + moraPagos
+  const totalMora   = moraFin + moraPagos + plan.mora
 
   // Si tiene curso pero 0 pagos → pendiente (nunca "sin deuda")
   const tieneCurso  = !!cursoEst
@@ -102,8 +106,7 @@ function calcFinanciero(e: Estudiante) {
                                           'sin-deuda'
 
   // Cuotas de Hotmart (Smart Installment) — cuántas van pagadas del total.
-  const cuota = e.pagos?.find(p => p.estado === 'PAGADO' && p.enPartes && (p.cuotasTotal ?? 0) > 1)
-  const cuotaInfo = cuota ? { numero: cuota.cuotaNumero ?? 1, total: cuota.cuotasTotal ?? 1 } : null
+  const cuotaInfo = plan.enPlazos ? { numero: plan.cuotasPagadas, total: plan.cuotasTotal } : null
 
   return { totalGeneral, totalPagado, totalPendiente, totalMora, progreso, estado, cuotaInfo }
 }

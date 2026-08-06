@@ -5,13 +5,15 @@ interface PagoConCuotas {
   cuotasTotal: number | null
 }
 
-// Hotmart no reenvía un webhook por cada cuota de un Smart Installment — solo
-// llega el primer cargo, y `cuotaNumero` se actualiza después vía el backfill
-// que consulta la API de Hotmart. `monto` siempre es el valor de UNA cuota, no
-// lo acumulado, así que hay que multiplicar por cuántas cuotas van pagadas.
+// Cada fila de pago es un cargo real que ya ocurrió, incluidas las cuotas de un
+// Smart Installment: Hotmart manda un webhook por cada cobro y cada uno trae su
+// propia referencia de transacción.
+//
+// Antes esto multiplicaba el monto por el número de cuota, asumiendo que había
+// una sola fila por compra que se iba actualizando. Con una fila por cuota, esa
+// multiplicación contaba de más: dos cuotas de 226.900 sumaban 680.700 en vez
+// de 453.800. Verificado contra producción: 267 filas en partes, 267
+// referencias distintas, ningún caso del modelo antiguo.
 export function montoPagadoPago(p: PagoConCuotas): number {
-  if (p.enPartes && (p.cuotasTotal ?? 0) > 1) {
-    return p.monto * (p.cuotaNumero ?? 1)
-  }
   return p.monto
 }
