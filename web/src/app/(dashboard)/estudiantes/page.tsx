@@ -119,12 +119,9 @@ const FORM_EMPTY = {
   documentoUrl: '',
   cursoId: '', descuentoValor: '0',
   acudienteNombre: '', acudienteEmail: '', acudienteTelefono: '', acudienteRelacion: 'Padre',
-  formaPago: 'CONTADO' as 'CONTADO' | 'FINANCIADO',
   metodoPago: 'TRANSFERENCIA',
   fechaPago: '',
   comprobante: '',
-  numeroCuotas: '3',
-  fechaPrimeraCuota: '',
 }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
@@ -194,7 +191,6 @@ export default function EstudiantesPage() {
   const [confirmEliminar, setConfirmEliminar] = useState<Estudiante | null>(null)
   const [formError, setFormError] = useState('')
   const [form, setForm] = useState(FORM_EMPTY)
-  const [cuotasDetalle, setCuotasDetalle] = useState<{ monto: string; fecha: string }[]>([])
   const [subiendoComprobante,  setSubiendoComprobante]  = useState(false)
   const [subiendoDocumento,    setSubiendoDocumento]    = useState(false)
 
@@ -244,17 +240,8 @@ const cursos: { id: string; nombre: string; precio: number }[] = (cursosData?.da
     mutationFn: async () => {
       if (!form.nombre || !form.email || !form.telefono || !form.fechaNacimiento)
         throw new Error('Completa todos los campos obligatorios del estudiante')
-      if (form.cursoId && form.formaPago === 'CONTADO' && !form.fechaPago)
+      if (form.cursoId && !form.fechaPago)
         throw new Error('Ingresa la fecha del pago')
-      if (form.cursoId && form.formaPago === 'FINANCIADO') {
-        if (cuotasDetalle.length === 0) throw new Error('Configura las cuotas del financiamiento')
-        if (cuotasDetalle.some(c => !c.fecha || !c.monto || Number(c.monto) <= 0))
-          throw new Error('Completa el monto y la fecha de cada cuota')
-        const sumaCuotas = cuotasDetalle.reduce((s, c) => s + Number(c.monto), 0)
-        const pf = Math.max(0, precioFinal)
-        if (sumaCuotas > pf + 1)
-          throw new Error(`La suma de cuotas (${formatCOP(sumaCuotas)}) supera el precio del curso (${formatCOP(pf)})`)
-      }
       const cursoPrecio = cursos.find(c => c.id === form.cursoId)?.precio ?? 0
       const descuentoValorNum = Number(form.descuentoValor) || 0
       const descuentoPct = cursoPrecio > 0 ? (descuentoValorNum / cursoPrecio) * 100 : 0
@@ -273,14 +260,9 @@ const cursos: { id: string; nombre: string; precio: number }[] = (cursosData?.da
         ...(isAdmin && form.lineaAutorizada && { lineaAutorizada: Number(form.lineaAutorizada) }),
         ...(form.cursoId && {
           cursoId: form.cursoId, descuentoPorcentaje: descuentoPct,
-          formaPago: form.formaPago,
-          ...(form.formaPago === 'CONTADO' && {
-            metodoPago: form.metodoPago, fechaPago: form.fechaPago,
-            ...(form.comprobante && { comprobante: form.comprobante }),
-          }),
-          ...(form.formaPago === 'FINANCIADO' && {
-            cuotas: cuotasDetalle.map(c => ({ monto: Number(c.monto), fechaVencimiento: c.fecha })),
-          }),
+          formaPago: 'CONTADO',
+          metodoPago: form.metodoPago, fechaPago: form.fechaPago,
+          ...(form.comprobante && { comprobante: form.comprobante }),
         }),
       }
       const acudienteCompleto = form.acudienteNombre.trim() && form.acudienteEmail.trim() && form.acudienteTelefono.trim()
@@ -296,7 +278,7 @@ const cursos: { id: string; nombre: string; precio: number }[] = (cursosData?.da
       queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
       queryClient.invalidateQueries({ queryKey: ['saldos-pendientes'] })
       queryClient.invalidateQueries({ queryKey: ['reportes-dashboard'] })
-      setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY); setCuotasDetalle([])
+      setModalCrear(false); setPasoCrear(1); setFormError(''); setForm(FORM_EMPTY)
     },
     onError: (e: any) => setFormError(e.message ?? 'Error al crear el estudiante'),
   })
@@ -450,7 +432,7 @@ const subirComprobante = async (file: File) => {
               <CheckSquare className="w-4 h-4" />
               <span className="hidden sm:inline">{modoSeleccion ? 'Cancelar' : 'Seleccionar'}</span>
             </button>
-            <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setCuotasDetalle([]); setFormError('') }}
+            <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setFormError('') }}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
               <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo</span>
             </button>
@@ -842,100 +824,23 @@ const subirComprobante = async (file: File) => {
                         )}
                       </div>
                       <div>
-                        <label className={labelCls}>Forma de pago *</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {(['CONTADO', 'FINANCIADO'] as const).map(f => (
-                            <button key={f} type="button" onClick={() => setForm(p => ({ ...p, formaPago: f }))}
-                              className={cn('py-2 rounded-lg border-2 text-sm font-medium transition-all cursor-pointer',
-                                form.formaPago === f ? 'border-primary bg-primary/8 text-primary' : 'border-outline-variant text-on-surface-variant hover:border-outline-variant/80')}>
-                              {f === 'CONTADO' ? 'Contado' : 'Financiado'}
-                            </button>
-                          ))}
-                        </div>
+                        <label className={labelCls}>Método de pago</label>
+                        <Select className={inputCls} value={form.metodoPago} onValueChange={v => setForm(p => ({ ...p, metodoPago: v }))}
+                          options={['TRANSFERENCIA','TARJETA','EFECTIVO','OTRO'].map(m => ({ value: m, label: m }))} />
                       </div>
-
-                      {form.formaPago === 'CONTADO' && (
-                        <>
-                          <div>
-                            <label className={labelCls}>Método de pago</label>
-                            <Select className={inputCls} value={form.metodoPago} onValueChange={v => setForm(p => ({ ...p, metodoPago: v }))}
-                              options={['TRANSFERENCIA','TARJETA','EFECTIVO','OTRO'].map(m => ({ value: m, label: m }))} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Fecha del pago *</label>
-                            <input type="date" className={inputCls} value={form.fechaPago} onChange={e => setForm(p => ({ ...p, fechaPago: e.target.value }))} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Comprobante (opcional)</label>
-                            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-highest transition-colors">
-                              <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoComprobante}
-                                onChange={e => { const f = e.target.files?.[0]; if (f) subirComprobante(f); e.target.value = '' }} />
-                              {subiendoComprobante ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <span className="text-sm text-on-surface-variant">📎</span>}
-                              <span className="text-sm text-on-surface-variant">{subiendoComprobante ? 'Subiendo...' : form.comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
-                            </label>
-                          </div>
-                        </>
-                      )}
-
-                      {form.formaPago === 'FINANCIADO' && (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className={labelCls}>Número de cuotas</label>
-                              <input type="number" min={1} max={24} className={inputCls} value={form.numeroCuotas}
-                                onChange={e => { setForm(p => ({ ...p, numeroCuotas: e.target.value })); setCuotasDetalle([]) }} />
-                            </div>
-                            <div>
-                              <label className={labelCls}>Primera cuota</label>
-                              <input type="date" className={inputCls} value={form.fechaPrimeraCuota}
-                                onChange={e => { setForm(p => ({ ...p, fechaPrimeraCuota: e.target.value })); setCuotasDetalle([]) }} />
-                            </div>
-                          </div>
-                          <button type="button" onClick={() => {
-                            const n = Number(form.numeroCuotas)
-                            const montoBase = Math.max(0, precioFinal)
-                            const montoCuota = n > 0 ? String(Math.round(montoBase / n)) : '0'
-                            const base = new Date(form.fechaPrimeraCuota)
-                            const cuotas = Array.from({ length: n }, (_, i) => {
-                              const d = new Date(base); d.setMonth(d.getMonth() + i)
-                              return { monto: montoCuota, fecha: d.toISOString().split('T')[0] }
-                            })
-                            setCuotasDetalle(cuotas)
-                          }}
-                            disabled={!form.numeroCuotas || !form.fechaPrimeraCuota}
-                            className="w-full py-2 rounded-lg border-2 border-dashed border-primary/50 text-sm text-primary font-medium hover:bg-primary/5 disabled:opacity-40 transition-colors cursor-pointer">
-                            Generar cuotas automáticamente
-                          </button>
-                          {cuotasDetalle.map((c, i) => (
-                            <div key={i} className="grid grid-cols-2 gap-2 items-end">
-                              <div>
-                                <label className={labelCls}>Cuota #{i + 1} — Monto</label>
-                                <div className="relative">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">$</span>
-                                  <NumericInput value={c.monto} onChange={v => setCuotasDetalle(prev => prev.map((x, j) => j === i ? { ...x, monto: v } : x))}
-                                    placeholder="0" className={cn(inputCls, 'pl-6')} />
-                                </div>
-                              </div>
-                              <div>
-                                <label className={labelCls}>Vencimiento</label>
-                                <input type="date" className={inputCls} value={c.fecha}
-                                  onChange={e => setCuotasDetalle(prev => prev.map((x, j) => j === i ? { ...x, fecha: e.target.value } : x))} />
-                              </div>
-                            </div>
-                          ))}
-                          {cuotasDetalle.length > 0 && (() => {
-                            const suma = cuotasDetalle.reduce((s, c) => s + Number(c.monto), 0)
-                            const pf   = Math.max(0, precioFinal)
-                            const ok   = suma <= pf + 1
-                            return (
-                              <div className={cn('flex items-center justify-between text-[11px] px-3 py-2 rounded-lg', ok ? 'bg-[#16a34a]/8 text-[#16a34a]' : 'bg-[#dc2626]/8 text-[#dc2626]')}>
-                                <span>Suma de cuotas: <strong>{formatCOP(suma)}</strong></span>
-                                <span>Precio final: <strong>{formatCOP(pf)}</strong></span>
-                              </div>
-                            )
-                          })()}
-                        </div>
-                      )}
+                      <div>
+                        <label className={labelCls}>Fecha del pago *</label>
+                        <input type="date" className={inputCls} value={form.fechaPago} onChange={e => setForm(p => ({ ...p, fechaPago: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Comprobante (opcional)</label>
+                        <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-highest transition-colors">
+                          <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoComprobante}
+                            onChange={e => { const f = e.target.files?.[0]; if (f) subirComprobante(f); e.target.value = '' }} />
+                          {subiendoComprobante ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <span className="text-sm text-on-surface-variant">📎</span>}
+                          <span className="text-sm text-on-surface-variant">{subiendoComprobante ? 'Subiendo...' : form.comprobante ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
+                        </label>
+                      </div>
                     </>
                   )}
                 </div>
@@ -954,7 +859,6 @@ const subirComprobante = async (file: File) => {
                     ['Documento', form.tipoDocumento + (form.documento ? ` ${form.documento}` : '')],
                     ...(form.cursoId ? [['Curso', cursos.find(c => c.id === form.cursoId)?.nombre ?? '']] : []),
                     ...(form.cursoId && Number(form.descuentoValor) > 0 ? [['Descuento', formatCOP(Number(form.descuentoValor))]] : []),
-                    ...(form.cursoId ? [['Forma de pago', form.formaPago]] : []),
                   ].map(([k, v]) => (
                     <div key={k} className="flex justify-between px-3 py-2">
                       <span className="text-xs text-on-surface-variant">{k}</span>

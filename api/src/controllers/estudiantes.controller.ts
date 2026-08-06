@@ -20,13 +20,12 @@ const crearSchema = z.object({
   colegioId: z.string().optional(),
   cursoId: z.string().optional(),
   descuentoPorcentaje: z.number().min(0).max(100).optional(),
-  // Pago integrado
-  formaPago: z.enum(['CONTADO', 'FINANCIADO']).optional(),
+  // Pago integrado — toda venta financiada pasa por Hotmart (Smart Installment,
+  // ver web/src/lib/cuotas.ts); no existe un flujo de cuotas manual fuera de eso.
+  formaPago: z.literal('CONTADO').optional(),
   metodoPago: z.string().min(1).optional(),
   fechaPago: z.string().optional(),
   comprobante: z.string().optional(),
-  numeroCuotas: z.number().int().min(1).max(24).optional(),
-  fechaPrimeraCuota: z.string().optional(),
   lineaAutorizada: z.number().int().min(1).max(6).optional(),
   documentoUrl: z.string().url().optional().or(z.literal('')),
   acudiente: z.object({
