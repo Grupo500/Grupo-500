@@ -4,6 +4,7 @@ import { ApiResponse, parsePagination } from '../utils/response'
 import { ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
+import { cuotaQueSalda } from '../utils/pagos'
 import { z } from 'zod'
 
 const registrarSchema = z.object({
@@ -82,7 +83,12 @@ export async function registrar(req: Request, res: Response) {
     where: { id: data.estudianteId },
     include: {
       cursos: { include: { curso: true } },
-      pagos: { select: { monto: true, estado: true } },
+      pagos: {
+        select: {
+          monto: true, estado: true,
+          enPartes: true, cuotaNumero: true, cuotasTotal: true, fechaPago: true,
+        },
+      },
     },
   })
   if (est?.cursos.length) {
@@ -99,11 +105,22 @@ export async function registrar(req: Request, res: Response) {
       )
   }
 
+  // Si el estudiante viene de un plan a cuotas de Hotmart y este abono salda la
+  // siguiente, se marca como tal desde ya. Sin esto el pago queda "suelto" y el
+  // plan se sigue viendo incompleto y en mora en la ficha y en el módulo de
+  // Cuotas, aunque el dinero ya haya entrado.
+  const fechaAbono = new Date(data.fechaVencimiento)
+  const cuota = cuotaQueSalda(
+    (est?.pagos ?? []).filter(p => p.estado === 'PAGADO'),
+    { monto: data.monto, fecha: fechaAbono },
+  )
+
   const pago = await prisma.pago.create({
     data: {
       ...data,
-      fechaVencimiento: new Date(data.fechaVencimiento),
+      fechaVencimiento: fechaAbono,
       ...(req.asesorId && { asesorId: req.asesorId }),
+      ...(cuota && { enPartes: true, cuotaNumero: cuota.cuotaNumero, cuotasTotal: cuota.cuotasTotal }),
     },
     include: { estudiante: true },
   })
