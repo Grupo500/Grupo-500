@@ -1128,3 +1128,55 @@ Se mantiene la rama que acepta `?token=`, con un warning `sse_token_legado`. **S
 
 ### Nota aparte
 Un origen no permitido en CORS responde **500** en vez de 403, porque el rechazo se lanza como excepción y cae en el errorHandler. Además de ser un código engañoso, cada petición bloqueada genera un evento en Sentry. No se tocó por estar fuera de alcance.
+
+---
+
+## Sesión 035 — 2026-08-06
+
+**Objetivo:** Conectar Google Ads al módulo de Finanzas y arreglar dos fallas de la ficha financiera del estudiante.
+
+### Google Ads entra solo al módulo de Finanzas
+
+La inversión publicitaria se tecleaba a mano. Ahora un trabajo programado (`api/src/jobs/sincronizarGoogleAds.ts`, cada 4 horas) trae el gasto diario por campaña vía `api/src/services/googleAds.ts` y lo guarda en `InversionPublicitaria`, de donde salen el CAC y el MER.
+
+**Por qué sincronizar y no consultar en vivo:** Google tiene tope de operaciones diarias y las cifras del día en curso se siguen ajustando durante horas (clics inválidos, conversiones tardías). Consultar en cada carga del dashboard sería lento y quemaría cuota sin traer números más firmes. Cada corrida reescribe la última semana completa para recoger esos reajustes retroactivos.
+
+Tres cosas que costaron descubrir y quedaron en el código:
+
+- **Las dos cuentas son independientes, no están en jerarquía.** `738-354-7272` es donde corren las campañas; `618-761-7649` figura como administradora pero la otra no cuelga de ella. Mandar `login-customer-id` produce 403. Por eso la cabecera solo se envía si existe la variable de entorno.
+- **La cuenta factura en COP**, así que el costo (que llega en micros) no pasa por TRM.
+- Se descartan las filas sin gasto ni impresiones: la cuenta arrastra decenas de campañas pausadas.
+
+La tabla ganó `campaniaId` y `fuente` (MANUAL / API) con índice único por plataforma, campaña y día (migración `20260730162645_inversion_fuente_campania_id`). Sin eso, resincronizar duplicaría el gasto y hundiría el CAC; como en Postgres los nulos no colisionan, las filas cargadas a mano quedan libres. Credenciales en Railway (`GOOGLE_ADS_*`, servicio Backend).
+
+**Pendiente:** el developer token sigue en nivel "Acceso al Explorador". Ya permite leer producción (verificado), pero tiene techo de cuota; falta que David solicite el acceso básico en Google Ads → Herramientas y configuración → Centro de API. Lo aprueba un humano y tarda días.
+
+### La barra de progreso de pago mentía
+
+`montoPagadoPago` multiplicaba el monto por el número de cuota. Eso valía cuando Hotmart guardaba **una sola fila por compra** que se iba actualizando, pero hoy manda un webhook por cada cobro y cada uno trae su propia referencia. Al sumar filas se contaba de más: dos cuotas de $226.900 mostraban $680.700 en vez de $453.800. Eran 32 estudiantes.
+
+Antes de tocarlo se comprobó que el modelo antiguo ya no existe en los datos: 267 filas en partes, 267 referencias distintas, cero casos de una sola fila con cuota mayor que uno. La función ahora devuelve `p.monto` y ya está.
+
+Efecto lateral importante: el saldo pendiente que reporta `reportes.controller.ts` usaba esa misma función, así que **venía subestimado**. Ahora refleja la deuda real.
+
+### Las cuotas atrasadas eran invisibles
+
+Los 2.554 pagos de la base están en `PAGADO`. No hay ni uno en `PENDIENTE` ni en `VENCIDO`, y **nada en el código escribe `VENCIDO` nunca** — el estado existe en el enum, la interfaz lo pinta de rojo y los reportes lo suman, pero jamás se asigna.
+
+La razón de fondo: las cuotas que Hotmart todavía no ha cobrado **no existen como registro**, porque Hotmart solo avisa cuando efectivamente cobra. De 235 compras a plazos, 192 están incompletas.
+
+Se resolvió **derivando** el plan (`web/src/lib/cuotas.ts`) en vez de sembrar filas. Sembrarlas contaminaría las cifras de facturación, porque Finanzas cuenta filas de pago para calcular ventas. Derivado además significa que el atraso se recalcula contra la fecha de hoy en cada render, sin depender de que ningún proceso corra.
+
+La ficha muestra las cuotas por cobrar con su fecha estimada, y en rojo las vencidas con los días de atraso; el listado suma esa mora al semáforo. La proyección parte del **último** cobro y no del primero, porque usar el primero acumula el desfase de los reintentos de Hotmart.
+
+**Criterio unificado:** el módulo de Cuotas ya trataba esto con ciclo de 30 días y 37 antes de dar por atrasada (7 de gracia, porque Hotmart reintenta). La ficha usaba mes calendario sin gracia, así que las dos pantallas se habrían contradicho sobre el mismo estudiante. Ahora comparten los números, anotados en ambos lados. Resultado: 13 planes con cuota vencida y $3.039.989 de mora visible.
+
+### Código muerto retirado
+
+No existe modelo de `Financiamiento` ni de `Cuota` en el esquema, ni el API los devuelve, así que el arreglo siempre llegaba vacío: la mora sumaba cero, la sección no se pintaba nunca y el formulario de abonos no se abría jamás. Se fueron las dos interfaces, los componentes `FilaCuota` y `FormAbono`, la sección de abonos y los cálculos asociados. **472 líneas** que aparentaban una funcionalidad inexistente.
+
+### Pendiente que NO se tocó, por ser decisión de producto
+
+En el formulario de crear estudiante sigue viva la opción de pago **FINANCIADO** con su configurador de cuotas, pero **el backend no tiene esa rama**: el esquema Zod de `crear` ni siquiera acepta el campo `cuotas` (lo descarta en silencio) y después del bloque de contado va directo al `return`. El asesor llena el plan, guarda, y no queda ningún registro. Eso explica que no exista ni un pago `PENDIENTE` en la base.
+
+Hay que decidir entre **implementar la rama en el backend** o **retirar la opción del formulario**. Dejarla como está significa que cualquier venta financiada que no pase por Hotmart se pierde sin aviso.
