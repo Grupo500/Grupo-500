@@ -41,7 +41,7 @@ export function TopAsesores() {
   return (
     <div className="flex flex-col h-full gap-3">
       <div className="flex items-center justify-between px-1">
-        <p className="text-[13px] font-semibold text-on-surface">Top 5 asesores · <span className="text-on-surface-variant font-normal">Este mes</span></p>
+        <p className="text-[15px] font-semibold text-on-surface">Top 5 asesores · <span className="text-on-surface-variant font-normal">Este mes</span></p>
         <Link href="/reportes" className="flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline">
           Ver todo <ChevronRight className="w-3.5 h-3.5" />
         </Link>
@@ -76,20 +76,20 @@ export function TopAsesores() {
                 {/* Nombre */}
                 <p className="text-[12px] font-semibold text-on-surface leading-tight line-clamp-2 min-h-[2.2em]" title={a.nombre}>{a.nombre}</p>
                 {/* Ventas */}
-                <p className="text-[14px] font-bold text-on-surface tabular-nums mt-1.5">{formatCOP(a.totalVentas)}</p>
+                <p className="text-[16px] font-bold text-on-surface tabular-nums mt-1.5">{formatCOP(a.totalVentas)}</p>
                 {/* Ventas / estudiantes */}
-                <p className="text-[10px] text-on-surface-variant flex items-center gap-1 mt-0.5">
+                <p className="text-[11px] text-on-surface-variant flex items-center gap-1 mt-0.5">
                   <Users className="w-3 h-3" /> {a.cantidadPagos} venta{a.cantidadPagos !== 1 ? 's' : ''}
                 </p>
                 {/* Comisión ganada + variación */}
                 {a.comisionGanada > 0 && (
-                  <p className="text-[10px] mt-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                  <p className="text-[11px] mt-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
                     Comisión {formatCOP(a.comisionGanada)}
                   </p>
                 )}
                 {/* Cierre (si hay leads) + score (siempre que se pueda calcular) */}
                 {(a.tasaCierre != null || a.score != null) && (
-                  <p className="text-[10px] mt-1 text-on-surface-variant tabular-nums">
+                  <p className="text-[11px] mt-1 text-on-surface-variant tabular-nums">
                     {a.tasaCierre != null && <>Cierre {Math.round(a.tasaCierre)}%</>}
                     {a.score != null && (
                       <span className={a.tasaCierre != null ? 'ml-1.5 text-on-surface font-semibold' : 'text-on-surface font-semibold'}>
@@ -99,11 +99,13 @@ export function TopAsesores() {
                   </p>
                 )}
                 <div className="mt-auto pt-2.5 border-t border-outline-variant w-full text-center">
-                  <p className="text-[18px] font-semibold tabular-nums leading-none"
+                  {/* La variación es contexto de la venta, no el dato principal:
+                      antes iba a 18px y pesaba más que el monto vendido. */}
+                  <p className="text-[13px] font-semibold tabular-nums leading-none"
                     style={{ color: a.variacion > 0 ? verde : a.variacion < 0 ? rojo : 'var(--on-surface-variant)' }}>
                     {a.variacion > 0 ? '+' : ''}{a.variacion}%
                   </p>
-                  <p className="text-[10px] text-on-surface-variant mt-0.5">vs mes anterior</p>
+                  <p className="text-[11px] text-on-surface-variant mt-0.5">vs mes anterior</p>
                 </div>
               </div>
             )

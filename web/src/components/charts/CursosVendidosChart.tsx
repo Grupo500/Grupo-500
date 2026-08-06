@@ -94,7 +94,7 @@ export function CursosVendidosChart({ desde, hasta }: { desde: string; hasta: st
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[24px] font-bold text-on-surface tabular-nums leading-none">{total}</span>
+              <span className="text-[20px] font-bold text-on-surface tabular-nums leading-none">{total}</span>
               <span className="text-[11px] text-on-surface-variant mt-0.5">ventas</span>
             </div>
           </div>

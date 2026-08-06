@@ -84,7 +84,7 @@ export function FacturadoMensual() {
     <div className="card p-4 sm:p-5">
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         {/* Título + mes */}
-        <p className="text-[13px] font-semibold text-on-surface whitespace-nowrap">Total facturado</p>
+        <p className="text-[15px] font-semibold text-on-surface whitespace-nowrap">Total facturado</p>
         <p className="text-[11px] text-on-surface-variant capitalize whitespace-nowrap">{mesLabel}</p>
         {/* Leyenda — centro */}
         <div className="flex items-center gap-3 text-[10px] text-on-surface-variant flex-1 justify-center">

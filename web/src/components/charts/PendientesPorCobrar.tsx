@@ -144,7 +144,7 @@ export function PendientesPorCobrar() {
         </span>
       </div>
 
-      <p className="text-[28px] font-bold tabular-nums leading-none text-on-surface">{formatCOP(animTotal)}</p>
+      <p className="text-[32px] font-bold tabular-nums leading-none text-on-surface">{formatCOP(animTotal)}</p>
       <p className="text-[12.5px] text-on-surface-variant mt-1.5 mb-4">
         {d.gestion.monto > 0 ? (
           <>Solo <span className="font-semibold" style={{ color: '#b45309' }}>{formatCOP(d.gestion.monto)}</span> necesitan gestión</>

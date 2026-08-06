@@ -346,8 +346,8 @@ export default function CuotasPage() {
                   <div className="px-2 border-r border-outline-variant/40 text-right">Saldo</div>
                   <div className="px-2 border-r border-outline-variant/40 text-right">Última</div>
                   <div className="px-2 border-r border-outline-variant/40 text-right">Próxima</div>
-                  <div className="px-2 border-r border-outline-variant/40">Estado</div>
-                  <div />
+                  <div className="px-2 border-r border-outline-variant/40 text-right">Estado</div>
+                  <div className="text-center">Ver</div>
                 </div>
 
                 {/* Filas */}
@@ -398,7 +398,7 @@ export default function CuotasPage() {
                             style={{ color: f.estado === 'atrasado' ? '#dc2626' : 'var(--on-surface-variant)' }}>
                             {f.estado === 'completado' ? '—' : fmtFecha(f.proximaCuotaEstimada)}
                           </div>
-                          <div className="px-2 border-r border-outline-variant/40">
+                          <div className="px-2 border-r border-outline-variant/40 text-right">
                             <span
                               className="inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap"
                               style={{ background: `${ESTADO_COLOR[f.estado]}1f`, color: ESTADO_COLOR[f.estado] }}

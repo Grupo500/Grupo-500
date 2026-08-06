@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
+import { format, startOfMonth, subMonths } from 'date-fns'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { Landmark, Users, Wallet } from 'lucide-react'
@@ -10,8 +11,9 @@ interface Desglose { bruto: number; comisionHotmart: number; comisionAsesor: num
 
 /**
  * Las tres tarjetas de comisiones junto a la gráfica de facturación: los dos
- * descuentos y el neto. Tarjetas blancas como el resto del dashboard; el
- * color vive solo en el ícono y la cifra.
+ * descuentos y el neto. El color vive solo en el ícono, nunca en la cifra —
+ * un texto rojo/naranja se lee como alerta, y una comisión no es un error,
+ * es un dato. El signo +/− ya dice si suma o resta.
  */
 export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string }) {
   const { resolvedTheme } = useTheme()
@@ -23,30 +25,81 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
     staleTime: 30_000,
   })
 
-  const d = data?.data?.desglose ?? { bruto: 0, comisionHotmart: 0, comisionAsesor: 0, neto: 0 }
+  // Mismo corte de días que el resto del dashboard (Nuevos estudiantes, Total
+  // facturado): se compara contra los primeros N días del mes anterior, no
+  // contra el mes anterior completo, o a mitad de mes la variación siempre
+  // se ve como una caída enorme.
+  const hoy = new Date()
+  const mesAnt = subMonths(hoy, 1)
+  const inicioAnt = format(startOfMonth(mesAnt), 'yyyy-MM-dd')
+  const corteAnt = format(new Date(mesAnt.getFullYear(), mesAnt.getMonth(), hoy.getDate()), 'yyyy-MM-dd')
+
+  const { data: antData } = useQuery({
+    queryKey: ['reportes-dashboard', inicioAnt, corteAnt],
+    queryFn: () => apiFetch(`/reportes/dashboard?desde=${inicioAnt}&hasta=${corteAnt}`) as Promise<{ data: { desglose?: Desglose } }>,
+    staleTime: 30_000,
+  })
+
+  const d    = data?.data?.desglose ?? { bruto: 0, comisionHotmart: 0, comisionAsesor: 0, neto: 0 }
+  const dAnt = antData?.data?.desglose ?? { bruto: 0, comisionHotmart: 0, comisionAsesor: 0, neto: 0 }
+
+  const variar = (actual: number, previo: number) =>
+    previo > 0 ? Math.round(((actual - previo) / previo) * 100) : null
 
   const cards = [
-    { label: 'Comisión Hotmart',  valor: d.comisionHotmart, color: isDark ? '#fbbf24' : '#b45309', Icon: Landmark, negativo: true },
-    { label: 'Comisión asesores', valor: d.comisionAsesor,  color: isDark ? '#f87171' : '#b91c1c', Icon: Users,    negativo: true },
-    { label: 'Neto recibido',     valor: d.neto,            color: isDark ? '#6ee7b7' : '#15803d', Icon: Wallet,   negativo: false },
+    {
+      label: 'Comisión Hotmart', valor: d.comisionHotmart, negativo: true,
+      Icon: Landmark, iconColor: isDark ? '#94a3b8' : '#64748b',
+      variacion: variar(d.comisionHotmart, dAnt.comisionHotmart), juicio: false,
+    },
+    {
+      label: 'Comisión asesores', valor: d.comisionAsesor, negativo: true,
+      Icon: Users, iconColor: isDark ? '#c4b5fd' : '#6d28d9',
+      variacion: variar(d.comisionAsesor, dAnt.comisionAsesor), juicio: false,
+    },
+    {
+      label: 'Neto recibido', valor: d.neto, negativo: false,
+      Icon: Wallet, iconColor: isDark ? '#6ee7b7' : '#15803d',
+      variacion: variar(d.neto, dAnt.neto), juicio: true,
+    },
   ]
 
   return (
     <div className="grid grid-cols-2 md:flex md:flex-col gap-3 md:h-full">
-      {cards.map(({ label, valor, color, Icon, negativo }, i) => {
+      {cards.map(({ label, valor, iconColor, Icon, negativo, variacion, juicio }, i) => {
         const esNeto = i === 2
+        // "juicio" = subir es objetivamente bueno/malo (Neto recibido). En las
+        // comisiones subir puede ser una buena señal (vendiste más) o no —
+        // el dato no alcanza para decidirlo, así que el delta queda neutro.
+        const deltaColor = !juicio || variacion == null || variacion === 0
+          ? 'var(--on-surface-variant)'
+          : variacion > 0 ? (isDark ? '#6ee7b7' : '#16a34a') : (isDark ? '#f87171' : '#dc2626')
+        const deltaTexto = variacion == null
+          ? 'Sin mes anterior para comparar'
+          : variacion === 0
+            ? 'Igual que el mes pasado'
+            : `${variacion > 0 ? '▲ +' : '▼ '}${variacion}% vs mes anterior`
+
         return (
           <div key={label}
             className={`card p-4 flex flex-col justify-center items-center text-center md:items-stretch md:text-left md:flex-1 ${esNeto ? 'col-span-2 md:col-span-1' : ''}`}>
             <div className="flex items-center gap-2 mb-2 justify-center md:justify-start">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}1f` }}>
-                <Icon className="w-3.5 h-3.5" style={{ color }} />
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${iconColor}1f` }}>
+                <Icon className="w-3.5 h-3.5" style={{ color: iconColor }} />
               </div>
-              <span className="text-[12px] font-medium text-on-surface-variant leading-tight">{label}</span>
+              <span className="text-[11px] font-medium text-on-surface-variant leading-tight">{label}</span>
             </div>
-            {isLoading
-              ? <div className="h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse" />
-              : <p className="text-[18px] font-bold tabular-nums" style={{ color }}>{negativo ? '−' : ''}{formatCOP(valor)}</p>}
+            {isLoading ? (
+              <>
+                <div className="h-6 w-28 rounded bg-[var(--surface-high)] animate-pulse" />
+                <div className="h-3 w-24 rounded bg-[var(--surface-high)] animate-pulse mt-2" />
+              </>
+            ) : (
+              <>
+                <p className="text-[16px] font-bold tabular-nums text-on-surface">{negativo ? '−' : ''}{formatCOP(valor)}</p>
+                <p className="text-[11px] mt-1 truncate" style={{ color: deltaColor }}>{deltaTexto}</p>
+              </>
+            )}
           </div>
         )
       })}

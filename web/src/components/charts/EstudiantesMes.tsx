@@ -108,11 +108,11 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
         <div className="h-12 w-28 rounded bg-[var(--surface-high)] animate-pulse" />
       ) : (
         <div className="animate-fade-in">
-          <p className="text-[40px] font-bold text-on-surface tabular-nums leading-none">{displayTotal}</p>
+          <p className="text-[32px] font-bold text-on-surface tabular-nums leading-none">{displayTotal}</p>
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[12px] text-on-surface-variant">este mes</span>
+            <span className="text-[11px] text-on-surface-variant">este mes</span>
             {variacion !== null && (
-              <span className="text-[12px] font-semibold flex items-center gap-0.5"
+              <span className="text-[11px] font-semibold flex items-center gap-0.5"
                 style={{ color: variacion >= 0 ? verde : rojo }}>
                 {variacion >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                 {variacion >= 0 ? '+' : ''}{variacion}%
