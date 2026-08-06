@@ -14,7 +14,7 @@ import {
   Users, Search, Plus, ChevronLeft, ChevronRight,
   School, Phone, BookOpen, Loader2, Trash2, AlertTriangle,
   CheckCircle, Clock, ChevronRight as Arrow, Check,
-  X, Download, CheckSquare, Square, RefreshCw,
+  X, Download, CheckSquare, Square,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isBefore, parseISO, isToday } from 'date-fns'
@@ -224,18 +224,6 @@ const cursos: { id: string; nombre: string; precio: number }[] = (cursosData?.da
     queryFn: () => fetcher<PaginatedResponse>(`/estudiantes?page=${page}&limit=15${busqueda ? `&nombre=${encodeURIComponent(busqueda)}` : ''}${soloMios ? '&soloMios=true' : ''}`),
   })
 
-  const [msgSync, setMsgSync] = useState<string | null>(null)
-  const sincronizarMutation = useMutation({
-    mutationFn: () => fetcher<any>('/estudiantes/sincronizar-hotmart', { method: 'POST' }),
-    onSuccess: (res: any) => {
-      queryClient.invalidateQueries({ queryKey: ['estudiantes'] })
-      const n = res?.data?.actualizados ?? 0
-      setMsgSync(n > 0 ? `${n} estudiante${n !== 1 ? 's' : ''} actualizado${n !== 1 ? 's' : ''}` : 'Todo al día con Hotmart')
-      setTimeout(() => setMsgSync(null), 5000)
-    },
-    onError: (e: Error) => alert(`Error al sincronizar con Hotmart: ${e.message}`),
-  })
-
   const crearMutation = useMutation({
     mutationFn: async () => {
       if (!form.nombre || !form.email || !form.telefono || !form.fechaNacimiento)
@@ -392,23 +380,9 @@ const subirComprobante = async (file: File) => {
     <div className="space-y-5">
       <PageHeader
         title="Estudiantes"
-        subtitle={
-          sincronizarMutation.isPending
-            ? 'Sincronizando con Hotmart…'
-            : msgSync ?? `${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`
-        }
+        subtitle={`${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`}
         actions={
           <div className="flex items-center gap-2">
-            {isAdmin && (
-              <button
-                onClick={() => sincronizarMutation.mutate()}
-                disabled={sincronizarMutation.isPending}
-                className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-outline-variant bg-surface-high hover:bg-surface-lowest transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
-                Sincronizar Hotmart
-              </button>
-            )}
             {isAdmin && (
               <button
                 onClick={exportarEstudiantes}
