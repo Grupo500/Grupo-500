@@ -119,6 +119,12 @@ export default function CuotasPage() {
   const paginadas = filtradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
 
   const r = d?.resumen
+  const totalPlanes = r?.total ?? 0
+  const segmentosEstado: { estado: FilaCuota['estado']; valor: number }[] = [
+    { estado: 'atrasado', valor: r?.atrasados ?? 0 },
+    { estado: 'al-dia', valor: r?.alDia ?? 0 },
+    { estado: 'completado', valor: r?.completados ?? 0 },
+  ]
 
   function ordenar(campo: OrdenCampo) {
     if (campo === ordenCampo) setOrdenAsc(a => !a)
@@ -159,22 +165,64 @@ export default function CuotasPage() {
           : 'Tus ventas a cuotas de Hotmart (Smart Installment): cuánto va pagado y quién se atrasó'}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        {[
-          { e: 'En plan de cuotas', v: numero(r?.total ?? 0) },
-          { e: 'Atrasados', v: numero(r?.atrasados ?? 0), color: '#dc2626' },
-          { e: 'Al día', v: numero(r?.alDia ?? 0), color: '#1a7de0' },
-          { e: 'Completados', v: numero(r?.completados ?? 0), color: '#16a34a' },
-          { e: 'Saldo pendiente', v: formatCOP(r?.saldoTotal ?? 0) },
-        ].map(k => (
-          <div key={k.e} className="card p-4">
-            <p className="text-[11.5px] font-medium text-on-surface-variant">{k.e}</p>
-            <p className="text-[20px] font-bold tabular-nums mt-1" style={{ color: k.color ?? 'var(--on-surface)' }}>
-              {isLoading ? '—' : k.v}
+      <motion.div
+        initial={animar ? { opacity: 0, y: 10 } : false}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="card p-5 sm:p-6"
+      >
+        <div className="flex items-start justify-between gap-6 flex-wrap mb-5">
+          <div>
+            <p className="text-[12px] font-medium text-on-surface-variant mb-1.5">Saldo pendiente total</p>
+            <p className="text-[34px] sm:text-[40px] font-bold leading-none text-on-surface" style={{ letterSpacing: '-0.02em' }}>
+              {isLoading ? '—' : formatCOP(r?.saldoTotal ?? 0)}
             </p>
           </div>
-        ))}
-      </div>
+          <div className="text-right">
+            <p className="text-[22px] font-semibold tabular-nums text-on-surface">{isLoading ? '—' : numero(totalPlanes)}</p>
+            <p className="text-[11px] text-on-surface-variant mt-0.5">en plan de cuotas</p>
+          </div>
+        </div>
+
+        <div className="h-2.5 rounded-full bg-surface-high overflow-hidden flex gap-[2px] mb-4">
+          {isLoading || totalPlanes === 0 ? (
+            <div className={`w-full h-full bg-surface-high ${isLoading ? 'animate-pulse' : ''}`} />
+          ) : (
+            segmentosEstado.filter(s => s.valor > 0).map(s => (
+              <motion.div
+                key={s.estado}
+                initial={animar ? { flexBasis: 0 } : false}
+                animate={{ flexBasis: `${(s.valor / totalPlanes) * 100}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="h-full flex-shrink-0"
+                style={{ background: ESTADO_COLOR[s.estado] }}
+              />
+            ))
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {segmentosEstado.map(s => {
+            const activo = estado === s.estado
+            return (
+              <button
+                key={s.estado}
+                onClick={() => setEstado(e => e === s.estado ? '' : s.estado)}
+                aria-pressed={activo}
+                className="flex items-center gap-2 pl-2.5 pr-3 py-1.5 rounded-full text-[12px] border transition-colors cursor-pointer"
+                style={{
+                  background: activo ? `${ESTADO_COLOR[s.estado]}1f` : 'var(--surface-container-lowest)',
+                  borderColor: activo ? ESTADO_COLOR[s.estado] : 'var(--outline-variant)',
+                }}
+              >
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ESTADO_COLOR[s.estado] }} />
+                <span className="font-semibold tabular-nums text-on-surface">{isLoading ? '—' : numero(s.valor)}</span>
+                <span className="text-on-surface-variant">{ESTADO_LABEL[s.estado]}</span>
+              </button>
+            )
+          })}
+        </div>
+      </motion.div>
 
       <div className="card p-5">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
