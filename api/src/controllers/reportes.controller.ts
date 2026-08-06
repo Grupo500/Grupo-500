@@ -1128,36 +1128,42 @@ export async function cuotas(req: Request, res: Response) {
   }
 
   // Hotmart no reutiliza la misma transacción para cada cuota de un plan:
-  // cada cargo puede llegar como un `Pago` propio, con su propia referencia.
-  // Sin agrupar, el mismo plan aparecía dos veces — una con el estado real
-  // (ej. "2 de 2") y otra con el primer cargo, congelado en "1 de 2" y
-  // marcado "Atrasado" aunque esa cuota ya se hubiera pagado hace rato. Se
-  // agrupa por estudiante+curso y de cada grupo se usa solo el cargo más
-  // avanzado (mayor cuotaNumero; si empatan, el más reciente).
-  const porPlan = new Map<string, { pago: (typeof pagos)[number]; curso: ReturnType<typeof cursoDe> }>()
+  // cada cargo llega como un `Pago` propio, con su propia referencia. Sin
+  // agrupar, el mismo plan aparecía dos veces — una con el estado real (ej.
+  // "2 de 2") y otra con el primer cargo, congelado en "1 de 2". Se agrupa
+  // por estudiante+curso y se acumulan TODAS las filas del grupo: lo pagado
+  // es la suma real de los cargos, no monto × cuotaNumero de la más avanzada
+  // (esa multiplicación asume que todas las cuotas cuestan igual, y ya
+  // sirvió mal una vez — mismo criterio que montoPagadoPago/planDeCuotas).
+  const porPlan = new Map<string, { filas: (typeof pagos)[number][]; curso: ReturnType<typeof cursoDe> }>()
   for (const p of pagos) {
     const ce = cursoDe(p)
     const clave = `${p.estudiante.id}:${ce?.cursoId ?? 'sin-curso'}`
     const actual = porPlan.get(clave)
-    const cuotaP = p.cuotaNumero ?? 1
-    if (!actual) { porPlan.set(clave, { pago: p, curso: ce }); continue }
-    const cuotaActual = actual.pago.cuotaNumero ?? 1
-    const esMasAvanzado = cuotaP > cuotaActual
-      || (cuotaP === cuotaActual && (p.fechaPago?.getTime() ?? 0) > (actual.pago.fechaPago?.getTime() ?? 0))
-    if (esMasAvanzado) porPlan.set(clave, { pago: p, curso: ce })
+    if (!actual) { porPlan.set(clave, { filas: [p], curso: ce }); continue }
+    actual.filas.push(p)
   }
 
   const hoy = Date.now()
-  const filas = [...porPlan.values()].map(({ pago: p, curso: ce }) => {
+  const filas = [...porPlan.values()].map(({ filas: grupo, curso: ce }) => {
+    // La fila más avanzada (mayor cuotaNumero; si empatan, la más reciente)
+    // manda para el progreso mostrado y la fecha de referencia.
+    const masAvanzada = [...grupo].sort((a, b) => {
+      const ca = a.cuotaNumero ?? 0, cb = b.cuotaNumero ?? 0
+      if (ca !== cb) return cb - ca
+      return (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
+    })[0]
+    const p = masAvanzada
+
     const cuotaNumero  = p.cuotaNumero ?? 1
-    const cuotasTotal  = p.cuotasTotal ?? 1
-    // El total de una venta a cuotas es siempre valor-de-la-cuota × cantidad
+    const cuotasTotal  = Math.max(...grupo.map(g => g.cuotasTotal ?? 1))
+    const totalPagado  = grupo.reduce((s, g) => s + g.monto, 0)
+    // El total de una venta a cuotas es valor-de-la-cuota-vigente × cantidad
     // de cuotas — el mismo criterio que usa backfillCuotas.ts para corregir
     // precioAcordado. No se usa precioAcordado/precio de lista aquí: si
     // quedó mal guardado (ej. con el valor de una sola cuota), el saldo
     // daba $0 y marcaba "Completado" aunque solo iba la cuota 1 o 2 de 3.
     const totalCurso   = Math.round(p.monto * cuotasTotal)
-    const totalPagado  = p.monto * cuotaNumero
     const saldo        = Math.max(0, Math.round(totalCurso - totalPagado))
     const completado   = cuotaNumero >= cuotasTotal || saldo <= 1000
     const diasSinPagar = p.fechaPago ? Math.floor((hoy - p.fechaPago.getTime()) / 86_400_000) : null

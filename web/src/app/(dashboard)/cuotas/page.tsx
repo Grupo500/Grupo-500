@@ -4,11 +4,15 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
+import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { formatCOP } from '@/lib/utils'
-import { Search, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Search, Phone, ChevronLeft, ChevronRight, ChevronDown, Download,
+  SlidersHorizontal, ArrowUpDown, X, User, BookOpen, Calendar, MoreHorizontal,
+} from 'lucide-react'
 
 const POR_PAGINA = 10
 
@@ -40,6 +44,11 @@ interface CuotasData {
 const ESTADO_LABEL: Record<FilaCuota['estado'], string> = { 'al-dia': 'Al día', atrasado: 'Atrasado', completado: 'Completado' }
 const ESTADO_COLOR: Record<FilaCuota['estado'], string> = { 'al-dia': '#1a7de0', atrasado: '#dc2626', completado: '#16a34a' }
 
+type OrdenCampo = 'diasSinPagar' | 'saldo' | 'nombre' | 'cuota'
+const ORDEN_LABEL: Record<OrdenCampo, string> = {
+  diasSinPagar: 'Días sin pagar', saldo: 'Saldo', nombre: 'Nombre', cuota: 'Progreso de cuota',
+}
+
 function numero(v: number) { return Math.round(v).toLocaleString('es-CO') }
 
 function fmtFecha(iso: string | null) {
@@ -47,14 +56,30 @@ function fmtFecha(iso: string | null) {
   return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function descargar(nombreArchivo: string, contenido: string, tipo: string) {
+  const blob = new Blob([contenido], { type: `${tipo};charset=utf-8;` })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = nombreArchivo
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
+
 export default function CuotasPage() {
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === 'ADMIN'
+  const shouldReduceMotion = useReducedMotion()
 
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState('')
   const [asesor, setAsesor] = useState('')
   const [pagina, setPagina] = useState(1)
+
+  const [ordenCampo, setOrdenCampo] = useState<OrdenCampo>('diasSinPagar')
+  const [ordenAsc, setOrdenAsc] = useState(false)
+  const [menuOrden, setMenuOrden] = useState(false)
+  const [menuExport, setMenuExport] = useState(false)
+  const [detalle, setDetalle] = useState<FilaCuota | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['reportes-cuotas'],
@@ -70,19 +95,60 @@ export default function CuotasPage() {
 
   const filtradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
-    return (d?.filas ?? []).filter(f =>
+    const base = (d?.filas ?? []).filter(f =>
       (!estado || f.estado === estado) &&
       (!isAdmin || !asesor || f.asesor === asesor) &&
       (!texto || f.nombre.toLowerCase().includes(texto) || f.curso.toLowerCase().includes(texto))
     )
-  }, [d?.filas, busqueda, estado, asesor, isAdmin])
+    const val = (f: FilaCuota) => {
+      if (ordenCampo === 'nombre') return f.nombre.toLowerCase()
+      if (ordenCampo === 'saldo') return f.saldo
+      if (ordenCampo === 'cuota') return f.cuotaNumero / f.cuotasTotal
+      return f.diasSinPagar ?? -1
+    }
+    return [...base].sort((a, b) => {
+      const va = val(a), vb = val(b)
+      const cmp = va < vb ? -1 : va > vb ? 1 : 0
+      return ordenAsc ? cmp : -cmp
+    })
+  }, [d?.filas, busqueda, estado, asesor, isAdmin, ordenCampo, ordenAsc])
 
-  useEffect(() => setPagina(1), [busqueda, estado, asesor])
+  useEffect(() => setPagina(1), [busqueda, estado, asesor, ordenCampo, ordenAsc])
 
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA))
   const paginadas = filtradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
 
   const r = d?.resumen
+
+  function ordenar(campo: OrdenCampo) {
+    if (campo === ordenCampo) setOrdenAsc(a => !a)
+    else { setOrdenCampo(campo); setOrdenAsc(false) }
+    setMenuOrden(false)
+  }
+
+  function exportarCSV() {
+    const encabezados = ['Estudiante', 'Curso', 'Asesor', 'Cuota', 'Cuotas totales', 'Pagado', 'Saldo', 'Última cuota', 'Estado']
+    const filas = filtradas.map(f => [f.nombre, f.curso, f.asesor ?? '', f.cuotaNumero, f.cuotasTotal, f.totalPagado, f.saldo, f.fechaUltimaCuota ?? '', ESTADO_LABEL[f.estado]])
+    const csv = [encabezados, ...filas].map(fila => fila.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    descargar(`cuotas-${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv')
+  }
+
+  function exportarJSON() {
+    descargar(`cuotas-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(filtradas, null, 2), 'application/json')
+  }
+
+  // 40px de acción + [40px de asesor si admin] + columnas fijas + estudiante/curso flexibles
+  const gridTemplate = isAdmin
+    ? '1.2fr 1.2fr 130px 90px 100px 100px 105px 105px 105px 36px'
+    : '1.2fr 1.2fr 90px 100px 100px 105px 105px 105px 36px'
+
+  const animar = !shouldReduceMotion
+  const containerVariants: Variants = { visible: { transition: { staggerChildren: 0.035, delayChildren: 0.05 } } }
+  const rowVariants: Variants = {
+    hidden: { opacity: 0, y: 14, filter: 'blur(3px)' },
+    visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { type: 'spring', stiffness: 420, damping: 28, mass: 0.7 } },
+    exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
+  }
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -141,94 +207,270 @@ export default function CuotasPage() {
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
                 placeholder="Buscar por nombre o curso"
-                className="h-9 pl-8 pr-3 rounded-lg border border-surface-high bg-surface-container-lowest text-[12.5px] text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:border-primary w-[220px]"
+                className="h-9 pl-8 pr-3 rounded-lg border border-surface-high bg-surface-container-lowest text-[12.5px] text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:border-primary w-[200px]"
               />
+            </div>
+
+            {/* Ordenar */}
+            <div className="relative">
+              <button
+                onClick={() => { setMenuOrden(v => !v); setMenuExport(false) }}
+                className="h-9 px-3 rounded-lg border border-surface-high bg-surface-container-lowest text-[12.5px] text-on-surface hover:bg-surface-high transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5 text-on-surface-variant" />
+                Ordenar
+                <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant" />
+              </button>
+              {menuOrden && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOrden(false)} />
+                  <div className="absolute right-0 mt-1 w-52 bg-surface-lowest border border-outline-variant shadow-float rounded-lg z-20 py-1">
+                    {(Object.keys(ORDEN_LABEL) as OrdenCampo[]).map(campo => (
+                      <button
+                        key={campo}
+                        onClick={() => ordenar(campo)}
+                        className={`w-full px-3 py-2 text-left text-[12.5px] hover:bg-surface-high transition-colors cursor-pointer ${ordenCampo === campo ? 'text-primary font-semibold' : 'text-on-surface'}`}
+                      >
+                        {ORDEN_LABEL[campo]} {ordenCampo === campo && (ordenAsc ? '↑' : '↓')}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Exportar */}
+            <div className="relative">
+              <button
+                onClick={() => { setMenuExport(v => !v); setMenuOrden(false) }}
+                className="h-9 px-3 rounded-lg border border-surface-high bg-surface-container-lowest text-[12.5px] text-on-surface hover:bg-surface-high transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-on-surface-variant" />
+                Exportar
+                <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant" />
+              </button>
+              {menuExport && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuExport(false)} />
+                  <div className="absolute right-0 mt-1 w-36 bg-surface-lowest border border-outline-variant shadow-float rounded-lg z-20 py-1">
+                    <button onClick={() => { exportarCSV(); setMenuExport(false) }} className="w-full px-3 py-2 text-left text-[12.5px] text-on-surface hover:bg-surface-high transition-colors cursor-pointer">CSV</button>
+                    <button onClick={() => { exportarJSON(); setMenuExport(false) }} className="w-full px-3 py-2 text-left text-[12.5px] text-on-surface hover:bg-surface-high transition-colors cursor-pointer border-t border-outline-variant/50">JSON</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {isLoading ? (
           <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-9 rounded bg-surface-high animate-pulse" />)}
+            {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-11 rounded-lg bg-surface-high animate-pulse" />)}
           </div>
         ) : filtradas.length === 0 ? (
-          <p className="text-[13px] text-on-surface-variant text-center py-8">Nadie coincide con el filtro</p>
+          <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
+            <SlidersHorizontal className="w-8 h-8 mb-2 opacity-30" />
+            <p className="text-[13px]">Nadie coincide con el filtro</p>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-surface-high">
-                  <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Estudiante</th>
-                  <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Curso</th>
-                  {isAdmin && <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Asesor</th>}
-                  <th className="px-2 py-2 text-center text-[11.5px] font-semibold text-on-surface-variant whitespace-nowrap">Cuota</th>
-                  <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant">Pagado</th>
-                  <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant">Saldo</th>
-                  <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant whitespace-nowrap">Última cuota</th>
-                  <th className="px-2 py-2 text-right text-[11.5px] font-semibold text-on-surface-variant whitespace-nowrap">Próxima cuota</th>
-                  <th className="px-2 py-2 text-left text-[11.5px] font-semibold text-on-surface-variant">Estado</th>
-                  <th className="px-2 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {paginadas.map(f => (
-                  <tr key={f.estudianteId + f.curso} className="border-b border-surface-high hover:bg-surface-low transition-colors">
-                    <td className="px-2 py-2.5 whitespace-nowrap">
-                      <Link href={`/estudiantes/${f.estudianteId}`} className="text-[12.5px] font-medium text-on-surface hover:text-primary">
-                        {f.nombre}
-                      </Link>
-                    </td>
-                    <td className="px-2 py-2.5 text-[12px] text-on-surface-variant whitespace-nowrap">{f.curso}</td>
-                    {isAdmin && <td className="px-2 py-2.5 text-[12px] text-on-surface-variant whitespace-nowrap">{f.asesor ?? '—'}</td>}
-                    <td className="px-2 py-2.5 text-center">
-                      <span className="text-[11.5px] font-semibold tabular-nums text-on-surface whitespace-nowrap">
-                        {f.cuotaNumero} de {f.cuotasTotal}
-                      </span>
-                      <div className="h-1 w-14 mx-auto mt-1 rounded-full bg-surface-high overflow-hidden">
+          <div className="border border-outline-variant rounded-xl overflow-hidden relative">
+            <div className="overflow-x-auto">
+              <div className="min-w-[900px]">
+                {/* Encabezado */}
+                <div
+                  className="px-3 py-2.5 text-[11px] font-semibold text-on-surface-variant bg-surface-high/60 border-b border-outline-variant"
+                  style={{ display: 'grid', gridTemplateColumns: gridTemplate }}
+                >
+                  <div className="px-2 border-r border-outline-variant/40">Estudiante</div>
+                  <div className="px-2 border-r border-outline-variant/40">Curso</div>
+                  {isAdmin && <div className="px-2 border-r border-outline-variant/40">Asesor</div>}
+                  <div className="px-2 border-r border-outline-variant/40 text-center">Cuota</div>
+                  <div className="px-2 border-r border-outline-variant/40 text-right">Pagado</div>
+                  <div className="px-2 border-r border-outline-variant/40 text-right">Saldo</div>
+                  <div className="px-2 border-r border-outline-variant/40 text-right">Última</div>
+                  <div className="px-2 border-r border-outline-variant/40 text-right">Próxima</div>
+                  <div className="px-2 border-r border-outline-variant/40">Estado</div>
+                  <div />
+                </div>
+
+                {/* Filas */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`p${pagina}-${estado}-${asesor}-${busqueda}-${ordenCampo}-${ordenAsc}`}
+                    variants={animar ? containerVariants : undefined}
+                    initial={animar ? 'hidden' : false}
+                    animate="visible"
+                  >
+                    {paginadas.map(f => (
+                      <motion.div key={f.estudianteId + f.curso} variants={animar ? rowVariants : undefined} exit="exit">
                         <div
-                          className="h-full rounded-full"
-                          style={{ width: `${Math.min(100, (f.cuotaNumero / f.cuotasTotal) * 100)}%`, background: ESTADO_COLOR[f.estado] }}
-                        />
+                          className="px-3 py-2.5 group border-b border-outline-variant/40 last:border-b-0 hover:bg-surface-high/40 transition-colors"
+                          style={{ display: 'grid', gridTemplateColumns: gridTemplate, alignItems: 'center' }}
+                        >
+                          <div className="px-2 border-r border-outline-variant/40 min-w-0">
+                            <Link href={`/estudiantes/${f.estudianteId}`} className="text-[12.5px] font-medium text-on-surface hover:text-primary truncate block">
+                              {f.nombre}
+                            </Link>
+                          </div>
+                          <div className="px-2 border-r border-outline-variant/40 min-w-0 text-[12px] text-on-surface-variant truncate" title={f.curso}>
+                            {f.curso}
+                          </div>
+                          {isAdmin && (
+                            <div className="px-2 border-r border-outline-variant/40 min-w-0 text-[12px] text-on-surface-variant truncate">
+                              {f.asesor ?? '—'}
+                            </div>
+                          )}
+                          <div className="px-2 border-r border-outline-variant/40 text-center">
+                            <span className="text-[11.5px] font-semibold tabular-nums text-on-surface whitespace-nowrap">
+                              {f.cuotaNumero}/{f.cuotasTotal}
+                            </span>
+                            <div className="h-1 w-12 mx-auto mt-1 rounded-full bg-surface-high overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(100, (f.cuotaNumero / f.cuotasTotal) * 100)}%`, background: ESTADO_COLOR[f.estado] }} />
+                            </div>
+                          </div>
+                          <div className="px-2 border-r border-outline-variant/40 text-right text-[12px] tabular-nums text-on-surface whitespace-nowrap">
+                            {formatCOP(f.totalPagado)}
+                          </div>
+                          <div className="px-2 border-r border-outline-variant/40 text-right text-[12px] font-semibold tabular-nums whitespace-nowrap" style={{ color: f.saldo > 0 ? '#d97706' : 'var(--on-surface-variant)' }}>
+                            {formatCOP(f.saldo)}
+                          </div>
+                          <div className="px-2 border-r border-outline-variant/40 text-right text-[11px] tabular-nums text-on-surface-variant whitespace-nowrap">
+                            {fmtFecha(f.fechaUltimaCuota)}
+                          </div>
+                          <div className="px-2 border-r border-outline-variant/40 text-right text-[11px] tabular-nums whitespace-nowrap"
+                            style={{ color: f.estado === 'atrasado' ? '#dc2626' : 'var(--on-surface-variant)' }}>
+                            {f.estado === 'completado' ? '—' : fmtFecha(f.proximaCuotaEstimada)}
+                          </div>
+                          <div className="px-2 border-r border-outline-variant/40">
+                            <span
+                              className="inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap"
+                              style={{ background: `${ESTADO_COLOR[f.estado]}1f`, color: ESTADO_COLOR[f.estado] }}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: ESTADO_COLOR[f.estado] }} />
+                              {ESTADO_LABEL[f.estado]}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-center">
+                            <button
+                              onClick={() => setDetalle(f)}
+                              aria-label={`Ver detalle de ${f.nombre}`}
+                              className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-pointer text-on-surface-variant"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Modal de detalle */}
+            <AnimatePresence>
+              {detalle && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                  onClick={() => setDetalle(null)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.92, opacity: 0, y: 16 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.92, opacity: 0, y: 16 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 28, mass: 0.8 }}
+                    className="bg-surface-lowest border border-outline-variant rounded-2xl p-5 shadow-float relative max-w-sm w-full"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => setDetalle(null)}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-full bg-surface-high hover:bg-surface-highest flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5 text-on-surface-variant" />
+                    </button>
+
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+                        <User className="w-5 h-5 text-primary" />
                       </div>
-                    </td>
-                    <td className="px-2 py-2.5 text-right text-[12px] tabular-nums text-on-surface whitespace-nowrap">{formatCOP(f.totalPagado)}</td>
-                    <td className="px-2 py-2.5 text-right text-[12px] font-semibold tabular-nums whitespace-nowrap" style={{ color: f.saldo > 0 ? '#d97706' : 'var(--on-surface-variant)' }}>
-                      {formatCOP(f.saldo)}
-                    </td>
-                    <td className="px-2 py-2.5 text-right text-[12px] tabular-nums text-on-surface-variant whitespace-nowrap">
-                      {fmtFecha(f.fechaUltimaCuota)}
-                      {f.diasSinPagar != null && f.estado !== 'completado' && (
-                        <p className="text-[10px] text-on-surface-variant/70">hace {f.diasSinPagar}d</p>
-                      )}
-                    </td>
-                    <td className="px-2 py-2.5 text-right text-[12px] tabular-nums whitespace-nowrap"
-                      style={{ color: f.estado === 'atrasado' ? '#dc2626' : 'var(--on-surface-variant)' }}>
-                      {f.estado === 'completado' ? '—' : fmtFecha(f.proximaCuotaEstimada)}
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <span
-                        className="text-[10.5px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
-                        style={{ background: `${ESTADO_COLOR[f.estado]}1f`, color: ESTADO_COLOR[f.estado] }}
+                      <div className="min-w-0">
+                        <p className="text-[15px] font-semibold text-on-surface truncate">{detalle.nombre}</p>
+                        <span
+                          className="inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-md mt-0.5"
+                          style={{ background: `${ESTADO_COLOR[detalle.estado]}1f`, color: ESTADO_COLOR[detalle.estado] }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: ESTADO_COLOR[detalle.estado] }} />
+                          {ESTADO_LABEL[detalle.estado]}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 text-[12.5px]">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1 text-on-surface-variant">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span className="text-[10.5px] uppercase tracking-wide">Curso</span>
+                        </div>
+                        <p className="text-on-surface font-medium">{detalle.curso}</p>
+                        {detalle.asesor && <p className="text-on-surface-variant text-[11.5px] mt-0.5">Asesor: {detalle.asesor}</p>}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-surface-high rounded-xl p-2.5">
+                          <p className="text-[10.5px] text-on-surface-variant">Cuota</p>
+                          <p className="text-[13px] font-bold tabular-nums text-on-surface mt-0.5">{detalle.cuotaNumero} de {detalle.cuotasTotal}</p>
+                        </div>
+                        <div className="bg-surface-high rounded-xl p-2.5">
+                          <p className="text-[10.5px] text-on-surface-variant">Valor cuota</p>
+                          <p className="text-[13px] font-bold tabular-nums text-on-surface mt-0.5">{formatCOP(detalle.montoCuota)}</p>
+                        </div>
+                        <div className="bg-surface-high rounded-xl p-2.5">
+                          <p className="text-[10.5px] text-on-surface-variant">Pagado</p>
+                          <p className="text-[13px] font-bold tabular-nums mt-0.5" style={{ color: '#16a34a' }}>{formatCOP(detalle.totalPagado)}</p>
+                        </div>
+                        <div className="bg-surface-high rounded-xl p-2.5">
+                          <p className="text-[10.5px] text-on-surface-variant">Saldo</p>
+                          <p className="text-[13px] font-bold tabular-nums mt-0.5" style={{ color: detalle.saldo > 0 ? '#d97706' : 'var(--on-surface-variant)' }}>{formatCOP(detalle.saldo)}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1 text-on-surface-variant">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span className="text-[10.5px] uppercase tracking-wide">Fechas</span>
+                        </div>
+                        <p className="text-on-surface">Última cuota: <strong>{fmtFecha(detalle.fechaUltimaCuota)}</strong>{detalle.diasSinPagar != null && detalle.estado !== 'completado' && ` (hace ${detalle.diasSinPagar}d)`}</p>
+                        {detalle.estado !== 'completado' && (
+                          <p className="text-on-surface-variant mt-0.5">Próxima estimada: {fmtFecha(detalle.proximaCuotaEstimada)}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-4 mt-4 border-t border-outline-variant/50">
+                      <Link
+                        href={`/estudiantes/${detalle.estudianteId}`}
+                        className="flex-1 text-center px-3 py-2 rounded-lg text-[12.5px] font-semibold border border-outline-variant text-on-surface hover:bg-surface-high transition-colors"
                       >
-                        {ESTADO_LABEL[f.estado]}
-                      </span>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      {f.telefono && f.estado !== 'completado' && (
+                        Ver estudiante
+                      </Link>
+                      {detalle.telefono && detalle.estado !== 'completado' && (
                         <a
-                          href={`https://wa.me/57${f.telefono.replace(/\D/g, '')}`}
+                          href={`https://wa.me/57${detalle.telefono.replace(/\D/g, '')}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline whitespace-nowrap"
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[12.5px] font-semibold bg-primary text-on-primary hover:bg-primary/90 transition-colors"
                         >
-                          <Phone className="w-3 h-3" /> Contactar
+                          <Phone className="w-3.5 h-3.5" /> Contactar
                         </a>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
