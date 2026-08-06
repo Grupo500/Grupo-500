@@ -40,7 +40,6 @@ function NumericInput({ value, onChange, placeholder, className, disabled }: {
 }
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
-interface CuotaMin { monto: number; pagado: boolean; fechaVencimiento: string }
 interface PagoMin  { monto: number; estado: string; fechaVencimiento: string; enPartes?: boolean; cuotaNumero?: number | null; cuotasTotal?: number | null }
 
 interface Estudiante {
@@ -60,7 +59,6 @@ interface Estudiante {
   asesor?: { id: string; nombre: string }
   cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; precioAcordado?: number | null; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: PagoMin[]
-  financiamientos?: { montoTotal: number; estado: string; cuotas: CuotaMin[] }[]
   verificado?: boolean
   createdAt: string
 }
@@ -79,23 +77,17 @@ function calcFinanciero(e: Estudiante) {
   const cursoEst     = e.cursos?.[0]
   const totalGeneral = cursoEst
     ? (cursoEst.precioAcordado ?? cursoEst.curso.precio)
-    : (e.financiamientos?.reduce((s, f) => s + f.montoTotal, 0) ?? 0)
-    + (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
+    : (e.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0)
 
-  const pagadoFin      = e.financiamientos?.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0) ?? 0
-  const pagadoPagos    = e.pagos?.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0) ?? 0
-  const totalPagado    = pagadoFin + pagadoPagos
+  const totalPagado    = e.pagos?.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0) ?? 0
   const totalPendiente = Math.max(0, totalGeneral - totalPagado)
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
 
   // Las cuotas de una compra a plazos que Hotmart aún no ha cobrado no existen
   // como registro: se derivan para que una cuota atrasada no quede invisible.
   const plan        = planDeCuotas(e.pagos ?? [], hoy)
-  const moraFin     = e.financiamientos?.flatMap(f => f.cuotas).filter(c =>
-    !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
-  ).reduce((s, c) => s + c.monto, 0) ?? 0
   const moraPagos   = e.pagos?.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0) ?? 0
-  const totalMora   = moraFin + moraPagos + plan.mora
+  const totalMora   = moraPagos + plan.mora
 
   // Si tiene curso pero 0 pagos → pendiente (nunca "sin deuda")
   const tieneCurso  = !!cursoEst

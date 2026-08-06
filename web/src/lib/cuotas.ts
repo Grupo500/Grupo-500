@@ -9,7 +9,15 @@
 // contaminaría esas cifras. Derivado también significa que el estado siempre
 // está al día, sin depender de que un proceso las marque.
 
-import { addMonths, differenceInCalendarDays, startOfDay } from 'date-fns'
+import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
+
+// Mismo criterio que el módulo de Cuotas (`reportes.controller.ts`,
+// DIAS_GRACIA_CUOTAS): el ciclo de cobro es de 30 días y se conceden 7 de
+// gracia antes de dar una cuota por vencida, porque Hotmart reintenta los
+// cobros que fallan y la fecha exacta se corre. Si estos números cambian,
+// cambiarlos en los dos lados o las pantallas se contradicen.
+const CICLO_DIAS = 30
+const GRACIA_DIAS = 7
 
 export interface PagoParaPlan {
   monto: number
@@ -79,14 +87,17 @@ export function planDeCuotas(pagos: PagoParaPlan[], hoy: Date = new Date()): Pla
 
   if (desde) {
     for (let n = ultimoNumero + 1; n <= cuotasTotal; n++) {
-      const fechaEsperada = addMonths(startOfDay(desde), n - ultimoNumero)
-      const vencida = fechaEsperada < inicioHoy
+      const fechaEsperada = addDays(startOfDay(desde), CICLO_DIAS * (n - ultimoNumero))
+      const diasCorridos = differenceInCalendarDays(inicioHoy, fechaEsperada)
+      // Solo se da por vencida pasada la gracia: marcarla en rojo al día
+      // siguiente sería gritar por un reintento que suele llegar solo.
+      const vencida = diasCorridos > GRACIA_DIAS
       esperadas.push({
         numero: n,
         monto: montoCuota,
         fechaEsperada,
         vencida,
-        diasAtraso: vencida ? differenceInCalendarDays(inicioHoy, fechaEsperada) : 0,
+        diasAtraso: vencida ? diasCorridos : 0,
       })
     }
   }

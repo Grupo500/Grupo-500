@@ -16,22 +16,10 @@ import {
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
 import { Select } from '@/components/ui/Select'
-import { isBefore, parseISO, isToday } from 'date-fns'
 import { TIPOS as TIPOS_CERTIFICADO, generarPDF, type Certificado, type Firmas } from '@/lib/certificados'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
-interface Cuota {
-  id: string; numero: number; monto: number
-  fechaVencimiento: string; pagado: boolean
-  fechaPago?: string; comprobante?: string
-  medioPago?: string; notas?: string
-}
-interface Financiamiento {
-  id: string; montoTotal: number
-  estado: 'ACTIVO' | 'COMPLETADO' | 'CANCELADO'
-  createdAt: string; cuotas: Cuota[]
-}
 interface Pago {
   id: string; monto: number
   estado: 'PENDIENTE' | 'PAGADO' | 'VENCIDO' | 'CANCELADO'
@@ -57,16 +45,12 @@ interface EstudianteDetalle {
   verificadoAt?: string | null
   cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; precioAcordado?: number | null; curso: { id: string; nombre: string; precio: number } }[]
   pagos?: Pago[]
-  financiamientos?: Financiamiento[]
   createdAt: string
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function esUrlValida(s: string | null | undefined): boolean {
   return !!s && /^https?:\/\//i.test(s.trim())
-}
-function esVencida(fechaVenc: string) {
-  return isBefore(parseISO(fechaVenc), new Date()) && !isToday(parseISO(fechaVenc))
 }
 function fmtFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })
@@ -102,385 +86,6 @@ const labelCls = 'block text-xs font-medium text-on-surface-variant mb-1'
 
 const MEDIOS_PAGO = ['Bancolombia', 'Bre-B', 'Nequi', 'Otro']
 
-// ══════════════════════════════════════════════════════════════════════════
-// COMPONENTE: FILA DE CUOTA (vista + edición inline)
-// ══════════════════════════════════════════════════════════════════════════
-function FilaCuota({ c, fetcher, onRefresh }: {
-  c: Cuota
-  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
-  onRefresh: () => void
-}) {
-  const [editando, setEditando] = useState(false)
-  const [monto, setMonto] = useState(String(Math.round(c.monto)))
-  const [fechaVenc, setFechaVenc] = useState(c.fechaVencimiento?.split('T')[0] ?? '')
-  const [fechaPago, setFechaPago] = useState(c.fechaPago?.split('T')[0] ?? '')
-  const [medioPago, setMedioPago] = useState(
-    MEDIOS_PAGO.includes(c.medioPago ?? '') ? (c.medioPago ?? 'Bancolombia') : 'Otro'
-  )
-  const [otroMedio, setOtroMedio] = useState(
-    MEDIOS_PAGO.includes(c.medioPago ?? '') ? '' : (c.medioPago ?? '')
-  )
-  const [comprobante, setComprobante] = useState(c.comprobante ?? '')
-  const [subiendo, setSubiendo] = useState(false)
-  const [error, setError] = useState('')
-
-  const vencida = !c.pagado && esVencida(c.fechaVencimiento)
-
-  const subirComp = async (file: File) => {
-    setSubiendo(true)
-    try {
-      const token = await getClientToken()
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
-      })
-      const json = await res.json()
-      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error')
-      setComprobante(json.data.url)
-    } catch (e: any) { setError(e.message ?? 'Error al subir') }
-    finally { setSubiendo(false) }
-  }
-
-  const medioFinal = medioPago === 'Otro' ? (otroMedio.trim() || 'Otro') : medioPago
-
-  const editarMutation = useMutation({
-    mutationFn: () => fetcher(`/cuotas/${c.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        monto: Number(monto),
-        fechaVencimiento: fechaVenc,
-        ...(c.pagado && { fechaPago, medioPago: medioFinal }),
-        ...(comprobante && { comprobante }),
-      }),
-    }),
-    onSuccess: () => { setEditando(false); setError(''); onRefresh() },
-    onError: (e: any) => setError(e.message ?? 'Error al guardar'),
-  })
-
-  if (editando) return (
-    <div className="px-3 py-3 rounded-xl border-2 border-primary/40 bg-primary/5 space-y-3">
-      <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Editando cuota #{c.numero}</p>
-      {/* Cuota pendiente: monto + vencimiento */}
-      {!c.pagado && (
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className={labelCls}>Monto</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
-              <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Vencimiento</label>
-            <input type="date" className={cn(inputCls, 'text-sm py-1.5 w-full')} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
-          </div>
-        </div>
-      )}
-
-      {/* Cuota pagada: fecha pago primero */}
-      {c.pagado && (
-        <>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelCls}>Fecha de pago</label>
-              <input type="date" className={cn(inputCls, 'text-sm py-1.5 w-full')} value={fechaPago} onChange={e => setFechaPago(e.target.value)} />
-            </div>
-            <div>
-              <label className={labelCls}>Monto</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
-                <NumericInput value={monto} onChange={setMonto} placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelCls}>Vencimiento</label>
-              <input type="date" className={cn(inputCls, 'text-sm py-1.5 w-full')} value={fechaVenc} onChange={e => setFechaVenc(e.target.value)} />
-            </div>
-            <div /></div>
-          <div>
-            <label className={labelCls}>Medio de pago</label>
-            <div className="flex gap-1.5">
-              {MEDIOS_PAGO.map(m => (
-                <button key={m} type="button" onClick={() => setMedioPago(m)}
-                  className={cn('flex-1 py-1.5 rounded-lg border-2 text-[11px] font-semibold transition-all cursor-pointer',
-                    medioPago === m ? 'border-primary bg-primary/8 text-primary' : 'border-outline-variant text-on-surface-variant hover:border-outline')}>
-                  {m}
-                </button>
-              ))}
-            </div>
-            {medioPago === 'Otro' && (
-              <input className={cn(inputCls, 'mt-1.5 text-sm')} placeholder="Especifica el medio..." value={otroMedio}
-                onChange={e => setOtroMedio(e.target.value)} />
-            )}
-          </div>
-          <div>
-            <label className={labelCls}>Comprobante</label>
-            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
-              <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
-                onChange={e => { const f = e.target.files?.[0]; if (f) subirComp(f); e.target.value = '' }} />
-              {subiendo ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-on-surface-variant" />}
-              <span className="text-xs text-on-surface-variant">{subiendo ? 'Subiendo...' : esUrlValida(comprobante) ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
-            </label>
-            <VerComprobante url={comprobante} label="Ver comprobante actual" className="mt-1" />
-          </div>
-        </>
-      )}
-
-      {error && <p className="text-xs text-[var(--error)]">{error}</p>}
-      <div className="flex gap-2 justify-end">
-        <button onClick={() => setEditando(false)} className="px-3 py-1 text-xs text-on-surface-variant hover:text-on-surface cursor-pointer">Cancelar</button>
-        <button onClick={() => editarMutation.mutate()} disabled={editarMutation.isPending}
-          className="flex items-center gap-1 px-3 py-1 bg-primary text-on-primary rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50">
-          {editarMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-          Guardar
-        </button>
-      </div>
-    </div>
-  )
-
-  return (
-    <div className={cn(
-      'flex items-center gap-3 px-3 py-2.5 rounded-xl border group',
-      c.pagado ? 'border-[#16a34a]/20 bg-[#16a34a]/4' :
-      vencida  ? 'border-[#dc2626]/25 bg-[#dc2626]/4' :
-                 'border-outline-variant/50 bg-surface-high/40',
-    )}>
-      <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-        c.pagado ? 'bg-[#16a34a]/15' : vencida ? 'bg-[#dc2626]/15' : 'bg-surface-high')}>
-        {c.pagado ? <CheckCircle className="w-3.5 h-3.5 text-[#16a34a]" />
-                  : vencida ? <AlertTriangle className="w-3.5 h-3.5 text-[#dc2626]" />
-                  : <span className="text-[10px] font-bold text-on-surface-variant">#{c.numero}</span>}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-on-surface">Cuota #{c.numero} · {formatCOP(c.monto)}</p>
-        <p className="text-[10px] text-on-surface-variant">
-          {c.pagado
-            ? `Pagado ${c.fechaPago ? fmtFecha(c.fechaPago) : ''}${c.medioPago ? ` · ${c.medioPago}` : ''}`
-            : `Vence ${fmtFecha(c.fechaVencimiento)}`}
-        </p>
-      </div>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <VerComprobante url={c.comprobante} variante="chip" />
-        <button onClick={() => setEditando(true)}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-surface-high transition-all cursor-pointer">
-          <Pencil className="w-3 h-3 text-on-surface-variant" />
-        </button>
-        {/* Revertir pago — solo cuotas pagadas */}
-        {c.pagado && (
-          <button
-            onClick={async () => {
-              if (!confirm('¿Revertir este abono? La cuota volverá a pendiente.')) return
-              const token = await getClientToken()
-              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cuotas/${c.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
-                body: JSON.stringify({ pagado: false }),
-              })
-              onRefresh()
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-[#dc2626]/10 transition-all cursor-pointer">
-            <Trash2 className="w-3 h-3 text-[#dc2626]" />
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ══════════════════════════════════════════════════════════════════════════
-// COMPONENTE: FORM ABONO
-// ══════════════════════════════════════════════════════════════════════════
-function FormAbono({ cuotasPendientes, fetcher, onSuccess }: {
-  cuotasPendientes: Cuota[]
-  fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
-  onSuccess: () => void
-}) {
-  type CuotaAbono = { cuotaId: string; numero: number; montoOrig: number; monto: string; fecha: string }
-  const [seleccionadas, setSeleccionadas] = useState<CuotaAbono[]>([])
-  const [medioPago, setMedioPago] = useState('Bancolombia')
-  const [otroMedio, setOtroMedio] = useState('')
-  const [comprobante, setComprobante] = useState('')
-  const [subiendo, setSubiendo] = useState(false)
-  const [error, setError] = useState('')
-  const hoy = new Date().toISOString().split('T')[0]
-
-  const toggleCuota = (c: Cuota) => {
-    setSeleccionadas(prev => {
-      const existe = prev.find(s => s.cuotaId === c.id)
-      if (existe) return prev.filter(s => s.cuotaId !== c.id)
-      return [...prev, { cuotaId: c.id, numero: c.numero, montoOrig: c.monto, monto: String(Math.round(c.monto)), fecha: hoy }]
-    })
-  }
-
-  const actualizarCuotaAbono = (cuotaId: string, field: 'monto' | 'fecha', value: string) => {
-    setSeleccionadas(prev => prev.map(s => s.cuotaId === cuotaId ? { ...s, [field]: value } : s))
-  }
-
-  const subirComprobante = async (file: File) => {
-    setSubiendo(true)
-    try {
-      const token = await getClientToken()
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token ?? ''}` }, body: fd,
-      })
-      const json = await res.json()
-      if (!res.ok || !json?.data?.url) throw new Error(json?.error ?? 'Error al subir')
-      setComprobante(json.data.url)
-    } catch (e: any) { setError(e.message ?? 'Error al subir')
-    } finally { setSubiendo(false) }
-  }
-
-  const medioFinal = medioPago === 'Otro' ? (otroMedio.trim() || 'Otro') : medioPago
-
-  const abonoMutation = useMutation({
-    mutationFn: async () => {
-      if (seleccionadas.length === 0) throw new Error('Selecciona al menos una cuota')
-      if (seleccionadas.some(s => !s.monto || Number(s.monto) <= 0)) throw new Error('Ingresa el monto de cada cuota seleccionada')
-      if (seleccionadas.some(s => !s.fecha)) throw new Error('Ingresa la fecha de pago de cada cuota')
-      await Promise.all(
-        seleccionadas.map(s =>
-          fetcher(`/cuotas/${s.cuotaId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({
-              pagado: true,
-              fechaPago: s.fecha,
-              monto: Number(s.monto),
-              medioPago: medioFinal,
-              ...(comprobante && { comprobante }),
-            }),
-          })
-        )
-      )
-    },
-    onSuccess: () => {
-      setSeleccionadas([]); setComprobante(''); setError(''); setOtroMedio('')
-      onSuccess()
-    },
-    onError: (e: any) => setError(e.message ?? 'Error al registrar abono'),
-  })
-
-  const totalAbono = seleccionadas.reduce((s, c) => s + (Number(c.monto) || 0), 0)
-
-  if (cuotasPendientes.length === 0) return (
-    <div className="flex flex-col items-center justify-center py-8 text-on-surface-variant">
-      <CheckCircle className="w-8 h-8 mb-2 text-[#16a34a] opacity-60" />
-      <p className="text-sm">Todas las cuotas están pagadas</p>
-    </div>
-  )
-
-  return (
-    <div className="space-y-4 pt-3 border-t border-outline-variant/40">
-      <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Registrar abono</p>
-
-      {/* Selección de cuotas */}
-      <div className="space-y-1.5">
-        <p className="text-[11px] text-on-surface-variant">Seleccioná las cuotas a saldar</p>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
-          {cuotasPendientes.map(c => {
-            const sel = seleccionadas.find(s => s.cuotaId === c.id)
-            const vencida = esVencida(c.fechaVencimiento)
-            return (
-              <div key={c.id} className="space-y-2">
-                <button type="button" onClick={() => toggleCuota(c)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all duration-150 cursor-pointer',
-                    sel     ? 'border-primary bg-primary/8' :
-                    vencida ? 'border-[#dc2626]/30 bg-[#dc2626]/4 hover:border-[#dc2626]/50' :
-                              'border-outline-variant/60 bg-surface-high hover:border-outline-variant',
-                  )}>
-                  <div className={cn('w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors',
-                    sel ? 'bg-primary border-primary' : 'border-outline-variant bg-surface-lowest')}>
-                    {sel && <CheckCircle className="w-2.5 h-2.5 text-white" />}
-                  </div>
-                  <span className={cn('text-[11px] font-bold w-5 text-center flex-shrink-0',
-                    sel ? 'text-primary' : vencida ? 'text-[#dc2626]' : 'text-on-surface-variant')}>
-                    #{c.numero}
-                  </span>
-                  <span className="text-[13px] font-bold text-on-surface tabular-nums flex-1">{formatCOP(c.monto)}</span>
-                  <div className="text-right">
-                    <p className="text-[11px] text-on-surface-variant">{fmtFecha(c.fechaVencimiento)}</p>
-                    {vencida && <p className="text-[9px] font-bold text-[#dc2626]">VENCIDA</p>}
-                  </div>
-                </button>
-
-                {/* Campos de monto y fecha por cuota seleccionada */}
-                {sel && (
-                  <div className="grid grid-cols-2 gap-2 pl-2">
-                    <div>
-                      <label className={labelCls}>Monto pagado *</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
-                        <NumericInput value={sel.monto} onChange={v => actualizarCuotaAbono(c.id, 'monto', v)}
-                          placeholder="0" className={cn(inputCls, 'pl-6 text-sm py-1.5')} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelCls}>Fecha de pago *</label>
-                      <input type="date" className={cn(inputCls, 'text-sm py-1.5')} value={sel.fecha}
-                        onChange={e => actualizarCuotaAbono(c.id, 'fecha', e.target.value)} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Total seleccionado */}
-      {seleccionadas.length > 0 && (
-        <div className="flex items-center justify-between px-3 py-2 bg-primary/6 rounded-xl border border-primary/20">
-          <span className="text-[12px] font-medium text-on-surface-variant">{seleccionadas.length} cuota{seleccionadas.length !== 1 ? 's' : ''} · Total abono</span>
-          <span className="text-[14px] font-bold text-primary tabular-nums">{formatCOP(totalAbono)}</span>
-        </div>
-      )}
-
-      {/* Medio de pago */}
-      <div>
-        <label className={labelCls}>Medio de pago *</label>
-        <div className="flex gap-2">
-          {MEDIOS_PAGO.map(m => (
-            <button key={m} type="button" onClick={() => setMedioPago(m)}
-              className={cn('flex-1 py-2 rounded-lg border-2 text-xs font-semibold transition-all cursor-pointer',
-                medioPago === m ? 'border-primary bg-primary/8 text-primary' : 'border-outline-variant text-on-surface-variant hover:border-outline-variant/80')}>
-              {m}
-            </button>
-          ))}
-        </div>
-        {medioPago === 'Otro' && (
-          <input className={cn(inputCls, 'mt-2')} placeholder="Especifica el medio de pago..." value={otroMedio}
-            onChange={e => setOtroMedio(e.target.value)} />
-        )}
-      </div>
-
-      {/* Comprobante */}
-      <div>
-        <label className={labelCls}>Comprobante (opcional)</label>
-        <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface-high border border-outline-variant rounded-lg hover:bg-surface-high/80 transition-colors">
-          <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo}
-            onChange={e => { const f = e.target.files?.[0]; if (f) subirComprobante(f); e.target.value = '' }} />
-          {subiendo ? <Loader2 className="w-4 h-4 text-primary animate-spin" /> : <Paperclip className="w-4 h-4 text-on-surface-variant" />}
-          <span className="text-sm text-on-surface-variant">{subiendo ? 'Subiendo...' : esUrlValida(comprobante) ? '✓ Comprobante adjunto' : 'Adjuntar comprobante'}</span>
-        </label>
-        <VerComprobante url={comprobante} className="mt-1" />
-      </div>
-
-      {error && <p className="text-xs text-[var(--error)] bg-[var(--error-container)]/40 border border-[var(--error)]/20 rounded-lg px-3 py-2">{error}</p>}
-
-      <button onClick={() => abonoMutation.mutate()}
-        disabled={abonoMutation.isPending || seleccionadas.length === 0}
-        className="flex items-center gap-2 w-full justify-center py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer">
-        {abonoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-        Registrar abono ({seleccionadas.length} cuota{seleccionadas.length !== 1 ? 's' : ''})
-      </button>
-    </div>
-  )
-}
-
-// ══════════════════════════════════════════════════════════════════════════
 // TAB: PERFIL
 // ══════════════════════════════════════════════════════════════════════════
 function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh }: {
@@ -1165,10 +770,8 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
   cursos: { id: string; nombre: string; precio: number }[]
   isAdmin: boolean
 }) {
-  const financiamientos = e.financiamientos ?? []
   const pagos = e.pagos ?? []
   const hoy = new Date()
-  const [abonoAbierto, setAbonoAbierto] = useState(false)
 
   const cursoEst = e.cursos?.[0]
 
@@ -1205,31 +808,25 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
   // ── Cálculos con descuento aplicado ──────────────────────────────────────
   const totalGeneral   = cursoEst
     ? precioConDescuento
-    : financiamientos.reduce((s, f) => s + f.montoTotal, 0) + pagos.reduce((s, p) => s + p.monto, 0)
+    : pagos.reduce((s, p) => s + p.monto, 0)
 
   // Compras a plazos: las cuotas que Hotmart aún no ha cobrado no existen como
   // registro, así que se derivan aquí. Se recalcula en cada render, de modo que
   // el atraso siempre corresponde al día de hoy sin depender de ningún proceso.
   const plan = planDeCuotas(pagos)
 
-  const pagadoFin      = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-  const pagadoPagosDir = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0)
-  const totalPagado    = pagadoFin + pagadoPagosDir
+  const totalPagado    = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0)
   // Con plan a plazos lo pendiente es lo que falta por cobrar, que es más fiel
   // que restar del precio del curso: puede haber diferencias de redondeo.
   const totalPendiente = plan.enPlazos ? plan.pendiente : Math.max(0, totalGeneral - totalPagado)
   const progreso       = totalGeneral > 0 ? Math.min(100, (totalPagado / totalGeneral) * 100) : 0
   const totalMora      = plan.mora
-    + financiamientos.flatMap(f => f.cuotas).filter(c =>
-        !c.pagado && isBefore(parseISO(c.fechaVencimiento), hoy) && !isToday(parseISO(c.fechaVencimiento))
-      ).reduce((s, c) => s + c.monto, 0)
     + pagos.filter(p => p.estado === 'VENCIDO').reduce((s, p) => s + p.monto, 0)
 
-  const cuotasPendientes = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado))
   const [nuevoPagoAbierto, setNuevoPagoAbierto] = useState(false)
 
-  // Sin curso ni pagos ni financiamientos → realmente vacío
-  if (!cursoEst && financiamientos.length === 0 && pagos.length === 0) return (
+  // Sin curso ni pagos → realmente vacío
+  if (!cursoEst && pagos.length === 0) return (
     <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
       <Wallet className="w-10 h-10 mb-3 opacity-30" />
       <p className="text-sm">Sin información financiera registrada</p>
@@ -1381,27 +978,6 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
         </section>
       )}
 
-      {/* Financiamientos */}
-      {financiamientos.map(fin => (
-        <section key={fin.id} className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-              Financiamiento · {formatCOP(fin.montoTotal)}
-            </p>
-            <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full',
-              fin.estado === 'COMPLETADO' ? 'bg-[#16a34a]/12 text-[#16a34a]' :
-              fin.estado === 'CANCELADO'  ? 'bg-[#dc2626]/12 text-[#dc2626]' :
-              'bg-primary/10 text-primary')}>
-              {fin.estado}
-            </span>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
-            {fin.cuotas.map(c => (
-              <FilaCuota key={c.id} c={c} fetcher={fetcher} onRefresh={onRefresh} />
-            ))}
-          </div>
-        </section>
-      ))}
 
       {/* Pagos directos */}
       {pagos.length > 0 && (
@@ -1437,29 +1013,6 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
         )}
       </div>
 
-      {/* ── Sección Abonos ── */}
-      {cuotasPendientes.length > 0 && (
-        <div className="rounded-2xl border border-outline-variant overflow-hidden">
-          <button onClick={() => setAbonoAbierto(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-surface-high hover:bg-surface-highest transition-colors cursor-pointer">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-on-surface">Registrar abono</span>
-              <span className="text-[11px] text-on-surface-variant">· {cuotasPendientes.length} cuota{cuotasPendientes.length !== 1 ? 's' : ''} pendiente{cuotasPendientes.length !== 1 ? 's' : ''}</span>
-            </div>
-            {abonoAbierto ? <ChevronUp className="w-4 h-4 text-on-surface-variant" /> : <ChevronDown className="w-4 h-4 text-on-surface-variant" />}
-          </button>
-          {abonoAbierto && (
-            <div className="px-4 pb-4">
-              <FormAbono
-                cuotasPendientes={cuotasPendientes}
-                fetcher={fetcher}
-                onSuccess={() => { setAbonoAbierto(false); onRefresh() }}
-              />
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
@@ -1706,7 +1259,6 @@ export default function EstudianteDetallePage() {
   )
 
   const curso = e.cursos?.[0]?.curso
-  const financiamientos = e.financiamientos ?? []
   const pagos = e.pagos ?? []
 
   // ── Cálculo de estado financiero real ──────────────────────────────────
@@ -1714,26 +1266,18 @@ export default function EstudianteDetallePage() {
   const precioBase    = cursoEst ? (cursoEst.precioAcordado ?? cursoEst.curso.precio) : 0
   const totalGeneral  = cursoEst
     ? precioBase
-    : financiamientos.reduce((s, f) => s + f.montoTotal, 0) +
-      pagos.filter(p => p.estado !== 'CANCELADO').reduce((s, p) => s + p.monto, 0)
-  const pagadoFin     = financiamientos.flatMap(f => f.cuotas).filter(c => c.pagado).reduce((s, c) => s + c.monto, 0)
-  const pagadoDir     = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0)
-  const totalPagado   = pagadoFin + pagadoDir
+    : pagos.filter(p => p.estado !== 'CANCELADO').reduce((s, p) => s + p.monto, 0)
+  const totalPagado   = pagos.filter(p => p.estado === 'PAGADO').reduce((s, p) => s + montoPagadoPago(p), 0)
   const saldoPend     = Math.max(0, totalGeneral - totalPagado)
 
-  // Hay mora si una cuota del plan a plazos ya debió cobrarse y no llegó, si
-  // alguna cuota de financiamiento venció, o si hay un pago marcado VENCIDO.
+  // Hay mora si una cuota del plan a plazos ya debió cobrarse y no llegó,
+  // o si hay un pago marcado VENCIDO.
   const planResumen = planDeCuotas(pagos)
-  const hasMora = planResumen.mora > 0
-    || financiamientos.flatMap(f => f.cuotas).some(c =>
-        !c.pagado && isBefore(parseISO(c.fechaVencimiento), new Date()) && !isToday(parseISO(c.fechaVencimiento))
-      )
-    || pagos.some(p => p.estado === 'VENCIDO')
+  const hasMora = planResumen.mora > 0 || pagos.some(p => p.estado === 'VENCIDO')
 
   // Pendientes sin mora: cualquier cuota/pago sin pagar, o saldo del curso sin cubrir
-  const cuotasPend = financiamientos.flatMap(f => f.cuotas.filter(c => !c.pagado)).length
   const pagosPend  = pagos.filter(p => p.estado === 'PENDIENTE' || p.estado === 'VENCIDO').length
-  const totalPend  = cuotasPend + pagosPend + planResumen.esperadas.length
+  const totalPend  = pagosPend + planResumen.esperadas.length
 
   // Estado final: "Al día" solo si el saldo está completamente cubierto
   const tieneSaldo     = saldoPend > 0   // hay deuda aunque sea sin fecha
