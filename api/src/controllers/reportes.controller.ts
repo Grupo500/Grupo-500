@@ -498,49 +498,100 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
   const porGestionar: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; metodo: string | null }[] = []
   const porAutomatico: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; cuotaNumero: number; cuotasTotal: number; metodo: string | null }[] = []
 
+  // Un estudiante puede tener varios cursos. Antes cada inscripción restaba
+  // TODOS los pagos del estudiante de su propio precio, así que lo pagado por
+  // el curso A también "saldaba" el curso B: la tarjeta ocultaba $2,6M de
+  // deuda real repartida en 7 estudiantes cuando se auditó. Cada pago se
+  // asigna al curso cuya fecha de compra queda más cerca de la del pago —
+  // el mismo emparejamiento que usan cuotas() y backfillCuotas.ts.
+  const porEstudiante = new Map<string, typeof inscripciones>()
   for (const ins of inscripciones) {
-    const precio = ins.precioAcordado ?? ins.curso.precio ?? 0
-    if (!precio) continue
+    const lista = porEstudiante.get(ins.estudiante.id)
+    if (lista) lista.push(ins)
+    else porEstudiante.set(ins.estudiante.id, [ins])
+  }
 
-    const pagados = ins.estudiante.pagos.filter(p => p.estado === 'PAGADO')
-    const pagado = pagados.reduce((s, p) => s + montoPagadoPago(p), 0)
-    const saldo = Math.round(precio - pagado)
-    if (saldo <= UMBRAL) continue
+  for (const [, cursosDelEst] of porEstudiante) {
+    const pagados = cursosDelEst[0].estudiante.pagos.filter(p => p.estado === 'PAGADO')
 
-    const cuota = pagados.find(p => p.enPartes && (p.cuotasTotal ?? 0) > 1)
-    if (cuota) {
-      automatico.monto += saldo
-      automatico.estudiantes++
-      const faltan = (cuota.cuotasTotal ?? 0) - (cuota.cuotaNumero ?? 1)
-      if (faltan > 0) cuotasFaltantes[faltan] = (cuotasFaltantes[faltan] ?? 0) + 1
-      porAutomatico.push({
-        estudianteId: ins.estudiante.id,
-        nombre: ins.estudiante.nombre,
-        telefono: ins.estudiante.telefono,
-        curso: ins.curso.nombre,
-        saldo,
-        asesor: ins.estudiante.asesor?.nombre ?? null,
-        cuotaNumero: cuota.cuotaNumero ?? 1,
-        cuotasTotal: cuota.cuotasTotal ?? 1,
-        metodo: cuota.metodo,
+    const pagosPorCurso: (typeof pagados)[] = cursosDelEst.map(() => [])
+    for (const p of pagados) {
+      let mejor = 0
+      let mejorDist = Infinity
+      cursosDelEst.forEach((ins, i) => {
+        if (!ins.fechaCompra) return
+        const dist = Math.abs(ins.fechaCompra.getTime() - (p.fechaPago?.getTime() ?? 0))
+        if (dist < mejorDist) { mejorDist = dist; mejor = i }
       })
-    } else {
-      gestion.monto += saldo
-      gestion.estudiantes++
-      // El más reciente, para reflejar cómo pagó el último abono si hubo varios.
-      const ultimoPago = [...pagados].sort(
-        (a, b) => (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
-      )[0]
-      porGestionar.push({
-        estudianteId: ins.estudiante.id,
-        nombre: ins.estudiante.nombre,
-        telefono: ins.estudiante.telefono,
-        curso: ins.curso.nombre,
-        saldo,
-        asesor: ins.estudiante.asesor?.nombre ?? null,
-        metodo: ultimoPago?.metodo ?? null,
-      })
+      pagosPorCurso[mejor].push(p)
     }
+
+    cursosDelEst.forEach((ins, i) => {
+      const pagosCurso = pagosPorCurso[i]
+      const pagado = pagosCurso.reduce((s, p) => s + montoPagadoPago(p), 0)
+
+      // La cuota más avanzada del curso, si es una venta a plazos.
+      const cuota = pagosCurso
+        .filter(p => p.enPartes && (p.cuotasTotal ?? 0) > 1)
+        .sort((a, b) => {
+          const ca = a.cuotaNumero ?? 0, cb = b.cuotaNumero ?? 0
+          if (ca !== cb) return cb - ca
+          return (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
+        })[0]
+
+      // El total a cobrar: en un plan a cuotas manda el valor real de la cuota
+      // × cantidad de cuotas — el MISMO criterio que el módulo de Cuotas y que
+      // la ficha del estudiante, para que las tres pantallas den una sola
+      // cifra (precioAcordado ya demostró quedar mal guardado a veces). Solo
+      // las compras de contado usan el precio acordado.
+      const precioLista = ins.precioAcordado ?? ins.curso.precio ?? 0
+      const total = cuota ? Math.round(cuota.monto * (cuota.cuotasTotal ?? 1)) : precioLista
+      if (!total) return
+
+      const saldo = Math.round(total - pagado)
+      if (saldo <= UMBRAL) return
+
+      if (cuota) {
+        const cuotasTotal = cuota.cuotasTotal ?? 1
+        // El progreso real puede ir más allá de lo que reportó Hotmart si hubo
+        // abonos manuales: mismo ajuste que hace cuotas().
+        const cuotaNumero = Math.min(
+          cuotasTotal,
+          Math.max(cuota.cuotaNumero ?? 1, Math.round(pagado / cuota.monto)),
+        )
+        automatico.monto += saldo
+        automatico.estudiantes++
+        const faltan = cuotasTotal - cuotaNumero
+        if (faltan > 0) cuotasFaltantes[faltan] = (cuotasFaltantes[faltan] ?? 0) + 1
+        porAutomatico.push({
+          estudianteId: ins.estudiante.id,
+          nombre: ins.estudiante.nombre,
+          telefono: ins.estudiante.telefono,
+          curso: ins.curso.nombre,
+          saldo,
+          asesor: ins.estudiante.asesor?.nombre ?? null,
+          cuotaNumero,
+          cuotasTotal,
+          metodo: cuota.metodo,
+        })
+      } else {
+        gestion.monto += saldo
+        gestion.estudiantes++
+        // El más reciente, para reflejar cómo pagó el último abono si hubo varios.
+        const ultimoPago = [...pagosCurso].sort(
+          (a, b) => (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
+        )[0]
+        porGestionar.push({
+          estudianteId: ins.estudiante.id,
+          nombre: ins.estudiante.nombre,
+          telefono: ins.estudiante.telefono,
+          curso: ins.curso.nombre,
+          saldo,
+          asesor: ins.estudiante.asesor?.nombre ?? null,
+          metodo: ultimoPago?.metodo ?? null,
+        })
+      }
+    })
   }
 
   porGestionar.sort((a, b) => b.saldo - a.saldo)
