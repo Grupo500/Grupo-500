@@ -46,27 +46,30 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
   const variar = (actual: number, previo: number) =>
     previo > 0 ? Math.round(((actual - previo) / previo) * 100) : null
 
+  // El ícono usa el azul del sistema, igual que Nuevos estudiantes y Cursos
+  // más vendidos: es identificación de la tarjeta, no un estado. Darle un
+  // color propio a cada una hacía que la fila se leyera como un semáforo.
   const cards = [
     {
       label: 'Comisión Hotmart', valor: d.comisionHotmart, negativo: true,
-      Icon: Landmark, iconColor: isDark ? '#94a3b8' : '#64748b',
+      Icon: Landmark,
       variacion: variar(d.comisionHotmart, dAnt.comisionHotmart), juicio: false,
     },
     {
       label: 'Comisión asesores', valor: d.comisionAsesor, negativo: true,
-      Icon: Users, iconColor: isDark ? '#c4b5fd' : '#6d28d9',
+      Icon: Users,
       variacion: variar(d.comisionAsesor, dAnt.comisionAsesor), juicio: false,
     },
     {
       label: 'Neto recibido', valor: d.neto, negativo: false,
-      Icon: Wallet, iconColor: isDark ? '#6ee7b7' : '#15803d',
+      Icon: Wallet,
       variacion: variar(d.neto, dAnt.neto), juicio: true,
     },
   ]
 
   return (
     <div className="grid grid-cols-2 md:flex md:flex-col gap-3 md:h-full">
-      {cards.map(({ label, valor, iconColor, Icon, negativo, variacion, juicio }, i) => {
+      {cards.map(({ label, valor, Icon, negativo, variacion, juicio }, i) => {
         const esNeto = i === 2
         // "juicio" = subir es objetivamente bueno/malo (Neto recibido). En las
         // comisiones subir puede ser una buena señal (vendiste más) o no —
@@ -84,8 +87,8 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
           <div key={label}
             className={`card p-4 flex flex-col justify-center items-center text-center md:items-stretch md:text-left md:flex-1 ${esNeto ? 'col-span-2 md:col-span-1' : ''}`}>
             <div className="flex items-center gap-2 mb-2 justify-center md:justify-start">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${iconColor}1f` }}>
-                <Icon className="w-3.5 h-3.5" style={{ color: iconColor }} />
+              <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center shrink-0">
+                <Icon className="w-3.5 h-3.5 text-primary" />
               </div>
               <span className="text-[11px] font-medium text-on-surface-variant leading-tight">{label}</span>
             </div>
