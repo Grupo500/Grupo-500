@@ -53,28 +53,27 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
     {
       label: 'Comisión Hotmart', valor: d.comisionHotmart, negativo: true,
       Icon: Landmark,
-      variacion: variar(d.comisionHotmart, dAnt.comisionHotmart), juicio: false,
+      variacion: variar(d.comisionHotmart, dAnt.comisionHotmart),
     },
     {
       label: 'Comisión asesores', valor: d.comisionAsesor, negativo: true,
       Icon: Users,
-      variacion: variar(d.comisionAsesor, dAnt.comisionAsesor), juicio: false,
+      variacion: variar(d.comisionAsesor, dAnt.comisionAsesor),
     },
     {
       label: 'Neto recibido', valor: d.neto, negativo: false,
       Icon: Wallet,
-      variacion: variar(d.neto, dAnt.neto), juicio: true,
+      variacion: variar(d.neto, dAnt.neto),
     },
   ]
 
   return (
     <div className="grid grid-cols-2 md:flex md:flex-col gap-3 md:h-full">
-      {cards.map(({ label, valor, Icon, negativo, variacion, juicio }, i) => {
+      {cards.map(({ label, valor, Icon, negativo, variacion }, i) => {
         const esNeto = i === 2
-        // "juicio" = subir es objetivamente bueno/malo (Neto recibido). En las
-        // comisiones subir puede ser una buena señal (vendiste más) o no —
-        // el dato no alcanza para decidirlo, así que el delta queda neutro.
-        const deltaColor = !juicio || variacion == null || variacion === 0
+        // Mismo código de color que el resto del dashboard (Nuevos
+        // estudiantes, Total facturado): sube en verde, baja en rojo.
+        const deltaColor = variacion == null || variacion === 0
           ? 'var(--on-surface-variant)'
           : variacion > 0 ? (isDark ? '#6ee7b7' : '#16a34a') : (isDark ? '#f87171' : '#dc2626')
         const deltaTexto = variacion == null
@@ -90,7 +89,7 @@ export function ComisionesKpis({ desde, hasta }: { desde: string; hasta: string 
               <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center shrink-0">
                 <Icon className="w-3.5 h-3.5 text-primary" />
               </div>
-              <span className="text-[11px] font-medium text-on-surface-variant leading-tight">{label}</span>
+              <span className="text-[12px] font-semibold text-on-surface leading-tight">{label}</span>
             </div>
             {isLoading ? (
               <>
