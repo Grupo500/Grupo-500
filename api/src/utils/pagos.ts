@@ -18,6 +18,21 @@ export function montoPagadoPago(p: PagoConCuotas): number {
   return p.monto
 }
 
+// Comisión del asesor sobre un pago que entra por fuera de Hotmart (Nequi,
+// transferencia, efectivo): 3% del monto, la misma tarifa que maneja el
+// negocio en Hotmart (definida por David, ago-2026). Los pagos de Hotmart NO
+// pasan por aquí: traen su desglose real en USD vía backfillComisiones.
+export const COMISION_ASESOR_DIRECTO = 0.03
+
+// Desglose de un pago directo. Sin Hotmart de intermediario no hay comisión
+// de plataforma, así que el neto es el monto menos la comisión del asesor.
+// Sin asesor atribuido la comisión es 0 (no null: null significa "falta por
+// calcular" y dispararía reintentos del backfill de Hotmart).
+export function desgloseDirecto(monto: number, tieneAsesor: boolean) {
+  const comisionAsesor = tieneAsesor ? Math.round(monto * COMISION_ASESOR_DIRECTO) : 0
+  return { comisionHotmart: 0, comisionAsesor, montoNeto: monto - comisionAsesor }
+}
+
 // Cuánto puede desviarse un abono del valor de la cuota para seguir
 // considerándose esa cuota. Hotmart convierte de USD y la TRM cambia día a
 // día, así que el mismo plan cobra montos que difieren en algunos pesos.

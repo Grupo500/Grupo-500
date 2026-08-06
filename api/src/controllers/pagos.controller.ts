@@ -4,7 +4,7 @@ import { ApiResponse, parsePagination } from '../utils/response'
 import { ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
-import { cuotaQueSalda } from '../utils/pagos'
+import { cuotaQueSalda, desgloseDirecto } from '../utils/pagos'
 import { z } from 'zod'
 
 const registrarSchema = z.object({
@@ -121,6 +121,9 @@ export async function registrar(req: Request, res: Response) {
       fechaVencimiento: fechaAbono,
       ...(req.asesorId && { asesorId: req.asesorId }),
       ...(cuota && { enPartes: true, cuotaNumero: cuota.cuotaNumero, cuotasTotal: cuota.cuotasTotal }),
+      // Un pago directo no pasa por el backfill de Hotmart: su desglose
+      // (comisión del asesor 3%, neto) se calcula aquí o no existiría nunca.
+      ...desgloseDirecto(data.monto, !!req.asesorId),
     },
     include: { estudiante: true },
   })
@@ -144,10 +147,22 @@ export async function actualizar(req: Request, res: Response) {
   const { id } = req.params
   const data = actualizarSchema.parse(req.body)
 
+  // Si cambia el monto de un pago directo (sin referencia de Hotmart), el
+  // desglose de comisión/neto se recalcula con él para no quedar desfasado.
+  // Los pagos de Hotmart no se tocan: su desglose viene de la API en USD.
+  let nuevoDesglose = {}
+  if (data.monto !== undefined) {
+    const previo = await prisma.pago.findUnique({
+      where: { id }, select: { referenciaPago: true, asesorId: true },
+    })
+    if (previo && !previo.referenciaPago) nuevoDesglose = desgloseDirecto(data.monto, !!previo.asesorId)
+  }
+
   const pago = await prisma.pago.update({
     where: { id },
     data: {
       ...(data.monto !== undefined           && { monto: data.monto }),
+      ...nuevoDesglose,
       ...(data.metodo                        && { metodo: data.metodo }),
       ...(data.estado                        && { estado: data.estado }),
       ...(data.fechaVencimiento              && { fechaVencimiento: new Date(data.fechaVencimiento) }),
