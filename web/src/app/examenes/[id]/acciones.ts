@@ -78,9 +78,19 @@ export async function finalizarSesion1(
   const actual = (intento?.respuestas as Record<string, unknown>) ?? {}
   const merged = { ...actual, s1: respuestas } as Prisma.InputJsonValue
 
+  // Cerrar el cronómetro de la sesión: acumular lo transcurrido deja registrado
+  // el tiempo total real, incluido el adicional después de llegar a 0:00.
+  const cierreReloj = intento?.sesion1IniciadoEn
+    ? {
+        sesion1ConsumidoSeg: intento.sesion1ConsumidoSeg +
+          Math.max(0, Math.floor((Date.now() - intento.sesion1IniciadoEn.getTime()) / 1000)),
+        sesion1IniciadoEn: null,
+      }
+    : {}
+
   await prisma.intentoExamen.update({
     where: { estudianteId_examenId: { estudianteId: estudId, examenId } },
-    data: { respuestas: merged, sesionActual: 2 },
+    data: { respuestas: merged, sesionActual: 2, ...cierreReloj },
   })
 
   redirect(`/examenes/${examenId}?sesion=2`)
@@ -117,6 +127,15 @@ export async function finalizarSimulacro(
     respPlanas
   )
 
+  // Igual que en la sesión 1: dejar registrado el tiempo total, incluido el adicional
+  const cierreReloj = intento?.sesion2IniciadoEn
+    ? {
+        sesion2ConsumidoSeg: intento.sesion2ConsumidoSeg +
+          Math.max(0, Math.floor((Date.now() - intento.sesion2IniciadoEn.getTime()) / 1000)),
+        sesion2IniciadoEn: null,
+      }
+    : {}
+
   await prisma.intentoExamen.update({
     where: { estudianteId_examenId: { estudianteId: estudId, examenId } },
     data: {
@@ -125,8 +144,33 @@ export async function finalizarSimulacro(
       correctas: resultado.correctasTotal,
       total: resultado.total,
       finalizadoAt: new Date(),
+      ...cierreReloj,
     },
   })
 
   redirect(`/examenes/${examenId}/resultado`)
+}
+
+// Guarda los subrayados del estudiante (PRD §8.5): mapa de bloque de texto →
+// rangos [inicio, fin] sobre el texto plano del bloque. Viven dentro del JSON
+// `respuestas` bajo la clave `sub`, junto a s1/s2 (el calificador solo lee s1/s2).
+export async function guardarSubrayados(
+  examenId: number,
+  subrayados: Record<string, [number, number][]>
+): Promise<void> {
+  const estudId = await estudianteActual()
+  if (!estudId) return
+
+  const intento = await prisma.intentoExamen.findUnique({
+    where: { estudianteId_examenId: { estudianteId: estudId, examenId } },
+  })
+  if (!intento || intento.finalizadoAt) return
+
+  const actual = (intento.respuestas as Record<string, unknown>) ?? {}
+  const merged = { ...actual, sub: subrayados } as Prisma.InputJsonValue
+
+  await prisma.intentoExamen.update({
+    where: { estudianteId_examenId: { estudianteId: estudId, examenId } },
+    data: { respuestas: merged },
+  })
 }

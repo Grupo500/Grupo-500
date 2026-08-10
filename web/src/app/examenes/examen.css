@@ -259,3 +259,15 @@
     transform: none !important;
   }
 }
+
+/* ── Subrayado del estudiante (PRD §8.5) ─────────────────────────────────── */
+/* Pintado con la CSS Custom Highlight API (registro "sub-examen") */
+::highlight(sub-examen) {
+  background-color: #ffe873;
+  color: inherit;
+}
+/* En modo resaltador la selección se previsualiza del mismo amarillo */
+.examen-sim .modo-resaltar ::selection {
+  background: #ffe873;
+  color: inherit;
+}

@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import ExamenCliente from './ExamenCliente'
-import { finalizarSesion1, finalizarSimulacro } from './acciones'
 
 // Misma lógica que simulacros-grupo500/src/app/simulacro/[id]/page.tsx,
 // portada a Prisma/NextAuth en vez de Supabase/cookie propia.
@@ -63,7 +62,10 @@ export default async function PaginaExamen({
   }
   const sesion = sesionSolicitada as 1 | 2
 
-  // Cronómetro pausable de la sesión (si el examen tiene duración por sesión configurada)
+  // Cronómetro pausable de la sesión (si el examen tiene duración por sesión configurada).
+  // Al agotarse NO se cierra la sesión: el restante se vuelve negativo y el cliente
+  // lo muestra en rojo contando el tiempo adicional (PRD §8.3). El tiempo total,
+  // incluido el extra, queda registrado al finalizar cada sesión.
   const duracionSesionSeg = examen.duracionMin ? examen.duracionMin * 60 : null
   let segundosRestantes: number | null = null
 
@@ -71,20 +73,7 @@ export default async function PaginaExamen({
     const iniciadoEn = sesion === 1 ? intento.sesion1IniciadoEn : intento.sesion2IniciadoEn
     const consumido = sesion === 1 ? intento.sesion1ConsumidoSeg : intento.sesion2ConsumidoSeg
     const enCurso = iniciadoEn ? Math.floor((Date.now() - iniciadoEn.getTime()) / 1000) : 0
-    const restante = Math.max(0, duracionSesionSeg - (consumido + enCurso))
-    const sesionYaCerrada = sesion === 1 ? (intento.sesionActual ?? 1) >= 2 : !!intento.finalizadoAt
-
-    if (restante <= 0 && !sesionYaCerrada) {
-      // Se acabó el tiempo mientras el estudiante no estaba: cerrar con lo ya contestado
-      const todasRespGuardadas = (intento.respuestas as Record<string, Record<string, string>>) ?? {}
-      const guardadas = todasRespGuardadas[`s${sesion}`] ?? {}
-      if (sesion === 1) {
-        await finalizarSesion1(examId, guardadas)
-      } else {
-        await finalizarSimulacro(examId, guardadas)
-      }
-      // finalizarSesion1/finalizarSimulacro hacen redirect() internamente: no sigue ejecución
-    }
+    const restante = duracionSesionSeg - (consumido + enCurso) // negativo = tiempo adicional
 
     if (!iniciadoEn) {
       // (Re)activar el cronómetro: primera entrada a la sesión o reanudando tras una pausa
@@ -124,9 +113,10 @@ export default async function PaginaExamen({
     imagen_url: p.imagenUrl,
   }))
 
-  // Respuestas previas de esta sesión
-  const todasResp = (intento.respuestas as Record<string, Record<string, string>>) ?? {}
-  const respPrevias: Record<string, string> = todasResp[`s${sesion}`] ?? {}
+  // Respuestas y subrayados previos de esta sesión
+  const todasResp = (intento.respuestas as Record<string, unknown>) ?? {}
+  const respPrevias = (todasResp[`s${sesion}`] as Record<string, string>) ?? {}
+  const subrayadosPrevios = (todasResp.sub as Record<string, [number, number][]>) ?? {}
 
   return (
     <ExamenCliente
@@ -135,6 +125,7 @@ export default async function PaginaExamen({
       sesion={sesion}
       preguntas={preguntas}
       respuestasPrevias={respPrevias}
+      subrayadosPrevios={subrayadosPrevios}
       segundosRestantesInicial={segundosRestantes}
     />
   )

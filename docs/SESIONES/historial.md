@@ -1209,7 +1209,15 @@ David aprobó el PRD (se mantiene el login por documento, sin OTP) y se construy
 - Para migrar desde local: la `DATABASE_URL` del servicio Backend apunta a `postgres.railway.internal` (no resuelve fuera de Railway). Hay que usar `DATABASE_PUBLIC_URL` del servicio **Postgres** (`railway variables --service Postgres --kv`) y exportar también `DIRECT_URL` (el schema la exige).
 - El typecheck de web se cae con "Cannot find module framer-motion" si el `node_modules` local está viejo — es `pnpm install`, no el código.
 
+### Fase 2: cronómetro negativo y subrayado
+
+**Cronómetro rojo negativo (PRD §8.3):** al llegar a 0:00 la sesión ya **no se auto-envía** — se quitó el cierre automático tanto del server (`page.tsx` cerraba el intento al cargar con tiempo vencido) como del cliente. El reloj continúa en rojo con signo negativo y la etiqueta cambia a "Tiempo extra". Al finalizar cada sesión se acumula el tiempo transcurrido en `sesionNConsumidoSeg` y se limpia `iniciadoEn`, así que el tiempo total real (incluido el adicional) queda registrado por sesión.
+
+**Subrayado (PRD §8.5):** botón "Resaltar" en el header del examen. Con el modo activo, seleccionar texto del contexto o del enunciado lo subraya en amarillo; un clic sobre un subrayado lo quita; los rangos solapados se fusionan. Se pinta con la **CSS Custom Highlight API** (registro `sub-examen`) para no mutar el DOM que React controla — nada de `<mark>` inyectados. Cada bloque subrayable lleva `data-sub-clave` (`c<id>` contexto, `e<id>` enunciado) y los rangos se guardan como offsets sobre el texto plano del bloque, en el JSON `respuestas` bajo la clave `sub` (el calificador solo lee `s1`/`s2`, no choca). Mismo esquema de persistencia que las respuestas: respaldo inmediato en localStorage + guardado al servidor con debounce + flush al ocultar la pestaña. En navegadores sin la API el botón no aparece.
+
+La negrilla del encabezado de lectura crítica ("Responda las preguntas X a Y…") ya la cumplía el `contexto-label` existente. La fidelidad visual fina contra los PDF S4 queda pendiente de que David entregue los archivos.
+
 ### Pendiente (próxima sesión)
-- Fase 2: cronómetro rojo negativo por sesión, subrayado, fidelidad visual contra los PDF S4
+- Fidelidad visual contra los PDF "S4 Primera/Segunda Sesión" (faltan los archivos)
 - Confirmar con el cliente la tabla de tramos (§10.1 del PRD) y el hosting de videos
 - Botón de "retirar producto" en la UI de admin (la acción ya existe)

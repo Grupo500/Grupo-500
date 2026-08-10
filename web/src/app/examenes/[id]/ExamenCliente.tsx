@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { guardarRespuestas, finalizarSesion1, finalizarSimulacro, pausarSesion } from "./acciones";
+import { guardarRespuestas, finalizarSesion1, finalizarSimulacro, pausarSesion, guardarSubrayados } from "./acciones";
 import { TextoConParrafos, EnunciadoConImagen } from "../_componentes/TextoExamen";
 
 type Pregunta = {
@@ -34,10 +34,54 @@ function textoOpcion(p: Pregunta, l: typeof LET[number]): string | null {
 }
 
 function formatearTiempo(segundos: number): string {
-  const h = Math.floor(segundos / 3600);
-  const m = Math.floor((segundos % 3600) / 60);
-  const s = segundos % 60;
+  const abs = Math.abs(segundos);
+  const h = Math.floor(abs / 3600);
+  const m = Math.floor((abs % 3600) / 60);
+  const s = abs % 60;
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
+// ── Subrayado (PRD §8.5) ─────────────────────────────────────────────────────
+// Cada bloque de texto subrayable lleva data-sub-clave; los subrayados se
+// guardan como rangos [inicio, fin] sobre el texto plano del bloque y se pintan
+// con la CSS Custom Highlight API, que no toca el DOM que renderiza React.
+
+type Rangos = Record<string, [number, number][]>;
+
+// Offset de un punto (nodo de texto + offset local) dentro del texto plano del bloque
+function offsetEnBloque(cont: Node, nodo: Node, offsetNodo: number): number | null {
+  if (nodo.nodeType !== Node.TEXT_NODE) return null;
+  const walker = document.createTreeWalker(cont, NodeFilter.SHOW_TEXT);
+  let acum = 0;
+  let n: Node | null;
+  while ((n = walker.nextNode())) {
+    if (n === nodo) return acum + offsetNodo;
+    acum += (n as Text).length;
+  }
+  return null;
+}
+
+// Inverso: offset del texto plano → (nodo de texto, offset local)
+function puntoEnBloque(cont: Node, offset: number): { nodo: Text; off: number } | null {
+  const walker = document.createTreeWalker(cont, NodeFilter.SHOW_TEXT);
+  let acum = 0;
+  let n: Node | null;
+  while ((n = walker.nextNode())) {
+    const len = (n as Text).length;
+    if (acum + len >= offset) return { nodo: n as Text, off: Math.max(0, offset - acum) };
+    acum += len;
+  }
+  return null;
+}
+
+// Ancestro con data-sub-clave (o null si la selección cruza bloques distintos)
+function bloqueDe(nodo: Node | null): HTMLElement | null {
+  let el: Node | null = nodo;
+  while (el) {
+    if (el instanceof HTMLElement && el.dataset.subClave) return el;
+    el = el.parentNode;
+  }
+  return null;
 }
 
 const AREA_CONFIG: Record<string, { color: string; dot: string; icon: string }> = {
@@ -54,6 +98,7 @@ export default function ExamenCliente({
   sesion,
   preguntas,
   respuestasPrevias,
+  subrayadosPrevios,
   segundosRestantesInicial,
 }: {
   simulacroId: number;
@@ -61,13 +106,13 @@ export default function ExamenCliente({
   sesion: 1 | 2;
   preguntas: Pregunta[];
   respuestasPrevias: Record<string, string>;
+  subrayadosPrevios: Rangos;
   segundosRestantesInicial: number | null;
 }) {
   const router = useRouter();
   const [esCelular, setEsCelular] = useState(false);
   const [respuestas, setRespuestas] = useState<Record<string, string>>(respuestasPrevias);
   const [segundos, setSegundos] = useState(segundosRestantesInicial ?? 0);
-  const autoEnviadoRef = useRef(false);
   const [filaActual, setFilaActual] = useState<number | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [yendoAHome, setYendoAHome] = useState(false);
@@ -98,6 +143,111 @@ export default function ExamenCliente({
   // Mantener ref actualizada para usarla en eventos sin stale closure
   useEffect(() => { respuestasRef.current = respuestas; }, [respuestas]);
 
+  // ── Subrayado (PRD §8.5) ──
+  const [modoResaltar, setModoResaltar] = useState(false);
+  const [subrayados, setSubrayados] = useState<Rangos>(subrayadosPrevios);
+  const subrayadosRef = useRef(subrayados);
+  const subSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [soportaResaltar, setSoportaResaltar] = useState(false);
+  const claveLocalSub = `sim${simulacroId}-sub`;
+
+  useEffect(() => {
+    setSoportaResaltar(typeof CSS !== "undefined" && "highlights" in CSS);
+  }, []);
+  useEffect(() => { subrayadosRef.current = subrayados; }, [subrayados]);
+
+  // Recuperar subrayados del respaldo local que el servidor no alcanzó a guardar
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(claveLocalSub);
+      if (!raw) return;
+      const local = JSON.parse(raw) as Rangos;
+      const hayDiferencia = Object.entries(local).some(
+        ([k, v]) => JSON.stringify(subrayadosRef.current[k]) !== JSON.stringify(v)
+      );
+      if (hayDiferencia) {
+        const merged = { ...subrayadosRef.current, ...local };
+        setSubrayados(merged);
+        startTransition(() => guardarSubrayados(simulacroId, merged).catch(() => {}));
+      }
+    } catch { /* respaldo corrupto: ignorar */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Pintar los subrayados con la Custom Highlight API (sin mutar el DOM de React)
+  useEffect(() => {
+    if (!soportaResaltar) return;
+    const W = window as unknown as { Highlight: new (...r: Range[]) => unknown };
+    const registro = (CSS as unknown as { highlights: Map<string, unknown> }).highlights;
+    const rangos: Range[] = [];
+    for (const [clave, lista] of Object.entries(subrayados)) {
+      const cont = document.querySelector(`[data-sub-clave="${clave}"]`);
+      if (!cont) continue; // bloque de la otra sesión: se pinta cuando se renderice
+      for (const [ini, fin] of lista) {
+        const a = puntoEnBloque(cont, ini);
+        const b = puntoEnBloque(cont, fin);
+        if (!a || !b) continue;
+        try {
+          const r = document.createRange();
+          r.setStart(a.nodo, a.off);
+          r.setEnd(b.nodo, b.off);
+          rangos.push(r);
+        } catch { /* el texto cambió: se descarta el rango */ }
+      }
+    }
+    if (rangos.length) registro.set("sub-examen", new W.Highlight(...rangos));
+    else registro.delete("sub-examen");
+    return () => { registro.delete("sub-examen"); };
+  }, [subrayados, soportaResaltar]);
+
+  function actualizarSubrayados(clave: string, lista: [number, number][]) {
+    const nuevos = { ...subrayadosRef.current };
+    if (lista.length) nuevos[clave] = lista;
+    else delete nuevos[clave];
+    setSubrayados(nuevos);
+    try { localStorage.setItem(claveLocalSub, JSON.stringify(nuevos)); } catch { /* almacenamiento lleno */ }
+    if (subSaveTimerRef.current) clearTimeout(subSaveTimerRef.current);
+    subSaveTimerRef.current = setTimeout(() => {
+      startTransition(() => guardarSubrayados(simulacroId, nuevos).catch(() => {}));
+    }, 1000);
+  }
+
+  // Al soltar una selección en modo resaltador: subrayarla; un clic (sin arrastrar)
+  // sobre un subrayado existente lo quita.
+  function manejarSeleccion() {
+    if (!modoResaltar || !soportaResaltar) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const rango = sel.getRangeAt(0);
+    const cont = bloqueDe(rango.commonAncestorContainer);
+    if (!cont) return; // fuera de un bloque subrayable o cruzando bloques
+    const clave = cont.dataset.subClave!;
+    const lista = subrayadosRef.current[clave] ?? [];
+
+    if (rango.collapsed) {
+      const off = offsetEnBloque(cont, rango.startContainer, rango.startOffset);
+      if (off === null) return;
+      const idx = lista.findIndex(([a, b]) => off >= a && off <= b);
+      if (idx >= 0) actualizarSubrayados(clave, lista.filter((_, i) => i !== idx));
+      return;
+    }
+
+    const ini = offsetEnBloque(cont, rango.startContainer, rango.startOffset);
+    const fin = offsetEnBloque(cont, rango.endContainer, rango.endOffset);
+    if (ini === null || fin === null || fin <= ini) return;
+
+    // Fusionar rangos solapados o contiguos
+    const todos = [...lista, [ini, fin] as [number, number]].sort((a, b) => a[0] - b[0]);
+    const fusion: [number, number][] = [];
+    for (const r of todos) {
+      const ultimo = fusion[fusion.length - 1];
+      if (ultimo && r[0] <= ultimo[1]) ultimo[1] = Math.max(ultimo[1], r[1]);
+      else fusion.push([r[0], r[1]]);
+    }
+    actualizarSubrayados(clave, fusion);
+    sel.removeAllRanges();
+  }
+
   // Respaldo local: cada respuesta se persiste al instante en localStorage,
   // de modo que un crash, un cierre abrupto o una caída de internet no pierdan nada.
   const claveLocal = `sim${simulacroId}-s${sesion}-resp`;
@@ -124,6 +274,10 @@ export default function ExamenCliente({
     const guardarAhora = () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       startTransition(() => guardarRespuestas(simulacroId, sesion, respuestasRef.current).catch(() => {}));
+      if (subSaveTimerRef.current) {
+        clearTimeout(subSaveTimerRef.current);
+        startTransition(() => guardarSubrayados(simulacroId, subrayadosRef.current).catch(() => {}));
+      }
     };
     const onHide = () => { if (document.visibilityState === "hidden") guardarAhora(); };
     document.addEventListener("visibilitychange", onHide);
@@ -169,6 +323,8 @@ export default function ExamenCliente({
 
   // Timer — cuenta regresiva por sesión (pausable) si el examen tiene duración configurada;
   // si no, cuenta hacia adelante sin límite (comportamiento legado, exámenes sin duración fija).
+  // Al llegar a 0:00 NO se envía nada: el reloj continúa en rojo con signo negativo
+  // contando el tiempo adicional que el estudiante toma para terminar (PRD §8.3).
   useEffect(() => {
     const inicio = Date.now();
     const actualizar = () => {
@@ -177,12 +333,7 @@ export default function ExamenCliente({
         setSegundos(transcurrido);
         return;
       }
-      const restante = Math.max(0, segundosRestantesInicial - transcurrido);
-      setSegundos(restante);
-      if (restante <= 0 && !autoEnviadoRef.current) {
-        autoEnviadoRef.current = true;
-        handleFinalizar(); // se acabó el tiempo: envía lo ya contestado, sin pedir confirmación
-      }
+      setSegundos(segundosRestantesInicial - transcurrido); // negativo = tiempo adicional
     };
     actualizar();
     const intervalo = setInterval(actualizar, 1000);
@@ -260,6 +411,7 @@ export default function ExamenCliente({
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     // El respaldo local de esta sesión ya cumplió su función: las respuestas van en la llamada
     try { localStorage.removeItem(claveLocal); } catch { /* no crítico */ }
+    if (sesion === 2) { try { localStorage.removeItem(claveLocalSub); } catch { /* no crítico */ } }
     startTransition(async () => {
       if (sesion === 1) {
         await finalizarSesion1(simulacroId, respuestas);
@@ -284,6 +436,7 @@ export default function ExamenCliente({
   const cant = contestadas();
   const porcentaje = totalPreguntas > 0 ? (cant / totalPreguntas) * 100 : 0;
   const enCountdown = segundosRestantesInicial !== null;
+  const enTiempoExtra = enCountdown && segundos < 0;
   const tiempoColor = enCountdown && segundos < 600 ? "var(--mal)" : "var(--azul-osc)";
 
   return (
@@ -304,6 +457,30 @@ export default function ExamenCliente({
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Resaltador: activa el modo subrayar; seleccionar texto lo marca, clic sobre una marca la quita */}
+          {soportaResaltar && (
+            <button
+              onClick={() => setModoResaltar(v => !v)}
+              title={modoResaltar
+                ? "Salir del resaltador"
+                : "Resaltador: selecciona texto para subrayarlo; clic sobre un subrayado lo quita"}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "8px 14px", borderRadius: 999,
+                border: `1.5px solid ${modoResaltar ? "#e0b400" : "var(--linea)"}`,
+                background: modoResaltar ? "#fff1a8" : "#fff",
+                color: modoResaltar ? "#7a5b00" : "var(--azul-osc)",
+                cursor: "pointer", fontWeight: 600, fontSize: ".85rem",
+                transition: "all .2s",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 11l-6 6v3h9l3-3" /><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" />
+              </svg>
+              <span>{modoResaltar ? "Resaltando" : "Resaltar"}</span>
+            </button>
+          )}
+
           {/* Botón Pausar: guarda respuestas, pausa el tiempo y sale al inicio */}
           <button
             onClick={irAHome}
@@ -334,18 +511,19 @@ export default function ExamenCliente({
             <span>{enCountdown ? "Pausar" : "Inicio"}</span>
           </button>
 
-          {/* Reloj */}
+          {/* Reloj — en tiempo extra pasa a rojo con signo negativo (PRD §8.3) */}
           <div style={{
             display: "flex", alignItems: "center", gap: 9,
-            background: "var(--azul-claro)", color: tiempoColor,
+            background: enTiempoExtra ? "#fde8e6" : "var(--azul-claro)", color: tiempoColor,
             fontWeight: 800, padding: "9px 16px", borderRadius: 999,
             fontVariantNumeric: "tabular-nums",
+            transition: "background .3s",
           }}>
-            <span style={{ fontSize: ".7rem", fontWeight: 600, color: "var(--azul)", textTransform: "uppercase", letterSpacing: ".08em" }}>
-              {enCountdown ? "Tiempo" : "Transcurrido"}
+            <span style={{ fontSize: ".7rem", fontWeight: 600, color: enTiempoExtra ? "var(--mal)" : "var(--azul)", textTransform: "uppercase", letterSpacing: ".08em" }}>
+              {enTiempoExtra ? "Tiempo extra" : enCountdown ? "Tiempo" : "Transcurrido"}
             </span>
             {" "}
-            <span>{formatearTiempo(segundos)}</span>
+            <span>{enTiempoExtra ? "-" : ""}{formatearTiempo(segundos)}</span>
           </div>
         </div>
       </header>
@@ -422,7 +600,11 @@ export default function ExamenCliente({
         </div>
 
         {/* Preguntas */}
-        <main style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <main
+          style={{ display: "flex", flexDirection: "column", gap: 18, cursor: modoResaltar ? "text" : undefined }}
+          className={modoResaltar ? "modo-resaltar" : undefined}
+          onPointerUp={manejarSeleccion}
+        >
           {grupos.map(({ area, items }) => {
             const cfg = AREA_CONFIG[area] ?? { color: "#60a5fa", dot: "#3b82f6", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" };
             return (
@@ -478,7 +660,9 @@ export default function ExamenCliente({
                               ? `Responda las preguntas ${p.numero} y ${ctxLastNum} de acuerdo con la siguiente información`
                               : `Responda las preguntas ${p.numero} a ${ctxLastNum} de acuerdo con la siguiente información`}
                         </div>
-                        <TextoConParrafos texto={p.contexto} style={{ fontSize: ".88rem", color: "var(--tinta)" }} />
+                        <div data-sub-clave={`c${p.id}`}>
+                          <TextoConParrafos texto={p.contexto} style={{ fontSize: ".88rem", color: "var(--tinta)" }} />
+                        </div>
                       </div>
                     )}
 
@@ -518,7 +702,7 @@ export default function ExamenCliente({
                           </div>
                         </div>
                       ) : (
-                        <div style={{ margin: "12px 0 4px" }}>
+                        <div style={{ margin: "12px 0 4px" }} data-sub-clave={`e${p.id}`}>
                           {/* Orden: intro del enunciado → imagen → pregunta */}
                           <EnunciadoConImagen texto={p.enunciado} imagenUrl={p.imagen_url} numero={p.numero} />
                         </div>
