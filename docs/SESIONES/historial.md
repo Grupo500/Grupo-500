@@ -1180,3 +1180,21 @@ No existe modelo de `Financiamiento` ni de `Cuota` en el esquema, ni el API los 
 En el formulario de crear estudiante sigue viva la opción de pago **FINANCIADO** con su configurador de cuotas, pero **el backend no tiene esa rama**: el esquema Zod de `crear` ni siquiera acepta el campo `cuotas` (lo descarta en silencio) y después del bloque de contado va directo al `return`. El asesor llena el plan, guarda, y no queda ningún registro. Eso explica que no exista ni un pago `PENDIENTE` en la base.
 
 Hay que decidir entre **implementar la rama en el backend** o **retirar la opción del formulario**. Dejarla como está significa que cualquier venta financiada que no pase por Hotmart se pierde sin aviso.
+
+---
+
+## Sesión 036 — 2026-08-10
+
+**Objetivo:** Adaptar el PRD del cliente "Plataforma de Simulacros Tipo ICFES" a la plataforma real.
+
+### PRD adaptado — nueva área de simulacros
+
+El cliente entregó un PRD (v0.1) que asumía construir una app nueva desde cero con NestJS. Antes de adaptar nada se auditó el repo y la conclusión cambió el plan: **el motor de exámenes existente (`/examenes`, tablas `sim_*`) ya cubre la mayor parte del alcance** — login de estudiante por correo+documento, dos sesiones con cronómetro autoritativo del servidor con pausas, banco de preguntas con opciones A–H e imágenes, hoja de respuestas única con bloqueo de S1, y calificación 0–100 por área + global 0–500 cuya fórmula de pesos 3/3/3/3/1 es matemáticamente idéntica a la del PRD.
+
+Quedó escrito `docs/PRD-SIMULACROS.md` con: el mapa de lo que ya existe, las brechas reales (accesos diferenciados por producto + CSV, video de corrección por pregunta, informe automático por colegio con PDF y correo, subrayado, cronómetro negativo, ajuste por tramos), los cambios de schema propuestos (`sim_accesos`, `videoUrl`, `sim_informes`), 7 decisiones a confirmar con el cliente (la primera: OTP vs. documento — se recomienda mantener documento) y 6 fases de implementación.
+
+Dos bloqueos identificados que no dependen de código: la regla de ajuste por tramos del calificador se solapa en el documento original (el propio PRD la marca "por confirmar") y el servicio de correo saliente del API sigue siendo un stub — lo necesitan tanto el informe por colegio como el OTP si se aprueba.
+
+### Pendiente (próxima sesión)
+- Revisión del PRD adaptado por David y el cliente (decisiones §5)
+- Fase 1: `sim_accesos` + estados en el listado + carga CSV
