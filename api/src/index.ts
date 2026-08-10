@@ -48,6 +48,7 @@ import { reconciliarAsesores } from './jobs/reconciliarAsesores'
 import { backfillComisiones } from './jobs/backfillComisiones'
 import { sincronizarGoogleAds } from './jobs/sincronizarGoogleAds'
 import { backfillCuotas } from './jobs/backfillCuotas'
+import { sincronizarAtrasos } from './jobs/sincronizarAtrasos'
 import redesRoutes from './routes/redes'
 import { publicarRedesPendientes } from './jobs/publicarRedes'
 
@@ -249,6 +250,12 @@ app.listen(PORT, () => {
   const ventanaCuotas = () => new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   setTimeout(() => { void backfillCuotas(true, ventanaCuotas()) }, 5 * 60 * 1000)
   setInterval(() => { void backfillCuotas(true, ventanaCuotas()) }, CUATRO_HORAS)
+
+  // Cuotas atrasadas: Hotmart sabe qué cobro rebotó y hasta lo reintenta solo.
+  // Corre después del backfill de arriba para que un abono recién registrado ya
+  // esté marcado como cuota y no se avise de algo que el cliente ya pagó.
+  setTimeout(() => { void sincronizarAtrasos(true, ventanaCuotas()) }, 8 * 60 * 1000)
+  setInterval(() => { void sincronizarAtrasos(true, ventanaCuotas()) }, CUATRO_HORAS)
 
   // Publicador de redes sociales (Marketing > Redes): cada minuto revisa las
   // publicaciones programadas vencidas y las sube a IG/FB vía la Graph API.

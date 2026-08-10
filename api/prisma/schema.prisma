@@ -179,6 +179,47 @@ model Estudiante {
   observaciones      Observacion[]
   pagos              Pago[]
   simulacros         SimulacroEstudiante[]
+  cuotasAtrasadas    CuotaAtrasada[]
+}
+
+/// Cuota de un plan de Hotmart cuyo cobro falló y sigue sin pagarse.
+///
+/// Antes el atraso se ESTIMABA (30 días de ciclo + 7 de gracia desde el último
+/// cobro conocido). Hotmart sabe cuál cobro falló de verdad y lo expone en su
+/// API (`transaction_status=OVERDUE`), que es lo que alimenta esta tabla.
+///
+/// Es una foto que refresca `sincronizarAtrasos.ts`, no una consulta en vivo:
+/// resolverlo en cada carga de pantalla exigiría recorrer miles de ventas de
+/// la API de Hotmart. Que sea una tabla también significa que un fallo de la
+/// API deja en pie el último dato bueno en vez de vaciar la lista.
+///
+/// Solo entran los atrasos VIVOS. De 99 cuotas que Hotmart reportó vencidas,
+/// solo 34 lo estaban de verdad: 32 ya las había recobrado Hotmart en un
+/// reintento, 30 eran reintentos fallidos duplicados de la misma cuota y 3 se
+/// habían pagado por fuera (Nequi/transferencia), algo de lo que Hotmart nunca
+/// se entera. Sin esos filtros, dos de cada tres avisos serían para alguien
+/// que no debe nada.
+model CuotaAtrasada {
+  id              String      @id @default(cuid())
+  /// Transacción del cobro fallido en Hotmart: identifica el atraso y evita duplicados.
+  transaccion     String      @unique
+  estudianteId    String?
+  estudiante      Estudiante? @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  /// Se guardan aunque haya estudiante: si el comprador no está en la base
+  /// todavía, el atraso igual queda visible para que alguien lo gestione.
+  emailComprador  String
+  nombreComprador String
+  productoId      String
+  productoNombre  String
+  cuotaNumero     Int
+  cuotasTotal     Int
+  monto           Int
+  /// Cuándo Hotmart intentó cobrar esta cuota.
+  fechaCobro      DateTime
+  sincronizadoEn  DateTime    @updatedAt
+
+  @@index([estudianteId])
+  @@map("cuotas_atrasadas")
 }
 
 model HistorialEstudiante {

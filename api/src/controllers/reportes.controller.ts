@@ -1134,9 +1134,10 @@ export async function resolverAtribucion(req: Request, res: Response) {
   return ApiResponse.success(res, { reasignados: pendientes.length, asesor: asesor.nombre })
 }
 
-// Cuánto puede pasar desde la última cuota confirmada antes de considerarla
-// atrasada. Los planes son mensuales; se da una semana extra de margen sobre
-// el ciclo de 30 días porque Hotmart no cobra siempre el mismo día exacto.
+// Respaldo para decidir el atraso cuando Hotmart todavía no ha reportado nada
+// de ese estudiante (ver `CuotaAtrasada`): los planes son mensuales y se da una
+// semana de margen sobre el ciclo de 30 días porque el cobro no cae siempre el
+// mismo día. Es una estimación; el dato bueno es el de Hotmart.
 const DIAS_GRACIA_CUOTAS = 37
 
 // Panel de control de ventas a cuotas (Smart Installment de Hotmart): cuánto
@@ -1163,6 +1164,24 @@ export async function cuotas(req: Request, res: Response) {
       resumen: { total: 0, atrasados: 0, alDia: 0, completados: 0, saldoTotal: 0 },
       filas: [],
     })
+  }
+
+  // El atraso real, tal como lo reporta Hotmart (lo llena `sincronizarAtrasos`).
+  // Si la tabla está vacía —nunca se sincronizó— se cae al cálculo por fecha
+  // para no mostrar cero atrasados cuando sí los hay.
+  const atrasosHotmart = await prisma.cuotaAtrasada.findMany({
+    where: { estudianteId: { in: estudianteIds } },
+    select: { estudianteId: true, cuotaNumero: true, cuotasTotal: true, monto: true, fechaCobro: true },
+  })
+  const hayDatosDeHotmart = (await prisma.cuotaAtrasada.count()) > 0
+
+  // Por estudiante se guarda el atraso más viejo: es el que marca desde cuándo
+  // dejó de pagar y el que se usa para priorizar la gestión de cobro.
+  const atrasoPorEstudiante = new Map<string, (typeof atrasosHotmart)[number]>()
+  for (const a of atrasosHotmart) {
+    if (!a.estudianteId) continue
+    const previo = atrasoPorEstudiante.get(a.estudianteId)
+    if (!previo || a.fechaCobro < previo.fechaCobro) atrasoPorEstudiante.set(a.estudianteId, a)
   }
 
   // Una cuota también se puede abonar a mano (comprobante subido en la ficha
@@ -1266,13 +1285,32 @@ export async function cuotas(req: Request, res: Response) {
       Math.max(cuotaMasAvanzada.cuotaNumero ?? 1, Math.round(totalPagado / cuotaMasAvanzada.monto)),
     )
     const completado   = cuotaNumero >= cuotasTotal || saldo <= 1000
-    const diasSinPagar = ultimoPago.fechaPago ? Math.floor((hoy - ultimoPago.fechaPago.getTime()) / 86_400_000) : null
-    const atrasado     = !completado && diasSinPagar != null && diasSinPagar > DIAS_GRACIA_CUOTAS
-    // Hotmart no reporta cuándo cae la próxima cuota — se estima a 30 días
-    // de la última confirmada, mismo ciclo mensual que usa DIAS_GRACIA_CUOTAS.
-    const proximaCuotaEstimada = !completado && ultimoPago.fechaPago
-      ? new Date(ultimoPago.fechaPago.getTime() + 30 * 86_400_000)
-      : null
+
+    // El atraso lo dice Hotmart: sabe qué cobro rebotó y desde cuándo. Solo si
+    // nunca se ha sincronizado se recurre a estimarlo por la fecha del último
+    // pago, que marca en mora a quien Hotmart ya le recobró y pasa por alto
+    // cuotas vencidas hace semanas.
+    const atrasoReal   = atrasoPorEstudiante.get(ultimoPago.estudiante.id) ?? null
+    const atrasado     = !completado && (
+      hayDatosDeHotmart
+        ? !!atrasoReal
+        : ultimoPago.fechaPago != null && Math.floor((hoy - ultimoPago.fechaPago.getTime()) / 86_400_000) > DIAS_GRACIA_CUOTAS
+    )
+    // Para un atrasado, los días se cuentan desde el cobro que falló — no desde
+    // su último pago, que puede ser de otra cuota anterior.
+    const desde        = atrasoReal?.fechaCobro ?? ultimoPago.fechaPago
+    const diasSinPagar = desde ? Math.floor((hoy - desde.getTime()) / 86_400_000) : null
+
+    // Con atraso confirmado la "próxima cuota" ya venció: es la fecha del cobro
+    // fallido. Si va al día, Hotmart no anticipa la siguiente, así que se
+    // estima a 30 días de la última cobrada.
+    const proximaCuotaEstimada = completado
+      ? null
+      : atrasoReal
+        ? atrasoReal.fechaCobro
+        : ultimoPago.fechaPago
+          ? new Date(ultimoPago.fechaPago.getTime() + 30 * 86_400_000)
+          : null
 
     return {
       estudianteId: ultimoPago.estudiante.id,
@@ -1291,6 +1329,11 @@ export async function cuotas(req: Request, res: Response) {
       fechaUltimaCuota: ultimoPago.fechaPago,
       diasSinPagar,
       proximaCuotaEstimada,
+      // Valor exacto del cobro que rebotó, para saber cuánto pedirle al
+      // cliente sin tener que deducirlo del saldo total.
+      montoVencido: atrasoReal?.monto ?? null,
+      // `true` cuando el atraso lo confirmó Hotmart y no es una estimación.
+      atrasoConfirmado: !!atrasoReal,
       estado: completado ? 'completado' : atrasado ? 'atrasado' : 'al-dia',
     }
   })

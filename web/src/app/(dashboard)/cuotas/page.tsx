@@ -33,6 +33,10 @@ interface FilaCuota {
   fechaUltimaCuota: string | null
   diasSinPagar: number | null
   proximaCuotaEstimada: string | null
+  /** Valor del cobro que Hotmart no pudo hacer. Null si el atraso es estimado. */
+  montoVencido: number | null
+  /** El atraso lo confirmó Hotmart; si es false, viene de la estimación por fecha. */
+  atrasoConfirmado: boolean
   estado: 'al-dia' | 'atrasado' | 'completado'
 }
 
@@ -133,8 +137,14 @@ export default function CuotasPage() {
   }
 
   function exportarCSV() {
-    const encabezados = ['Estudiante', 'Curso', 'Asesor', 'Cuota', 'Cuotas totales', 'Pagado', 'Saldo', 'Última cuota', 'Estado']
-    const filas = filtradas.map(f => [f.nombre, f.curso, f.asesor ?? '', f.cuotaNumero, f.cuotasTotal, f.totalPagado, f.saldo, f.fechaUltimaCuota ?? '', ESTADO_LABEL[f.estado]])
+    // Se exporta para llamar a cobrar: el teléfono y el valor exacto vencido
+    // son las dos columnas que hacen falta para gestionar sin volver a la app.
+    const encabezados = ['Estudiante', 'Teléfono', 'Curso', 'Asesor', 'Cuota', 'Cuotas totales', 'Pagado', 'Saldo', 'Monto vencido', 'Días de atraso', 'Última cuota', 'Estado']
+    const filas = filtradas.map(f => [
+      f.nombre, f.telefono, f.curso, f.asesor ?? '', f.cuotaNumero, f.cuotasTotal, f.totalPagado, f.saldo,
+      f.montoVencido ?? '', f.estado === 'atrasado' ? (f.diasSinPagar ?? '') : '',
+      f.fechaUltimaCuota ?? '', ESTADO_LABEL[f.estado],
+    ])
     const csv = [encabezados, ...filas].map(fila => fila.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
     descargar(`cuotas-${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv')
   }
@@ -495,13 +505,31 @@ export default function CuotasPage() {
                         </div>
                       </div>
 
+                      {/* Con atraso confirmado por Hotmart se muestra el valor
+                          exacto del cobro que rebotó: es lo que hay que pedirle
+                          al cliente, y no coincide con el saldo total cuando
+                          quedan varias cuotas por delante. */}
+                      {detalle.estado === 'atrasado' && detalle.montoVencido != null && (
+                        <div className="rounded-xl p-2.5" style={{ background: `${ESTADO_COLOR.atrasado}14` }}>
+                          <p className="text-[10.5px]" style={{ color: ESTADO_COLOR.atrasado }}>
+                            Cuota vencida{detalle.diasSinPagar != null && ` hace ${detalle.diasSinPagar} días`}
+                          </p>
+                          <p className="text-[15px] font-bold tabular-nums mt-0.5" style={{ color: ESTADO_COLOR.atrasado }}>
+                            {formatCOP(detalle.montoVencido)}
+                          </p>
+                          <p className="text-[10.5px] text-on-surface-variant mt-0.5">
+                            Hotmart intentó cobrarla el {fmtFecha(detalle.proximaCuotaEstimada)} y fue rechazada
+                          </p>
+                        </div>
+                      )}
+
                       <div>
                         <div className="flex items-center gap-1.5 mb-1 text-on-surface-variant">
                           <Calendar className="w-3.5 h-3.5" />
                           <span className="text-[10.5px] uppercase tracking-wide">Fechas</span>
                         </div>
-                        <p className="text-on-surface">Última cuota: <strong>{fmtFecha(detalle.fechaUltimaCuota)}</strong>{detalle.diasSinPagar != null && detalle.estado !== 'completado' && ` (hace ${detalle.diasSinPagar}d)`}</p>
-                        {detalle.estado !== 'completado' && (
+                        <p className="text-on-surface">Última cuota pagada: <strong>{fmtFecha(detalle.fechaUltimaCuota)}</strong></p>
+                        {detalle.estado === 'al-dia' && (
                           <p className="text-on-surface-variant mt-0.5">Próxima estimada: {fmtFecha(detalle.proximaCuotaEstimada)}</p>
                         )}
                       </div>
