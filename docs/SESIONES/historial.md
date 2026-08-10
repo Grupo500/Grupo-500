@@ -1217,6 +1217,8 @@ David aprobó el PRD (se mantiene el login por documento, sin OTP) y se construy
 
 La negrilla del encabezado de lectura crítica ("Responda las preguntas X a Y…") ya la cumplía el `contexto-label` existente. La fidelidad visual fina contra los PDF S4 queda pendiente de que David entregue los archivos.
 
+**Verificado E2E en producción** con un estudiante desechable (creado y borrado en la misma sesión, DB quedó idéntica: 69 estudiantes, 207 accesos): el listado solo muestra el examen con acceso y con chip "Pendiente"; `/examenes/1` sin acceso redirige al listado; subrayar pinta, persiste en `respuestas.sub` del servidor tras recargar y se quita con clic; con el tiempo agotado el examen NO se auto-envía y el reloj muestra "Tiempo extra −00:0X:XX" en rojo. Ojo al probar en el navegador embebido: `btn.click()` programático no dispara el onClick de React ahí — hay que clicar por CDP (`computer` con ref); no es bug del producto. Para correr el web local contra la DB real: `web/.env.local` (gitignored) con la `DATABASE_PUBLIC_URL` de Railway y secretos de auth de relleno.
+
 ### Pendiente (próxima sesión)
 - Fidelidad visual contra los PDF "S4 Primera/Segunda Sesión" (faltan los archivos)
 - Confirmar con el cliente la tabla de tramos (§10.1 del PRD) y el hosting de videos
