@@ -1195,6 +1195,21 @@ Quedó escrito `docs/PRD-SIMULACROS.md` con: el mapa de lo que ya existe, las br
 
 Dos bloqueos identificados que no dependen de código: la regla de ajuste por tramos del calificador se solapa en el documento original (el propio PRD la marca "por confirmar") y el servicio de correo saliente del API sigue siendo un stub — lo necesitan tanto el informe por colegio como el OTP si se aprueba.
 
+### Fase 1 implementada: accesos diferenciados por producto
+
+David aprobó el PRD (se mantiene el login por documento, sin OTP) y se construyó la fase 1 en la misma sesión.
+
+**Migración `20260810175639_sim_accesos_diferenciados`:** tabla `sim_accesos` (estudiante×examen, único, con `habilitado_at`/`retirado_at` — retirar oculta sin borrar histórico) y columna `tipo_documento` en `sim_estudiantes`. La migración trae un **backfill**: hasta ahora todo estudiante veía todos los exámenes, así que se crearon los accesos explícitos para cada par existente (69 estudiantes × 3 exámenes = 207 accesos) y nadie perdió visibilidad con el deploy. El banco interno de Brito (id 9999) queda excluido.
+
+**Cambios de comportamiento:** el listado `/examenes` ahora filtra por accesos activos para rol `ESTUDIANTE` (admin sigue viendo todo) y muestra el estado del producto (Pendiente / En curso / Calificado); `/examenes/[id]` rechaza presentar sin acceso activo, pero `/resultado` no pasa por el muro — retirar un acceso conserva el resultado consultable.
+
+**Carga masiva CSV** en `/examenes/admin/accesos`: columnas `nombre, tipo_documento, documento, correo, colegio, productos` (IDs internos separados por espacio, `;` o `|`). Valida fila por fila **sin abortar la carga** y reporta errores con número de fila de Excel; upsert de estudiante por correo (documento → hash, jamás en claro), accesos nuevos o reactivados, colegio cruzado por nombre normalizado y creado con ciudad "Por definir" si no existe (queda avisado en el reporte). El parser soporta comillas, BOM y detecta delimitador `,` o `;` (Excel es-CO exporta con `;`). También quedó la acción `retirarAccesosDeExamen` (baja de producto del PRD §6.2), aún sin botón en la UI.
+
+**Gotchas de esta sesión:**
+- Para migrar desde local: la `DATABASE_URL` del servicio Backend apunta a `postgres.railway.internal` (no resuelve fuera de Railway). Hay que usar `DATABASE_PUBLIC_URL` del servicio **Postgres** (`railway variables --service Postgres --kv`) y exportar también `DIRECT_URL` (el schema la exige).
+- El typecheck de web se cae con "Cannot find module framer-motion" si el `node_modules` local está viejo — es `pnpm install`, no el código.
+
 ### Pendiente (próxima sesión)
-- Revisión del PRD adaptado por David y el cliente (decisiones §5)
-- Fase 1: `sim_accesos` + estados en el listado + carga CSV
+- Fase 2: cronómetro rojo negativo por sesión, subrayado, fidelidad visual contra los PDF S4
+- Confirmar con el cliente la tabla de tramos (§10.1 del PRD) y el hosting de videos
+- Botón de "retirar producto" en la UI de admin (la acción ya existe)

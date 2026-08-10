@@ -55,9 +55,17 @@ export default async function AdminSimulacrosPage() {
           <ArrowLeft className="w-4 h-4" /> Volver
         </Link>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-on-surface">Panel de simulacros</h1>
-          <p className="text-sm text-on-surface-variant mt-0.5">Administración · Grupo 500</p>
+        <div className="mb-6 flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-on-surface">Panel de simulacros</h1>
+            <p className="text-sm text-on-surface-variant mt-0.5">Administración · Grupo 500</p>
+          </div>
+          <Link
+            href="/examenes/admin/accesos"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-lowest border border-outline-variant text-xs font-medium text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors"
+          >
+            <Users className="w-3.5 h-3.5" /> Accesos y carga CSV
+          </Link>
         </div>
 
         {/* Estadísticas globales */}

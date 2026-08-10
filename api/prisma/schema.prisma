@@ -648,6 +648,7 @@ model Examen {
   activo      Boolean          @default(false)
   preguntas   PreguntaExamen[]
   intentos    IntentoExamen[]
+  accesos     AccesoExamen[]
 
   @@map("sim_simulacros")
 }
@@ -685,13 +686,32 @@ model EstudianteExamen {
   email         String          @unique
   documentoHash String          @map("documento_hash")
   nombre        String
+  tipoDocumento String?         @map("tipo_documento") // CC, TI, CE…
   colegioId     String?         @map("colegio_id")
   creadoAt      DateTime        @default(now()) @map("creado_at")
   colegio       Colegio?        @relation(fields: [colegioId], references: [id])
   intentos      IntentoExamen[]
+  accesos       AccesoExamen[]
   britoPerfil   BritoPerfil?
 
   @@map("sim_estudiantes")
+}
+
+/// Acceso diferenciado estudiante↔examen (PRD simulacros §3.1). Un estudiante
+/// solo ve y presenta los exámenes con acceso activo. Retirar un producto pone
+/// `retiradoAt` (oculta sin borrar; los resultados históricos se conservan).
+model AccesoExamen {
+  id           String           @id @default(cuid())
+  estudianteId String           @map("estudiante_id") @db.Uuid
+  examenId     Int              @map("simulacro_id")
+  habilitadoAt DateTime         @default(now()) @map("habilitado_at")
+  retiradoAt   DateTime?        @map("retirado_at")
+  estudiante   EstudianteExamen @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  examen       Examen           @relation(fields: [examenId], references: [id], onDelete: Cascade)
+
+  @@unique([estudianteId, examenId])
+  @@index([examenId])
+  @@map("sim_accesos")
 }
 
 // ── Brito: modo de práctica gamificado, capa nueva sobre el banco de preguntas

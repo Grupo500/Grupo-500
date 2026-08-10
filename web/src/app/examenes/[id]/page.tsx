@@ -26,6 +26,13 @@ export default async function PaginaExamen({
   const examen = await prisma.examen.findUnique({ where: { id: examId } })
   if (!examen || !examen.activo) redirect('/examenes')
 
+  // Accesos diferenciados: sin acceso activo no se puede presentar. El resultado
+  // histórico (/resultado) no pasa por aquí, así que retirar el acceso no borra nada.
+  const acceso = await prisma.accesoExamen.findUnique({
+    where: { estudianteId_examenId: { estudianteId: estudId, examenId: examId } },
+  })
+  if (!acceso || acceso.retiradoAt) redirect('/examenes')
+
   const ahora = Date.now()
   if (examen.abreAt && ahora < examen.abreAt.getTime()) redirect('/examenes')
   if (examen.cierraAt && ahora > examen.cierraAt.getTime()) redirect('/examenes')

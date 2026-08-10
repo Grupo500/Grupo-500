@@ -12,8 +12,21 @@ export default async function ExamenesPage() {
   const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE'
   if (role === 'VENDEDOR') redirect('/no-autorizado')
 
+  // Accesos diferenciados: el estudiante solo ve los productos habilitados
+  // para él (sim_accesos con retiradoAt null). Admin sigue viendo todo.
+  const accesos = role === 'ESTUDIANTE'
+    ? await prisma.accesoExamen.findMany({
+        where: { estudianteId: session.user.id, retiradoAt: null },
+        select: { examenId: true },
+      })
+    : null
+
   const examenes = await prisma.examen.findMany({
-    where: { id: { not: BRITO_BANCO_EXAMEN_ID } },
+    where: {
+      id: accesos
+        ? { in: accesos.map(a => a.examenId), not: BRITO_BANCO_EXAMEN_ID }
+        : { not: BRITO_BANCO_EXAMEN_ID },
+    },
     orderBy: { id: 'asc' },
     select: { id: true, titulo: true, descripcion: true, activo: true, duracionMin: true },
   })
@@ -88,9 +101,15 @@ export default async function ExamenesPage() {
                       }`}>
                         {ex.activo ? 'Disponible' : 'Cerrado'}
                       </span>
-                      {terminado && (
-                        <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-[#dde3ff] text-[#4361ee]">
-                          Completado
+                      {role === 'ESTUDIANTE' && (
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${
+                          terminado
+                            ? 'bg-[#dde3ff] text-[#4361ee]'
+                            : enProgreso
+                              ? 'bg-[#fff3cd] text-[#b8860b]'
+                              : 'bg-[#eef2f7] text-[#5a74a8]'
+                        }`}>
+                          {terminado ? 'Calificado' : enProgreso ? 'En curso' : 'Pendiente'}
                         </span>
                       )}
                     </div>
@@ -123,7 +142,11 @@ export default async function ExamenesPage() {
 
           {examenes.length === 0 && (
             <div className="bg-white/15 backdrop-blur-sm rounded-2xl border border-white/25 p-8 text-center animate-card-enter">
-              <p className="text-white/70 text-sm font-medium">No hay simulacros disponibles por ahora.</p>
+              <p className="text-white/70 text-sm font-medium">
+                {role === 'ESTUDIANTE'
+                  ? 'Aún no tienes simulacros habilitados. Si crees que es un error, escríbenos.'
+                  : 'No hay simulacros disponibles por ahora.'}
+              </p>
             </div>
           )}
         </div>

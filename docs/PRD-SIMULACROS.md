@@ -148,10 +148,9 @@ model AccesoExamen {
 
 ## 5. Decisiones a confirmar con el cliente
 
-1. **OTP vs. documento.** El PRD pide correo + OTP; la plataforma ya autentica con correo +
-   documento, probado en producción y sin depender de la entrega de correos. Recomendación:
-   **mantener correo + documento** y ofrecer OTP como segunda fase si el cliente lo exige
-   (implementarlo requiere el servicio de correo de §3.5 de todos modos).
+1. **OTP vs. documento.** ✅ **Resuelto (2026-08-10): se mantiene correo + documento.** El PRD
+   pedía OTP; la autenticación existente ya está probada en producción y no depende de la
+   entrega de correos. OTP queda como opción futura si el cliente lo exige.
 2. **Tabla exacta del ajuste por tramos** (§3.4) — bloquea la parte nueva del calificador.
 3. **Hosting de videos**: Cloudinary firmado (integrado, más caro en volumen) vs. Bunny Stream.
 4. **¿La sesión 2 puede presentarse otro día** o debe ser continua? (El motor actual lo permite;
@@ -164,7 +163,7 @@ model AccesoExamen {
 
 | Fase | Contenido | Depende de |
 |---|---|---|
-| 1 | Accesos diferenciados + estados en el listado + carga CSV | — |
+| 1 | ✅ **Hecha (2026-08-10).** Accesos diferenciados + estados en el listado + carga CSV | — |
 | 2 | Ajustes de examen: cronómetro negativo por sesión, subrayado, fidelidad visual S4 | PDFs S4 |
 | 3 | Correcciones en video (campo, vista, migración de videos a hosting firmado) | decisión §5.3 |
 | 4 | Servicio de correo + informe por colegio (PDF + envío automático) | anexos §5.6 |
