@@ -3,18 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
-
-type ResultadoArea = {
-  area: string;
-  correctas: number;
-  total: number;
-  puntaje: number;
-};
-
-const PESOS: Record<string, number> = {
-  "Lectura Crítica": 3, Matemáticas: 3,
-  "Sociales y Ciudadanas": 3, "Ciencias Naturales": 3, Inglés: 1,
-};
+import { PESOS, ajustarPuntajeMateria, type ResultadoArea } from "@/lib/calificacion";
 
 const COLOR_AREA: Record<string, string> = {
   Matemáticas: "#6366f1",
@@ -86,9 +75,10 @@ export default async function PaginaResultado({
     a.t += 1;
     if (respPlanas[String(p.id)] === p.correcta) a.c += 1;
   }
+  // Puntaje por área con el ajuste en cascada — misma regla que calificar()
   const porArea: ResultadoArea[] = Object.entries(acc).map(([area, v]) => ({
     area, correctas: v.c, total: v.t,
-    puntaje: v.t > 0 ? Math.round((v.c / v.t) * 100) : 0,
+    puntaje: v.t > 0 ? ajustarPuntajeMateria(Math.round((v.c / v.t) * 100)) : 0,
   }));
 
   const global = intento.puntaje ? Number(intento.puntaje) : 0;

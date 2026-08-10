@@ -1233,7 +1233,15 @@ David entregó los PDFs fuente del Simulacro 2 (el que está en producción). Se
 
 También quedó el **botón "Retirar" por producto** en `/examenes/admin/accesos` (con confirmación, usa `retirarAccesosDeExamen`): oculta el simulacro a los estudiantes conservando resultados.
 
+### Algoritmo de calificación confirmado e implementado (fase 5)
+
+El cliente entregó la regla exacta del ajuste ("Algoritmo de calificación — Plataforma de Simulacros"): **cascada de dos pasos**, no la tabla por tramos solapada del borrador. base 100 → 100; base 11–99 → −10 y, si el resultado cae en 85–89, −4 adicional; base 0–10 → igual. Efecto neto: 95–99 → −14, 11–94 → −10. El global sigue siendo el ponderado 3/3/3/3/1 ÷13 ×5 sobre las materias **ya ajustadas**.
+
+Quedó en `ajustarPuntajeMateria()` (`web/src/lib/calificacion.ts`), aplicada en `calificar()` y en la página de resultado — que calculaba las áreas con lógica propia duplicada sin ajuste; ahora importa la lib compartida. Verificado contra los 10 ejemplos del documento (99→85, 95→81, 94→84…), el global de ejemplo (405) y un caso de punta a punta con `calificar()`.
+
+**Los 15 intentos finalizados del Simulacro 2 se recalcularon** con la regla nueva (bajaron ~40–70 puntos de global, p. ej. 482→413, 458→403): sin esto, la página de resultado (que recalcula áreas en vivo) habría mostrado áreas ajustadas junto a un global viejo sin ajuste, y los promedios del admin y el futuro informe por colegio quedarían mezclando dos reglas. El recálculo es determinista desde `respuestas` + `correcta`: quitar el ajuste y re-correr lo revierte.
+
 ### Pendiente (próxima sesión)
-- Confirmar con el cliente la tabla de tramos (§10.1 del PRD) y el hosting de videos (fase 3)
+- Hosting de videos de corrección (fase 3): decisión Cloudinary firmado vs Bunny + los videos
 - Membrete + "Logos" + informe institucional de ejemplo para la fase 4 (informe por colegio)
 - Servicio de correo saliente (Resend recomendado) — lo exigen las fases 4 y el OTP si se aprueba

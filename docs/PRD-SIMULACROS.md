@@ -78,13 +78,19 @@ correo, colegio, ids_productos` (IDs internos separados por `;`).
   repo, cumple el requisito de "baja vulnerabilidad" del §11.3). Alternativa más barata si el
   volumen crece (≈244 videos por producto): Bunny Stream. Decisión de costo pendiente.
 
-### 3.4 Ajuste por tramos en la calificación (bloqueado por confirmación)
+### 3.4 Ajuste en cascada de la calificación — ✅ hecho (2026-08-10)
 
-El PRD propone sobre el puntaje base por materia: 100 → sin cambio; 90–99 → −10; 85–89 → −4;
-≤84 → sin cambio. **La regla textual original se solapa y el propio PRD la marca "por
-confirmar"** — no se implementa hasta que el cliente confirme la tabla exacta. Cuando se confirme:
-función de ajuste en `calificacion.ts` activable por examen (flag en `Examen`), para no alterar
-retroactivamente los simulacros ya calificados.
+El cliente confirmó la regla exacta ("Algoritmo de calificación — Plataforma de Simulacros"):
+es una **cascada de dos pasos** sobre el puntaje base por materia, no la tabla por tramos del
+borrador. base 100 → 100; base 11–99 → −10, y si el resultado cae en 85–89 → −4 adicional;
+base 0–10 → sin cambio. Efecto neto: 95–99 → −14, 11–94 → −10. Global = promedio ponderado
+(3/3/3/3/1, denominador 13) de las materias **ya ajustadas** × 5.
+
+Implementado en `ajustarPuntajeMateria()` (`web/src/lib/calificacion.ts`), aplicado en
+`calificar()` y en la página de resultado (que ahora usa la lib compartida). Verificado contra
+los 10 ejemplos y el global 405 del documento. Los intentos ya finalizados se **recalcularon**
+con la regla nueva para que resultados, promedios y el futuro informe por colegio sean
+consistentes (el recálculo es determinista desde las respuestas guardadas: reversible).
 
 ### 3.5 Informe automático por colegio (prioridad 2)
 
@@ -151,7 +157,8 @@ model AccesoExamen {
 1. **OTP vs. documento.** ✅ **Resuelto (2026-08-10): se mantiene correo + documento.** El PRD
    pedía OTP; la autenticación existente ya está probada en producción y no depende de la
    entrega de correos. OTP queda como opción futura si el cliente lo exige.
-2. **Tabla exacta del ajuste por tramos** (§3.4) — bloquea la parte nueva del calificador.
+2. **Tabla exacta del ajuste por tramos** — ✅ **Resuelto (2026-08-10):** el cliente entregó el
+   algoritmo en cascada; implementado, ver §3.4.
 3. **Hosting de videos**: Cloudinary firmado (integrado, más caro en volumen) vs. Bunny Stream.
 4. **¿La sesión 2 puede presentarse otro día** o debe ser continua? (El motor actual lo permite;
    definir si hay que restringirlo.)
