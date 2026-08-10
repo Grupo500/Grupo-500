@@ -1219,7 +1219,21 @@ La negrilla del encabezado de lectura crítica ("Responda las preguntas X a Y…
 
 **Verificado E2E en producción** con un estudiante desechable (creado y borrado en la misma sesión, DB quedó idéntica: 69 estudiantes, 207 accesos): el listado solo muestra el examen con acceso y con chip "Pendiente"; `/examenes/1` sin acceso redirige al listado; subrayar pinta, persiste en `respuestas.sub` del servidor tras recargar y se quita con clic; con el tiempo agotado el examen NO se auto-envía y el reloj muestra "Tiempo extra −00:0X:XX" en rojo. Ojo al probar en el navegador embebido: `btn.click()` programático no dispara el onClick de React ahí — hay que clicar por CDP (`computer` con ref); no es bug del producto. Para correr el web local contra la DB real: `web/.env.local` (gitignored) con la `DATABASE_PUBLIC_URL` de Railway y secretos de auth de relleno.
 
+### Auditoría de fidelidad: Simulacro 2 vs PDFs S-2 (cierre de fase 2)
+
+David entregó los PDFs fuente del Simulacro 2 (el que está en producción). Se auditó **toda** la digitalización contra ellos por script (parseo del PDF + cruce con `sim_preguntas`): estructura exacta — 120+124 preguntas, áreas 25/41/25/29 y 25/25/29/45, 15/15 rangos de contexto en sesión 1, enunciados de inglés (cloze y comprensión) literales al PDF. Las preguntas sin opciones de texto (10) las tienen dentro de su imagen, como el cuadernillo.
+
+**4 correcciones de datos aplicadas en producción:**
+1. **Inglés P80–84**: la DB ofrecía la opción H como marcable; el PDF manda "marque A–G" (la H es del ejemplo). Se quitó `opcionH` — la palabra H sigue visible en el banco del contexto.
+2. **Inglés P90–94**: enunciados alineados al PDF («¿Dónde puede ver este aviso?», sin tuteo ni "(ver imagen)») y P94 recibió el contexto compartido para agruparse 90–94 como en el cuadernillo.
+3. **Matemáticas S2 P42**: enunciado reescrito que además tenía el typo «P, Q, R y s» → texto literal del PDF (la tabla vive en la imagen).
+4. **Escala de grises**: 2 de 88 imágenes estaban a color (S1 P26 cómic, S1 P102 planta). Se resolvió **sin re-subir**: transformación `e_grayscale` de Cloudinary insertada en la URL (`/upload/e_grayscale/`), verificada con análisis de canales (colorido 0.0 tras aplicar).
+
+**Gotcha del análisis**: el texto extraído del PDF trae las opciones de inglés en columnas desordenadas y los números de página pegados — la mayoría de las 64 alertas del script eran ruido de extracción; solo se actuó sobre lo confirmado a mano contra el PDF.
+
+También quedó el **botón "Retirar" por producto** en `/examenes/admin/accesos` (con confirmación, usa `retirarAccesosDeExamen`): oculta el simulacro a los estudiantes conservando resultados.
+
 ### Pendiente (próxima sesión)
-- Fidelidad visual contra los PDF "S4 Primera/Segunda Sesión" (faltan los archivos)
-- Confirmar con el cliente la tabla de tramos (§10.1 del PRD) y el hosting de videos
-- Botón de "retirar producto" en la UI de admin (la acción ya existe)
+- Confirmar con el cliente la tabla de tramos (§10.1 del PRD) y el hosting de videos (fase 3)
+- Membrete + "Logos" + informe institucional de ejemplo para la fase 4 (informe por colegio)
+- Servicio de correo saliente (Resend recomendado) — lo exigen las fases 4 y el OTP si se aprueba

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { BRITO_BANCO_EXAMEN_ID } from '@/lib/britoBanco'
 import { ArrowLeft, Users } from 'lucide-react'
 import CargarCsv from './CargarCsv'
+import RetirarProducto from './RetirarProducto'
 
 // Gestión de accesos diferenciados por producto (PRD simulacros §3.1–3.2).
 export default async function AdminAccesosPage() {
@@ -75,6 +76,7 @@ export default async function AdminAccesosPage() {
                   <span className="text-on-surface-variant text-xs">· {retiradosPorExamen.get(ex.id)} retirados</span>
                 )}
               </span>
+              <RetirarProducto examenId={ex.id} habilitados={activosPorExamen.get(ex.id) ?? 0} />
             </div>
           ))}
         </div>

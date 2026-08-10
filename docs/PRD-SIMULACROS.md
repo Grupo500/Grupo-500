@@ -164,7 +164,7 @@ model AccesoExamen {
 | Fase | Contenido | Depende de |
 |---|---|---|
 | 1 | ✅ **Hecha (2026-08-10).** Accesos diferenciados + estados en el listado + carga CSV | — |
-| 2 | 🟡 **Parcial (2026-08-10):** cronómetro negativo y subrayado hechos; fidelidad visual espera los PDFs S4 | PDFs S4 |
+| 2 | ✅ **Hecha (2026-08-10).** Cronómetro negativo, subrayado, y auditoría de fidelidad del Simulacro 2 contra sus PDFs fuente (4 correcciones de datos aplicadas) | — |
 | 3 | Correcciones en video (campo, vista, migración de videos a hosting firmado) | decisión §5.3 |
 | 4 | Servicio de correo + informe por colegio (PDF + envío automático) | anexos §5.6 |
 | 5 | Ajuste por tramos del calificador (+ OTP si se aprueba) | confirmaciones §5.1–5.2 |
