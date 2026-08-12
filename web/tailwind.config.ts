@@ -1,5 +1,9 @@
 import type { Config } from 'tailwindcss'
 import animate from 'tailwindcss-animate'
+// El calendario de ReUI usa container queries (@container, @[8rem]:) para que
+// los chips y las cabeceras se adapten al ancho de su celda, no al del viewport.
+// En Tailwind v4 son nativas; en la v3 de este proyecto vienen de este plugin.
+import containerQueries from '@tailwindcss/container-queries'
 
 const config: Config = {
   darkMode: 'class',
@@ -44,6 +48,33 @@ const config: Config = {
         'on-surface':         'var(--on-surface)',
         'on-surface-variant': 'var(--on-surface-variant)',
         'on-primary':         'var(--primary-on)',
+
+        // ── Puente para los componentes de ReUI (src/components/reui) ──
+        // Vienen escritos con el vocabulario de shadcn (bg-muted,
+        // text-muted-foreground, border-border…), que no existe en este
+        // proyecto: aquí se usa un sistema Material propio. En vez de editar
+        // los 13 archivos del calendario —que así siguen actualizándose desde
+        // el registry sin tocarlos— se traduce cada nombre al token de la app.
+        // Todos apuntan a las mismas variables CSS, así que el claro/oscuro
+        // sale gratis.
+        foreground:   'var(--on-surface)',
+        card:         'var(--surface-lowest)',
+        popover:      'var(--surface-lowest)',
+        muted:        'var(--surface-low)',
+        input:        'var(--outline-variant)',
+        ring:         'var(--primary)',
+        border:       'var(--outline-variant)',
+        'card-foreground':      'var(--on-surface)',
+        'popover-foreground':   'var(--on-surface)',
+        'muted-foreground':     'var(--on-surface-variant)',
+        'primary-foreground':   'var(--primary-on)',
+        'secondary-foreground': 'var(--secondary-on)',
+        // `accent` en shadcn es el fondo de hover neutro, no un color de
+        // marca: se mapea a una superficie, no al --accent de la app.
+        accent:                 'var(--surface-high)',
+        'accent-foreground':    'var(--on-surface)',
+        destructive:            'var(--error)',
+        'destructive-foreground': 'var(--error-container)',
       },
       fontFamily: {
         sans: ['Poppins', 'system-ui', 'sans-serif'],
@@ -98,7 +129,7 @@ const config: Config = {
       maxWidth: { container: '1440px' },
     },
   },
-  plugins: [animate],
+  plugins: [animate, containerQueries],
 }
 
 export default config
