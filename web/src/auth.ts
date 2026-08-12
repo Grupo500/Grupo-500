@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import Google      from 'next-auth/providers/google'
+import Microsoft   from 'next-auth/providers/microsoft-entra-id'
 import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
@@ -14,6 +15,46 @@ import { prisma } from '@/lib/prisma'
 export function hashDocumento(documento: string): string {
   return createHash('sha256').update(`sim:${documento.trim()}`).digest('hex')
 }
+
+/**
+ * Entrar con una cuenta Microsoft (Hotmail, Outlook, Live).
+ *
+ * Media docena del equipo no tiene Gmail, así que el botón de Google no les
+ * sirve y solo pueden entrar con contraseña. Esto les da la misma puerta.
+ *
+ * Va condicionado a que existan las credenciales: sin ellas el proveedor se
+ * registraría con clientId vacío y el botón llevaría a un error de Microsoft.
+ * Así, mientras no estén configuradas en Vercel, simplemente no existe.
+ *
+ * El emisor por defecto es `common`, que es justo el que acepta cuentas
+ * personales además de las corporativas. Para que funcione, la app en el
+ * portal de Microsoft debe estar registrada como "cuentas de cualquier
+ * directorio y cuentas personales de Microsoft".
+ */
+const microsoft = process.env.AUTH_MICROSOFT_ENTRA_ID_ID && process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET
+  ? [Microsoft({
+      clientId:     process.env.AUTH_MICROSOFT_ENTRA_ID_ID,
+      clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET,
+      // Quien ya tiene cuenta con contraseña entra con Microsoft al mismo
+      // perfil, en vez de que se le cree uno duplicado con el mismo correo.
+      allowDangerousEmailAccountLinking: true,
+      // El perfil por defecto lee el correo de `email` y además baja la foto
+      // desde Microsoft Graph. En las cuentas personales `email` suele venir
+      // vacío —el correo está en `preferred_username`— y sin correo el
+      // usuario no se puede cruzar con su asesor. La foto se deja de lado:
+      // la app ya cae en las iniciales cuando no hay imagen.
+      profile: (perfil: any) => ({
+        id:    perfil.sub,
+        name:  perfil.name ?? null,
+        email: perfil.email ?? perfil.preferred_username ?? null,
+        image: null,
+        // Solo se usa si Microsoft trae un correo que no existe en la app y
+        // hay que crear la cuenta. A quien ya está registrado se le respeta
+        // el rol de la base: el callback jwt lo lee de ahí.
+        role: 'VENDEDOR' as const,
+      }),
+    })]
+  : []
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -64,6 +105,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
+    ...microsoft,
     Credentials({
       credentials: {
         email:    { label: 'Email',      type: 'email' },

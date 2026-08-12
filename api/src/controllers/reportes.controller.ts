@@ -360,7 +360,14 @@ export async function rankingAsesores(req: Request, res: Response) {
 
   // Traer asesores + pagos + leads de Trengo y HubSpot en queries paralelas
   const [asesores, pagosActual, pagosAnterior, leadsAll, leadsHoy, leadsHubspotAll, leadsHubspotHoy] = await Promise.all([
-    prisma.asesor.findMany({ select: { id: true, nombre: true, email: true, emailCrm: true, user: { select: { image: true } } } }),
+    // El ranking parte de la lista completa de asesores, no de los pagos, para
+    // que quien no vendió este mes también aparezca (en cero, pero aparece).
+    // Por eso hay que excluir aquí las cuentas de operación: no venden nunca y
+    // solo agregaban filas vacías al final.
+    prisma.asesor.findMany({
+      where: { esAdministrativo: false },
+      select: { id: true, nombre: true, email: true, emailCrm: true, user: { select: { image: true } } },
+    }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
       select: { asesorId: true, monto: true, estudianteId: true, comisionAsesor: true, fechaPago: true },

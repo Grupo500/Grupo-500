@@ -23,6 +23,7 @@ export default function SignInPage() {
   const [showPass,      setShowPass]      = useState(false)
   const [loading,       setLoading]       = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [msLoading,     setMsLoading]     = useState(false)
   const [faceLoading,   setFaceLoading]   = useState(false)
   const [error,         setError]         = useState('')
   const [showForgot,    setShowForgot]    = useState(false)
@@ -69,6 +70,11 @@ export default function SignInPage() {
   async function handleGoogle() {
     setGoogleLoading(true)
     await signIn('google', { callbackUrl: '/inicio' })
+  }
+
+  async function handleMicrosoft() {
+    setMsLoading(true)
+    await signIn('microsoft-entra-id', { callbackUrl: '/inicio' })
   }
 
   async function handleFaceId() {
@@ -215,6 +221,30 @@ export default function SignInPage() {
               }
               Continuar con Google
             </button>
+
+            {/* Botón Microsoft — el equipo con Hotmail/Outlook no puede usar
+                Google. Solo aparece si la app de Microsoft está configurada;
+                sin credenciales el proveedor no existe y el botón llevaría a
+                un error. */}
+            {process.env.NEXT_PUBLIC_AUTH_MICROSOFT === '1' && (
+              <button
+                type="button"
+                onClick={handleMicrosoft}
+                disabled={msLoading || googleLoading || loading || faceLoading}
+                className="w-full flex items-center justify-center gap-2 border border-black/[0.08] hover:bg-black/[0.03] hover:border-black/[0.14] transition-all duration-200 active:scale-[0.97] rounded-xl py-2.5 text-sm font-medium text-[#001d3d] disabled:opacity-60"
+              >
+                {msLoading
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 23 23" aria-hidden="true">
+                      <path fill="#f25022" d="M1 1h10v10H1z"/>
+                      <path fill="#7fba00" d="M12 1h10v10H12z"/>
+                      <path fill="#00a4ef" d="M1 12h10v10H1z"/>
+                      <path fill="#ffb900" d="M12 12h10v10H12z"/>
+                    </svg>
+                }
+                Continuar con Microsoft
+              </button>
+            )}
 
             {/* Divider */}
             <div className="flex items-center gap-3">
