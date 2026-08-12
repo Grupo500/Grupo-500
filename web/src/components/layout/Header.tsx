@@ -11,6 +11,11 @@ import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 // marca partida en dos, así que no siguen el tema claro/oscuro de la app.
 const RAIL_BG = '#15203a'
 
+// El mismo radio que usa el sidebar (su `R`), para no meter una curva nueva al
+// sistema. Solo abajo: arriba el header va pegado al borde de la ventana y no
+// tiene de qué separarse.
+const RADIO_INFERIOR = 18
+
 // Los cuatro botones van en círculo claro sobre el oscuro. Se pasa por
 // `className` porque sus estilos por defecto son para fondo claro.
 const BOTON = 'w-9 h-9 rounded-full bg-white/[0.09] text-[#cfe3ff] hover:bg-white/[0.16] hover:text-white'
@@ -27,7 +32,11 @@ const BOTON = 'w-9 h-9 rounded-full bg-white/[0.09] text-[#cfe3ff] hover:bg-whit
 export function Header() {
   return (
     <header
-      style={{ background: RAIL_BG }}
+      style={{
+        background: RAIL_BG,
+        borderBottomLeftRadius:  RADIO_INFERIOR,
+        borderBottomRightRadius: RADIO_INFERIOR,
+      }}
       className="flex h-[60px] flex-shrink-0 items-center justify-between gap-4 px-3 md:px-4"
     >
       <Link href="/inicio" className="flex min-w-0 items-center gap-2.5" title="Volver al inicio">
