@@ -7,8 +7,8 @@ import { RefreshButton } from '@/components/ui/RefreshButton'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 
-// Misma paleta fija del sidebar: el header y la barra son la misma pieza de
-// marca partida en dos, así que no siguen el tema claro/oscuro de la app.
+// Misma paleta fija del sidebar y de la barra flotante: las tres son la misma
+// pieza de chrome, así que no siguen el tema claro/oscuro de la app.
 const RAIL_BG = '#15203a'
 
 // El mismo radio que usa el sidebar (su `R`), para no meter una curva nueva al
@@ -16,18 +16,23 @@ const RAIL_BG = '#15203a'
 // tiene de qué separarse.
 const RADIO_INFERIOR = 18
 
-// Los cuatro botones van en círculo claro sobre el oscuro. Se pasa por
-// `className` porque sus estilos por defecto son para fondo claro.
-const BOTON = 'w-9 h-9 rounded-full bg-white/[0.09] text-[#cfe3ff] hover:bg-white/[0.16] hover:text-white'
+// Círculo claro sobre el oscuro. Se pasa por `className` porque los estilos por
+// defecto de estos botones son para fondo claro. En celular bajan a 32px: con
+// cuatro botones más el logo, a 36 se empujaban contra el nombre.
+const BOTON =
+  'w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/[0.09] text-[#cfe3ff] ' +
+  'hover:bg-white/[0.16] hover:text-white'
 
 /**
  * Franja de marca a todo el ancho, encima del sidebar y del contenido.
  *
- * Antes esto era una tarjeta flotante dentro del sidebar y los cuatro botones
- * vivían dentro del dashboard de Ventas — o sea que en Estudiantes, Cursos o
- * Colegios no había ni marca arriba ni forma de refrescar. Al subirlos aquí
- * están en todas las pantallas del área, y en celular (donde el sidebar no
- * existe) aparece por primera vez la marca.
+ * No lleva `position: fixed`: el layout del área es una columna de alto fijo
+ * donde el que desplaza es el `<main>`, así que el header ya se queda quieto
+ * por construcción. Fijarlo además obligaría a compensar su alto con padding
+ * en el contenido y a pelear con la barra de direcciones del navegador móvil.
+ *
+ * En celular mide 46px en vez de 60 y reserva el espacio de la muesca, para
+ * cuando la app se instala en la pantalla de inicio.
  */
 export function Header() {
   return (
@@ -36,41 +41,45 @@ export function Header() {
         background: RAIL_BG,
         borderBottomLeftRadius:  RADIO_INFERIOR,
         borderBottomRightRadius: RADIO_INFERIOR,
+        paddingTop: 'env(safe-area-inset-top)',
       }}
-      // Solo escritorio. En celular la pantalla es angosta y el header le
-      // quitaba 60px de alto útil sin aportar navegación: los botones ya viven
-      // en la cabecera de cada página y el menú flotante hace el resto.
-      className="hidden h-[60px] flex-shrink-0 items-center justify-between gap-4 px-3 md:flex md:px-4"
+      className="flex-shrink-0"
     >
-      <Link href="/inicio" className="flex min-w-0 items-center gap-2.5" title="Volver al inicio">
-        <Image
-          src="/logo-grupo500.png"
-          alt="Grupo 500"
-          width={40}
-          height={40}
-          priority
-          className="h-9 w-9 flex-shrink-0 rounded-full object-cover md:h-10 md:w-10"
-        />
-        {/* Se recorta antes que empujar los botones: en pantallas angostas la
-            salida al selector pesa más que ver el nombre completo. */}
-        <span className="min-w-0">
-          <span className="block truncate text-[13.5px] font-bold leading-none tracking-tight text-white">Grupo 500</span>
-          <span className="mt-0.5 block truncate text-[10.5px] font-medium leading-none text-slate-400">Pre-ICFES</span>
-        </span>
-      </Link>
-
-      <div className="flex flex-shrink-0 items-center gap-2">
-        <Link
-          href="/inicio"
-          title="Volver al inicio"
-          aria-label="Volver al inicio"
-          className={`flex items-center justify-center transition-colors ${BOTON}`}
-        >
-          <Home className="h-4 w-4" />
+      <div className="flex h-[46px] items-center justify-between gap-3 px-3 md:h-[60px] md:gap-4 md:px-4">
+        <Link href="/inicio" className="flex min-w-0 items-center gap-2 md:gap-2.5" title="Volver al inicio">
+          <Image
+            src="/logo-grupo500.png"
+            alt="Grupo 500"
+            width={40}
+            height={40}
+            priority
+            className="h-8 w-8 flex-shrink-0 rounded-full object-cover md:h-10 md:w-10"
+          />
+          {/* Se recorta antes que empujar los botones: en pantallas angostas la
+              salida al selector pesa más que ver el nombre completo. */}
+          <span className="min-w-0">
+            <span className="block truncate text-[12.5px] font-bold leading-none tracking-tight text-white md:text-[13.5px]">
+              Grupo 500
+            </span>
+            <span className="mt-0.5 block truncate text-[9.5px] font-medium leading-none text-slate-400 md:text-[10.5px]">
+              Pre-ICFES
+            </span>
+          </span>
         </Link>
-        <NotificacionesButton className={BOTON} />
-        <ThemeToggle className={BOTON} />
-        <RefreshButton className={BOTON} />
+
+        <div className="flex flex-shrink-0 items-center gap-1.5 md:gap-2">
+          <Link
+            href="/inicio"
+            title="Volver al inicio"
+            aria-label="Volver al inicio"
+            className={`flex items-center justify-center transition-colors ${BOTON}`}
+          >
+            <Home className="h-4 w-4" />
+          </Link>
+          <NotificacionesButton className={BOTON} />
+          <ThemeToggle className={BOTON} />
+          <RefreshButton className={BOTON} />
+        </div>
       </div>
     </header>
   )

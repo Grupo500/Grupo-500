@@ -4,10 +4,6 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { VolverInicioButton } from '@/components/ui/VolverInicioButton'
-import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { RefreshButton } from '@/components/ui/RefreshButton'
 import { MonthPicker, type DateRange } from '@/components/ui/MonthPicker'
 import { formatCOP } from '@/lib/utils'
 import { TarjetaKPI, rangoDelMes, nombreMes, pct, numero } from '@/components/finanzas/comunes'
@@ -88,15 +84,6 @@ export default function FinanzasResumenPage() {
               onChange={(m, r) => { setMes(m); setRango(r) }}
               alignRight
             />
-            {/* Solo en celular: en escritorio ya están en el header del área.
-                El selector de mes sí se queda en las dos, que es propio de
-                esta pantalla y no del área. */}
-            <span className="flex items-center gap-2 md:hidden">
-              <VolverInicioButton />
-              <NotificacionesButton />
-              <ThemeToggle />
-              <RefreshButton />
-            </span>
           </>
         }
       />
