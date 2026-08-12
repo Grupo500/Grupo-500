@@ -339,14 +339,17 @@ export default async function MapaBritoPage({
           </div>
         </aside>
 
-        {/* Sendero central: la hoja de cuaderno */}
+        {/* Sendero central: la hoja de cuaderno.
+            El tile de marcas de agua (logo Grupo 500 al ~5% de opacidad, horneada
+            en el PNG) se genera desde public/logo.png — dos logos escalonados por
+            tile de 480px para que el patrón respire entre los garabatos. */}
         <div
           className="lg:overflow-y-auto overflow-x-hidden"
           style={{
             background: '#FAF8F0',
             backgroundImage:
-              'linear-gradient(rgba(30,95,168,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(30,95,168,0.06) 1px, transparent 1px)',
-            backgroundSize: '26px 26px',
+              'url(/brito/tapiz-logo.png), linear-gradient(rgba(30,95,168,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(30,95,168,0.06) 1px, transparent 1px)',
+            backgroundSize: '480px 480px, 26px 26px, 26px 26px',
           }}
         >
           <div className="relative min-h-full">

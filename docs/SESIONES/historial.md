@@ -1245,3 +1245,15 @@ Quedó en `ajustarPuntajeMateria()` (`web/src/lib/calificacion.ts`), aplicada en
 - Hosting de videos de corrección (fase 3): decisión Cloudinary firmado vs Bunny + los videos
 - Membrete + "Logos" + informe institucional de ejemplo para la fase 4 (informe por colegio)
 - Servicio de correo saliente (Resend recomendado) — lo exigen las fases 4 y el OTP si se aprueba
+
+---
+
+## Sesión 037 — 2026-08-13
+
+**Objetivo:** Marca de agua del logo en el tapiz del mapa de Brito.
+
+### Marcas de agua en el sendero de Brito
+
+El tapiz del mapa (`/brito/mapa`, la "hoja de cuaderno") ahora lleva el logo de Grupo 500 como marca de agua repetida. Implementación: un tile PNG (`web/public/brito/tapiz-logo.png`, 480×480) generado desde `public/logo.png` con la opacidad (~5,5%) **horneada en el PNG** y dos logos escalonados por tile rotados −12° como los garabatos. Se suma como primera capa del `backgroundImage` del sendero, junto a la cuadrícula existente — cero DOM extra, una sola petición cacheable.
+
+**Por qué horneada y no CSS:** un `background-image` no acepta `opacity`, y espaciar un patrón con `background-repeat` exige que el propio tile traiga el aire alrededor del logo. Regenerar el tile (cambiar tamaño/opacidad/densidad): script inline de PIL sobre `public/logo.png`, documentado en el comentario del componente.
