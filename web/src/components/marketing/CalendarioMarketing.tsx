@@ -480,19 +480,17 @@ export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }:
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {esEdicion && (
-            <div>
-              <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Estado</label>
-              <Select
-                value={estado}
-                onValueChange={v => setEstado(v as Contenido['estado'])}
-                className="input-base"
-                options={Object.entries(ESTADO_LABEL).map(([value, label]) => ({ value, label }))}
-              />
-            </div>
-          )}
-        </div>
+        {esEdicion && (
+          <div>
+            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Estado</label>
+            <Select
+              value={estado}
+              onValueChange={v => setEstado(v as Contenido['estado'])}
+              className="input-base"
+              options={Object.entries(ESTADO_LABEL).map(([value, label]) => ({ value, label }))}
+            />
+          </div>
+        )}
 
         <div>
           <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Notas</label>
@@ -563,23 +561,34 @@ export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }:
 
         {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
-        <div className="flex items-center justify-between gap-3 pt-2">
-          {esEdicion ? (
+        {/* Pie a todo el ancho: la acción principal es la que más pesa y se
+            alcanza sin apuntar a un botón pequeño en la esquina. */}
+        <div className="flex gap-2 border-t border-outline-variant pt-3">
+          {esEdicion && (
             <button
               onClick={() => confirm('¿Eliminar este contenido?') && eliminar.mutate()}
               disabled={eliminar.isPending}
-              className="flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--error)] hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-40"
+              aria-label="Eliminar contenido"
+              title="Eliminar contenido"
+              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-outline-variant text-[var(--error)] transition-colors hover:bg-surface-high disabled:opacity-40"
             >
-              <Trash2 className="w-3.5 h-3.5" /> Eliminar
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
-          ) : <span />}
-          <div className="flex gap-2">
-            <button onClick={onClose} className="btn-ghost">Cancelar</button>
-            <Button onClick={() => guardar.mutate()} disabled={!titulo.trim() || guardar.isPending}>
-              {guardar.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              {esEdicion ? 'Guardar cambios' : 'Crear'}
-            </Button>
-          </div>
+          )}
+          <button
+            onClick={onClose}
+            className="flex-1 cursor-pointer rounded-lg border border-outline-variant bg-surface-lowest py-2 text-[12.5px] font-semibold text-on-surface transition-colors hover:bg-surface-high"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => guardar.mutate()}
+            disabled={!titulo.trim() || guardar.isPending}
+            className="flex flex-[1.4] cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-[12.5px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            {guardar.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            {esEdicion ? 'Guardar cambios' : 'Crear contenido'}
+          </button>
         </div>
       </div>
     </Modal>

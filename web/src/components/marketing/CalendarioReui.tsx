@@ -196,18 +196,16 @@ export function CalendarioReui() {
               // `leading-none` para que el punto quede centrado con las letras:
               // con la altura de línea heredada, `items-center` lo alinea contra
               // la caja de texto —que incluye el hueco del ascendente— y el
-              // punto se ve alto. El color lo lleva solo el punto; tres bordes
-              // de colores a la vez hacían ruido y competían con la grilla.
+              // punto se ve alto.
               <button
                 key={e}
                 onClick={() => alternar(e)}
                 aria-pressed={activo}
                 className={cn(
                   'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none transition-colors',
-                  activo
-                    ? 'border-outline-variant bg-surface-lowest'
-                    : 'border-transparent opacity-40 hover:opacity-70',
+                  activo ? 'bg-surface-lowest' : 'border-transparent opacity-40 hover:opacity-70',
                 )}
+                style={activo ? { borderColor: ESTADO_COLOR[e] } : undefined}
               >
                 <span
                   className="h-[7px] w-[7px] shrink-0 rounded-full"
@@ -253,6 +251,12 @@ export function CalendarioReui() {
             // evita tener que reimplementar formatTitle entero.
             title: 'text-[16px] font-semibold tracking-[-0.022em] first-letter:uppercase',
             monthDayHeader: 'text-[10px] font-bold uppercase tracking-[0.05em]',
+            // ReUI enmarca la ficha con un aro completo del color del estado;
+            // la maqueta usa una franja solo a la izquierda, que deja el color
+            // igual de legible sin encerrar el texto. `ring-0` desactiva el aro
+            // (va después, así que gana en tailwind-merge).
+            event:
+              'ring-0 border-l-[2.5px] border-l-[var(--ec-event-color)] rounded-l-[3px] pl-1.5',
           }}
           renderEvent={({ occurrence }) => <Ficha contenido={occurrence.event.data} />}
           onEventClick={(occ: EventCalendarOccurrence<Contenido>) => {
