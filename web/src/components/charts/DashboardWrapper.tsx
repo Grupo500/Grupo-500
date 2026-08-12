@@ -3,10 +3,10 @@
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { EstudiantesMes } from './EstudiantesMes'
-// La misma tabla de cursos que usa Analíticas, no la torta: con 23 cursos una
-// torta no deja leer cuál vende más, y tener dos gráficas distintas para el
-// mismo dato obligaba a reaprender la lectura al cambiar de pantalla.
-import { CursosVendidosRanked } from './CursosVendidosRanked'
+// La torta y no la tabla de Analíticas: su alto es fijo, así que la columna
+// izquierda termina a la misma altura que el Top 5 de la derecha. La tabla
+// crece según cuántas familias tengan ventas y dejaba un hueco abajo.
+import { CursosVendidosChart } from './CursosVendidosChart'
 import { FacturadoMensual } from './FacturadoMensual'
 import { ComisionesKpis } from './ComisionesKpis'
 import { TopAsesores } from './TopAsesores'
@@ -54,7 +54,7 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
         <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col gap-4">
           <EstudiantesMes desde={desde} hasta={hasta} />
           <div className="flex-1">
-            <CursosVendidosRanked desde={desde} hasta={hasta} />
+            <CursosVendidosChart desde={desde} hasta={hasta} />
           </div>
         </div>
 
