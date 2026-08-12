@@ -470,7 +470,12 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                 <button
                   key={a.id}
                   onClick={() => { setAsesorId(a.id); setPagina(1) }}
-                  className={cn(GRID_ASESOR, 'w-full py-2 px-2 -mx-2 rounded-lg hover:bg-surface-high transition-colors cursor-pointer text-left')}
+                  // Sin `w-full`: con `-mx-2` el ancho automático se estira
+                  // hasta cubrir los márgenes negativos, igual que el
+                  // encabezado. Con `w-full` medía exacto el contenedor y
+                  // además se corría 8px, así que terminaba 16px antes y todas
+                  // las cifras quedaban desalineadas de su rótulo.
+                  className={cn(GRID_ASESOR, 'py-2 px-2 -mx-2 rounded-lg hover:bg-surface-high transition-colors cursor-pointer text-left')}
                 >
                   <span className={`${mono.className} text-[11.5px] text-on-surface-variant`}>{i + 1}</span>
                   <span className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10">
