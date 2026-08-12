@@ -57,6 +57,15 @@ function iniciales(n: string) {
   return n.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
 
+// Color de avatar por miembro. Se deriva del id para que cada persona conserve
+// siempre el mismo, sin guardarlo en la base ni depender del orden de la lista.
+const COLORES_AVATAR = ['#2094ff', '#7c3aed', '#db2777', '#0891b2', '#ca8a04', '#059669']
+export function colorAvatar(id: string): string {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return COLORES_AVATAR[h % COLORES_AVATAR.length]
+}
+
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
 export function CalendarioMarketing() {
@@ -387,27 +396,81 @@ export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }:
             />
           </div>
           <div>
+            {/* Segmentado en vez de desplegable: son dos opciones y se elige
+                de un clic, sin abrir una lista para ver dos ítems. */}
             <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Tipo de contenido</label>
-            <Select
-              value={clasificacion}
-              onValueChange={v => setClasificacion(v as Contenido['clasificacion'])}
-              className="input-base"
-              options={Object.entries(CLASIFICACION_LABEL).map(([value, label]) => ({ value, label }))}
-            />
+            <div className="flex gap-0.5 rounded-lg bg-surface-low p-0.5">
+              {(Object.keys(CLASIFICACION_LABEL) as Contenido['clasificacion'][]).map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setClasificacion(c)}
+                  aria-pressed={clasificacion === c}
+                  className={cn(
+                    'flex-1 rounded-md py-1.5 text-[12.5px] transition-colors cursor-pointer',
+                    clasificacion === c
+                      ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface',
+                  )}
+                >
+                  {CLASIFICACION_LABEL[c]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Responsable por avatar: se ve de una quién está en el equipo y se
+            asigna de un clic, en vez de desplegar una lista de nombres. */}
+        <div>
+          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Asignado a</label>
+          <div className="flex flex-wrap gap-1.5">
+            {miembros.filter(m => m.activo).map(m => {
+              const activo = asignadoAId === m.id
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setAsignadoAId(activo ? '' : m.id)}
+                  aria-pressed={activo}
+                  title={m.nombre}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[12px] transition-colors cursor-pointer',
+                    activo
+                      ? 'border-primary bg-primary-container text-on-surface'
+                      : 'border-outline-variant bg-surface-lowest text-on-surface hover:border-outline',
+                  )}
+                >
+                  <span
+                    className="grid h-[19px] w-[19px] place-items-center rounded-full text-[8.5px] font-bold text-white"
+                    style={{ background: colorAvatar(m.id) }}
+                  >
+                    {iniciales(m.nombre)}
+                  </span>
+                  {m.nombre.split(' ')[0]}
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => setAsignadoAId('')}
+              aria-pressed={!asignadoAId}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[12px] transition-colors cursor-pointer',
+                !asignadoAId
+                  ? 'border-primary bg-primary-container text-on-surface'
+                  : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
+              )}
+            >
+              <span className="grid h-[19px] w-[19px] place-items-center rounded-full border border-dashed border-outline text-[8.5px] font-bold text-on-surface-variant">
+                ?
+              </span>
+              Sin asignar
+            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Asignado a</label>
-            <Select
-              value={asignadoAId}
-              onValueChange={setAsignadoAId}
-              className="input-base"
-              placeholder="Sin asignar"
-              options={[{ value: '', label: 'Sin asignar' }, ...miembros.map(m => ({ value: m.id, label: m.nombre }))]}
-            />
-          </div>
           {esEdicion && (
             <div>
               <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Estado</label>

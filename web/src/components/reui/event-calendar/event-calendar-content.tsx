@@ -64,7 +64,7 @@ function EventCalendarContent({
     "data-loading": loading || undefined,
     className: cn(
       "relative flex min-h-0 min-w-0 flex-1 flex-col",
-      "data-loading:pointer-events-none data-loading:opacity-60",
+      "data-[loading]:pointer-events-none data-[loading]:opacity-60",
       viewConfig.classNames?.content,
       className
     ),

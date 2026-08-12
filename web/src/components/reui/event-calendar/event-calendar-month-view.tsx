@@ -595,7 +595,7 @@ function EventCalendarMonthWeek({
                 style={
                   {
                     "--ec-event-color":
-                      dragGhost.color ?? "var(--color-primary)",
+                      dragGhost.color ?? "var(--primary)",
                   } as CSSProperties
                 }
               >
@@ -615,7 +615,7 @@ function EventCalendarMonthWeek({
                       continuesAfter: !dragGhost.isEnd,
                     }}
                     className={cn(
-                      "h-full inset-ring-0",
+                      "h-full ring-0",
                       !dragGhost.valid && EVENT_CALENDAR_GHOST.invalidContent
                     )}
                   />
@@ -863,13 +863,13 @@ function EventCalendarMonthCell({
       className={cn(
         "shrink-0 rounded-sm border border-dashed",
         inlineDrop.valid
-          ? "border-(--ec-event-color)/50 bg-(--ec-event-color)/8"
+          ? "border-[color-mix(in_srgb,var(--ec-event-color)_50%,transparent)] bg-[color-mix(in_srgb,var(--ec-event-color)_8%,transparent)]"
           : "border-destructive/70 bg-destructive/10",
         viewConfig.classNames?.dragGhost
       )}
       style={
         {
-          "--ec-event-color": inlineDrop.color ?? "var(--color-primary)",
+          "--ec-event-color": inlineDrop.color ?? "var(--primary)",
           height: "calc(var(--ec-month-bar-h, 1.75rem) - 0.125rem)",
         } as CSSProperties
       }
@@ -1147,7 +1147,7 @@ function EventCalendarMoreIndicator({
             cn(
               "flex shrink-0 items-center border border-dashed",
               dropInto.valid
-                ? "text-foreground border-(--ec-event-color)/50 bg-(--ec-event-color)/8"
+                ? "text-foreground border-[color-mix(in_srgb,var(--ec-event-color)_50%,transparent)] bg-[color-mix(in_srgb,var(--ec-event-color)_8%,transparent)]"
                 : "border-destructive/70 bg-destructive/10 text-destructive"
             ),
           viewConfig.classNames?.moreIndicator
@@ -1155,7 +1155,7 @@ function EventCalendarMoreIndicator({
         style={
           dropInto
             ? ({
-                "--ec-event-color": dropInto.color ?? "var(--color-primary)",
+                "--ec-event-color": dropInto.color ?? "var(--primary)",
                 height: "calc(var(--ec-month-bar-h, 1.75rem) - 0.125rem)",
               } as CSSProperties)
             : undefined

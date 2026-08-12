@@ -71,9 +71,9 @@ const EVENT_CALENDAR_COLORS: Array<{ name: string; value: string }> = [
  *   a cursor-following validation hint.
  */
 const EVENT_CALENDAR_GHOST = {
-  move: "rounded-sm border border-dashed border-(--ec-event-color)/50 bg-(--ec-event-color)/8",
+  move: "rounded-sm border border-dashed border-[color-mix(in_srgb,var(--ec-event-color)_50%,transparent)] bg-[color-mix(in_srgb,var(--ec-event-color)_8%,transparent)]",
   resize:
-    "rounded-sm border border-dashed border-(--ec-event-color)/70 overflow-hidden",
+    "rounded-sm border border-dashed border-[color-mix(in_srgb,var(--ec-event-color)_70%,transparent)] overflow-hidden",
   invalid: "border-destructive/70 bg-destructive/10",
   invalidResize: "border-destructive/70",
   /** Applied to the clone inside an invalid resize ghost. */
@@ -232,7 +232,7 @@ function EventCalendarEvent<TData = unknown>({
           data-slot="event-calendar-event-dot"
           // -me-0.5 tightens just the dot-to-title gap (the chip keeps gap-1.5
           // between the title and the trailing time)
-          className="-me-0.5 size-1.5 shrink-0 rounded-full bg-(--ec-event-color)"
+          className="-me-0.5 size-1.5 shrink-0 rounded-full bg-[var(--ec-event-color)]"
         />
       )}
       {occurrence.isRecurring && (
@@ -323,7 +323,7 @@ function EventCalendarEvent<TData = unknown>({
       <span
         aria-hidden
         data-slot="event-calendar-agenda-dot"
-        className="size-2 shrink-0 rounded-full bg-(--ec-event-color)"
+        className="size-2 shrink-0 rounded-full bg-[var(--ec-event-color)]"
       />
       <span className="truncate text-sm">{event.title}</span>
       {occurrence.isRecurring && (
@@ -494,7 +494,7 @@ function EventCalendarEvent<TData = unknown>({
     "aria-hidden": preview || undefined,
     tabIndex: preview ? -1 : undefined,
     style: {
-      "--ec-event-color": event.color ?? "var(--color-primary)",
+      "--ec-event-color": event.color ?? "var(--primary)",
     } as CSSProperties,
     onPointerDown: (e: React.PointerEvent) => {
       e.stopPropagation()
@@ -531,14 +531,14 @@ function EventCalendarEvent<TData = unknown>({
             "@container gap-1.5 rounded-sm px-1.5 py-1 leading-normal",
             // soft tint + hairline inset ring: color reads from the surface
             // itself (no accent border), stays legible in light and dark
-            "bg-(--ec-event-color)/15 hover:bg-(--ec-event-color)/25",
+            "bg-[color-mix(in_srgb,var(--ec-event-color)_15%,transparent)] hover:bg-[color-mix(in_srgb,var(--ec-event-color)_25%,transparent)]",
             // a flat tint reads darker over a dark surface, so lift it a little
             // in dark mode to keep a lighter, softer chip tone
-            "dark:bg-(--ec-event-color)/20 dark:hover:bg-(--ec-event-color)/30",
-            "inset-ring inset-ring-(--ec-event-color)/15",
+            "dark:bg-[color-mix(in_srgb,var(--ec-event-color)_20%,transparent)] dark:hover:bg-[color-mix(in_srgb,var(--ec-event-color)_30%,transparent)]",
+            "ring-inset ring-1 ring-[color-mix(in_srgb,var(--ec-event-color)_15%,transparent)]",
             "transition-[background-color,box-shadow] duration-150",
-            "data-dragging:opacity-40",
-            "data-selected:bg-(--ec-event-color)/30 data-selected:inset-ring-(--ec-event-color)/40",
+            "data-[dragging]:opacity-40",
+            "data-[selected]:bg-[color-mix(in_srgb,var(--ec-event-color)_30%,transparent)] data-[selected]:ring-[color-mix(in_srgb,var(--ec-event-color)_40%,transparent)]",
             segment.continuesBefore && "rounded-s-none",
             segment.continuesAfter && "rounded-e-none"
           ),

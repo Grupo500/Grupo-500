@@ -639,7 +639,7 @@ function EventCalendarResourceColumn({
       )}
       style={{
         height: `calc(var(--ec-hour-height) * ${boundsMinutes / 60})`,
-        backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent calc(var(--ec-hour-height) * ${interval / 60} - var(--ec-slot-line-width, 1px)), var(--ec-slot-line-color, var(--color-border)) calc(var(--ec-hour-height) * ${interval / 60} - var(--ec-slot-line-width, 1px)), var(--ec-slot-line-color, var(--color-border)) calc(var(--ec-hour-height) * ${interval / 60}))`,
+        backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent calc(var(--ec-hour-height) * ${interval / 60} - var(--ec-slot-line-width, 1px)), var(--ec-slot-line-color, var(--outline-variant)) calc(var(--ec-hour-height) * ${interval / 60} - var(--ec-slot-line-width, 1px)), var(--ec-slot-line-color, var(--outline-variant)) calc(var(--ec-hour-height) * ${interval / 60}))`,
       }}
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) gestures.beginCreate(e, day, false)
@@ -690,7 +690,7 @@ function EventCalendarResourceColumn({
             // min-h keeps 15-min chips readable (Google-style: the block may
             // slightly outgrow its true window); hover raises a squeezed
             // cascade chip above its overlapping neighbors
-            className="absolute z-(--ec-z) min-h-(--ec-event-min-h,1.5rem) px-0.5 hover:z-40"
+            className="absolute z-[var(--ec-z)] min-h-(--ec-event-min-h,1.5rem) px-0.5 hover:z-40"
             style={
               {
                 ...minuteBlockStyle(startMin, endMin, boundsStartMin),
@@ -743,7 +743,7 @@ function EventCalendarResourceColumn({
                 dragGhost.window[1],
                 boundsStartMin
               ),
-              "--ec-event-color": dragGhost.color ?? "var(--color-primary)",
+              "--ec-event-color": dragGhost.color ?? "var(--primary)",
             } as CSSProperties
           }
         >
@@ -771,7 +771,7 @@ function EventCalendarResourceColumn({
                   ? "h-full gap-1 py-0 leading-4"
                   : "h-full flex-col items-start justify-start gap-0 py-1",
                 viewConfig.classNames?.timedChip,
-                "inset-ring-0",
+                "ring-0",
                 !dragGhost.valid && EVENT_CALENDAR_GHOST.invalidContent
               )}
             />
