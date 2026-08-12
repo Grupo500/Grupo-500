@@ -5,7 +5,10 @@ import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import { Home } from 'lucide-react'
 import { EstudiantesMes } from './EstudiantesMes'
-import { CursosVendidosChart } from './CursosVendidosChart'
+// La misma tabla de cursos que usa Analíticas, no la torta: con 23 cursos una
+// torta no deja leer cuál vende más, y tener dos gráficas distintas para el
+// mismo dato obligaba a reaprender la lectura al cambiar de pantalla.
+import { CursosVendidosRanked } from './CursosVendidosRanked'
 import { FacturadoMensual } from './FacturadoMensual'
 import { ComisionesKpis } from './ComisionesKpis'
 import { TopAsesores } from './TopAsesores'
@@ -38,10 +41,14 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
             <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
             <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
           </h1>
-          <div className="mt-2">
-            <p className="text-[11px] font-semibold text-on-surface-variant tracking-wide">Resumen del mes</p>
-            <p className="text-[13px] font-semibold text-on-surface leading-tight mt-0.5">{mesLabel}</p>
-          </div>
+          {/* En una sola fila: son dos mitades de la misma frase, no dos datos.
+              Alineadas por la línea base y no por el centro, que es lo que las
+              deja parejas de verdad teniendo tamaños distintos. */}
+          <p className="mt-2 flex items-baseline gap-1.5 leading-tight">
+            <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">Resumen del mes</span>
+            <span className="text-[11px] text-outline">·</span>
+            <span className="text-[13px] font-semibold text-on-surface">{mesLabel}</span>
+          </p>
         </div>
         <div className="flex-shrink-0 pt-1 flex items-center gap-2">
           <Link
@@ -64,7 +71,7 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
         <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col gap-4">
           <EstudiantesMes desde={desde} hasta={hasta} />
           <div className="flex-1">
-            <CursosVendidosChart desde={desde} hasta={hasta} />
+            <CursosVendidosRanked desde={desde} hasta={hasta} />
           </div>
         </div>
 
