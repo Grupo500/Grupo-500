@@ -133,15 +133,21 @@ export function CalendarioReui() {
       contenidos
         .filter(c => !ocultos.includes(c.estado))
         .map(c => {
+          // Ojo: NO se marcan como `allDay`. ReUI dibuja los de día completo
+          // como barras en una capa flotante sobre las celdas (absolute,
+          // top-0), así que salían pisando el número del día en vez de
+          // apilarse debajo. Un evento con horario que ocupa el día entero se
+          // renderiza DENTRO de la celda, que es lo que necesitamos, y se sigue
+          // leyendo como "todo el día" en las vistas de semana y día.
           const inicio = diaDe(c.fecha)
           const fin = new Date(inicio)
-          fin.setDate(fin.getDate() + 1)
+          fin.setHours(23, 59, 59, 999)
           return {
             id: c.id,
             title: c.titulo,
             start: inicio,
             end: fin,
-            allDay: true,
+            allDay: false,
             color: ESTADO_COLOR[c.estado],
             resourceId: c.asignadoA?.id,
             data: c,
@@ -241,7 +247,6 @@ export function CalendarioReui() {
           nowIndicator
           // Sin `offDays`: en Grupo 500 se trabaja sábado y domingo, así que
           // marcarlos como no laborables sería falso.
-          showDayAddButton
           // Arrastrar cambiaría la fecha del contenido en la base y eso todavía
           // no está conectado: se apaga en vez de dejarlo fallar en silencio.
           interactions={{ drag: false, resize: false, selectSlot: false }}
@@ -259,6 +264,23 @@ export function CalendarioReui() {
               'ring-0 border-l-[2.5px] border-l-[var(--ec-event-color)] rounded-l-[3px] pl-1.5',
           }}
           renderEvent={({ occurrence }) => <Ficha contenido={occurrence.event.data} />}
+          // La celda del mes se dibuja completa aquí. La de ReUI pone el número
+          // abajo a la derecha y fija el alto y la separación de las fichas;
+          // tomando el control se consigue el diseño acordado sin pelear con
+          // sus clases. ReUI sigue resolviendo lo que no se ve: fechas, zona
+          // horaria, qué días caen en cada fila y la navegación.
+          renderMonthCell={({ day, segments, isToday, isOutside }) => (
+            <CeldaMes
+              day={day}
+              contenidos={segments.timed
+                .map(s => s.occurrence.event.data)
+                .filter((c): c is Contenido => !!c)}
+              isToday={isToday}
+              isOutside={isOutside}
+              onAgregar={() => setModal({ modo: 'crear', fecha: day })}
+              onAbrir={c => setModal({ modo: 'editar', contenido: c })}
+            />
+          )}
           onEventClick={(occ: EventCalendarOccurrence<Contenido>) => {
             if (occ.event.data) setModal({ modo: 'editar', contenido: occ.event.data })
           }}
@@ -307,6 +329,74 @@ export function CalendarioReui() {
           onSaved={invalidar}
         />
       )}
+    </div>
+  )
+}
+
+/** Cuántas fichas se muestran antes de resumir en "+N más". */
+const FICHAS_VISIBLES = 3
+
+/**
+ * Celda de un día del mes, dibujada de punta a punta.
+ *
+ * Arriba, en la misma fila: el botón de agregar a la izquierda —aparece al
+ * pasar el mouse— y el número del día a la derecha. Debajo, las fichas.
+ */
+function CeldaMes({
+  day, contenidos, isToday, isOutside, onAgregar, onAbrir,
+}: {
+  day: Date
+  contenidos: Contenido[]
+  isToday: boolean
+  isOutside: boolean
+  onAgregar: () => void
+  onAbrir: (c: Contenido) => void
+}) {
+  const visibles = contenidos.slice(0, FICHAS_VISIBLES)
+  const sobran = contenidos.length - visibles.length
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex items-center justify-between gap-1 px-2 pt-1.5">
+        {/* `group/ec-cell` lo pone ReUI en la raíz de la celda; el botón se
+            revela al pasar el mouse por ella, no solo por el propio botón. */}
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); onAgregar() }}
+          aria-label={`Agregar contenido el ${format(day, "d 'de' MMMM", { locale: es })}`}
+          className="grid size-5 cursor-pointer place-items-center rounded-[5px] bg-primary text-on-primary opacity-0 transition-opacity focus-visible:opacity-100 group-hover/ec-cell:opacity-100"
+        >
+          <Plus className="size-3.5" />
+        </button>
+        <span
+          className={cn(
+            'grid size-5 place-items-center rounded-full text-[12px] tabular-nums',
+            isToday ? 'bg-primary font-light text-on-primary' : 'text-on-surface-variant',
+            isOutside && !isToday && 'opacity-45',
+          )}
+        >
+          {format(day, 'd')}
+        </span>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-[3px] overflow-hidden px-1.5 pb-1 pt-1">
+        {visibles.map(c => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={e => { e.stopPropagation(); onAbrir(c) }}
+            style={{ ['--marca' as string]: ESTADO_COLOR[c.estado] }}
+            className="flex cursor-pointer items-center gap-1.5 overflow-hidden rounded-[3px] border-l-[2.5px] border-l-[var(--marca)] bg-[color-mix(in_srgb,var(--marca)_15%,transparent)] px-1.5 py-1 text-left leading-none transition-colors hover:bg-[color-mix(in_srgb,var(--marca)_25%,transparent)]"
+          >
+            <Ficha contenido={c} />
+          </button>
+        ))}
+        {sobran > 0 && (
+          <span className="pl-1.5 text-[9.5px] leading-none text-on-surface-variant">
+            +{sobran} más
+          </span>
+        )}
+      </div>
     </div>
   )
 }
