@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   FileBarChart2, BarChart3,
-  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck,
+  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck, Home,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -32,6 +32,12 @@ const primaryItems: NavItem[] = [
   { href: '/ventas',      label: 'Ventas',      icon: Receipt,         adminOnly: true  },
   { href: '/reportes',     label: 'Analíticas',  icon: BarChart3,       adminOnly: false },
 ]
+
+// Salida al selector de módulos. Va en "Más" en TODAS las áreas: en celular
+// no hay sidebar ni header, así que sin esta entrada se entra a un área y no
+// se sale — pasaba en Ventas, donde la barra se convierte en las pestañas del
+// área y "Más" quedaba vacío.
+const INICIO: NavItem = { href: '/inicio', label: 'Inicio', icon: Home, adminOnly: false }
 
 const moreItems: NavItem[] = [
   { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
@@ -97,13 +103,21 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     ? ventasTabs
     : primaryItems.filter(porRol)
 
+  // Ventas no es un área aparte como Finanzas o Marketing: es una sección de
+  // la app. Por eso, aunque la barra muestre sus pestañas, "Más" conserva los
+  // módulos de siempre — incluidos los tres que quedaron desplazados de la
+  // barra— en vez de vaciarse y dejar al usuario encerrado.
+  const desplazadosPorVentas = primaryItems
+    .filter(porRol)
+    .filter(i => !ventasTabs.some(t => t.href === i.href))
+
   const visibleMore = enFinanzas
-    ? finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
+    ? [INICIO, ...finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))]
     : enMarketing
-    ? []
+    ? [INICIO]
     : enVentas
-    ? []
-    : moreItems.filter(porRol)
+    ? [INICIO, ...desplazadosPorVentas, ...moreItems.filter(porRol)]
+    : [INICIO, ...moreItems.filter(porRol)]
   const hrefActivoActual = hrefActivo(pathname, [...visiblePrimary, ...visibleMore].map(i => i.href))
   const isMoreActive = visibleMore.some(i => i.href === hrefActivoActual)
   const handleClose = () => setMoreOpen(false)

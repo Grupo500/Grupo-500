@@ -2,6 +2,10 @@
 
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { VolverInicioButton } from '@/components/ui/VolverInicioButton'
+import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { RefreshButton } from '@/components/ui/RefreshButton'
 import { EstudiantesMes } from './EstudiantesMes'
 // La torta y no la tabla de Analíticas: su alto es fijo, así que la columna
 // izquierda termina a la misma altura que el Top 5 de la derecha. La tabla
@@ -29,9 +33,17 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
   return (
     <div className="space-y-4 animate-fade-in">
 
-      {/* Saludo y periodo. Los botones de inicio, notificaciones, tema y
-          refrescar se fueron al header del área, donde acompañan a todas las
-          pantallas y no solo a esta. */}
+      {/* Solo en celular: en escritorio estos botones viven en el header del
+          área. Aquí no son un lujo — en celular no hay header ni sidebar, así
+          que son la única forma de refrescar o cambiar el tema desde esta
+          pantalla. */}
+      <div className="flex items-center justify-end gap-2 md:hidden">
+        <VolverInicioButton />
+        <NotificacionesButton />
+        <ThemeToggle />
+        <RefreshButton />
+      </div>
+
       <div>
         <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
           <span className="md:hidden">{saludo},<br />{firstName} 👋</span>

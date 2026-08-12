@@ -37,7 +37,10 @@ export function Header() {
         borderBottomLeftRadius:  RADIO_INFERIOR,
         borderBottomRightRadius: RADIO_INFERIOR,
       }}
-      className="flex h-[60px] flex-shrink-0 items-center justify-between gap-4 px-3 md:px-4"
+      // Solo escritorio. En celular la pantalla es angosta y el header le
+      // quitaba 60px de alto útil sin aportar navegación: los botones ya viven
+      // en la cabecera de cada página y el menú flotante hace el resto.
+      className="hidden h-[60px] flex-shrink-0 items-center justify-between gap-4 px-3 md:flex md:px-4"
     >
       <Link href="/inicio" className="flex min-w-0 items-center gap-2.5" title="Volver al inicio">
         <Image
@@ -56,10 +59,7 @@ export function Header() {
         </span>
       </Link>
 
-      {/* En celular el header es solo la franja de marca. Los botones siguen
-          donde estaban —en la cabecera de cada página—, que es donde caben sin
-          apretar el logo contra el borde. */}
-      <div className="hidden flex-shrink-0 items-center gap-2 md:flex">
+      <div className="flex flex-shrink-0 items-center gap-2">
         <Link
           href="/inicio"
           title="Volver al inicio"
