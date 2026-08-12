@@ -11,6 +11,13 @@ interface Props {
   titulo: string
   subtitulo?: string
   children: React.ReactNode
+  /**
+   * Acciones del diálogo. Van aquí y no dentro de `children` por dos razones:
+   * su línea divisoria cruza la tarjeta de borde a borde igual que la del
+   * encabezado —dentro del cuerpo quedaría metida el ancho del padding— y los
+   * botones no se van con el scroll cuando el formulario es largo.
+   */
+  pie?: React.ReactNode
   className?: string
 }
 
@@ -19,7 +26,7 @@ interface Props {
  * VerComprobante (portal a document.body, ESC, clic afuera, scroll del body
  * bloqueado), pero como tarjeta de contenido en vez de visor de imagen.
  */
-export function Modal({ abierto, onClose, titulo, subtitulo, children, className }: Props) {
+export function Modal({ abierto, onClose, titulo, subtitulo, children, pie, className }: Props) {
   const cerrarPorFondo = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose()
   }, [onClose])
@@ -48,7 +55,11 @@ export function Modal({ abierto, onClose, titulo, subtitulo, children, className
           className,
         )}
       >
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-surface-high shrink-0">
+        {/* items-center y no items-start: alineados por arriba, el título de
+            15px queda unos 6px más alto que el centro del botón de cerrar, que
+            es un círculo de 32px, y se lee como si estuvieran en filas
+            distintas. */}
+        <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-outline-variant shrink-0">
           <div className="min-w-0">
             <h2 className="text-[15px] font-semibold text-on-surface">{titulo}</h2>
             {subtitulo && <p className="text-[12px] text-on-surface-variant mt-0.5">{subtitulo}</p>}
@@ -62,6 +73,9 @@ export function Modal({ abierto, onClose, titulo, subtitulo, children, className
           </button>
         </div>
         <div className="overflow-y-auto px-5 py-2">{children}</div>
+        {pie && (
+          <div className="shrink-0 border-t border-outline-variant px-5 py-3.5">{pie}</div>
+        )}
       </div>
     </div>,
     document.body,
