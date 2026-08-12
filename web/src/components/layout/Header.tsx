@@ -48,19 +48,23 @@ export function Header() {
           priority
           className="h-9 w-9 flex-shrink-0 rounded-full object-cover md:h-10 md:w-10"
         />
+        {/* Se recorta antes que empujar los botones: en pantallas angostas la
+            salida al selector pesa más que ver el nombre completo. */}
         <span className="min-w-0">
-          <span className="block text-[13.5px] font-bold leading-none tracking-tight text-white">Grupo 500</span>
-          <span className="mt-0.5 block text-[10.5px] font-medium leading-none text-slate-400">Pre-ICFES</span>
+          <span className="block truncate text-[13.5px] font-bold leading-none tracking-tight text-white">Grupo 500</span>
+          <span className="mt-0.5 block truncate text-[10.5px] font-medium leading-none text-slate-400">Pre-ICFES</span>
         </span>
       </Link>
 
-      <div className="flex flex-shrink-0 items-center gap-2">
-        {/* En celular el menú de abajo ya lleva a todos los módulos, así que
-            el atajo a inicio sobra y se queda el espacio para lo demás. */}
+      {/* En celular el header es solo la franja de marca. Los botones siguen
+          donde estaban —en la cabecera de cada página—, que es donde caben sin
+          apretar el logo contra el borde. */}
+      <div className="hidden flex-shrink-0 items-center gap-2 md:flex">
         <Link
           href="/inicio"
           title="Volver al inicio"
-          className={`hidden md:flex items-center justify-center transition-colors ${BOTON}`}
+          aria-label="Volver al inicio"
+          className={`flex items-center justify-center transition-colors ${BOTON}`}
         >
           <Home className="h-4 w-4" />
         </Link>

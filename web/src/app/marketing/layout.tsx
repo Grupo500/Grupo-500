@@ -1,5 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
+import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
@@ -22,18 +23,26 @@ export default async function MarketingLayout({ children }: { children: React.Re
 
   return (
     <QueryProvider>
-      <div className="flex h-dvh">
-        <div className="hidden md:flex">
-          <Sidebar role={role} />
-        </div>
+      {/* Mismo header que el área de ventas: la marca cruza arriba de todo y
+          el sidebar cuelga debajo. Al ser un área propia le corresponde la
+          misma cabecera, y en celular —donde no hay sidebar— es la única
+          marca de la pantalla. */}
+      <div className="flex h-dvh flex-col">
+        <Header />
 
-        <main className="flex-1 overflow-y-auto edu-bg-pattern">
-          <div className="p-4 md:p-6 max-w-container mx-auto pb-20 md:pb-6">
-            {children}
+        <div className="flex min-h-0 flex-1">
+          <div className="hidden md:flex">
+            <Sidebar role={role} />
           </div>
-        </main>
 
-        <BottomNav role={role} />
+          <main className="flex-1 overflow-y-auto edu-bg-pattern">
+            <div className="p-4 md:p-6 max-w-container mx-auto pb-20 md:pb-6">
+              {children}
+            </div>
+          </main>
+
+          <BottomNav role={role} />
+        </div>
       </div>
     </QueryProvider>
   )

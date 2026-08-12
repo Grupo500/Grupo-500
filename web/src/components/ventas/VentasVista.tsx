@@ -453,7 +453,7 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
 
               Las dos pistas que se ocultan en móvil desaparecen de la rejilla
               con el elemento, por eso hay una plantilla de 5 y otra de 7. */}
-          <div className={cn(GRID_ASESOR, 'px-2 -mx-2 pb-2 mb-1 border-b border-surface-high text-[10px] font-semibold text-on-surface-variant')}>
+          <div className={cn(GRID_ASESOR, 'w-full px-2 -mx-2 pb-2 mb-1 border-b border-surface-high text-[10px] font-semibold text-on-surface-variant')}>
             <span aria-hidden />
             <span aria-hidden />
             <span className="text-[11px]">Por asesor</span>
@@ -470,12 +470,12 @@ export function VentasVista({ modo }: { modo: 'asesor' | 'admin' }) {
                 <button
                   key={a.id}
                   onClick={() => { setAsesorId(a.id); setPagina(1) }}
-                  // Sin `w-full`: con `-mx-2` el ancho automático se estira
-                  // hasta cubrir los márgenes negativos, igual que el
-                  // encabezado. Con `w-full` medía exacto el contenedor y
-                  // además se corría 8px, así que terminaba 16px antes y todas
-                  // las cifras quedaban desalineadas de su rótulo.
-                  className={cn(GRID_ASESOR, 'py-2 px-2 -mx-2 rounded-lg hover:bg-surface-high transition-colors cursor-pointer text-left')}
+                  // `w-full` en los dos: un <button> no se estira solo como
+                  // un <div> —su ancho automático es el del contenido—, así
+                  // que sin esto la fila se encogía y las columnas se
+                  // amontonaban. Fijando el ancho en ambos, los dos miden el
+                  // contenedor exacto y el -mx-2 los corre igual.
+                  className={cn(GRID_ASESOR, 'w-full py-2 px-2 -mx-2 rounded-lg hover:bg-surface-high transition-colors cursor-pointer text-left')}
                 >
                   <span className={`${mono.className} text-[11.5px] text-on-surface-variant`}>{i + 1}</span>
                   <span className="w-8 h-8 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center ring-1 ring-primary/10">

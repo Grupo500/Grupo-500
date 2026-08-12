@@ -219,9 +219,13 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
       >
         <nav
           className="flex items-center justify-around h-[62px] px-2 rounded-[28px] shadow-2xl"
+          // El mismo azul oscuro del header y del sidebar, plano y no en
+          // degradado: en celular la barra flotante y el header son las dos
+          // piezas de chrome que enmarcan la pantalla, así que comparten
+          // color. El degradado las hacía ver de sistemas distintos.
           style={{
-            background: 'linear-gradient(135deg, #003060 0%, #0a4a8a 60%, #1264b8 100%)',
-            boxShadow: '0 8px 32px rgba(0,48,96,0.45), 0 2px 8px rgba(32,148,255,0.2)',
+            background: '#15203a',
+            boxShadow: '0 8px 32px rgba(0,29,61,0.45), 0 2px 8px rgba(0,29,61,0.25)',
           }}
         >
           {/* Ítems primarios */}
