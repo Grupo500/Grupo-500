@@ -2,8 +2,6 @@
 
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
-import Link from 'next/link'
-import { Home } from 'lucide-react'
 import { EstudiantesMes } from './EstudiantesMes'
 // La misma tabla de cursos que usa Analíticas, no la torta: con 23 cursos una
 // torta no deja leer cuál vende más, y tener dos gráficas distintas para el
@@ -13,9 +11,6 @@ import { FacturadoMensual } from './FacturadoMensual'
 import { ComisionesKpis } from './ComisionesKpis'
 import { TopAsesores } from './TopAsesores'
 import { PendientesPorCobrar } from './PendientesPorCobrar'
-import { RefreshButton } from '@/components/ui/RefreshButton'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -34,34 +29,22 @@ export function DashboardWrapper({ firstName, saludo }: Props) {
   return (
     <div className="space-y-4 animate-fade-in">
 
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
-            <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
-            <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
-          </h1>
-          {/* En una sola fila: son dos mitades de la misma frase, no dos datos.
-              Alineadas por la línea base y no por el centro, que es lo que las
-              deja parejas de verdad teniendo tamaños distintos. */}
-          <p className="mt-2 flex items-baseline gap-1.5 leading-tight">
-            <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">Resumen del mes</span>
-            <span className="text-[11px] text-outline">·</span>
-            <span className="text-[13px] font-semibold text-on-surface">{mesLabel}</span>
-          </p>
-        </div>
-        <div className="flex-shrink-0 pt-1 flex items-center gap-2">
-          <Link
-            href="/inicio"
-            title="Volver al inicio"
-            className="w-9 h-9 rounded-xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-highest transition-colors"
-          >
-            <Home className="w-4 h-4" />
-          </Link>
-          <NotificacionesButton />
-          <ThemeToggle />
-          <RefreshButton />
-        </div>
+      {/* Saludo y periodo. Los botones de inicio, notificaciones, tema y
+          refrescar se fueron al header del área, donde acompañan a todas las
+          pantallas y no solo a esta. */}
+      <div>
+        <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+          <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
+          <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
+        </h1>
+        {/* En una sola fila: son dos mitades de la misma frase, no dos datos.
+            Alineadas por la línea base y no por el centro, que es lo que las
+            deja parejas de verdad teniendo tamaños distintos. */}
+        <p className="mt-2 flex items-baseline gap-1.5 leading-tight">
+          <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">Resumen del mes</span>
+          <span className="text-[11px] text-outline">·</span>
+          <span className="text-[13px] font-semibold text-on-surface">{mesLabel}</span>
+        </p>
       </div>
 
       {/* ── Layout 30 / 70 ── */}

@@ -53,9 +53,9 @@ const ACTIVE  = '#21b9f7'
 const PAD_L       = 6     // separación izquierda
 const PAD_Y       = 8     // separación arriba/abajo
 const R           = 18    // radio de esquinas
-const LOGO_BOTTOM = 70    // borde inferior del bloque del logo
-const GAP         = 12    // separación entre el logo y el bloque principal
-const MAIN_TOP    = LOGO_BOTTOM + GAP
+// El bloque del logo se fue al header de ancho completo, así que la barra
+// arranca arriba del todo: ya no hay tarjeta flotante ni hueco que saltar.
+const MAIN_TOP    = PAD_Y
 
 // Rectángulo con las cuatro esquinas redondeadas
 function roundedRect(x1: number, y1: number, x2: number, y2: number, r: number): string {
@@ -125,10 +125,10 @@ function buildMain(w: number, h: number, cy: number | null): string {
   return p.join(' ')
 }
 
-// Fondo completo: bloque del logo (flotante) + bloque principal
+// Fondo completo. Antes eran dos piezas —la tarjeta del logo flotando y el
+// bloque de navegación— y ahora es una sola, porque el logo vive en el header.
 function buildPath(w: number, h: number, cy: number | null): string {
-  const logo = roundedRect(PAD_L, PAD_Y, w, LOGO_BOTTOM, R)
-  return `${logo} ${buildMain(w, h, cy)}`
+  return buildMain(w, h, cy)
 }
 
 export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
@@ -293,7 +293,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
       ref={asideRef}
       style={{ background: notchFill }}
       className={cn(
-        'relative flex flex-col h-screen transition-all duration-300 z-20',
+        'relative flex flex-col h-full transition-all duration-300 z-20',
         // margen derecho extra en comprimido para que el círculo flotante no toque el contenido
         collapsed ? 'w-[60px] mr-5' : 'w-[220px]',
       )}
@@ -318,24 +318,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
         </span>
       )}
 
-      {/* ── Logo (bloque flotante separado) ──────── */}
-      <div
-        style={{ height: MAIN_TOP }}
-        className={cn(
-          'relative z-10 flex items-center gap-2.5 px-4 flex-shrink-0',
-          collapsed && 'justify-center px-0',
-        )}
-      >
-        <div className="flex-shrink-0 w-10 h-10">
-          <Image src="/logo-grupo500.png" alt="Grupo 500" width={40} height={40} className="w-10 h-10 object-cover rounded-full" priority />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <p className="text-[13px] font-bold text-white leading-none tracking-tight">Grupo 500</p>
-            <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Pre-ICFES</p>
-          </div>
-        )}
-      </div>
+      {/* El logo vive en el header de ancho completo, no aquí. */}
 
       {/* ── Nav ──────────────────────────────────── */}
       {/* Caja de ícono fija (w-11 h-10) → mismo tamaño/posición en colapsado y expandido */}
