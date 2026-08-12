@@ -88,10 +88,15 @@ export default function FinanzasResumenPage() {
               onChange={(m, r) => { setMes(m); setRango(r) }}
               alignRight
             />
-            <VolverInicioButton />
-            <NotificacionesButton />
-            <ThemeToggle />
-            <RefreshButton />
+            {/* Solo en celular: en escritorio ya están en el header del área.
+                El selector de mes sí se queda en las dos, que es propio de
+                esta pantalla y no del área. */}
+            <span className="flex items-center gap-2 md:hidden">
+              <VolverInicioButton />
+              <NotificacionesButton />
+              <ThemeToggle />
+              <RefreshButton />
+            </span>
           </>
         }
       />
