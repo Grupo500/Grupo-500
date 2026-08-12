@@ -272,7 +272,7 @@ export function CalendarioMarketing() {
 }
 
 // ── Modal de creación / edición ──────────────────────────────────────────────
-// Exportado para que el calendario de ReUI (CalendarioReui) reutilice el mismo
+// Exportado para que el tablero (TableroContenido) reutilice el mismo
 // formulario de crear/editar/eliminar y entregables, en vez de duplicarlo.
 export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
   fecha?: Date

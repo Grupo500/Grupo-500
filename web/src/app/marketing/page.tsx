@@ -4,7 +4,7 @@ import { VolverInicioButton } from '@/components/ui/VolverInicioButton'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { RefreshButton } from '@/components/ui/RefreshButton'
-import { CalendarioReui } from '@/components/marketing/CalendarioReui'
+import { TableroContenido } from '@/components/marketing/TableroContenido'
 
 export default function MarketingPage() {
   return (
@@ -15,7 +15,7 @@ export default function MarketingPage() {
         <ThemeToggle />
         <RefreshButton />
       </div>
-      <CalendarioReui />
+      <TableroContenido />
     </div>
   )
 }
