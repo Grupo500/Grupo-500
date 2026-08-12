@@ -15,9 +15,9 @@ import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 
-interface Miembro { id: string; nombre: string; activo: boolean; user?: { image: string | null } }
-interface EntregableDto { id: string; plataforma: string; url: string | null; videoUrl: string | null; publicadoEn: string }
-interface Contenido {
+export interface Miembro { id: string; nombre: string; activo: boolean; user?: { image: string | null } }
+export interface EntregableDto { id: string; plataforma: string; url: string | null; videoUrl: string | null; publicadoEn: string }
+export interface Contenido {
   id: string
   titulo: string
   tipo: 'VIDEO' | 'VSL' | 'CARRUSEL' | 'CARRUMEME' | 'TIKTOKERO' | 'GUION' | 'PUBLICACION' | 'OTRO'
@@ -263,7 +263,9 @@ export function CalendarioMarketing() {
 }
 
 // ── Modal de creación / edición ──────────────────────────────────────────────
-function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
+// Exportado para que el calendario de ReUI (CalendarioReui) reutilice el mismo
+// formulario de crear/editar/eliminar y entregables, en vez de duplicarlo.
+export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
   fecha?: Date
   contenido?: Contenido
   miembros: Miembro[]
