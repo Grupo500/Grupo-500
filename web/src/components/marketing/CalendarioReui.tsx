@@ -286,14 +286,19 @@ function Ficha({ contenido }: { contenido?: Contenido }) {
   if (!contenido) return null
   const persona = contenido.asignadoA
   return (
-    <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+    // `w-full` es lo que empuja el avatar al borde derecho: sin él la ficha se
+    // encoge a su contenido y todo queda apelmazado a la izquierda del chip.
+    // `leading-none` alinea la etiqueta del tipo (8.5px) con el título (11px):
+    // con line-height heredado cada uno centra sobre su propia caja y el punto
+    // y el texto quedan a distinta altura.
+    <span className="flex w-full min-w-0 items-center gap-1.5 overflow-hidden leading-none">
       <span
-        className="shrink-0 text-[8.5px] font-bold uppercase tracking-[0.03em]"
+        className="shrink-0 text-[8.5px] font-bold uppercase leading-none tracking-[0.03em]"
         style={{ color: ESTADO_COLOR[contenido.estado] }}
       >
         {TIPO_CORTO[contenido.tipo]}
       </span>
-      <span className="min-w-0 flex-1 truncate text-on-surface">{contenido.titulo}</span>
+      <span className="min-w-0 flex-1 truncate leading-none text-on-surface">{contenido.titulo}</span>
       {contenido.clasificacion === 'PAUTA' && (
         <span
           title="Pauta"

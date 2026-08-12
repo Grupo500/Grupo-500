@@ -27,10 +27,12 @@ function TooltipContent({
 }) {
   return (
     <BaseTooltip.Portal>
-      <BaseTooltip.Positioner side={side} sideOffset={sideOffset}>
+      {/* z-index en el Positioner, no en el Popup — ver la nota en
+          ./dropdown-menu.tsx. */}
+      <BaseTooltip.Positioner side={side} sideOffset={sideOffset} className="z-[10000]">
         <BaseTooltip.Popup
           className={cn(
-            "z-50 max-w-xs origin-[var(--transform-origin)] rounded-lg border border-border bg-popover px-2.5 py-1.5 text-xs text-popover-foreground shadow-md",
+            "max-w-xs origin-[var(--transform-origin)] rounded-lg border border-outline-variant bg-surface-lowest px-2.5 py-1.5 text-xs text-on-surface shadow-float",
             "transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
             className,
           )}

@@ -26,10 +26,12 @@ function PopoverContent({
 }) {
   return (
     <BasePopover.Portal>
-      <BasePopover.Positioner align={align} sideOffset={sideOffset}>
+      {/* z-index en el Positioner, no en el Popup — ver la nota en
+          ./dropdown-menu.tsx. */}
+      <BasePopover.Positioner align={align} sideOffset={sideOffset} className="z-[10000]">
         <BasePopover.Popup
           className={cn(
-            "z-50 origin-[var(--transform-origin)] rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg outline-none",
+            "origin-[var(--transform-origin)] rounded-xl border border-outline-variant bg-surface-lowest p-2 text-on-surface shadow-float outline-none",
             "transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
             className,
           )}

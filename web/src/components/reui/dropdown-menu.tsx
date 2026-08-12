@@ -27,10 +27,14 @@ function DropdownMenuContent({
 }) {
   return (
     <BaseMenu.Portal>
-      <BaseMenu.Positioner align={align} sideOffset={sideOffset}>
+      {/* El z-index va en el Positioner, no en el Popup: es el Positioner el
+          que Base UI posiciona en fixed, así que un z en el hijo no levanta
+          el desplegable y termina saliendo por debajo del resto. Se usa la
+          misma altura que el Select de la app (z-[10000]). */}
+      <BaseMenu.Positioner align={align} sideOffset={sideOffset} className="z-[10000]">
         <BaseMenu.Popup
           className={cn(
-            "z-50 min-w-[9rem] origin-[var(--transform-origin)] overflow-hidden rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-lg outline-none",
+            "min-w-[9rem] origin-[var(--transform-origin)] overflow-hidden rounded-xl border border-outline-variant bg-surface-lowest p-1 text-on-surface shadow-float outline-none",
             "transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
             className,
           )}
