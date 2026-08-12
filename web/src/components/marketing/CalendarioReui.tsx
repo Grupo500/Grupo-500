@@ -28,9 +28,19 @@ import {
   type Miembro,
 } from '@/components/marketing/CalendarioMarketing'
 import { CALENDARIO_I18N } from '@/components/marketing/calendarioI18n'
-import { EventCalendar } from '@/components/reui/event-calendar/event-calendar'
-import { EventCalendarNav } from '@/components/reui/event-calendar/event-calendar-nav'
+import {
+  EventCalendar,
+  useEventCalendarView,
+} from '@/components/reui/event-calendar/event-calendar'
+import {
+  EventCalendarNav,
+  EventCalendarNavNext,
+  EventCalendarNavPrev,
+  EventCalendarNavToday,
+  EventCalendarTitle,
+} from '@/components/reui/event-calendar/event-calendar-nav'
 import { EventCalendarContent } from '@/components/reui/event-calendar/event-calendar-content'
+import type { CalendarView } from '@/components/reui/event-calendar/event-calendar-types'
 import type {
   CalendarEvent,
   EventCalendarOccurrence,
@@ -231,7 +241,8 @@ export function CalendarioReui() {
           weekStartsOn={1}
           i18n={CALENDARIO_I18N}
           nowIndicator
-          offDays
+          // Sin `offDays`: en Grupo 500 se trabaja sábado y domingo, así que
+          // marcarlos como no laborables sería falso.
           showDayAddButton
           // Arrastrar cambiaría la fecha del contenido en la base y eso todavía
           // no está conectado: se apaga en vez de dejarlo fallar en silencio.
@@ -252,7 +263,15 @@ export function CalendarioReui() {
           }}
           className="min-h-[640px]"
         >
-          <EventCalendarNav />
+          {/* Barra compuesta a mano: el nav de ReUI mete las vistas en un
+              desplegable y con cinco opciones se ve mejor en pastillas. */}
+          <EventCalendarNav showViewSwitcher={false}>
+            <EventCalendarNavPrev />
+            <EventCalendarNavNext />
+            <EventCalendarTitle />
+            <EventCalendarNavToday />
+            <SelectorVistas />
+          </EventCalendarNav>
           <EventCalendarContent />
         </EventCalendar>
 
@@ -270,7 +289,7 @@ export function CalendarioReui() {
             Pauta
           </span>
           <span className="ml-auto text-[11px]" style={{ color: 'var(--outline)' }}>
-            Sáb y dom · no laborables
+            Toca un día para agregar
           </span>
         </div>
       </div>
@@ -284,6 +303,44 @@ export function CalendarioReui() {
           onSaved={invalidar}
         />
       )}
+    </div>
+  )
+}
+
+const VISTA_LABEL: Partial<Record<CalendarView, string>> = {
+  month: 'Mes',
+  week: 'Semana',
+  day: 'Día',
+  agenda: 'Agenda',
+  resource: 'Responsables',
+}
+
+/**
+ * Selector de vistas en pastillas. El de ReUI las mete en un desplegable, que
+ * con cinco opciones obliga a abrir para ver dónde estás parado.
+ */
+function SelectorVistas() {
+  const { view, availableViews, setView } = useEventCalendarView()
+  return (
+    <div className="ml-auto flex gap-0.5 rounded-lg bg-surface-low p-0.5">
+      {availableViews
+        .filter(v => VISTA_LABEL[v])
+        .map(v => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setView(v)}
+            aria-pressed={view === v}
+            className={cn(
+              'cursor-pointer rounded-md px-2.5 py-1 text-[12px] leading-none transition-colors',
+              view === v
+                ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface',
+            )}
+          >
+            {VISTA_LABEL[v]}
+          </button>
+        ))}
     </div>
   )
 }

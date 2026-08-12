@@ -7,7 +7,7 @@ import {
   isEqual, isSameDay, isSameMonth, isToday, startOfMonth, startOfToday, startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus, Trash2, Link2, Upload, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Trash2, Link2, Upload, Loader2, CalendarDays } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -358,8 +358,24 @@ export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }:
       subtitulo={esEdicion ? TIPO_LABEL[contenido!.tipo] : undefined}
     >
       <div className="space-y-3 pb-2">
+        {/* La fecha va arriba como pastilla, no perdida entre los campos: al
+            abrirse desde un día del calendario es el dato que da contexto a
+            todo lo demás. Sigue siendo editable por si hay que corregirla. */}
+        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-primary-container px-2.5 py-1.5 text-[11.5px] leading-none text-primary">
+          <CalendarDays className="h-3 w-3 shrink-0" />
+          <input
+            type="date"
+            value={fechaStr}
+            onChange={e => setFechaStr(e.target.value)}
+            aria-label="Fecha de entrega"
+            className="cursor-pointer border-0 bg-transparent p-0 text-[11.5px] leading-none text-primary outline-none"
+          />
+        </label>
+
         <div>
-          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Título</label>
+          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
+            Título <span style={{ color: '#d97706' }}>*</span>
+          </label>
           <input
             value={titulo}
             onChange={e => setTitulo(e.target.value)}
@@ -379,13 +395,6 @@ export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }:
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Fecha de entrega</label>
-            <input type="date" value={fechaStr} onChange={e => setFechaStr(e.target.value)} className="input-base" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
             <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Destino</label>
             <Select
               value={destino}
@@ -395,28 +404,29 @@ export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }:
               options={[{ value: '', label: 'Sin definir' }, ...Object.entries(DESTINO_LABEL).map(([value, label]) => ({ value, label }))]}
             />
           </div>
-          <div>
-            {/* Segmentado en vez de desplegable: son dos opciones y se elige
-                de un clic, sin abrir una lista para ver dos ítems. */}
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Tipo de contenido</label>
-            <div className="flex gap-0.5 rounded-lg bg-surface-low p-0.5">
-              {(Object.keys(CLASIFICACION_LABEL) as Contenido['clasificacion'][]).map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setClasificacion(c)}
-                  aria-pressed={clasificacion === c}
-                  className={cn(
-                    'flex-1 rounded-md py-1.5 text-[12.5px] transition-colors cursor-pointer',
-                    clasificacion === c
-                      ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface',
-                  )}
-                >
-                  {CLASIFICACION_LABEL[c]}
-                </button>
-              ))}
-            </div>
+        </div>
+
+        <div>
+          {/* Segmentado en vez de desplegable: son dos opciones y se elige
+              de un clic, sin abrir una lista para ver dos ítems. */}
+          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Clasificación</label>
+          <div className="flex gap-0.5 rounded-lg bg-surface-low p-0.5">
+            {(Object.keys(CLASIFICACION_LABEL) as Contenido['clasificacion'][]).map(c => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setClasificacion(c)}
+                aria-pressed={clasificacion === c}
+                className={cn(
+                  'flex-1 rounded-md py-1.5 text-[12.5px] transition-colors cursor-pointer',
+                  clasificacion === c
+                    ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface',
+                )}
+              >
+                {CLASIFICACION_LABEL[c]}
+              </button>
+            ))}
           </div>
         </div>
 
