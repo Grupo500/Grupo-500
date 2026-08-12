@@ -197,7 +197,15 @@ export function TableroContenido() {
           })}
           {sinResponsable > 0 && (
             <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-lowest py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none">
-              <span className="size-[7px] shrink-0 rounded-full border border-dashed border-outline" />
+              {/* El mismo "?" que llevan las fichas sin responsable en las
+                  celdas: así el filtro y lo que hay que buscar en el mes se
+                  reconocen por la misma marca. */}
+              <span
+                className="grid size-[15px] shrink-0 place-items-center rounded-full border border-dashed text-[7.5px] font-bold leading-none"
+                style={{ borderColor: 'var(--outline)', color: 'var(--outline)' }}
+              >
+                ?
+              </span>
               <b className="font-bold tabular-nums leading-none text-on-surface">{sinResponsable}</b>
               <span className="leading-none text-on-surface-variant">sin responsable</span>
             </span>

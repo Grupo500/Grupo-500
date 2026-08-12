@@ -11,7 +11,7 @@ import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, Users, CreditCard, Award,
   Wallet, CheckCircle, AlertTriangle, Paperclip,
-  Save, ChevronDown, ChevronUp, Download, Clock,
+  Save, ChevronDown, ChevronUp, Download, Clock, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
@@ -24,6 +24,9 @@ interface Pago {
   id: string; monto: number
   estado: 'PENDIENTE' | 'PAGADO' | 'VENCIDO' | 'CANCELADO'
   metodo: string; fechaVencimiento: string
+  // El "HP": el código con el que Hotmart identifica la compra. Null en los
+  // pagos registrados a mano, que no pasaron por Hotmart.
+  referenciaPago?: string | null
   fechaPago?: string; comprobante?: string
   createdAt: string; notas?: string
   asesor?: { nombre: string }
@@ -167,6 +170,21 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 
   const f = (key: keyof typeof form) => (v: string) => setForm(p => ({ ...p, [key]: v }))
 
+  // Códigos de Hotmart del estudiante, sin repetir y del más reciente al más
+  // viejo. 72 estudiantes tienen más de uno porque compraron varias veces: se
+  // muestra el último y el resto queda en el tooltip, en vez de esconderlos.
+  const hpTodos = [...new Set(
+    (e.pagos ?? [])
+      .filter(p => p.referenciaPago)
+      .sort((a, b) => new Date(b.fechaPago ?? b.createdAt).getTime() - new Date(a.fechaPago ?? a.createdAt).getTime())
+      .map(p => p.referenciaPago as string),
+  )]
+  const hpPrincipal = hpTodos.length === 0
+    ? '—'
+    : hpTodos.length === 1
+      ? hpTodos[0]
+      : `${hpTodos[0]}  +${hpTodos.length - 1}`
+
   if (!editando) return (
     <div className="space-y-6">
       <section className="space-y-3">
@@ -184,8 +202,12 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
             { icon: Phone,      label: 'Teléfono',   value: e.telefono },
             { icon: Users,      label: 'Asesor',     value: e.asesor?.nombre ?? '—' },
             { icon: CreditCard, label: 'Documento',  value: e.documento ? `${e.tipoDocumento} ${e.documento}` : e.tipoDocumento ?? '—' },
-          ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
+            // El HP no se guarda en el estudiante: se lee de sus pagos, que es
+            // donde Hotmart lo deja. Copiarlo al estudiante crearía una segunda
+            // versión del dato que se quedaría vieja en cuanto vuelva a comprar.
+            { icon: Receipt,    label: 'HP (Hotmart)', value: hpPrincipal, hint: hpTodos.join(' · ') },
+          ].map(({ icon: Icon, label, value, hint }: { icon: LucideIcon; label: string; value: string; hint?: string }) => (
+            <div key={label} title={hint} className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-high/60">
               <Icon className="w-3.5 h-3.5 text-on-surface-variant mt-0.5 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] text-on-surface-variant">{label}</p>
