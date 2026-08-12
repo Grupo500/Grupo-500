@@ -1,5 +1,25 @@
 import { prisma } from '../config/prisma'
 
+/**
+ * Convierte lo que manda un campo `<input type="date">` a un instante en hora
+ * de Colombia.
+ *
+ * `new Date('2026-08-12')` da la medianoche UTC, que en Colombia son las 7 de
+ * la noche del 11. Como los reportes agrupan por día colombiano, un pago que
+ * el asesor registró el 12 se contaba el 11 — y si era el día 1, se iba al mes
+ * anterior y con él su comisión y su puesto en el ranking. Verificado en
+ * producción: los 9 pagos manuales estaban guardados así.
+ *
+ * Solo toca las fechas sin hora. Si viene un instante completo (lo de Hotmart,
+ * que trae su propia hora) se respeta tal cual.
+ */
+export function fechaColombia(valor: string | Date): Date {
+  if (valor instanceof Date) return valor
+  return /^\d{4}-\d{2}-\d{2}$/.test(valor)
+    ? new Date(`${valor}T00:00:00-05:00`)
+    : new Date(valor)
+}
+
 interface PagoConCuotas {
   monto: number
   enPartes: boolean
@@ -130,4 +150,23 @@ export function cuotaQueSalda(
   if (Math.abs(abono.monto - esperado) > esperado * TOLERANCIA_MONTO) return null
 
   return { cuotaNumero: ultimoNumero + cuantas, cuotasTotal }
+}
+
+/**
+ * A qué asesor se acotan los reportes de quien consulta.
+ *
+ * Devuelve `undefined` para ADMIN (ve todo) y el id del asesor para VENDEDOR.
+ * La clave es el centinela: si un VENDEDOR no tiene ficha de Asesor, antes el
+ * filtro quedaba en `undefined` y la consulta pasaba a global — es decir, le
+ * mostraba los teléfonos y saldos de TODA la cartera. Con un id que no existe,
+ * ante la duda no devuelve nada, que es el lado seguro.
+ *
+ * Se llega a "VENDEDOR sin ficha" por dos caminos reales: promoverlo desde
+ * otro rol (el cambio de rol no crea la ficha) y el primer ingreso con Google,
+ * que crea el usuario con rol VENDEDOR por defecto.
+ */
+export const SIN_ASESOR = '__sin_asesor__'
+
+export function filtroAsesorDe(req: { userRole?: string; asesorId?: string }): string | undefined {
+  return req.userRole === 'VENDEDOR' ? (req.asesorId ?? SIN_ASESOR) : undefined
 }

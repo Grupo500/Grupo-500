@@ -4,7 +4,7 @@ import { ApiResponse, parsePagination } from '../utils/response'
 import { ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
-import { cuotaQueSalda, desgloseDirecto, tasaDirectaDe } from '../utils/pagos'
+import { cuotaQueSalda, desgloseDirecto, tasaDirectaDe, fechaColombia } from '../utils/pagos'
 import { z } from 'zod'
 
 const registrarSchema = z.object({
@@ -109,7 +109,7 @@ export async function registrar(req: Request, res: Response) {
   // siguiente, se marca como tal desde ya. Sin esto el pago queda "suelto" y el
   // plan se sigue viendo incompleto y en mora en la ficha y en el módulo de
   // Cuotas, aunque el dinero ya haya entrado.
-  const fechaAbono = new Date(data.fechaVencimiento)
+  const fechaAbono = fechaColombia(data.fechaVencimiento)
   const cuota = cuotaQueSalda(
     (est?.pagos ?? []).filter(p => p.estado === 'PAGADO'),
     { monto: data.monto, fecha: fechaAbono },
@@ -161,7 +161,7 @@ export async function actualizar(req: Request, res: Response) {
       where: { id }, select: { referenciaPago: true, asesorId: true, fechaPago: true, fechaVencimiento: true },
     })
     if (previo && !previo.referenciaPago) {
-      const fecha = data.fechaPago ? new Date(data.fechaPago) : previo.fechaPago ?? previo.fechaVencimiento
+      const fecha = data.fechaPago ? fechaColombia(data.fechaPago) : previo.fechaPago ?? previo.fechaVencimiento
       nuevoDesglose = desgloseDirecto(data.monto, await tasaDirectaDe(previo.asesorId, fecha))
     }
   }
@@ -173,12 +173,12 @@ export async function actualizar(req: Request, res: Response) {
       ...nuevoDesglose,
       ...(data.metodo                        && { metodo: data.metodo }),
       ...(data.estado                        && { estado: data.estado }),
-      ...(data.fechaVencimiento              && { fechaVencimiento: new Date(data.fechaVencimiento) }),
+      ...(data.fechaVencimiento              && { fechaVencimiento: fechaColombia(data.fechaVencimiento) }),
       ...(data.comprobante !== undefined     && { comprobante: data.comprobante }),
       ...(data.notas !== undefined           && { notas: data.notas }),
       // Usar la fecha real del body; si no viene pero se marca PAGADO, usar hoy
       ...(data.fechaPago
-            ? { fechaPago: new Date(data.fechaPago) }
+            ? { fechaPago: fechaColombia(data.fechaPago) }
             : data.estado === 'PAGADO' && { fechaPago: new Date() }),
     },
     include: { estudiante: true, asesor: true },

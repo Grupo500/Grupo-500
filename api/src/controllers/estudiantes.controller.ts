@@ -4,7 +4,7 @@ import { ApiResponse, parsePagination } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
-import { montoPagadoPago, desgloseDirecto, tasaDirectaDe } from '../utils/pagos'
+import { montoPagadoPago, desgloseDirecto, tasaDirectaDe, fechaColombia } from '../utils/pagos'
 import { z } from 'zod'
 import * as XLSX from 'xlsx'
 
@@ -91,7 +91,7 @@ export async function crear(req: Request, res: Response) {
   // meterla dentro solo alarga el tiempo que la transacción queda abierta.
   const tasaDirecta = await tasaDirectaDe(
     req.asesorId,
-    data.fechaPago ? new Date(data.fechaPago) : new Date(),
+    data.fechaPago ? fechaColombia(data.fechaPago) : new Date(),
   )
 
   const estudiante = await prisma.$transaction(async (tx) => {
@@ -133,7 +133,7 @@ export async function crear(req: Request, res: Response) {
       const montoFinal = Number(
         (curso.precio * (1 - (data.descuentoPorcentaje ?? 0) / 100)).toFixed(2)
       )
-      const fechaPago = data.fechaPago ? new Date(data.fechaPago) : new Date()
+      const fechaPago = data.fechaPago ? fechaColombia(data.fechaPago) : new Date()
       await tx.pago.create({
         data: {
           estudianteId:    est.id,

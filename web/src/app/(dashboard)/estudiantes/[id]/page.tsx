@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
-import { formatCOP, cn, montoPagadoPago } from '@/lib/utils'
+import { formatCOP, cn, montoPagadoPago, hoyColombia } from '@/lib/utils'
 import { planDeCuotas } from '@/lib/cuotas'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
@@ -376,7 +376,7 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
   onSuccess: () => void
 }) {
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = hoyColombia()
   const [monto,       setMonto]       = useState('')
   const [pagarAhora,  setPagarAhora]  = useState(true)
   const [fechaPago,   setFechaPago]   = useState(hoy)
@@ -559,7 +559,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
 }) {
   const [abierto,    setAbierto]    = useState(false)
   const [editando,   setEditando]   = useState(false)
-  const [fechaPago,  setFechaPago]  = useState(new Date().toISOString().split('T')[0])
+  const [fechaPago,  setFechaPago]  = useState(hoyColombia())
   const [comprobante, setComprobante] = useState(p.comprobante ?? '')
   const [subiendo,   setSubiendo]   = useState(false)
   const [error,      setError]      = useState('')

@@ -55,3 +55,14 @@ export function formatCurso(nombre: string): string {
     .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w))
     .join(' ')
 }
+
+/**
+ * El día de hoy en Colombia, como "YYYY-MM-DD" para un <input type="date">.
+ *
+ * `new Date().toISOString()` da el día en UTC, que desde las 7 de la noche
+ * hora local ya es el día siguiente: el formulario proponía mañana como fecha
+ * de pago. Mismo criterio que usa el backend para agrupar por día.
+ */
+export function hoyColombia(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
+}

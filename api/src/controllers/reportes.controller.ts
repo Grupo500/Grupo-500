@@ -4,6 +4,7 @@ import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
 import { construirRanking, hoyColombia, diaColombia, emailKey } from '../services/ranking'
+import { filtroAsesorDe } from '../utils/pagos'
 import { montoPagadoPago } from '../utils/pagos'
 
 export async function dashboard(req: Request, res: Response) {
@@ -448,7 +449,7 @@ export async function cursosMasVendidos(req: Request, res: Response) {
   }
 
   // VENDEDOR → solo sus estudiantes por curso; ADMIN → global
-  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+  const filtroAsesor = filtroAsesorDe(req)
 
   const cursos = await prisma.curso.findMany({
     include: {
@@ -474,7 +475,7 @@ export async function cursosMasVendidos(req: Request, res: Response) {
 // Smart Installment) de lo que alguien tiene que ir a cobrar: meter ambos en un
 // mismo total da una cifra que asusta y no dice qué hacer.
 export async function pendientesPorCobrar(req: Request, res: Response) {
-  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+  const filtroAsesor = filtroAsesorDe(req)
 
   // Una deuda no deja de existir porque cambió el mes: esto siempre muestra
   // el saldo abierto de TODO el historial, sin acotar por cuándo se compró
@@ -919,7 +920,7 @@ export async function ventasGrafica(req: Request, res: Response) {
   }
 
   // VENDEDOR → solo sus pagos; ADMIN → global
-  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+  const filtroAsesor = filtroAsesorDe(req)
 
   // Corte de hoy: los días posteriores se devuelven null (sin datos), para que
   // la gráfica muestre el eje del mes completo sin dibujar la línea en 0
@@ -969,7 +970,7 @@ export async function mediosPago(req: Request, res: Response) {
     : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59)
 
   // VENDEDOR → solo sus pagos; ADMIN → global
-  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+  const filtroAsesor = filtroAsesorDe(req)
 
   // Agrupar pagos pagados por método de pago
   const porMetodo = await prisma.pago.groupBy({
@@ -1151,7 +1152,7 @@ const DIAS_GRACIA_CUOTAS = 37
 // va pagado, cuánto falta y si el cliente se atrasó en la siguiente cuota.
 // ADMIN ve todo el equipo; VENDEDOR solo sus propios estudiantes.
 export async function cuotas(req: Request, res: Response) {
-  const filtroAsesor = req.userRole === 'VENDEDOR' && req.asesorId ? req.asesorId : undefined
+  const filtroAsesor = filtroAsesorDe(req)
 
   // Quién está en un plan de cuotas de Hotmart (al menos una fila enPartes).
   const enPlan = await prisma.pago.findMany({
