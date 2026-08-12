@@ -1,3 +1,5 @@
+import { prisma } from '../config/prisma'
+
 interface PagoConCuotas {
   monto: number
   enPartes: boolean
@@ -18,19 +20,32 @@ export function montoPagadoPago(p: PagoConCuotas): number {
   return p.monto
 }
 
-// Comisión del asesor sobre un pago que entra por fuera de Hotmart (Nequi,
-// transferencia, efectivo): 3% del monto, la misma tarifa que maneja el
-// negocio en Hotmart (definida por David, ago-2026). Los pagos de Hotmart NO
-// pasan por aquí: traen su desglose real en USD vía backfillComisiones.
+// Comisión por defecto sobre un pago que entra por fuera de Hotmart (Nequi,
+// transferencia, efectivo). Es solo el arranque: la tarifa vive en
+// `Asesor.comisionDirecta` porque se negocia por persona. Los pagos de Hotmart
+// NO pasan por aquí — traen su desglose real en USD vía backfillComisiones.
 export const COMISION_ASESOR_DIRECTO = 0.03
 
 // Desglose de un pago directo. Sin Hotmart de intermediario no hay comisión
 // de plataforma, así que el neto es el monto menos la comisión del asesor.
 // Sin asesor atribuido la comisión es 0 (no null: null significa "falta por
 // calcular" y dispararía reintentos del backfill de Hotmart).
-export function desgloseDirecto(monto: number, tieneAsesor: boolean) {
-  const comisionAsesor = tieneAsesor ? Math.round(monto * COMISION_ASESOR_DIRECTO) : 0
+export function desgloseDirecto(monto: number, tasa: number | null | undefined) {
+  const comisionAsesor = tasa ? Math.round(monto * tasa) : 0
   return { comisionHotmart: 0, comisionAsesor, montoNeto: monto - comisionAsesor }
+}
+
+/**
+ * Tasa de comisión directa del asesor, o `null` si el pago no tiene asesor
+ * atribuido (ahí no hay a quién pagarle y la comisión queda en 0).
+ */
+export async function tasaDirectaDe(asesorId: string | null | undefined): Promise<number | null> {
+  if (!asesorId) return null
+  const a = await prisma.asesor.findUnique({
+    where: { id: asesorId },
+    select: { comisionDirecta: true },
+  })
+  return a?.comisionDirecta ?? COMISION_ASESOR_DIRECTO
 }
 
 // Cuánto puede desviarse un abono del valor de la cuota para seguir

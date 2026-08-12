@@ -297,6 +297,7 @@ export function TableroContenido() {
           fecha={modal.modo === 'crear' ? modal.fecha : undefined}
           contenido={modal.modo === 'editar' ? modal.contenido : undefined}
           miembros={miembros}
+          agenda={contenidos}
           onClose={() => setModal(null)}
           onSaved={cerrarYRefrescar}
         />

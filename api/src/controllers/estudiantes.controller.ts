@@ -4,7 +4,7 @@ import { ApiResponse, parsePagination } from '../utils/response'
 import { NotFoundError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
-import { montoPagadoPago, desgloseDirecto } from '../utils/pagos'
+import { montoPagadoPago, desgloseDirecto, tasaDirectaDe } from '../utils/pagos'
 import { z } from 'zod'
 import * as XLSX from 'xlsx'
 
@@ -87,6 +87,10 @@ export async function listar(req: Request, res: Response) {
 export async function crear(req: Request, res: Response) {
   const data = crearSchema.parse(req.body)
 
+  // Se resuelve antes de abrir la transacción: es una lectura ajena a ella y
+  // meterla dentro solo alarga el tiempo que la transacción queda abierta.
+  const tasaDirecta = await tasaDirectaDe(req.asesorId)
+
   const estudiante = await prisma.$transaction(async (tx) => {
     // 1. Crear estudiante
     const est = await tx.estudiante.create({
@@ -137,9 +141,10 @@ export async function crear(req: Request, res: Response) {
           fechaVencimiento: fechaPago,
           ...(data.comprobante && { comprobante: data.comprobante }),
           ...(req.asesorId     && { asesorId:    req.asesorId }),
-          // Pago directo (no pasa por Hotmart): comisión del asesor 3% y neto,
-          // calculados aquí porque ningún backfill los completa después.
-          ...desgloseDirecto(montoFinal, !!req.asesorId),
+          // Pago directo (no pasa por Hotmart): la comisión del asesor (su tasa
+          // propia) y el neto se calculan aquí, porque ningún backfill los
+          // completa después.
+          ...desgloseDirecto(montoFinal, tasaDirecta),
         },
       })
     }
@@ -633,7 +638,7 @@ export async function importar(req: Request, res: Response) {
           data: {
             ...baseData, monto: abono, estado: 'PAGADO',
             fechaVencimiento: fechaPagoDate, fechaPago: fechaPagoDate,
-            ...desgloseDirecto(abono, !!asesorObj),
+            ...desgloseDirecto(abono, await tasaDirectaDe(asesorObj?.id)),
           },
         })
         pagosCreados++

@@ -11,7 +11,7 @@
 
 import { prisma } from '../config/prisma'
 import { logger } from '../utils/logger'
-import { desgloseDirecto } from '../utils/pagos'
+import { desgloseDirecto, tasaDirectaDe } from '../utils/pagos'
 
 export async function backfillComisionDirecta(aplicar = false): Promise<void> {
   // Solo pagos directos (sin referencia de Hotmart) ya cobrados y sin
@@ -33,7 +33,7 @@ export async function backfillComisionDirecta(aplicar = false): Promise<void> {
   }
 
   for (const p of pagos) {
-    const d = desgloseDirecto(p.monto, !!p.asesorId)
+    const d = desgloseDirecto(p.monto, await tasaDirectaDe(p.asesorId))
     logger.info(
       `[ComisionDirecta] ${p.estudiante.nombre.trim()} — $${p.monto.toLocaleString('es-CO')} ` +
       `(${p.fechaPago?.toISOString().slice(0, 10) ?? 'sin fecha'}) → ` +

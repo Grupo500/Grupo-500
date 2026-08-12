@@ -68,6 +68,154 @@ export function colorAvatar(id: string): string {
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
+/** `fecha` viene como YYYY-MM-DD; se ancla a medianoche local. */
+function deISO(iso: string) {
+  const [a, m, d] = iso.slice(0, 10).split('-').map(Number)
+  return new Date(a, m - 1, d)
+}
+
+/**
+ * Fecha del contenido: el día en grande, y al tocar "Cambiar" se abre un
+ * selector de mes que además muestra qué hay ya agendado en el día elegido
+ * — que es lo útil al programar, para no amontonar tres cosas el mismo día.
+ */
+function CampoFecha({ valor, onCambio, agenda, idActual }: {
+  valor: string
+  onCambio: (iso: string) => void
+  agenda: Contenido[]
+  idActual?: string
+}) {
+  const elegido = deISO(valor)
+  const [abierto, setAbierto] = useState(false)
+  const [mes, setMes] = useState(startOfMonth(elegido))
+
+  const dias = useMemo(() => eachDayOfInterval({
+    start: startOfWeek(mes, { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(mes), { weekStartsOn: 1 }),
+  }), [mes])
+
+  // Lo que ya hay ese día, sin contar el contenido que se está editando.
+  const delDia = agenda.filter(c => c.id !== idActual && isSameDay(deISO(c.fecha), elegido))
+  const cuantosEn = (d: Date) =>
+    agenda.filter(c => c.id !== idActual && isSameDay(deISO(c.fecha), d)).length
+
+  return (
+    <div className="rounded-xl border border-outline-variant">
+      <div className="flex items-center gap-2.5 px-3 py-2.5">
+        <span className="text-[21px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-on-surface">
+          {format(elegido, 'd')}
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <span className="text-[11.5px] leading-none text-on-surface first-letter:uppercase">
+            {format(elegido, "MMMM 'de' yyyy", { locale: es })}
+          </span>
+          <span className="text-[10px] leading-none text-on-surface-variant first-letter:uppercase">
+            {format(elegido, 'EEEE', { locale: es })}
+          </span>
+        </span>
+        <button
+          type="button"
+          onClick={() => { setMes(startOfMonth(elegido)); setAbierto(a => !a) }}
+          className="ml-auto cursor-pointer text-[11px] text-primary underline underline-offset-2"
+        >
+          {abierto ? 'Listo' : 'Cambiar'}
+        </button>
+      </div>
+
+      {abierto && (
+        <div className="border-t border-outline-variant p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setMes(m => add(m, { months: -1 }))}
+              aria-label="Mes anterior"
+              className="grid size-6 cursor-pointer place-items-center rounded-md text-on-surface-variant hover:bg-surface-high"
+            >
+              <ChevronLeft className="size-3.5" />
+            </button>
+            <span className="text-[12px] font-semibold first-letter:uppercase">
+              {format(mes, "MMMM 'de' yyyy", { locale: es })}
+            </span>
+            <button
+              type="button"
+              onClick={() => setMes(m => add(m, { months: 1 }))}
+              aria-label="Mes siguiente"
+              className="grid size-6 cursor-pointer place-items-center rounded-md text-on-surface-variant hover:bg-surface-high"
+            >
+              <ChevronRight className="size-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-0.5">
+            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+              <span key={i} className="grid h-6 place-items-center text-[9.5px] font-bold text-on-surface-variant">
+                {d}
+              </span>
+            ))}
+            {dias.map(d => {
+              const sel = isSameDay(d, elegido)
+              const n = cuantosEn(d)
+              return (
+                <button
+                  key={d.toISOString()}
+                  type="button"
+                  onClick={() => onCambio(toISO(d))}
+                  className={cn(
+                    'relative grid h-7 cursor-pointer place-items-center rounded-md text-[11.5px] tabular-nums transition-colors',
+                    sel
+                      ? 'bg-primary font-semibold text-on-primary'
+                      : isSameMonth(d, mes)
+                        ? 'text-on-surface hover:bg-surface-high'
+                        : 'text-on-surface-variant/45 hover:bg-surface-high',
+                  )}
+                >
+                  {format(d, 'd')}
+                  {/* Punto: ese día ya tiene algo programado. */}
+                  {n > 0 && (
+                    <span
+                      className={cn(
+                        'absolute bottom-[3px] size-1 rounded-full',
+                        sel ? 'bg-on-primary' : 'bg-primary',
+                      )}
+                    />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mt-3 border-t border-outline-variant pt-2.5">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-on-surface-variant">
+              Ese día
+            </p>
+            {delDia.length === 0 ? (
+              <p className="text-[11.5px] text-on-surface-variant">Nada programado todavía.</p>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {delDia.map(c => (
+                  <div
+                    key={c.id}
+                    className="relative rounded-md bg-surface-low py-1.5 pl-5 pr-2 text-[11.5px]"
+                  >
+                    <span
+                      className="absolute inset-y-1.5 left-2 w-1 rounded-full"
+                      style={{ background: ESTADO_COLOR[c.estado] }}
+                    />
+                    <span className="block truncate font-medium text-on-surface">{c.titulo}</span>
+                    <span className="block text-[10px] text-on-surface-variant">
+                      {TIPO_LABEL[c.tipo]} · {c.asignadoA?.nombre ?? 'sin responsable'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function CalendarioMarketing() {
   const queryClient = useQueryClient()
   const today = startOfToday()
@@ -274,10 +422,12 @@ export function CalendarioMarketing() {
 // ── Modal de creación / edición ──────────────────────────────────────────────
 // Exportado para que el tablero (TableroContenido) reutilice el mismo
 // formulario de crear/editar/eliminar y entregables, en vez de duplicarlo.
-export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }: {
+export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClose, onSaved }: {
   fecha?: Date
   contenido?: Contenido
   miembros: Miembro[]
+  /** Contenidos del periodo, para mostrar qué ya hay agendado al elegir un día. */
+  agenda?: Contenido[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -358,19 +508,12 @@ export function ContenidoModal({ fecha, contenido, miembros, onClose, onSaved }:
       subtitulo={esEdicion ? TIPO_LABEL[contenido!.tipo] : undefined}
     >
       <div className="space-y-3 pb-2">
-        {/* La fecha va arriba como pastilla, no perdida entre los campos: al
-            abrirse desde un día del calendario es el dato que da contexto a
-            todo lo demás. Sigue siendo editable por si hay que corregirla. */}
-        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-primary-container px-2.5 py-1.5 text-[11.5px] leading-none text-primary">
-          <CalendarDays className="h-3 w-3 shrink-0" />
-          <input
-            type="date"
-            value={fechaStr}
-            onChange={e => setFechaStr(e.target.value)}
-            aria-label="Fecha de entrega"
-            className="cursor-pointer border-0 bg-transparent p-0 text-[11.5px] leading-none text-primary outline-none"
-          />
-        </label>
+        <CampoFecha
+          valor={fechaStr}
+          onCambio={setFechaStr}
+          agenda={agenda}
+          idActual={contenido?.id}
+        />
 
         <div>
           <label className="text-xs font-medium text-on-surface-variant block mb-1.5">

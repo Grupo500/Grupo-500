@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Asesor" ADD COLUMN     "comisionDirecta" DOUBLE PRECISION NOT NULL DEFAULT 0.03;

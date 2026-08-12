@@ -4,7 +4,7 @@ import { ApiResponse, parsePagination } from '../utils/response'
 import { ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { broadcast } from '../utils/sseManager'
-import { cuotaQueSalda, desgloseDirecto } from '../utils/pagos'
+import { cuotaQueSalda, desgloseDirecto, tasaDirectaDe } from '../utils/pagos'
 import { z } from 'zod'
 
 const registrarSchema = z.object({
@@ -122,8 +122,9 @@ export async function registrar(req: Request, res: Response) {
       ...(req.asesorId && { asesorId: req.asesorId }),
       ...(cuota && { enPartes: true, cuotaNumero: cuota.cuotaNumero, cuotasTotal: cuota.cuotasTotal }),
       // Un pago directo no pasa por el backfill de Hotmart: su desglose
-      // (comisión del asesor 3%, neto) se calcula aquí o no existiría nunca.
-      ...desgloseDirecto(data.monto, !!req.asesorId),
+      // (comisión según la tasa del asesor, y neto) se calcula aquí o no
+      // existiría nunca.
+      ...desgloseDirecto(data.monto, await tasaDirectaDe(req.asesorId)),
     },
     include: { estudiante: true },
   })
@@ -155,7 +156,7 @@ export async function actualizar(req: Request, res: Response) {
     const previo = await prisma.pago.findUnique({
       where: { id }, select: { referenciaPago: true, asesorId: true },
     })
-    if (previo && !previo.referenciaPago) nuevoDesglose = desgloseDirecto(data.monto, !!previo.asesorId)
+    if (previo && !previo.referenciaPago) nuevoDesglose = desgloseDirecto(data.monto, await tasaDirectaDe(previo.asesorId))
   }
 
   const pago = await prisma.pago.update({
