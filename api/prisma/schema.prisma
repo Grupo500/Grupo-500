@@ -122,6 +122,10 @@ model Asesor {
   /// reparto lo decide Hotmart y la app solo lo lee. Es por asesor porque la
   /// tarifa se negocia individualmente (Cielo Guevara pasó a 9% en ago-2026).
   comisionDirecta Float        @default(0.03)
+  /// Desde cuándo rige `comisionDirecta`. Una tarifa negociada arranca un día,
+  /// no rige hacia atrás: los pagos anteriores a esta fecha se liquidan al 3%
+  /// estándar. Vacío = la tarifa aplica a todo su historial.
+  comisionDirectaDesde DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)

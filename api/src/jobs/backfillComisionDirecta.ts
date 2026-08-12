@@ -33,7 +33,7 @@ export async function backfillComisionDirecta(aplicar = false): Promise<void> {
   }
 
   for (const p of pagos) {
-    const d = desgloseDirecto(p.monto, await tasaDirectaDe(p.asesorId))
+    const d = desgloseDirecto(p.monto, await tasaDirectaDe(p.asesorId, p.fechaPago))
     logger.info(
       `[ComisionDirecta] ${p.estudiante.nombre.trim()} — $${p.monto.toLocaleString('es-CO')} ` +
       `(${p.fechaPago?.toISOString().slice(0, 10) ?? 'sin fecha'}) → ` +

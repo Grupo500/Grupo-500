@@ -124,7 +124,7 @@ export async function registrar(req: Request, res: Response) {
       // Un pago directo no pasa por el backfill de Hotmart: su desglose
       // (comisión según la tasa del asesor, y neto) se calcula aquí o no
       // existiría nunca.
-      ...desgloseDirecto(data.monto, await tasaDirectaDe(req.asesorId)),
+      ...desgloseDirecto(data.monto, await tasaDirectaDe(req.asesorId, fechaAbono)),
     },
     include: { estudiante: true },
   })
@@ -151,12 +151,19 @@ export async function actualizar(req: Request, res: Response) {
   // Si cambia el monto de un pago directo (sin referencia de Hotmart), el
   // desglose de comisión/neto se recalcula con él para no quedar desfasado.
   // Los pagos de Hotmart no se tocan: su desglose viene de la API en USD.
+  //
+  // La tasa se resuelve con la fecha del pago —la nueva si viene en el body,
+  // si no la que ya tenía—, no con la de hoy: corregirle el monto a un pago
+  // viejo no debe liquidarlo a una tarifa que empezó a regir después.
   let nuevoDesglose = {}
   if (data.monto !== undefined) {
     const previo = await prisma.pago.findUnique({
-      where: { id }, select: { referenciaPago: true, asesorId: true },
+      where: { id }, select: { referenciaPago: true, asesorId: true, fechaPago: true, fechaVencimiento: true },
     })
-    if (previo && !previo.referenciaPago) nuevoDesglose = desgloseDirecto(data.monto, await tasaDirectaDe(previo.asesorId))
+    if (previo && !previo.referenciaPago) {
+      const fecha = data.fechaPago ? new Date(data.fechaPago) : previo.fechaPago ?? previo.fechaVencimiento
+      nuevoDesglose = desgloseDirecto(data.monto, await tasaDirectaDe(previo.asesorId, fecha))
+    }
   }
 
   const pago = await prisma.pago.update({

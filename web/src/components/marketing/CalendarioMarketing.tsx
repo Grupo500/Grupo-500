@@ -550,10 +550,14 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
         </div>
 
         <div>
-          {/* Segmentado en vez de desplegable: son dos opciones y se elige
-              de un clic, sin abrir una lista para ver dos ítems. */}
+          {/* Dos opciones, se eligen de un clic: no hace falta desplegar una
+              lista para ver dos ítems. Lo elegido va relleno y con borde de
+              color, igual que los responsables de abajo — antes era al revés
+              (pastilla blanca sobre pista azul) y sobre el fondo blanco del
+              modal la teñida parecía la activa, así que "Pauta" se leía
+              seleccionada cuando la marcada era "Orgánico". */}
           <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Clasificación</label>
-          <div className="flex gap-0.5 rounded-lg bg-surface-low p-0.5">
+          <div className="flex gap-1.5">
             {(Object.keys(CLASIFICACION_LABEL) as Contenido['clasificacion'][]).map(c => (
               <button
                 key={c}
@@ -561,10 +565,10 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
                 onClick={() => setClasificacion(c)}
                 aria-pressed={clasificacion === c}
                 className={cn(
-                  'flex-1 rounded-md py-1.5 text-[12.5px] transition-colors cursor-pointer',
+                  'flex-1 rounded-full border py-1.5 text-[12.5px] transition-colors cursor-pointer',
                   clasificacion === c
-                    ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
-                    : 'text-on-surface-variant hover:text-on-surface',
+                    ? 'border-primary bg-primary-container font-semibold text-on-surface'
+                    : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
                 )}
               >
                 {CLASIFICACION_LABEL[c]}

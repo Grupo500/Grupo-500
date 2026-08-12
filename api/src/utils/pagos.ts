@@ -36,16 +36,31 @@ export function desgloseDirecto(monto: number, tasa: number | null | undefined) 
 }
 
 /**
- * Tasa de comisión directa del asesor, o `null` si el pago no tiene asesor
- * atribuido (ahí no hay a quién pagarle y la comisión queda en 0).
+ * Tasa de comisión directa que le corresponde a un pago, o `null` si no tiene
+ * asesor atribuido (ahí no hay a quién pagarle y la comisión queda en 0).
+ *
+ * Una tarifa negociada rige desde una fecha, no desde siempre: cuando la de
+ * Cielo subió a 9% se acordó que aplicaba de ese día en adelante y que lo ya
+ * cobrado se quedaba al 3%. Por eso la tasa se resuelve contra la fecha del
+ * pago y no contra "hoy" — si no, editar el monto de un pago viejo se lo
+ * recalcularía a la tarifa nueva y le cambiaría la comisión hacia atrás.
  */
-export async function tasaDirectaDe(asesorId: string | null | undefined): Promise<number | null> {
+export async function tasaDirectaDe(
+  asesorId: string | null | undefined,
+  fechaPago?: Date | null,
+): Promise<number | null> {
   if (!asesorId) return null
   const a = await prisma.asesor.findUnique({
     where: { id: asesorId },
-    select: { comisionDirecta: true },
+    select: { comisionDirecta: true, comisionDirectaDesde: true },
   })
-  return a?.comisionDirecta ?? COMISION_ASESOR_DIRECTO
+  if (!a) return COMISION_ASESOR_DIRECTO
+  // Sin fecha de vigencia la tarifa rige siempre; con ella, lo anterior se
+  // liquida a la tarifa estándar del equipo.
+  if (a.comisionDirectaDesde && fechaPago && fechaPago < a.comisionDirectaDesde) {
+    return COMISION_ASESOR_DIRECTO
+  }
+  return a.comisionDirecta
 }
 
 // Cuánto puede desviarse un abono del valor de la cuota para seguir

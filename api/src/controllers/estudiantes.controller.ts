@@ -89,7 +89,10 @@ export async function crear(req: Request, res: Response) {
 
   // Se resuelve antes de abrir la transacción: es una lectura ajena a ella y
   // meterla dentro solo alarga el tiempo que la transacción queda abierta.
-  const tasaDirecta = await tasaDirectaDe(req.asesorId)
+  const tasaDirecta = await tasaDirectaDe(
+    req.asesorId,
+    data.fechaPago ? new Date(data.fechaPago) : new Date(),
+  )
 
   const estudiante = await prisma.$transaction(async (tx) => {
     // 1. Crear estudiante
@@ -638,7 +641,7 @@ export async function importar(req: Request, res: Response) {
           data: {
             ...baseData, monto: abono, estado: 'PAGADO',
             fechaVencimiento: fechaPagoDate, fechaPago: fechaPagoDate,
-            ...desgloseDirecto(abono, await tasaDirectaDe(asesorObj?.id)),
+            ...desgloseDirecto(abono, await tasaDirectaDe(asesorObj?.id, fechaPagoDate)),
           },
         })
         pagosCreados++
