@@ -183,27 +183,36 @@ export function CalendarioReui() {
           {ORDEN_ESTADOS.map(e => {
             const activo = !ocultos.includes(e)
             return (
+              // `leading-none` para que el punto quede centrado con las letras:
+              // con la altura de línea heredada, `items-center` lo alinea contra
+              // la caja de texto —que incluye el hueco del ascendente— y el
+              // punto se ve alto. El color lo lleva solo el punto; tres bordes
+              // de colores a la vez hacían ruido y competían con la grilla.
               <button
                 key={e}
                 onClick={() => alternar(e)}
                 aria-pressed={activo}
                 className={cn(
-                  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-2 pr-2.5 text-[11.5px] transition-colors',
-                  activo ? 'bg-surface-lowest' : 'border-transparent opacity-45',
+                  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none transition-colors',
+                  activo
+                    ? 'border-outline-variant bg-surface-lowest'
+                    : 'border-transparent opacity-40 hover:opacity-70',
                 )}
-                style={activo ? { borderColor: ESTADO_COLOR[e] } : undefined}
               >
-                <span className="h-[7px] w-[7px] rounded-full" style={{ background: ESTADO_COLOR[e] }} />
-                <b className="font-bold tabular-nums text-on-surface">{conteos[e]}</b>
-                <span className="text-on-surface-variant">{ESTADO_LABEL[e]}</span>
+                <span
+                  className="h-[7px] w-[7px] shrink-0 rounded-full"
+                  style={{ background: ESTADO_COLOR[e] }}
+                />
+                <b className="font-bold tabular-nums leading-none text-on-surface">{conteos[e]}</b>
+                <span className="leading-none text-on-surface-variant">{ESTADO_LABEL[e]}</span>
               </button>
             )
           })}
           {sinResponsable > 0 && (
-            <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-surface-lowest py-1 pl-2 pr-2.5 text-[11.5px]">
-              <span className="h-[7px] w-[7px] rounded-full border border-dashed border-outline" />
-              <b className="font-bold tabular-nums text-on-surface">{sinResponsable}</b>
-              <span className="text-on-surface-variant">sin responsable</span>
+            <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-lowest py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none">
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full border border-dashed border-outline" />
+              <b className="font-bold tabular-nums leading-none text-on-surface">{sinResponsable}</b>
+              <span className="leading-none text-on-surface-variant">sin responsable</span>
             </span>
           )}
         </div>
@@ -248,14 +257,16 @@ export function CalendarioReui() {
         </EventCalendar>
 
         <div className="flex flex-wrap gap-3.5 border-t border-outline-variant bg-surface-low px-3.5 py-2.5">
+          {/* `leading-none` por lo mismo que en la barra de arriba: sin él el
+              punto se alinea con la caja de línea y queda por encima del texto. */}
           {ORDEN_ESTADOS.map(e => (
-            <span key={e} className="inline-flex items-center gap-1.5 text-[11px] text-on-surface-variant">
-              <span className="h-[7px] w-[7px] rounded-full" style={{ background: ESTADO_COLOR[e] }} />
+            <span key={e} className="inline-flex items-center gap-1.5 text-[11px] leading-none text-on-surface-variant">
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: ESTADO_COLOR[e] }} />
               {e === 'PLANIFICADO' ? 'Planificado' : e === 'EN_PROCESO' ? 'En proceso' : 'Publicado'}
             </span>
           ))}
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-on-surface-variant">
-            <span className="h-[5px] w-[5px] rounded-full bg-on-surface-variant" />
+          <span className="inline-flex items-center gap-1.5 text-[11px] leading-none text-on-surface-variant">
+            <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-on-surface-variant" />
             Pauta
           </span>
           <span className="ml-auto text-[11px]" style={{ color: 'var(--outline)' }}>
