@@ -89,14 +89,14 @@ export default async function InicioPage() {
     : verSimulacros
     ? {
         href: '/examenes', titulo: 'Simulacros', icono: ClipboardList,
-        de: '#21b9f7', a: '#2094ff',
+        de: '#6d28d9', a: '#8b5cf6',
         texto: 'Exámenes tipo Saber 11 en dos sesiones, con calificación automática y resultados por área.',
         accion: 'Entrar a Simulacros',
       }
     : verMarketing
     ? {
         href: '/marketing', titulo: 'Marketing', icono: Megaphone,
-        de: '#d97706', a: '#f59e0b',
+        de: '#be185d', a: '#ec4899',
         texto: 'Calendario de contenido, cobros y entregables publicados por el equipo.',
         accion: 'Entrar a Marketing',
       }
@@ -105,7 +105,9 @@ export default async function InicioPage() {
   const secundarios = [
     verSimulacros && {
       href: '/examenes', titulo: 'Simulacros', icono: ClipboardList,
-      de: '#21b9f7', a: '#2094ff', borde: '#21b9f7',
+      // Violeta y no azul: el azul es de Ventas, y dos módulos del mismo color
+      // en la misma rejilla se leen como el mismo sitio.
+      de: '#6d28d9', a: '#8b5cf6', borde: '#8b5cf6',
       texto: 'Exámenes tipo Saber 11 con calificación automática.',
     },
     verBrito && {
@@ -128,7 +130,9 @@ export default async function InicioPage() {
     },
     verMarketing && {
       href: '/marketing', titulo: 'Marketing', icono: Megaphone,
-      de: '#d97706', a: '#f59e0b', borde: '#f59e0b',
+      // Magenta y no ámbar: el ámbar es de Brito, y además en el resto de la
+      // app significa "pendiente" (cuotas, cobros, alertas).
+      de: '#be185d', a: '#ec4899', borde: '#ec4899',
       texto: 'Calendario de contenido, cobros y entregables del equipo.',
     },
   ].filter(Boolean).filter(m => (m as { href: string }).href !== destacado?.href) as {

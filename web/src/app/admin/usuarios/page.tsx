@@ -35,9 +35,9 @@ const ROLE_LABEL = ROL_LABEL
  * huérfanos.
  */
 const AREAS: { nombre: string; icono: typeof Shield; color: string; roles: Usuario['role'][] }[] = [
-  { nombre: 'Administración', icono: Shield,    color: '#7c3aed', roles: ['ADMIN'] },
+  { nombre: 'Administración', icono: Shield,    color: '#2a3a5e', roles: ['ADMIN'] },
   { nombre: 'Ventas',         icono: UserCheck, color: '#1a7de0', roles: ['VENDEDOR'] },
-  { nombre: 'Marketing',      icono: Megaphone, color: '#d97706', roles: ROLES_MKT },
+  { nombre: 'Marketing',      icono: Megaphone, color: '#db2777', roles: ROLES_MKT },
 ]
 
 export default function UsuariosPage() {
@@ -184,9 +184,9 @@ export default function UsuariosPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Total usuarios',  sublabel: 'Usuarios registrados', value: usuariosTodos.length, icon: Users,     accent: '#1a7de0' },
-          { label: 'Administradores', sublabel: 'Con acceso total',      value: totalAdmin,            icon: Shield,    accent: '#7c3aed' },
+          { label: 'Administradores', sublabel: 'Con acceso total',      value: totalAdmin,            icon: Shield,    accent: '#2a3a5e' },
           { label: 'Asesores',        sublabel: 'Equipo de ventas',      value: totalVendedor,         icon: UserCheck, accent: '#16a34a' },
-          { label: 'Marketing',       sublabel: 'Equipo de contenido',   value: totalMarketing,         icon: Megaphone, accent: '#d97706' },
+          { label: 'Marketing',       sublabel: 'Equipo de contenido',   value: totalMarketing,         icon: Megaphone, accent: '#db2777' },
         ].map(({ label, sublabel, value, icon: Icon, accent }) => (
           <div
             key={label}
@@ -285,7 +285,7 @@ export default function UsuariosPage() {
                     <span className={cn(
                       'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5',
                       u.role === 'ADMIN' ? 'bg-tertiary text-white'
-                        : ROLES_MKT.includes(u.role) ? 'bg-[#d97706] text-white'
+                        : ROLES_MKT.includes(u.role) ? 'bg-[#db2777] text-white'
                         : 'bg-primary text-white',
                     )}>
                       {u.role === 'ADMIN' ? <Shield className="w-2.5 h-2.5" />

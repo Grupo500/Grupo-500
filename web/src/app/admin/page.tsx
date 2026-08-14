@@ -114,7 +114,7 @@ export default function AdminResumenPage() {
           ]}
         />
         <Area
-          titulo="Marketing" color="#7c3aed" href="/marketing"
+          titulo="Marketing" color="#db2777" href="/marketing"
           filas={[
             { l: 'Publicado este mes',      v: String(r?.marketing.publicado ?? 0) },
             { l: 'En proceso',              v: String(r?.marketing.enProceso ?? 0) },
