@@ -1257,3 +1257,48 @@ Quedó en `ajustarPuntajeMateria()` (`web/src/lib/calificacion.ts`), aplicada en
 El tapiz del mapa (`/brito/mapa`, la "hoja de cuaderno") ahora lleva el logo de Grupo 500 como marca de agua repetida. Implementación: un tile PNG (`web/public/brito/tapiz-logo.png`, 480×480) generado desde `public/logo.png` con la opacidad (~5,5%) **horneada en el PNG** y dos logos escalonados por tile rotados −12° como los garabatos. Se suma como primera capa del `backgroundImage` del sendero, junto a la cuadrícula existente — cero DOM extra, una sola petición cacheable.
 
 **Por qué horneada y no CSS:** un `background-image` no acepta `opacity`, y espaciar un patrón con `background-repeat` exige que el propio tile traiga el aire alrededor del logo. Regenerar el tile (cambiar tamaño/opacidad/densidad): script inline de PIL sobre `public/logo.png`, documentado en el comentario del componente.
+
+---
+
+## Sesión 038 — 2026-08-14
+
+**Objetivo:** Panel de administración, roles del equipo de marketing y las cuentas de cobro freelance de punta a punta.
+
+### Panel de Administración
+
+Área propia en `/admin` (tarjeta en `/inicio`, azul marino del chrome de la app), con muro solo ADMIN. Se le mudaron —con `git mv`, conservando historial— Ventas generales, Usuarios y Brito, que vivían dentro de Ventas por herencia y un vendedor nunca vio. Delante va un **Resumen general** alimentado por `GET /reportes/resumen-general`: un solo lote de consultas para que las cifras de las tres áreas salgan de la misma foto. En Ventas quedó el enlace "Ver todas las ventas" para que un admin no se quede sin lista de ventas junto a los estudiantes que las generan.
+
+### Roles
+
+Fuera el rol `MARKETING` del selector: nació como el rol genérico del área antes de que existieran los cinco oficios y no lo tiene ninguna cuenta (verificado en producción). Sigue en `ROL_LABEL` y en el enum por si apareciera una cuenta vieja — un `<select>` no puede mostrar seleccionado un valor que no está entre sus opciones, y en blanco era justo el bug que había. "Vendedor" pasa a llamarse **Asesor** en pantalla; el valor `VENDEDOR` de la base no cambió. La lista de Usuarios va partida por área (Administración / Ventas / Marketing) con su conteo.
+
+### Ajustes para todo el mundo
+
+`/ajustes` vivía dentro de `(dashboard)`, cuyo muro manda a `/inicio` a quien no sea admin o asesor: el equipo de marketing oprimía Ajustes y rebotaba sin llegar nunca a su perfil. Se mudó a la raíz con su propio muro (solo queda fuera el estudiante). Además leía el nombre y el teléfono de la ficha de **asesor**, que marketing no tiene: ahora todo sale de `/auth/me` y se guarda con un `PATCH /auth/me` que escribe donde corresponda según quién sea.
+
+### Cuentas de cobro freelance
+
+El formulario de la landing pedía diez datos cada vez. **Seis son de la persona** y no cambian de un mes a otro; los otros cuatro —fecha, periodo, concepto y valor— ya los tiene la app en el propio `ContenidoMarketing`. Así que los seis viven ahora en `MiembroMarketing` (identificación, cuenta bancaria, RUT y la firma dibujada) y se llenan una vez en Ajustes. El estado ("te faltan dos datos para que te podamos pagar") lo calcula `utils/cuentaCobro.ts`, un solo sitio que consultan Ajustes y Cobros — así la líder ve el problema antes de aprobar algo que después no se va a poder pagar.
+
+El PDF se arma **en el navegador** con jsPDF (`web/src/lib/cuentaCobroPdf.ts`, incluye el valor en letras) y se manda al servidor ya hecho: lo que queda archivado es exactamente el archivo que la persona vio, no una segunda versión dibujada por otro código. Se descarga antes de subir, para que un fallo de Drive no la deje sin su cuenta de cobro.
+
+**Cobros** pasa a entrarse por una tabla de liquidación —una fila por persona, sus tres montos en columnas y el RUT debajo del nombre— porque a un freelance no se le hacen cinco transferencias sino una. El filtro de persona hace de conmutador: al elegir a alguien se abre el detalle de sus trabajos. Aprobar y pagar en lote van con un `updateMany` que lleva el estado de origen en el `where`, así que una fila que cambió entretanto no entra: no hay forma de pagar dos veces ni de saltarse la aprobación.
+
+### Google Drive: por qué NO con la cuenta de servicio
+
+Los PDF caen en la carpeta *Cuentas de Cobro - Grupo 500* (`19kcOxrAS19fhoAoa32U02qq6_DsjA1kr`). El primer intento fue con la cuenta de servicio de Sheets (`gastos-agencia@durable-zoo-504020-q5`): habilitada la Drive API y compartida la carpeta como Editor, **ve la carpeta y hasta crea subcarpetas**, pero al subir un archivo Google responde `403 · Service Accounts do not have storage quota` — no tiene almacenamiento propio, así que un archivo suyo en "Mi unidad" de alguien no tiene a quién cobrarle el espacio. Las salidas que da Google son unidades compartidas (no existen en una cuenta personal como pregrupo500@gmail.com) o entrar en nombre del usuario.
+
+Se hizo lo segundo: **refresh token de la cuenta dueña**, igual que ya se hacía con Google Ads, reutilizando su mismo cliente OAuth (`DRIVE_OAUTH_CLIENT_ID/SECRET/REFRESH_TOKEN` en Railway). El redirect que sirvió fue `http://localhost:8080`, que ya estaba autorizado en ese cliente. Los archivos quedan a nombre de David y ocupan su cuota.
+
+**Estructura:** `2026-08 Agosto / Primera quincena - Marketing`. La carpeta del mes se **comparte** con la landing —se busca por nombre exacto, mismo formato, para entrar en la que exista en vez de duplicarla—; el apellido *Marketing* va en las quincenas, porque esa landing la usa toda la empresa y también crea carpetas sola. Manda la fecha del trabajo, no la de aprobación. Probado contra la carpeta real con una fecha de cada quincena y limpiado después.
+
+### Otros arreglos
+
+- Fotos de Google en los avatares de marketing: la app ya las guardaba al entrar, pero los avatares estaban dibujados a mano en tres pantallas y ninguno las leía. Ahora hay un solo `AvatarMiembro`.
+- **Entregables** pasa a ser la lista de tareas de cada quien: listaba solo enlaces ya publicados, así que lo pendiente era invisible por construcción. Sale del calendario, no de la tabla de entregables.
+- Simulacros y Marketing dejan de repetir el color de otro módulo (violeta y magenta). El ámbar significa "pendiente" en el resto de la app.
+
+### Pendiente (próxima sesión)
+- Prueba de punta a punta de la cuenta de cobro con un trabajo freelance real aprobado
+- Cruce de los cobros aprobados con Finanzas: ¿se escriben en el Sheet de contabilidad o se leen de la app? — decisión de David
+- Pagar de verdad desde la app exigiría conectar un banco o pasarela (Bancolombia empresas, Nequi negocios, Wompi): contrato y credenciales aparte
