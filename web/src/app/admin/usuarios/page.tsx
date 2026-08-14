@@ -307,13 +307,7 @@ export default function UsuariosPage() {
                       disabled={cambiarRol.isPending}
                       onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as Usuario['role'] })}
                       className="text-[10px] md:text-xs font-medium px-2 py-1.5 bg-surface-high"
-                      options={[
-                        { value: 'VENDEDOR', label: 'Asesor' },
-                        { value: 'ADMIN', label: 'Admin' },
-                        { value: 'MARKETING', label: 'Marketing' },
-                        { value: 'EDITOR', label: 'Editor' },
-                        { value: 'COMMUNITY', label: 'Community' },
-                      ]}
+                      options={OPCIONES_ROL}
                     />
                   </div>
                   {u.asesor && (
@@ -511,13 +505,7 @@ export default function UsuariosPage() {
                   value={formRole}
                   onValueChange={v => setFormRole(v as Usuario['role'])}
                   className="input-base"
-                  options={[
-                    { value: 'VENDEDOR', label: 'Asesor' },
-                    { value: 'ADMIN', label: 'Administrador' },
-                    { value: 'MARKETING', label: 'Marketing' },
-                    { value: 'EDITOR', label: 'Editor' },
-                    { value: 'COMMUNITY', label: 'Community' },
-                  ]}
+                  options={OPCIONES_ROL}
                 />
               </div>
               {formError && <p className="text-xs text-[var(--error)]">{formError}</p>}
