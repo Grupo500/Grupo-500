@@ -1,7 +1,9 @@
 import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
-import { ForbiddenError, NotFoundError } from '../utils/errors'
+import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors'
+import { auditLog } from '../utils/auditLogger'
+import { esLiderMarketing } from '../utils/roles'
 import { z } from 'zod'
 
 const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, user: { select: { image: true } } }
@@ -34,7 +36,6 @@ export async function listarContenidos(req: Request, res: Response) {
     },
     include: {
       asignadoA: { select: SELECT_MIEMBRO },
-      guion: { select: { id: true, titulo: true } },
       entregables: true,
     },
     orderBy: { fecha: 'asc' },
@@ -66,7 +67,6 @@ const crearContenidoSchema = z.object({
   clasificacion: z.enum(CLASIFICACION).optional(),
   fecha:         z.string(),
   asignadoAId:   z.string().optional().nullable(),
-  guionId:       z.string().optional().nullable(),
   notas:         z.string().optional().nullable(),
   tipoTrabajo:   z.enum(TIPO_TRABAJO).optional(),
   valor:         z.number().int().min(0).optional().nullable(),
@@ -80,7 +80,7 @@ export async function crearContenido(req: Request, res: Response) {
       fecha: new Date(data.fecha),
       valor: valorSegunTrabajo(data.tipoTrabajo, data.valor) ?? null,
     },
-    include: { asignadoA: { select: SELECT_MIEMBRO }, guion: { select: { id: true, titulo: true } }, entregables: true },
+    include: { asignadoA: { select: SELECT_MIEMBRO }, entregables: true },
   })
   return ApiResponse.created(res, contenido)
 }
@@ -93,7 +93,6 @@ const actualizarContenidoSchema = z.object({
   fecha:         z.string().optional(),
   estado:        z.enum(['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO']).optional(),
   asignadoAId:   z.string().optional().nullable(),
-  guionId:       z.string().optional().nullable(),
   notas:         z.string().optional().nullable(),
   tipoTrabajo:   z.enum(TIPO_TRABAJO).optional(),
   valor:         z.number().int().min(0).optional().nullable(),
@@ -111,7 +110,7 @@ export async function actualizarContenido(req: Request, res: Response) {
         ? { valor: valorSegunTrabajo(data.tipoTrabajo, data.valor) }
         : {}),
     },
-    include: { asignadoA: { select: SELECT_MIEMBRO }, guion: { select: { id: true, titulo: true } }, entregables: true },
+    include: { asignadoA: { select: SELECT_MIEMBRO }, entregables: true },
   })
   return ApiResponse.success(res, contenido)
 }
@@ -175,60 +174,106 @@ export async function listarEntregables(req: Request, res: Response) {
 }
 
 // ── Guiones ───────────────────────────────────────────────────────────────
-export async function listarGuiones(req: Request, res: Response) {
-  const q = String(req.query.q ?? '').trim()
-  const guiones = await prisma.guion.findMany({
-    where: q ? { titulo: { contains: q, mode: 'insensitive' } } : {},
-    include: { autor: { select: SELECT_MIEMBRO } },
-    orderBy: { updatedAt: 'desc' },
-  })
-  return ApiResponse.success(res, guiones)
-}
 
-const crearGuionSchema = z.object({
-  titulo:    z.string().min(2),
-  contenido: z.string().min(1),
-})
 
-export async function crearGuion(req: Request, res: Response) {
-  const data = crearGuionSchema.parse(req.body)
-  const miembro = await prisma.miembroMarketing.findUnique({ where: { userId: req.userId } })
-  if (!miembro) throw new ForbiddenError('Tu usuario no tiene un perfil de marketing asociado')
 
-  const guion = await prisma.guion.create({
-    data: { ...data, autorId: miembro.id },
-    include: { autor: { select: SELECT_MIEMBRO } },
-  })
-  return ApiResponse.created(res, guion)
-}
 
-const actualizarGuionSchema = z.object({
-  titulo:    z.string().min(2).optional(),
-  contenido: z.string().min(1).optional(),
-})
-
-export async function actualizarGuion(req: Request, res: Response) {
-  const data = actualizarGuionSchema.parse(req.body)
-  const guion = await prisma.guion.update({
-    where: { id: req.params.id },
-    data,
-    include: { autor: { select: SELECT_MIEMBRO } },
-  })
-  return ApiResponse.success(res, guion)
-}
 
 // Solo ADMIN o el propio autor pueden borrar un guion.
-export async function eliminarGuion(req: Request, res: Response) {
-  const guion = await prisma.guion.findUnique({ where: { id: req.params.id } })
-  if (!guion) throw new NotFoundError('Guion no encontrado')
 
-  if (req.userRole !== 'ADMIN') {
-    const miembro = await prisma.miembroMarketing.findUnique({ where: { userId: req.userId } })
-    if (!miembro || guion.autorId !== miembro.id) {
-      throw new ForbiddenError('Solo puedes eliminar guiones propios')
-    }
+// ───────────────────────────────────────────────────────────────────────────
+// Cobros freelance
+//
+// El cobro no es una tabla aparte: es el contenido visto desde el dinero. Un
+// trabajo freelance ES un cobro, así que separarlos obligaría a mantener dos
+// filas sincronizadas para el mismo hecho.
+//
+// Quién ve qué: los líderes y el admin ven los de todo el equipo y son los que
+// aprueban; el resto ve solo los suyos. Lo que cobra un editor no es asunto de
+// los demás editores.
+// ───────────────────────────────────────────────────────────────────────────
+
+const SELECT_COBRO = {
+  id: true, titulo: true, tipo: true, fecha: true, estado: true,
+  valor: true, estadoCobro: true, aprobadoEn: true, pagadoEn: true,
+  asignadoA:   { select: SELECT_MIEMBRO },
+  aprobadoPor: { select: { id: true, nombre: true } },
+  entregables: { select: { id: true, publicadoEn: true } },
+}
+
+/** El perfil de marketing de quien consulta, o null si no tiene. */
+async function miMiembro(userId?: string) {
+  if (!userId) return null
+  return prisma.miembroMarketing.findUnique({ where: { userId }, select: { id: true } })
+}
+
+export async function listarCobros(req: Request, res: Response) {
+  const { desde, hasta, estado } = req.query
+  const lider = esLiderMarketing(req.userRole)
+
+  // Sin perfil de marketing y sin ser líder no hay nada que mostrar. Se filtra
+  // con un id imposible en vez de dejar el where vacío: ante la duda, nada.
+  const yo = lider ? null : (await miMiembro(req.userId))?.id ?? '__sin_miembro__'
+
+  const where = {
+    tipoTrabajo: 'FREELANCE' as const,
+    ...(yo ? { asignadoAId: yo } : {}),
+    ...(estado ? { estadoCobro: String(estado) as any } : {}),
+    ...(desde && hasta ? { fecha: { gte: new Date(String(desde)), lte: new Date(String(hasta)) } } : {}),
   }
 
-  await prisma.guion.delete({ where: { id: req.params.id } })
-  return ApiResponse.noContent(res)
+  const cobros = await prisma.contenidoMarketing.findMany({
+    where, select: SELECT_COBRO, orderBy: [{ estadoCobro: 'asc' }, { fecha: 'desc' }],
+  })
+
+  // Los totales se calculan sobre lo mismo que se lista, para que el número de
+  // arriba siempre cuadre con las filas de abajo.
+  const suma = (e: string) =>
+    cobros.filter(c => c.estadoCobro === e).reduce((s, c) => s + (c.valor ?? 0), 0)
+
+  return ApiResponse.success(res, {
+    cobros,
+    puedeAprobar: lider,
+    totales: {
+      porAprobar: suma('POR_APROBAR'),
+      aprobado:   suma('APROBADO'),
+      pagado:     suma('PAGADO'),
+    },
+  })
 }
+
+/** Aprobar y marcar pagado son del líder; el resto no puede ni intentarlo. */
+async function cambiarEstadoCobro(
+  req: Request, res: Response,
+  destino: 'APROBADO' | 'PAGADO',
+) {
+  if (!esLiderMarketing(req.userRole)) {
+    return res.status(403).json({ error: 'Solo la líder de edición o un administrador pueden hacer esto' })
+  }
+  const actual = await prisma.contenidoMarketing.findUnique({
+    where: { id: req.params.id },
+    select: { tipoTrabajo: true, estadoCobro: true },
+  })
+  if (!actual) throw new NotFoundError('Contenido no encontrado')
+  if (actual.tipoTrabajo !== 'FREELANCE') {
+    throw new ValidationError('Este trabajo no es freelance, no tiene cobro que aprobar')
+  }
+  // Se paga lo aprobado, no lo que está esperando visto bueno.
+  if (destino === 'PAGADO' && actual.estadoCobro !== 'APROBADO') {
+    throw new ValidationError('Hay que aprobar el cobro antes de marcarlo pagado')
+  }
+
+  const quien = await miMiembro(req.userId)
+  const cobro = await prisma.contenidoMarketing.update({
+    where: { id: req.params.id },
+    data: destino === 'APROBADO'
+      ? { estadoCobro: 'APROBADO', aprobadoEn: new Date(), ...(quien && { aprobadoPorId: quien.id }) }
+      : { estadoCobro: 'PAGADO', pagadoEn: new Date() },
+    select: SELECT_COBRO,
+  })
+  auditLog(req, 'UPDATE', 'cobro_marketing', cobro.id, { estado: destino, valor: cobro.valor })
+  return ApiResponse.success(res, cobro)
+}
+
+export const aprobarCobro = (req: Request, res: Response) => cambiarEstadoCobro(req, res, 'APROBADO')
+export const pagarCobro   = (req: Request, res: Response) => cambiarEstadoCobro(req, res, 'PAGADO')

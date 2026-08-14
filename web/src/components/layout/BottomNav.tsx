@@ -14,8 +14,9 @@ import {
 import { cn } from '@/lib/utils'
 import { FINANZAS_TABS } from '@/lib/finanzasNav'
 import { MARKETING_TABS } from '@/lib/marketingNav'
+import { esMarketing, type Rol } from '@/lib/roles'
 
-type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY'
+
 
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor.
 // Este nav es exclusivo de Ventas — MARKETING vive en su propia área (ver

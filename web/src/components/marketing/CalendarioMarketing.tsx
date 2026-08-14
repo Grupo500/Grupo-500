@@ -30,7 +30,6 @@ export interface Contenido {
   estado: 'PLANIFICADO' | 'EN_PROCESO' | 'PUBLICADO'
   notas: string | null
   asignadoA: Miembro | null
-  guion: { id: string; titulo: string } | null
   entregables: EntregableDto[]
 }
 

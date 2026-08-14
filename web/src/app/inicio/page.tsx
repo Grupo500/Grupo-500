@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
+import { esMarketing, type Rol } from '@/lib/roles'
 
 /** Fecha de hoy en Colombia, con el día y el mes capitalizados. */
 function fechaDeHoy(): string {
@@ -56,7 +57,7 @@ export default async function InicioPage() {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' | 'ESTUDIANTE'
+  const role = ((session.user as any).role ?? 'VENDEDOR') as Rol
 
   function primerNombre(nombreCompleto: string): string {
     const partes = nombreCompleto.trim().split(/\s+/)
@@ -71,7 +72,7 @@ export default async function InicioPage() {
   const verBrito      = true
   // Finanzas es una vista de dirección: no se segmenta por asesor.
   const verFinanzas   = role === 'ADMIN'
-  const verMarketing  = role === 'ADMIN' || role === 'MARKETING' || role === 'EDITOR' || role === 'COMMUNITY'
+  const verMarketing  = role === 'ADMIN' || esMarketing(role)
 
   const cifras = verVentas ? await cifrasDeVentas((session.user as any).id ?? '', role === 'ADMIN') : null
 
@@ -95,7 +96,7 @@ export default async function InicioPage() {
     ? {
         href: '/marketing', titulo: 'Marketing', icono: Megaphone,
         de: '#d97706', a: '#f59e0b',
-        texto: 'Calendario de contenido, guiones y entregables publicados por el equipo.',
+        texto: 'Calendario de contenido, cobros y entregables publicados por el equipo.',
         accion: 'Entrar a Marketing',
       }
     : null
@@ -119,7 +120,7 @@ export default async function InicioPage() {
     verMarketing && {
       href: '/marketing', titulo: 'Marketing', icono: Megaphone,
       de: '#d97706', a: '#f59e0b', borde: '#f59e0b',
-      texto: 'Calendario de contenido, guiones y entregables del equipo.',
+      texto: 'Calendario de contenido, cobros y entregables del equipo.',
     },
   ].filter(Boolean).filter(m => (m as { href: string }).href !== destacado?.href) as {
     href: string; titulo: string; icono: typeof Wallet

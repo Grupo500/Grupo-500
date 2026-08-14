@@ -485,7 +485,7 @@ model MiembroMarketing {
 
   user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   asignados ContenidoMarketing[] @relation("AsignadoA")
-  guiones   Guion[]
+  aprobados ContenidoMarketing[] @relation("AprobadoPor")
 
   @@map("marketing_miembros")
 }
@@ -526,6 +526,14 @@ enum TipoTrabajoMarketing {
   FREELANCE
 }
 
+/// Ciclo de vida del cobro de un freelance. Solo aplica cuando el trabajo es
+/// FREELANCE; en los de empresa no hay nada que aprobar ni que pagar.
+enum EstadoCobroMarketing {
+  POR_APROBAR
+  APROBADO
+  PAGADO
+}
+
 model ContenidoMarketing {
   id            String                    @id @default(cuid())
   titulo        String
@@ -539,16 +547,26 @@ model ContenidoMarketing {
   /// sentido en los freelance — en los de empresa se guarda null, para que no
   /// queden importes colgando de trabajo interno.
   valor         Int?
+  /// En qué va el cobro. Arranca POR_APROBAR en cuanto el trabajo se marca
+  /// como freelance, aunque todavía no se haya entregado: el freelance debe
+  /// poder esperar aprobación desde que se le encarga.
+  estadoCobro   EstadoCobroMarketing      @default(POR_APROBAR)
+  /// Quién dio el visto bueno y cuándo. En algo que mueve plata, la firma
+  /// importa tanto como el monto — sin esto no hay a quién preguntarle.
+  aprobadoPorId String?
+  aprobadoEn    DateTime?
+  /// Cuándo se pagó de verdad. Separado de la aprobación porque son dos
+  /// momentos distintos y a veces los separan semanas.
+  pagadoEn      DateTime?
   fecha         DateTime // día planificado en el calendario
   estado        EstadoContenidoMarketing  @default(PLANIFICADO)
   notas         String?
   asignadoAId   String?
-  guionId       String?
   createdAt     DateTime                  @default(now())
   updatedAt     DateTime                  @updatedAt
 
   asignadoA   MiembroMarketing? @relation("AsignadoA", fields: [asignadoAId], references: [id])
-  guion       Guion?            @relation(fields: [guionId], references: [id])
+  aprobadoPor MiembroMarketing? @relation("AprobadoPor", fields: [aprobadoPorId], references: [id])
   entregables Entregable[]
 
   @@map("marketing_contenidos")
@@ -577,26 +595,19 @@ model Entregable {
   @@map("marketing_entregables")
 }
 
-model Guion {
-  id        String   @id @default(cuid())
-  titulo    String
-  contenido String   @db.Text
-  autorId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  autor   MiembroMarketing     @relation(fields: [autorId], references: [id])
-  usadoEn ContenidoMarketing[]
-
-  @@map("marketing_guiones")
-}
 
 enum Role {
   ADMIN
   VENDEDOR
+  // Todos los de abajo entran SOLO al área de Marketing: no ven estudiantes,
+  // ventas ni finanzas. Se distinguen entre sí por la especialidad y, en el
+  // caso de LIDER_EDICION, por lo que puede aprobar.
   MARKETING
-  EDITOR    // acceso solo al area de Marketing, igual que MARKETING
-  COMMUNITY // acceso solo al area de Marketing, igual que MARKETING
+  EDITOR        // editor de video
+  COMMUNITY     // community manager
+  LIDER_EDICION // líder de editores: ve los cobros de todos y es quien los aprueba
+  SOCIAL_MEDIA  // social media manager
+  LIDER_DISENO  // líder de diseño gráfico
 }
 
 enum EstadoPago {

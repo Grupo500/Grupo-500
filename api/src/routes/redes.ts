@@ -2,10 +2,11 @@ import { Router } from 'express'
 import { authenticate, requireRole } from '../middleware/auth'
 import { asyncHandler } from '../middleware/errorHandler'
 import * as ctrl from '../controllers/redes.controller'
+import * as ROLES from '../utils/roles'
 
 const router = Router()
 
-router.use(authenticate, requireRole('ADMIN', 'MARKETING', 'EDITOR', 'COMMUNITY'))
+router.use(authenticate, requireRole('ADMIN', ...ROLES.MARKETING))
 
 router.get('/config',            asyncHandler(ctrl.estadoConfig))
 router.post('/config',           requireRole('ADMIN'), asyncHandler(ctrl.guardarConfig))

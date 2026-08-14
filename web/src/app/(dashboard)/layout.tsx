@@ -5,18 +5,19 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
 import { SSEProvider } from '@/components/layout/SSEProvider'
+import { esMarketing, type Rol } from '@/lib/roles'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
-  const role = ((session.user as any).role ?? 'VENDEDOR') as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' | 'ESTUDIANTE'
+  const role = ((session.user as any).role ?? 'VENDEDOR') as Rol
 
   // Muro de acceso: Ventas es SOLO para admin/asesor. Un estudiante se va a
   // su módulo de exámenes; los roles de marketing (tienen su propia área, ver
   // /marketing) se van al selector de módulos.
   if (role === 'ESTUDIANTE') redirect('/examenes')
-  if (role === 'MARKETING' || role === 'EDITOR' || role === 'COMMUNITY') redirect('/inicio')
+  if (esMarketing(role)) redirect('/inicio')
 
   return (
     <QueryProvider>

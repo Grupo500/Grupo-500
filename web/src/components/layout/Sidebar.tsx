@@ -17,8 +17,9 @@ import { cn } from '@/lib/utils'
 import { AJUSTES_TABS } from '@/lib/ajustesNav'
 import { FINANZAS_TABS } from '@/lib/finanzasNav'
 import { MARKETING_TABS } from '@/lib/marketingNav'
+import { esMarketing, type Rol } from '@/lib/roles'
 
-type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY'
+
 
 // `soloAsesor` es lo contrario de `adminOnly`: módulos personales del vendedor
 // que un ADMIN no necesita ver (él tiene sus propias vistas globales). Este
@@ -187,7 +188,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           href: t.href, label: t.label, icon: t.icon, proximamente: t.proximamente ?? false,
         })),
       }
-    : dentroDe('/marketing') && (role === 'ADMIN' || role === 'MARKETING' || role === 'EDITOR' || role === 'COMMUNITY')
+    : dentroDe('/marketing') && (role === 'ADMIN' || esMarketing(role))
     ? {
         titulo: 'Marketing',
         tabs: MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),

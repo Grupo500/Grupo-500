@@ -2,10 +2,11 @@ import { Router } from 'express'
 import { authenticate, requireRole } from '../middleware/auth'
 import { asyncHandler } from '../middleware/errorHandler'
 import * as ctrl from '../controllers/marketing.controller'
+import * as ROLES from '../utils/roles'
 
 const router = Router()
 
-router.use(authenticate, requireRole('ADMIN', 'MARKETING', 'EDITOR', 'COMMUNITY'))
+router.use(authenticate, requireRole('ADMIN', ...ROLES.MARKETING))
 
 router.get('/miembros', asyncHandler(ctrl.listarMiembros))
 
@@ -18,9 +19,12 @@ router.post('/contenidos/:id/entregables', asyncHandler(ctrl.crearEntregable))
 router.get('/entregables',    asyncHandler(ctrl.listarEntregables))
 router.delete('/entregables/:id', asyncHandler(ctrl.eliminarEntregable))
 
-router.get('/guiones',        asyncHandler(ctrl.listarGuiones))
-router.post('/guiones',       asyncHandler(ctrl.crearGuion))
-router.patch('/guiones/:id',  asyncHandler(ctrl.actualizarGuion))
-router.delete('/guiones/:id', asyncHandler(ctrl.eliminarGuion))
+// Cobros freelance. El propio controlador acota qué ve cada quien y quién
+// puede aprobar; la ruta no lo restringe porque todo el área entra a ver los
+// suyos.
+router.get('/cobros',             asyncHandler(ctrl.listarCobros))
+router.patch('/cobros/:id/aprobar', asyncHandler(ctrl.aprobarCobro))
+router.patch('/cobros/:id/pagar',   asyncHandler(ctrl.pagarCobro))
+
 
 export default router

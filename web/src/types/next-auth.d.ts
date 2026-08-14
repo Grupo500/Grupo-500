@@ -1,8 +1,9 @@
 import { DefaultSession, DefaultUser } from 'next-auth'
 import { DefaultJWT } from 'next-auth/jwt'
 
-// Roles del sistema: staff (ADMIN/VENDEDOR/MARKETING/EDITOR/COMMUNITY) + estudiantes de simulacros (ESTUDIANTE)
-type Rol = 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' | 'ESTUDIANTE'
+// La lista vive en un solo sitio (`@/lib/roles`) para que sumar un rol no
+// obligue a acordarse de este archivo, que es de los que nadie mira.
+import type { Rol } from '@/lib/roles'
 
 declare module 'next-auth' {
   interface Session {

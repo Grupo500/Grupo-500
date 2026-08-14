@@ -8,6 +8,7 @@ import { InputPassword } from '@/components/ui/InputPassword'
 import { Select } from '@/components/ui/Select'
 import { formatDate, cn } from '@/lib/utils'
 import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp, Megaphone } from 'lucide-react'
+import { ROLES_MARKETING, OPCIONES_ROL, ROL_LABEL, type Rol } from '@/lib/roles'
 
 interface Asesor {
   id: string; nombre: string; telefono: string
@@ -17,14 +18,14 @@ interface Asesor {
 interface Usuario {
   id: string; email: string
   nombre: string | null; image: string | null
-  role: 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY'; asesor: Asesor | null; createdAt: string
+  role: Exclude<Rol, 'ESTUDIANTE'>; asesor: Asesor | null; createdAt: string
 }
 
 // Roles que operan dentro del área de Marketing (mismo acceso, distinta etiqueta).
-const ROLES_MARKETING: Usuario['role'][] = ['MARKETING', 'EDITOR', 'COMMUNITY']
-const ROLE_LABEL: Record<Usuario['role'], string> = {
-  ADMIN: 'Admin', VENDEDOR: 'Asesor', MARKETING: 'Marketing', EDITOR: 'Editor', COMMUNITY: 'Community',
-}
+const ROLES_MKT = ROLES_MARKETING as Usuario['role'][]
+// Las etiquetas salen de la lista única: era otra copia que había que
+// acordarse de actualizar al sumar un rol, y se olvidaba.
+const ROLE_LABEL = ROL_LABEL
 
 export default function UsuariosPage() {
   const queryClient = useQueryClient()
@@ -53,7 +54,7 @@ export default function UsuariosPage() {
   })
 
   const cambiarRol = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' }) =>
+    mutationFn: ({ id, role }: { id: string; role: Usuario['role'] }) =>
       fetcher(`/auth/usuarios/${id}/rol`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -151,7 +152,7 @@ export default function UsuariosPage() {
   )
   const totalAdmin     = usuariosTodos.filter(u => u.role === 'ADMIN').length
   const totalVendedor  = usuariosTodos.filter(u => u.role === 'VENDEDOR').length
-  const totalMarketing = usuariosTodos.filter(u => ROLES_MARKETING.includes(u.role)).length
+  const totalMarketing = usuariosTodos.filter(u => ROLES_MKT.includes(u.role)).length
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -259,11 +260,11 @@ export default function UsuariosPage() {
                     <span className={cn(
                       'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5',
                       u.role === 'ADMIN' ? 'bg-tertiary text-white'
-                        : ROLES_MARKETING.includes(u.role) ? 'bg-[#d97706] text-white'
+                        : ROLES_MKT.includes(u.role) ? 'bg-[#d97706] text-white'
                         : 'bg-primary text-white',
                     )}>
                       {u.role === 'ADMIN' ? <Shield className="w-2.5 h-2.5" />
-                        : ROLES_MARKETING.includes(u.role) ? <Megaphone className="w-2.5 h-2.5" />
+                        : ROLES_MKT.includes(u.role) ? <Megaphone className="w-2.5 h-2.5" />
                         : <UserCheck className="w-2.5 h-2.5" />}
                       {ROLE_LABEL[u.role]}
                     </span>
@@ -304,7 +305,7 @@ export default function UsuariosPage() {
                     <Select
                       value={u.role}
                       disabled={cambiarRol.isPending}
-                      onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as 'ADMIN' | 'VENDEDOR' | 'MARKETING' | 'EDITOR' | 'COMMUNITY' })}
+                      onValueChange={v => cambiarRol.mutate({ id: u.id, role: v as Usuario['role'] })}
                       className="text-[10px] md:text-xs font-medium px-2 py-1.5 bg-surface-high"
                       options={[
                         { value: 'VENDEDOR', label: 'Asesor' },

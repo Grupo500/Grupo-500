@@ -7,6 +7,7 @@ import { auditLog } from '../utils/auditLogger'
 import { logSecurityEvent } from '../utils/logger'
 import { prisma } from '../config/prisma'
 import { z } from 'zod'
+import * as ROLES from '../utils/roles'
 
 const router = Router()
 
@@ -58,14 +59,14 @@ router.get('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async (
 // Roles que operan dentro del área de Marketing y usan un perfil MiembroMarketing
 // (no Asesor) — EDITOR/COMMUNITY tienen el mismo acceso que MARKETING, solo
 // cambia la etiqueta del rol para distinguir la especialidad de cada uno.
-const ROLES_MARKETING = ['MARKETING', 'EDITOR', 'COMMUNITY'] as const
+const ROLES_MARKETING = ROLES.MARKETING
 
 const crearSchema = z.object({
   email:    z.string().email().transform(e => e.toLowerCase().trim()),
   password: z.string().min(8),
   nombre:   z.string().min(2),
   telefono: z.string().min(7).optional(),
-  role:     z.enum(['ADMIN', 'VENDEDOR', 'MARKETING', 'EDITOR', 'COMMUNITY']).default('VENDEDOR'),
+  role:     z.enum(ROLES.TODOS as [ROLES.RolTrabajo, ...ROLES.RolTrabajo[]]).default('VENDEDOR'),
 })
 
 // ── Crear usuario (solo ADMIN) ───────────────────────────────────────────────
@@ -102,7 +103,7 @@ router.post('/usuarios', authenticate, requireRole('ADMIN'), asyncHandler(async 
 // ── Cambiar rol (solo ADMIN) ─────────────────────────────────────────────────
 router.patch('/usuarios/:id/rol', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const { role } = req.body
-  if (!['ADMIN', 'VENDEDOR', 'MARKETING', 'EDITOR', 'COMMUNITY'].includes(role)) {
+  if (!(ROLES.TODOS as string[]).includes(role)) {
     return res.status(400).json({ error: 'Rol inválido' })
   }
   const user = await prisma.user.update({ where: { id: req.params.id }, data: { role } })
