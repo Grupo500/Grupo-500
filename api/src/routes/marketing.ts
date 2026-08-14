@@ -23,6 +23,8 @@ router.delete('/entregables/:id', asyncHandler(ctrl.eliminarEntregable))
 // puede aprobar; la ruta no lo restringe porque todo el área entra a ver los
 // suyos.
 router.get('/cobros',             asyncHandler(ctrl.listarCobros))
+// Antes que `/cobros/:id/...`, o Express leería "lote" como un id.
+router.patch('/cobros/lote',      asyncHandler(ctrl.cobrosEnLote))
 router.patch('/cobros/:id/aprobar', asyncHandler(ctrl.aprobarCobro))
 router.patch('/cobros/:id/pagar',   asyncHandler(ctrl.pagarCobro))
 

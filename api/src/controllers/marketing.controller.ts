@@ -196,7 +196,10 @@ export async function listarEntregables(req: Request, res: Response) {
 const SELECT_COBRO = {
   id: true, titulo: true, tipo: true, fecha: true, estado: true,
   valor: true, estadoCobro: true, aprobadoEn: true, pagadoEn: true,
-  asignadoA:   { select: SELECT_MIEMBRO },
+  // El RUT solo viaja aquí, no en SELECT_MIEMBRO: en el calendario lo vería
+  // todo el equipo, y aquí solo llegan los cobros que uno tiene permitido ver
+  // —los propios, o todos si es líder—, que es justo donde el RUT hace falta.
+  asignadoA:   { select: { ...SELECT_MIEMBRO, rut: true } },
   aprobadoPor: { select: { id: true, nombre: true } },
   entregables: { select: { id: true, publicadoEn: true } },
 }
@@ -277,3 +280,39 @@ async function cambiarEstadoCobro(
 
 export const aprobarCobro = (req: Request, res: Response) => cambiarEstadoCobro(req, res, 'APROBADO')
 export const pagarCobro   = (req: Request, res: Response) => cambiarEstadoCobro(req, res, 'PAGADO')
+
+/**
+ * Aprobar o pagar de un solo golpe todo lo de una persona.
+ *
+ * A un freelance no se le hacen cinco transferencias, se le hace una: la
+ * pantalla liquida por persona y esto es lo que corresponde de este lado. Va
+ * como un `updateMany` con el estado de origen en el `where`, así que una fila
+ * que ya cambió entretanto simplemente no entra — no hay forma de pagar dos
+ * veces lo mismo ni de saltarse la aprobación.
+ */
+const loteSchema = z.object({
+  ids:    z.array(z.string()).min(1).max(200),
+  accion: z.enum(['aprobar', 'pagar']),
+})
+
+export async function cobrosEnLote(req: Request, res: Response) {
+  if (!esLiderMarketing(req.userRole)) {
+    return res.status(403).json({ error: 'Solo la líder de edición o un administrador pueden hacer esto' })
+  }
+  const { ids, accion } = loteSchema.parse(req.body)
+  const quien = await miMiembro(req.userId)
+
+  const { count } = await prisma.contenidoMarketing.updateMany({
+    where: {
+      id: { in: ids },
+      tipoTrabajo: 'FREELANCE',
+      estadoCobro: accion === 'aprobar' ? 'POR_APROBAR' : 'APROBADO',
+    },
+    data: accion === 'aprobar'
+      ? { estadoCobro: 'APROBADO', aprobadoEn: new Date(), ...(quien && { aprobadoPorId: quien.id }) }
+      : { estadoCobro: 'PAGADO', pagadoEn: new Date() },
+  })
+
+  auditLog(req, 'UPDATE', 'cobros_marketing_lote', ids.join(','), { accion, count })
+  return ApiResponse.success(res, { actualizados: count })
+}
