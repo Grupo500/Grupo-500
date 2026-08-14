@@ -39,9 +39,10 @@ function SeccionCabecera({ icon: Icon, tono, titulo, descripcion }: {
 }
 
 export default function AjustesPage() {
-  const { data: session } = useSession()
+  const { data: session, update: updateSession } = useSession()
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
+  const [email, setEmail] = useState('')
   const [telefono, setTelefono] = useState('')
   const [rut, setRut] = useState('')
   const [cargado, setCargado] = useState(false)
@@ -66,6 +67,7 @@ export default function AjustesPage() {
   const cuenta = cuentaData?.data
   if (cuenta && !cargado) {
     setNombre(cuenta.nombre ?? '')
+    setEmail(cuenta.email ?? '')
     setTelefono(cuenta.telefono ?? '')
     setCargado(true)
   }
@@ -76,12 +78,20 @@ export default function AjustesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nombre: nombre.trim(),
+        ...(email.trim() ? { email: email.trim() } : {}),
         ...(telefono.trim() ? { telefono: telefono.trim() } : {}),
       }),
     }),
-    onSuccess: () => {
+    onSuccess: async (r: any) => {
       queryClient.invalidateQueries({ queryKey: ['mi-cuenta'] })
       queryClient.invalidateQueries({ queryKey: ['marketing-miembros'] })
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      // La sesión guarda el nombre y el correo desde el login: sin refrescarla,
+      // el menú de arriba seguiría mostrando los viejos hasta cerrar sesión.
+      await updateSession()
+      if (r?.data?.correoCambiado) {
+        alert('Correo actualizado. La próxima vez entra con el correo nuevo.')
+      }
     },
     onError: (e: any) => alert(e?.message ?? 'Error al guardar'),
   })
@@ -190,8 +200,18 @@ export default function AjustesPage() {
             <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
               <Mail className="w-3 h-3" /> Correo
             </label>
-            <input type="email" value={cuenta?.email ?? ''} disabled className="input-base opacity-60 cursor-not-allowed" />
-            <p className="text-[11px] text-on-surface-variant mt-1">Contacta a un administrador para cambiar tu correo.</p>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="email"
+              className="input-base"
+            />
+            <p className="mt-1 text-[11px] text-on-surface-variant">
+              {/* Se avisa antes y no después: es la llave con la que se entra. */}
+              Es con el que entras a la plataforma. Si lo cambias, la próxima vez tienes que
+              entrar con el nuevo.
+            </p>
           </div>
         </div>
 

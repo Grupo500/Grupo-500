@@ -9,6 +9,7 @@ import { prisma } from '../config/prisma'
 import { z } from 'zod'
 import * as ROLES from '../utils/roles'
 import { datosFinancierosDe } from '../utils/cuentaCobro'
+import { ValidationError } from '../utils/errors'
 
 const router = Router()
 
@@ -18,17 +19,18 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
     where: { id: req.userId },
     include: { asesor: true, marketing: true },
   })
+  // Sin envolver de más: esto respondía `{ data: { data: {...} } }` y la
+  // pantalla de Ajustes leía un nivel de menos, así que el correo y el
+  // teléfono salían en blanco aunque estuvieran en la base.
   return ApiResponse.success(res, {
-    data: {
-      role:    user?.role,
-      email:   user?.email,
-      nombre:  user?.nombre,
-      image:   user?.image,
-      telefono: user?.asesor?.telefono,
-      esMarketing: !!user?.marketing,
-      // Los datos fijos de la cuenta de cobro. Solo vienen para marketing.
-      financieros: user?.marketing ? datosFinancierosDe(user.marketing) : null,
-    },
+    role:    user?.role,
+    email:   user?.email,
+    nombre:  user?.nombre,
+    image:   user?.image,
+    telefono: user?.asesor?.telefono,
+    esMarketing: !!user?.marketing,
+    // Los datos fijos de la cuenta de cobro. Solo vienen para marketing.
+    financieros: user?.marketing ? datosFinancierosDe(user.marketing) : null,
   })
 }))
 
@@ -41,6 +43,7 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
 const textoOpcional = z.string().max(120).optional().nullable()
 const miPerfilSchema = z.object({
   nombre:   z.string().min(2).optional(),
+  email:    z.string().email().optional(),
   telefono: z.string().min(3).optional(),
   // Los datos de la cuenta de cobro. Se aceptan sueltos y a medias a
   // propósito: la persona guarda lo que tenga a mano y vuelve por el resto.
@@ -67,24 +70,48 @@ function limpio<T extends Record<string, unknown>>(datos: T) {
 }
 
 router.patch('/me', authenticate, asyncHandler(async (req, res) => {
-  const { nombre, telefono, ...financieros } = miPerfilSchema.parse(req.body)
+  const { nombre, telefono, email, ...financieros } = miPerfilSchema.parse(req.body)
 
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { id: true, asesor: { select: { id: true } }, marketing: { select: { id: true } } },
+    select: { id: true, email: true, asesor: { select: { id: true } }, marketing: { select: { id: true } } },
   })
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
 
+  // El correo es la llave con la que se entra: se normaliza y se comprueba que
+  // no sea el de otra cuenta antes de tocar nada, porque la columna es única y
+  // el choque reventaría a mitad de la transacción.
+  const correo = email?.trim().toLowerCase()
+  const cambiaCorreo = Boolean(correo && correo !== user.email.toLowerCase())
+  if (cambiaCorreo) {
+    const ocupado = await prisma.user.findFirst({
+      where: { email: { equals: correo!, mode: 'insensitive' }, id: { not: user.id } },
+      select: { id: true },
+    })
+    if (ocupado) throw new ValidationError('Ese correo ya lo usa otra cuenta')
+  }
+
   await prisma.$transaction(async tx => {
-    if (nombre) await tx.user.update({ where: { id: user.id }, data: { nombre } })
+    if (nombre || cambiaCorreo) {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { ...(nombre ? { nombre } : {}), ...(cambiaCorreo ? { email: correo! } : {}) },
+      })
+    }
 
     // El nombre vive en dos sitios (la cuenta y la ficha del área) y se guardan
     // juntos: si se desincronizan, la persona aparece con un nombre en Usuarios
     // y con otro en el calendario de marketing.
-    if (user.asesor && (nombre || telefono)) {
+    if (user.asesor && (nombre || telefono || cambiaCorreo)) {
       await tx.asesor.update({
         where: { id: user.asesor.id },
-        data: { ...(nombre ? { nombre } : {}), ...(telefono ? { telefono } : {}) },
+        data: {
+          ...(nombre ? { nombre } : {}),
+          ...(telefono ? { telefono } : {}),
+          // La ficha de asesor lleva su propia copia del correo —la usan los
+          // reportes y los certificados—, así que se mueve con la cuenta.
+          ...(cambiaCorreo ? { email: correo! } : {}),
+        },
       })
     }
     if (user.marketing) {
@@ -95,8 +122,8 @@ router.patch('/me', authenticate, asyncHandler(async (req, res) => {
     }
   })
 
-  auditLog(req, 'UPDATE', 'mi_perfil', user.id)
-  return ApiResponse.success(res, { ok: true })
+  auditLog(req, 'UPDATE', 'mi_perfil', user.id, cambiaCorreo ? { correoAnterior: user.email, correoNuevo: correo } : undefined)
+  return ApiResponse.success(res, { ok: true, correoCambiado: cambiaCorreo })
 }))
 
 // ── Actualizar foto de perfil ────────────────────────────────────────────────
