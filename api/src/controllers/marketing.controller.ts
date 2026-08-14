@@ -4,6 +4,8 @@ import { ApiResponse } from '../utils/response'
 import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { esLiderMarketing } from '../utils/roles'
+import { datosFinancierosDe, SELECT_FINANCIEROS } from '../utils/cuentaCobro'
+import { subirCuentaDeCobro } from '../services/googleDrive'
 import { z } from 'zod'
 
 const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, user: { select: { image: true } } }
@@ -196,10 +198,12 @@ export async function listarEntregables(req: Request, res: Response) {
 const SELECT_COBRO = {
   id: true, titulo: true, tipo: true, fecha: true, estado: true,
   valor: true, estadoCobro: true, aprobadoEn: true, pagadoEn: true,
-  // El RUT solo viaja aquí, no en SELECT_MIEMBRO: en el calendario lo vería
-  // todo el equipo, y aquí solo llegan los cobros que uno tiene permitido ver
-  // —los propios, o todos si es líder—, que es justo donde el RUT hace falta.
-  asignadoA:   { select: { ...SELECT_MIEMBRO, rut: true } },
+  cuentaCobroUrl: true, cuentaCobroEn: true,
+  // Los datos financieros viajan solo aquí, no en SELECT_MIEMBRO: en el
+  // calendario los vería todo el equipo, y a esta consulta solo llegan los
+  // cobros que uno tiene permitido ver —los propios, o todos si es líder—,
+  // que es justo donde hacen falta para armar la cuenta de cobro.
+  asignadoA:   { select: { ...SELECT_MIEMBRO, ...SELECT_FINANCIEROS } },
   aprobadoPor: { select: { id: true, nombre: true } },
   entregables: { select: { id: true, publicadoEn: true } },
 }
@@ -225,9 +229,16 @@ export async function listarCobros(req: Request, res: Response) {
     ...(desde && hasta ? { fecha: { gte: new Date(String(desde)), lte: new Date(String(hasta)) } } : {}),
   }
 
-  const cobros = await prisma.contenidoMarketing.findMany({
+  const crudos = await prisma.contenidoMarketing.findMany({
     where, select: SELECT_COBRO, orderBy: [{ estadoCobro: 'asc' }, { fecha: 'desc' }],
   })
+
+  // A cada persona se le adjunta qué le falta para poder cobrar. Se calcula
+  // aquí y no en la pantalla para que Ajustes y Cobros no puedan discrepar.
+  const cobros = crudos.map(c => ({
+    ...c,
+    asignadoA: c.asignadoA && { ...c.asignadoA, ...datosFinancierosDe(c.asignadoA) },
+  }))
 
   // Los totales se calculan sobre lo mismo que se lista, para que el número de
   // arriba siempre cuadre con las filas de abajo.
@@ -315,4 +326,50 @@ export async function cobrosEnLote(req: Request, res: Response) {
 
   auditLog(req, 'UPDATE', 'cobros_marketing_lote', ids.join(','), { accion, count })
   return ApiResponse.success(res, { actualizados: count })
+}
+
+/**
+ * Guarda en Drive la cuenta de cobro que armó el navegador.
+ *
+ * El PDF se genera en el cliente —ahí ya está jsPDF y ahí se descarga al
+ * instante— y aquí solo se archiva: el servidor no vuelve a dibujarlo, así que
+ * lo que se guarda es exactamente lo que la persona vio.
+ *
+ * Solo se archiva un cobro aprobado: antes del visto bueno de la líder no hay
+ * nada que cobrar, y una cuenta de cobro suelta en la carpeta de contabilidad
+ * es justo lo que no debe pasar.
+ */
+const cuentaCobroSchema = z.object({
+  pdfBase64: z.string().min(100),
+  archivo:   z.string().min(3).max(150),
+})
+
+export async function archivarCuentaDeCobro(req: Request, res: Response) {
+  const { pdfBase64, archivo } = cuentaCobroSchema.parse(req.body)
+
+  const cobro = await prisma.contenidoMarketing.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, fecha: true, estadoCobro: true, tipoTrabajo: true, asignadoAId: true, cuentaCobroUrl: true },
+  })
+  if (!cobro) throw new NotFoundError('Cobro no encontrado')
+  if (cobro.tipoTrabajo !== 'FREELANCE') throw new ValidationError('Este trabajo no es freelance')
+  if (cobro.estadoCobro === 'POR_APROBAR') {
+    throw new ValidationError('La cuenta de cobro se genera después de que se apruebe el trabajo')
+  }
+
+  // Cada quien archiva la suya; el líder puede archivar la de cualquiera.
+  const yo = await miMiembro(req.userId)
+  if (!esLiderMarketing(req.userRole) && cobro.asignadoAId !== yo?.id) {
+    throw new ForbiddenError('Este cobro no es tuyo')
+  }
+
+  const pdf = Buffer.from(pdfBase64.replace(/^data:.*?base64,/, ''), 'base64')
+  const subido = await subirCuentaDeCobro(archivo, pdf, cobro.fecha)
+
+  await prisma.contenidoMarketing.update({
+    where: { id: cobro.id },
+    data: { cuentaCobroUrl: subido.url, cuentaCobroEn: new Date() },
+  })
+  auditLog(req, 'CREATE', 'cuenta_de_cobro', cobro.id, { carpeta: subido.carpeta })
+  return ApiResponse.success(res, { url: subido.url, carpeta: subido.carpeta })
 }

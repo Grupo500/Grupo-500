@@ -19,18 +19,22 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Loader2, Check, Wallet, BadgeCheck, AlertTriangle } from 'lucide-react'
+import { Loader2, Check, Wallet, BadgeCheck, AlertTriangle, FileText, ExternalLink } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
+import { generarCuentaDeCobro, type DatosPersona } from '@/lib/cuentaCobroPdf'
 
 type EstadoCobro = 'POR_APROBAR' | 'APROBADO' | 'PAGADO'
 
-interface Persona {
-  id: string; nombre: string; rut: string | null
+interface Persona extends DatosPersona {
+  id: string; nombre: string
   user?: { image: string | null }
+  /** Qué le falta para poder cobrar; lo calcula el backend. */
+  falta: string[]
+  completos: boolean
 }
 interface Cobro {
   id: string
@@ -41,6 +45,8 @@ interface Cobro {
   estadoCobro: EstadoCobro
   aprobadoEn: string | null
   pagadoEn: string | null
+  cuentaCobroUrl: string | null
+  cuentaCobroEn: string | null
   asignadoA: Persona | null
   aprobadoPor: { id: string; nombre: string } | null
   entregables: { id: string; publicadoEn: string }[]
@@ -117,11 +123,53 @@ export default function CobrosPage() {
   })
   const ocupado = mover.isPending || moverLote.isPending
 
+  /**
+   * Genera la cuenta de cobro, la descarga y la archiva en Drive.
+   *
+   * El PDF se arma en el navegador y se manda al servidor ya hecho: así lo que
+   * queda en la carpeta de contabilidad es exactamente el archivo que la
+   * persona vio, no una segunda versión dibujada por otro código.
+   */
+  const [generando, setGenerando] = useState<string | null>(null)
+  const cuentaDeCobro = useMutation({
+    mutationFn: async (c: Cobro) => {
+      const p = c.asignadoA
+      if (!p) throw new Error('Este cobro no tiene a nadie asignado')
+      if (!p.completos) throw new Error(`Faltan datos financieros: ${p.falta.join(', ')}`)
+
+      const emision = c.aprobadoEn ? new Date(c.aprobadoEn) : new Date()
+      const { blob, base64, archivo } = await generarCuentaDeCobro(p, {
+        concepto: c.titulo,
+        valor: c.valor ?? 0,
+        fecha: emision,
+      })
+
+      // Se descarga antes de subir: si Drive falla, la persona igual se queda
+      // con su cuenta de cobro en la mano.
+      const enlace = document.createElement('a')
+      enlace.href = URL.createObjectURL(blob)
+      enlace.download = archivo
+      enlace.click()
+      URL.revokeObjectURL(enlace.href)
+
+      return apiFetch<{ data: { url: string; carpeta: string } }>(
+        `/marketing/cobros/${c.id}/cuenta-de-cobro`,
+        { method: 'POST', body: JSON.stringify({ pdfBase64: base64, archivo }) },
+      )
+    },
+    onSuccess: invalidar,
+    onError: (e: Error) => alert(e.message || 'No se pudo archivar en Drive. El PDF ya se descargó.'),
+    onSettled: () => setGenerando(null),
+  })
+
+  const generarCuenta = (c: Cobro) => { setGenerando(c.id); cuentaDeCobro.mutate(c) }
+
   // Una entrada por persona con sus tres montos. Se arma sobre lo mismo que se
   // lista, así que la tabla y el detalle nunca pueden discrepar.
   const porPersona = useMemo(() => {
     const mapa = new Map<string, {
-      id: string; nombre: string; rut: string | null; foto: string | null
+      id: string; nombre: string; foto: string | null
+      falta: string[]; completos: boolean
       cobros: Cobro[]; porAprobar: number; aprobado: number; pagado: number
     }>()
     for (const c of cobros) {
@@ -129,8 +177,9 @@ export default function CobrosPage() {
       if (!mapa.has(id)) mapa.set(id, {
         id,
         nombre: c.asignadoA?.nombre ?? 'Sin asignar',
-        rut:    c.asignadoA?.rut ?? null,
         foto:   c.asignadoA?.user?.image ?? null,
+        falta:  c.asignadoA?.falta ?? [],
+        completos: c.asignadoA?.completos ?? false,
         cobros: [], porAprobar: 0, aprobado: 0, pagado: 0,
       })
       const g = mapa.get(id)!
@@ -244,13 +293,17 @@ export default function CobrosPage() {
                           : <AvatarMiembro id={p.id} nombre={p.nombre} image={p.foto} size={26} />}
                         <span className="min-w-0">
                           <span className="block truncate text-[12.5px] font-semibold text-on-surface">{p.nombre}</span>
-                          {/* El RUT es lo que se necesita para transferir: si
-                              falta, se avisa aquí y no cuando ya se iba a pagar. */}
+                          {/* Los datos de pago se avisan aquí y no cuando ya se
+                              iba a transferir. */}
                           {p.id !== SIN_ASIGNAR && (
-                            p.rut
-                              ? <span className="block text-[10px] text-on-surface-variant">RUT {p.rut}</span>
-                              : <span className="flex items-center gap-1 text-[10px] font-semibold text-[#9a5b06]">
-                                  <AlertTriangle className="size-2.5" /> Falta el RUT
+                            p.completos
+                              ? <span className="block text-[10px] text-on-surface-variant">Datos completos</span>
+                              : <span
+                                  title={`Falta ${p.falta.join(', ')}`}
+                                  className="flex items-center gap-1 text-[10px] font-semibold text-[#9a5b06]"
+                                >
+                                  <AlertTriangle className="size-2.5" />
+                                  {p.falta.length === 1 ? `Falta ${p.falta[0]}` : `Le faltan ${p.falta.length} datos`}
                                 </span>
                           )}
                         </span>
@@ -309,12 +362,10 @@ export default function CobrosPage() {
                 : <AvatarMiembro id={elegida.id} nombre={elegida.nombre} image={elegida.foto} size={32} />}
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-semibold text-on-surface">{elegida.nombre}</span>
-                {elegida.id !== SIN_ASIGNAR && (
-                  elegida.rut
-                    ? <span className="block text-[10.5px] text-on-surface-variant">RUT {elegida.rut}</span>
-                    : <span className="flex items-center gap-1 text-[10.5px] font-semibold text-[#9a5b06]">
-                        <AlertTriangle className="size-2.5" /> Falta el RUT
-                      </span>
+                {elegida.id !== SIN_ASIGNAR && !elegida.completos && (
+                  <span className="flex items-center gap-1 text-[10.5px] font-semibold text-[#9a5b06]">
+                    <AlertTriangle className="size-2.5" /> Falta {elegida.falta.join(', ')}
+                  </span>
                 )}
               </span>
               <button
@@ -366,6 +417,41 @@ export default function CobrosPage() {
                   >
                     <Check className="mr-1 inline size-3.5" />Marcar pagado
                   </button>
+                )}
+
+                {/* La cuenta de cobro solo existe después del visto bueno: antes
+                    no hay nada que cobrar, y una cuenta suelta en la carpeta de
+                    contabilidad es justo lo que no debe pasar. */}
+                {c.estadoCobro !== 'POR_APROBAR' && (
+                  c.cuentaCobroUrl ? (
+                    <a
+                      href={c.cuentaCobroUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex shrink-0 items-center gap-1 rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high"
+                    >
+                      <ExternalLink className="size-3.5" />Ver cuenta de cobro
+                    </a>
+                  ) : c.asignadoA && !c.asignadoA.completos ? (
+                    <span
+                      title={`Falta ${c.asignadoA.falta.join(', ')}`}
+                      className="flex shrink-0 items-center gap-1 rounded-lg bg-[#d97706]/12 px-3 py-1.5 text-[11px] font-semibold text-[#9a5b06]"
+                    >
+                      <AlertTriangle className="size-3.5" />
+                      {puedeAprobar ? 'Le faltan datos' : 'Completa tus datos en Ajustes'}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => generarCuenta(c)}
+                      disabled={generando === c.id}
+                      className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                    >
+                      {generando === c.id
+                        ? <Loader2 className="size-3.5 animate-spin" />
+                        : <FileText className="size-3.5" />}
+                      Generar cuenta de cobro
+                    </button>
+                  )
                 )}
               </div>
             ))}

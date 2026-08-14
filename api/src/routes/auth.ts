@@ -8,6 +8,7 @@ import { logSecurityEvent } from '../utils/logger'
 import { prisma } from '../config/prisma'
 import { z } from 'zod'
 import * as ROLES from '../utils/roles'
+import { datosFinancierosDe } from '../utils/cuentaCobro'
 
 const router = Router()
 
@@ -24,10 +25,9 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
       nombre:  user?.nombre,
       image:   user?.image,
       telefono: user?.asesor?.telefono,
-      // Solo viene con contenido para el equipo de marketing; el RUT es lo que
-      // se necesita para pagarles un freelance.
-      rut:     user?.marketing?.rut ?? null,
       esMarketing: !!user?.marketing,
+      // Los datos fijos de la cuenta de cobro. Solo vienen para marketing.
+      financieros: user?.marketing ? datosFinancierosDe(user.marketing) : null,
     },
   })
 }))
@@ -38,14 +38,36 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
 // de asesor: el equipo de marketing no la tiene y se quedaba sin poder cambiar
 // ni su nombre. Este endpoint escribe donde corresponda según quién sea, y no
 // pide id — siempre es el del token, así que nadie puede editar a otro.
+const textoOpcional = z.string().max(120).optional().nullable()
 const miPerfilSchema = z.object({
   nombre:   z.string().min(2).optional(),
   telefono: z.string().min(3).optional(),
-  rut:      z.string().max(40).optional().nullable(),
+  // Los datos de la cuenta de cobro. Se aceptan sueltos y a medias a
+  // propósito: la persona guarda lo que tenga a mano y vuelve por el resto.
+  nombreCompleto:   textoOpcional,
+  cedula:           textoOpcional,
+  ciudadExpedicion: textoOpcional,
+  ciudad:           textoOpcional,
+  celular:          textoOpcional,
+  rut:              textoOpcional,
+  banco:            textoOpcional,
+  tipoCuenta:       z.enum(['AHORROS', 'CORRIENTE']).optional().nullable(),
+  numeroCuenta:     textoOpcional,
+  firmaUrl:         z.string().url().optional().nullable(),
 })
 
+/** '' y null valen lo mismo: borrar el dato. `undefined` es "no lo tocaste". */
+function limpio<T extends Record<string, unknown>>(datos: T) {
+  const salida: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(datos)) {
+    if (v === undefined) continue
+    salida[k] = typeof v === 'string' && v.trim() === '' ? null : v
+  }
+  return salida
+}
+
 router.patch('/me', authenticate, asyncHandler(async (req, res) => {
-  const { nombre, telefono, rut } = miPerfilSchema.parse(req.body)
+  const { nombre, telefono, ...financieros } = miPerfilSchema.parse(req.body)
 
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
@@ -65,11 +87,11 @@ router.patch('/me', authenticate, asyncHandler(async (req, res) => {
         data: { ...(nombre ? { nombre } : {}), ...(telefono ? { telefono } : {}) },
       })
     }
-    if (user.marketing && (nombre || rut !== undefined)) {
-      await tx.miembroMarketing.update({
-        where: { id: user.marketing.id },
-        data: { ...(nombre ? { nombre } : {}), ...(rut !== undefined ? { rut: rut || null } : {}) },
-      })
+    if (user.marketing) {
+      const datos = { ...(nombre ? { nombre } : {}), ...limpio(financieros) }
+      if (Object.keys(datos).length > 0) {
+        await tx.miembroMarketing.update({ where: { id: user.marketing.id }, data: datos })
+      }
     }
   })
 

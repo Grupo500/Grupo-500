@@ -5,14 +5,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Save, Lock, Loader2, Camera, Mail, User, Check, FileText } from 'lucide-react'
+import { Save, Lock, Loader2, Camera, Mail, User, Check } from 'lucide-react'
+import { DatosFinancieros, type Financieros } from '@/components/marketing/DatosFinancieros'
 
 interface MiCuenta {
   role: string; email: string; nombre: string | null; image: string | null
   telefono?: string
-  /** Solo llega con valor para el equipo de marketing. */
-  rut: string | null
   esMarketing: boolean
+  /** Solo llega con valor para el equipo de marketing. */
+  financieros: Financieros | null
 }
 
 function SeccionCabecera({ icon: Icon, tono, titulo, descripcion }: {
@@ -66,7 +67,6 @@ export default function AjustesPage() {
   if (cuenta && !cargado) {
     setNombre(cuenta.nombre ?? '')
     setTelefono(cuenta.telefono ?? '')
-    setRut(cuenta.rut ?? '')
     setCargado(true)
   }
 
@@ -77,7 +77,6 @@ export default function AjustesPage() {
       body: JSON.stringify({
         nombre: nombre.trim(),
         ...(telefono.trim() ? { telefono: telefono.trim() } : {}),
-        ...(cuenta?.esMarketing ? { rut: rut.trim() } : {}),
       }),
     }),
     onSuccess: () => {
@@ -194,23 +193,6 @@ export default function AjustesPage() {
             <input type="email" value={cuenta?.email ?? ''} disabled className="input-base opacity-60 cursor-not-allowed" />
             <p className="text-[11px] text-on-surface-variant mt-1">Contacta a un administrador para cambiar tu correo.</p>
           </div>
-          {/* El RUT solo se le pide a marketing: es lo que hace falta para
-              pagarles un trabajo freelance. A un asesor no le aplica. */}
-          {cuenta?.esMarketing && (
-            <div>
-              <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
-                <FileText className="w-3 h-3" /> RUT
-              </label>
-              <input
-                type="text"
-                value={rut}
-                onChange={e => setRut(e.target.value)}
-                placeholder="Número de RUT"
-                className="input-base"
-              />
-              <p className="text-[11px] text-on-surface-variant mt-1">Necesario para pagarte los trabajos freelance.</p>
-            </div>
-          )}
         </div>
 
         <div className="pt-4 border-t border-outline-variant flex items-center justify-end gap-3">
@@ -229,6 +211,11 @@ export default function AjustesPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Datos financieros — solo el equipo de marketing cobra freelance ── */}
+      {cuenta?.esMarketing && cuenta.financieros && (
+        <DatosFinancieros inicial={cuenta.financieros} />
+      )}
 
       {/* ── Contraseña ── */}
       <div className="card p-5 animate-card-enter delay-2">

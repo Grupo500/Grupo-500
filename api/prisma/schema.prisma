@@ -481,10 +481,27 @@ model MiembroMarketing {
   userId    String   @unique
   nombre    String
   activo    Boolean  @default(true)
-  // El RUT solo hace falta en marketing: es lo que se pide para pagarle un
-  // trabajo freelance. Lo escribe cada quien desde Ajustes, así que es opcional
-  // hasta que lo llenen.
-  rut       String?
+  // ── Datos para la cuenta de cobro ──────────────────────────────────────
+  //
+  // Son los seis datos que antes se escribían cada vez en el formulario de la
+  // landing y que nunca cambian de un mes a otro. Guardados aquí, el PDF se
+  // arma solo cuando se aprueba el cobro: lo que falta —fecha, periodo,
+  // concepto y valor— ya lo tiene el propio ContenidoMarketing.
+  //
+  // Todos opcionales: la cuenta se crea antes de que la persona entre a
+  // llenarlos, y quien no los tenga sale marcado en Cobros.
+  nombreCompleto   String?
+  cedula           String?
+  ciudadExpedicion String?
+  ciudad           String?
+  celular          String?
+  rut              String?
+  banco            String?
+  tipoCuenta       String?  // AHORROS | CORRIENTE
+  numeroCuenta     String?
+  // La rúbrica dibujada, en Cloudinary. Se incrusta sobre la línea del PDF.
+  firmaUrl         String?
+
   createdAt DateTime @default(now())
 
   user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -557,6 +574,11 @@ model ContenidoMarketing {
   estadoCobro   EstadoCobroMarketing      @default(POR_APROBAR)
   /// Quién dio el visto bueno y cuándo. En algo que mueve plata, la firma
   /// importa tanto como el monto — sin esto no hay a quién preguntarle.
+  // La cuenta de cobro en PDF, una vez generada. Se guarda el enlace y no el
+  // archivo: vive en Drive, que es donde contabilidad ya las busca.
+  cuentaCobroUrl String?
+  cuentaCobroEn  DateTime?
+
   aprobadoPorId String?
   aprobadoEn    DateTime?
   /// Cuándo se pagó de verdad. Separado de la aprobación porque son dos
