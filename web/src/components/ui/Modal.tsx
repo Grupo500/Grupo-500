@@ -5,6 +5,10 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// El mismo azul marino del header y del sidebar. Está repetido a propósito en
+// las tres piezas de chrome: no es un token de tema porque no cambia con él.
+const RAIL_BG = '#15203a'
+
 interface Props {
   abierto: boolean
   onClose: () => void
@@ -51,23 +55,32 @@ export function Modal({ abierto, onClose, titulo, subtitulo, children, pie, clas
     >
       <div
         className={cn(
-          'w-full sm:max-w-lg max-h-[85vh] flex flex-col bg-surface-lowest sm:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up',
+          // `overflow-hidden` porque el encabezado va con fondo propio: sin
+          // recortar, su color se saldría por las esquinas redondeadas.
+          'w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden bg-surface-lowest sm:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up',
           className,
         )}
       >
-        {/* items-center y no items-start: alineados por arriba, el título de
+        {/* Franja de marca, el mismo azul marino del header, el sidebar y la
+            barra flotante. No sigue el tema de la app, igual que ellos: es
+            chrome, no contenido.
+
+            items-center y no items-start: alineados por arriba, el título de
             15px queda unos 6px más alto que el centro del botón de cerrar, que
             es un círculo de 32px, y se lee como si estuvieran en filas
             distintas. */}
-        <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-outline-variant shrink-0">
+        <div
+          style={{ background: RAIL_BG }}
+          className="flex items-center justify-between gap-3 px-5 py-4 shrink-0"
+        >
           <div className="min-w-0">
-            <h2 className="text-[15px] font-semibold text-on-surface">{titulo}</h2>
-            {subtitulo && <p className="text-[12px] text-on-surface-variant mt-0.5">{subtitulo}</p>}
+            <h2 className="text-[15px] font-semibold text-white">{titulo}</h2>
+            {subtitulo && <p className="text-[12px] text-slate-400 mt-0.5">{subtitulo}</p>}
           </div>
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-high hover:text-on-surface transition-colors cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[#c3d4ee] hover:bg-white/[0.14] hover:text-white transition-colors cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>

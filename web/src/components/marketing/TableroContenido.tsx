@@ -146,7 +146,7 @@ export function TableroContenido() {
         </Button>
       </div>
 
-      <div className="card overflow-hidden p-0">
+      <div className="card-panel overflow-hidden p-0">
         {/* Navegación */}
         <div className="flex flex-wrap items-center gap-2 border-b border-outline-variant px-3.5 py-2.5">
           <button

@@ -64,6 +64,11 @@
   --shadow-card:        0 1px 3px rgba(0,48,96,0.08), 0 0 0 1px rgba(0,48,96,0.07);
   --shadow-float:       0 8px 24px rgba(0,48,96,0.14), 0 0 0 1px rgba(0,48,96,0.06);
   --shadow-diffused:    0 4px 12px -4px rgba(0,48,96,0.12);
+  /* Panel grande que ocupa la pantalla, como el calendario de contenido: un
+     contacto corto y un halo ancho recogido por dentro. Levanta la pieza del
+     fondo azul con textura, donde el borde de 1px solo se confunde con el
+     patrón, sin darle el aspecto de ventana flotante que tiene --shadow-float. */
+  --shadow-panel:       0 2px 4px rgba(0,48,96,0.05), 0 12px 32px -8px rgba(0,48,96,0.16);
 }
 
 /* ─── TEMA OSCURO — brand sobre navy Stitch ─────────────────────────────────── */
@@ -115,6 +120,7 @@
   --shadow-card:        0 0 0 1px rgba(149,218,255,0.07);
   --shadow-float:       0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(149,218,255,0.07);
   --shadow-diffused:    0 4px 12px -4px rgba(0,0,0,0.4);
+  --shadow-panel:       0 2px 4px rgba(0,0,0,0.3), 0 12px 32px -8px rgba(0,0,0,0.5);
 }
 
 /* ─── BASE ──────────────────────────────────────────────────────────────────── */
@@ -175,6 +181,14 @@
     border-radius: 12px;
     border: 1px solid var(--outline-variant);
     box-shadow: var(--shadow-card);
+  }
+
+  /* Igual que .card pero para paneles grandes: ver --shadow-panel. */
+  .card-panel {
+    background: var(--surface-lowest);
+    border-radius: 12px;
+    border: 1px solid var(--outline-variant);
+    box-shadow: var(--shadow-panel);
   }
 
   .card-elevated {
