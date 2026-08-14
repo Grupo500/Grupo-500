@@ -44,6 +44,15 @@ function rangoDelMes(month: string | null) {
   const base = month ? new Date(month + '-15') : new Date()
   return { desde: toISO(startOfMonth(base)), hasta: toISO(endOfMonth(base)) }
 }
+/**
+ * La fecha viene como YYYY-MM-DD a medianoche UTC. Pasarla por `new Date()`
+ * la corre al día anterior en Colombia (UTC-5), así que se ancla a medianoche
+ * local igual que en el calendario.
+ */
+function deISO(iso: string) {
+  const [a, m, d] = iso.slice(0, 10).split('-').map(Number)
+  return new Date(a, m - 1, d)
+}
 function iniciales(n: string) {
   return n.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
@@ -58,7 +67,7 @@ function Tarea({ c }: { c: Contenido }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-medium text-on-surface">{c.titulo}</p>
         <p className="mt-0.5 text-[11px] text-on-surface-variant">
-          {TIPO_LABEL[c.tipo]} · {format(new Date(c.fecha), "d 'de' MMM", { locale: es })}
+          {TIPO_LABEL[c.tipo]} · {format(deISO(c.fecha), "d 'de' MMM", { locale: es })}
           {c.tipoTrabajo === 'FREELANCE' && ' · Freelance'}
         </p>
       </div>
