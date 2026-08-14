@@ -1,34 +1,26 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useTheme } from 'next-themes'
 
-const THEME_COLORS = {
-  light: '#eef6ff',
-  dark:  '#0a1628',
-}
+/** El azul claro del fondo de la app. */
+const COLOR_BARRA = '#eef6ff'
 
 /**
- * Sincroniza la meta tag theme-color con el tema activo de la app.
- * Debe montarse dentro de ThemeProvider.
+ * Pinta la barra del navegador —y la del sistema, en el celular— del color de
+ * la app, en vez del gris por defecto.
+ *
+ * Next.js genera varias `theme-color` con media queries para claro y oscuro;
+ * como la app va siempre en claro, se quitan todas y se deja una sola sin
+ * condición, que es la que el navegador respeta siempre.
  */
 export function ThemeColorSync() {
-  const { resolvedTheme } = useTheme()
-
   useEffect(() => {
-    if (!resolvedTheme) return
-
-    const color = resolvedTheme === 'dark' ? THEME_COLORS.dark : THEME_COLORS.light
-
-    // Eliminar TODAS las meta tags theme-color existentes (Next.js genera varias con media queries)
     document.querySelectorAll('meta[name="theme-color"]').forEach(el => el.remove())
-
-    // Crear una sola sin media query para que el navegador la use siempre
     const meta = document.createElement('meta')
     meta.name = 'theme-color'
-    meta.content = color
+    meta.content = COLOR_BARRA
     document.head.appendChild(meta)
-  }, [resolvedTheme])
+  }, [])
 
   return null
 }

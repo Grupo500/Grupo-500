@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserMenu } from '@/components/layout/UserMenu'
-import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   FileBarChart2, BarChart3,
-  ShieldCheck, Sun, Moon, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck, Home,
+  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck, Home,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -67,12 +66,8 @@ interface BottomNavProps { role?: Rol }
 
 export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [sheetVisible, setSheetVisible] = useState(false)
-
-  useEffect(() => setMounted(true), [])
 
   useEffect(() => {
     if (moreOpen) {
@@ -82,7 +77,6 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     }
   }, [moreOpen])
 
-  const isDark = theme === 'dark'
   const porRol = (i: NavItem) => (!i.adminOnly || role === 'ADMIN') && (!i.soloAsesor || role !== 'ADMIN')
   // Dentro de Finanzas/Marketing la barra muestra las secciones del área, no
   // las de Ventas: son áreas distintas y mezclarlas deja al usuario sin forma
@@ -215,14 +209,6 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           >
             <Settings className="w-4 h-4" />
           </Link>
-          {mounted && (
-            <button
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              className="w-9 h-9 rounded-2xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all active:scale-90"
-            >
-              {isDark ? <Sun className="w-4 h-4 text-tertiary" /> : <Moon className="w-4 h-4" />}
-            </button>
-          )}
         </div>
       </div>
 

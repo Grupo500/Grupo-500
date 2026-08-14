@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 /**
  * Botón ícono para activar notificaciones push.
- * Igual de compacto que ThemeToggle/RefreshButton. iOS requiere que el permiso
+ * Igual de compacto que RefreshButton. iOS requiere que el permiso
  * se pida desde un gesto, por eso es un botón (no automático).
  *
  * `className` deja repintarlo para el header, que va sobre fondo oscuro fijo y

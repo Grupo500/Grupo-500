@@ -4,7 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Home } from 'lucide-react'
 import { RefreshButton } from '@/components/ui/RefreshButton'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 
 // Misma paleta fija del sidebar y de la barra flotante: las tres son la misma
@@ -77,7 +76,6 @@ export function Header() {
             <Home className="h-4 w-4" />
           </Link>
           <NotificacionesButton className={BOTON} />
-          <ThemeToggle className={BOTON} />
           <RefreshButton className={BOTON} />
         </div>
       </div>
