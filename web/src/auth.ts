@@ -97,10 +97,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // porque el login lo repone desde Google—. Aquí es donde se decide qué
       // nombre lleva la persona en la app, y ese es el que ella escribió.
       //
-      // Se relee al entrar, al refrescar la sesión desde Ajustes (`update`) y
-      // cuando falte la foto; no en cada petición, que sería una consulta de
-      // más por cada navegación.
-      const releer = Boolean(user) || trigger === 'update' || !token.image || !token.name
+      // Se relee al entrar, al guardar el perfil (`update`), cuando falte algo,
+      // y si no se relee hace más de cinco minutos. Ese último caso es el que
+      // importa: sin él, a quien cambia su nombre desde otro dispositivo —o a
+      // quien un admin le cambia el rol— la sesión le seguiría mostrando lo
+      // viejo hasta cerrar sesión. Consultar en cada petición sería una consulta
+      // por navegación; cinco minutos es barato y se siente inmediato.
+      const VENCE = 5 * 60_000
+      const leidoEn = (token as any).leidoEn as number | undefined
+      const releer = Boolean(user) || trigger === 'update' ||
+                     !token.image || !token.name ||
+                     !leidoEn || Date.now() - leidoEn > VENCE
+
       if (releer && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where:  { id: token.sub },
@@ -112,6 +120,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (dbUser.role)   token.role = dbUser.role
           if (dbUser.image && !token.image) token.image = dbUser.image
         }
+        ;(token as any).leidoEn = Date.now()
       }
       return token
     },
