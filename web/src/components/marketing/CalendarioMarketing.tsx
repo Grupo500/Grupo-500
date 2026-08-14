@@ -23,6 +23,9 @@ export interface Contenido {
   tipo: 'VIDEO' | 'VSL' | 'CARRUSEL' | 'CARRUMEME' | 'TIKTOKERO' | 'GUION' | 'PUBLICACION' | 'OTRO'
   destino: 'SEBASTIAN_PERSONAL' | 'ANDRES_PERSONAL' | 'PREICFES' | 'PREMEDICO' | null
   clasificacion: 'ORGANICO' | 'PAUTA'
+  tipoTrabajo: 'EMPRESA' | 'FREELANCE'
+  /** Solo en los freelance; en los de empresa siempre null. */
+  valor: number | null
   fecha: string
   estado: 'PLANIFICADO' | 'EN_PROCESO' | 'PUBLICADO'
   notas: string | null
@@ -48,6 +51,10 @@ const DESTINO_LABEL: Record<NonNullable<Contenido['destino']>, string> = {
   PREMEDICO: 'Premédico',
 }
 const CLASIFICACION_LABEL: Record<Contenido['clasificacion'], string> = { ORGANICO: 'Orgánico', PAUTA: 'Pauta' }
+const TRABAJO_LABEL: Record<Contenido['tipoTrabajo'], string> = { EMPRESA: 'Empresa', FREELANCE: 'Freelance' }
+
+/** Miles con punto mientras se escribe; el input guarda solo los dígitos. */
+const milesCO = (n: number) => n.toLocaleString('es-CO')
 const PLATAFORMAS = ['YOUTUBE', 'INSTAGRAM', 'TIKTOK', 'FACEBOOK', 'DRIVE', 'OTRO']
 const PLATAFORMA_LABEL: Record<string, string> = {
   YOUTUBE: 'YouTube', INSTAGRAM: 'Instagram', TIKTOK: 'TikTok', FACEBOOK: 'Facebook', DRIVE: 'Drive', OTRO: 'Otro',
@@ -436,6 +443,8 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   const [tipo, setTipo]             = useState<Contenido['tipo']>(contenido?.tipo ?? 'VIDEO')
   const [destino, setDestino]       = useState(contenido?.destino ?? '')
   const [clasificacion, setClasificacion] = useState<Contenido['clasificacion']>(contenido?.clasificacion ?? 'ORGANICO')
+  const [tipoTrabajo, setTipoTrabajo] = useState<Contenido['tipoTrabajo']>(contenido?.tipoTrabajo ?? 'EMPRESA')
+  const [valor, setValor] = useState(contenido?.valor != null ? String(contenido.valor) : '')
   const [estado, setEstado]         = useState<Contenido['estado']>(contenido?.estado ?? 'PLANIFICADO')
   const [fechaStr, setFechaStr]     = useState(toISO(contenido ? new Date(contenido.fecha) : fecha ?? new Date()))
   const [asignadoAId, setAsignadoAId] = useState(contenido?.asignadoA?.id ?? '')
@@ -451,6 +460,10 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
     mutationFn: () => {
       const body = {
         titulo, tipo, clasificacion, fecha: fechaStr,
+        tipoTrabajo,
+        // En un trabajo de empresa el valor no viaja: el backend lo pondría en
+        // null de todos modos, y así el cuerpo dice lo mismo que la pantalla.
+        valor: tipoTrabajo === 'FREELANCE' && valor ? Number(valor) : null,
         destino: destino || null, asignadoAId: asignadoAId || null, notas: notas || null,
         ...(esEdicion ? { estado } : {}),
       }
@@ -607,6 +620,54 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
             ))}
           </div>
         </div>
+
+        {/* Empresa o freelance. Mismo idioma que Clasificación: lo elegido va
+            relleno y con borde de color. */}
+        <div>
+          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Tipo de trabajo</label>
+          <div className="flex gap-1.5">
+            {(Object.keys(TRABAJO_LABEL) as Contenido['tipoTrabajo'][]).map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTipoTrabajo(t)}
+                aria-pressed={tipoTrabajo === t}
+                className={cn(
+                  'flex-1 rounded-full border py-1.5 text-[12.5px] transition-colors cursor-pointer',
+                  tipoTrabajo === t
+                    ? 'border-primary bg-primary-container font-semibold text-on-surface'
+                    : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
+                )}
+              >
+                {TRABAJO_LABEL[t]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* El valor solo existe en los freelance, así que solo se ve ahí. La
+            línea de la izquierda marca que este campo apareció por lo que se
+            acaba de elegir justo arriba. */}
+        {tipoTrabajo === 'FREELANCE' && (
+          <div className="border-l-2 border-primary pl-3">
+            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
+              Valor <span className="font-normal text-outline">· opcional</span>
+            </label>
+            <div className="flex items-stretch overflow-hidden rounded-lg border border-outline-variant focus-within:border-primary">
+              <span className="grid place-items-center border-r border-outline-variant bg-surface-low px-3 text-[13px] font-semibold text-on-surface-variant">
+                $
+              </span>
+              <input
+                inputMode="numeric"
+                value={valor ? milesCO(Number(valor)) : ''}
+                onChange={e => setValor(e.target.value.replace(/\D/g, ''))}
+                placeholder="0"
+                className="w-full bg-surface-lowest px-3 py-2 text-[14px] tabular-nums text-on-surface outline-none placeholder:text-on-surface-variant/60"
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-outline">Lo que se cobra por este trabajo.</p>
+          </div>
+        )}
 
         {/* Responsable por avatar: se ve de una quién está en el equipo y se
             asigna de un clic, en vez de desplegar una lista de nombres. */}

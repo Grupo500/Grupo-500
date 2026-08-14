@@ -519,12 +519,26 @@ enum ClasificacionContenido {
   PAUTA
 }
 
+/// Quién hace el trabajo. La distinción existe porque el freelance se cobra:
+/// es la única pieza de contenido que lleva un valor asociado.
+enum TipoTrabajoMarketing {
+  EMPRESA
+  FREELANCE
+}
+
 model ContenidoMarketing {
   id            String                    @id @default(cuid())
   titulo        String
   tipo          TipoContenidoMarketing
   destino       DestinoContenido?
   clasificacion ClasificacionContenido    @default(ORGANICO)
+  /// EMPRESA por defecto: la mayor parte del contenido lo hace el equipo de
+  /// planta y no se cobra aparte.
+  tipoTrabajo   TipoTrabajoMarketing      @default(EMPRESA)
+  /// Lo que se cobra por el trabajo, en pesos y sin centavos. Solo tiene
+  /// sentido en los freelance — en los de empresa se guarda null, para que no
+  /// queden importes colgando de trabajo interno.
+  valor         Int?
   fecha         DateTime // día planificado en el calendario
   estado        EstadoContenidoMarketing  @default(PLANIFICADO)
   notas         String?

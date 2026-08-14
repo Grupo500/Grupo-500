@@ -45,6 +45,19 @@ export async function listarContenidos(req: Request, res: Response) {
 const TIPO_CONTENIDO = ['VIDEO', 'VSL', 'CARRUSEL', 'CARRUMEME', 'TIKTOKERO', 'GUION', 'PUBLICACION', 'OTRO'] as const
 const DESTINO = ['SEBASTIAN_PERSONAL', 'ANDRES_PERSONAL', 'PREICFES', 'PREMEDICO'] as const
 const CLASIFICACION = ['ORGANICO', 'PAUTA'] as const
+const TIPO_TRABAJO  = ['EMPRESA', 'FREELANCE'] as const
+
+// El valor solo tiene sentido en un freelance: en un trabajo de empresa se
+// guarda null aunque el cliente lo mande, para que no queden importes colgando
+// de trabajo interno. Se normaliza aquí y no en el formulario porque la API
+// también la usan otros clientes.
+function valorSegunTrabajo(
+  tipoTrabajo: 'EMPRESA' | 'FREELANCE' | undefined,
+  valor: number | null | undefined,
+) {
+  if (tipoTrabajo === 'FREELANCE') return valor ?? null
+  return tipoTrabajo === 'EMPRESA' ? null : undefined
+}
 
 const crearContenidoSchema = z.object({
   titulo:        z.string().min(2),
@@ -55,12 +68,18 @@ const crearContenidoSchema = z.object({
   asignadoAId:   z.string().optional().nullable(),
   guionId:       z.string().optional().nullable(),
   notas:         z.string().optional().nullable(),
+  tipoTrabajo:   z.enum(TIPO_TRABAJO).optional(),
+  valor:         z.number().int().min(0).optional().nullable(),
 })
 
 export async function crearContenido(req: Request, res: Response) {
   const data = crearContenidoSchema.parse(req.body)
   const contenido = await prisma.contenidoMarketing.create({
-    data: { ...data, fecha: new Date(data.fecha) },
+    data: {
+      ...data,
+      fecha: new Date(data.fecha),
+      valor: valorSegunTrabajo(data.tipoTrabajo, data.valor) ?? null,
+    },
     include: { asignadoA: { select: SELECT_MIEMBRO }, guion: { select: { id: true, titulo: true } }, entregables: true },
   })
   return ApiResponse.created(res, contenido)
@@ -76,13 +95,22 @@ const actualizarContenidoSchema = z.object({
   asignadoAId:   z.string().optional().nullable(),
   guionId:       z.string().optional().nullable(),
   notas:         z.string().optional().nullable(),
+  tipoTrabajo:   z.enum(TIPO_TRABAJO).optional(),
+  valor:         z.number().int().min(0).optional().nullable(),
 })
 
 export async function actualizarContenido(req: Request, res: Response) {
   const data = actualizarContenidoSchema.parse(req.body)
   const contenido = await prisma.contenidoMarketing.update({
     where: { id: req.params.id },
-    data: { ...data, ...(data.fecha ? { fecha: new Date(data.fecha) } : {}) },
+    data: {
+      ...data,
+      ...(data.fecha ? { fecha: new Date(data.fecha) } : {}),
+      // Si el trabajo pasa a ser de empresa, el valor que tuviera se descarta.
+      ...(valorSegunTrabajo(data.tipoTrabajo, data.valor) !== undefined
+        ? { valor: valorSegunTrabajo(data.tipoTrabajo, data.valor) }
+        : {}),
+    },
     include: { asignadoA: { select: SELECT_MIEMBRO }, guion: { select: { id: true, titulo: true } }, entregables: true },
   })
   return ApiResponse.success(res, contenido)
