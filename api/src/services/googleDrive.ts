@@ -68,12 +68,24 @@ export function nombreCarpetaMes(fecha: Date): string {
 }
 
 /**
- * La subcarpeta del mes dentro de la carpeta madre; la crea si no existe.
- * Se busca por nombre y no se guarda el id: así sigue funcionando si alguien
- * arma la carpeta a mano en Drive, que es como vienen las de julio y agosto.
+ * "Primera quincena - Marketing" / "Segunda quincena - Marketing".
+ *
+ * El apellido no es decoración: la landing de cuentas de cobro la usa toda la
+ * empresa y también crea carpetas sola dentro de la misma madre. Sin el
+ * apellido, en un par de meses nadie sabría qué PDF salió de dónde.
  */
-async function carpetaDelMes(token: string, padre: string, fecha: Date): Promise<string> {
-  const nombre = nombreCarpetaMes(fecha)
+export function nombreCarpetaQuincena(fecha: Date): string {
+  return `${fecha.getDate() <= 15 ? 'Primera' : 'Segunda'} quincena - Marketing`
+}
+
+/**
+ * Busca una subcarpeta por nombre dentro de otra, y la crea si no está.
+ *
+ * Se resuelve por nombre y no se guardan ids: así la app entra en la carpeta
+ * que ya exista —la creó la landing, o alguien a mano— en vez de armar una
+ * segunda con el mismo nombre.
+ */
+async function subcarpeta(token: string, padre: string, nombre: string): Promise<string> {
   const q = [
     `'${padre}' in parents`,
     `name = '${nombre.replace(/'/g, "\\'")}'`,
@@ -97,6 +109,18 @@ async function carpetaDelMes(token: string, padre: string, fecha: Date): Promise
   return creada.id
 }
 
+/**
+ * Dónde va el PDF: mes → quincena.
+ *
+ * La carpeta del mes se comparte con la landing a propósito; la de la quincena
+ * es la que separa lo del área. El corte es el 15: los pagos van por quincena.
+ */
+async function carpetaDestino(token: string, padre: string, fecha: Date) {
+  const mes = await subcarpeta(token, padre, nombreCarpetaMes(fecha))
+  const quincena = await subcarpeta(token, mes, nombreCarpetaQuincena(fecha))
+  return { id: quincena, ruta: `${nombreCarpetaMes(fecha)} / ${nombreCarpetaQuincena(fecha)}` }
+}
+
 export interface ArchivoEnDrive { id: string; url: string; carpeta: string }
 
 /** Sube un PDF a la subcarpeta del mes y devuelve su enlace para ver. */
@@ -108,11 +132,11 @@ export async function subirCuentaDeCobro(
   if (!driveConfigurado()) throw new Error('Google Drive no está configurado')
   const token = await accessToken()
   const padre = process.env.DRIVE_CUENTAS_COBRO_FOLDER_ID!
-  const carpeta = await carpetaDelMes(token, padre, fecha)
+  const destino = await carpetaDestino(token, padre, fecha)
 
   // Subida multipart: los metadatos y el archivo en una sola petición.
   const limite = '-------grupo500' + Math.random().toString(36).slice(2)
-  const meta = JSON.stringify({ name: nombreArchivo, parents: [carpeta] })
+  const meta = JSON.stringify({ name: nombreArchivo, parents: [destino.id] })
   const cuerpo = Buffer.concat([
     Buffer.from(`--${limite}\r\ncontent-type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n`),
     Buffer.from(`--${limite}\r\ncontent-type: application/pdf\r\n\r\n`),
@@ -130,5 +154,5 @@ export async function subirCuentaDeCobro(
     logger.error({ status: res.status, error: json.error }, 'Drive rechazó la cuenta de cobro')
     throw new Error(json.error?.message ?? `Drive respondió ${res.status}`)
   }
-  return { id: json.id, url: json.webViewLink, carpeta: nombreCarpetaMes(fecha) }
+  return { id: json.id, url: json.webViewLink, carpeta: destino.ruta }
 }
