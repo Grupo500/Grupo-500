@@ -115,6 +115,10 @@ export default async function InicioPage() {
     },
     verAdmin && {
       href: '/admin', titulo: 'Administración', icono: ShieldCheck,
+      // El azul marino del header y el sidebar: es el color del chrome de la
+      // app, y administración es justo eso — la app por dentro, no un área de
+      // trabajo con identidad propia como Ventas o Marketing.
+      de: '#15203a', a: '#2a3a5e', borde: '#2a3a5e',
       texto: 'Resumen de todas las áreas, usuarios y accesos.',
     },
     verFinanzas && {
