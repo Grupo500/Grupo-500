@@ -27,6 +27,19 @@ const ROLES_MKT = ROLES_MARKETING as Usuario['role'][]
 // acordarse de actualizar al sumar un rol, y se olvidaba.
 const ROLE_LABEL = ROL_LABEL
 
+/**
+ * La lista va partida por área y no por rol: en una sola rejilla de veinte y
+ * pico tarjetas, saber cuánta gente hay en cada frente obligaba a contar a
+ * ojo. El orden es el de la app —Administración, Ventas, Marketing— y cada
+ * grupo se salta si está vacío, para que la búsqueda no deje encabezados
+ * huérfanos.
+ */
+const AREAS: { nombre: string; icono: typeof Shield; color: string; roles: Usuario['role'][] }[] = [
+  { nombre: 'Administración', icono: Shield,    color: '#7c3aed', roles: ['ADMIN'] },
+  { nombre: 'Ventas',         icono: UserCheck, color: '#1a7de0', roles: ['VENDEDOR'] },
+  { nombre: 'Marketing',      icono: Megaphone, color: '#d97706', roles: ROLES_MKT },
+]
+
 export default function UsuariosPage() {
   const queryClient = useQueryClient()
   const [busqueda, setBusqueda] = useState('')
@@ -239,8 +252,20 @@ export default function UsuariosPage() {
         )}
 
         {!isLoading && usuarios.length > 0 && (<>
+          {AREAS.map(area => {
+            const gente = usuarios.filter(u => area.roles.includes(u.role))
+            if (gente.length === 0) return null
+            return (
+          <div key={area.nombre}>
+            {/* Encabezado del área: pegado a su gente, no una tarjeta aparte —
+                el color lo repite el badge de cada rol, así que basta el punto. */}
+            <div className="flex items-center gap-2 px-4 pt-4 pb-1">
+              <area.icono className="w-3.5 h-3.5" style={{ color: area.color }} />
+              <p className="text-[12px] font-semibold text-on-surface">{area.nombre}</p>
+              <span className="text-[11px] text-on-surface-variant tabular-nums">{gente.length}</span>
+            </div>
           <div className="p-3 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {usuarios.map(u => (
+            {gente.map(u => (
               <div key={u.id} className="bg-surface-low border border-outline-variant rounded-xl p-3 md:p-4 flex flex-col gap-3 hover:border-primary/30 transition-colors">
 
                 {/* Avatar + nombre + badge */}
@@ -331,7 +356,9 @@ export default function UsuariosPage() {
               </div>
             ))}
           </div>
-
+          </div>
+            )
+          })}
         </>)}
       </div>
 
