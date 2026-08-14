@@ -171,8 +171,10 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   const subNav: SubNav | null = dentroDe('/ajustes')
     ? {
         titulo: 'Ajustes',
-        // Ajustes es una sección de Ventas: se vuelve al dashboard.
-        volverA: '/dashboard',
+        // Se vuelve a donde se estaba: quien trabaja en Ventas al dashboard,
+        // y el resto al selector de módulos — a marketing el dashboard le está
+        // vedado, así que mandarlo allá era devolverlo a una puerta cerrada.
+        volverA: role === 'ADMIN' || role === 'VENDEDOR' ? '/dashboard' : '/inicio',
         tabs: AJUSTES_TABS
           .filter(t => !t.adminOnly || role === 'ADMIN')
           .map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),

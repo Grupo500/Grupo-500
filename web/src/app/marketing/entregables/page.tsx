@@ -19,12 +19,12 @@ import { useQuery } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { apiFetch } from '@/lib/api'
-import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock } from 'lucide-react'
-import { colorAvatar, type Contenido } from '@/components/marketing/CalendarioMarketing'
+import { type Contenido } from '@/components/marketing/CalendarioMarketing'
+import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
 const TIPO_LABEL: Record<Contenido['tipo'], string> = {
   VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme', TIKTOKERO: 'TikTokero',
@@ -52,9 +52,6 @@ function rangoDelMes(month: string | null) {
 function deISO(iso: string) {
   const [a, m, d] = iso.slice(0, 10).split('-').map(Number)
   return new Date(a, m - 1, d)
-}
-function iniciales(n: string) {
-  return n.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
 
 /** Una tarea. El enlace solo aparece cuando ya hay algo publicado. */
@@ -118,10 +115,15 @@ export default function EntregablesPage() {
       : filtro === 'PUBLICADO' ? c.estado === 'PUBLICADO'
       : c.estado !== 'PUBLICADO',
     )
-    const mapa = new Map<string, { id: string; nombre: string; tareas: Contenido[] }>()
+    const mapa = new Map<string, { id: string; nombre: string; foto: string | null; tareas: Contenido[] }>()
     for (const c of visibles) {
       const id = c.asignadoA?.id ?? '__sin__'
-      if (!mapa.has(id)) mapa.set(id, { id, nombre: c.asignadoA?.nombre ?? 'Sin responsable', tareas: [] })
+      if (!mapa.has(id)) mapa.set(id, {
+        id,
+        nombre: c.asignadoA?.nombre ?? 'Sin responsable',
+        foto: c.asignadoA?.user?.image ?? null,
+        tareas: [],
+      })
       mapa.get(id)!.tareas.push(c)
     }
     return [...mapa.values()].sort((a, b) =>
@@ -171,17 +173,11 @@ export default function EntregablesPage() {
             return (
               <div key={g.id} className="card overflow-hidden">
                 <div className="flex items-center gap-2.5 border-b border-outline-variant px-4 py-3">
-                  <span
-                    className={cn(
-                      'grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white',
-                      sinDueno && 'bg-surface-high',
-                    )}
-                    style={sinDueno ? undefined : { background: colorAvatar(g.id) }}
-                  >
-                    {sinDueno
-                      ? <HelpCircle className="size-4 text-on-surface-variant" />
-                      : iniciales(g.nombre)}
-                  </span>
+                  {sinDueno
+                    ? <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-high">
+                        <HelpCircle className="size-4 text-on-surface-variant" />
+                      </span>
+                    : <AvatarMiembro id={g.id} nombre={g.nombre} image={g.foto} size={32} />}
                   <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-on-surface">{g.nombre}</p>
                   <p className="shrink-0 text-[11px] tabular-nums text-on-surface-variant">
                     {pendientes > 0 && <span className="font-semibold text-[#d97706]">{pendientes} pend.</span>}

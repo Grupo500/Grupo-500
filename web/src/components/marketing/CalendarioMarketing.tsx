@@ -14,6 +14,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
+import { AvatarMiembro } from './AvatarMiembro'
 
 export interface Miembro { id: string; nombre: string; activo: boolean; user?: { image: string | null } }
 export interface EntregableDto { id: string; plataforma: string; url: string | null; videoUrl: string | null; publicadoEn: string }
@@ -59,18 +60,10 @@ const PLATAFORMA_LABEL: Record<string, string> = {
   YOUTUBE: 'YouTube', INSTAGRAM: 'Instagram', TIKTOK: 'TikTok', FACEBOOK: 'Facebook', DRIVE: 'Drive', OTRO: 'Otro',
 }
 
-function iniciales(n: string) {
-  return n.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
-}
-
-// Color de avatar por miembro. Se deriva del id para que cada persona conserve
-// siempre el mismo, sin guardarlo en la base ni depender del orden de la lista.
-const COLORES_AVATAR = ['#2094ff', '#7c3aed', '#db2777', '#0891b2', '#ca8a04', '#059669']
-export function colorAvatar(id: string): string {
-  let h = 0
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
-  return COLORES_AVATAR[h % COLORES_AVATAR.length]
-}
+// El avatar y su color viven en AvatarMiembro: los usan también el tablero y
+// la pantalla de entregables, y tenerlos aquí obligaba a importar el calendario
+// entero para dibujar un círculo.
+export { colorAvatar } from './AvatarMiembro'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -689,12 +682,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
                       : 'border-outline-variant bg-surface-lowest text-on-surface hover:border-outline',
                   )}
                 >
-                  <span
-                    className="grid h-[19px] w-[19px] place-items-center rounded-full text-[8.5px] font-bold text-white"
-                    style={{ background: colorAvatar(m.id) }}
-                  >
-                    {iniciales(m.nombre)}
-                  </span>
+                  <AvatarMiembro id={m.id} nombre={m.nombre} image={m.user?.image} size={19} />
                   {m.nombre.split(' ')[0]}
                 </button>
               )

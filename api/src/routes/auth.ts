@@ -15,7 +15,7 @@ const router = Router()
 router.get('/me', authenticate, asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
-    include: { asesor: true },
+    include: { asesor: true, marketing: true },
   })
   return ApiResponse.success(res, {
     data: {
@@ -24,8 +24,57 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
       nombre:  user?.nombre,
       image:   user?.image,
       telefono: user?.asesor?.telefono,
+      // Solo viene con contenido para el equipo de marketing; el RUT es lo que
+      // se necesita para pagarles un freelance.
+      rut:     user?.marketing?.rut ?? null,
+      esMarketing: !!user?.marketing,
     },
   })
+}))
+
+// ── Editar el propio perfil ─────────────────────────────────────────────────
+//
+// Ajustes usaba `PATCH /asesores/:id`, que solo existe para quien tiene ficha
+// de asesor: el equipo de marketing no la tiene y se quedaba sin poder cambiar
+// ni su nombre. Este endpoint escribe donde corresponda según quién sea, y no
+// pide id — siempre es el del token, así que nadie puede editar a otro.
+const miPerfilSchema = z.object({
+  nombre:   z.string().min(2).optional(),
+  telefono: z.string().min(3).optional(),
+  rut:      z.string().max(40).optional().nullable(),
+})
+
+router.patch('/me', authenticate, asyncHandler(async (req, res) => {
+  const { nombre, telefono, rut } = miPerfilSchema.parse(req.body)
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, asesor: { select: { id: true } }, marketing: { select: { id: true } } },
+  })
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
+
+  await prisma.$transaction(async tx => {
+    if (nombre) await tx.user.update({ where: { id: user.id }, data: { nombre } })
+
+    // El nombre vive en dos sitios (la cuenta y la ficha del área) y se guardan
+    // juntos: si se desincronizan, la persona aparece con un nombre en Usuarios
+    // y con otro en el calendario de marketing.
+    if (user.asesor && (nombre || telefono)) {
+      await tx.asesor.update({
+        where: { id: user.asesor.id },
+        data: { ...(nombre ? { nombre } : {}), ...(telefono ? { telefono } : {}) },
+      })
+    }
+    if (user.marketing && (nombre || rut !== undefined)) {
+      await tx.miembroMarketing.update({
+        where: { id: user.marketing.id },
+        data: { ...(nombre ? { nombre } : {}), ...(rut !== undefined ? { rut: rut || null } : {}) },
+      })
+    }
+  })
+
+  auditLog(req, 'UPDATE', 'mi_perfil', user.id)
+  return ApiResponse.success(res, { ok: true })
 }))
 
 // ── Actualizar foto de perfil ────────────────────────────────────────────────

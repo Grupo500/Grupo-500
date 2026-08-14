@@ -26,10 +26,10 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import {
   ContenidoModal,
-  colorAvatar,
   type Contenido,
   type Miembro,
 } from '@/components/marketing/CalendarioMarketing'
+import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
 type Estado = Contenido['estado']
 
@@ -61,9 +61,6 @@ const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 /** Cuántas fichas se ven antes de resumir en "+N más". */
 const FICHAS_VISIBLES = 3
 
-function iniciales(n: string) {
-  return n.trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase()
-}
 function aISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 /** `fecha` llega como YYYY-MM-DD; se ancla a medianoche local. */
 function diaDe(iso: string) {
@@ -339,13 +336,7 @@ function Ficha({ contenido, onAbrir }: { contenido: Contenido; onAbrir: () => vo
         <span title="Pauta" className="size-1 shrink-0 rounded-full bg-on-surface-variant" />
       )}
       {persona ? (
-        <span
-          title={persona.nombre}
-          className="grid size-[15px] shrink-0 place-items-center rounded-full text-[7.5px] font-bold text-white"
-          style={{ background: colorAvatar(persona.id) }}
-        >
-          {iniciales(persona.nombre)}
-        </span>
+        <AvatarMiembro id={persona.id} nombre={persona.nombre} image={persona.user?.image} size={15} />
       ) : (
         <span
           title="Sin responsable"

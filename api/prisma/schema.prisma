@@ -481,6 +481,10 @@ model MiembroMarketing {
   userId    String   @unique
   nombre    String
   activo    Boolean  @default(true)
+  // El RUT solo hace falta en marketing: es lo que se pide para pagarle un
+  // trabajo freelance. Lo escribe cada quien desde Ajustes, así que es opcional
+  // hasta que lo llenen.
+  rut       String?
   createdAt DateTime @default(now())
 
   user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)

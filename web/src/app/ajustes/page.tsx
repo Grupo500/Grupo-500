@@ -5,10 +5,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Save, Lock, Loader2, Camera, Mail, User, Check } from 'lucide-react'
+import { Save, Lock, Loader2, Camera, Mail, User, Check, FileText } from 'lucide-react'
 
-interface MiAsesor { id: string; nombre: string; telefono: string; email: string }
-interface MiCuenta { role: string; email: string; nombre: string | null; image: string | null; telefono?: string }
+interface MiCuenta {
+  role: string; email: string; nombre: string | null; image: string | null
+  telefono?: string
+  /** Solo llega con valor para el equipo de marketing. */
+  rut: string | null
+  esMarketing: boolean
+}
 
 function SeccionCabecera({ icon: Icon, tono, titulo, descripcion }: {
   icon: typeof Camera
@@ -37,6 +42,7 @@ export default function AjustesPage() {
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [rut, setRut] = useState('')
   const [cargado, setCargado] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState('')
@@ -48,30 +54,36 @@ export default function AjustesPage() {
     return createClientFetcher(token ?? '')<T>(path, opts)
   }
 
-  const { data } = useQuery({
-    queryKey: ['mi-perfil'],
-    queryFn: () => fetcher<{ data: MiAsesor }>('/asesores/me'),
-  })
+  // Todo sale de /auth/me: antes el nombre y el teléfono venían de la ficha de
+  // asesor, que el equipo de marketing no tiene — la pantalla les quedaba vacía
+  // y sin nada que guardar.
   const { data: cuentaData, refetch: refetchCuenta } = useQuery({
     queryKey: ['mi-cuenta'],
     queryFn: () => fetcher<{ data: MiCuenta }>('/auth/me'),
   })
 
-  const mia = data?.data
   const cuenta = cuentaData?.data
-  if (mia && !cargado) {
-    setNombre(mia.nombre)
-    setTelefono(mia.telefono)
+  if (cuenta && !cargado) {
+    setNombre(cuenta.nombre ?? '')
+    setTelefono(cuenta.telefono ?? '')
+    setRut(cuenta.rut ?? '')
     setCargado(true)
   }
 
   const guardar = useMutation({
-    mutationFn: () => fetcher(`/asesores/${mia!.id}`, {
+    mutationFn: () => fetcher('/auth/me', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre: nombre.trim(), telefono: telefono.trim() }),
+      body: JSON.stringify({
+        nombre: nombre.trim(),
+        ...(telefono.trim() ? { telefono: telefono.trim() } : {}),
+        ...(cuenta?.esMarketing ? { rut: rut.trim() } : {}),
+      }),
     }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mi-perfil'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mi-cuenta'] })
+      queryClient.invalidateQueries({ queryKey: ['marketing-miembros'] })
+    },
     onError: (e: any) => alert(e?.message ?? 'Error al guardar'),
   })
 
@@ -160,17 +172,21 @@ export default function AjustesPage() {
 
       {/* ── Datos personales ── */}
       <div className="card p-5 animate-card-enter delay-1">
-        <SeccionCabecera icon={User} tono="secondary" titulo="Datos personales" descripcion="Tu nombre y teléfono, visibles en tu perfil de asesor." />
+        <SeccionCabecera icon={User} tono="secondary" titulo="Datos personales" descripcion="Cómo te ve el resto del equipo dentro de la plataforma." />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mb-4">
           <div>
             <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Nombre</label>
             <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="input-base" />
           </div>
-          <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
-            <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} className="input-base" />
-          </div>
+          {/* El teléfono vive en la ficha de asesor: a quien no la tiene no se
+              le muestra un campo que al guardar no iría a ninguna parte. */}
+          {!cuenta?.esMarketing && (
+            <div>
+              <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
+              <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} className="input-base" />
+            </div>
+          )}
           <div>
             <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
               <Mail className="w-3 h-3" /> Correo
@@ -178,6 +194,23 @@ export default function AjustesPage() {
             <input type="email" value={cuenta?.email ?? ''} disabled className="input-base opacity-60 cursor-not-allowed" />
             <p className="text-[11px] text-on-surface-variant mt-1">Contacta a un administrador para cambiar tu correo.</p>
           </div>
+          {/* El RUT solo se le pide a marketing: es lo que hace falta para
+              pagarles un trabajo freelance. A un asesor no le aplica. */}
+          {cuenta?.esMarketing && (
+            <div>
+              <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
+                <FileText className="w-3 h-3" /> RUT
+              </label>
+              <input
+                type="text"
+                value={rut}
+                onChange={e => setRut(e.target.value)}
+                placeholder="Número de RUT"
+                className="input-base"
+              />
+              <p className="text-[11px] text-on-surface-variant mt-1">Necesario para pagarte los trabajos freelance.</p>
+            </div>
+          )}
         </div>
 
         <div className="pt-4 border-t border-outline-variant flex items-center justify-end gap-3">
@@ -188,7 +221,7 @@ export default function AjustesPage() {
           )}
           <button
             onClick={() => guardar.mutate()}
-            disabled={!nombre.trim() || !telefono.trim() || guardar.isPending}
+            disabled={!nombre.trim() || guardar.isPending}
             className="btn-primary"
           >
             {guardar.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
