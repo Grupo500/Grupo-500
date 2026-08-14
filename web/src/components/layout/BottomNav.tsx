@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/utils'
 import { FINANZAS_TABS } from '@/lib/finanzasNav'
 import { MARKETING_TABS } from '@/lib/marketingNav'
+import { ADMIN_TABS } from '@/lib/adminNav'
 import { esMarketing, type Rol } from '@/lib/roles'
 
 
@@ -29,7 +30,6 @@ const primaryItems: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
   { href: '/mis-ventas',  label: 'Mis ventas',  icon: Receipt,         adminOnly: false, soloAsesor: true },
-  { href: '/ventas',      label: 'Ventas',      icon: Receipt,         adminOnly: true  },
   { href: '/reportes',     label: 'Analíticas',  icon: BarChart3,       adminOnly: false },
 ]
 
@@ -44,8 +44,6 @@ const moreItems: NavItem[] = [
   { href: '/enlaces',         label: 'Enlaces',          icon: Link2,         adminOnly: false, soloAsesor: true },
   { href: '/colegios',        label: 'Colegios',         icon: School,        adminOnly: false },
   { href: '/simulacros',      label: 'Simulacros',       icon: FileBarChart2, adminOnly: false },
-  { href: '/brito-admin',     label: 'Brito',            icon: Gamepad2,      adminOnly: true  },
-  { href: '/usuarios',        label: 'Usuarios',         icon: ShieldCheck,   adminOnly: true  },
   { href: '/formularios',     label: 'Formularios',      icon: ClipboardList, adminOnly: false },
 ]
 
@@ -85,12 +83,16 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   const enFinanzas = pathname === '/finanzas' || pathname.startsWith('/finanzas/')
   const finanzasDisponibles = FINANZAS_TABS.filter(t => !t.proximamente)
   const enMarketing = pathname === '/marketing' || pathname.startsWith('/marketing/')
-  const enVentas = ['/ventas', '/mis-ventas', '/cuotas'].some(b => pathname === b || pathname.startsWith(b + '/'))
+  const enVentas = ['/mis-ventas', '/cuotas'].some(b => pathname === b || pathname.startsWith(b + '/'))
+  const enAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
+  // Ventas generales se mudó a Administración; al admin aquí solo le queda Cuotas.
   const ventasTabs = role === 'ADMIN'
-    ? [{ href: '/ventas',     label: 'Ventas generales', icon: Receipt,       adminOnly: false }, { href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
-    : [{ href: '/mis-ventas', label: 'Mis ventas',       icon: Receipt,       adminOnly: false }, { href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
+    ? [{ href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
+    : [{ href: '/mis-ventas', label: 'Mis ventas', icon: Receipt, adminOnly: false }, { href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
 
-  const visiblePrimary = enFinanzas
+  const visiblePrimary = enAdmin
+    ? ADMIN_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
+    : enFinanzas
     ? finanzasDisponibles.slice(0, 4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
     : enMarketing
     ? MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: false }))
@@ -106,7 +108,9 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     .filter(porRol)
     .filter(i => !ventasTabs.some(t => t.href === i.href))
 
-  const visibleMore = enFinanzas
+  const visibleMore = enAdmin
+    ? [INICIO]
+    : enFinanzas
     ? [INICIO, ...finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))]
     : enMarketing
     ? [INICIO]

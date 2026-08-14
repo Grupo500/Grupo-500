@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 import { AJUSTES_TABS } from '@/lib/ajustesNav'
 import { FINANZAS_TABS } from '@/lib/finanzasNav'
 import { MARKETING_TABS } from '@/lib/marketingNav'
+import { ADMIN_TABS } from '@/lib/adminNav'
 import { esMarketing, type Rol } from '@/lib/roles'
 
 
@@ -33,14 +34,11 @@ const navItems: NavItem[] = [
   { type: 'link',    href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard, adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/mis-ventas',      label: 'Mis ventas',      icon: Receipt,         adminOnly: false, soloAsesor: true },
-  { type: 'link',    href: '/ventas',          label: 'Ventas',          icon: Receipt,         adminOnly: true  },
-  { type: 'link',    href: '/usuarios',        label: 'Usuarios',        icon: ShieldCheck,     adminOnly: true  },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },
   { type: 'link',    href: '/enlaces',         label: 'Enlaces',         icon: Link2,           adminOnly: false, soloAsesor: true },
   { type: 'link',    href: '/formularios',      label: 'Formularios',     icon: ClipboardList,   adminOnly: false },
   { type: 'link',    href: '/colegios',        label: 'Colegios',        icon: School,          adminOnly: false },
   { type: 'link',    href: '/simulacros',      label: 'Simulacros',      icon: FileBarChart2,   adminOnly: false },
-  { type: 'link',    href: '/brito-admin',     label: 'Brito',           icon: Gamepad2,        adminOnly: true  },
   { type: 'link',    href: '/reportes',        label: 'Analíticas',      icon: BarChart3,       adminOnly: false },
 ]
 
@@ -188,22 +186,26 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
           href: t.href, label: t.label, icon: t.icon, proximamente: t.proximamente ?? false,
         })),
       }
+    : dentroDe('/admin') && role === 'ADMIN'
+    ? {
+        titulo: 'Administración',
+        tabs: ADMIN_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),
+      }
     : dentroDe('/marketing') && (role === 'ADMIN' || esMarketing(role))
     ? {
         titulo: 'Marketing',
         tabs: MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),
       }
-    : (dentroDe('/ventas') || dentroDe('/mis-ventas') || dentroDe('/cuotas')) && (role === 'ADMIN' || role === 'VENDEDOR')
+    : (dentroDe('/mis-ventas') || dentroDe('/cuotas')) && (role === 'ADMIN' || role === 'VENDEDOR')
     ? {
         titulo: 'Ventas',
         // Ventas/Cuotas son una sección de Ventas: se vuelve al dashboard,
         // igual que Ajustes.
         volverA: '/dashboard',
+        // Ventas generales se mudó a Administración, así que al admin aquí
+        // solo le queda Cuotas. Al vendedor no le cambia nada.
         tabs: role === 'ADMIN'
-          ? [
-              { href: '/ventas', label: 'Ventas generales', icon: Receipt, proximamente: false },
-              { href: '/cuotas', label: 'Cuotas',            icon: CalendarCheck, proximamente: false },
-            ]
+          ? [{ href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, proximamente: false }]
           : [
               { href: '/mis-ventas', label: 'Mis ventas', icon: Receipt, proximamente: false },
               { href: '/cuotas',     label: 'Cuotas',      icon: CalendarCheck, proximamente: false },

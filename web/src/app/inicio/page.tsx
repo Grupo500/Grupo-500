@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
-import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone } from 'lucide-react'
+import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone, ShieldCheck } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
 import { esMarketing, type Rol } from '@/lib/roles'
 
@@ -72,6 +72,7 @@ export default async function InicioPage() {
   const verBrito      = true
   // Finanzas es una vista de dirección: no se segmenta por asesor.
   const verFinanzas   = role === 'ADMIN'
+  const verAdmin      = role === 'ADMIN'
   const verMarketing  = role === 'ADMIN' || esMarketing(role)
 
   const cifras = verVentas ? await cifrasDeVentas((session.user as any).id ?? '', role === 'ADMIN') : null
@@ -111,6 +112,10 @@ export default async function InicioPage() {
       href: '/brito', titulo: 'Brito', icono: Gamepad2,
       de: '#ffb703', a: '#fb8500', borde: '#fb8500',
       texto: 'Practica en modo juego: racha, XP y ligas.',
+    },
+    verAdmin && {
+      href: '/admin', titulo: 'Administración', icono: ShieldCheck,
+      texto: 'Resumen de todas las áreas, usuarios y accesos.',
     },
     verFinanzas && {
       href: '/finanzas', titulo: 'Finanzas', icono: Landmark,

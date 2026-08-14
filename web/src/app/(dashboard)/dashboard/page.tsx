@@ -22,6 +22,7 @@ export default async function DashboardPage() {
     <DashboardWrapper
       firstName={firstName}
       saludo={saludo}
+      esAdmin={(session?.user as any)?.role === 'ADMIN'}
     />
   )
 }

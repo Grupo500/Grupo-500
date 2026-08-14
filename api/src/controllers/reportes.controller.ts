@@ -1359,3 +1359,69 @@ export async function cuotas(req: Request, res: Response) {
     filas,
   })
 }
+
+/**
+ * Resumen que cruza las áreas, para el panel de Administración.
+ *
+ * Existe porque hasta ahora, para saber cómo va el mes, había que entrar a
+ * Ventas, a Marketing y a Finanzas por separado. Va en un solo endpoint y no
+ * en tres llamadas del cliente para que las cifras salgan de la misma foto:
+ * consultadas por aparte, dos peticiones a distinto segundo pueden mostrar
+ * totales que no cuadran entre sí.
+ */
+export async function resumenGeneral(req: Request, res: Response) {
+  const ahora = new Date()
+  const inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+  const fin    = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59)
+
+  const [pagosMes, asesoresActivos, sinAsesor, atrasadas, contenidoMes, cobros, equipoMkt] =
+    await Promise.all([
+      prisma.pago.aggregate({
+        where: { estado: 'PAGADO', fechaPago: { gte: inicio, lte: fin } },
+        _sum: { monto: true, montoNeto: true, comisionAsesor: true }, _count: true,
+      }),
+      prisma.asesor.count({ where: { esAdministrativo: false } }),
+      prisma.pago.count({ where: { asesorId: null, estado: 'PAGADO' } }),
+      prisma.cuotaAtrasada.aggregate({ _sum: { monto: true }, _count: true }),
+      prisma.contenidoMarketing.groupBy({
+        by: ['estado'], where: { fecha: { gte: inicio, lte: fin } }, _count: true,
+      }),
+      prisma.contenidoMarketing.findMany({
+        where: { tipoTrabajo: 'FREELANCE', fecha: { gte: inicio, lte: fin } },
+        select: { valor: true, estadoCobro: true },
+      }),
+      prisma.miembroMarketing.count({ where: { activo: true } }),
+    ])
+
+  const porEstado = (e: string) => contenidoMes.find(c => c.estado === e)?._count ?? 0
+  const sumaCobros = (e: string) =>
+    cobros.filter(c => c.estadoCobro === e).reduce((s, c) => s + (c.valor ?? 0), 0)
+
+  return ApiResponse.success(res, {
+    periodo: { desde: inicio, hasta: fin },
+    ventas: {
+      facturado:   pagosMes._sum.monto ?? 0,
+      neto:        pagosMes._sum.montoNeto ?? 0,
+      comisiones:  pagosMes._sum.comisionAsesor ?? 0,
+      cantidad:    pagosMes._count,
+      asesores:    asesoresActivos,
+      sinAsesor,
+    },
+    cartera: {
+      // El atraso real que reporta Hotmart, no una estimación.
+      vencido:  atrasadas._sum.monto ?? 0,
+      cuotas:   atrasadas._count,
+    },
+    marketing: {
+      planificado: porEstado('PLANIFICADO'),
+      enProceso:   porEstado('EN_PROCESO'),
+      publicado:   porEstado('PUBLICADO'),
+      equipo:      equipoMkt,
+      cobros: {
+        porAprobar: sumaCobros('POR_APROBAR'),
+        aprobado:   sumaCobros('APROBADO'),
+        pagado:     sumaCobros('PAGADO'),
+      },
+    },
+  })
+}

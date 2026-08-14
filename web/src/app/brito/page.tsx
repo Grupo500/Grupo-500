@@ -60,7 +60,7 @@ export default async function BritoLandingPage() {
     role === 'ESTUDIANTE'
       ? { principal: { href: MAPA, texto: 'Continuar mis lecciones' }, secundaria: null }
       : role === 'ADMIN'
-      ? { principal: { href: '/brito-admin', texto: 'Administrar el juego' }, secundaria: { href: MAPA, texto: 'Entrar a jugar' } }
+      ? { principal: { href: '/admin/brito', texto: 'Administrar el juego' }, secundaria: { href: MAPA, texto: 'Entrar a jugar' } }
       : { principal: { href: '/brito/registro', texto: 'Crear cuenta gratis' }, secundaria: { href: '/sign-in', texto: 'Ya tengo cuenta' } }
 
   return (

@@ -21,6 +21,7 @@ router.get('/asesores',        asyncHandler(ctrl.rankingAsesores))
 
 // El resto solo para admin
 router.use(requireRole('ADMIN'))
+router.get('/resumen-general', asyncHandler(ctrl.resumenGeneral))
 router.get('/ingresos',        asyncHandler(ctrl.ingresos))
 router.get('/financiero',         asyncHandler(ctrl.financiero))
 router.get('/financiero-periodo', asyncHandler(ctrl.financieroPeriodo))

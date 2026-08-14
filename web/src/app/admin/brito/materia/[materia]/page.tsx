@@ -30,7 +30,7 @@ export default async function MateriaAdminPage({ params }: { params: Promise<{ m
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Link href="/brito-admin" className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface">
+      <Link href="/admin/brito" className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface">
         <ArrowLeft className="w-4 h-4" /> Volver a Brito
       </Link>
 
@@ -72,7 +72,7 @@ export default async function MateriaAdminPage({ params }: { params: Promise<{ m
                 key={l.id}
                 className="flex items-center gap-2 bg-surface-lowest border border-outline-variant rounded-xl pr-2 hover:border-primary/30 transition-colors"
               >
-                <Link href={`/brito-admin/${l.id}`} className="flex-1 min-w-0 flex items-center gap-4 p-4">
+                <Link href={`/admin/brito/${l.id}`} className="flex-1 min-w-0 flex items-center gap-4 p-4">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-on-surface truncate">{l.titulo}</p>
                     <p className="text-xs text-on-surface-variant">Orden {l.orden}</p>

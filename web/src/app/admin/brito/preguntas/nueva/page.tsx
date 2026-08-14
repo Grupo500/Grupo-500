@@ -14,7 +14,7 @@ export default async function NuevaPreguntaPage() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
-      <Link href="/brito-admin" className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface">
+      <Link href="/admin/brito" className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface">
         <ArrowLeft className="w-4 h-4" /> Volver a Brito
       </Link>
 

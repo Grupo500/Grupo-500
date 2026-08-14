@@ -13,14 +13,14 @@ async function requireAdmin() {
 export async function crearLeccion(data: { materia: string; titulo: string; orden: number; sesion: number }) {
   await requireAdmin()
   const leccion = await prisma.britoLeccion.create({ data })
-  revalidatePath('/brito-admin')
+  revalidatePath('/admin/brito')
   return { ok: true, id: leccion.id }
 }
 
 export async function eliminarLeccion(id: string) {
   await requireAdmin()
   await prisma.britoLeccion.delete({ where: { id } })
-  revalidatePath('/brito-admin')
+  revalidatePath('/admin/brito')
   return { ok: true }
 }
 
@@ -44,7 +44,7 @@ export async function agregarPreguntaALeccion(leccionId: string, preguntaId: str
   await prisma.britoLeccionPregunta.create({
     data: { leccionId, preguntaId: BigInt(preguntaId), orden: count + 1 },
   })
-  revalidatePath(`/brito-admin/${leccionId}`)
+  revalidatePath(`/admin/brito/${leccionId}`)
   return { ok: true }
 }
 
@@ -53,7 +53,7 @@ export async function quitarPreguntaDeLeccion(leccionId: string, preguntaId: str
   await prisma.britoLeccionPregunta.delete({
     where: { leccionId_preguntaId: { leccionId, preguntaId: BigInt(preguntaId) } },
   })
-  revalidatePath(`/brito-admin/${leccionId}`)
+  revalidatePath(`/admin/brito/${leccionId}`)
   return { ok: true }
 }
 
@@ -99,6 +99,6 @@ export async function crearPregunta(data: {
     },
   })
 
-  revalidatePath('/brito-admin')
+  revalidatePath('/admin/brito')
   return { ok: true, id: pregunta.id.toString() }
 }

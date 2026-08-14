@@ -34,7 +34,7 @@ export default async function LeccionAdminPage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Link href="/brito-admin" className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface">
+      <Link href="/admin/brito" className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface">
         <ArrowLeft className="w-4 h-4" /> Volver a Brito
       </Link>
 

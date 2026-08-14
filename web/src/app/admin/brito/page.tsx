@@ -89,7 +89,7 @@ export default async function BritoAdminPage() {
           return (
             <Link
               key={nombre}
-              href={`/brito-admin/materia/${encodeURIComponent(nombre)}`}
+              href={`/admin/brito/materia/${encodeURIComponent(nombre)}`}
               className={`group flex items-center gap-4 bg-surface-lowest border border-outline-variant rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-md transition-all animate-card-enter ${t.ring}`}
               style={{ animationDelay: `${180 + i * 60}ms` }}
             >

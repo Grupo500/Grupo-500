@@ -73,7 +73,7 @@ export function NuevaLeccionForm({ materias }: { materias: string[] }) {
           if (res.ok) {
             setTitulo('')
             setOpen(false)
-            router.push(`/brito-admin/${res.id}`)
+            router.push(`/admin/brito/${res.id}`)
           }
         })}
         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
