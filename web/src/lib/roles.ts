@@ -27,7 +27,7 @@ export const esLiderMarketing = (r?: string | null) => LIDERES_MARKETING.include
 /** Cómo se llama cada rol en pantalla. */
 export const ROL_LABEL: Record<Exclude<Rol, 'ESTUDIANTE'>, string> = {
   ADMIN:         'Administrador',
-  VENDEDOR:      'Vendedor',
+  VENDEDOR:      'Asesor',
   MARKETING:     'Marketing',
   EDITOR:        'Editor de video',
   COMMUNITY:     'Community manager',
@@ -36,6 +36,17 @@ export const ROL_LABEL: Record<Exclude<Rol, 'ESTUDIANTE'>, string> = {
   LIDER_DISENO:  'Líder de diseño gráfico',
 }
 
-/** Opciones para los selectores de rol, en el orden en que se asignan. */
-export const OPCIONES_ROL = (Object.keys(ROL_LABEL) as Exclude<Rol, 'ESTUDIANTE'>[])
-  .map(value => ({ value, label: ROL_LABEL[value] }))
+/**
+ * Opciones para los selectores de rol, en el orden en que se asignan.
+ *
+ * MARKETING queda fuera a propósito: nació como el rol genérico del área,
+ * antes de que existieran los cinco oficios, y hoy no describe el trabajo de
+ * nadie. Sigue en `ROL_LABEL` —y en el enum de la base— por si quedara alguna
+ * cuenta vieja: así se muestra con nombre en vez de aparecer en blanco.
+ */
+const ASIGNABLES: Exclude<Rol, 'ESTUDIANTE' | 'MARKETING'>[] = [
+  'ADMIN', 'VENDEDOR',
+  'EDITOR', 'COMMUNITY', 'LIDER_EDICION', 'SOCIAL_MEDIA', 'LIDER_DISENO',
+]
+
+export const OPCIONES_ROL = ASIGNABLES.map(value => ({ value, label: ROL_LABEL[value] }))

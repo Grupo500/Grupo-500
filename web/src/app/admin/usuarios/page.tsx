@@ -172,7 +172,7 @@ export default function UsuariosPage() {
         {[
           { label: 'Total usuarios',  sublabel: 'Usuarios registrados', value: usuariosTodos.length, icon: Users,     accent: '#1a7de0' },
           { label: 'Administradores', sublabel: 'Con acceso total',      value: totalAdmin,            icon: Shield,    accent: '#7c3aed' },
-          { label: 'Asesores',        sublabel: 'Vendedores activos',    value: totalVendedor,         icon: UserCheck, accent: '#16a34a' },
+          { label: 'Asesores',        sublabel: 'Equipo de ventas',      value: totalVendedor,         icon: UserCheck, accent: '#16a34a' },
           { label: 'Marketing',       sublabel: 'Equipo de contenido',   value: totalMarketing,         icon: Megaphone, accent: '#d97706' },
         ].map(({ label, sublabel, value, icon: Icon, accent }) => (
           <div
