@@ -1,60 +1,59 @@
-// Subida de archivos a Google Drive con la misma cuenta de servicio de Sheets.
+// Subida de archivos a Google Drive.
 //
-// Reutiliza `GOOGLE_SHEETS_SA_EMAIL` / `GOOGLE_SHEETS_SA_PRIVATE_KEY` —es la
-// misma cuenta, solo cambia el scope— y pide además:
-//   DRIVE_CUENTAS_COBRO_FOLDER_ID  carpeta destino, compartida con esa cuenta
+// Se entra como el DUEÑO de la carpeta, no como cuenta de servicio. Se intentó
+// primero con la cuenta de servicio de Sheets —era la opción sin fricción, ya
+// existía y la carpeta se le puede compartir— y Google la rechaza:
 //
-// Dos cosas tienen que estar hechas del lado de Google o esto responde 403:
-//   1. La Drive API habilitada en el proyecto de la cuenta de servicio.
-//   2. La carpeta compartida con el correo de la cuenta como Editor.
+//   403 · Service Accounts do not have storage quota
 //
-// Ojo con dónde vive la carpeta: una cuenta de servicio no tiene cuota propia
-// en "Mi unidad", así que subir ahí falla con storageQuotaExceeded. En una
-// unidad compartida el archivo pertenece a la unidad y sí funciona.
+// Una cuenta de servicio no tiene almacenamiento propio, así que el archivo que
+// crea en "Mi unidad" de alguien no tiene a quién cobrarle el espacio. Las dos
+// salidas que da Google son unidades compartidas (no existen en una cuenta
+// personal) o entrar en nombre del usuario. Esta es la segunda: un refresh
+// token de la cuenta dueña, igual que ya se hace con Google Ads. Los archivos
+// quedan a nombre de David, que es como si los hubiera subido a mano.
+//
+// Requiere en el entorno:
+//   DRIVE_OAUTH_CLIENT_ID / DRIVE_OAUTH_CLIENT_SECRET / DRIVE_OAUTH_REFRESH_TOKEN
+//   DRIVE_CUENTAS_COBRO_FOLDER_ID   carpeta destino
+// El refresh token se saca una sola vez con `scripts/autorizar-drive.ts`.
 
-import jwt from 'jsonwebtoken'
 import { logger } from '../utils/logger'
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
-const SCOPE = 'https://www.googleapis.com/auth/drive'
 const API = 'https://www.googleapis.com/drive/v3'
 const SUBIDA = 'https://www.googleapis.com/upload/drive/v3/files'
 
 export function driveConfigurado(): boolean {
   return Boolean(
-    process.env.GOOGLE_SHEETS_SA_EMAIL &&
-    process.env.GOOGLE_SHEETS_SA_PRIVATE_KEY &&
+    process.env.DRIVE_OAUTH_CLIENT_ID &&
+    process.env.DRIVE_OAUTH_CLIENT_SECRET &&
+    process.env.DRIVE_OAUTH_REFRESH_TOKEN &&
     process.env.DRIVE_CUENTAS_COBRO_FOLDER_ID,
   )
-}
-
-function llavePrivada(): string {
-  const raw = process.env.GOOGLE_SHEETS_SA_PRIVATE_KEY ?? ''
-  // Railway y Vercel guardan la llave en una sola línea con \n escapados.
-  return raw.includes('\\n') ? raw.replace(/\\n/g, '\n') : raw
 }
 
 let cacheToken: { token: string; expira: number } | null = null
 
 async function accessToken(): Promise<string> {
   if (cacheToken && Date.now() < cacheToken.expira) return cacheToken.token
-
-  const ahora = Math.floor(Date.now() / 1000)
-  const assertion = jwt.sign(
-    { iss: process.env.GOOGLE_SHEETS_SA_EMAIL, scope: SCOPE, aud: TOKEN_URL, iat: ahora, exp: ahora + 3600 },
-    llavePrivada(),
-    { algorithm: 'RS256' },
-  )
+  if (!driveConfigurado()) throw new Error('Google Drive no está configurado')
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }),
+    body: new URLSearchParams({
+      client_id:     process.env.DRIVE_OAUTH_CLIENT_ID!,
+      client_secret: process.env.DRIVE_OAUTH_CLIENT_SECRET!,
+      refresh_token: process.env.DRIVE_OAUTH_REFRESH_TOKEN!,
+      grant_type:    'refresh_token',
+    }),
   })
   const cuerpo = await res.json() as any
   if (!res.ok || !cuerpo.access_token) {
     throw new Error(`No pude autenticarme con Google Drive: ${cuerpo.error_description ?? cuerpo.error ?? res.status}`)
   }
+  // Se renueva un minuto antes de vencer para no cortar una subida a medias.
   cacheToken = { token: cuerpo.access_token, expira: Date.now() + ((cuerpo.expires_in ?? 3600) - 60) * 1000 }
   return cacheToken.token
 }
