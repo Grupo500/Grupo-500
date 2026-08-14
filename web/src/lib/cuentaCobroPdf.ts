@@ -39,6 +39,14 @@ const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 const enLetra = (d: Date) => `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`
+
+/**
+ * El indicativo solo se guarda en el papel, no en la base: la app se lo
+ * antepone sola a los enlaces de WhatsApp, así que en la base vive el número
+ * nacional pelado. Si alguien lo escribió con +57, no se repite.
+ */
+const conIndicativo = (tel: string) => (tel.trim().startsWith('+') ? tel.trim() : `+57 ${tel.trim()}`)
+
 const enPesos = (n: number) => '$' + n.toLocaleString('es-CO')
 
 const UNIDADES = ['', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve',
@@ -129,7 +137,7 @@ export async function generarCuentaDeCobro(persona: DatosPersona, cobro: DatosCo
   const identificacion = [
     `C.C. ${persona.cedula ?? '—'}${persona.ciudadExpedicion ? ` de ${persona.ciudadExpedicion}` : ''}`,
     persona.rut ? `RUT ${persona.rut}` : null,
-    persona.celular ? `Cel. ${persona.celular}` : null,
+    persona.celular ? `Cel. ${conIndicativo(persona.celular)}` : null,
   ].filter(Boolean).join('  ·  ')
   doc.text(identificacion, margen, y)
 
@@ -190,7 +198,7 @@ export async function generarCuentaDeCobro(persona: DatosPersona, cobro: DatosCo
   doc.setFontSize(9)
   doc.setTextColor(90)
   doc.text(`C.C. ${persona.cedula ?? '—'}`, margen, pie + 11)
-  if (persona.celular) doc.text(`Cel. ${persona.celular}`, margen, pie + 16)
+  if (persona.celular) doc.text(`Cel. ${conIndicativo(persona.celular)}`, margen, pie + 16)
 
   const blob = doc.output('blob') as Blob
   const base64 = doc.output('datauristring') as string

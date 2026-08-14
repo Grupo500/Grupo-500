@@ -76,7 +76,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account, profile, trigger }) {
       // Login inicial: guardar datos en el token
       if (user) {
         token.id    = user.id ?? token.sub ?? ''
@@ -87,14 +87,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === 'google' && profile) {
         token.image = (profile as any).picture ?? token.image ?? null
       }
-      // Sesión activa sin imagen: leer de la DB para no forzar re-login
-      if ((!token.image || !token.name) && token.sub) {
+
+      // La base manda sobre el nombre y el correo.
+      //
+      // Antes solo se leían "si el token no los traía", así que el nombre de
+      // Google se quedaba pegado: alguien cambiaba su nombre en Ajustes, se
+      // guardaba bien en la base, y el menú de arriba seguía mostrando el
+      // viejo hasta el fin de los tiempos —volver a entrar tampoco servía,
+      // porque el login lo repone desde Google—. Aquí es donde se decide qué
+      // nombre lleva la persona en la app, y ese es el que ella escribió.
+      //
+      // Se relee al entrar, al refrescar la sesión desde Ajustes (`update`) y
+      // cuando falte la foto; no en cada petición, que sería una consulta de
+      // más por cada navegación.
+      const releer = Boolean(user) || trigger === 'update' || !token.image || !token.name
+      if (releer && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where:  { id: token.sub },
-          select: { image: true, nombre: true },
+          select: { image: true, nombre: true, email: true, role: true },
         })
-        if (dbUser?.image  && !token.image) token.image = dbUser.image
-        if (dbUser?.nombre && !token.name)  token.name  = dbUser.nombre
+        if (dbUser) {
+          if (dbUser.nombre) token.name = dbUser.nombre
+          if (dbUser.email)  token.email = dbUser.email
+          if (dbUser.role)   token.role = dbUser.role
+          if (dbUser.image && !token.image) token.image = dbUser.image
+        }
       }
       return token
     },

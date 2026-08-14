@@ -21,6 +21,7 @@ import { Loader2, Save, Check, Landmark, AlertTriangle, FileText } from 'lucide-
 import { getClientToken, createClientFetcher } from '@/lib/api'
 import { Select } from '@/components/ui/Select'
 import { CampoFirma } from './CampoFirma'
+import { CampoTelefono } from '@/components/ui/CampoTelefono'
 
 export interface Financieros {
   nombreCompleto: string | null
@@ -143,7 +144,10 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
         <Campo label="Ciudad de expedición" valor={f.ciudadExpedicion} onCambio={set('ciudadExpedicion')} placeholder="Bucaramanga" />
         <Campo label="Ciudad" valor={f.ciudad} onCambio={set('ciudad')} placeholder="Bucaramanga"
                ayuda="Desde dónde se emite la cuenta de cobro." />
-        <Campo label="Celular de contacto" valor={f.celular} onCambio={set('celular')} placeholder="300 123 4567" />
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-on-surface-variant">Celular de contacto</label>
+          <CampoTelefono valor={f.celular} onCambio={v => setF(p => ({ ...p, celular: v }))} placeholder="300 123 4567" />
+        </div>
         <Campo ancho label="RUT" valor={f.rut} onCambio={set('rut')} placeholder="1098765432-1"
                ayuda="Lo pide contabilidad para soportar el pago." />
       </div>

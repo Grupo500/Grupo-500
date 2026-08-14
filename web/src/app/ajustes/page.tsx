@@ -7,6 +7,7 @@ import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Save, Lock, Loader2, Camera, Mail, User, Check } from 'lucide-react'
 import { DatosFinancieros, type Financieros } from '@/components/marketing/DatosFinancieros'
+import { CampoTelefono } from '@/components/ui/CampoTelefono'
 
 interface MiCuenta {
   role: string; email: string; nombre: string | null; image: string | null
@@ -78,20 +79,16 @@ export default function AjustesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nombre: nombre.trim(),
-        ...(email.trim() ? { email: email.trim() } : {}),
         ...(telefono.trim() ? { telefono: telefono.trim() } : {}),
       }),
     }),
-    onSuccess: async (r: any) => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['mi-cuenta'] })
       queryClient.invalidateQueries({ queryKey: ['marketing-miembros'] })
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
-      // La sesión guarda el nombre y el correo desde el login: sin refrescarla,
-      // el menú de arriba seguiría mostrando los viejos hasta cerrar sesión.
+      // La sesión guarda el nombre desde el login: sin refrescarla, el menú de
+      // arriba seguiría mostrando el viejo hasta cerrar sesión.
       await updateSession()
-      if (r?.data?.correoCambiado) {
-        alert('Correo actualizado. La próxima vez entra con el correo nuevo.')
-      }
     },
     onError: (e: any) => alert(e?.message ?? 'Error al guardar'),
   })
@@ -193,24 +190,20 @@ export default function AjustesPage() {
           {!cuenta?.esMarketing && (
             <div>
               <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
-              <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} className="input-base" />
+              <CampoTelefono valor={telefono} onCambio={setTelefono} />
             </div>
           )}
           <div>
             <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
               <Mail className="w-3 h-3" /> Correo
             </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              autoComplete="email"
-              className="input-base"
-            />
+            {/* Se muestra pero no se edita: es la llave con la que se entra y
+                con la que Google reconoce la cuenta. Lo cambia un admin desde
+                Usuarios, que es donde se puede revisar que nadie se quede por
+                fuera. */}
+            <input type="email" value={email} disabled className="input-base cursor-not-allowed opacity-60" />
             <p className="mt-1 text-[11px] text-on-surface-variant">
-              {/* Se avisa antes y no después: es la llave con la que se entra. */}
-              Es con el que entras a la plataforma. Si lo cambias, la próxima vez tienes que
-              entrar con el nuevo.
+              Es con el que entras a la plataforma. Contacta a un administrador para cambiarlo.
             </p>
           </div>
         </div>
