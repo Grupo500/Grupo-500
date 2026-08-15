@@ -1298,6 +1298,30 @@ Se hizo lo segundo: **refresh token de la cuenta dueña**, igual que ya se hací
 - **Entregables** pasa a ser la lista de tareas de cada quien: listaba solo enlaces ya publicados, así que lo pendiente era invisible por construcción. Sale del calendario, no de la tabla de entregables.
 - Simulacros y Marketing dejan de repetir el color de otro módulo (violeta y magenta). El ámbar significa "pendiente" en el resto de la app.
 
+### Ajustes: los datos reales y el teléfono con su país
+
+El correo salía en blanco aunque estuviera en la base: `/auth/me` respondía `{ data: { data: {...} } }` y la pantalla leía un nivel de menos. Se muestra pero no se edita — es la llave con la que se entra y con la que Google reconoce la cuenta.
+
+**El nombre no se reflejaba en la plataforma** aunque se guardara bien: el callback `jwt` leía el nombre de la base *solo si el token no lo traía*, y el login siempre lo trae desde Google, así que el de la base no ganaba nunca —ni volviendo a entrar—. Ahora la base manda, y el token se relee al entrar, al guardar el perfil y **si lleva más de cinco minutos sin hacerlo**: una consulta cada cinco minutos por persona en vez de una por navegación. De paso arregla que un cambio de rol hecho por un admin no se veía hasta cerrar sesión.
+
+El teléfono lleva selector de país (200 países, `web/src/lib/paises.ts`) y guarda el número completo `+57 3164134212`. Los guardados sin `+` se leen como colombianos. La bandera es emoji dentro de una cajita: Windows no trae esos glifos y los pinta como las dos letras del país, que dentro de la caja se lee como insignia. Dibujar 200 banderas a mano no era viable — la de Colombia sí estaba dibujada mientras fue la única.
+
+### Requiere gestión: contexto para saber a quién llamar
+
+La lista daba nombre, curso, método y saldo; para decidir si valía la pena llamar había que salirse a la ficha. Ahora cada fila trae los días en silencio como etiqueta, la barra de cuánto lleva abonado del total, el HP (`pago.referenciaPago`) con botón de copiar, el último abono con su método, la fecha de compra y el documento. **Nada de eso es campo nuevo**: la consulta ya lo calculaba todo para sacar el saldo y lo botaba.
+
+Cambia el orden: **por días sin abonar en vez de por monto**. El reloj arranca en el último abono, o en la compra si nunca abonó. Verificado contra producción — 11 estudiantes, $3.488.922; el caso que lo justifica es uno que debe $2.550 de $430.002 y lleva 57 días: con "saldo $2.550" a secas nadie sabía si era deuda real o residuo de redondeo.
+
+No se puso "Registrar pago" en el modal: el formulario completo ya existe en la ficha y duplicarlo a medias en una ventana de consulta era peor.
+
+### Azul para actuar, claro para consultar
+
+El encabezado azul marino del `Modal` nació para formularios, donde la ventana es un objeto con una acción y la franja se lee como su barra de título. En una ventana de consulta pesaba más que su contenido: tres fondos apilados en los primeros 120px. El componente gana `tono` (claro por defecto, `marca` donde se gana el peso: crear contenido y programar publicación), `icono` —el mismo cuadrito de las tarjetas del dashboard, solo en claro porque sobre el azul no se distingue— y `extra`, que carga el total de lo que se está viendo en el hueco que antes quedaba vacío.
+
+### Email marketing a compradores de Ruta 500 (sin ejecutar)
+
+373 compradores contando combos, **100% con correo válido y sin duplicados**, comprados entre el 29-jun y el 15-ago-2026. 367 celulares colombianos válidos. Se desaconsejó enviar desde Gmail personal (tope de 500/día, sin unsubscribe, y es la cuenta dueña de GitHub/Railway/Vercel/Drive/Meta). Elegido Resend, pendiente de que David autorice el conector. Para WhatsApp masivo: Wassenger (no oficial, riesgo de baneo, inmediato) vs Cloud API de Meta (plantilla aprobada, ~USD 5–11 por 367, cero riesgo) — sin decidir.
+
 ### Pendiente (próxima sesión)
 - Prueba de punta a punta de la cuenta de cobro con un trabajo freelance real aprobado
 - Cruce de los cobros aprobados con Finanzas: ¿se escriben en el Sheet de contabilidad o se leen de la app? — decisión de David
