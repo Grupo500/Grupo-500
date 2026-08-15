@@ -1320,7 +1320,7 @@ El encabezado azul marino del `Modal` nació para formularios, donde la ventana 
 
 ### Email marketing a compradores de Ruta 500 (sin ejecutar)
 
-373 compradores contando combos, **100% con correo válido y sin duplicados**, comprados entre el 29-jun y el 15-ago-2026. 367 celulares colombianos válidos. Se desaconsejó enviar desde Gmail personal (tope de 500/día, sin unsubscribe, y es la cuenta dueña de GitHub/Railway/Vercel/Drive/Meta). Elegido Resend, pendiente de que David autorice el conector. Para WhatsApp masivo: Wassenger (no oficial, riesgo de baneo, inmediato) vs Cloud API de Meta (plantilla aprobada, ~USD 5–11 por 367, cero riesgo) — sin decidir.
+373 compradores contando combos, **100% con correo válido y sin duplicados**, comprados entre el 29-jun y el 15-ago-2026. 367 celulares colombianos válidos. Se desaconsejó enviar desde Gmail personal (tope de 500/día, sin unsubscribe, y es la cuenta dueña de GitHub/Railway/Vercel/Drive/Meta). **Cerrado sin construir nada: David lo envió desde el email marketing de Hotmart**, que ya tiene la lista de compradores y resuelve unsubscribe y métricas por su cuenta. Queda la consulta de la lista por si alguna vez se necesita fuera de Hotmart. Para WhatsApp masivo: Wassenger (no oficial, riesgo de baneo, inmediato) vs Cloud API de Meta (plantilla aprobada, ~USD 5–11 por 367, cero riesgo) — sin decidir.
 
 ### Pendiente (próxima sesión)
 - Prueba de punta a punta de la cuenta de cobro con un trabajo freelance real aprobado
