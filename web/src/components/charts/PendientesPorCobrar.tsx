@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { useCountUp } from '@/hooks/useCountUp'
 import { Modal } from '@/components/ui/Modal'
-import { CircleDollarSign, ChevronRight, Phone } from 'lucide-react'
+import { CircleDollarSign, ChevronRight, Phone, FileText, Copy, Check } from 'lucide-react'
 
 interface PersonaGestion {
   estudianteId: string
@@ -16,6 +19,15 @@ interface PersonaGestion {
   saldo: number
   asesor: string | null
   metodo: string | null
+  total: number
+  pagado: number
+  abonos: number
+  /** El código de Hotmart. Null si la compra se registró a mano. */
+  hp: string | null
+  documento: string | null
+  ultimoPagoEn: string | null
+  fechaCompra: string | null
+  diasSinAbonar: number | null
 }
 interface PersonaAutomatico extends PersonaGestion {
   cuotaNumero: number
@@ -39,6 +51,144 @@ function metodoLegible(metodo: string | null) {
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+const diaCorto = (iso: string | null) =>
+  iso ? format(new Date(iso), "d 'de' MMM", { locale: es }) : null
+
+/** "hace 2 meses", "hace 6 días". Sin precisión falsa: por encima de 60 días
+ *  el número exacto ya no cambia la decisión, y los meses se leen más rápido. */
+function haceCuanto(dias: number | null) {
+  if (dias == null) return null
+  if (dias === 0) return 'hoy'
+  if (dias === 1) return 'ayer'
+  if (dias < 60) return `hace ${dias} días`
+  return `hace ${Math.round(dias / 30)} meses`
+}
+
+/**
+ * Una deuda que hay que perseguir, con lo necesario para decidir a quién se
+ * llama primero y qué se le dice. El orden lo pone el servidor: por días en
+ * silencio, no por monto.
+ */
+function FilaGestion({ p }: { p: PersonaGestion }) {
+  const [copiado, setCopiado] = useState(false)
+  const pct = p.total > 0 ? Math.min(100, Math.round((p.pagado / p.total) * 100)) : 0
+  const nunca = p.abonos === 0
+  const dias = p.diasSinAbonar
+
+  // Rojo cuando el silencio ya es largo; azul cuando la compra es reciente y
+  // todavía no hay nada que reprochar.
+  const urgente = dias != null && dias >= 30
+  const tono = urgente
+    ? { fondo: 'rgba(220,38,38,0.13)', texto: '#dc2626' }
+    : dias != null && dias >= 8
+      ? { fondo: 'rgba(245,158,11,0.14)', texto: '#b45309' }
+      : { fondo: 'rgba(32,148,255,0.13)', texto: 'var(--primary)' }
+
+  const etiqueta = nunca
+    ? (dias != null ? `Sin abonar · compró ${haceCuanto(dias)}` : 'Sin abonar')
+    : `Sin abonar ${haceCuanto(dias) ?? ''}`.trim()
+
+  const copiarHp = async () => {
+    if (!p.hp) return
+    try {
+      await navigator.clipboard.writeText(p.hp)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 1500)
+    } catch { /* sin portapapeles: el HP igual está a la vista */ }
+  }
+
+  return (
+    <div className="border-t border-surface-high py-3.5 first:border-t-0 first:pt-0">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="text-[13.5px] font-semibold text-on-surface">{p.nombre}</p>
+            <span
+              className="rounded-full px-2 py-0.5 text-[9.5px] font-bold"
+              style={{ background: tono.fondo, color: tono.texto }}
+            >
+              {etiqueta}
+            </span>
+          </div>
+          <p className="mt-0.5 truncate text-[11.5px] text-on-surface-variant">
+            {p.curso}{p.asesor && ` · ${p.asesor}`}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[15px] font-bold tabular-nums" style={{ color: '#b45309' }}>
+            {formatCOP(p.saldo)}
+          </p>
+          <p className="mt-0.5 text-[10px] text-on-surface-variant tabular-nums">de {formatCOP(p.total)}</p>
+        </div>
+      </div>
+
+      {/* Cuánto de la relación va cumplido: quien ya puso el 40% se recupera
+          con un mensaje; quien no ha puesto nada es otra conversación. */}
+      <div className="mt-2.5">
+        <div className="h-1.5 overflow-hidden rounded-full bg-surface-high">
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#16a34a' }} />
+        </div>
+        <div className="mt-1.5 flex items-center justify-between gap-3 text-[10.5px] text-on-surface-variant tabular-nums">
+          <span>
+            {nunca
+              ? <span className="font-semibold text-on-surface">Sin ningún abono</span>
+              : <>Abonó <span className="font-semibold text-on-surface">{formatCOP(p.pagado)}</span> en {p.abonos} {p.abonos === 1 ? 'pago' : 'pagos'}</>}
+          </span>
+          <span>Le falta el <span className="font-semibold text-on-surface">{100 - pct}%</span></span>
+        </div>
+      </div>
+
+      <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+        {[
+          { k: 'HP', v: p.hp, vacio: 'Pago manual' },
+          { k: 'Último abono', v: p.ultimoPagoEn ? `${diaCorto(p.ultimoPagoEn)} · ${metodoLegible(p.metodo)}` : null, vacio: 'Nunca', alerta: true },
+          { k: 'Compró', v: diaCorto(p.fechaCompra), vacio: 'Sin fecha' },
+          { k: 'Documento', v: p.documento, vacio: 'Sin registrar' },
+        ].map(d => (
+          <div key={d.k} className="min-w-0 rounded-lg bg-surface-low px-2.5 py-1.5">
+            <p className="text-[9.5px] text-on-surface-variant">{d.k}</p>
+            <p
+              className="truncate text-[11.5px] font-semibold"
+              style={{ color: d.v ? (d.alerta ? '#b45309' : 'var(--on-surface)') : 'var(--on-surface-variant)' }}
+              title={d.v ?? d.vacio}
+            >
+              {d.v ?? d.vacio}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        {p.telefono && (
+          <a
+            href={`https://wa.me/57${p.telefono.replace(/\D/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-2.5 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            <Phone className="size-3" /> WhatsApp
+          </a>
+        )}
+        <Link
+          href={`/estudiantes/${p.estudianteId}`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant px-2.5 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high"
+        >
+          <FileText className="size-3" /> Ver ficha
+        </Link>
+        {p.hp && (
+          <button
+            onClick={copiarHp}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-outline-variant px-2.5 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high"
+          >
+            {copiado ? <Check className="size-3" style={{ color: '#16a34a' }} /> : <Copy className="size-3" />}
+            {copiado ? 'Copiado' : 'Copiar HP'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function Fila({ p, tipo }: { p: PersonaGestion | PersonaAutomatico; tipo: 'automatico' | 'gestion' }) {
@@ -214,9 +364,9 @@ export function PendientesPorCobrar() {
         abierto={modal === 'gestion'}
         onClose={() => setModal(null)}
         titulo="Requiere gestión"
-        subtitulo="Sin plan de cuotas automático — hay que contactarlos"
+        subtitulo={`${d.gestion.estudiantes} sin plan de cuotas · ordenados por tiempo sin abonar`}
       >
-        {d.porGestionar.map(p => <Fila key={p.estudianteId + p.curso} p={p} tipo="gestion" />)}
+        {d.porGestionar.map(p => <FilaGestion key={p.estudianteId + p.curso} p={p} />)}
       </Modal>
     </div>
   )

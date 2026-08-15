@@ -490,9 +490,11 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
       curso: { select: { nombre: true, precio: true } },
       estudiante: {
         select: {
-          id: true, nombre: true, telefono: true,
+          id: true, nombre: true, telefono: true, documento: true, tipoDocumento: true,
           asesor: { select: { nombre: true } },
-          pagos: { select: { monto: true, estado: true, enPartes: true, cuotaNumero: true, cuotasTotal: true, metodo: true, fechaPago: true } },
+          // `referenciaPago` es el HP: el código con el que Hotmart identifica
+          // la compra. Va nulo en los pagos registrados a mano.
+          pagos: { select: { monto: true, estado: true, enPartes: true, cuotaNumero: true, cuotasTotal: true, metodo: true, fechaPago: true, referenciaPago: true } },
         },
       },
     },
@@ -503,7 +505,19 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
   let automatico = { monto: 0, estudiantes: 0 }
   let gestion    = { monto: 0, estudiantes: 0 }
   const cuotasFaltantes: Record<number, number> = {}
-  const porGestionar: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; metodo: string | null }[] = []
+  /**
+   * A quien hay que perseguir se le manda el contexto completo, no solo el
+   * saldo: el asesor abre esta lista para decidir a quién llama primero y qué
+   * le dice, y con nombre y monto a secas tenía que salirse a la ficha de cada
+   * uno. Todo esto ya se calcula aquí para sacar el saldo — antes se botaba.
+   */
+  const porGestionar: {
+    estudianteId: string; nombre: string; telefono: string; curso: string
+    saldo: number; asesor: string | null; metodo: string | null
+    total: number; pagado: number; abonos: number
+    hp: string | null; documento: string | null
+    ultimoPagoEn: Date | null; fechaCompra: Date | null; diasSinAbonar: number | null
+  }[] = []
   const porAutomatico: { estudianteId: string; nombre: string; telefono: string; curso: string; saldo: number; asesor: string | null; cuotaNumero: number; cuotasTotal: number; metodo: string | null }[] = []
 
   // Un estudiante puede tener varios cursos. Antes cada inscripción restaba
@@ -589,6 +603,15 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
         const ultimoPago = [...pagosCurso].sort(
           (a, b) => (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0)
         )[0]
+
+        // El reloj del silencio arranca en el último abono, y si nunca abonó,
+        // en el día de la compra: quien compró ayer y no ha pagado no está en
+        // la misma situación que quien lleva dos meses mudo.
+        const desde = ultimoPago?.fechaPago ?? ins.fechaCompra
+        const diasSinAbonar = desde
+          ? Math.max(0, Math.floor((Date.now() - desde.getTime()) / 86_400_000))
+          : null
+
         porGestionar.push({
           estudianteId: ins.estudiante.id,
           nombre: ins.estudiante.nombre,
@@ -597,12 +620,29 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
           saldo,
           asesor: ins.estudiante.asesor?.nombre ?? null,
           metodo: ultimoPago?.metodo ?? null,
+          total: Math.round(total),
+          pagado: Math.round(pagado),
+          abonos: pagosCurso.length,
+          // El HP del último pago que lo traiga: los manuales van sin él.
+          hp: [...pagosCurso]
+            .sort((a, b) => (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0))
+            .find(p => p.referenciaPago)?.referenciaPago ?? null,
+          documento: ins.estudiante.documento
+            ? `${ins.estudiante.tipoDocumento ?? 'CC'} ${ins.estudiante.documento}`
+            : null,
+          ultimoPagoEn: ultimoPago?.fechaPago ?? null,
+          fechaCompra: ins.fechaCompra ?? null,
+          diasSinAbonar,
         })
       }
     })
   }
 
-  porGestionar.sort((a, b) => b.saldo - a.saldo)
+  // Por urgencia y no por monto: el que más debe no es el que más corre. Quien
+  // compró ayer y debe todo no necesita llamada; quien abonó dos veces y lleva
+  // dos meses en silencio, sí. A igualdad de días manda el saldo.
+  porGestionar.sort((a, b) =>
+    (b.diasSinAbonar ?? -1) - (a.diasSinAbonar ?? -1) || b.saldo - a.saldo)
   porAutomatico.sort((a, b) => b.saldo - a.saldo)
 
   return ApiResponse.success(res, {
