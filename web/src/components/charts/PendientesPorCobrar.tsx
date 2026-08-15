@@ -9,7 +9,7 @@ import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { useCountUp } from '@/hooks/useCountUp'
 import { Modal } from '@/components/ui/Modal'
-import { CircleDollarSign, ChevronRight, Phone, FileText, Copy, Check } from 'lucide-react'
+import { CircleDollarSign, ChevronRight, Phone, FileText, Copy, Check, Clock, RefreshCw } from 'lucide-react'
 
 interface PersonaGestion {
   estudianteId: string
@@ -59,14 +59,21 @@ function metodoLegible(metodo: string | null) {
  * Ese número vive en la tarjeta de atrás, que el propio modal tapa justo al
  * abrirlo. Va un punto más pequeño que los montos de cada fila para que no
  * compita con ellos: resume, no encabeza la lectura.
+ *
+ * En móvil se muestra igual, solo que sin la palabra "por cobrar" y un punto
+ * más chico: en una pantalla de 360px esa línea no cabe junto al título, y el
+ * dato es la cifra — la etiqueta la da el propio título de la ventana.
  */
 function TotalCabecera({ monto, tono }: { monto: number; tono?: string }) {
   return (
-    <div className="hidden text-right sm:block">
-      <p className="text-[14px] font-bold leading-none tabular-nums" style={{ color: tono ?? 'var(--on-surface)' }}>
+    <div className="text-right">
+      <p
+        className="text-[12.5px] font-bold leading-none tabular-nums sm:text-[14px]"
+        style={{ color: tono ?? 'var(--on-surface)' }}
+      >
         {formatCOP(monto)}
       </p>
-      <p className="mt-1 text-[9.5px] text-on-surface-variant">por cobrar</p>
+      <p className="mt-1 hidden text-[9.5px] text-on-surface-variant sm:block">por cobrar</p>
     </div>
   )
 }
@@ -374,6 +381,8 @@ export function PendientesPorCobrar() {
         onClose={() => setModal(null)}
         titulo="Hotmart lo cobra solo"
         subtitulo={`${d.porAutomatico.length} estudiante${d.porAutomatico.length !== 1 ? 's' : ''} con cuotas programadas`}
+        // Repetición: son cobros que vuelven solos cada mes.
+        icono={RefreshCw}
         extra={<TotalCabecera monto={d.automatico.monto} />}
       >
         {d.porAutomatico.map(p => <Fila key={p.estudianteId + p.curso} p={p} tipo="automatico" />)}
@@ -384,6 +393,8 @@ export function PendientesPorCobrar() {
         onClose={() => setModal(null)}
         titulo="Requiere gestión"
         subtitulo={`${d.gestion.estudiantes} estudiante${d.gestion.estudiantes !== 1 ? 's' : ''} · por tiempo sin abonar`}
+        // Reloj: lo que ordena esta lista es el tiempo, no el monto.
+        icono={Clock}
         extra={<TotalCabecera monto={d.gestion.monto} tono="#b45309" />}
       >
         {d.porGestionar.map(p => <FilaGestion key={p.estudianteId + p.curso} p={p} />)}

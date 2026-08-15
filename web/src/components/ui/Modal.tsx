@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { X, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // El mismo azul marino del header y del sidebar. Está repetido a propósito en
@@ -32,6 +32,12 @@ interface Props {
    * primeros 120px y el ojo reanclándose antes de llegar al primer dato.
    */
   tono?: 'claro' | 'marca'
+  /**
+   * El mismo cuadrito con icono que llevan las tarjetas del dashboard. Ata la
+   * ventana al sistema que ya existe sin necesidad de la franja de color.
+   * Solo aplica en `claro`: sobre el azul marino la pastilla no se distingue.
+   */
+  icono?: LucideIcon
   /** A la derecha del título. Para la cifra que resume lo que se está viendo. */
   extra?: React.ReactNode
   className?: string
@@ -44,7 +50,7 @@ interface Props {
  */
 export function Modal({
   abierto, onClose, titulo, subtitulo, children, pie,
-  tono = 'claro', extra, className,
+  tono = 'claro', icono: Icono, extra, className,
 }: Props) {
   const cerrarPorFondo = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose()
@@ -94,15 +100,22 @@ export function Modal({
             !marca && 'border-b border-outline-variant',
           )}
         >
-          <div className="min-w-0">
-            <h2 className={cn('text-[15px] font-semibold', marca ? 'text-white' : 'text-on-surface')}>
-              {titulo}
-            </h2>
-            {subtitulo && (
-              <p className={cn('text-[12px] mt-0.5', marca ? 'text-slate-400' : 'text-on-surface-variant')}>
-                {subtitulo}
-              </p>
+          <div className="flex min-w-0 items-center gap-3">
+            {Icono && !marca && (
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-container">
+                <Icono className="size-4 text-primary" />
+              </span>
             )}
+            <div className="min-w-0">
+              <h2 className={cn('text-[15px] font-semibold', marca ? 'text-white' : 'text-on-surface')}>
+                {titulo}
+              </h2>
+              {subtitulo && (
+                <p className={cn('text-[12px] mt-0.5', marca ? 'text-slate-400' : 'text-on-surface-variant')}>
+                  {subtitulo}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {extra}
