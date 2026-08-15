@@ -195,7 +195,7 @@ function Composer({ cuentas, abierto, onClose }: { cuentas: Cuenta[]; abierto: b
     (!necesitaVideo || mediaEsVideo)
 
   return (
-    <Modal abierto={abierto} onClose={onClose} titulo="Programar publicación" subtitulo="Se publicará automáticamente a la hora indicada">
+    <Modal abierto={abierto} onClose={onClose} titulo="Programar publicación" subtitulo="Se publicará automáticamente a la hora indicada" tono="marca">
       <div className="space-y-4">
         <div className="inline-flex rounded-lg border border-outline-variant bg-surface-lowest p-1 gap-1">
           {(['POST', 'HISTORIA', 'REEL'] as const).map(t => (

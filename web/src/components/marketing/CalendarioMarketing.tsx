@@ -511,6 +511,9 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
       onClose={onClose}
       titulo={esEdicion ? 'Editar contenido' : 'Nuevo contenido'}
       subtitulo={esEdicion ? TIPO_LABEL[contenido!.tipo] : undefined}
+      // Azul para actuar: aquí la ventana es un formulario con una acción al
+      // pie, y la franja se lee como su barra de título.
+      tono="marca"
       pie={
         // La acción principal pesa más y se alcanza sin apuntar a un botón
         // pequeño en la esquina.

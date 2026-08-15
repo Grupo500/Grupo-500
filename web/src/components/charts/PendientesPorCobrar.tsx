@@ -53,6 +53,24 @@ function metodoLegible(metodo: string | null) {
     .replace(/\b\w/g, c => c.toUpperCase())
 }
 
+/**
+ * El total, en el hueco que dejaba el encabezado.
+ *
+ * Ese número vive en la tarjeta de atrás, que el propio modal tapa justo al
+ * abrirlo. Va un punto más pequeño que los montos de cada fila para que no
+ * compita con ellos: resume, no encabeza la lectura.
+ */
+function TotalCabecera({ monto, tono }: { monto: number; tono?: string }) {
+  return (
+    <div className="hidden text-right sm:block">
+      <p className="text-[14px] font-bold leading-none tabular-nums" style={{ color: tono ?? 'var(--on-surface)' }}>
+        {formatCOP(monto)}
+      </p>
+      <p className="mt-1 text-[9.5px] text-on-surface-variant">por cobrar</p>
+    </div>
+  )
+}
+
 const diaCorto = (iso: string | null) =>
   iso ? format(new Date(iso), "d 'de' MMM", { locale: es }) : null
 
@@ -356,6 +374,7 @@ export function PendientesPorCobrar() {
         onClose={() => setModal(null)}
         titulo="Hotmart lo cobra solo"
         subtitulo={`${d.porAutomatico.length} estudiante${d.porAutomatico.length !== 1 ? 's' : ''} con cuotas programadas`}
+        extra={<TotalCabecera monto={d.automatico.monto} />}
       >
         {d.porAutomatico.map(p => <Fila key={p.estudianteId + p.curso} p={p} tipo="automatico" />)}
       </Modal>
@@ -364,7 +383,8 @@ export function PendientesPorCobrar() {
         abierto={modal === 'gestion'}
         onClose={() => setModal(null)}
         titulo="Requiere gestión"
-        subtitulo={`${d.gestion.estudiantes} sin plan de cuotas · ordenados por tiempo sin abonar`}
+        subtitulo={`${d.gestion.estudiantes} estudiante${d.gestion.estudiantes !== 1 ? 's' : ''} · por tiempo sin abonar`}
+        extra={<TotalCabecera monto={d.gestion.monto} tono="#b45309" />}
       >
         {d.porGestionar.map(p => <FilaGestion key={p.estudianteId + p.curso} p={p} />)}
       </Modal>
