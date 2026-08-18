@@ -52,6 +52,7 @@ import { sincronizarAtrasos } from './jobs/sincronizarAtrasos'
 import redesRoutes from './routes/redes'
 import { publicarRedesPendientes } from './jobs/publicarRedes'
 import { respaldarBaseDatos, backupVencido, horaColombia } from './jobs/backupBaseDatos'
+import { purgarAsesoresRetirados } from './jobs/purgarAsesoresRetirados'
 
 const app = express()
 
@@ -284,6 +285,11 @@ app.listen(PORT, () => {
   setTimeout(() => {
     void backupVencido(26).then(vencido => { if (vencido) void respaldarBaseDatos() })
   }, 3 * 60 * 1000)
+
+  // Asesores retirados: pasados 60 días desde su retiro se eliminan del todo.
+  // Una vez al día basta — el plazo se mide en días, no en horas.
+  setTimeout(() => { void purgarAsesoresRetirados() }, 5 * 60 * 1000)
+  setInterval(() => { void purgarAsesoresRetirados() }, 24 * 60 * 60 * 1000)
 })
 
 export default app
