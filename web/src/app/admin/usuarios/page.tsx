@@ -52,7 +52,7 @@ export default function UsuariosPage() {
   const [formError, setFormError] = useState('')
 
   // Modal editar asesor
-  const [editAsesor, setEditAsesor] = useState<{ asesorId: string; userId: string; nombre: string; telefono: string; email: string; codigosHotmart: string } | null>(null)
+  const [editAsesor, setEditAsesor] = useState<{ asesorId: string; userId: string; nombre: string; telefono: string; email: string } | null>(null)
   const [editPassword, setEditPassword] = useState('')
   const [editError, setEditError]   = useState('')
 
@@ -98,7 +98,6 @@ export default function UsuariosPage() {
               nombre: editAsesor!.nombre,
               telefono: editAsesor!.telefono,
               email: editAsesor!.email,
-              codigosHotmart: editAsesor!.codigosHotmart.split(',').map(c => c.trim()).filter(Boolean),
             }),
           })
         } catch (e: any) {
@@ -337,7 +336,7 @@ export default function UsuariosPage() {
                   </div>
                   {u.asesor && (
                     <button
-                      onClick={() => { setEditAsesor({ asesorId: (u.asesor as any).id, userId: u.id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email, codigosHotmart: (u.asesor!.codigosHotmart ?? []).join(', ') }); setEditPassword('') }}
+                      onClick={() => { setEditAsesor({ asesorId: (u.asesor as any).id, userId: u.id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email }); setEditPassword('') }}
                       className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
                       title="Editar asesor"
                     >
@@ -415,19 +414,6 @@ export default function UsuariosPage() {
                   value={editAsesor.email}
                   onChange={e => setEditAsesor({ ...editAsesor, email: e.target.value })}
                   autoComplete="new-password"
-                  className="input-base"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
-                  Códigos Hotmart
-                  <span className="ml-1.5 text-[10px] text-on-surface-variant/60 font-normal">(src/sck de sus links, separados por coma)</span>
-                </label>
-                <input
-                  type="text"
-                  value={editAsesor.codigosHotmart}
-                  onChange={e => setEditAsesor({ ...editAsesor, codigosHotmart: e.target.value })}
-                  placeholder="asesor1, juan-fb, juan-ig"
                   className="input-base"
                 />
               </div>
