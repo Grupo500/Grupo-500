@@ -47,7 +47,7 @@ async function obtenerOwners(): Promise<Map<string, string>> {
 
 // Trae los tickets con owner asignado, creados desde `desde` (si se indica).
 // Sin `desde` trae TODO el histórico (solo para la primera sincronización).
-async function obtenerTickets(desde?: Date): Promise<HubspotTicket[]> {
+async function obtenerTickets(desde?: Date, hasta?: Date): Promise<HubspotTicket[]> {
   const tickets: HubspotTicket[] = []
   let after: string | undefined
 
@@ -55,6 +55,7 @@ async function obtenerTickets(desde?: Date): Promise<HubspotTicket[]> {
     { propertyName: 'hubspot_owner_id', operator: 'HAS_PROPERTY' },
   ]
   if (desde) filtros.push({ propertyName: 'createdate', operator: 'GTE', value: String(desde.getTime()) })
+  if (hasta) filtros.push({ propertyName: 'createdate', operator: 'LT', value: String(hasta.getTime()) })
 
   do {
     const res = await fetch(`${HS_API}/crm/v3/objects/tickets/search`, {
@@ -91,7 +92,22 @@ export async function sincronizarLeadsHubspot(): Promise<ResultadoSyncHubspot> {
   const ultimo = await prisma.hubspotLead.aggregate({ _max: { createdAtHubspot: true } })
   const desde = ultimo._max.createdAtHubspot ?? undefined
 
-  const [owners, tickets] = await Promise.all([obtenerOwners(), obtenerTickets(desde)])
+  // Con la tabla vacía (el borrado del 18-ago) hay que repaginar el historial
+  // completo, y el buscador de HubSpot no deja pasar de 10.000 resultados por
+  // consulta: revienta con un 400 genérico. Se trae por ventanas de mes, que
+  // nunca tocan ese techo; con `desde` (el caso diario) va directo como antes.
+  const owners = await obtenerOwners()
+  let tickets: HubspotTicket[]
+  if (desde) {
+    tickets = await obtenerTickets(desde)
+  } else {
+    tickets = []
+    const inicio = new Date('2026-01-01T00:00:00Z')
+    for (let v = new Date(inicio); v < new Date(); v.setUTCMonth(v.getUTCMonth() + 1)) {
+      const fin = new Date(v); fin.setUTCMonth(fin.getUTCMonth() + 1)
+      tickets.push(...await obtenerTickets(v, fin))
+    }
+  }
 
   let sincronizados = 0
   let sinOwnerReconocido = 0
