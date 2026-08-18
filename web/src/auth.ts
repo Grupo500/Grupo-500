@@ -110,10 +110,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                      !leidoEn || Date.now() - leidoEn > VENCE
 
       if (releer && token.sub) {
-        const dbUser = await prisma.user.findUnique({
+        let dbUser = await prisma.user.findUnique({
           where:  { id: token.sub },
-          select: { image: true, nombre: true, email: true, role: true },
+          select: { id: true, image: true, nombre: true, email: true, role: true },
         })
+        // Sesión huérfana: el usuario del token ya no existe con ese id. Pasó
+        // masivamente el 18-ago-2026 —el borrado de la base recreó las cuentas
+        // con ids nuevos— y toda sesión anterior quedó apuntando al vacío: el
+        // API respondía USUARIO_NO_REGISTRADO a todo y las pantallas se veían
+        // en ceros. Se re-resuelve por correo, que sobrevive a la reencarnación.
+        if (!dbUser && token.email) {
+          dbUser = await prisma.user.findFirst({
+            where:  { email: { equals: String(token.email), mode: 'insensitive' } },
+            select: { id: true, image: true, nombre: true, email: true, role: true },
+          })
+          if (dbUser) {
+            token.sub = dbUser.id
+            token.id  = dbUser.id
+          }
+        }
         if (dbUser) {
           if (dbUser.nombre) token.name = dbUser.nombre
           if (dbUser.email)  token.email = dbUser.email
