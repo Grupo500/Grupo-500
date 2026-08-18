@@ -46,3 +46,4 @@ tmp/
 .respaldo/
 api/_*.js
 api/_*.json
+api/_*.ts
