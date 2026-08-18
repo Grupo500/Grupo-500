@@ -1387,3 +1387,20 @@ La app siguió en línea, así que hay escrituras posteriores al borrado (logins
 3. Re-aplicar los ajustes de datos documentados en sesiones 036-039 (accesos, correcciones de fidelidad S-2, e_grayscale, tramos ya está en código).
 4. Lo no recuperable de fuentes: intentos presentados en la plataforma tras la fusión, datos manuales de ventas/marketing/finanzas posteriores al último dump que tenga el equipo.
 5. **Activar backups diarios del volumen en Railway** (dashboard → Postgres → Backups) — sin esto, cualquier error vuelve a ser catastrófico.
+
+### Recuperación ejecutada (plan B: re-digitalización desde los PDFs)
+
+David no tiene los Google Forms del portal viejo ni el dump de la fusión, así que se reconstruyó desde la única fuente disponible: los PDFs "S-2 Primera/Segunda sesión".
+
+**Hecho:**
+- Exámenes 1, 2, 3 y banco Brito (9999) recreados como estructura; **todos inactivos**.
+- **244/244 preguntas del Simulacro 2 re-digitalizadas** por parser en 3 pases (contextos "Responda las preguntas X a Y", enunciados, opciones, áreas exactas 25/41/25/29 y 25/25/29/45) + las correcciones de fidelidad ya auditadas el 13-ago (banco A-G de inglés 80-84, avisos 90-94, P42 literal). Respaldo del JSON en `skil credenciales\simulacro2-reconstruido-2026-08-18.json`.
+- 5 preguntas quedaron sin opciones de texto a propósito (96, 110*, 113 de S1; 42, 70 de S2): sus opciones viven en la figura del cuadernillo. *La 110 no es extraíble del PDF (página-figura): quedó marcada "[Pendiente: completar desde el cuadernillo]".
+
+**Para reactivar el Simulacro 2 falta (insumos del equipo, no de código):**
+1. **La hoja de respuestas correctas (244)** — hoy `correcta` es un placeholder 'A' en todas; con la hoja se actualiza por script y se activa el examen. ⚠️ NO activar antes: calificaría mal.
+2. **Re-adjuntar las imágenes** de las ~88 preguntas que las llevaban: los archivos están intactos en Cloudinary (no se borraron), pero el mapeo pregunta→imagen se perdió; se re-asignan por el admin existente (`/examenes/admin/imagenes`) comparando contra el cuadernillo.
+3. **Estudiantes y accesos**: recargar por la carga CSV de `/examenes/admin/accesos` con el Excel del equipo.
+4. Los 15 intentos ya calificados no son recuperables de ninguna fuente.
+
+Simulacros 1 y 3 quedaron como cascarones (sus preguntas no tienen fuente en esta máquina; si aparecen sus PDFs, el mismo pipeline los reconstruye).
