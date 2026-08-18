@@ -15,6 +15,9 @@ Reglas para cualquier sesión de Claude en cualquier máquina:
    se APLICAN a producción desde la máquina de David con `migrate deploy`
    (reglas completas en CLAUDE.md, sección "Reglas de base de datos").
 
+Las tres máquinas conocidas: **Hotman**, **David** y **Cristal** (cada una
+firma sus commits con su nombre; `git config --local user.name "SuNombre"`).
+
 | Máquina | Desde | Frente | Módulos/archivos |
 |---|---|---|---|
 | (libre) | | | |
