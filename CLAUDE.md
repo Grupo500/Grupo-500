@@ -193,6 +193,29 @@ Detalle completo y decisiones: `docs/SESIONES/historial.md`, Sesión 034.
 - [Historial de Sesiones](docs/SESIONES/historial.md)
 - [API Documentation](docs/API.md)
 
+## Reglas de base de datos (tras el borrado del 18-ago-2026)
+
+Ese dia, un `.env` de desarrollo en otro equipo tenia el `shadow-database-url`
+de Prisma apuntando a produccion, y un `migrate dev` la vacio entera. Estas
+reglas existen para que ese error rebote:
+
+1. **La URL de produccion jamas va en el `.env` de una maquina de desarrollo.**
+   Para desarrollar se usa un Postgres local (o el rol `app_rw`, ver abajo).
+   `shadowDatabaseUrl`, si se configura, apunta SIEMPRE a una base local
+   desechable — es una base que Prisma VACIA por diseno en cada ensayo.
+2. **`prisma migrate dev` y `prisma migrate reset` nunca se corren contra
+   produccion.** A produccion solo llega `prisma migrate deploy`, a mano y a
+   proposito (ver Sesion 034).
+3. **Dos credenciales, dos poderes.** El backend y cualquier desarrollador usan
+   el rol `app_rw` (lee y escribe datos; `DROP`/`TRUNCATE`/DDL le fallan con
+   permiso denegado). La credencial duena (`postgres`) queda solo para
+   migraciones deliberadas y no se comparte.
+4. **Backups**: cada noche a las 23:59 (Colombia) el backend sube un volcado
+   completo a la carpeta "Backups" del Drive de la cuenta duena (se conservan
+   60). Restaurar: `api/scripts/restaurarBackup.ts` (simulacion por defecto,
+   `--commit` para ejecutar). Si el servidor estuvo caido a esa hora, al
+   arrancar detecta el respaldo vencido (>26h) y hace uno de inmediato.
+
 ## Notas Importantes
 
 1. **Backend primero:** Todas las APIs deben estar 100% funcionales antes de tocar UI
