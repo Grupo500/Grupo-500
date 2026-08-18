@@ -20,4 +20,4 @@ firma sus commits con su nombre; `git config --local user.name "SuNombre"`).
 
 | Máquina | Desde | Frente | Módulos/archivos |
 |---|---|---|---|
-| (libre) | | | |
+| Hotman | 2026-08-18 | Cierre de asesores + retiro de asesores inactivos | api/prisma (Asesor.activo), api/src/services/ranking.ts, reportes.controller.ts, web usuarios |
