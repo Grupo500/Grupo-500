@@ -204,6 +204,10 @@ Cada sesión de Claude corre aislada, pero el repo es el cerebro compartido:
    (equipo: Hotman, David, Cristal). Es lo primero que se comprueba al arrancar,
    junto con `git config --local core.hooksPath .githooks` si no está puesto:
    ese hook rechaza commits sin firma aunque alguien intente saltarse la regla.
+   **Identificado ≠ listo: inmediatamente después viene `git pull`.** El orden
+   obligatorio de arranque es: identificarse → `git pull` → leer
+   `docs/EN-CURSO.md` → recién ahí trabajar. Trabajar sobre un repo viejo es
+   como llegó el borrado del 18-ago: cada máquina viendo un pasado distinto.
 1. **Al arrancar cualquier sesión**: `git pull` + leer `docs/EN-CURSO.md`
    (quién está en qué AHORA) y las últimas sesiones de `docs/SESIONES/historial.md`.
 2. **Al empezar un frente**: anotarlo en `docs/EN-CURSO.md` y pushear ese
