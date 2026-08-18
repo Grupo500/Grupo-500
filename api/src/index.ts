@@ -284,3 +284,5 @@ app.listen(PORT, () => {
 })
 
 export default app
+
+// Redeploy 2026-08-18: el build de las 21:33 fallo al publicar la imagen.
