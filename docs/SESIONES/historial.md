@@ -1404,3 +1404,11 @@ David no tiene los Google Forms del portal viejo ni el dump de la fusión, así 
 4. Los 15 intentos ya calificados no son recuperables de ninguna fuente.
 
 Simulacros 1 y 3 quedaron como cascarones (sus preguntas no tienen fuente en esta máquina; si aparecen sus PDFs, el mismo pipeline los reconstruye).
+
+### Imágenes del Simulacro 2 restauradas desde los PDFs
+
+David pidió usar los propios PDFs como fuente de las imágenes. Con PyMuPDF se ancló cada pregunta por coordenadas (token «n.» en orden de lectura, con reparación de anclas entre vecinas) y cada figura embebida se asignó a su pregunta por posición vertical, recortando la página en la **banda de la pregunta** (del inicio de la n al inicio de la n+1) para que una figura no arrastre contenido de la vecina — ese fue el bug del primer intento, visible en la P42. La marca de agua del cuadernillo se filtró por repetición de xref. Las figuras que cruzan página se unieron verticalmente en un solo PNG.
+
+**Resultado: 131 preguntas con figura, subidas a Cloudinary (`simulacros/s2-reconstruido/`) y enlazadas en `sim_preguntas`, 0 errores.** Verificación por muestra: la caricatura de la P26 y los diagramas de opciones de la P42 quedaron exactos. La tabla de fichas de la P42 va como texto en el enunciado (en el PDF es texto, no figura).
+
+**Estado del Simulacro 2: reconstruido al 100% en contenido** (244 preguntas + 131 imágenes + contextos). Sigue **inactivo** por lo único que falta: la hoja de respuestas correctas (hoy placeholder 'A'). El equipo puede revisar la fidelidad en `/examenes/admin/preview/2?sesion=1|2` y corregir detalles con el editor por pregunta.
