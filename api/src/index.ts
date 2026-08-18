@@ -51,6 +51,7 @@ import { backfillCuotas } from './jobs/backfillCuotas'
 import { sincronizarAtrasos } from './jobs/sincronizarAtrasos'
 import redesRoutes from './routes/redes'
 import { publicarRedesPendientes } from './jobs/publicarRedes'
+import { respaldarBaseDatos, backupVencido, horaColombia } from './jobs/backupBaseDatos'
 
 const app = express()
 
@@ -260,6 +261,26 @@ app.listen(PORT, () => {
   // Publicador de redes sociales (Marketing > Redes): cada minuto revisa las
   // publicaciones programadas vencidas y las sube a IG/FB vía la Graph API.
   setInterval(() => { void publicarRedesPendientes() }, 60 * 1000)
+
+  // Respaldo nocturno de la base a Drive, a las 23:59 de Colombia. Se revisa
+  // el reloj cada minuto en vez de calcular un setTimeout largo: sobrevive a
+  // reinicios del contenedor sin re-derivar nada. El candado del día evita
+  // repetirlo si el minuto 23:59 alcanza a verse dos veces.
+  let ultimoBackupDia = ''
+  setInterval(() => {
+    if (horaColombia() !== '23:59') return
+    const dia = new Date().toISOString().slice(0, 10)
+    if (dia === ultimoBackupDia) return
+    ultimoBackupDia = dia
+    void respaldarBaseDatos()
+  }, 60 * 1000)
+
+  // Y al arrancar: si el último respaldo tiene más de 26 horas —el contenedor
+  // estuvo caído a las 23:59, o el job murió— se hace uno de inmediato. Es
+  // también lo que permite verificar el sistema el día que se despliega.
+  setTimeout(() => {
+    void backupVencido(26).then(vencido => { if (vencido) void respaldarBaseDatos() })
+  }, 3 * 60 * 1000)
 })
 
 export default app

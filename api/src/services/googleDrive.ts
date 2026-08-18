@@ -156,3 +156,47 @@ export async function subirCuentaDeCobro(
   }
   return { id: json.id, url: json.webViewLink, carpeta: destino.ruta }
 }
+
+// ── Genéricos para otros usos de Drive (backups) ───────────────────────────
+
+export interface ArchivoDrive { id: string; name: string; createdTime: string }
+
+/** Sube cualquier archivo a una carpeta. Mismo multipart que las cuentas. */
+export async function subirArchivoADrive(
+  nombre: string, contenido: Buffer, mime: string, carpetaId: string,
+): Promise<{ id: string; url: string }> {
+  const token = await accessToken()
+  const limite = '-------grupo500' + Math.random().toString(36).slice(2)
+  const meta = JSON.stringify({ name: nombre, parents: [carpetaId] })
+  const cuerpo = Buffer.concat([
+    Buffer.from(`--${limite}\r\ncontent-type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n`),
+    Buffer.from(`--${limite}\r\ncontent-type: ${mime}\r\n\r\n`),
+    contenido,
+    Buffer.from(`\r\n--${limite}--\r\n`),
+  ])
+  const res = await fetch(`${SUBIDA}?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'content-type': `multipart/related; boundary=${limite}` },
+    body: cuerpo,
+  })
+  const json = await res.json() as any
+  if (!res.ok) throw new Error(json.error?.message ?? `Drive respondió ${res.status}`)
+  return { id: json.id, url: json.webViewLink }
+}
+
+/** Los archivos de una carpeta, del más nuevo al más viejo. */
+export async function listarArchivosDrive(carpetaId: string): Promise<ArchivoDrive[]> {
+  const token = await accessToken()
+  const q = `'${carpetaId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`
+  const res = await fetch(
+    `${API}/files?q=${encodeURIComponent(q)}&fields=files(id,name,createdTime)&orderBy=createdTime desc&pageSize=200`,
+    { headers: { Authorization: `Bearer ${token}` } })
+  const json = await res.json() as any
+  if (!res.ok) throw new Error(json.error?.message ?? `Drive respondió ${res.status}`)
+  return json.files ?? []
+}
+
+export async function borrarArchivoDrive(id: string): Promise<void> {
+  const token = await accessToken()
+  await fetch(`${API}/files/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+}

@@ -41,3 +41,8 @@ tmp/
 
 .vercel
 .env*
+
+# Respaldos locales y scripts de emergencia de sesion - nunca al repo
+.respaldo/
+api/_*.js
+api/_*.json
