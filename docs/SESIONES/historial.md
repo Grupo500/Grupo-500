@@ -1355,3 +1355,35 @@ En la app original cofundador era un login aparte; aquí ambos paneles son ADMIN
 ### Pendiente (próxima sesión)
 - Decidir si se rebaselinea `_prisma_migrations` o se documenta `db execute` como flujo oficial
 - Avisar al equipo que la app vieja (pagosagencia.netlify.app) queda congelada: lo nuevo se registra en la plataforma
+
+---
+
+## Sesión 040 — 2026-08-18 (incidente)
+
+**Objetivo:** David reportó que el área de simulacros "se borró". Diagnóstico y respuesta.
+
+### Qué pasó (causa raíz, con total transparencia)
+
+A las 12:15 de hoy, durante la migración del módulo de Contabilidad (sesión 039), el agente ejecutó `prisma migrate diff --from-migrations … --shadow-database-url "$DATABASE_URL"` **apuntando la shadow database a la base de producción**. Prisma trata la shadow como espacio de trabajo desechable: la **resetea** y reproduce ahí las 66 migraciones para calcular el diff. Resultado: **todas las tablas quedaron vacías** (el esquema sobrevivió; los datos no). El P3005 posterior y la desaparición de `_prisma_migrations` eran síntomas de esto, no de un cambio de infra del equipo como se creyó en la sesión 039.
+
+La app siguió en línea, así que hay escrituras posteriores al borrado (logins de Google recrean `User`, webhooks de Hotmart crean pagos, un estudiante "preview" de las 21:08). El módulo de Contabilidad se importó DESPUÉS del borrado, por eso sus 65 registros están intactos.
+
+### Alcance
+
+- Vacías: `sim_*` (exámenes, 244 preguntas, 69 estudiantes, 207 accesos, ~27 intentos con 15 finalizados), Brito, ventas (`Estudiante`, `Pago`, cursos, negociaciones…), marketing (contenido, entregables, cobros), finanzas manuales.
+- Intactas: `contab_*` completo (post-borrado), y lo escrito después del mediodía (9 estudiantes, 15 users, 9 pagos).
+- **No hay backups de Railway**: el volumen nunca tuvo backups configurados (verificado por API) y la creación manual por API da Not Authorized.
+
+### Qué se hizo ya
+
+1. **Respaldo inmediato del estado actual** (55 tablas, 508 filas) a `skil credenciales\respaldo-post-incidente-2026-08-18.json` — protege contabilidad y las escrituras post-incidente ante cualquier restauración.
+2. Runbook corregido con la regla absoluta: **jamás `--shadow-database-url` contra una base real**.
+3. Inventario de fuentes de recuperación (ver plan).
+
+### Plan de recuperación (en orden)
+
+1. **Pedir a NexCode** el `supabase-dump.json` de la fusión (está referenciado en `api/scripts/importar-simulacros.mjs`, ruta de su máquina) o acceso al Supabase original `simulacros-grupo500` — restaura exámenes, preguntas, estudiantes e intentos hasta la fecha de fusión con el script ya existente (es idempotente).
+2. **Re-sync de ventas desde Hotmart** con `api/scripts/importarVentasRango.ts` (después del punto 1, para no duplicar).
+3. Re-aplicar los ajustes de datos documentados en sesiones 036-039 (accesos, correcciones de fidelidad S-2, e_grayscale, tramos ya está en código).
+4. Lo no recuperable de fuentes: intentos presentados en la plataforma tras la fusión, datos manuales de ventas/marketing/finanzas posteriores al último dump que tenga el equipo.
+5. **Activar backups diarios del volumen en Railway** (dashboard → Postgres → Backups) — sin esto, cualquier error vuelve a ser catastrófico.
