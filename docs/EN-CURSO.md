@@ -20,4 +20,4 @@ firma sus commits con su nombre; `git config --local user.name "SuNombre"`).
 
 | Máquina | Desde | Frente | Módulos/archivos |
 |---|---|---|---|
-| Cristal | 18-ago 18:15 | Hacer que el hook de identificación realmente corra | .githooks/pre-commit |
+| (libre) | | | |

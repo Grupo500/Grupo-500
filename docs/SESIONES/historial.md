@@ -1412,3 +1412,55 @@ David pidió usar los propios PDFs como fuente de las imágenes. Con PyMuPDF se 
 **Resultado: 131 preguntas con figura, subidas a Cloudinary (`simulacros/s2-reconstruido/`) y enlazadas en `sim_preguntas`, 0 errores.** Verificación por muestra: la caricatura de la P26 y los diagramas de opciones de la P42 quedaron exactos. La tabla de fichas de la P42 va como texto en el enunciado (en el PDF es texto, no figura).
 
 **Estado del Simulacro 2: reconstruido al 100% en contenido** (244 preguntas + 131 imágenes + contextos). Sigue **inactivo** por lo único que falta: la hoja de respuestas correctas (hoy placeholder 'A'). El equipo puede revisar la fidelidad en `/examenes/admin/preview/2?sesion=1|2` y corregir detalles con el editor por pregunta.
+
+---
+
+## Sesión 041 — 2026-08-18 (máquina de Cristal)
+
+**Objetivo:** dejar la máquina de Cristal operativa sobre la plataforma y arreglar lo que
+apareciera de paso.
+
+### Entorno nuevo: la máquina de Cristal (macOS)
+
+Es la tercera máquina del tablero y no tenía nada montado. Queda así:
+
+- Repo en `~/Documents/claude general/grupo500-plataforma`.
+- Toolchain por Homebrew: **node@22** (el node 26 global no está probado con Next 15/Prisma 5),
+  pnpm global — `corepack` ya no viene incluido con node 26 —, `gh` y `railway`.
+- **Postgres 16 local**, base `grupo500_dev`: las 74 migraciones aplicadas con
+  `migrate deploy`, 55 tablas, `migrate status` al día. Ninguna migración fue
+  modificada ni reemplazada.
+- `web/.env.local` y `api/.env` apuntan **solo** a esa base local, según la regla de
+  base de datos: la URL de producción no está escrita en ningún archivo de esta máquina.
+- Verificado de punta a punta: `tsc --noEmit` en web y api en 0, `next build` verde,
+  login por credenciales con 302 + cookie, y `/inicio`, `/finanzas`, `/marketing`,
+  `/examenes` y `/brito` en 200.
+
+**Gotcha nuevo:** el API **no carga `dotenv`** — en Railway las variables se inyectan
+solas, pero en local hay que exportarlas antes (`set -a; . ./.env; set +a`) o el
+arranque muere con "Variables de entorno faltantes". `tsx watch --env-file` no sirve:
+pierde las variables en cada reinicio del watcher.
+
+**Decisión:** Cloudinary queda con valores falsos en local. Con las credenciales reales,
+cualquier prueba local escribiría o borraría en el Cloudinary de producción. Las imágenes
+existentes se siguen viendo (son URLs públicas); solo falla subir desde local.
+
+### El hook de identificación no estaba corriendo en ninguna máquina
+
+El `pre-commit` creado esta misma tarde estaba registrado en git con modo `100644`.
+**Git ignora en silencio cualquier hook que no sea ejecutable** — solo deja un `hint`
+fácil de pasar por alto. O sea que la regla escrita después del borrado existía en el
+papel pero no se aplicaba en ninguna máquina que clonara el repo.
+
+Comprobado, no supuesto: un commit firmado `Grupo500` pasó sin queja antes del cambio y
+fue rechazado después. El arreglo va con `git update-index --chmod=+x` y no con un `chmod`
+a secas, porque el modo viaja en el árbol de git; verificado clonando de cero, donde el
+hook ya llega como `-rwxr-xr-x`.
+
+### Pendiente (próxima sesión)
+
+- `core.hooksPath = .githooks` **sigue siendo manual en cada máquina**: el hook ya es
+  ejecutable, pero si una máquina no tiene esa configuración, git ni lo mira. Vale la pena
+  que el arranque lo verifique, o mover la comprobación a un sitio que no dependa de la
+  configuración local de cada quien.
+- Confirmar que Hotman y David tienen `core.hooksPath` puesto.
