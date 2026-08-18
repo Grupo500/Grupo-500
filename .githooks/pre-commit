@@ -1,0 +1,22 @@
+#!/bin/sh
+# Nadie trabaja sin identificarse.
+#
+# Regla del equipo (Hotman, 18-ago-2026): tres personas tocan esta app desde
+# computadores distintos y el borrado de hoy no se pudo atribuir porque todas
+# las maquinas firmaban igual. Este hook rechaza cualquier commit cuya firma
+# sea la generica: primero te identificas, despues trabajas.
+NOMBRE=$(git config user.name)
+case "$NOMBRE" in
+  ""|"Grupo500"|"grupo500")
+    echo ""
+    echo "  ✋ Commit rechazado: esta maquina no esta identificada."
+    echo ""
+    echo "  Corre UNA VEZ (con tu nombre real) y reintenta:"
+    echo ""
+    echo "      git config --local user.name \"TuNombre\""
+    echo ""
+    echo "  Equipo conocido: Hotman, David, Cristal."
+    exit 1
+    ;;
+esac
+exit 0

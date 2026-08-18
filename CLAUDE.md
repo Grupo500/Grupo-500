@@ -197,11 +197,13 @@ Detalle completo y decisiones: `docs/SESIONES/historial.md`, Sesión 034.
 
 Cada sesión de Claude corre aislada, pero el repo es el cerebro compartido:
 
-0. **Identidad de la máquina**: cada computador firma sus commits con nombre
-   propio (`git config --local user.name "Nombre (máquina)"`, una sola vez).
-   Si al arrancar una sesión el `user.name` es el genérico "Grupo500", pídele
-   a la persona que bautice la máquina antes de trabajar — sin firma no hay
-   forma de saber después quién hizo qué.
+0. **Identificarse es requisito, no cortesía** (decisión de Hotman, 18-ago):
+   si `git config user.name` es el genérico "Grupo500" o está vacío, la sesión
+   NO ejecuta ninguna tarea sobre el proyecto — ni ediciones ni comandos — hasta
+   que la persona se identifique con `git config --local user.name "SuNombre"`
+   (equipo: Hotman, David, Cristal). Es lo primero que se comprueba al arrancar,
+   junto con `git config --local core.hooksPath .githooks` si no está puesto:
+   ese hook rechaza commits sin firma aunque alguien intente saltarse la regla.
 1. **Al arrancar cualquier sesión**: `git pull` + leer `docs/EN-CURSO.md`
    (quién está en qué AHORA) y las últimas sesiones de `docs/SESIONES/historial.md`.
 2. **Al empezar un frente**: anotarlo en `docs/EN-CURSO.md` y pushear ese
