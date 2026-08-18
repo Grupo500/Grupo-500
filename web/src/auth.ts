@@ -76,7 +76,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
-    async jwt({ token, user, account, profile, trigger }) {
+    async jwt({ token, user, account, profile, trigger, session }) {
+      // Un update() con datos (desde Ajustes) se aplica AL INSTANTE: el nombre
+      // nuevo no debe esperar el viaje de vuelta a la base para verse en el
+      // menu — la base se relee igual abajo, como confirmacion.
+      if (trigger === 'update' && (session as any)?.name) {
+        token.name = (session as any).name
+      }
       // Login inicial: guardar datos en el token
       if (user) {
         token.id    = user.id ?? token.sub ?? ''

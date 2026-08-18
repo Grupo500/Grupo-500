@@ -86,9 +86,9 @@ export default function AjustesPage() {
       queryClient.invalidateQueries({ queryKey: ['mi-cuenta'] })
       queryClient.invalidateQueries({ queryKey: ['marketing-miembros'] })
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
-      // La sesión guarda el nombre desde el login: sin refrescarla, el menú de
-      // arriba seguiría mostrando el viejo hasta cerrar sesión.
-      await updateSession()
+      // El nombre viaja DENTRO del update: la sesión lo aplica al instante y
+      // el menú cambia sin esperar el viaje de vuelta a la base.
+      await updateSession({ name: nombre.trim() })
     },
     onError: (e: any) => alert(e?.message ?? 'Error al guardar'),
   })
