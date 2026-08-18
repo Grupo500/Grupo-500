@@ -193,6 +193,19 @@ Detalle completo y decisiones: `docs/SESIONES/historial.md`, Sesión 034.
 - [Historial de Sesiones](docs/SESIONES/historial.md)
 - [API Documentation](docs/API.md)
 
+## Coordinación entre computadores (tres equipos sobre la misma app)
+
+Cada sesión de Claude corre aislada, pero el repo es el cerebro compartido:
+
+1. **Al arrancar cualquier sesión**: `git pull` + leer `docs/EN-CURSO.md`
+   (quién está en qué AHORA) y las últimas sesiones de `docs/SESIONES/historial.md`.
+2. **Al empezar un frente**: anotarlo en `docs/EN-CURSO.md` y pushear ese
+   archivo de inmediato — es la señal para las otras máquinas.
+3. **Commits pequeños y push frecuente**: el push es el único canal entre
+   máquinas. Trabajo largo sin pushear = invisible = choques.
+4. **Cambios de esquema (prisma/)**: frente exclusivo — nunca dos máquinas a
+   la vez, y ver las reglas de base de datos de abajo.
+
 ## Reglas de base de datos (tras el borrado del 18-ago-2026)
 
 Ese dia, un `.env` de desarrollo en otro equipo tenia el `shadow-database-url`
