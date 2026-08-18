@@ -416,6 +416,10 @@ export async function rankingAsesores(req: Request, res: Response) {
       id: a.id,
       nombre: a.nombre,
       email: a.email,
+      // El correo alterno para cruzar leads: ranking.ts lo espera (emailCrm ||
+      // email) pero aquí se seleccionaba de la base y se dejaba caer, así que
+      // el cruce de Sara Duarte (Trengo con otro correo) nunca funcionó.
+      emailCrm: a.emailCrm,
       image: a.user?.image ?? null,
     })),
     pagosActual,
