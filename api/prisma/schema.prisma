@@ -1024,3 +1024,92 @@ enum EstadoPublicacionRed {
   ERROR
   CANCELADA
 }
+
+// ── Contabilidad de Marketing (cuentas de cobro por quincena) ───────────────
+// Migrado de la app pagosagencia.netlify.app (Supabase KV) a tablas propias.
+// Flujo: el líder registra actividades de su equipo por quincena y la envía a
+// contabilidad; contabilidad (ADMIN) aprueba/rechaza, marca pagado y exporta.
+
+model ContabDepartamento {
+  id        String           @id // slug: "marketing", "editores"…
+  nombre    String
+  gradiente String // "#1257C4,#8FD0FF" — baldosa del ícono
+  icono     String // paths SVG (viewBox 24x24)
+  esBase    Boolean          @default(false) // los 7 de fábrica no se borran
+  orden     Int              @default(0)
+  personas  ContabPersona[]
+  envios    ContabEnvio[]
+  tarifas   ContabTarifa[]
+
+  @@map("contab_departamentos")
+}
+
+model ContabPersona {
+  id        String             @id @default(cuid())
+  deptId    String             @map("dept_id")
+  slug      String // "sara-reyes"
+  nombre    String
+  cedula    String?
+  rolTexto  String?            @map("rol_texto") // "Freelance", "Edición"…
+  fotoUrl   String?            @map("foto_url") // URL o data-URI heredado
+  activa    Boolean            @default(true)
+  dept      ContabDepartamento @relation(fields: [deptId], references: [id], onDelete: Cascade)
+  registros ContabRegistro[]
+
+  @@unique([deptId, slug])
+  @@map("contab_personas")
+}
+
+model ContabRegistro {
+  id        BigInt        @id @default(autoincrement())
+  personaId String        @map("persona_id")
+  quincena  String // "2026-08-Q1"
+  categoria String
+  actividad String
+  valor     Int // COP
+  fecha     String // texto corto como el original: "14 de ago."
+  link      String?
+  imagenUrl String?       @map("imagen_url")
+  revisado  Boolean       @default(false)
+  aprobado  Boolean       @default(false)
+  rechazado Boolean       @default(false)
+  pagado    Boolean       @default(false)
+  creadoAt  DateTime      @default(now()) @map("creado_at")
+  persona   ContabPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@index([quincena])
+  @@index([personaId, quincena])
+  @@map("contab_registros")
+}
+
+model ContabEnvio {
+  id        String             @id @default(cuid())
+  deptId    String             @map("dept_id")
+  quincena  String
+  enviadoAt DateTime           @map("enviado_at")
+  por       String // email de quien envió
+  total     Int
+  personas  Int
+  dept      ContabDepartamento @relation(fields: [deptId], references: [id], onDelete: Cascade)
+
+  @@unique([deptId, quincena])
+  @@map("contab_envios")
+}
+
+model ContabTarifa {
+  id     String              @id @default(cuid())
+  deptId String?             @map("dept_id") // null = aplica a todos
+  label  String
+  valor  Int
+  dept   ContabDepartamento? @relation(fields: [deptId], references: [id], onDelete: Cascade)
+
+  @@map("contab_tarifas")
+}
+
+model ContabCategoria {
+  id     String @id @default(cuid())
+  nombre String @unique
+  orden  Int    @default(0)
+
+  @@map("contab_categorias")
+}

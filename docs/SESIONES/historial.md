@@ -1326,3 +1326,23 @@ El encabezado azul marino del `Modal` nació para formularios, donde la ventana 
 - Prueba de punta a punta de la cuenta de cobro con un trabajo freelance real aprobado
 - Cruce de los cobros aprobados con Finanzas: ¿se escriben en el Sheet de contabilidad o se leen de la app? — decisión de David
 - Pagar de verdad desde la app exigiría conectar un banco o pasarela (Bancolombia empresas, Nequi negocios, Wompi): contrato y credenciales aparte
+## Sesión 039 — 2026-08-18
+
+**Objetivo:** Migrar la app externa de cuentas de cobro (pagosagencia.netlify.app, Supabase de Cristal) a un módulo Contabilidad dentro del área de Marketing.
+
+### Módulo Contabilidad en Marketing
+
+La app original es un solo HTML con Supabase como KV (`registros` con key/value JSONB) y Supabase Auth. Se migró a tablas relacionales propias (`contab_departamentos`, `contab_personas`, `contab_registros`, `contab_envios`, `contab_tarifas`, `contab_categorias`, migración `20260818121548`) y se recreó la UI con el diseño de la app (tokens surface/outline, tarjetas, chips) en `/marketing/contabilidad`:
+
+- **Índice**: grid de departamentos (gradientes e íconos SVG migrados tal cual), selector de quincena (`2026-08-Q1` = día 1–15), total y estado por dept (Sin enviar / Enviada / Pagada), export CSV para ADMIN.
+- **Departamento**: personas con foto o avatar de iniciales, totales de la quincena, tarifario como chips, alta de personas y botón "Enviar a contabilidad" (congela la quincena para el líder, regla heredada de la app original).
+- **Persona**: actividades de la quincena con chips de estado (Pendiente/Aprobado/Rechazado/Realizado + Revisado), captura con atajos de tarifas, y acciones por rol.
+- **Roles**: MARKETING/EDITOR/COMMUNITY actúan como "líder" (registran, revisan, envían); solo ADMIN es "contabilidad" (aprueba, rechaza, marca pagos, exporta CSV con cédulas para Siigo).
+
+**Datos migrados** (import idempotente): 8 departamentos, 34 personas (fotos en data-URI heredadas tal cual), 65 registros por $6.670.300 COP, 3 envíos, tarifas y 16 categorías. Verificado E2E en local contra la DB real con un usuario MARKETING temporal (borrado al final): páginas rinden los datos, la quincena enviada bloquea la captura, y el total de marketing 2026-08-Q1 ($2.399.800) coincide exacto con el envío original.
+
+**Gotcha grande de infraestructura:** la DB de Railway **ya no tiene la tabla `_prisma_migrations`** (cambió la infra del equipo; también apareció `binaryTargets` en el schema). `prisma migrate deploy` da P3005 y `migrate dev` se pone interactivo. Esta migración se aplicó con `prisma db execute --file` y la carpeta de migración queda en el repo como documentación. Ojo: la próxima migración necesitará el mismo camino, o rebaselinear el historial (`migrate resolve --applied` por cada una) si el equipo quiere volver al flujo normal — decisión pendiente de David.
+
+### Pendiente (próxima sesión)
+- Decidir si se rebaselinea `_prisma_migrations` o se documenta `db execute` como flujo oficial
+- Avisar al equipo que la app vieja (pagosagencia.netlify.app) queda congelada: lo nuevo se registra en la plataforma

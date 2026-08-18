@@ -1,4 +1,4 @@
-import { CalendarDays, Link2, Clapperboard, Share2, Wallet, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Link2, Clapperboard, Share2, Wallet, Calculator, type LucideIcon } from 'lucide-react'
 
 export interface MarketingTab {
   href: string
@@ -15,4 +15,9 @@ export const MARKETING_TABS: MarketingTab[] = [
   { href: '/marketing/cobros',        label: 'Cobros',           icon: Wallet },
   { href: '/marketing/panel-edicion', label: 'Panel de Edición', icon: Clapperboard },
   { href: '/marketing/redes',         label: 'Redes',            icon: Share2 },
+  // Contabilidad de agencia por quincenas (multi-departamento), migrada de
+  // pagosagencia.netlify.app. Distinta de Cobros: aquí viven los equipos de
+  // TODOS los departamentos (no solo usuarios de la app) y el ciclo quincenal
+  // líder → envío → aprobación → pago de contabilidad.
+  { href: '/marketing/contabilidad',  label: 'Contabilidad',     icon: Calculator },
 ]
