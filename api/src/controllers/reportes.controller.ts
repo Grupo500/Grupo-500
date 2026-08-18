@@ -367,7 +367,7 @@ export async function rankingAsesores(req: Request, res: Response) {
     // solo agregaban filas vacías al final.
     prisma.asesor.findMany({
       where: { esAdministrativo: false },
-      select: { id: true, nombre: true, email: true, emailCrm: true, user: { select: { image: true } } },
+      select: { id: true, nombre: true, email: true, emailCrm: true, activo: true, user: { select: { image: true } } },
     }),
     prisma.pago.findMany({
       where: { estado: 'PAGADO', fechaPago: { gte: inicioMesActual, lte: finMesActual } },
@@ -420,6 +420,7 @@ export async function rankingAsesores(req: Request, res: Response) {
       // email) pero aquí se seleccionaba de la base y se dejaba caer, así que
       // el cruce de Sara Duarte (Trengo con otro correo) nunca funcionó.
       emailCrm: a.emailCrm,
+      activo: a.activo,
       image: a.user?.image ?? null,
     })),
     pagosActual,

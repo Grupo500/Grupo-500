@@ -32,8 +32,27 @@ export type AsesorInfo = {
   id: string
   nombre: string
   email: string
-  emailCrm?: string | null  // correo alterno para cruzar leads (Trengo/HubSpot), si difiere del de perfil
+  emailCrm?: string | null  // correo(s) alterno(s) para cruzar leads (Trengo/HubSpot), separados por coma
   image: string | null
+  // Retirado del equipo: se conserva por su historial, pero no aparece en el
+  // ranking de un período donde no tuvo ni ventas ni leads.
+  activo?: boolean
+}
+
+// Todas las llaves de correo con las que un asesor puede aparecer en el CRM:
+// su correo de perfil más los alternos de emailCrm (separados por coma, ej.
+// alguien con un correo en Trengo y otro distinto en HubSpot). Antes emailCrm
+// REEMPLAZABA al de perfil y solo se cruzaba un correo — los leads del otro
+// se perdían y la tasa de cierre salía rota.
+export function llavesCorreo(a: Pick<AsesorInfo, 'email' | 'emailCrm'>): string[] {
+  const llaves = new Set<string>()
+  llaves.add(emailKey(a.email))
+  for (const alterno of (a.emailCrm ?? '').split(',')) {
+    const k = emailKey(alterno)
+    if (k) llaves.add(k)
+  }
+  llaves.delete('')
+  return [...llaves]
 }
 
 export type FilaRanking = {
@@ -125,11 +144,11 @@ export function construirRanking(args: {
     const comision = pagos.reduce((s, p) => s + (p.comisionAsesor ?? 0), 0)
     const ventasHoy = pagos.filter(p => p.fechaPago && diaColombia(p.fechaPago) === hoy).length
 
-    // Si el asesor tiene un correo alterno de CRM (login distinto en Trengo/HubSpot),
-    // se usa ese para el cruce de leads en vez del correo de perfil.
-    const k = emailKey(a.emailCrm || a.email)
-    const leads    = leadsPorEmail[k] ?? 0
-    const leadsHoy = leadsHoyPorEmail[k] ?? 0
+    // Los leads se suman sobre TODOS los correos del asesor (perfil + alternos):
+    // hay quien atiende Trengo con un correo y HubSpot con otro.
+    const llaves = llavesCorreo(a)
+    const leads    = llaves.reduce((s, k) => s + (leadsPorEmail[k] ?? 0), 0)
+    const leadsHoy = llaves.reduce((s, k) => s + (leadsHoyPorEmail[k] ?? 0), 0)
     // Tasa de cierre = ventas / leads del MISMO período.
     // Si supera 100% es señal de datos aún no comparables (más ventas que
     // leads registrados en el período); en ese caso mostramos null ("—").
@@ -162,15 +181,24 @@ export function construirRanking(args: {
     }
   })
 
+  // Un asesor retirado (activo=false) solo aparece en los períodos donde tuvo
+  // movimiento real: sus meses históricos se conservan intactos, pero deja de
+  // sumar filas en cero en los meses posteriores a su salida.
+  const activos = borrador.filter(b => {
+    const info = asesores.find(a => a.id === b.id)
+    if (info?.activo !== false) return true
+    return b.cantidadPagos > 0 || b.leads > 0 || b.ventasAnterior > 0
+  })
+
   // Score: necesitamos el máximo de ventas del período
-  const maxVentas = borrador.reduce((m, b) => Math.max(m, b._ventas), 0)
-  for (const b of borrador) {
+  const maxVentas = activos.reduce((m, b) => Math.max(m, b._ventas), 0)
+  for (const b of activos) {
     b.score = calcularScore(b.tasaCierre, b._ventas, maxVentas)
   }
 
   // Ordenar por VENTAS (monto): el ranking refleja quién más vendió.
   // El score y la tasa de cierre son columnas informativas, no el orden.
-  const ordenado = borrador.sort((a, b) => b.totalVentas - a.totalVentas)
+  const ordenado = activos.sort((a, b) => b.totalVentas - a.totalVentas)
 
   // Quitar el campo interno _ventas
   return ordenado.map(({ _ventas: _ignored, ...resto }) => resto)

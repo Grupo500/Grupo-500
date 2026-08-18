@@ -13,6 +13,8 @@ import { ROLES_MARKETING, OPCIONES_ROL, ROL_LABEL, type Rol } from '@/lib/roles'
 interface Asesor {
   id: string; nombre: string; telefono: string
   codigosHotmart?: string[]
+  // false = retirado del equipo: conserva su historial pero sale del ranking.
+  activo?: boolean
   _count?: { estudiantes: number; pagos: number }
 }
 interface Usuario {
@@ -252,7 +254,11 @@ export default function UsuariosPage() {
 
         {!isLoading && usuarios.length > 0 && (<>
           {AREAS.map(area => {
-            const gente = usuarios.filter(u => area.roles.includes(u.role))
+            // Los retirados van al final de su área: siguen visibles (su
+            // historial existe) pero no se mezclan con el equipo vigente.
+            const gente = usuarios
+              .filter(u => area.roles.includes(u.role))
+              .sort((a, b) => Number(b.asesor?.activo !== false) - Number(a.asesor?.activo !== false))
             if (gente.length === 0) return null
             return (
           <div key={area.nombre}>
@@ -292,6 +298,11 @@ export default function UsuariosPage() {
                         : <UserCheck className="w-2.5 h-2.5" />}
                       {ROLE_LABEL[u.role]}
                     </span>
+                    {u.asesor?.activo === false && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5 ml-1 bg-surface-high text-on-surface-variant border border-outline-variant">
+                        Retirado
+                      </span>
+                    )}
                   </div>
                 </div>
 
