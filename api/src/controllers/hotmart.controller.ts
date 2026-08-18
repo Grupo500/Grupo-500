@@ -313,6 +313,16 @@ export async function webhook(req: Request, res: Response) {
   })
 
   logger.info(`[Hotmart] Pago registrado: ${pago.id} — $${monto} ${purchase.price.currency_value ?? ''}`)
+
+  // Si este pago era una cuota que estaba en mora, el atraso muere aquí mismo:
+  // la lista de vencidos no debe esperar a la conciliación de cada 30 minutos
+  // para soltar a alguien que ya pagó.
+  const resueltos = await prisma.cuotaAtrasada.deleteMany({ where: { transaccion } })
+  if (resueltos.count > 0) {
+    logger.info(`[Hotmart] Atraso resuelto en vivo por el pago ${transaccion}`)
+    broadcast('atraso-resuelto', { estudianteId: estudiante.id })
+  }
+
   broadcast('nuevo-estudiante', { estudianteId: estudiante.id, cursoId: curso.id })
   broadcast('pago-registrado', { pagoId: pago.id, estudianteId: estudiante.id })
   auditLog(

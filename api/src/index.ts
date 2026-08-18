@@ -250,13 +250,16 @@ app.listen(PORT, () => {
   // el historial, para no repetir trabajo ya resuelto en cada corrida.
   const ventanaCuotas = () => new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   setTimeout(() => { void backfillCuotas(true, ventanaCuotas()) }, 5 * 60 * 1000)
-  setInterval(() => { void backfillCuotas(true, ventanaCuotas()) }, CUATRO_HORAS)
+  // Cada 30 minutos y no cada 4 horas (pedido de Hotman, 18-ago): el estado de
+  // cuotas y mora debe sentirse en vivo. El webhook ya resuelve al instante el
+  // atraso de un pago que llega; esta pasada recoge lo que el webhook no ve.
+  setInterval(() => { void backfillCuotas(true, ventanaCuotas()) }, 30 * 60 * 1000)
 
   // Cuotas atrasadas: Hotmart sabe qué cobro rebotó y hasta lo reintenta solo.
   // Corre después del backfill de arriba para que un abono recién registrado ya
   // esté marcado como cuota y no se avise de algo que el cliente ya pagó.
   setTimeout(() => { void sincronizarAtrasos(true, ventanaCuotas()) }, 8 * 60 * 1000)
-  setInterval(() => { void sincronizarAtrasos(true, ventanaCuotas()) }, CUATRO_HORAS)
+  setInterval(() => { void sincronizarAtrasos(true, ventanaCuotas()) }, 30 * 60 * 1000)
 
   // Publicador de redes sociales (Marketing > Redes): cada minuto revisa las
   // publicaciones programadas vencidas y las sube a IG/FB vía la Graph API.
