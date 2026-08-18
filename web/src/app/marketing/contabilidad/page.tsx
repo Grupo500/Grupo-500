@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { Download, Users } from 'lucide-react'
+import { Calculator, Crown, Download, Users } from 'lucide-react'
 import { cop, etiquetaQuincena, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from './SelectorQuincena'
 
@@ -77,6 +77,38 @@ export default async function ContabilidadPage({
         </div>
       )}
 
+      {/* Administración: los dos paneles de la app original, solo ADMIN */}
+      {esAdmin && (
+        <div>
+          <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Administración</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link href={`/marketing/contabilidad/panel?q=${quincena}`}
+              className="bg-surface-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3.5 hover:border-primary/40 hover:shadow-sm transition-all">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(150deg, #1257C4, #8FD0FF)' }}>
+                <Calculator className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-on-surface">Panel contable</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">Envíos, pagos en lote, CSV para Siigo y gestión de departamentos</p>
+              </div>
+            </Link>
+            <Link href={`/marketing/contabilidad/cofundador?q=${quincena}`}
+              className="bg-surface-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3.5 hover:border-primary/40 hover:shadow-sm transition-all">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(150deg, #6A3AA6, #C79BF0)' }}>
+                <Crown className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-on-surface">Panel de cofundador</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">La misma vista de contabilidad, más el ranking de ingresos</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider -mb-2">Departamentos</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {depts.map(d => {
           const s = porDept.get(d.id)

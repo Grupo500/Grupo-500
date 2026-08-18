@@ -154,6 +154,29 @@ export async function enviarQuincena(deptId: string, quincena: string): Promise<
   return {}
 }
 
+// Paletas e íconos para departamentos nuevos (los mismos de la app original)
+export async function crearDepartamento(input: {
+  nombre: string
+  gradiente: string
+  icono: string
+}): Promise<{ error?: string }> {
+  const s = await sesionArea()
+  if (s?.role !== 'ADMIN') return { error: 'Solo contabilidad crea departamentos.' }
+  const nombre = input.nombre.trim()
+  if (!nombre) return { error: 'Escribe el nombre del departamento.' }
+  const id = nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32)
+  if (!id) return { error: 'Nombre inválido.' }
+  const existe = await prisma.contabDepartamento.findUnique({ where: { id } })
+  if (existe) return { error: 'Ya existe un departamento con ese nombre.' }
+  const max = await prisma.contabDepartamento.aggregate({ _max: { orden: true } })
+  await prisma.contabDepartamento.create({
+    data: { id, nombre, gradiente: input.gradiente, icono: input.icono, esBase: false, orden: (max._max.orden ?? 0) + 1 },
+  })
+  revalidatePath(RUTA, 'layout')
+  return {}
+}
+
 export async function crearPersona(input: {
   deptId: string
   nombre: string

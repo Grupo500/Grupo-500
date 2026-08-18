@@ -1343,6 +1343,15 @@ La app original es un solo HTML con Supabase como KV (`registros` con key/value 
 
 **Gotcha grande de infraestructura:** la DB de Railway **ya no tiene la tabla `_prisma_migrations`** (cambió la infra del equipo; también apareció `binaryTargets` en el schema). `prisma migrate deploy` da P3005 y `migrate dev` se pone interactivo. Esta migración se aplicó con `prisma db execute --file` y la carpeta de migración queda en el repo como documentación. Ojo: la próxima migración necesitará el mismo camino, o rebaselinear el historial (`migrate resolve --applied` por cada una) si el equipo quiere volver al flujo normal — decisión pendiente de David.
 
+### Los dos paneles de administración
+
+David mostró que faltaban los dos paneles de la app original. Quedaron dentro del módulo, visibles solo para ADMIN desde una sección "Administración" en el índice:
+
+- **Panel contable** (`/marketing/contabilidad/panel`): envíos recibidos por quincena (quién, cuándo, total), consolidado por departamento→persona con **pago en lote** de los aprobados, export CSV para Siigo y **creación de departamentos** con las mismas 10 paletas y 10 íconos de la app original.
+- **Panel de cofundador** (`/marketing/contabilidad/cofundador`): la misma vista consolidada en solo lectura, más el **ranking de ingresos** (histórico + quincena actual, con medallas).
+
+En la app original cofundador era un login aparte; aquí ambos paneles son ADMIN — si un día hay que dárselo a alguien que no sea admin, se agrega un rol. Verificado E2E en local contra la DB real con un ADMIN temporal (borrado al final): envíos de Cristal visibles, pago en lote operativo y ranking encabezado por Valentina García.
+
 ### Pendiente (próxima sesión)
 - Decidir si se rebaselinea `_prisma_migrations` o se documenta `db execute` como flujo oficial
 - Avisar al equipo que la app vieja (pagosagencia.netlify.app) queda congelada: lo nuevo se registra en la plataforma
