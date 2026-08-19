@@ -6,6 +6,7 @@ import { NotFoundError } from '../utils/errors'
 import { construirRanking, hoyColombia, diaColombia, emailKey } from '../services/ranking'
 import { filtroAsesorDe } from '../utils/pagos'
 import { montoPagadoPago } from '../utils/pagos'
+import { asignarPagosACursos } from '../utils/asignarPagos'
 
 export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
@@ -542,16 +543,18 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
     const pagados = cursosDelEst[0].estudiante.pagos.filter(p => p.estado === 'PAGADO')
 
     const pagosPorCurso: (typeof pagados)[] = cursosDelEst.map(() => [])
-    for (const p of pagados) {
-      let mejor = 0
-      let mejorDist = Infinity
-      cursosDelEst.forEach((ins, i) => {
-        if (!ins.fechaCompra) return
-        const dist = Math.abs(ins.fechaCompra.getTime() - (p.fechaPago?.getTime() ?? 0))
-        if (dist < mejorDist) { mejorDist = dist; mejor = i }
-      })
-      pagosPorCurso[mejor].push(p)
-    }
+    // El monto manda y la fecha desempata (asignarPagosACursos): el criterio
+    // viejo de solo-fecha empataba con dos cursos comprados el mismo día y
+    // apilaba ambos pagos en el primero — el segundo quedaba "sin abonos" y
+    // la lista inventaba deudores que ya habían pagado completo.
+    const indices = asignarPagosACursos(
+      cursosDelEst.map(ins => ({
+        total: ins.precioAcordado ?? ins.curso.precio ?? null,
+        fechaCompra: ins.fechaCompra,
+      })),
+      pagados,
+    )
+    pagados.forEach((p, j) => pagosPorCurso[indices[j]].push(p))
 
     cursosDelEst.forEach((ins, i) => {
       const pagosCurso = pagosPorCurso[i]
@@ -1263,16 +1266,28 @@ export async function cuotas(req: Request, res: Response) {
     orderBy: { fechaPago: 'asc' },
   })
 
-  // Un pago no dice a qué curso pertenece — se toma el más cercano en fecha,
-  // mismo criterio que backfillCuotas.ts.
+  // Un pago no dice a qué curso pertenece — se asigna con asignarPagosACursos
+  // (el monto manda, la fecha desempata), una vez por estudiante para que el
+  // criterio de "este curso ya recibió su total" funcione entre hermanos.
+  const cursoAsignado = new Map<string, (typeof pagos)[number]['estudiante']['cursos'][number] | null>()
+  {
+    const pagosPorEst = new Map<string, (typeof pagos)[number][]>()
+    for (const p of pagos) {
+      const arr = pagosPorEst.get(p.estudiante.id) ?? []
+      arr.push(p)
+      pagosPorEst.set(p.estudiante.id, arr)
+    }
+    for (const [, lista] of pagosPorEst) {
+      const cursos = lista[0].estudiante.cursos
+      const indices = asignarPagosACursos(
+        cursos.map(c => ({ total: c.precioAcordado ?? c.curso.precio ?? null, fechaCompra: c.fechaCompra })),
+        lista,
+      )
+      lista.forEach((p, j) => cursoAsignado.set(p.id, cursos[indices[j]] ?? null))
+    }
+  }
   function cursoDe(p: (typeof pagos)[number]) {
-    const cursos = p.estudiante.cursos
-    const t = p.fechaPago?.getTime() ?? 0
-    return cursos.reduce<typeof cursos[number] | null>((mejor, c) => {
-      if (!c.fechaCompra) return mejor
-      if (!mejor?.fechaCompra) return c
-      return Math.abs(c.fechaCompra.getTime() - t) < Math.abs(mejor.fechaCompra.getTime() - t) ? c : mejor
-    }, null)
+    return cursoAsignado.get(p.id) ?? null
   }
 
   // Hotmart no reutiliza la misma transacción para cada cuota de un plan:

@@ -11,6 +11,7 @@
 
 import { prisma } from '../config/prisma'
 import { getAccessToken } from '../controllers/hotmart.controller'
+import { asignarPagosACursos } from '../utils/asignarPagos'
 
 interface VentaHotmart {
   purchase?: {
@@ -127,12 +128,13 @@ export async function backfillCuotas(aplicar = false, desdeISO = '2026-01-01') {
   for (const p of enPartes) {
     const cursos = porEstudiante.get(p.estudianteId) ?? []
     if (cursos.length === 0) continue
-    const t = p.fechaPago?.getTime() ?? 0
-    const ce = cursos.reduce((mejor, c) => {
-      if (!c.fechaCompra) return mejor
-      if (!mejor.fechaCompra) return c
-      return Math.abs(c.fechaCompra.getTime() - t) < Math.abs(mejor.fechaCompra.getTime() - t) ? c : mejor
-    })
+    // El monto manda, la fecha desempata — mismo emparejador que
+    // pendientesPorCobrar y cuotas() (utils/asignarPagos.ts).
+    const [idx] = asignarPagosACursos(
+      cursos.map(c => ({ total: c.precioAcordado ?? c.curso.precio ?? null, fechaCompra: c.fechaCompra })),
+      [{ monto: p.cargo, fechaPago: p.fechaPago, enPartes: true, cuotasTotal: p.cuotas }],
+    )
+    const ce = cursos[idx]
 
     const clave = `${ce.estudianteId}:${ce.cursoId}`
     if (yaVistos.has(clave)) continue
