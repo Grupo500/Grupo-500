@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone, ShieldCheck } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
-import { esMarketing, type Rol } from '@/lib/roles'
+import { entraAMarketing, esMarketing, type Rol } from '@/lib/roles'
 
 /** Fecha de hoy en Colombia, con el día y el mes capitalizados. */
 function fechaDeHoy(): string {
@@ -73,7 +73,7 @@ export default async function InicioPage() {
   // Finanzas es una vista de dirección: no se segmenta por asesor.
   const verFinanzas   = role === 'ADMIN'
   const verAdmin      = role === 'ADMIN'
-  const verMarketing  = role === 'ADMIN' || esMarketing(role)
+  const verMarketing  = entraAMarketing(role)
 
   const cifras = verVentas ? await cifrasDeVentas((session.user as any).id ?? '', role === 'ADMIN') : null
 

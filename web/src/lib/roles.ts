@@ -22,6 +22,14 @@ export const ROLES_MARKETING: Rol[] = [
 export const LIDERES_MARKETING: Rol[] = ['ADMIN', 'LIDER_EDICION']
 
 export const esMarketing = (r?: string | null) => ROLES_MARKETING.includes(r as Rol)
+
+/**
+ * Quién entra al área de Marketing: los oficios del área, más quien la
+ * administra. El cofundador entra por Contabilidad —es un rol de esa área—
+ * pero no por eso ve Finanzas, Ventas ni el panel de administración.
+ */
+export const entraAMarketing = (r?: string | null) =>
+  r === 'ADMIN' || r === 'COFUNDADOR' || esMarketing(r)
 export const esLiderMarketing = (r?: string | null) => LIDERES_MARKETING.includes(r as Rol)
 
 /** Cómo se llama cada rol en pantalla. */

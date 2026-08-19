@@ -6,7 +6,7 @@ import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { cop, estadoRegistro, etiquetaQuincena, iniciales, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from '../../SelectorQuincena'
 import { AccionesRegistro, BotonPagarTodo, FormRegistro } from './controles'
-import { esContabilidad } from '@/lib/rolesContabilidad'
+import { esContabilidad, puedeAprobarEn } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +32,13 @@ export default async function PersonaContabilidadPage({
   if (!persona) notFound()
 
   const session = await auth()
-  const esAdmin = esContabilidad((session?.user as any)?.role)
+  const rol = (session?.user as any)?.role as string | undefined
+  const esAdmin = esContabilidad(rol)
+  // Aprobar y corregir es del líder de ESTA área, no de cualquiera del equipo.
+  const puedeAprobar = await puedeAprobarEn(
+    { role: rol ?? '', email: session?.user?.email ?? '' },
+    deptId,
+  )
 
   const [quincenasConDatos, categorias, tarifas] = await Promise.all([
     prisma.contabRegistro.findMany({ distinct: ['quincena'], select: { quincena: true } }),
@@ -116,6 +122,14 @@ export default async function PersonaContabilidadPage({
                     <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-[#e8eefc] text-[#2c5cc5]">Revisado</span>
                   )}
                 </div>
+                {r.rechazado && r.motivoRechazo && (
+                  <p className="text-xs text-error mt-1">Rechazado: {r.motivoRechazo}</p>
+                )}
+                {r.valorOriginal !== null && (
+                  <p className="text-xs text-on-surface-variant mt-1">
+                    Valor corregido · se registró por {cop(r.valorOriginal)}
+                  </p>
+                )}
                 <p className="text-xs text-on-surface-variant mt-0.5">
                   {r.categoria} · {r.fecha}
                   {r.link && (
@@ -132,6 +146,8 @@ export default async function PersonaContabilidadPage({
               <AccionesRegistro
                 id={String(r.id)}
                 esAdmin={esAdmin}
+                puedeAprobar={puedeAprobar}
+                valor={r.valor}
                 congelada={congelada}
                 revisado={r.revisado}
                 aprobado={r.aprobado}

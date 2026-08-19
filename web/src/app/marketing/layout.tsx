@@ -4,7 +4,7 @@ import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
-import { esMarketing, type Rol } from '@/lib/roles'
+import { entraAMarketing, type Rol } from '@/lib/roles'
 
 /**
  * Marketing es un área propia, al mismo nivel que Ventas, Simulacros, Brito
@@ -20,7 +20,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
 
   const role = ((session.user as any).role ?? 'VENDEDOR') as Rol
 
-  if (role !== 'ADMIN' && !esMarketing(role)) redirect('/inicio')
+  if (!entraAMarketing(role)) redirect('/inicio')
 
   return (
     <QueryProvider>

@@ -5,8 +5,9 @@ import { prisma } from '@/lib/prisma'
 import { ArrowLeft, Send } from 'lucide-react'
 import { cop, etiquetaQuincena, iniciales, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from '../SelectorQuincena'
-import { FormPersona, BotonEnviar } from './controles'
-import { esContabilidad } from '@/lib/rolesContabilidad'
+import { FormPersona, BotonEnviar, Tarifario } from './controles'
+import { BotonAprobarTodo } from './[persona]/controles'
+import { esContabilidad, puedeAprobarEn } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +23,8 @@ export default async function DeptContabilidadPage({
   if (!dept) notFound()
 
   const session = await auth()
-  const esAdmin = esContabilidad((session?.user as any)?.role)
+  const rol = (session?.user as any)?.role as string | undefined
+  const esAdmin = esContabilidad(rol)
 
   const [personas, quincenasConDatos, tarifas] = await Promise.all([
     prisma.contabPersona.findMany({ where: { deptId, activa: true }, orderBy: { nombre: 'asc' } }),
@@ -30,6 +32,10 @@ export default async function DeptContabilidadPage({
     prisma.contabTarifa.findMany({ where: { deptId }, orderBy: { valor: 'asc' } }),
   ])
 
+  const puedeAprobar = await puedeAprobarEn(
+    { role: rol ?? '', email: session?.user?.email ?? '' },
+    deptId,
+  )
   const quincenas = listaQuincenas(quincenasConDatos.map(r => r.quincena))
   const { q } = await searchParams
   const quincena = q && /^\d{4}-\d{2}-Q[12]$/.test(q) ? q : quincenaActual()
@@ -37,7 +43,7 @@ export default async function DeptContabilidadPage({
   const [registros, envio] = await Promise.all([
     prisma.contabRegistro.findMany({
       where: { quincena, persona: { deptId } },
-      select: { personaId: true, valor: true, pagado: true, aprobado: true },
+      select: { personaId: true, valor: true, pagado: true, aprobado: true, rechazado: true },
     }),
     prisma.contabEnvio.findUnique({ where: { deptId_quincena: { deptId, quincena } } }),
   ])
@@ -51,6 +57,7 @@ export default async function DeptContabilidadPage({
     porPersona.set(r.personaId, acc)
   }
   const total = registros.reduce((a, r) => a + r.valor, 0)
+  const pendientes = registros.filter(r => !r.aprobado && !r.rechazado && !r.pagado).length
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -94,16 +101,12 @@ export default async function DeptContabilidadPage({
         </span>
       </div>
 
-      {/* Tarifario del departamento */}
-      {tarifas.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          {tarifas.map(t => (
-            <span key={t.id} className="text-[11px] px-2.5 py-1 rounded-full bg-surface-high text-on-surface-variant border border-outline-variant">
-              {t.label}: <b className="text-on-surface">{cop(t.valor)}</b>
-            </span>
-          ))}
-        </div>
+      {puedeAprobar && pendientes > 0 && (
+        <BotonAprobarTodo deptId={deptId} quincena={quincena} pendientes={pendientes} />
       )}
+
+      {/* Tarifario del departamento, que su líder mantiene */}
+      <Tarifario deptId={deptId} tarifas={tarifas} editable={puedeAprobar} />
 
       {/* Personas */}
       <div className="space-y-2.5">

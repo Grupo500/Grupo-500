@@ -1,61 +1,121 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { BadgeCheck, Banknote, Loader2, Plus, Trash2 } from 'lucide-react'
+import { BadgeCheck, Banknote, Check, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react'
 import {
-  aprobarRegistro, crearRegistro, eliminarRegistro,
+  aprobarRegistro, aprobarTodo, crearRegistro, editarValor, eliminarRegistro,
   marcarPagado, marcarRevisado, pagarQuincenaPersona, rechazarRegistro,
 } from '../../acciones'
 
 const btn = 'px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors disabled:opacity-50'
 
-// Botonera de un registro según rol y estado (líder: revisar/eliminar · contabilidad: aprobar/rechazar/pagar)
-export function AccionesRegistro({ id, esAdmin, congelada, revisado, aprobado, rechazado, pagado }: {
+// Botonera de un registro. Quien aprueba es el líder del área o contabilidad;
+// pagar es solo de contabilidad. El rechazo abre un campo de motivo porque sin
+// él la persona no sabe qué corregir, y corregir el valor deja rastro del que
+// traía.
+export function AccionesRegistro({
+  id, esAdmin, puedeAprobar, congelada, revisado, aprobado, rechazado, pagado, valor,
+}: {
   id: string
   esAdmin: boolean
+  puedeAprobar: boolean
   congelada: boolean
   revisado: boolean
   aprobado: boolean
   rechazado: boolean
   pagado: boolean
+  valor: number
 }) {
   const [pendiente, startTransition] = useTransition()
   const [error, setError] = useState('')
+  const [motivo, setMotivo] = useState<string | null>(null)
+  const [nuevoValor, setNuevoValor] = useState<string | null>(null)
+
   const correr = (fn: () => Promise<{ error?: string }>) => {
     setError('')
     startTransition(async () => {
       const r = await fn()
       if (r.error) setError(r.error)
+      else { setMotivo(null); setNuevoValor(null) }
     })
   }
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
       {error && <span className="text-[11px] text-error w-full">{error}</span>}
+
+      {motivo !== null && (
+        <div className="w-full flex items-center gap-1.5 flex-wrap">
+          <input
+            autoFocus
+            value={motivo}
+            onChange={e => setMotivo(e.target.value)}
+            placeholder="¿Por qué se rechaza?"
+            className="flex-1 min-w-[160px] px-2.5 py-1.5 rounded-lg bg-surface-lowest border border-outline-variant text-[11px] text-on-surface"
+          />
+          <button disabled={pendiente} onClick={() => correr(() => rechazarRegistro(id, true, motivo))}
+            className={`${btn} bg-error-container text-error`}>Rechazar</button>
+          <button disabled={pendiente} onClick={() => { setMotivo(null); setError('') }}
+            className={`${btn} bg-surface-high text-on-surface-variant border border-outline-variant`}>
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
+      {nuevoValor !== null && (
+        <div className="w-full flex items-center gap-1.5 flex-wrap">
+          <input
+            autoFocus
+            inputMode="numeric"
+            value={nuevoValor}
+            onChange={e => setNuevoValor(e.target.value.replace(/[^\d]/g, ''))}
+            placeholder="Nuevo valor"
+            className="w-32 px-2.5 py-1.5 rounded-lg bg-surface-lowest border border-outline-variant text-[11px] text-on-surface tabular-nums"
+          />
+          <button disabled={pendiente} onClick={() => correr(() => editarValor(id, Number(nuevoValor)))}
+            className={`${btn} bg-primary text-on-primary`}>
+            <Check className="w-3 h-3" />
+          </button>
+          <button disabled={pendiente} onClick={() => { setNuevoValor(null); setError('') }}
+            className={`${btn} bg-surface-high text-on-surface-variant border border-outline-variant`}>
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
       {!congelada && !pagado && (
         <button disabled={pendiente} onClick={() => correr(() => marcarRevisado(id, !revisado))}
           className={`${btn} ${revisado ? 'bg-[#e8eefc] text-[#2c5cc5]' : 'bg-surface-high text-on-surface-variant border border-outline-variant'}`}>
           {revisado ? 'Revisado ✓' : 'Revisar'}
         </button>
       )}
-      {esAdmin && !pagado && (
+
+      {puedeAprobar && !pagado && (
         <>
           <button disabled={pendiente} onClick={() => correr(() => aprobarRegistro(id, !aprobado))}
             className={`${btn} ${aprobado ? 'bg-[#e3f2e6] text-[#1b7a3d]' : 'bg-surface-high text-on-surface-variant border border-outline-variant'}`}>
             {aprobado ? 'Aprobado ✓' : 'Aprobar'}
           </button>
-          <button disabled={pendiente} onClick={() => correr(() => rechazarRegistro(id, !rechazado))}
+          <button disabled={pendiente}
+            onClick={() => rechazado ? correr(() => rechazarRegistro(id, false)) : setMotivo('')}
             className={`${btn} ${rechazado ? 'bg-error-container text-error' : 'bg-surface-high text-on-surface-variant border border-outline-variant'}`}>
             {rechazado ? 'Rechazado ✓' : 'Rechazar'}
           </button>
+          <button disabled={pendiente} title="Corregir el valor"
+            onClick={() => setNuevoValor(String(valor))}
+            className={`${btn} bg-surface-high text-on-surface-variant border border-outline-variant`}>
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
         </>
       )}
+
       {esAdmin && aprobado && !rechazado && (
         <button disabled={pendiente} onClick={() => correr(() => marcarPagado(id, !pagado))}
           className={`${btn} ${pagado ? 'bg-primary-container text-secondary' : 'bg-primary text-on-primary'}`}>
           {pagado ? 'Pago realizado ✓' : 'Marcar pagado'}
         </button>
       )}
+
       {!pagado && (!congelada || esAdmin) && !aprobado && (
         <button disabled={pendiente} title="Eliminar registro" onClick={() => correr(() => eliminarRegistro(id))}
           className={`${btn} bg-surface-high text-on-surface-variant border border-outline-variant hover:text-error`}>
@@ -63,6 +123,30 @@ export function AccionesRegistro({ id, esAdmin, congelada, revisado, aprobado, r
         </button>
       )}
       {pendiente && <Loader2 className="w-3.5 h-3.5 animate-spin text-on-surface-variant" />}
+    </div>
+  )
+}
+
+/** Aprueba de un golpe todo lo que el área tiene pendiente en la quincena. */
+export function BotonAprobarTodo({ deptId, quincena, pendientes }: {
+  deptId: string; quincena: string; pendientes: number
+}) {
+  const [pendiente, startTransition] = useTransition()
+  const [error, setError] = useState('')
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <button
+        disabled={pendiente}
+        onClick={() => startTransition(async () => {
+          const r = await aprobarTodo(deptId, quincena)
+          if (r.error) setError(r.error)
+        })}
+        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#e3f2e6] text-[#1b7a3d] text-xs font-semibold disabled:opacity-60"
+      >
+        {pendiente ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BadgeCheck className="w-3.5 h-3.5" />}
+        Aprobar {pendientes} {pendientes === 1 ? 'pendiente' : 'pendientes'}
+      </button>
+      {error && <span className="text-[11px] text-error">{error}</span>}
     </div>
   )
 }
