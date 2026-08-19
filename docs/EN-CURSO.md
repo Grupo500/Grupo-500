@@ -20,4 +20,4 @@ firma sus commits con su nombre; `git config --local user.name "SuNombre"`).
 
 | Máquina | Desde | Frente | Módulos/archivos |
 |---|---|---|---|
-| (libre) | | | |
+| Cristal | 18-ago 20:20 | Contabilidad: buscar persona + vista unificada por nombre (sin tocar esquema) | web/src/app/marketing/contabilidad/ |
