@@ -43,3 +43,34 @@ export function estadoRegistro(r: { pagado: boolean; rechazado: boolean; aprobad
 export function iniciales(nombre: string): string {
   return nombre.split(/\s+/).slice(0, 2).map(w => w.charAt(0)).join('').toUpperCase()
 }
+
+// ── Identidad de una persona entre departamentos ────────────────────────────
+// Hay gente que trabaja en tres áreas a la vez y tiene una fila de
+// `contab_personas` en cada una (los nombres repetidos son a propósito: es la
+// misma persona en otra área). En el detalle de un departamento se ve por
+// separado; para el resumen y la búsqueda hay que unificarla, y lo único que
+// las une es el nombre. Por eso se compara normalizado: sin tildes, sin
+// mayúsculas y sin espacios de más, que es donde difieren en la práctica.
+
+/** Clave con la que se decide que dos filas son la misma persona. */
+export function claveNombre(nombre: string): string {
+  return nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().trim().replace(/\s+/g, ' ')
+}
+
+/** La misma clave, apta para una URL: "Sara Reyes" → "sara-reyes". */
+export function slugNombre(nombre: string): string {
+  return claveNombre(nombre).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+/** Mes al que pertenece una quincena: "2026-08-Q1" → "2026-08". */
+export function mesDeQuincena(quincena: string): string {
+  return quincena.slice(0, 7)
+}
+
+/** Etiqueta de un mes: "2026-08" → "agosto 2026". */
+export function etiquetaMes(mes: string): string {
+  const m = mes.match(/^(\d{4})-(\d{2})$/)
+  if (!m) return mes
+  return `${MESES[Number(m[2]) - 1]} ${m[1]}`
+}
