@@ -53,6 +53,7 @@ import redesRoutes from './routes/redes'
 import { publicarRedesPendientes } from './jobs/publicarRedes'
 import { respaldarBaseDatos, backupVencido, horaColombia } from './jobs/backupBaseDatos'
 import { purgarAsesoresRetirados } from './jobs/purgarAsesoresRetirados'
+import { sincronizarLeadsHubspot } from './services/hubspot.service'
 
 const app = express()
 
@@ -261,6 +262,16 @@ app.listen(PORT, () => {
   // esté marcado como cuota y no se avise de algo que el cliente ya pagó.
   setTimeout(() => { void sincronizarAtrasos(true, ventanaCuotas()) }, 8 * 60 * 1000)
   setInterval(() => { void sincronizarAtrasos(true, ventanaCuotas()) }, 30 * 60 * 1000)
+
+  // Leads de HubSpot: los tickets que el equipo se asigna a mano en HubSpot
+  // solo entraban cuando un admin corría la sincronización manual — la tasa
+  // de cierre se quedaba vieja. Es incremental (solo trae lo nuevo), así que
+  // cada 30 minutos cuesta casi nada. Trengo no necesita esto: su webhook
+  // registra cada asignación (manual o automática) al instante.
+  if (process.env.HUBSPOT_API_KEY) {
+    setTimeout(() => { void sincronizarLeadsHubspot().catch(e => logger.error(`[HubSpot] sync periódica: ${e?.message}`)) }, 10 * 60 * 1000)
+    setInterval(() => { void sincronizarLeadsHubspot().catch(e => logger.error(`[HubSpot] sync periódica: ${e?.message}`)) }, 30 * 60 * 1000)
+  }
 
   // Publicador de redes sociales (Marketing > Redes): cada minuto revisa las
   // publicaciones programadas vencidas y las sube a IG/FB vía la Graph API.
