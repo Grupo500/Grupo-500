@@ -39,27 +39,27 @@ export function DesgloseMes({ desde, hasta }: { desde: string; hasta: string }) 
         : <div className="space-y-3 flex-1 flex flex-col justify-center animate-fade-in">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] text-on-surface-variant">Facturación bruta</span>
-              <span className="text-[13px] font-bold text-on-surface tabular-nums">{formatCOP(d.bruto)}</span>
+              <span className="text-[13px] font-bold text-on-surface tabular-nums whitespace-nowrap">{formatCOP(d.bruto)}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+              <span className="text-[12px] text-on-surface-variant flex items-center gap-1 whitespace-nowrap">
                 <Landmark className="w-3 h-3" /> Comisión Hotmart
               </span>
-              <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#d97706' }}>
+              <span className="text-[12px] font-semibold tabular-nums whitespace-nowrap" style={{ color: '#d97706' }}>
                 −{formatCOP(d.comisionHotmart)}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[12px] text-on-surface-variant flex items-center gap-1">
+              <span className="text-[12px] text-on-surface-variant flex items-center gap-1 whitespace-nowrap">
                 <Users className="w-3 h-3" /> Comisión asesores
               </span>
-              <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#dc2626' }}>
+              <span className="text-[12px] font-semibold tabular-nums whitespace-nowrap" style={{ color: '#dc2626' }}>
                 −{formatCOP(d.comisionAsesor)}
               </span>
             </div>
             <div className="border-t border-outline-variant pt-3 flex items-center justify-between gap-3">
               <span className="text-[13px] font-semibold text-on-surface">Neto recibido</span>
-              <span className="text-[18px] font-bold tabular-nums" style={{ color: '#16a34a' }}>
+              <span className="text-[18px] font-bold tabular-nums whitespace-nowrap" style={{ color: '#16a34a' }}>
                 {formatCOP(d.neto)}
               </span>
             </div>

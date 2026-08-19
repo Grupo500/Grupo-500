@@ -76,7 +76,7 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
                 tarjeta, en vez de tres KPIs sueltos: es una resta y se lee
                 como tal. Un poco más ancha que las tarjetas viejas para que
                 las cifras no se partan de línea. */}
-            <div className="md:flex-shrink-0 md:w-64">
+            <div className="md:flex-shrink-0 md:w-72">
               <DesgloseMes desde={desde} hasta={hasta} />
             </div>
           </div>
