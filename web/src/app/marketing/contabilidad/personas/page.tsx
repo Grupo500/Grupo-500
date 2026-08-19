@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { ArrowLeft, Search } from 'lucide-react'
 import { claveNombre, cop, iniciales, slugNombre } from '@/lib/contabilidadMarketing'
+import { esContabilidad } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export default async function PersonasPage({
   searchParams: Promise<{ buscar?: string }>
 }) {
   const session = await auth()
-  if (((session?.user as any)?.role ?? '') !== 'ADMIN') redirect('/marketing/contabilidad')
+  if (!esContabilidad((session?.user as any)?.role)) redirect('/marketing/contabilidad')
 
   const { buscar } = await searchParams
   const termino = (buscar ?? '').trim()

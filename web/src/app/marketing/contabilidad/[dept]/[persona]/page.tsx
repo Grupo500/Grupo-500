@@ -6,6 +6,7 @@ import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { cop, estadoRegistro, etiquetaQuincena, iniciales, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from '../../SelectorQuincena'
 import { AccionesRegistro, BotonPagarTodo, FormRegistro } from './controles'
+import { esContabilidad } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,7 @@ export default async function PersonaContabilidadPage({
   if (!persona) notFound()
 
   const session = await auth()
-  const esAdmin = ((session?.user as any)?.role ?? '') === 'ADMIN'
+  const esAdmin = esContabilidad((session?.user as any)?.role)
 
   const [quincenasConDatos, categorias, tarifas] = await Promise.all([
     prisma.contabRegistro.findMany({ distinct: ['quincena'], select: { quincena: true } }),

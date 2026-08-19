@@ -17,7 +17,7 @@ export const MARKETING: Role[] = [
  * Ven los cobros de todo el equipo y pueden aprobarlos. El resto solo ve los
  * suyos: lo que cobra un editor no es asunto de los demás editores.
  */
-export const LIDERES_MARKETING: Role[] = ['ADMIN', 'LIDER_EDICION']
+export const LIDERES_MARKETING: Role[] = ['ADMIN', 'COFUNDADOR', 'LIDER_EDICION']
 
 /** Operan el área de Ventas. */
 export const VENTAS: Role[] = ['ADMIN', 'VENDEDOR']
@@ -27,4 +27,4 @@ export const esLiderMarketing = (r?: string): boolean => LIDERES_MARKETING.inclu
 
 /** Todos los roles que puede tener una cuenta de trabajo (no estudiantes). */
 export type RolTrabajo = Role
-export const TODOS: RolTrabajo[] = ['ADMIN', 'VENDEDOR', ...MARKETING]
+export const TODOS: RolTrabajo[] = ['ADMIN', 'COFUNDADOR', 'VENDEDOR', ...MARKETING]

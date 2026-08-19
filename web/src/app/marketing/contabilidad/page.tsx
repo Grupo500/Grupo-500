@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { Calculator, Crown, Download, Users } from 'lucide-react'
 import { cop, etiquetaQuincena, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from './SelectorQuincena'
+import { esContabilidad, esCofundador } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,8 @@ export default async function ContabilidadPage({
 }) {
   const session = await auth()
   const role = ((session?.user as any)?.role ?? '') as string
-  const esAdmin = role === 'ADMIN'
+  const esAdmin = esContabilidad(role)
+  const verRanking = esCofundador(role)
 
   const [depts, quincenasConDatos] = await Promise.all([
     prisma.contabDepartamento.findMany({ orderBy: { orden: 'asc' } }),
@@ -81,7 +83,7 @@ export default async function ContabilidadPage({
       {esAdmin && (
         <div>
           <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Administración</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className={`grid grid-cols-1 gap-3 ${verRanking ? 'sm:grid-cols-2' : ''}`}>
             <Link href={`/marketing/contabilidad/panel?q=${quincena}`}
               className="bg-surface-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3.5 hover:border-primary/40 hover:shadow-sm transition-all">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -93,6 +95,9 @@ export default async function ContabilidadPage({
                 <p className="text-xs text-on-surface-variant mt-0.5">Envíos, pagos en lote, CSV para Siigo y gestión de departamentos</p>
               </div>
             </Link>
+            {/* El ranking de ingresos es lo único reservado al cofundador, así que
+                el resto de contabilidad ni siquiera ve la puerta. */}
+            {verRanking && (
             <Link href={`/marketing/contabilidad/cofundador?q=${quincena}`}
               className="bg-surface-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3.5 hover:border-primary/40 hover:shadow-sm transition-all">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -104,6 +109,7 @@ export default async function ContabilidadPage({
                 <p className="text-xs text-on-surface-variant mt-0.5">La misma vista de contabilidad, más el ranking de ingresos</p>
               </div>
             </Link>
+            )}
           </div>
         </div>
       )}

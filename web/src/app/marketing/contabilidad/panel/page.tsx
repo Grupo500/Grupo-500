@@ -8,6 +8,7 @@ import SelectorQuincena from '../SelectorQuincena'
 import Consolidado from '../Consolidado'
 import FormDepartamento from './FormDepartamento'
 import { armarComprobante } from '@/lib/siigoDatos'
+import { esContabilidad } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +20,7 @@ export default async function PanelContabilidadPage({
   searchParams: Promise<{ q?: string }>
 }) {
   const session = await auth()
-  if (((session?.user as any)?.role ?? '') !== 'ADMIN') redirect('/marketing/contabilidad')
+  if (!esContabilidad((session?.user as any)?.role)) redirect('/marketing/contabilidad')
 
   const quincenasConDatos = await prisma.contabRegistro.findMany({ distinct: ['quincena'], select: { quincena: true } })
   const quincenas = listaQuincenas(quincenasConDatos.map(r => r.quincena))

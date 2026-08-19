@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { quincenaActual } from '@/lib/contabilidadMarketing'
 import { libroSiigo } from '@/lib/siigo'
 import { armarComprobante } from '@/lib/siigoDatos'
+import { esContabilidad } from '@/lib/rolesContabilidad'
 
 // Comprobante contable de la quincena en el formato de importación de Siigo.
 // Se descarga con lo que haya: si aún faltan los códigos del plan de cuentas o
@@ -11,7 +12,7 @@ import { armarComprobante } from '@/lib/siigoDatos'
 // panel muestra al lado qué es lo que falta.
 export async function GET(req: NextRequest) {
   const session = await auth()
-  if (((session?.user as any)?.role ?? '') !== 'ADMIN') {
+  if (!esContabilidad((session?.user as any)?.role)) {
     return NextResponse.json({ error: 'Solo contabilidad puede exportar.' }, { status: 403 })
   }
 

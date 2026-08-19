@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { estadoRegistro, quincenaActual } from '@/lib/contabilidadMarketing'
+import { esContabilidad } from '@/lib/rolesContabilidad'
 
 // Exporta la quincena completa a CSV (solo contabilidad/ADMIN).
 // Con BOM y «;» como separador para que Excel en es-CO lo abra directo.
 export async function GET(req: NextRequest) {
   const session = await auth()
-  if (((session?.user as any)?.role ?? '') !== 'ADMIN') {
+  if (!esContabilidad((session?.user as any)?.role)) {
     return NextResponse.json({ error: 'Solo contabilidad puede exportar.' }, { status: 403 })
   }
 

@@ -6,20 +6,22 @@ import { ArrowLeft, Trophy } from 'lucide-react'
 import { cop, etiquetaQuincena, iniciales, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from '../SelectorQuincena'
 import Consolidado from '../Consolidado'
+import { esCofundador } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
 const MEDALLA = ['🥇', '🥈', '🥉']
 
-// Panel de cofundador (solo ADMIN): la misma vista de contabilidad en modo
-// lectura, más el ranking de ingresos del equipo.
+// Panel de cofundador: la misma vista de contabilidad y con los mismos
+// permisos de escritura, más el ranking de ingresos —que es lo único que no
+// ve el resto de contabilidad.
 export default async function CofundadorPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>
 }) {
   const session = await auth()
-  if (((session?.user as any)?.role ?? '') !== 'ADMIN') redirect('/marketing/contabilidad')
+  if (!esCofundador((session?.user as any)?.role)) redirect('/marketing/contabilidad')
 
   const quincenasConDatos = await prisma.contabRegistro.findMany({ distinct: ['quincena'], select: { quincena: true } })
   const quincenas = listaQuincenas(quincenasConDatos.map(r => r.quincena))
@@ -107,7 +109,7 @@ export default async function CofundadorPage({
       {/* La misma vista de contabilidad, sin acciones */}
       <div>
         <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Consolidado de la quincena</h2>
-        <Consolidado quincena={quincena} accionable={false} />
+        <Consolidado quincena={quincena} accionable />
       </div>
     </div>
   )

@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import {
   cop, estadoRegistro, etiquetaMes, etiquetaQuincena, iniciales, mesDeQuincena, slugNombre,
 } from '@/lib/contabilidadMarketing'
+import { esContabilidad } from '@/lib/rolesContabilidad'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +27,7 @@ export default async function HistoricoPersonaPage({
   params: Promise<{ slug: string }>
 }) {
   const session = await auth()
-  if (((session?.user as any)?.role ?? '') !== 'ADMIN') redirect('/marketing/contabilidad')
+  if (!esContabilidad((session?.user as any)?.role)) redirect('/marketing/contabilidad')
 
   const { slug } = await params
   const personas = await prisma.contabPersona.findMany({ include: { dept: true } })

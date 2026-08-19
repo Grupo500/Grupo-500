@@ -8,7 +8,7 @@
  */
 
 export type Rol =
-  | 'ADMIN' | 'VENDEDOR'
+  | 'ADMIN' | 'COFUNDADOR' | 'VENDEDOR'
   | 'MARKETING' | 'EDITOR' | 'COMMUNITY'
   | 'LIDER_EDICION' | 'SOCIAL_MEDIA' | 'LIDER_DISENO'
   | 'ESTUDIANTE'
@@ -27,6 +27,7 @@ export const esLiderMarketing = (r?: string | null) => LIDERES_MARKETING.include
 /** Cómo se llama cada rol en pantalla. */
 export const ROL_LABEL: Record<Exclude<Rol, 'ESTUDIANTE'>, string> = {
   ADMIN:         'Administrador',
+  COFUNDADOR:    'Cofundador',
   VENDEDOR:      'Asesor',
   MARKETING:     'Marketing',
   EDITOR:        'Editor de video',
@@ -45,7 +46,7 @@ export const ROL_LABEL: Record<Exclude<Rol, 'ESTUDIANTE'>, string> = {
  * cuenta vieja: así se muestra con nombre en vez de aparecer en blanco.
  */
 const ASIGNABLES: Exclude<Rol, 'ESTUDIANTE' | 'MARKETING'>[] = [
-  'ADMIN', 'VENDEDOR',
+  'ADMIN', 'COFUNDADOR', 'VENDEDOR',
   'EDITOR', 'COMMUNITY', 'LIDER_EDICION', 'SOCIAL_MEDIA', 'LIDER_DISENO',
 ]
 
