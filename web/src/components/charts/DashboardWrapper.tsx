@@ -4,10 +4,9 @@ import Link from 'next/link'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { EstudiantesMes } from './EstudiantesMes'
-// La torta y no la tabla de Analíticas: su alto es fijo, así que la columna
-// izquierda termina a la misma altura que el Top 5 de la derecha. La tabla
-// crece según cuántas familias tengan ventas y dejaba un hueco abajo.
-import { CursosVendidosChart } from './CursosVendidosChart'
+// La versión de barras de Analíticas (pedido de Hotman, 19-ago): en la fila
+// inferior de tres tarjetas el alto variable ya no rompe ninguna columna.
+import { CursosVendidosRanked } from './CursosVendidosRanked'
 import { FacturadoMensual } from './FacturadoMensual'
 import { DesgloseMes } from './DesgloseMes'
 import { TopAsesores } from './TopAsesores'
@@ -54,41 +53,40 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
         </p>
       </div>
 
-      {/* ── Layout 30 / 70 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:items-stretch">
+      {/* ── Rediseño (Hotman, 19-ago): la gráfica toma todo el ancho arriba y
+          las tarjetas que antes vivían en la columna izquierda bajan a una
+          fila de tres junto a Pendiente por cobrar. ── */}
 
-        {/* Columna lateral (30%) — en móvil va después de la principal */}
-        <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col gap-4">
-          <EstudiantesMes desde={desde} hasta={hasta} />
-          <div className="flex-1">
-            <CursosVendidosChart desde={desde} hasta={hasta} />
-          </div>
+      {/* Fila 1: gráfica ancha + desglose del mes */}
+      <div className="flex flex-col md:flex-row gap-4 md:items-stretch">
+        <div className="flex-1 min-w-0">
+          <FacturadoMensual />
         </div>
-
-        {/* Columna principal (70%) */}
-        <div className="lg:col-span-7 order-1 lg:order-2 flex flex-col gap-4">
-          {/* Móvil: apilado · Tablet+: gráfica + KPIs lado a lado */}
-          <div className="flex flex-col md:flex-row gap-4 md:items-stretch">
-            <div className="flex-1 min-w-0">
-              <FacturadoMensual />
-            </div>
-            {/* El desglose completo (bruta − comisiones = neto) en una sola
-                tarjeta, en vez de tres KPIs sueltos: es una resta y se lee
-                como tal. Un poco más ancha que las tarjetas viejas para que
-                las cifras no se partan de línea. */}
-            <div className="md:flex-shrink-0 md:w-72">
-              <DesgloseMes desde={desde} hasta={hasta} />
-            </div>
-          </div>
-          <div className="flex-1">
-            <TopAsesores />
-          </div>
+        {/* El desglose completo (bruta − comisiones = neto) en una sola
+            tarjeta: es una resta y se lee como tal. */}
+        <div className="md:flex-shrink-0 md:w-72">
+          <DesgloseMes desde={desde} hasta={hasta} />
         </div>
-
       </div>
 
-      {/* Saldos abiertos — no depende del mes elegido arriba, es el total vigente */}
-      <PendientesPorCobrar />
+      {/* Fila 2: top asesores a lo ancho */}
+      <TopAsesores />
+
+      {/* Fila 3: estudiantes · pendiente por cobrar · cursos. Pendiente va al
+          centro y más ancha: es la que más información carga. Los cursos son
+          la versión de barras de Analíticas (pedido expreso), no la torta. */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:items-stretch">
+        <div className="lg:col-span-3">
+          <EstudiantesMes desde={desde} hasta={hasta} />
+        </div>
+        <div className="lg:col-span-4">
+          {/* Saldos abiertos — no depende del mes elegido, es el total vigente */}
+          <PendientesPorCobrar />
+        </div>
+        <div className="lg:col-span-3">
+          <CursosVendidosRanked desde={desde} hasta={hasta} />
+        </div>
+      </div>
     </div>
   )
 }

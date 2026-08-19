@@ -653,9 +653,30 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
     (b.diasSinAbonar ?? -1) - (a.diasSinAbonar ?? -1) || b.saldo - a.saldo)
   porAutomatico.sort((a, b) => b.saldo - a.saldo)
 
+  // La contracara positiva del saldo: cuánto de la deuda ya entró este mes.
+  // Cuentan las cuotas 2+ de planes (la cuota 1 es la compra, no recuperación
+  // de deuda). El % se mide contra el saldo que había al empezar el mes:
+  // lo abierto hoy + lo que ya se cobró en el mes.
+  const inicioMesCol = new Date(`${hoyColombia().slice(0, 7)}-01T00:00:00-05:00`)
+  const rec = await prisma.pago.aggregate({
+    where: {
+      estado: 'PAGADO', enPartes: true, cuotaNumero: { gt: 1 },
+      fechaPago: { gte: inicioMesCol },
+      ...(filtroAsesor ? { estudiante: { asesorId: filtroAsesor } } : {}),
+    },
+    _sum: { monto: true }, _count: true,
+  })
+  const recuperado = Math.round(rec._sum.monto ?? 0)
+  const saldoInicial = recuperado + automatico.monto + gestion.monto
+
   return ApiResponse.success(res, {
     total: automatico.monto + gestion.monto,
     estudiantes: automatico.estudiantes + gestion.estudiantes,
+    recuperadoMes: {
+      monto: recuperado,
+      abonos: rec._count,
+      pct: saldoInicial > 0 ? recuperado / saldoInicial : 0,
+    },
     automatico,
     gestion,
     cuotasFaltantes: Object.entries(cuotasFaltantes)

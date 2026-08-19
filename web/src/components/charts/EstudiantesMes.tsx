@@ -7,7 +7,37 @@ import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { apiFetch } from '@/lib/api'
 import { Users, TrendingUp, TrendingDown } from 'lucide-react'
 
-interface Resp { total: number }
+interface Resp { total: number; puntos: { label: string; cantidad: number }[] }
+
+/**
+ * El día a día del mes en una línea pequeña + proyección de cierre. El
+ * endpoint ya devolvía la serie diaria (puntos); aquí solo se dibuja. La
+ * proyección es ritmo simple: total ÷ días corridos × días del mes.
+ */
+function Sparkline({ puntos, diasDelMes, isDark }: {
+  puntos: { cantidad: number }[]; diasDelMes: number; isDark: boolean
+}) {
+  const ANCHO = 300, ALTO = 44, M = 4
+  const transcurridos = puntos.length
+  if (transcurridos < 2) return null
+  const max = Math.max(...puntos.map(p => p.cantidad), 1)
+  const x = (i: number) => M + (i / (diasDelMes - 1)) * (ANCHO - 2 * M)
+  const y = (v: number) => ALTO - M - (v / max) * (ALTO - 2 * M)
+  const linea = puntos.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.cantidad).toFixed(1)}`).join(' ')
+  // Tramo punteado: desde el último día real hasta fin de mes, al promedio.
+  const promedio = puntos.reduce((s, p) => s + p.cantidad, 0) / transcurridos
+  const proyeccion = transcurridos < diasDelMes
+    ? `M${x(transcurridos - 1).toFixed(1)},${y(puntos[transcurridos - 1].cantidad).toFixed(1)} L${x(diasDelMes - 1).toFixed(1)},${y(promedio).toFixed(1)}`
+    : null
+  const azul = isDark ? '#95daff' : '#1a7de0'
+  return (
+    <svg viewBox={`0 0 ${ANCHO} ${ALTO}`} preserveAspectRatio="none" className="w-full h-11" aria-hidden="true">
+      <path d={linea} fill="none" stroke={azul} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {proyeccion && <path d={proyeccion} fill="none" stroke={azul} strokeWidth="2" strokeDasharray="4 4" opacity="0.45" />}
+      <circle cx={x(transcurridos - 1)} cy={y(puntos[transcurridos - 1].cantidad)} r="3.5" fill={azul} />
+    </svg>
+  )
+}
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -93,6 +123,13 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
   const variacion = totalAnt > 0 ? Math.round(((total - totalAnt) / totalAnt) * 100) : null
   const max      = Math.max(total, totalAnt, 1)
 
+  // Serie diaria y proyección de cierre — solo para el mes en curso.
+  const esMesActual = desde === toISO(startOfMonth(hoy))
+  const diasDelMes  = endOfMonth(hoy).getDate()
+  const diaHoy      = hoy.getDate()
+  const puntosHastaHoy = (data?.data?.puntos ?? []).slice(0, diaHoy)
+  const proyeccion = diaHoy > 0 ? Math.round((total / diaHoy) * diasDelMes) : total
+
   const displayTotal = useCountUp(total)
 
   return (
@@ -124,6 +161,18 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
             <Barra label="Este mes"     valor={total}    max={max} color={primary}                          delay={100} />
             <Barra label="Mes anterior" valor={totalAnt} max={max} color={isDark ? '#4a6fa0' : '#9bb3d4'}  delay={250} />
           </div>
+
+          {/* El día a día del mes + a dónde va: solo tiene sentido mirando el
+              mes en curso — un mes cerrado no se proyecta. */}
+          {esMesActual && puntosHastaHoy.length >= 2 && (
+            <div className="mt-4 pt-3 border-t border-outline-variant">
+              <Sparkline puntos={puntosHastaHoy} diasDelMes={diasDelMes} isDark={isDark} />
+              <p className="text-[10.5px] text-on-surface-variant mt-1.5">
+                Inscripciones por día · al ritmo actual el mes cierra en{' '}
+                <span className="font-bold text-on-surface tabular-nums">~{proyeccion}</span>
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

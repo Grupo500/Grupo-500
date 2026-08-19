@@ -41,6 +41,9 @@ interface PorCobrar {
   cuotasFaltantes: { faltan: number; estudiantes: number }[]
   porGestionar: PersonaGestion[]
   porAutomatico: PersonaAutomatico[]
+  // La contracara positiva: cuánto de la deuda ya entró este mes (cuotas 2+
+  // de planes). pct se mide contra el saldo que había al empezar el mes.
+  recuperadoMes?: { monto: number; abonos: number; pct: number }
 }
 
 // El método llega tal cual lo reporta Hotmart o el formulario de inscripción
@@ -374,6 +377,28 @@ export function PendientesPorCobrar() {
             {d.gestion.estudiantes} estudiante{d.gestion.estudiantes !== 1 ? 's' : ''} sin plan de cuotas automático
           </p>
         </button>
+      )}
+
+      {/* Lo que ya se cobró este mes: la barra naranja de arriba cuenta lo que
+          falta; sin esta línea el equipo nunca veía lo que sí entró. */}
+      {d.recuperadoMes && d.recuperadoMes.monto > 0 && (
+        <div className="mt-4 pt-3.5 border-t border-outline-variant">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-[11.5px] text-on-surface-variant">Recuperado este mes</span>
+            <span className="text-[15px] font-bold tabular-nums whitespace-nowrap" style={{ color: '#16a34a' }}>
+              {formatCOP(d.recuperadoMes.monto)}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-surface-high overflow-hidden mt-1.5">
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${Math.min(100, Math.round(d.recuperadoMes.pct * 100))}%`, background: '#16a34a', transition: 'width 600ms cubic-bezier(0.23,1,0.32,1)' }}
+            />
+          </div>
+          <p className="text-[10.5px] text-on-surface-variant mt-1.5">
+            {Math.round(d.recuperadoMes.pct * 100)}% del saldo que había al empezar el mes ya se cobró · {d.recuperadoMes.abonos} abono{d.recuperadoMes.abonos !== 1 ? 's' : ''}
+          </p>
+        </div>
       )}
 
       <Modal
