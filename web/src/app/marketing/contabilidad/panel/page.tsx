@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Download, Search, Send } from 'lucide-react'
+import { ArrowLeft, Download, FileSpreadsheet, Search, Send } from 'lucide-react'
 import { cop, etiquetaQuincena, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from '../SelectorQuincena'
 import Consolidado from '../Consolidado'
@@ -53,7 +53,11 @@ export default async function PanelContabilidadPage({
           </Link>
           <a href={`/marketing/contabilidad/export?q=${quincena}`}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-lowest border border-outline-variant text-xs font-medium text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors">
-            <Download className="w-3.5 h-3.5" /> CSV para Siigo
+            <Download className="w-3.5 h-3.5" /> CSV de la quincena
+          </a>
+          <a href={`/marketing/contabilidad/export/siigo?q=${quincena}`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:opacity-90 transition-opacity">
+            <FileSpreadsheet className="w-3.5 h-3.5" /> Excel para Siigo
           </a>
         </div>
       </div>
