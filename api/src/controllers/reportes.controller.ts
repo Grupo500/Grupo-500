@@ -1089,7 +1089,12 @@ export async function estudiantesPorMes(req: Request, res: Response) {
     hastaDate = new Date(hoy.getFullYear(), 11, 31, 23, 59, 59)
   }
 
-  const diasRango = Math.round((hastaDate.getTime() - desdeDate.getTime()) / 86400000) + 1
+  // Días que abarca el rango, contando ambos extremos. Con `floor` y no
+  // `round`: el rango va de las 00:00 al 23:59, así que la resta da 30,99
+  // días para un mes de 31 — redondeando salían 32 y CUALQUIER mes completo
+  // se pasaba del umbral de 31, cayendo al agrupado por semana. Por eso la
+  // serie de un mes llegaba con 5 puntos en vez de 31.
+  const diasRango = Math.floor((hastaDate.getTime() - desdeDate.getTime()) / 86400000) + 1
 
   type Punto = { label: string; desde: Date; hasta: Date }
   const puntos: Punto[] = []
@@ -1133,7 +1138,10 @@ export async function estudiantesPorMes(req: Request, res: Response) {
       const cantidad = await prisma.estudiante.count({
         where: { createdAt: { gte: desde, lte: hasta } },
       })
-      return { label, cantidad }
+      // `fecha` (inicio del tramo) va además del label: quien dibuje la serie
+      // no tiene que adivinar a qué día corresponde cada punto a partir de su
+      // posición — con un rango que no empiece el día 1 eso se equivocaría.
+      return { label, cantidad, fecha: desde.toISOString() }
     })
   )
 

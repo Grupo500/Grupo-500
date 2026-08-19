@@ -6,9 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { apiFetch } from '@/lib/api'
 import { Users, TrendingUp, TrendingDown } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
 
-interface Resp { total: number; puntos: { label: string; cantidad: number }[] }
+interface Resp { total: number; puntos: { label: string; cantidad: number; fecha?: string }[] }
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -94,21 +94,20 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
   const variacion = totalAnt > 0 ? Math.round(((total - totalAnt) / totalAnt) * 100) : null
   const max      = Math.max(total, totalAnt, 1)
 
-  // Serie diaria y proyección de cierre — solo para el mes en curso. La
-  // gráfica es de verdad (Recharts, la misma de Total facturado en chiquito):
-  // área con degradado, tooltip por día y la proyección como tramo punteado.
+  // Serie diaria del mes en curso. Se dibuja como barras y no como línea: es
+  // un conteo por día (cada barra es un día que se puede comparar con el de
+  // al lado), no una magnitud que fluye. El día de hoy va resaltado y los
+  // días que aún no llegan no se pintan.
   const esMesActual = desde === toISO(startOfMonth(hoy))
   const diasDelMes  = endOfMonth(hoy).getDate()
   const diaHoy      = hoy.getDate()
   const proyeccion  = diaHoy > 0 ? Math.round((total / diaHoy) * diasDelMes) : total
-  const ritmo       = diaHoy > 0 ? total / diaHoy : 0
-  const serie = (data?.data?.puntos ?? []).map((p, i) => ({
-    dia: i + 1,
-    // La serie real termina hoy; la proyectada arranca hoy (comparten el
-    // punto de empalme) y sigue plana al ritmo promedio del mes.
-    real: i < diaHoy ? p.cantidad : null,
-    proy: i === diaHoy - 1 ? p.cantidad : i >= diaHoy ? Math.round(ritmo) : null,
-  }))
+  const promedioDia = diaHoy > 0 ? Math.round(total / diaHoy) : 0
+  const serie = (data?.data?.puntos ?? [])
+    // El día sale de la fecha del punto, no de su posición en la lista.
+    .map(p => ({ dia: p.fecha ? new Date(p.fecha).getDate() : 0, cantidad: p.cantidad }))
+    .filter(p => p.dia > 0 && p.dia <= diaHoy)
+  const mejorDia = serie.reduce((m, p) => Math.max(m, p.cantidad), 0)
 
   const displayTotal = useCountUp(total)
 
@@ -142,35 +141,50 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
             <Barra label="Mes anterior" valor={totalAnt} max={max} color={isDark ? '#4a6fa0' : '#9bb3d4'}  delay={250} />
           </div>
 
-          {/* El día a día del mes + a dónde va: solo tiene sentido mirando el
-              mes en curso — un mes cerrado no se proyecta. */}
-          {esMesActual && diaHoy >= 2 && serie.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-outline-variant">
-              <ResponsiveContainer width="100%" height={110}>
-                <AreaChart data={serie} margin={{ top: 4, right: 2, left: 2, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradEstMes" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={primary} stopOpacity={0.25} />
-                      <stop offset="100%" stopColor={primary} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="dia" tick={{ fontSize: 9, fill: isDark ? '#8ea0b8' : '#5b6b85' }}
-                    axisLine={false} tickLine={false} interval={4} />
-                  <YAxis hide domain={[0, 'dataMax + 4']} />
-                  <Tooltip
-                    contentStyle={{ background: isDark ? '#0f1e35' : '#fff', border: `1px solid ${isDark ? 'rgba(149,218,255,0.12)' : 'rgba(0,48,96,0.10)'}`, borderRadius: 10, fontSize: 11 }}
-                    labelFormatter={(l) => `Día ${l}`}
-                    formatter={(v: number, name) => [`${v} inscripciones`, name === 'real' ? 'Real' : 'Proyección']}
+          {/* El día a día del mes: solo tiene sentido mirando el mes en curso
+              — un mes cerrado no se proyecta. */}
+          {esMesActual && serie.length >= 2 && (
+            <div className="mt-4 pt-3.5 border-t border-outline-variant">
+              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                <span className="text-[10.5px] font-medium text-on-surface-variant">Inscripciones por día</span>
+                <span className="text-[10.5px] text-on-surface-variant">
+                  promedio <span className="font-bold text-on-surface tabular-nums">{promedioDia}</span>/día
+                </span>
+              </div>
+
+              <ResponsiveContainer width="100%" height={92}>
+                <BarChart data={serie} margin={{ top: 2, right: 0, left: 0, bottom: 0 }} barCategoryGap="18%">
+                  <XAxis
+                    dataKey="dia" tick={{ fontSize: 9, fill: isDark ? '#8ea0b8' : '#5b6b85' }}
+                    axisLine={false} tickLine={false}
+                    // Primer día, cada 5, y el de hoy: suficientes anclas para
+                    // ubicarse sin llenar el eje de números.
+                    ticks={serie.map(p => p.dia).filter(d => d === 1 || d % 5 === 0 || d === diaHoy)}
                   />
-                  <Area type="monotone" dataKey="proy" stroke={primary} strokeWidth={1.5}
-                    strokeDasharray="4 4" strokeOpacity={0.5} fill="none" dot={false} connectNulls={false} />
-                  <Area type="monotone" dataKey="real" stroke={primary} strokeWidth={2.5}
-                    fill="url(#gradEstMes)" dot={false} activeDot={{ r: 4, fill: primary, strokeWidth: 0 }} connectNulls={false} />
-                </AreaChart>
+                  <YAxis hide domain={[0, Math.max(mejorDia, 1)]} />
+                  {/* El promedio como referencia: una barra por encima fue un
+                      buen día, por debajo uno flojo. */}
+                  <ReferenceLine y={promedioDia} stroke={isDark ? '#8ea0b8' : '#9bb3d4'}
+                    strokeDasharray="3 3" strokeWidth={1} />
+                  <Tooltip
+                    cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,48,96,0.05)' }}
+                    contentStyle={{ background: isDark ? '#0f1e35' : '#fff', border: `1px solid ${isDark ? 'rgba(149,218,255,0.12)' : 'rgba(0,48,96,0.10)'}`, borderRadius: 10, fontSize: 11 }}
+                    labelFormatter={(d) => `Día ${d}`}
+                    formatter={(v: number) => [`${v} estudiante${v === 1 ? '' : 's'}`, 'Nuevos']}
+                  />
+                  <Bar dataKey="cantidad" radius={[3, 3, 0, 0]} isAnimationActive={false}>
+                    {serie.map(p => (
+                      // Hoy resaltado; el mejor día del mes en verde.
+                      <Cell key={p.dia}
+                        fill={p.dia === diaHoy ? primary : p.cantidad === mejorDia ? verde : (isDark ? '#2f4d78' : '#bcd4ee')} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
-              <p className="text-[10.5px] text-on-surface-variant mt-1">
-                Inscripciones por día · al ritmo actual el mes cierra en{' '}
-                <span className="font-bold text-on-surface tabular-nums">~{proyeccion}</span>
+
+              <p className="text-[10.5px] text-on-surface-variant mt-1.5">
+                Al ritmo actual el mes cierra en{' '}
+                <span className="font-bold text-on-surface tabular-nums">~{proyeccion}</span> estudiantes
               </p>
             </div>
           )}
