@@ -2,11 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Download, FileSpreadsheet, Search, Send } from 'lucide-react'
+import { ArrowLeft, Download, FileSpreadsheet, Search, Send, TriangleAlert } from 'lucide-react'
 import { cop, etiquetaQuincena, listaQuincenas, quincenaActual } from '@/lib/contabilidadMarketing'
 import SelectorQuincena from '../SelectorQuincena'
 import Consolidado from '../Consolidado'
 import FormDepartamento from './FormDepartamento'
+import { armarComprobante } from '@/lib/siigoDatos'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,8 @@ export default async function PanelContabilidadPage({
   const quincenas = listaQuincenas(quincenasConDatos.map(r => r.quincena))
   const { q } = await searchParams
   const quincena = q && /^\d{4}-\d{2}-Q[12]$/.test(q) ? q : quincenaActual()
+
+  const comprobante = await armarComprobante(quincena)
 
   const envios = await prisma.contabEnvio.findMany({
     where: { quincena },
@@ -61,6 +64,33 @@ export default async function PanelContabilidadPage({
           </a>
         </div>
       </div>
+
+      {/* Lo que el Excel de Siigo todavía no puede llenar solo. No bloquea la
+          descarga: el archivo sale igual y esas columnas van vacías. */}
+      {comprobante.registros > 0 && !comprobante.completo && (
+        <div className="bg-[#fff8e1] border border-[#ffe08a] rounded-xl p-4 flex gap-3">
+          <TriangleAlert className="w-4 h-4 text-[#8a6d00] flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-[#6b5500] space-y-1.5">
+            <p className="font-semibold text-sm">El Excel para Siigo sale como borrador</p>
+            <p>
+              Se descarga con los valores y las personas de la quincena, pero estas columnas
+              van vacías porque el dato todavía no existe en la app. Complétalas en Excel
+              antes de importar, o cárgalas aquí para que salgan solas.
+            </p>
+            {comprobante.configuracionPendiente.length > 0 && (
+              <p>
+                <b>Códigos contables:</b> {comprobante.configuracionPendiente.join(' · ')}.
+              </p>
+            )}
+            {comprobante.personasSinCedula.length > 0 && (
+              <p>
+                <b>Sin cédula ({comprobante.personasSinCedula.length}):</b>{' '}
+                {comprobante.personasSinCedula.join(', ')}.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quincenas enviadas por los líderes */}
       <div>
