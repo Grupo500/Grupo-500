@@ -1464,3 +1464,75 @@ hook ya llega como `-rwxr-xr-x`.
   que el arranque lo verifique, o mover la comprobación a un sitio que no dependa de la
   configuración local de cada quien.
 - Confirmar que Hotman y David tienen `core.hooksPath` puesto.
+
+---
+
+## Sesión 042 — 2026-08-18 (noche, máquina de Hotman)
+
+**Objetivo:** rematar la recuperación del borrado — respaldo verificado, tasa de
+cierre real para todos los asesores y retiro ordenado de los que ya no venden.
+
+### Respaldo de la noche, verificado en Drive
+
+`backup-2026-08-18-1832.json.gz` (55 tablas, 15.758 filas, 1.2MB) subido con el
+mismo código del job nocturno y **confirmado listándolo en la carpeta "Backups"
+del Drive** — no se dio por hecho. El job automático de las 23:59 entra con el
+deploy que sigue en cola por el incidente de Railway.
+
+### Tasa de cierre: la fórmula estaba bien, el insumo no
+
+- **HubSpot quedó completo**: resincronización por ventanas de mes terminada —
+  10.860 leads de 10.877 tickets (jun 3.837 / jul 5.489 / ago 1.534). Los 17
+  restantes son del chatbot, sin dueño humano.
+- **Trengo es el hueco**: el webhook corre desde el 24-jun, pero su acumulado
+  vivía en nuestra base y se borró con todo lo demás. Trengo conserva los
+  tickets de su lado; **nunca existió un token de la API** (verificado en env
+  de Railway, .env locales y todo el historial de git — la integración nació
+  webhook-only). `api/scripts/backfillTrengo.ts` queda listo: con un Personal
+  Access Token de Trengo se reconstruye el historial completo y las tasas
+  vuelven a ser las de antes del borrado. **Sin ese token, las tasas de agosto
+  salen infladas** (ej. Leidy 40/40 = 100% falso: solo cuentan los leads
+  llegados desde hoy).
+- **El cruce ahora suma todos los correos del asesor**: `llavesCorreo()` en
+  `ranking.ts` — perfil + alternos de `emailCrm` separados por coma. Antes el
+  alterno *reemplazaba* al de perfil y solo cruzaba uno. María Buelvas atendía
+  Trengo con un Gmail distinto al de su perfil: `emailCrm` asignado, sus leads
+  ya cruzan. En HubSpot hay una "Sofía Duarte" (318 leads jun-jul,
+  sofduartetrabajo@) que no es ningún asesor registrado — pendiente que Hotman
+  confirme si es un segundo correo de Sara o una ex-integrante.
+
+### Asesores retirados: fuera de la vista, 60 días en la base
+
+Decisión de Hotman: los asesores en ceros ya no trabajan — se ocultan pero se
+conservan por si vuelven, y a los 60 días se eliminan del todo.
+
+- `Asesor.activo` + `retiradoEn` (migración `20260818240000_asesor_activo`,
+  aplicada a mano en producción e insertada en `_prisma_migrations` — columna
+  aditiva, inofensiva para el contenedor viejo que sigue corriendo).
+- 7 marcados como retirados (sin una sola venta en agosto): Silvia Juliana
+  Parra, María Fernanda Calderón, Samuel Diaz, Juan Gómez, Mariana Uribe,
+  Mariana Caviedes y Valentina Rodríguez. Purga automática: **17-oct-2026**
+  (`jobs/purgarAsesoresRetirados.ts`, diario). Al purgar, sus pagos quedan sin
+  asesor: los totales históricos no cambian, la atribución individual sí.
+- El ranking los muestra solo en períodos donde tuvieron movimiento; Usuarios
+  los ordena al final de su área con chip "Retirado".
+
+### Hallazgos del barrido de completitud
+
+- 138 pagos sin desglose de comisión (Hotmart no reportó el detalle), 267 sin
+  asesor (ventas orgánicas — correcto), 16 cursos sin familia.
+- **`ConfigApp` quedó vacía con el borrado: las credenciales de la App de Meta
+  se perdieron.** Un ADMIN debe reingresarlas en la pantalla de Redes y volver
+  a vincular las páginas de FB/IG.
+- Esta máquina cumple los pendientes de la Sesión 041: `core.hooksPath`
+  configurado y commits firmados "Hotman".
+
+### Pendiente
+
+- Token de la API de Trengo (lo crea quien administre Trengo) → correr
+  `backfillTrengo.ts` → tasas de cierre reales en todos los meses.
+- Deploy en cola en Railway (incidente de plataforma) — al pasar: backup
+  nocturno activo, ranking sin retirados, cierre multi-correo en vivo.
+- Rotación de la contraseña de Postgres + rol `app_rw` para el backend, cuando
+  Railway sane.
+- Confirmar identidad de "Sofía Duarte" en HubSpot.
