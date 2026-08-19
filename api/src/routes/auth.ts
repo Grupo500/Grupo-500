@@ -209,6 +209,29 @@ router.patch('/usuarios/:id/password', authenticate, asyncHandler(async (req, re
   return ApiResponse.success(res, { message: 'Contraseña actualizada' })
 }))
 
+// ── Suspender / reactivar usuario (solo ADMIN) ───────────────────────────────
+// Corta el acceso sin borrar nada: para gente que ya no trabaja aquí pero
+// cuyo registro se quiere conservar. El middleware rechaza sus peticiones al
+// instante (CUENTA_SUSPENDIDA), tenga o no una sesión abierta.
+router.patch('/usuarios/:id/suspension', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
+  const { suspendido } = z.object({ suspendido: z.boolean() }).parse(req.body)
+
+  // Un admin no se suspende a sí mismo: sería cerrarse la puerta por dentro.
+  if (req.params.id === req.userId) {
+    return res.status(400).json({ error: 'No puedes suspender tu propia cuenta' })
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } })
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { suspendido, suspendidoEn: suspendido ? new Date() : null },
+  })
+  auditLog(req, 'UPDATE', 'usuario_suspension', user.id, { email: user.email, suspendido })
+  return ApiResponse.success(res, { message: suspendido ? 'Acceso suspendido' : 'Acceso restablecido' })
+}))
+
 // ── Eliminar usuario (solo ADMIN) ────────────────────────────────────────────
 router.delete('/usuarios/:id', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.params.id } })

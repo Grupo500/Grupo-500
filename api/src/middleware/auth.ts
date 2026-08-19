@@ -42,6 +42,11 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
     if (!user) return next(new ForbiddenError('USUARIO_NO_REGISTRADO'))
 
+    // Cuenta suspendida: el registro existe pero el acceso está cortado.
+    // Se valida aquí —y no solo en el login— para que la suspensión aplique
+    // de inmediato aunque la persona tenga una sesión abierta.
+    if (user.suspendido) return next(new ForbiddenError('CUENTA_SUSPENDIDA'))
+
     req.userId   = user.id
     req.userRole = user.role
     req.asesorId = user.asesor?.id

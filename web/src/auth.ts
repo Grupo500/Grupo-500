@@ -63,6 +63,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     async signIn({ user, account, profile }) {
+      // Cuenta suspendida: se le niega la entrada desde la puerta. El API
+      // también la rechaza en cada petición (CUENTA_SUSPENDIDA), así que una
+      // sesión que ya estaba abierta muere sola — esto solo evita abrir nuevas.
+      if (user.email) {
+        const cuenta = await prisma.user.findFirst({
+          where:  { email: { equals: user.email.trim(), mode: 'insensitive' } },
+          select: { suspendido: true },
+        })
+        if (cuenta?.suspendido) return false
+      }
       // Al entrar con Google, actualizar la foto en la DB con la del perfil de Google
       if (account?.provider === 'google' && profile?.sub && user.email) {
         const picture = (profile as any).picture as string | undefined

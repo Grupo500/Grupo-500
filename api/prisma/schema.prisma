@@ -13,6 +13,12 @@ model User {
   id             String    @id @default(cuid())
   email          String    @unique
   role           Role      @default(VENDEDOR)
+  // Cuenta suspendida: no puede entrar a la plataforma (web ni API) pero no
+  // se borra nada — para gente que ya no trabaja aquí sin perder su registro.
+  // La levanta un admin desde Usuarios. Distinto de Asesor.activo: retirar
+  // saca del ranking y purga a los 60 días; suspender solo corta el acceso.
+  suspendido     Boolean   @default(false)
+  suspendidoEn   DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   image          String?

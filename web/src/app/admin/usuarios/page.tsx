@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { InputPassword } from '@/components/ui/InputPassword'
 import { Select } from '@/components/ui/Select'
 import { formatDate, cn } from '@/lib/utils'
-import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp, Megaphone } from 'lucide-react'
+import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp, Megaphone, Ban } from 'lucide-react'
 import { ROLES_MARKETING, OPCIONES_ROL, ROL_LABEL, type Rol } from '@/lib/roles'
 
 interface Asesor {
@@ -20,6 +20,8 @@ interface Asesor {
 interface Usuario {
   id: string; email: string
   nombre: string | null; image: string | null
+  // true = acceso cortado sin borrar la cuenta (gente que ya no trabaja aquí).
+  suspendido?: boolean
   role: Exclude<Rol, 'ESTUDIANTE'>; asesor: Asesor | null; createdAt: string
 }
 
@@ -84,6 +86,17 @@ export default function UsuariosPage() {
       fetcher(`/auth/usuarios/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
     onError: (e: Error) => alert(e.message || 'Error al eliminar el usuario'),
+  })
+
+  const suspender = useMutation({
+    mutationFn: ({ id, suspendido }: { id: string; suspendido: boolean }) =>
+      fetcher(`/auth/usuarios/${id}/suspension`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suspendido }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
+    onError: (e: Error) => alert(e.message || 'Error al cambiar la suspensión'),
   })
 
   const guardarAsesor = useMutation({
@@ -271,7 +284,10 @@ export default function UsuariosPage() {
             </div>
           <div className="p-3 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {gente.map(u => (
-              <div key={u.id} className="bg-surface-low border border-outline-variant rounded-xl p-3 md:p-4 flex flex-col gap-3 hover:border-primary/30 transition-colors">
+              <div key={u.id} className={cn(
+                'bg-surface-low border border-outline-variant rounded-xl p-3 md:p-4 flex flex-col gap-3 hover:border-primary/30 transition-colors',
+                u.suspendido && 'opacity-60',
+              )}>
 
                 {/* Avatar + nombre + badge */}
                 <div className="flex items-center gap-2.5">
@@ -301,6 +317,11 @@ export default function UsuariosPage() {
                     {u.asesor?.activo === false && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5 ml-1 bg-surface-high text-on-surface-variant border border-outline-variant">
                         Retirado
+                      </span>
+                    )}
+                    {u.suspendido && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold mt-0.5 ml-1 bg-[#f59e0b]/15 text-[#b45309] border border-[#f59e0b]/30">
+                        <Ban className="w-2.5 h-2.5" /> Suspendido
                       </span>
                     )}
                   </div>
@@ -354,6 +375,24 @@ export default function UsuariosPage() {
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                   )}
+                  <button
+                    onClick={() => {
+                      const pregunta = u.suspendido
+                        ? `¿Restablecer el acceso de ${u.nombre ?? u.email}?`
+                        : `¿Suspender el acceso de ${u.nombre ?? u.email}? No se borra nada; podrás reactivarlo cuando quieras.`
+                      if (confirm(pregunta)) suspender.mutate({ id: u.id, suspendido: !u.suspendido })
+                    }}
+                    disabled={suspender.isPending}
+                    className={cn(
+                      'p-1.5 rounded-lg transition-colors disabled:opacity-40',
+                      u.suspendido
+                        ? 'text-[#b45309] bg-[#f59e0b]/15 hover:bg-[#f59e0b]/25'
+                        : 'text-on-surface-variant hover:text-[#b45309] hover:bg-[#f59e0b]/10',
+                    )}
+                    title={u.suspendido ? 'Restablecer acceso' : 'Suspender acceso'}
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={() => { if (confirm(`¿Eliminar a ${u.nombre ?? u.email}?`)) eliminar.mutate(u.id) }}
                     disabled={eliminar.isPending}
