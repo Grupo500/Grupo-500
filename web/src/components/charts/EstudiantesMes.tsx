@@ -6,38 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { apiFetch } from '@/lib/api'
 import { Users, TrendingUp, TrendingDown } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface Resp { total: number; puntos: { label: string; cantidad: number }[] }
-
-/**
- * El día a día del mes en una línea pequeña + proyección de cierre. El
- * endpoint ya devolvía la serie diaria (puntos); aquí solo se dibuja. La
- * proyección es ritmo simple: total ÷ días corridos × días del mes.
- */
-function Sparkline({ puntos, diasDelMes, isDark }: {
-  puntos: { cantidad: number }[]; diasDelMes: number; isDark: boolean
-}) {
-  const ANCHO = 300, ALTO = 44, M = 4
-  const transcurridos = puntos.length
-  if (transcurridos < 2) return null
-  const max = Math.max(...puntos.map(p => p.cantidad), 1)
-  const x = (i: number) => M + (i / (diasDelMes - 1)) * (ANCHO - 2 * M)
-  const y = (v: number) => ALTO - M - (v / max) * (ALTO - 2 * M)
-  const linea = puntos.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.cantidad).toFixed(1)}`).join(' ')
-  // Tramo punteado: desde el último día real hasta fin de mes, al promedio.
-  const promedio = puntos.reduce((s, p) => s + p.cantidad, 0) / transcurridos
-  const proyeccion = transcurridos < diasDelMes
-    ? `M${x(transcurridos - 1).toFixed(1)},${y(puntos[transcurridos - 1].cantidad).toFixed(1)} L${x(diasDelMes - 1).toFixed(1)},${y(promedio).toFixed(1)}`
-    : null
-  const azul = isDark ? '#95daff' : '#1a7de0'
-  return (
-    <svg viewBox={`0 0 ${ANCHO} ${ALTO}`} preserveAspectRatio="none" className="w-full h-11" aria-hidden="true">
-      <path d={linea} fill="none" stroke={azul} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {proyeccion && <path d={proyeccion} fill="none" stroke={azul} strokeWidth="2" strokeDasharray="4 4" opacity="0.45" />}
-      <circle cx={x(transcurridos - 1)} cy={y(puntos[transcurridos - 1].cantidad)} r="3.5" fill={azul} />
-    </svg>
-  )
-}
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -123,12 +94,21 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
   const variacion = totalAnt > 0 ? Math.round(((total - totalAnt) / totalAnt) * 100) : null
   const max      = Math.max(total, totalAnt, 1)
 
-  // Serie diaria y proyección de cierre — solo para el mes en curso.
+  // Serie diaria y proyección de cierre — solo para el mes en curso. La
+  // gráfica es de verdad (Recharts, la misma de Total facturado en chiquito):
+  // área con degradado, tooltip por día y la proyección como tramo punteado.
   const esMesActual = desde === toISO(startOfMonth(hoy))
   const diasDelMes  = endOfMonth(hoy).getDate()
   const diaHoy      = hoy.getDate()
-  const puntosHastaHoy = (data?.data?.puntos ?? []).slice(0, diaHoy)
-  const proyeccion = diaHoy > 0 ? Math.round((total / diaHoy) * diasDelMes) : total
+  const proyeccion  = diaHoy > 0 ? Math.round((total / diaHoy) * diasDelMes) : total
+  const ritmo       = diaHoy > 0 ? total / diaHoy : 0
+  const serie = (data?.data?.puntos ?? []).map((p, i) => ({
+    dia: i + 1,
+    // La serie real termina hoy; la proyectada arranca hoy (comparten el
+    // punto de empalme) y sigue plana al ritmo promedio del mes.
+    real: i < diaHoy ? p.cantidad : null,
+    proy: i === diaHoy - 1 ? p.cantidad : i >= diaHoy ? Math.round(ritmo) : null,
+  }))
 
   const displayTotal = useCountUp(total)
 
@@ -164,10 +144,31 @@ export function EstudiantesMes({ desde, hasta }: { desde: string; hasta: string 
 
           {/* El día a día del mes + a dónde va: solo tiene sentido mirando el
               mes en curso — un mes cerrado no se proyecta. */}
-          {esMesActual && puntosHastaHoy.length >= 2 && (
+          {esMesActual && diaHoy >= 2 && serie.length > 0 && (
             <div className="mt-4 pt-3 border-t border-outline-variant">
-              <Sparkline puntos={puntosHastaHoy} diasDelMes={diasDelMes} isDark={isDark} />
-              <p className="text-[10.5px] text-on-surface-variant mt-1.5">
+              <ResponsiveContainer width="100%" height={110}>
+                <AreaChart data={serie} margin={{ top: 4, right: 2, left: 2, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradEstMes" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={primary} stopOpacity={0.25} />
+                      <stop offset="100%" stopColor={primary} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="dia" tick={{ fontSize: 9, fill: isDark ? '#8ea0b8' : '#5b6b85' }}
+                    axisLine={false} tickLine={false} interval={4} />
+                  <YAxis hide domain={[0, 'dataMax + 4']} />
+                  <Tooltip
+                    contentStyle={{ background: isDark ? '#0f1e35' : '#fff', border: `1px solid ${isDark ? 'rgba(149,218,255,0.12)' : 'rgba(0,48,96,0.10)'}`, borderRadius: 10, fontSize: 11 }}
+                    labelFormatter={(l) => `Día ${l}`}
+                    formatter={(v: number, name) => [`${v} inscripciones`, name === 'real' ? 'Real' : 'Proyección']}
+                  />
+                  <Area type="monotone" dataKey="proy" stroke={primary} strokeWidth={1.5}
+                    strokeDasharray="4 4" strokeOpacity={0.5} fill="none" dot={false} connectNulls={false} />
+                  <Area type="monotone" dataKey="real" stroke={primary} strokeWidth={2.5}
+                    fill="url(#gradEstMes)" dot={false} activeDot={{ r: 4, fill: primary, strokeWidth: 0 }} connectNulls={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+              <p className="text-[10.5px] text-on-surface-variant mt-1">
                 Inscripciones por día · al ritmo actual el mes cierra en{' '}
                 <span className="font-bold text-on-surface tabular-nums">~{proyeccion}</span>
               </p>
