@@ -21,8 +21,9 @@ async function trengo(path: string): Promise<any> {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   })
   if (res.status === 429) {
-    // Trengo limita por minuto: esperar y reintentar el mismo path
-    await new Promise(r => setTimeout(r, 30_000))
+    // Trengo limita por minuto: espera corta y reintento del mismo path.
+    // (30s era demasiado conservador — alargaba el backfill por horas.)
+    await new Promise(r => setTimeout(r, 5_000))
     return trengo(path)
   }
   if (!res.ok) throw new Error(`Trengo ${res.status} en ${path}: ${(await res.text()).slice(0, 200)}`)
@@ -40,10 +41,19 @@ async function main() {
   }
   console.log(`Agentes en Trengo: ${emailPorUsuario.size}`)
 
-  // 2. Tickets paginados (todos los estados, historial completo)
-  let pagina = 1
+  // 2. Tickets paginados (todos los estados, historial completo).
+  // TRENGO_DESDE_PAGINA permite reanudar una corrida interrumpida sin
+  // repetir páginas ya guardadas (el upsert las haría inofensivas, pero
+  // re-pedirlas gasta el límite de velocidad de la API, que es el cuello).
+  let pagina = Math.max(1, parseInt(process.env.TRENGO_DESDE_PAGINA ?? '1', 10) || 1)
   let importados = 0
   let sinAgente = 0
+  // Corte por antigüedad: las tasas de cierre solo usan leads desde junio-2026
+  // (antes de eso no hay pagos contra los cuales comparar en la app). El orden
+  // de Trengo no es estrictamente cronológico, así que no basta una página
+  // vieja: se corta tras 20 páginas SEGUIDAS completamente anteriores al corte.
+  const CORTE = new Date('2026-06-01T00:00:00-05:00').getTime()
+  let paginasViejasSeguidas = 0
   for (;;) {
     const lote = await trengo(`/tickets?page=${pagina}`)
     const tickets: any[] = lote.data ?? []
@@ -75,7 +85,15 @@ async function main() {
       })
       importados++
     }
-    console.log(`página ${pagina}: acumulado ${importados} tickets con agente, ${sinAgente} sin agente`)
+    const fechas = tickets.map(t => t.assigned_at ?? t.created_at).filter(Boolean).sort()
+    console.log(`página ${pagina}: acumulado ${importados} con agente, ${sinAgente} sin agente | fechas ${String(fechas[0]).slice(0, 10)} → ${String(fechas[fechas.length - 1]).slice(0, 10)}`)
+
+    const masReciente = fechas.length ? new Date(fechas[fechas.length - 1]).getTime() : 0
+    paginasViejasSeguidas = masReciente && masReciente < CORTE ? paginasViejasSeguidas + 1 : 0
+    if (paginasViejasSeguidas >= 20) {
+      console.log(`CORTE: 20 páginas seguidas anteriores a jun-2026 — el resto del historial no afecta ninguna tasa.`)
+      break
+    }
     if (!lote.links?.next && !lote.meta?.next_page_url && tickets.length < (lote.meta?.per_page ?? 25)) break
     pagina++
   }
