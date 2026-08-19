@@ -32,7 +32,7 @@ export default function AjustesApiKeysPage() {
   const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
-    if (status === 'authenticated' && !isAdmin) router.replace('/ajustes')
+    if (status === 'authenticated' && !isAdmin) router.replace('/inicio')
   }, [status, isAdmin, router])
 
   const fetcher = async <T,>(url: string, opts?: RequestInit): Promise<T> => {

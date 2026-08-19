@@ -9,7 +9,7 @@ import { EstudiantesMes } from './EstudiantesMes'
 // crece según cuántas familias tengan ventas y dejaba un hueco abajo.
 import { CursosVendidosChart } from './CursosVendidosChart'
 import { FacturadoMensual } from './FacturadoMensual'
-import { ComisionesKpis } from './ComisionesKpis'
+import { DesgloseMes } from './DesgloseMes'
 import { TopAsesores } from './TopAsesores'
 import { PendientesPorCobrar } from './PendientesPorCobrar'
 
@@ -72,8 +72,12 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
             <div className="flex-1 min-w-0">
               <FacturadoMensual />
             </div>
-            <div className="md:flex-shrink-0 md:w-44">
-              <ComisionesKpis desde={desde} hasta={hasta} />
+            {/* El desglose completo (bruta − comisiones = neto) en una sola
+                tarjeta, en vez de tres KPIs sueltos: es una resta y se lee
+                como tal. Un poco más ancha que las tarjetas viejas para que
+                las cifras no se partan de línea. */}
+            <div className="md:flex-shrink-0 md:w-64">
+              <DesgloseMes desde={desde} hasta={hasta} />
             </div>
           </div>
           <div className="flex-1">

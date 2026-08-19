@@ -64,7 +64,7 @@ export default function AjustesFirmaPage() {
   const [subiendo, setSubiendo] = useState<'andres' | null>(null)
 
   useEffect(() => {
-    if (status === 'authenticated' && !isAdmin) router.replace('/ajustes')
+    if (status === 'authenticated' && !isAdmin) router.replace('/inicio')
   }, [status, isAdmin, router])
 
   const fetcher = async <T,>(path: string, opts?: RequestInit) => {
