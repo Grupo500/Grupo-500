@@ -10,11 +10,11 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  role           Role      @default(VENDEDOR)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id             String             @id @default(cuid())
+  email          String             @unique
+  role           Role               @default(VENDEDOR)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
   image          String?
   nombre         String?
   emailVerified  DateTime?
@@ -102,26 +102,26 @@ model VerificationToken {
 }
 
 model Asesor {
-  id            String        @id @default(cuid())
-  userId        String        @unique
-  nombre        String
-  email         String
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  nombre               String
+  email                String
   // Correo alterno de solo lectura para cruzar leads de Trengo/HubSpot cuando
   // el asesor inició sesión ahí con un correo distinto al de su perfil (ej.
   // Sara Duarte: perfil saraduarte5500@gmail.com, Trengo funnyplayer407@gmail.com).
   // Campo interno — no se expone en ningún formulario, se asigna a mano por caso.
-  emailCrm      String?
-  telefono      String
+  emailCrm             String?
+  telefono             String
   // Códigos de rastreo Hotmart (src/sck de sus links) + email de afiliado
-  codigosHotmart String[]     @default([])
+  codigosHotmart       String[]           @default([])
   // Snapshot del ranking para detectar rebases entre ventas (notificaciones push)
-  posicionRanking Int?
-  posicionMes    String?
+  posicionRanking      Int?
+  posicionMes          String?
   /// Comisión sobre pagos que entran POR FUERA de Hotmart (Nequi, transferencia,
   /// efectivo), como fracción: 0.03 = 3%. Los pagos de Hotmart no la usan — su
   /// reparto lo decide Hotmart y la app solo lo lee. Es por asesor porque la
   /// tarifa se negocia individualmente (Cielo Guevara pasó a 9% en ago-2026).
-  comisionDirecta Float        @default(0.03)
+  comisionDirecta      Float              @default(0.03)
   /// Desde cuándo rige `comisionDirecta`. Una tarifa negociada arranca un día,
   /// no rige hacia atrás: los pagos anteriores a esta fecha se liquidan al 3%
   /// estándar. Vacío = la tarifa aplica a todo su historial.
@@ -134,35 +134,35 @@ model Asesor {
   /// Es una marca propia y no `role = ADMIN` porque son cosas distintas —
   /// Soporte G500 es VENDEDOR y tampoco vende, y un día puede haber un
   /// administrador que sí venda y deba aparecer.
-  esAdministrativo Boolean  @default(false)
+  esAdministrativo     Boolean            @default(false)
   // Retirado del equipo (activo=false): desaparece del ranking y de los
   // selectores, pero se CONSERVA 60 días por si vuelve (decisión de Hotman,
   // 18-ago-2026). Cumplidos los 60 días desde retiradoEn, el job
   // purgarAsesoresRetirados lo borra del todo; sus pagos quedan sin asesor
   // (los totales históricos no cambian, la atribución individual sí se pierde).
-  activo        Boolean       @default(true)
-  retiradoEn    DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  estudiantes   Estudiante[]
-  negociaciones Negociacion[]
-  pagos         Pago[]
-  alias         AliasAsesor[]
-  afiliaciones  AfiliacionAsesor[]
+  activo               Boolean            @default(true)
+  retiradoEn           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  estudiantes          Estudiante[]
+  negociaciones        Negociacion[]
+  pagos                Pago[]
+  alias                AliasAsesor[]
+  afiliaciones         AfiliacionAsesor[]
 }
 
 model Colegio {
-  id               String        @id @default(cuid())
-  nombre           String        @unique
-  ciudad           String
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  contactoNombre   String?
-  contactoEmail    String?
-  contactoTelefono String?
-  estudiantes      Estudiante[]
-  negociaciones    Negociacion[]
+  id                String             @id @default(cuid())
+  nombre            String             @unique
+  ciudad            String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  contactoNombre    String?
+  contactoEmail     String?
+  contactoTelefono  String?
+  estudiantes       Estudiante[]
+  negociaciones     Negociacion[]
   estudiantesExamen EstudianteExamen[]
 }
 
@@ -292,42 +292,42 @@ model FuenteContacto {
 }
 
 model Curso {
-  id                String            @id @default(cuid())
-  nombre            String
-  descripcion       String?
-  precio            Float
-  duracionHoras     Int
-  activo            Boolean           @default(true)
-  tipoCurso         TipoCurso         @default(INDIVIDUAL)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  calendario        CalendarioCurso   @default(A)
-  fechaFin          DateTime?
-  fechaInicio       DateTime?
-  fechaIcfes        DateTime?
-  simulacros        Int?
-  visibleEnLanding  Boolean           @default(false)
-  cuposDisponibles  Int?
-  hotmartProductId  String?           @unique
+  id               String             @id @default(cuid())
+  nombre           String
+  descripcion      String?
+  precio           Float
+  duracionHoras    Int
+  activo           Boolean            @default(true)
+  tipoCurso        TipoCurso          @default(INDIVIDUAL)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  calendario       CalendarioCurso    @default(A)
+  fechaFin         DateTime?
+  fechaInicio      DateTime?
+  fechaIcfes       DateTime?
+  simulacros       Int?
+  visibleEnLanding Boolean            @default(false)
+  cuposDisponibles Int?
+  hotmartProductId String?            @unique
   // Línea de producto para agrupar en reportes (Intensivo, Calendario, Combo,
   // Año 500, Premédico, Ruta 500). Se siembra desde el nombre pero es editable:
   // deducirla del texto en cada consulta rompería al renombrar un curso.
-  familia           String?
+  familia          String?
   // Link para que un asesor se afilie a este producto en Hotmart. No hay API
   // de Hotmart para armarlo ni para saber quién ya está afiliado (confirmado
   // con su soporte) — un admin lo copia una vez desde Hotmart y cada asesor
   // marca su propio estado (ver AfiliacionAsesor).
-  linkAfiliacion    String?
+  linkAfiliacion   String?
   // Usados en el certificado (CertificadoTemplate.tsx): antes el texto de
   // materias/horario estaba escrito fijo en el PDF, igual para todos los
   // cursos. horarioTexto es libre porque algunos cursos (ej. Ruta 500) no
   // son una franja semanal fija — mezclan sábados recurrentes con viernes o
   // domingos puntuales que no entran en una grilla día/hora.
-  materias          String[]          @default([])
-  horarioTexto      String?
-  estudiantes       CursoEstudiante[]
-  preciosOficiales  PrecioOficial[]
-  afiliaciones      AfiliacionAsesor[]
+  materias         String[]           @default([])
+  horarioTexto     String?
+  estudiantes      CursoEstudiante[]
+  preciosOficiales PrecioOficial[]
+  afiliaciones     AfiliacionAsesor[]
 }
 
 // Un asesor marca a mano que ya se afilió a un producto en Hotmart — no hay
@@ -346,16 +346,16 @@ model AfiliacionAsesor {
 }
 
 model Formulario {
-  id               String    @id @default(cuid())
+  id               String   @id @default(cuid())
   nombre           String
   descripcion      String?
-  campos           Json      // FieldSchema[]
-  meta             Json?     // { colorPrimario, mensajeBienvenida, mensajeExito, icono }
-  activo           Boolean   @default(false)
-  visibleEnLanding Boolean   @default(false)
+  campos           Json // FieldSchema[]
+  meta             Json? // { colorPrimario, mensajeBienvenida, mensajeExito, icono }
+  activo           Boolean  @default(false)
+  visibleEnLanding Boolean  @default(false)
   cursoId          String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model CursoEstudiante {
@@ -387,15 +387,15 @@ model Pago {
   comprobanteAt    DateTime?
   notas            String?
   // Desglose de comisiones (en COP, convertido desde USD con TRM oficial de la fecha)
-  comisionHotmart  Float?     // comisión de la plataforma Hotmart (fee + addon)
-  comisionAsesor   Float?     // comisión del afiliado/asesor
-  montoNeto        Float?     // neto que recibe el productor
-  trm              Float?     // TRM oficial usada para la conversión
+  comisionHotmart  Float? // comisión de la plataforma Hotmart (fee + addon)
+  comisionAsesor   Float? // comisión del afiliado/asesor
+  montoNeto        Float? // neto que recibe el productor
+  trm              Float? // TRM oficial usada para la conversión
   // Pagos en partes de Hotmart (Smart Installment): el cargo que llega es una
   // cuota, no el precio del curso. Datos tal como los reporta Hotmart.
   enPartes         Boolean    @default(false) // offer.payment_mode = MULTIPLE_PAYMENTS
-  cuotaNumero      Int?       // purchase.recurrency_number — qué cuota es este cargo
-  cuotasTotal      Int?       // purchase.payment.installments_number
+  cuotaNumero      Int? // purchase.recurrency_number — qué cuota es este cargo
+  cuotasTotal      Int? // purchase.payment.installments_number
   // Cupón aplicado en la compra, si lo hubo. Hotmart no lo enviaba a la app
   // y por eso el indicador de ventas con descuento no existía.
   cupon            String?
@@ -435,13 +435,13 @@ model Certificado {
 }
 
 model Simulacro {
-  id           String                @id @default(cuid())
-  nombre       String
-  archivoUrl   String
-  tipoArchivo  String                @default("pdf")
-  procesado    Boolean               @default(false)
-  createdAt    DateTime              @default(now())
-  estudiantes  SimulacroEstudiante[]
+  id          String                @id @default(cuid())
+  nombre      String
+  archivoUrl  String
+  tipoArchivo String                @default("pdf")
+  procesado   Boolean               @default(false)
+  createdAt   DateTime              @default(now())
+  estudiantes SimulacroEstudiante[]
 }
 
 model SimulacroEstudiante {
@@ -484,10 +484,10 @@ model Negociacion {
 
 // ── Marketing: planificación de contenido, guiones y entregables publicados ──
 model MiembroMarketing {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  nombre    String
-  activo    Boolean  @default(true)
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  nombre           String
+  activo           Boolean @default(true)
   // ── Datos para la cuenta de cobro ──────────────────────────────────────
   //
   // Son los seis datos que antes se escribían cada vez en el formulario de la
@@ -504,7 +504,7 @@ model MiembroMarketing {
   celular          String?
   rut              String?
   banco            String?
-  tipoCuenta       String?  // AHORROS | CORRIENTE
+  tipoCuenta       String? // AHORROS | CORRIENTE
   numeroCuenta     String?
   // La rúbrica dibujada, en Cloudinary. Se incrusta sobre la línea del PDF.
   firmaUrl         String?
@@ -563,22 +563,22 @@ enum EstadoCobroMarketing {
 }
 
 model ContenidoMarketing {
-  id            String                    @id @default(cuid())
-  titulo        String
-  tipo          TipoContenidoMarketing
-  destino       DestinoContenido?
-  clasificacion ClasificacionContenido    @default(ORGANICO)
+  id             String                 @id @default(cuid())
+  titulo         String
+  tipo           TipoContenidoMarketing
+  destino        DestinoContenido?
+  clasificacion  ClasificacionContenido @default(ORGANICO)
   /// EMPRESA por defecto: la mayor parte del contenido lo hace el equipo de
   /// planta y no se cobra aparte.
-  tipoTrabajo   TipoTrabajoMarketing      @default(EMPRESA)
+  tipoTrabajo    TipoTrabajoMarketing   @default(EMPRESA)
   /// Lo que se cobra por el trabajo, en pesos y sin centavos. Solo tiene
   /// sentido en los freelance — en los de empresa se guarda null, para que no
   /// queden importes colgando de trabajo interno.
-  valor         Int?
+  valor          Int?
   /// En qué va el cobro. Arranca POR_APROBAR en cuanto el trabajo se marca
   /// como freelance, aunque todavía no se haya entregado: el freelance debe
   /// poder esperar aprobación desde que se le encarga.
-  estadoCobro   EstadoCobroMarketing      @default(POR_APROBAR)
+  estadoCobro    EstadoCobroMarketing   @default(POR_APROBAR)
   /// Quién dio el visto bueno y cuándo. En algo que mueve plata, la firma
   /// importa tanto como el monto — sin esto no hay a quién preguntarle.
   // La cuenta de cobro en PDF, una vez generada. Se guarda el enlace y no el
@@ -592,11 +592,11 @@ model ContenidoMarketing {
   /// momentos distintos y a veces los separan semanas.
   pagadoEn      DateTime?
   fecha         DateTime // día planificado en el calendario
-  estado        EstadoContenidoMarketing  @default(PLANIFICADO)
+  estado        EstadoContenidoMarketing @default(PLANIFICADO)
   notas         String?
   asignadoAId   String?
-  createdAt     DateTime                  @default(now())
-  updatedAt     DateTime                  @updatedAt
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
 
   asignadoA   MiembroMarketing? @relation("AsignadoA", fields: [asignadoAId], references: [id])
   aprobadoPor MiembroMarketing? @relation("AprobadoPor", fields: [aprobadoPorId], references: [id])
@@ -628,7 +628,6 @@ model Entregable {
   @@map("marketing_entregables")
 }
 
-
 enum Role {
   ADMIN
   VENDEDOR
@@ -636,11 +635,14 @@ enum Role {
   // ventas ni finanzas. Se distinguen entre sí por la especialidad y, en el
   // caso de LIDER_EDICION, por lo que puede aprobar.
   MARKETING
-  EDITOR        // editor de video
-  COMMUNITY     // community manager
+  EDITOR // editor de video
+  COMMUNITY // community manager
   LIDER_EDICION // líder de editores: ve los cobros de todos y es quien los aprueba
-  SOCIAL_MEDIA  // social media manager
-  LIDER_DISENO  // líder de diseño gráfico
+  SOCIAL_MEDIA // social media manager
+  LIDER_DISENO // líder de diseño gráfico
+  // Ve y escribe todo lo de contabilidad, y además el ranking de ingresos,
+  // que es lo único reservado para él.
+  COFUNDADOR
 }
 
 enum EstadoPago {
@@ -684,10 +686,10 @@ enum EtapaNegociacion {
 // El webhook upsertea por ticketId; si cambia el asesor se actualiza el agentEmail
 // y se preserva firstAssignedAt para distinguir "lead nuevo" de "reasignación".
 model TrengoTicket {
-  ticketId         String   @id
-  agentEmail       String
-  firstAssignedAt  DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  ticketId        String   @id
+  agentEmail      String
+  firstAssignedAt DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([agentEmail])
   @@index([firstAssignedAt])
@@ -730,27 +732,27 @@ model Examen {
 }
 
 model PreguntaExamen {
-  id          BigInt  @id @default(autoincrement())
-  examenId    Int     @map("simulacro_id")
-  sesion      Int
-  area        String?
-  numero      Int?
-  contexto    String?
-  enunciado   String
-  opcionA     String? @map("opcion_a")
-  opcionB     String? @map("opcion_b")
-  opcionC     String? @map("opcion_c")
-  opcionD     String? @map("opcion_d")
-  opcionE     String? @map("opcion_e")
-  opcionF     String? @map("opcion_f")
-  opcionG     String? @map("opcion_g")
-  opcionH     String? @map("opcion_h")
-  correcta      String  @db.Char(1)
-  explicacion   String?
-  retroOpciones Json?   @map("retro_opciones")
-  imagenUrl     String? @map("imagen_url")
-  tieneImagen   Boolean @default(false) @map("tiene_imagen")
-  examen        Examen  @relation(fields: [examenId], references: [id])
+  id             BigInt                 @id @default(autoincrement())
+  examenId       Int                    @map("simulacro_id")
+  sesion         Int
+  area           String?
+  numero         Int?
+  contexto       String?
+  enunciado      String
+  opcionA        String?                @map("opcion_a")
+  opcionB        String?                @map("opcion_b")
+  opcionC        String?                @map("opcion_c")
+  opcionD        String?                @map("opcion_d")
+  opcionE        String?                @map("opcion_e")
+  opcionF        String?                @map("opcion_f")
+  opcionG        String?                @map("opcion_g")
+  opcionH        String?                @map("opcion_h")
+  correcta       String                 @db.Char(1)
+  explicacion    String?
+  retroOpciones  Json?                  @map("retro_opciones")
+  imagenUrl      String?                @map("imagen_url")
+  tieneImagen    Boolean                @default(false) @map("tiene_imagen")
+  examen         Examen                 @relation(fields: [examenId], references: [id])
   britoLecciones BritoLeccionPregunta[]
 
   @@index([examenId, sesion, numero])
@@ -793,13 +795,13 @@ model AccesoExamen {
 // ── Brito: modo de práctica gamificado, capa nueva sobre el banco de preguntas
 // existente (PreguntaExamen). No toca el motor de simulacros/exámenes real. ──
 model BritoLeccion {
-  id        String                 @id @default(cuid())
-  materia   String
-  titulo    String
-  orden     Int
-  sesion    Int                    @default(1)
-  createdAt DateTime               @default(now())
-  preguntas BritoLeccionPregunta[]
+  id          String                   @id @default(cuid())
+  materia     String
+  titulo      String
+  orden       Int
+  sesion      Int                      @default(1)
+  createdAt   DateTime                 @default(now())
+  preguntas   BritoLeccionPregunta[]
   completadas BritoLeccionCompletada[]
 
   @@map("brito_lecciones")
@@ -817,21 +819,21 @@ model BritoLeccionPregunta {
 }
 
 model BritoPerfil {
-  id              String    @id @default(cuid())
-  estudianteId    String    @unique @db.Uuid
-  xpTotal         Int       @default(0)
-  corazones       Int       @default(5)
-  corazonesAt     DateTime  @default(now())
-  rachaActual     Int       @default(0)
-  rachaMejor      Int       @default(0)
-  ultimaLeccionAt DateTime?
-  plan            String    @default("FREE")
-  liga             Int      @default(0)
+  id               String           @id @default(cuid())
+  estudianteId     String           @unique @db.Uuid
+  xpTotal          Int              @default(0)
+  corazones        Int              @default(5)
+  corazonesAt      DateTime         @default(now())
+  rachaActual      Int              @default(0)
+  rachaMejor       Int              @default(0)
+  ultimaLeccionAt  DateTime?
+  plan             String           @default("FREE")
+  liga             Int              @default(0)
   ligaSemana       String?
-  semanasInactivas Int      @default(0)
-  quinis           Int      @default(0)
-  createdAt       DateTime  @default(now())
-  estudiante      EstudianteExamen @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  semanasInactivas Int              @default(0)
+  quinis           Int              @default(0)
+  createdAt        DateTime         @default(now())
+  estudiante       EstudianteExamen @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
 
   @@map("brito_perfiles")
 }
@@ -880,7 +882,7 @@ model IntentoExamen {
   examenId            Int              @map("simulacro_id")
   respuestas          Json             @default("{}")
   correctas           Int?
-  total                Int?
+  total               Int?
   puntaje             Decimal?         @db.Decimal
   sesionActual        Int              @default(1) @map("sesion_actual")
   iniciadoAt          DateTime         @default(now()) @map("iniciado_at")
@@ -904,7 +906,7 @@ model IntentoExamen {
 /// fechas, por eso el período se guarda aquí en vez de deducirse.
 model InversionPublicitaria {
   id           String   @id @default(cuid())
-  plataforma   String   // GOOGLE | META | TIKTOK
+  plataforma   String // GOOGLE | META | TIKTOK
   /// Id de la campaña en la plataforma. Solo lo traen las filas que llegan por
   /// API; las cargadas a mano lo dejan nulo. Es la mitad de la clave que evita
   /// duplicados al re-sincronizar, y aguanta que la campaña cambie de nombre.
@@ -936,13 +938,13 @@ model InversionPublicitaria {
 /// Para cambiar un precio se agrega una fila nueva, nunca se edita la anterior:
 /// cada venta se compara contra el precio que regía el día en que ocurrió.
 model PrecioOficial {
-  id            String   @id @default(cuid())
-  cursoId       String
-  precio        Float
-  vigenteDesde  DateTime
-  nota          String?
-  createdAt     DateTime @default(now())
-  curso         Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  cursoId      String
+  precio       Float
+  vigenteDesde DateTime
+  nota         String?
+  createdAt    DateTime @default(now())
+  curso        Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
 
   @@unique([cursoId, vigenteDesde])
   @@index([cursoId, vigenteDesde])
@@ -980,8 +982,8 @@ model RedSocialCuenta {
   id            String              @id @default(cuid())
   plataforma    RedSocialPlataforma
   nombre        String
-  externalId    String              // IG user id o Page id de Facebook
-  accessToken   String              // page access token de larga duración (nunca se expone al cliente)
+  externalId    String // IG user id o Page id de Facebook
+  accessToken   String // page access token de larga duración (nunca se expone al cliente)
   fotoUrl       String?
   activa        Boolean             @default(true)
   creadaEn      DateTime            @default(now())
@@ -996,12 +998,12 @@ model PublicacionRed {
   id             String               @id @default(cuid())
   tipo           TipoPublicacionRed
   caption        String?
-  mediaUrl       String?              // Cloudinary; la Graph API la lee por URL pública
+  mediaUrl       String? // Cloudinary; la Graph API la lee por URL pública
   mediaEsVideo   Boolean              @default(false)
   programadaPara DateTime
   estado         EstadoPublicacionRed @default(PROGRAMADA)
   error          String?
-  externalId     String?              // id del post/media ya publicado en la red
+  externalId     String? // id del post/media ya publicado en la red
   publicadaEn    DateTime?
   creadaEn       DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
@@ -1038,15 +1040,19 @@ enum EstadoPublicacionRed {
 // contabilidad; contabilidad (ADMIN) aprueba/rechaza, marca pagado y exporta.
 
 model ContabDepartamento {
-  id        String           @id // slug: "marketing", "editores"…
+  id        String          @id // slug: "marketing", "editores"…
   nombre    String
   gradiente String // "#1257C4,#8FD0FF" — baldosa del ícono
   icono     String // paths SVG (viewBox 24x24)
-  esBase    Boolean          @default(false) // los 7 de fábrica no se borran
-  orden     Int              @default(0)
+  esBase    Boolean         @default(false) // los 7 de fábrica no se borran
+  // Quitar un departamento lo archiva: desaparece del inicio pero sus
+  // registros quedan, y si se vuelve a crear con el mismo nombre reaparecen.
+  archivado Boolean         @default(false)
+  orden     Int             @default(0)
   personas  ContabPersona[]
   envios    ContabEnvio[]
   tarifas   ContabTarifa[]
+  lideres   ContabLider[]
 
   @@map("contab_departamentos")
 }
@@ -1062,27 +1068,33 @@ model ContabPersona {
   activa    Boolean            @default(true)
   dept      ContabDepartamento @relation(fields: [deptId], references: [id], onDelete: Cascade)
   registros ContabRegistro[]
+  nomina    ContabNomina[]
 
   @@unique([deptId, slug])
   @@map("contab_personas")
 }
 
 model ContabRegistro {
-  id        BigInt        @id @default(autoincrement())
-  personaId String        @map("persona_id")
-  quincena  String // "2026-08-Q1"
-  categoria String
-  actividad String
-  valor     Int // COP
-  fecha     String // texto corto como el original: "14 de ago."
-  link      String?
-  imagenUrl String?       @map("imagen_url")
-  revisado  Boolean       @default(false)
-  aprobado  Boolean       @default(false)
-  rechazado Boolean       @default(false)
-  pagado    Boolean       @default(false)
-  creadoAt  DateTime      @default(now()) @map("creado_at")
-  persona   ContabPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  id            BigInt        @id @default(autoincrement())
+  personaId     String        @map("persona_id")
+  quincena      String // "2026-08-Q1"
+  categoria     String
+  actividad     String
+  valor         Int // COP
+  fecha         String // texto corto como el original: "14 de ago."
+  link          String?
+  imagenUrl     String?       @map("imagen_url")
+  revisado      Boolean       @default(false)
+  aprobado      Boolean       @default(false)
+  rechazado     Boolean       @default(false)
+  pagado        Boolean       @default(false)
+  // Por qué se rechazó. El líder lo escribe al rechazar y la persona lo ve.
+  motivoRechazo String?       @map("motivo_rechazo")
+  // Valor con el que se registró la actividad, si alguien lo editó después.
+  // Null = nunca se tocó. Guardarlo es lo que hace auditable la edición.
+  valorOriginal Int?          @map("valor_original")
+  creadoAt      DateTime      @default(now()) @map("creado_at")
+  persona       ContabPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
 
   @@index([quincena])
   @@index([personaId, quincena])
@@ -1111,6 +1123,38 @@ model ContabTarifa {
   dept   ContabDepartamento? @relation(fields: [deptId], references: [id], onDelete: Cascade)
 
   @@map("contab_tarifas")
+}
+
+model ContabLider {
+  id     String             @id @default(cuid())
+  deptId String             @map("dept_id")
+  // Correo de quien lidera el área. Se guarda el correo y no el id del User
+  // porque hay líderes que todavía no tienen cuenta en la app, y porque es la
+  // misma llave con la que ya se firma el envío de la quincena.
+  email  String
+  dept   ContabDepartamento @relation(fields: [deptId], references: [id], onDelete: Cascade)
+
+  @@unique([deptId, email])
+  @@map("contab_lideres")
+}
+
+// Sueldos de contrato, al margen del flujo de líderes: contabilidad los
+// registra y no pasan por aprobación ni por envío de quincena. Van aparte de
+// contab_registros justamente para que ningún cálculo del flujo freelance los
+// arrastre por accidente.
+model ContabNomina {
+  id        BigInt        @id @default(autoincrement())
+  personaId String        @map("persona_id")
+  quincena  String
+  concepto  String
+  valor     Int // COP
+  pagado    Boolean       @default(false)
+  creadoAt  DateTime      @default(now()) @map("creado_at")
+  persona   ContabPersona @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@index([quincena])
+  @@index([personaId, quincena])
+  @@map("contab_nomina")
 }
 
 model ContabCategoria {
