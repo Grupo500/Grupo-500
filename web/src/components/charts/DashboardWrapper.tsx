@@ -72,21 +72,16 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
       {/* Fila 2: top asesores a lo ancho */}
       <TopAsesores />
 
-      {/* Fila 3: estudiantes · pendiente por cobrar · cursos. Pendiente va al
-          centro y más ancha: es la que más información carga. Los cursos son
-          la versión de barras de Analíticas (pedido expreso), no la torta. */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:items-stretch">
-        <div className="lg:col-span-3">
-          <EstudiantesMes desde={desde} hasta={hasta} />
-        </div>
-        <div className="lg:col-span-4">
-          {/* Saldos abiertos — no depende del mes elegido, es el total vigente */}
-          <PendientesPorCobrar />
-        </div>
-        <div className="lg:col-span-3">
-          <CursosVendidosRanked desde={desde} hasta={hasta} />
-        </div>
+      {/* Fila 3: estudiantes y cursos a mitades. Los cursos son la versión de
+          barras de Analíticas (pedido expreso), no la torta. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-stretch">
+        <EstudiantesMes desde={desde} hasta={hasta} />
+        <CursosVendidosRanked desde={desde} hasta={hasta} />
       </div>
+
+      {/* Fila 4 (última, a lo ancho): saldos abiertos — no depende del mes
+          elegido, es el total vigente. Sola en su fila (Hotman, 19-ago). */}
+      <PendientesPorCobrar />
     </div>
   )
 }

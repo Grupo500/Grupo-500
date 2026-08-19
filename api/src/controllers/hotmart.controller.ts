@@ -43,7 +43,11 @@ interface HotmartProduct {
 }
 
 interface HotmartAffiliate {
-  affiliate_name: string
+  // Hotmart ha mandado el nombre bajo DOS llaves según la época/endpoint:
+  // affiliate_name (histórico) y name (los webhooks de ago-2026). Leer solo
+  // una dejó un día entero de ventas sin asesor.
+  affiliate_name?: string
+  name?: string
   affiliate_email?: string
   affiliate_code?: string
 }
@@ -230,16 +234,33 @@ export async function webhook(req: Request, res: Response) {
     })
   }
 
-  // Último recurso: el nombre del afiliado homologado a mano. Hotmart lo manda
-  // escrito como lo tenga cada quien ("juan gomez", "Luis alejandro") y a veces
-  // no coincide con el correo del perfil; sin esto la venta queda sin dueño.
-  const nombreAfiliado = affiliates?.[0]?.affiliate_name?.trim() || null
+  // Por nombre: Hotmart lo manda escrito como lo tenga cada quien y bajo dos
+  // llaves distintas según la época (affiliate_name o name). Primero el alias
+  // homologado a mano, luego el nombre tal cual contra el perfil del asesor.
+  const nombreAfiliado = (affiliates?.[0]?.affiliate_name ?? affiliates?.[0]?.name)?.trim() || null
   if (!asesor && nombreAfiliado) {
     const alias = await prisma.aliasAsesor.findUnique({
       where: { alias: nombreAfiliado.toLowerCase() },
       include: { asesor: true },
     })
     if (alias) asesor = alias.asesor
+  }
+  if (!asesor && nombreAfiliado) {
+    asesor = await prisma.asesor.findFirst({
+      where: { nombre: { equals: nombreAfiliado, mode: 'insensitive' } },
+    })
+  }
+
+  // Auto-aprendizaje: si la venta trae affiliate_code y el asesor no lo tiene
+  // registrado, se guarda — la próxima venta cruza directo por código aunque
+  // el nombre venga escrito distinto.
+  const codigoAfiliado = affiliates?.[0]?.affiliate_code
+  if (asesor && codigoAfiliado && !asesor.codigosHotmart.includes(codigoAfiliado)) {
+    await prisma.asesor.update({
+      where: { id: asesor.id },
+      data: { codigosHotmart: { push: codigoAfiliado } },
+    })
+    logger.info(`[Hotmart] Código de afiliado aprendido para ${asesor.nombre}: ${codigoAfiliado}`)
   }
 
   if (asesor) {
