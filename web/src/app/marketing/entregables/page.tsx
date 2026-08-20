@@ -30,7 +30,7 @@ import { Modal } from '@/components/ui/Modal'
 import {
   Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil,
   ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, Trash2, RotateCcw,
-  ChevronRight, ChevronDown, ChevronsUpDown, Building2, LayoutList, Rows3, type LucideIcon,
+  ChevronRight, ChevronDown, ChevronsUpDown, LayoutList, Rows3, type LucideIcon,
 } from 'lucide-react'
 import { ContenidoModal, type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
@@ -843,7 +843,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
         type="button"
         onClick={() => ordenar(col)}
         className={cn(
-          'inline-flex cursor-pointer items-center gap-1.5 text-[11px] font-semibold transition-colors',
+          'inline-flex cursor-pointer items-center gap-1.5 text-[11.5px] font-semibold transition-colors',
           orden.col === col ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface',
         )}
       >
@@ -860,13 +860,13 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr className="border-b border-outline-variant bg-surface-low">
+            <tr className="border-b border-outline-variant bg-surface-lowest">
               <Cabecera col="titulo" texto="Nombre" />
               <Cabecera col="tipo" texto="Tipo" />
               <Cabecera col="responsable" texto="Responsable" />
               <Cabecera col="estado" texto="Estado" />
               <Cabecera col="fecha" texto="Fecha" />
-              <th className="px-3.5 py-2.5 text-left text-[11px] font-semibold text-on-surface-variant">
+              <th className="px-3.5 py-2.5 text-left text-[11.5px] font-semibold text-on-surface-variant">
                 Enlace
               </th>
               <Cabecera col="valor" texto="Pago" alDerecha />
@@ -886,14 +886,16 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
                   <tr>
                     <td
                       colSpan={7}
-                      className="border-y border-outline-variant bg-surface-highest px-5 py-3 text-left shadow-[inset_4px_0_0_var(--primary)]"
+                      className="border-y border-outline-variant bg-surface-low px-5 py-2.5 text-left shadow-[inset_3px_0_0_var(--primary)]"
                     >
-                      <span className="inline-flex items-center gap-2.5 text-[11px] font-bold text-on-surface">
-                        {b.destino === '__sin__'
-                          ? <HelpCircle className="size-4 text-on-surface" />
-                          : <Building2 className="size-4 text-on-surface" />}
-                        {DESTINO_LABEL[b.destino]}
-                        <span className="rounded-full bg-surface-lowest/70 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-on-surface-variant">
+                      <span className="inline-flex items-baseline gap-2.5">
+                        {/* El nombre de la cuenta es un título de sección, no
+                            una etiqueta: se lee al tamaño del contenido y con
+                            su acento, no en versalitas apretadas. */}
+                        <span className="text-[13px] font-semibold tracking-[-0.01em] text-on-surface">
+                          {DESTINO_LABEL[b.destino]}
+                        </span>
+                        <span className="text-[11.5px] text-on-surface-variant">
                           {b.filas.length} pieza{b.filas.length !== 1 ? 's' : ''} · {publ} publicada{publ !== 1 ? 's' : ''}
                         </span>
                       </span>
@@ -908,7 +910,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
                         key={t.id}
                         onClick={() => onAbrir(t)}
                         className={cn(
-                          'group/fila cursor-pointer border-b border-outline-variant transition-colors last:border-b-0 hover:bg-surface-low',
+                          'group/fila cursor-pointer border-b border-outline-variant transition-colors last:border-b-0 hover:bg-surface-low/60',
                           pendientes > 0 && 'bg-[#dc2626]/[0.04] shadow-[inset_3px_0_0_#dc2626]',
                         )}
                       >
