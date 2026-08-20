@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import { Header } from '@/components/layout/Header'
+import { HeaderCondicional } from '@/components/layout/HeaderCondicional'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
@@ -27,7 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             sidebar, y las acciones acompañan a todas las pantallas del área
             en vez de solo al dashboard. */}
         <div className="flex h-dvh flex-col">
-          <Header />
+          <HeaderCondicional />
 
           <div className="flex min-h-0 flex-1">
             {/* Sidebar — solo tablet y desktop */}

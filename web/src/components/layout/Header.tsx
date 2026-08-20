@@ -30,8 +30,10 @@ const BOTON =
  * por construcción. Fijarlo además obligaría a compensar su alto con padding
  * en el contenido y a pelear con la barra de direcciones del navegador móvil.
  *
- * En celular mide 46px en vez de 60 y reserva el espacio de la muesca, para
- * cuando la app se instala en la pantalla de inicio.
+ * En celular mide 62px —más alto que el escritorio a propósito: ahí el header
+ * es la única marca visible y a 46px quedaba apretado (Hotman, 20-ago)— y
+ * reserva el espacio de la muesca, para cuando la app se instala en la
+ * pantalla de inicio.
  */
 export function Header() {
   return (
@@ -44,7 +46,7 @@ export function Header() {
       }}
       className="flex-shrink-0"
     >
-      <div className="flex h-[46px] items-center justify-between gap-3 px-3 md:h-[60px] md:gap-4 md:px-4">
+      <div className="flex h-[62px] items-center justify-between gap-3 px-3.5 md:h-[60px] md:gap-4 md:px-4">
         <Link href="/inicio" className="flex min-w-0 items-center gap-2 md:gap-2.5" title="Volver al inicio">
           <Image
             src="/logo-grupo500.png"

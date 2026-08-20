@@ -135,21 +135,28 @@ export default function ReportesPage() {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <PageHeader
-          title={isAsesor ? 'Mis analíticas' : 'Analíticas'}
-          subtitle={isAsesor ? 'Estadísticas de tu gestión' : 'Estadísticas globales de la operación'}
-        />
-        <div className="flex flex-col items-start md:items-end gap-1 flex-shrink-0 w-full md:w-auto">
-          <MonthPicker
-            value={month}
-            currentMonth={currentMonth}
-            dateRange={dateRange}
-            onChange={handleChange}
-            alignRight
-          />
-          <p className="text-[11px] text-on-surface-variant capitalize">{periodoLabel}</p>
+      {/* El selector va a la altura del subtítulo, no del título: en celular
+          quedaba flotando arriba, desalineado de la descripción que explica
+          qué período se está viendo (Hotman, 20-ago). */}
+      <div>
+        <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+          {isAsesor ? 'Mis analíticas' : 'Analíticas'}
+        </h1>
+        <div className="mt-0.5 flex items-center justify-between gap-3">
+          <p className="text-[13px] font-medium text-on-surface-variant">
+            {isAsesor ? 'Estadísticas de tu gestión' : 'Estadísticas globales de la operación'}
+          </p>
+          <div className="flex flex-shrink-0 flex-col items-end gap-1">
+            <MonthPicker
+              value={month}
+              currentMonth={currentMonth}
+              dateRange={dateRange}
+              onChange={handleChange}
+              alignRight
+            />
+          </div>
         </div>
+        <p className="mt-1 text-[11px] capitalize text-on-surface-variant">{periodoLabel}</p>
       </div>
 
       {/* ── FILA 1: Estudiantes + Cobranza unificados ─────────────── */}

@@ -144,10 +144,9 @@ export function AsesorDashboard() {
             <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Tu desempeño y comisiones</p>
           </div>
         </div>
-        <div className="flex-shrink-0 flex items-center gap-2">
-          <NotificacionesButton />
-          <RefreshButton />
-        </div>
+        {/* Los botones de refrescar y notificaciones viven en el header de
+            arriba: tenerlos también aquí los mostraba dos veces seguidas en
+            celular (Hotman, 20-ago). */}
       </div>
 
       {/* Ventas de la semana — pulso diario, exclusivo del dashboard de asesor */}
