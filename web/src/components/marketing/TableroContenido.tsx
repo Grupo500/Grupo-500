@@ -29,6 +29,8 @@ import {
   type Miembro,
 } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
+import { useSession } from 'next-auth/react'
+import { visiblesPara } from '@/lib/visibilidadMarketing'
 
 type Estado = Contenido['estado']
 
@@ -103,7 +105,15 @@ export function TableroContenido() {
     queryFn: () => apiFetch<{ data: Contenido[] }>(`/marketing/contenidos?desde=${desde}&hasta=${hasta}`),
     staleTime: 30_000,
   })
-  const contenidos = useMemo(() => data?.data ?? [], [data])
+  // El filtro de verdad vive en el backend; esta pasada repite la misma regla
+  // en pantalla para el rato en que el servidor responda con la version
+  // anterior (ver visibilidadMarketing.ts).
+  const { data: sesion } = useSession()
+  const rol = (sesion?.user as { role?: string } | undefined)?.role
+  const contenidos = useMemo(
+    () => visiblesPara(data?.data ?? [], { rol, userId: sesion?.user?.id, miembros }),
+    [data, rol, sesion?.user?.id, miembros],
+  )
 
   const conteos = useMemo(() => {
     const c: Record<Estado, number> = { PLANIFICADO: 0, EN_PROCESO: 0, PUBLICADO: 0 }

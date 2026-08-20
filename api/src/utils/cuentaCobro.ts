@@ -31,7 +31,10 @@ const REQUERIDOS: [keyof DatosFinancieros, string][] = [
   ['banco',            'el banco'],
   ['tipoCuenta',       'el tipo de cuenta'],
   ['numeroCuenta',     'el número de cuenta'],
-  ['firmaUrl',         'tu firma'],
+  // La firma dejó de pedirse (Hotman, 20-ago): se quitó el lienzo de dibujo de
+  // Ajustes, así que exigirla aquí dejaba a todo el equipo con un dato
+  // "faltante" imposible de llenar y bloqueaba sus cobros. El PDF deja la
+  // línea para firmar a mano.
 ]
 
 const vacio = (v: unknown) => v == null || String(v).trim() === ''

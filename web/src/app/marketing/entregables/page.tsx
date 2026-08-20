@@ -22,12 +22,13 @@ import { useSession } from 'next-auth/react'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { esLiderMarketing } from '@/lib/roles'
+import { visiblesPara } from '@/lib/visibilidadMarketing'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil } from 'lucide-react'
-import { type Contenido } from '@/components/marketing/CalendarioMarketing'
+import { type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
 const TIPO_LABEL: Record<Contenido['tipo'], string> = {
@@ -346,6 +347,13 @@ export default function EntregablesPage() {
     ? { desde: toISO(dateRange.start), hasta: toISO(dateRange.end) }
     : rangoDelMes(month)
 
+  const { data: miembrosData } = useQuery({
+    queryKey: ['marketing-miembros'],
+    queryFn: () => apiFetch<{ data: Miembro[] }>('/marketing/miembros'),
+    staleTime: 5 * 60_000,
+  })
+  const miembrosMkt = miembrosData?.data ?? []
+
   const { data, isLoading } = useQuery({
     queryKey: ['marketing-contenidos-equipo', desde, hasta],
     queryFn: () => apiFetch<{ data: Contenido[] }>(`/marketing/contenidos?desde=${desde}&hasta=${hasta}`),
@@ -355,7 +363,7 @@ export default function EntregablesPage() {
   // Agrupado por persona, y los que nadie tomó al final: no es una persona
   // más, es una alerta — algo agendado que no tiene quién lo haga.
   const grupos = useMemo(() => {
-    const todos = data?.data ?? []
+    const todos = visiblesPara(data?.data ?? [], { rol, userId: miUserId, miembros: miembrosMkt })
     const visibles = todos.filter(c =>
       filtro === '' ? true
       : filtro === 'PUBLICADO' ? c.estado === 'PUBLICADO'
@@ -375,7 +383,7 @@ export default function EntregablesPage() {
     return [...mapa.values()].sort((a, b) =>
       a.id === '__sin__' ? 1 : b.id === '__sin__' ? -1 : a.nombre.localeCompare(b.nombre),
     )
-  }, [data, filtro])
+  }, [data, filtro, rol, miUserId, miembrosMkt])
 
   return (
     <div className="space-y-4 animate-fade-in">
