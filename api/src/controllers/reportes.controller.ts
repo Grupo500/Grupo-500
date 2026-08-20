@@ -480,8 +480,12 @@ export async function cursosMasVendidos(req: Request, res: Response) {
 // Saldos abiertos. Distingue lo que Hotmart cobra solo (cuotas programadas del
 // Smart Installment) de lo que alguien tiene que ir a cobrar: meter ambos en un
 // mismo total da una cifra que asusta y no dice qué hacer.
-export async function pendientesPorCobrar(req: Request, res: Response) {
-  const filtroAsesor = filtroAsesorDe(req)
+/**
+ * El cálculo de saldos abiertos, separado del controlador: el panel de
+ * Administración necesita las mismas cifras y consultarlas por su cuenta
+ * garantizaba que un día dejaran de cuadrar entre pantallas.
+ */
+export async function calcularPendientes(filtroAsesor: string | null) {
 
   // Una deuda no deja de existir porque cambió el mes: esto siempre muestra
   // el saldo abierto de TODO el historial, sin acotar por cuándo se compró
@@ -669,7 +673,7 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
   const recuperado = Math.round(rec._sum.monto ?? 0)
   const saldoInicial = recuperado + automatico.monto + gestion.monto
 
-  return ApiResponse.success(res, {
+  return {
     total: automatico.monto + gestion.monto,
     estudiantes: automatico.estudiantes + gestion.estudiantes,
     recuperadoMes: {
@@ -684,7 +688,11 @@ export async function pendientesPorCobrar(req: Request, res: Response) {
       .sort((a, b) => a.faltan - b.faltan),
     porGestionar: porGestionar.slice(0, 50),
     porAutomatico: porAutomatico.slice(0, 50),
-  })
+  }
+}
+
+export async function pendientesPorCobrar(req: Request, res: Response) {
+  return ApiResponse.success(res, await calcularPendientes(filtroAsesorDe(req) ?? null))
 }
 
 // Financiero por período: totales del período activo + serie temporal
@@ -1463,7 +1471,8 @@ export async function resumenGeneral(req: Request, res: Response) {
   const inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
   const fin    = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59)
 
-  const [pagosMes, asesoresActivos, sinAsesor, atrasadas, contenidoMes, cobros, equipoMkt] =
+  const [pagosMes, asesoresActivos, sinAsesor, atrasadas, contenidoMes, cobros, equipoMkt,
+         pagosDelMes, cartera] =
     await Promise.all([
       prisma.pago.aggregate({
         where: { estado: 'PAGADO', fechaPago: { gte: inicio, lte: fin } },
@@ -1480,11 +1489,42 @@ export async function resumenGeneral(req: Request, res: Response) {
         select: { valor: true, estadoCobro: true },
       }),
       prisma.miembroMarketing.count({ where: { activo: true } }),
+      // Los pagos uno a uno, para el día a día y el ranking: agregarlos aquí
+      // evita dos consultas más y sale de la misma foto que el resto.
+      prisma.pago.findMany({
+        where: { estado: 'PAGADO', fechaPago: { gte: inicio, lte: fin } },
+        select: { monto: true, fechaPago: true, asesor: { select: { nombre: true } } },
+      }),
+      calcularPendientes(null),
     ])
 
   const porEstado = (e: string) => contenidoMes.find(c => c.estado === e)?._count ?? 0
   const sumaCobros = (e: string) =>
     cobros.filter(c => c.estadoCobro === e).reduce((s, c) => s + (c.valor ?? 0), 0)
+
+  // ── Ventas por día del mes (para el mapa de calor) ──
+  const diasDelMes = fin.getDate()
+  const porDia = Array.from({ length: diasDelMes }, (_, i) => ({ dia: i + 1, monto: 0, cantidad: 0 }))
+  for (const p of pagosDelMes) {
+    if (!p.fechaPago) continue
+    // Día en hora Colombia: con la del servidor, una venta de las 8 p.m. cae
+    // en el día siguiente y el mapa de calor se corre una casilla.
+    const d = Number(diaColombia(p.fechaPago)?.slice(8, 10) ?? 0)
+    if (d >= 1 && d <= diasDelMes) { porDia[d - 1].monto += p.monto; porDia[d - 1].cantidad++ }
+  }
+  const mejorDia = porDia.reduce((m, d) => (d.monto > m.monto ? d : m), porDia[0] ?? { dia: 0, monto: 0, cantidad: 0 })
+
+  // ── Top asesores del mes ──
+  const porAsesor = new Map<string, number>()
+  for (const p of pagosDelMes) {
+    const n = p.asesor?.nombre
+    if (!n) continue
+    porAsesor.set(n, (porAsesor.get(n) ?? 0) + p.monto)
+  }
+  const top = [...porAsesor.entries()]
+    .map(([nombre, monto]) => ({ nombre, monto }))
+    .sort((a, b) => b.monto - a.monto)
+    .slice(0, 5)
 
   return ApiResponse.success(res, {
     periodo: { desde: inicio, hasta: fin },
@@ -1495,11 +1535,20 @@ export async function resumenGeneral(req: Request, res: Response) {
       cantidad:    pagosMes._count,
       asesores:    asesoresActivos,
       sinAsesor,
+      porDia,
+      mejorDia,
+      top,
     },
     cartera: {
       // El atraso real que reporta Hotmart, no una estimación.
       vencido:  atrasadas._sum.monto ?? 0,
       cuotas:   atrasadas._count,
+      // Saldo abierto completo, mismas cifras que la tarjeta de Ventas.
+      abierto:     cartera.total,
+      estudiantes: cartera.estudiantes,
+      gestion:     cartera.gestion.monto,
+      gestionEst:  cartera.gestion.estudiantes,
+      recuperado:  cartera.recuperadoMes.monto,
     },
     marketing: {
       planificado: porEstado('PLANIFICADO'),
