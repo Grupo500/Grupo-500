@@ -29,7 +29,7 @@ import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import {
   Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil,
-  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, Trash2, type LucideIcon,
+  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, Trash2, RotateCcw, type LucideIcon,
 } from 'lucide-react'
 import { ContenidoModal, type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
@@ -389,7 +389,7 @@ function DetalleTarea({
                 <span className="truncate text-[11.5px] text-on-surface-variant">· sin enlace</span>
               ) : null}
             </div>
-            {paso && (
+            {paso ? (
               <button
                 type="button"
                 disabled={avanzando}
@@ -402,6 +402,23 @@ function DetalleTarea({
                   ? <Loader2 className="size-3.5 animate-spin" />
                   : paso.estado === 'EN_PROCESO' ? <Play className="size-3.5" /> : <Check className="size-3.5" />}
                 {paso.texto}
+              </button>
+            ) : (
+              // "Publicado" no tiene paso siguiente, así que una tarea
+              // publicada por error quedaba encallada: el selector de estado
+              // salió del formulario y con él la única forma de deshacerlo.
+              // Este es el camino de vuelta, y el único (Hotman, 20-ago).
+              <button
+                type="button"
+                disabled={avanzando}
+                onClick={() => onAvanzar(c.id, 'EN_PROCESO')}
+                title="Reabrir — vuelve a En proceso"
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-outline-variant px-3.5 py-2 text-[11.5px] font-semibold text-on-surface-variant transition-colors hover:border-[#d97706] hover:text-[#d97706] disabled:cursor-wait disabled:opacity-60"
+              >
+                {avanzando
+                  ? <Loader2 className="size-3.5 animate-spin" />
+                  : <RotateCcw className="size-3.5" />}
+                Reabrir
               </button>
             )}
           </div>

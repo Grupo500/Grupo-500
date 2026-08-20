@@ -8,7 +8,10 @@ import {
   isEqual, isSameDay, isSameMonth, isToday, startOfMonth, startOfToday, startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus, Trash2, Link2, Upload, Loader2, CalendarDays } from 'lucide-react'
+import {
+  ChevronLeft, ChevronRight, Plus, Trash2, Link2, Upload, Loader2, CalendarDays,
+  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, type LucideIcon,
+} from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -88,6 +91,75 @@ function deISO(iso: string) {
   return new Date(a, m - 1, d)
 }
 
+/** El icono que encabeza la ficha, según lo que sea la pieza. */
+const ICONO_TIPO: Record<Contenido['tipo'], LucideIcon> = {
+  VIDEO: Video, VSL: Video, TIKTOKERO: Video,
+  CARRUSEL: LayoutGrid, CARRUMEME: LayoutGrid,
+  GUION: FileText, PUBLICACION: Megaphone, OTRO: Megaphone,
+}
+
+/** Una dirección legible: sin protocolo ni www, que en un enlace son ruido. */
+function direccionCorta(u: string) {
+  return u.replace(/^https?:\/\//, '').replace(/^www\./, '')
+}
+
+/**
+ * Un campo del formulario: etiqueta arriba, control debajo.
+ *
+ * `obligatorio` lo dice con la palabra y no con un asterisco: el asterisco solo
+ * significa algo para quien ya sabe qué significa (Hotman, 20-ago).
+ */
+function Campo({ label, obligatorio, ayuda, children }: {
+  label: string
+  obligatorio?: boolean
+  ayuda?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-[11.5px] font-medium text-on-surface-variant">
+        {label}
+        {obligatorio && (
+          <span className="ml-1.5 text-[9.5px] font-semibold uppercase tracking-wider text-[#d97706]">
+            obligatorio
+          </span>
+        )}
+        {ayuda && <span className="font-normal text-outline"> · {ayuda}</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+/** Dos o tres opciones que se eligen de un clic, sin desplegar una lista. */
+function Segmentado<T extends string>({ valor, onCambio, opciones }: {
+  valor: T
+  onCambio: (v: T) => void
+  opciones: { valor: T; texto: string; color?: string }[]
+}) {
+  return (
+    <div className="flex gap-1.5">
+      {opciones.map(o => (
+        <button
+          key={o.valor}
+          type="button"
+          onClick={() => onCambio(o.valor)}
+          aria-pressed={valor === o.valor}
+          className={cn(
+            'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border py-2 text-[12.5px] transition-colors',
+            valor === o.valor
+              ? 'border-primary bg-primary-container font-semibold text-on-surface'
+              : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
+          )}
+        >
+          {o.color && <span className="size-[7px] shrink-0 rounded-full" style={{ background: o.color }} />}
+          {o.texto}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /**
  * Fecha del contenido: el día en grande, y al tocar "Cambiar" se abre un
  * selector de mes que además muestra qué hay ya agendado en el día elegido
@@ -115,26 +187,22 @@ function CampoFecha({ valor, onCambio, agenda, idActual }: {
 
   return (
     <div className="rounded-xl border border-outline-variant">
-      <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <span className="text-[21px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-on-surface">
-          {format(elegido, 'd')}
+      {/* Una línea, como los demás campos del formulario. Antes era una tarjeta
+          con el día en 21px flotando encima del formulario, y se leía como
+          parte del encabezado en vez de como un dato de la pieza. */}
+      <button
+        type="button"
+        onClick={() => { setMes(startOfMonth(elegido)); setAbierto(a => !a) }}
+        className="flex w-full cursor-pointer items-center gap-2.5 px-3 py-2.5 text-left"
+      >
+        <CalendarDays className="size-[15px] shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate text-[13px] text-on-surface first-letter:uppercase">
+          {format(elegido, "EEEE d 'de' MMMM", { locale: es })}
         </span>
-        <span className="flex flex-col gap-0.5">
-          <span className="text-[11.5px] leading-none text-on-surface first-letter:uppercase">
-            {format(elegido, "MMMM 'de' yyyy", { locale: es })}
-          </span>
-          <span className="text-[10px] leading-none text-on-surface-variant first-letter:uppercase">
-            {format(elegido, 'EEEE', { locale: es })}
-          </span>
-        </span>
-        <button
-          type="button"
-          onClick={() => { setMes(startOfMonth(elegido)); setAbierto(a => !a) }}
-          className="ml-auto cursor-pointer text-[11px] text-primary underline underline-offset-2"
-        >
+        <span className="shrink-0 text-[11px] text-primary underline underline-offset-2">
           {abierto ? 'Listo' : 'Cambiar'}
-        </button>
-      </div>
+        </span>
+      </button>
 
       {abierto && (
         <div className="border-t border-outline-variant p-3">
@@ -452,7 +520,6 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   const [clasificacion, setClasificacion] = useState<Contenido['clasificacion']>(contenido?.clasificacion ?? 'ORGANICO')
   const [tipoTrabajo, setTipoTrabajo] = useState<Contenido['tipoTrabajo']>(contenido?.tipoTrabajo ?? 'EMPRESA')
   const [valor, setValor] = useState(contenido?.valor != null ? String(contenido.valor) : '')
-  const [estado, setEstado]         = useState<Contenido['estado']>(contenido?.estado ?? 'PLANIFICADO')
   // La fecha guardada llega como medianoche UTC ("2026-08-19T00:00:00.000Z").
   // Pasarla por `new Date()` la corría al día anterior en Colombia (UTC-5), así
   // que el formulario abría con un día menos y al guardar —aunque solo se
@@ -486,7 +553,10 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
         // null de todos modos, y así el cuerpo dice lo mismo que la pantalla.
         valor: tipoTrabajo === 'FREELANCE' && valor ? Number(valor) : null,
         destino: destino || null, asignadoAId: asignadoAId || null, notas: notas || null,
-        ...(esEdicion ? { estado } : {}),
+        // El estado no viaja: no es un dato que se escriba, es lo que va
+        // pasando. Se mueve desde Entregables y desde la ficha, con un solo
+        // paso hacia adelante y "Reabrir" como unica vuelta (Hotman, 20-ago).
+        // Mandarlo desde aqui deshacia lo que otro acababa de publicar.
       }
       return esEdicion
         ? apiFetch(`/marketing/contenidos/${contenido!.id}`, { method: 'PATCH', body: JSON.stringify(body) })
@@ -507,16 +577,15 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
       method: 'POST',
       body: JSON.stringify({ plataforma, url: videoUrl ? null : url, videoUrl: videoUrl ?? null }),
     }),
-    onSuccess: () => {
-      setUrl('')
-      // Publicar un entregable marca el contenido como publicado —lo hace el
-      // backend—, pero el formulario seguía mostrando el estado viejo: al
-      // tocar "Guardar cambios" lo mandaba de vuelta y deshacía la publicación
-      // (Hotman, 20-ago). Aquí el formulario se pone al día.
-      setEstado('PUBLICADO')
-      onSaved()
-    },
+    onSuccess: () => { setUrl(''); onSaved() },
     onError: (e: Error) => setError(e.message || 'Error al agregar entregable'),
+  })
+
+  /** Quitar un enlace mal pegado. Antes solo se podian agregar. */
+  const quitarEntregable = useMutation({
+    mutationFn: (id: string) => apiFetch(`/marketing/entregables/${id}`, { method: 'DELETE' }),
+    onSuccess: onSaved,
+    onError: (e: Error) => setError(e.message || 'No se pudo quitar el enlace'),
   })
 
   async function subirVideo(file: File) {
@@ -546,227 +615,215 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
     <Modal
       abierto
       onClose={onClose}
-      titulo={esEdicion ? 'Editar contenido' : 'Nuevo contenido'}
-      subtitulo={esEdicion ? TIPO_LABEL[contenido!.tipo] : undefined}
-      // Azul para actuar: aquí la ventana es un formulario con una acción al
-      // pie, y la franja se lee como su barra de título.
-      tono="marca"
+      // El nombre de la pieza manda en el encabezado; "Editar contenido" no
+      // decía cuál se estaba editando. La franja azul marino salió de aquí
+      // (Hotman, 20-ago): en un formulario de tres bloques ya hay bastante
+      // estructura sin un tercer fondo apilado en los primeros 120px.
+      titulo={esEdicion ? contenido!.titulo : 'Nuevo contenido'}
+      icono={esEdicion ? ICONO_TIPO[contenido!.tipo] : Plus}
+      subtitulo={
+        esEdicion
+          ? `${TIPO_LABEL[contenido!.tipo]} · ${format(deISO(contenido!.fecha), "d 'de' MMMM", { locale: es })}`
+          : `Se agenda para el ${format(deISO(fechaStr), "EEEE d", { locale: es })}`
+      }
       pie={
-        // La acción principal pesa más y se alcanza sin apuntar a un botón
-        // pequeño en la esquina.
-        <div className="flex gap-2">
-          {esEdicion && (
+        <div className="-mx-5 -my-3.5 flex items-center justify-between gap-3 bg-surface-low px-5 py-3.5">
+          {esEdicion ? (
+            // Lejos de Guardar y sin color hasta que se le apunta: la papelera
+            // roja pegada a "Cancelar" invitaba a un borrado por ir rápido.
             <button
-              onClick={() => confirm('¿Eliminar este contenido?') && eliminar.mutate()}
+              type="button"
+              onClick={() => confirm('¿Eliminar esta tarea? No se puede deshacer.') && eliminar.mutate()}
               disabled={eliminar.isPending}
-              aria-label="Eliminar contenido"
-              title="Eliminar contenido"
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-outline-variant text-[var(--error)] transition-colors hover:bg-surface-high disabled:opacity-40"
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-1 py-1.5 text-[12px] font-medium text-on-surface-variant transition-colors hover:text-[#dc2626] disabled:opacity-40"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="size-3.5" /> Eliminar tarea
             </button>
+          ) : (
+            <span className="min-w-0 truncate text-[11.5px] text-on-surface-variant">
+              Nace como <b className="font-semibold text-on-surface">Planificado</b>
+            </span>
           )}
-          <button
-            onClick={onClose}
-            className="flex-1 cursor-pointer rounded-lg border border-outline-variant bg-surface-lowest py-2 text-[12.5px] font-semibold text-on-surface transition-colors hover:bg-surface-high"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={() => guardar.mutate()}
-            disabled={!titulo.trim() || guardar.isPending}
-            className="flex flex-[1.4] cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-[12.5px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {guardar.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {esEdicion ? 'Guardar cambios' : 'Crear contenido'}
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="cursor-pointer rounded-full border border-outline-variant px-4 py-2 text-[12.5px] font-semibold text-on-surface-variant transition-colors hover:border-outline hover:text-on-surface"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => guardar.mutate()}
+              disabled={!titulo.trim() || guardar.isPending}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-[12.5px] font-semibold text-primary-on transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:opacity-45"
+            >
+              {guardar.isPending && <Loader2 className="size-4 animate-spin" />}
+              {esEdicion ? 'Guardar' : 'Crear'}
+            </button>
+          </div>
         </div>
       }
     >
-      <div className="space-y-3 pb-2">
-        <CampoFecha
-          valor={fechaStr}
-          onCambio={setFechaStr}
-          agenda={agenda}
-          idActual={contenido?.id}
-        />
+      {/* De borde a borde: cada bloque lleva su propia línea, y el Modal ya
+          acolcha el cuerpo. */}
+      <div className="-mx-5 -my-2">
 
-        <div>
-          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
-            Título <span style={{ color: '#d97706' }}>*</span>
-          </label>
-          <input
-            value={titulo}
-            onChange={e => setTitulo(e.target.value)}
-            placeholder="Ej. Reel tips de comprensión lectora"
-            className="input-base"
-          />
-        </div>
+        {/* ── La pieza ── */}
+        <div className="border-b border-outline-variant px-5 py-4">
+          <p className="mb-3.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+            La pieza
+          </p>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Tipo</label>
-            <Select
-              value={tipo}
-              onValueChange={v => setTipo(v as Contenido['tipo'])}
-              className="input-base"
-              options={Object.entries(TIPO_LABEL).map(([value, label]) => ({ value, label }))}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Destino</label>
-            <Select
-              value={destino}
-              onValueChange={setDestino}
-              className="input-base"
-              placeholder="Sin definir"
-              options={[{ value: '', label: 'Sin definir' }, ...Object.entries(DESTINO_LABEL).map(([value, label]) => ({ value, label }))]}
-            />
-          </div>
-        </div>
-
-        <div>
-          {/* Dos opciones, se eligen de un clic: no hace falta desplegar una
-              lista para ver dos ítems. Lo elegido va relleno y con borde de
-              color, igual que los responsables de abajo — antes era al revés
-              (pastilla blanca sobre pista azul) y sobre el fondo blanco del
-              modal la teñida parecía la activa, así que "Pauta" se leía
-              seleccionada cuando la marcada era "Orgánico". */}
-          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Clasificación</label>
-          <div className="flex gap-1.5">
-            {(Object.keys(CLASIFICACION_LABEL) as Contenido['clasificacion'][]).map(c => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setClasificacion(c)}
-                aria-pressed={clasificacion === c}
-                className={cn(
-                  'flex-1 rounded-full border py-1.5 text-[12.5px] transition-colors cursor-pointer',
-                  clasificacion === c
-                    ? 'border-primary bg-primary-container font-semibold text-on-surface'
-                    : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
-                )}
-              >
-                {CLASIFICACION_LABEL[c]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Empresa o freelance. Mismo idioma que Clasificación: lo elegido va
-            relleno y con borde de color. */}
-        <div>
-          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Tipo de trabajo</label>
-          <div className="flex gap-1.5">
-            {(Object.keys(TRABAJO_LABEL) as Contenido['tipoTrabajo'][]).map(t => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTipoTrabajo(t)}
-                aria-pressed={tipoTrabajo === t}
-                className={cn(
-                  'flex-1 rounded-full border py-1.5 text-[12.5px] transition-colors cursor-pointer',
-                  tipoTrabajo === t
-                    ? 'border-primary bg-primary-container font-semibold text-on-surface'
-                    : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
-                )}
-              >
-                {TRABAJO_LABEL[t]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* El valor solo existe en los freelance, así que solo se ve ahí. La
-            línea de la izquierda marca que este campo apareció por lo que se
-            acaba de elegir justo arriba. */}
-        {tipoTrabajo === 'FREELANCE' && (
-          <div className="border-l-2 border-primary pl-3">
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
-              Valor <span className="font-normal text-outline">· opcional</span>
-            </label>
-            <div className="flex items-stretch overflow-hidden rounded-lg border border-outline-variant focus-within:border-primary">
-              <span className="grid place-items-center border-r border-outline-variant bg-surface-low px-3 text-[13px] font-semibold text-on-surface-variant">
-                $
-              </span>
-              <input
-                inputMode="numeric"
-                value={valor ? milesCO(Number(valor)) : ''}
-                onChange={e => setValor(e.target.value.replace(/\D/g, ''))}
-                placeholder="0"
-                className="w-full bg-surface-lowest px-3 py-2 text-[14px] tabular-nums text-on-surface outline-none placeholder:text-on-surface-variant/60"
+          <div className="space-y-3.5">
+            <Campo label="Se publica el">
+              <CampoFecha
+                valor={fechaStr}
+                onCambio={setFechaStr}
+                agenda={agenda}
+                idActual={contenido?.id}
               />
-            </div>
-            <p className="mt-1 text-[11px] text-outline">Lo que se cobra por este trabajo.</p>
-          </div>
-        )}
+            </Campo>
 
-        {/* Asignar solo lo ven quienes reparten trabajo (community, líderes,
-            admin) y la lista trae únicamente editores de video: es a ellos a
-            quienes se les encarga (Hotman, 20-ago). Quien no reparte crea
-            siempre a su nombre y no ve este campo. */}
-        {puedeAsignar && (
-          <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Asignar a</label>
-            <div className="flex flex-wrap gap-1.5">
-              {editores.map(m => {
-                const activo = asignadoAId === m.id
-                return (
+            <Campo label="Título" obligatorio>
+              <input
+                value={titulo}
+                onChange={e => setTitulo(e.target.value)}
+                placeholder="Ej. Reel tips de comprensión lectora"
+                className="input-base"
+              />
+            </Campo>
+
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+              <Campo label="Tipo">
+                <Select
+                  value={tipo}
+                  onValueChange={v => setTipo(v as Contenido['tipo'])}
+                  className="input-base"
+                  options={Object.entries(TIPO_LABEL).map(([value, label]) => ({ value, label }))}
+                />
+              </Campo>
+              {/* "Cuenta" y no "Destino": es el perfil donde sale la pieza, que
+                  es como el equipo lo llama en su hoja de cálculo. */}
+              <Campo label="Cuenta">
+                <Select
+                  value={destino}
+                  onValueChange={setDestino}
+                  className="input-base"
+                  placeholder="Sin definir"
+                  options={[{ value: '', label: 'Sin definir' }, ...Object.entries(DESTINO_LABEL).map(([value, label]) => ({ value, label }))]}
+                />
+              </Campo>
+            </div>
+
+            <Campo label="Clasificación">
+              <Segmentado
+                valor={clasificacion}
+                onCambio={setClasificacion}
+                opciones={(Object.keys(CLASIFICACION_LABEL) as Contenido['clasificacion'][])
+                  .map(c => ({ valor: c, texto: CLASIFICACION_LABEL[c] }))}
+              />
+            </Campo>
+          </div>
+        </div>
+
+        {/* ── El trabajo ── */}
+        <div className="border-b border-outline-variant px-5 py-4">
+          <p className="mb-3.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+            El trabajo
+          </p>
+
+          <div className="space-y-3.5">
+            {/* "Quién lo paga" dice lo que la persona decide; "Tipo de trabajo"
+                nombraba el campo por dentro. */}
+            <Campo label="Quién lo paga">
+              <Segmentado
+                valor={tipoTrabajo}
+                onCambio={setTipoTrabajo}
+                opciones={(Object.keys(TRABAJO_LABEL) as Contenido['tipoTrabajo'][])
+                  .map(t => ({ valor: t, texto: TRABAJO_LABEL[t] }))}
+              />
+              {/* El valor solo existe en los freelance. La línea de la
+                  izquierda marca que apareció por lo que se acaba de elegir. */}
+              {tipoTrabajo === 'FREELANCE' && (
+                <div className="mt-3 border-l-2 border-primary pl-3">
+                  <label className="mb-1.5 block text-[11.5px] font-medium text-on-surface-variant">
+                    Valor <span className="font-normal text-outline">· opcional</span>
+                  </label>
+                  <div className="flex items-stretch overflow-hidden rounded-lg border border-outline-variant focus-within:border-primary">
+                    <span className="grid place-items-center border-r border-outline-variant bg-surface-low px-3 text-[13px] font-semibold text-on-surface-variant">
+                      $
+                    </span>
+                    <input
+                      inputMode="numeric"
+                      value={valor ? milesCO(Number(valor)) : ''}
+                      onChange={e => setValor(e.target.value.replace(/\D/g, ''))}
+                      placeholder="0"
+                      className="w-full bg-surface-lowest px-3 py-2 text-[14px] tabular-nums text-on-surface outline-none placeholder:text-on-surface-variant/60"
+                    />
+                  </div>
+                  <p className="mt-1 text-[11px] text-outline">Lo que se cobra por este trabajo.</p>
+                </div>
+              )}
+            </Campo>
+
+            {/* Asignar solo lo ven quienes reparten trabajo (community, social
+                media, líderes, admin) y la lista trae únicamente editores de
+                video: es a ellos a quienes se les encarga (Hotman, 20-ago). */}
+            {puedeAsignar && (
+              <Campo label="Asignar a" ayuda="solo editores de video">
+                <div className="flex flex-wrap gap-1.5">
+                  {editores.map(m => {
+                    const activo = asignadoAId === m.id
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setAsignadoAId(activo ? '' : m.id)}
+                        aria-pressed={activo}
+                        title={m.nombre}
+                        className={cn(
+                          'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-[12px] transition-colors',
+                          activo
+                            ? 'border-primary bg-primary-container font-semibold text-on-surface'
+                            : 'border-outline-variant bg-surface-lowest text-on-surface hover:border-outline',
+                        )}
+                      >
+                        <AvatarMiembro id={m.id} nombre={m.nombre} image={m.user?.image} size={20} />
+                        {m.nombre.split(' ')[0]}
+                      </button>
+                    )
+                  })}
                   <button
-                    key={m.id}
                     type="button"
-                    onClick={() => setAsignadoAId(activo ? '' : m.id)}
-                    aria-pressed={activo}
-                    title={m.nombre}
+                    onClick={() => setAsignadoAId('')}
+                    aria-pressed={!asignadoAId}
                     className={cn(
-                      'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[12px] transition-colors',
-                      activo
+                      'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-[12px] transition-colors',
+                      !asignadoAId
                         ? 'border-primary bg-primary-container text-on-surface'
-                        : 'border-outline-variant bg-surface-lowest text-on-surface hover:border-outline',
+                        : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
                     )}
                   >
-                    <AvatarMiembro id={m.id} nombre={m.nombre} image={m.user?.image} size={19} />
-                    {m.nombre.split(' ')[0]}
+                    <span className="grid size-5 place-items-center rounded-full border border-dashed border-outline text-[9px] font-bold text-on-surface-variant">
+                      ?
+                    </span>
+                    A mi nombre
                   </button>
-                )
-              })}
-              <button
-                type="button"
-                onClick={() => setAsignadoAId('')}
-                aria-pressed={!asignadoAId}
-                className={cn(
-                  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[12px] transition-colors',
-                  !asignadoAId
-                    ? 'border-primary bg-primary-container text-on-surface'
-                    : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
+                </div>
+                {editores.length === 0 && (
+                  <p className="mt-1.5 text-[11px] text-outline">No hay editores de video registrados.</p>
                 )}
-              >
-                <span className="grid h-[19px] w-[19px] place-items-center rounded-full border border-dashed border-outline text-[8.5px] font-bold text-on-surface-variant">
-                  ?
-                </span>
-                A mi nombre
-              </button>
-            </div>
-            {editores.length === 0 && (
-              <p className="mt-1 text-[11px] text-outline">No hay editores de video registrados.</p>
+              </Campo>
             )}
           </div>
-        )}
+        </div>
 
-        {esEdicion && (
-          <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Estado</label>
-            <Select
-              value={estado}
-              onValueChange={v => setEstado(v as Contenido['estado'])}
-              className="input-base"
-              options={Object.entries(ESTADO_LABEL).map(([value, label]) => ({ value, label }))}
-            />
-          </div>
-        )}
-
-        <div>
-          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Notas</label>
+        {/* ── Notas ── */}
+        <div className={cn('px-5 py-4', esEdicion && 'border-b border-outline-variant')}>
+          <p className="mb-3 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+            Notas
+          </p>
           <textarea
             value={notas ?? ''}
             onChange={e => setNotas(e.target.value)}
@@ -776,66 +833,113 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
           />
         </div>
 
+        {/* ── Enlaces publicados ── */}
         {esEdicion && (
-          // -mx-5 px-5 para que la línea cruce la tarjeta de borde a borde
-          // como las del encabezado y el pie: dentro del cuerpo quedaría
-          // metida el ancho del padding y se leería como un recuadro suelto.
-          <div className="-mx-5 border-t border-outline-variant px-5 pt-3">
-            <p className="text-xs font-medium text-on-surface-variant mb-2">Entregables publicados</p>
-            <div className="space-y-1.5 mb-3">
-              {contenido!.entregables.length === 0 && (
-                <p className="text-[12px] text-on-surface-variant">Todavía no hay nada publicado.</p>
+          <div className="px-5 py-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+                Enlaces publicados
+              </p>
+              {contenido!.entregables.length > 0 && (
+                <p className="shrink-0 text-[10px] tabular-nums text-on-surface-variant">
+                  {contenido!.entregables.length} enlace{contenido!.entregables.length !== 1 ? 's' : ''}
+                </p>
               )}
-              {contenido!.entregables.map(e => (
-                <a
-                  key={e.id}
-                  href={e.url ?? e.videoUrl ?? '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[12px] text-primary hover:underline"
-                >
-                  <Link2 className="w-3 h-3 shrink-0" /> {PLATAFORMA_LABEL[e.plataforma] ?? e.plataforma} · {e.url ? 'link' : 'video subido'}
-                </a>
-              ))}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+
+            {contenido!.entregables.length === 0 ? (
+              <p className="mb-3 rounded-xl border border-dashed border-outline-variant px-4 py-3 text-[12px] text-on-surface-variant">
+                Todavía no hay nada publicado.
+              </p>
+            ) : (
+              <div className="mb-3 flex flex-col gap-2">
+                {contenido!.entregables.map(en => {
+                  const enlace = en.url ?? en.videoUrl
+                  return (
+                    <div
+                      key={en.id}
+                      className="flex items-center gap-3 rounded-xl border border-outline-variant px-3 py-2.5 transition-colors hover:border-outline"
+                    >
+                      <span className="grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-primary-container text-primary">
+                        <Link2 className="size-[15px]" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[12.5px] font-semibold text-on-surface">
+                          {PLATAFORMA_LABEL[en.plataforma] ?? en.plataforma}
+                        </span>
+                        <span className="block truncate text-[10.5px] text-on-surface-variant">
+                          {enlace ? direccionCorta(enlace) : 'video subido'}
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-0.5">
+                        <a
+                          href={enlace ?? '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Abrir en una pestaña"
+                          className="grid size-7 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-high hover:text-on-surface"
+                        >
+                          <ArrowUpRight className="size-3.5" />
+                        </a>
+                        {/* Se podían agregar enlaces pero no quitarlos: uno mal
+                            pegado se quedaba ahí para siempre (Hotman, 20-ago). */}
+                        <button
+                          type="button"
+                          title="Quitar este enlace"
+                          disabled={quitarEntregable.isPending}
+                          onClick={() => confirm('¿Quitar este enlace?') && quitarEntregable.mutate(en.id)}
+                          className="grid size-7 cursor-pointer place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-[#dc2626]/12 hover:text-[#dc2626] disabled:opacity-40"
+                        >
+                          {quitarEntregable.isPending && quitarEntregable.variables === en.id
+                            ? <Loader2 className="size-3.5 animate-spin" />
+                            : <Trash2 className="size-3.5" />}
+                        </button>
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
               <Select
                 value={plataforma}
                 onValueChange={setPlataforma}
-                className="w-[120px] text-[12px] py-1.5"
+                className="input-base w-[126px] shrink-0"
                 options={PLATAFORMAS.map(p => ({ value: p, label: PLATAFORMA_LABEL[p] }))}
               />
               <input
                 value={url}
                 onChange={e => setUrl(e.target.value)}
                 placeholder="https://..."
-                className="input-base flex-1 min-w-[140px] py-1.5 text-[12px]"
+                className="input-base min-w-[140px] flex-1"
               />
-              <Button
-                size="sm"
-                variant="outline"
+              <button
+                type="button"
                 disabled={!url || agregarEntregable.isPending}
                 onClick={() => agregarEntregable.mutate(undefined)}
+                className="shrink-0 cursor-pointer rounded-lg border border-outline-variant px-4 text-[12.5px] font-semibold text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:opacity-40"
               >
-                Agregar link
-              </Button>
-              <label className={cn('inline-flex', subiendo && 'opacity-60 pointer-events-none')}>
-                <input
-                  type="file"
-                  accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
-                  className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) subirVideo(f) }}
-                />
-                <span className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 h-8 rounded-lg border border-outline bg-surface-lowest hover:bg-surface-high transition-colors cursor-pointer">
-                  {subiendo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  Subir video
-                </span>
-              </label>
+                {agregarEntregable.isPending ? <Loader2 className="size-4 animate-spin" /> : 'Agregar'}
+              </button>
             </div>
+
+            <label className={cn('mt-2 block', subiendo && 'pointer-events-none opacity-60')}>
+              <input
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
+                className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) subirVideo(f) }}
+              />
+              <span className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-outline-variant text-[12.5px] font-medium text-on-surface-variant transition-colors hover:border-primary hover:bg-primary/[0.05] hover:text-primary">
+                {subiendo ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                O sube el video desde tu computador
+              </span>
+            </label>
           </div>
         )}
 
-        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
+        {error && <p className="px-5 pb-4 text-xs text-[var(--error)]">{error}</p>}
       </div>
     </Modal>
   )
