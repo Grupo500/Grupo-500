@@ -13,12 +13,21 @@ export function RefreshButton({ className }: { className?: string }) {
   const queryClient = useQueryClient()
 
   const handleRefresh = async () => {
+    if (spinning) return
     setSpinning(true)
-    // Invalida TODO el cache de TanStack Query → los charts refetchan inmediatamente
-    await queryClient.invalidateQueries()
-    // Re-ejecuta el Server Component para datos SSR
-    router.refresh()
-    setTimeout(() => setSpinning(false), 800)
+    try {
+      // `refetchQueries` y no `invalidateQueries`: invalidar solo MARCA los
+      // datos como viejos y respeta el staleTime de cada consulta, así que
+      // tocar el botón podía no disparar una sola petición y parecía que no
+      // hacía nada (Hotman, 20-ago). Esto vuelve a pedir de verdad.
+      await queryClient.refetchQueries({ type: 'active' })
+      // Y re-ejecuta los Server Components, para lo que no pasa por el cache.
+      router.refresh()
+    } finally {
+      // El giro dura lo que dura la petición —con un mínimo para que se vea—,
+      // en vez de 800 ms fijos que mentían sobre si ya había terminado.
+      setTimeout(() => setSpinning(false), 400)
+    }
   }
 
   return (
