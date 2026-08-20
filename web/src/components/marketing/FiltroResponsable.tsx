@@ -12,7 +12,8 @@
  * compensa.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Check, ChevronDown, User, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AvatarMiembro } from './AvatarMiembro'
@@ -43,12 +44,47 @@ export function FiltroResponsable({ valor, onCambio, opciones, total }: {
   total: number
 }) {
   const [abierto, setAbierto] = useState(false)
-  const caja = useRef<HTMLDivElement>(null)
+  const caja  = useRef<HTMLDivElement>(null)
+  const panel = useRef<HTMLDivElement>(null)
+  const [montado, setMontado] = useState(false)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  useEffect(() => setMontado(true), [])
+
+  /**
+   * El panel se dibuja en el `body` y no debajo del botón.
+   *
+   * La barra de filtros tiene scroll horizontal para que quepan los cinco
+   * controles, y un panel posicionado dentro de ella lo recortaba: se abría
+   * "dentro de la fila", asomando unos pocos píxeles y obligando a hacer
+   * scroll para verlo (Hotman, 20-ago).
+   */
+  useLayoutEffect(() => {
+    if (!abierto) return
+    const medir = () => {
+      const t = caja.current?.getBoundingClientRect()
+      if (!t) return
+      const margen = 12
+      const ancho = 284
+      // Si no cabe hacia la derecha, se alinea por el borde derecho del botón.
+      const izq = Math.max(margen, Math.min(t.left, window.innerWidth - ancho - margen))
+      setPos({ top: t.bottom + 8, left: izq })
+    }
+    medir()
+    window.addEventListener('resize', medir)
+    window.addEventListener('scroll', medir, true)
+    return () => {
+      window.removeEventListener('resize', medir)
+      window.removeEventListener('scroll', medir, true)
+    }
+  }, [abierto])
 
   useEffect(() => {
     if (!abierto) return
     const fuera = (e: MouseEvent) => {
-      if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false)
+      const t = e.target as Node
+      if (caja.current?.contains(t) || panel.current?.contains(t)) return
+      setAbierto(false)
     }
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setAbierto(false) }
     document.addEventListener('mousedown', fuera)
@@ -84,8 +120,12 @@ export function FiltroResponsable({ valor, onCambio, opciones, total }: {
         <ChevronDown className={cn('size-3.5 shrink-0 text-on-surface-variant transition-transform', abierto && 'rotate-180')} />
       </button>
 
-      {abierto && (
-        <div className="absolute left-0 top-11 z-[70] w-[284px] overflow-hidden rounded-2xl border border-outline-variant bg-surface-lowest py-1.5 shadow-2xl animate-slide-up">
+      {abierto && montado && pos && createPortal(
+        <div
+          ref={panel}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: 284 }}
+          className="z-[9999] max-h-[min(60vh,420px)] overflow-y-auto rounded-2xl border border-outline-variant bg-surface-lowest py-1.5 shadow-2xl animate-slide-up"
+        >
           <Fila
             seleccionada={valor === ''}
             onClick={() => elegir('')}
@@ -115,7 +155,8 @@ export function FiltroResponsable({ valor, onCambio, opciones, total }: {
               n={o.total}
             />
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
