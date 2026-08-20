@@ -28,7 +28,7 @@ import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil } from 'lucide-react'
-import { type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
+import { ContenidoModal, type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
 const TIPO_LABEL: Record<Contenido['tipo'], string> = {
@@ -166,12 +166,14 @@ function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
  * correcciones. Quien puede pedir cambios escribe aquí; quien hizo el trabajo
  * marca desde aquí que ya corrigió.
  */
-function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio }: {
+function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar }: {
   c: Contenido
   puedePedir: boolean
   esMio: boolean
   onCerrar: () => void
   onCambio: () => void
+  /** Abre el formulario completo. Solo se ofrece a quien puede tocar la tarea. */
+  onEditar?: () => void
 }) {
   const [mensaje, setMensaje] = useState('')
   const e = ESTADO[c.estado]
@@ -216,6 +218,18 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio }: {
               <AvatarMiembro id={c.asignadoA.id} nombre={c.asignadoA.nombre} image={c.asignadoA.user?.image} size={22} />
               {c.asignadoA.nombre}
             </span>
+          )}
+          {/* Editar sin ir al Planificador: quien tiene la tarea delante es
+              quien nota que el título quedó mal o que falta el enlace
+              (Hotman, 20-ago). Abre el mismo formulario de siempre. */}
+          {onEditar && (
+            <button
+              type="button"
+              onClick={onEditar}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface transition-colors hover:border-primary hover:text-primary"
+            >
+              <Pencil className="size-3.5" /> Editar
+            </button>
           )}
         </div>
 
@@ -321,6 +335,7 @@ export default function EntregablesPage() {
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
   const [verTodas, setVerTodas] = useState<Grupo | null>(null)
   const [detalle, setDetalle] = useState<Contenido | null>(null)
+  const [editando, setEditando] = useState<Contenido | null>(null)
   const { data: sesion } = useSession()
   const rol = (sesion?.user as { role?: string } | undefined)?.role
   const miUserId = sesion?.user?.id
@@ -486,8 +501,32 @@ export default function EntregablesPage() {
             esLiderMarketing(rol) || (!!detalle.asignadoPorId && detalle.asignadoPorId === miUserId)
           }
           esMio={detalle.asignadoA?.userId === miUserId}
+          // Puede editar quien tiene la tarea a su nombre, quien la asigno y
+          // los lideres: el resto solo la ve.
+          onEditar={
+            esLiderMarketing(rol) ||
+            detalle.asignadoA?.userId === miUserId ||
+            (!!detalle.asignadoPorId && detalle.asignadoPorId === miUserId)
+              ? () => { setEditando(detalle); setDetalle(null) }
+              : undefined
+          }
           onCerrar={() => setDetalle(null)}
           onCambio={() => queryClient.invalidateQueries({ queryKey: ['marketing-contenidos-equipo'] })}
+        />
+      )}
+
+      {/* El formulario completo, el mismo del Planificador */}
+      {editando && (
+        <ContenidoModal
+          contenido={editando}
+          miembros={miembrosMkt}
+          agenda={data?.data ?? []}
+          onClose={() => setEditando(null)}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ['marketing-contenidos-equipo'] })
+            queryClient.invalidateQueries({ queryKey: ['marketing-contenidos'] })
+            setEditando(null)
+          }}
         />
       )}
     </div>
