@@ -66,6 +66,8 @@ export function useSSE() {
       // cobro. Cambian poco, pero mientras no llegaban, quien revisa Cobros
       // seguía viendo "le falta el banco" de alguien que acababa de ponerlo.
       es.addEventListener('perfil-actualizado', refrescarTodo)
+      // El globito de la campana sube solo cuando llega un aviso nuevo.
+      es.addEventListener('notificacion-nueva', refrescarTodo)
 
       es.onerror = () => {
         // Se cierra a mano para que EventSource no reintente por su cuenta con

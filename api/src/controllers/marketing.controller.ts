@@ -7,8 +7,26 @@ import { esLiderMarketing } from '../utils/roles'
 import { datosFinancierosDe, SELECT_FINANCIEROS } from '../utils/cuentaCobro'
 import { subirCuentaDeCobro } from '../services/googleDrive'
 import { sendPushToUser } from '../services/push'
+import { avisar } from '../services/notificaciones'
 import { broadcast } from '../utils/sseManager'
 import { z } from 'zod'
+
+/** El nombre de pila de quien provoca un aviso, para redactarlo. */
+async function nombreDe(userId?: string) {
+  if (!userId) return 'Alguien'
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { nombre: true } })
+  return u?.nombre?.trim() || 'Alguien'
+}
+
+/** El día de una tarea en palabras: "21 de agosto". */
+function enPalabras(fecha: Date) {
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+  // La fecha se guarda a medianoche UTC; se lee en UTC para no correrla un día.
+  return `${fecha.getUTCDate()} de ${meses[fecha.getUTCMonth()]}`
+}
+
+/** La corrección, cortada para que quepa en una línea de la bandeja. */
+const recorte = (t: string) => (t.length > 80 ? t.slice(0, 80).trimEnd() + '…' : t)
 
 const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, userId: true, user: { select: { image: true, role: true } } }
 
@@ -143,11 +161,16 @@ export async function crearContenido(req: Request, res: Response) {
       where: { id: otro }, select: { userId: true },
     })
     if (destino) {
-      void sendPushToUser(destino.userId, {
-        title: 'Te asignaron un trabajo',
-        body: contenido.titulo,
+      const quien = await nombreDe(req.userId)
+      void avisar({
+        userId: destino.userId,
+        autorId: req.userId,
+        tipo: 'TAREA_ASIGNADA',
+        titulo: 'Te asignaron un trabajo',
+        texto: `${quien} te asignó «${contenido.titulo}» para el ${enPalabras(contenido.fecha)}.`,
         url: '/marketing/entregables',
-      }).catch(() => {})
+        contenidoId: contenido.id,
+      })
     }
   }
 
@@ -188,11 +211,16 @@ export async function pedirCorreccion(req: Request, res: Response) {
   }
 
   if (contenido.asignadoA?.userId) {
-    void sendPushToUser(contenido.asignadoA.userId, {
-      title: 'Tienes correcciones en un trabajo',
-      body: `«${contenido.titulo}» — ${mensaje.slice(0, 90)}`,
+    const quien = await nombreDe(req.userId)
+    void avisar({
+      userId: contenido.asignadoA.userId,
+      autorId: req.userId,
+      tipo: 'CAMBIOS_PEDIDOS',
+      titulo: 'Tienes correcciones en un trabajo',
+      texto: `${quien} pidió cambios en «${contenido.titulo}»: «${recorte(mensaje)}»`,
       url: '/marketing/entregables',
-    }).catch(() => {})
+      contenidoId: contenido.id,
+    })
   }
 
   broadcast('contenido-actualizado', { id: contenido.id })
@@ -227,11 +255,15 @@ export async function resolverCorrecciones(req: Request, res: Response) {
   // Aviso de vuelta a quien las pidió, para que vaya a revisar.
   const pidieron = [...new Set(contenido.correcciones.map(c => c.pedidaPorId))]
   for (const userId of pidieron) {
-    void sendPushToUser(userId, {
-      title: 'Correcciones listas para revisar',
-      body: `${contenido.asignadoA?.nombre ?? 'El equipo'} corrigió «${contenido.titulo}»`,
+    void avisar({
+      userId,
+      autorId: req.userId,
+      tipo: 'CORRECCION_HECHA',
+      titulo: 'Correcciones listas para revisar',
+      texto: `${contenido.asignadoA?.nombre ?? 'El equipo'} corrigió «${contenido.titulo}» — listo para revisar.`,
       url: '/marketing/entregables',
-    }).catch(() => {})
+      contenidoId: contenido.id,
+    })
   }
 
   broadcast('contenido-actualizado', { id: contenido.id })
@@ -306,7 +338,7 @@ export async function actualizarContenido(req: Request, res: Response) {
 
   const antes = await prisma.contenidoMarketing.findUnique({
     where: { id: req.params.id },
-    select: { asignadoAId: true, asignadoPorId: true, titulo: true },
+    select: { asignadoAId: true, asignadoPorId: true, titulo: true, estado: true },
   })
   if (!antes) throw new NotFoundError('Contenido no encontrado')
 
@@ -341,11 +373,31 @@ export async function actualizarContenido(req: Request, res: Response) {
   // El mismo aviso que al crear: quien recibe el encargo tiene que enterarse
   // sin depender de que abra la app por casualidad.
   if (reasignada && contenido.asignadoA?.userId) {
-    void sendPushToUser(contenido.asignadoA.userId, {
-      title: 'Te asignaron un trabajo',
-      body: contenido.titulo,
+    const quien = await nombreDe(req.userId)
+    void avisar({
+      userId: contenido.asignadoA.userId,
+      autorId: req.userId,
+      tipo: 'TAREA_ASIGNADA',
+      titulo: 'Te asignaron un trabajo',
+      texto: `${quien} te asignó «${contenido.titulo}» para el ${enPalabras(contenido.fecha)}.`,
       url: '/marketing/entregables',
-    }).catch(() => {})
+      contenidoId: contenido.id,
+    })
+  }
+
+  // Se publicó algo que otro repartió: quien lo encargó quiere enterarse sin
+  // tener que ir a mirar.
+  if (data.estado === 'PUBLICADO' && antes.estado !== 'PUBLICADO' && contenido.asignadoPorId) {
+    const quien = await nombreDe(req.userId)
+    void avisar({
+      userId: contenido.asignadoPorId,
+      autorId: req.userId,
+      tipo: 'TAREA_PUBLICADA',
+      titulo: 'Se publicó un trabajo',
+      texto: `${quien} publicó «${contenido.titulo}».`,
+      url: '/marketing/entregables',
+      contenidoId: contenido.id,
+    })
   }
 
   broadcast('contenido-actualizado', { id: contenido.id })
