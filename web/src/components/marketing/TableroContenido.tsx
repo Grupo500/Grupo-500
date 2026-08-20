@@ -14,7 +14,7 @@
 // CalendarioMarketing: es el mismo que el equipo ya conoce.
 
 import { useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format,
   isSameDay, isSameMonth, isToday, startOfMonth, startOfToday, startOfWeek,
@@ -126,6 +126,36 @@ export function TableroContenido() {
     setModal(null)
   }
 
+  // Reprogramar arrastrando. `arrastrando` guarda la pieza en vuelo (el
+  // dataTransfer no se puede leer durante el dragover, solo al soltar) y
+  // `destino` el día que se está sobrevolando, para marcarlo.
+  const [arrastrando, setArrastrando] = useState<string>('')
+  const [destino, setDestino] = useState<string | null>(null)
+
+  const mover = useMutation({
+    mutationFn: ({ id, fecha }: { id: string; fecha: string }) =>
+      apiFetch(`/marketing/contenidos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fecha }),
+      }),
+    // La pieza se pinta en su día nuevo antes de que el servidor conteste: al
+    // arrastrar se espera que siga al cursor, no que parpadee de vuelta.
+    onMutate: async ({ id, fecha }) => {
+      await queryClient.cancelQueries({ queryKey: ['marketing-contenidos', desde, hasta] })
+      const previo = queryClient.getQueryData<{ data: Contenido[] }>(['marketing-contenidos', desde, hasta])
+      queryClient.setQueryData<{ data: Contenido[] }>(['marketing-contenidos', desde, hasta], viejo =>
+        viejo ? { ...viejo, data: viejo.data.map(c => (c.id === id ? { ...c, fecha } : c)) } : viejo)
+      return { previo }
+    },
+    onError: (_e, _v, ctx) => {
+      // Se devuelve a su sitio: dejarla movida sería mentir sobre lo guardado.
+      if (ctx?.previo) queryClient.setQueryData(['marketing-contenidos', desde, hasta], ctx.previo)
+      alert('No se pudo mover la tarea')
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['marketing-contenidos'] }),
+  })
+
   return (
     <div className="flex flex-col gap-4">
       {/* Sin botón de "nuevo contenido": se crea con el + del día, que además
@@ -230,11 +260,34 @@ export function TableroContenido() {
               const muestra = delDiaTodos.slice(0, FICHAS_VISIBLES)
               const sobran = delDiaTodos.length - muestra.length
               const fuera = !isSameMonth(dia, mes)
+              const iso = aISO(dia)
               return (
                 <div
                   key={dia.toISOString()}
                   onClick={() => setModal({ modo: 'crear', fecha: dia })}
-                  className="group flex min-h-[96px] cursor-pointer flex-col overflow-hidden border-b border-r border-outline-variant transition-colors last-of-type:border-r-0 hover:bg-surface-low/60 [&:nth-child(7n)]:border-r-0"
+                  onDragOver={e => {
+                    // Sin preventDefault el navegador no acepta la soltada.
+                    if (!arrastrando) return
+                    e.preventDefault()
+                    e.dataTransfer.dropEffect = 'move'
+                    if (destino !== iso) setDestino(iso)
+                  }}
+                  onDragLeave={() => { if (destino === iso) setDestino(null) }}
+                  onDrop={e => {
+                    e.preventDefault()
+                    setDestino(null)
+                    const id = e.dataTransfer.getData('text/plain') || arrastrando
+                    const actual = contenidos.find(c => c.id === id)
+                    // Soltarla en su propio día no es un cambio: no se guarda.
+                    if (!id || !actual || actual.fecha.slice(0, 10) === iso) return
+                    mover.mutate({ id, fecha: iso })
+                  }}
+                  className={cn(
+                    'group flex min-h-[96px] cursor-pointer flex-col overflow-hidden border-b border-r border-outline-variant transition-colors last-of-type:border-r-0 hover:bg-surface-low/60 [&:nth-child(7n)]:border-r-0',
+                    // El día bajo el cursor se marca mientras se arrastra, o no
+                    // hay forma de saber dónde va a caer la pieza.
+                    destino === iso && 'bg-primary/10 ring-2 ring-inset ring-primary/50',
+                  )}
                 >
                   {/* Fila del número: "+" a la izquierda, día a la derecha */}
                   <div className="flex items-center justify-between gap-1 px-2 pt-1.5">
@@ -264,6 +317,7 @@ export function TableroContenido() {
                         key={c.id}
                         contenido={c}
                         onAbrir={() => setModal({ modo: 'editar', contenido: c })}
+                        onArrastrar={setArrastrando}
                       />
                     ))}
                     {sobran > 0 && (
@@ -310,16 +364,31 @@ export function TableroContenido() {
 }
 
 /** Tipo, título, punto de pauta y avatar del responsable. */
-function Ficha({ contenido, onAbrir }: { contenido: Contenido; onAbrir: () => void }) {
+function Ficha({ contenido, onAbrir, onArrastrar }: {
+  contenido: Contenido
+  onAbrir: () => void
+  onArrastrar: (id: string) => void
+}) {
   const marca = ESTADO_COLOR[contenido.estado]
   const persona = contenido.asignadoA
   return (
     <button
       type="button"
       onClick={e => { e.stopPropagation(); onAbrir() }}
-      title={contenido.titulo}
+      // Reprogramar arrastrando: mover una pieza de día era abrirla, cambiar
+      // la fecha en el formulario y guardar. Con doce piezas al mes eso es
+      // media planificación perdida en formularios (Hotman, 20-ago).
+      draggable
+      onDragStart={e => {
+        e.stopPropagation()
+        e.dataTransfer.effectAllowed = 'move'
+        e.dataTransfer.setData('text/plain', contenido.id)
+        onArrastrar(contenido.id)
+      }}
+      onDragEnd={() => onArrastrar('')}
+      title={`${contenido.titulo} — arrastra para cambiar de día`}
       style={{ ['--marca' as string]: marca }}
-      className="flex w-full min-w-0 cursor-pointer items-center gap-1.5 overflow-hidden rounded-[3px] border-l-[2.5px] border-l-[var(--marca)] bg-[color-mix(in_srgb,var(--marca)_15%,transparent)] px-1.5 py-1 text-left leading-none transition-colors hover:bg-[color-mix(in_srgb,var(--marca)_25%,transparent)]"
+      className="flex w-full min-w-0 cursor-grab items-center gap-1.5 overflow-hidden rounded-[3px] border-l-[2.5px] border-l-[var(--marca)] bg-[color-mix(in_srgb,var(--marca)_15%,transparent)] px-1.5 py-1 text-left leading-none transition-colors hover:bg-[color-mix(in_srgb,var(--marca)_25%,transparent)] active:cursor-grabbing"
     >
       <span
         className="shrink-0 text-[8.5px] font-bold uppercase leading-none tracking-[0.03em]"

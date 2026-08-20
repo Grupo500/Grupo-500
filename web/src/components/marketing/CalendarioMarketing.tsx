@@ -479,7 +479,15 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
       method: 'POST',
       body: JSON.stringify({ plataforma, url: videoUrl ? null : url, videoUrl: videoUrl ?? null }),
     }),
-    onSuccess: () => { setUrl(''); onSaved() },
+    onSuccess: () => {
+      setUrl('')
+      // Publicar un entregable marca el contenido como publicado —lo hace el
+      // backend—, pero el formulario seguía mostrando el estado viejo: al
+      // tocar "Guardar cambios" lo mandaba de vuelta y deshacía la publicación
+      // (Hotman, 20-ago). Aquí el formulario se pone al día.
+      setEstado('PUBLICADO')
+      onSaved()
+    },
     onError: (e: Error) => setError(e.message || 'Error al agregar entregable'),
   })
 
