@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Home } from 'lucide-react'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
+import { cn } from '@/lib/utils'
 
 // Misma paleta fija del sidebar y de la barra flotante: las tres son la misma
 // pieza de chrome, así que no siguen el tema claro/oscuro de la app.
@@ -35,7 +36,7 @@ const BOTON =
  * reserva el espacio de la muesca, para cuando la app se instala en la
  * pantalla de inicio.
  */
-export function Header() {
+export function Header({ className }: { className?: string }) {
   return (
     <header
       style={{
@@ -44,7 +45,7 @@ export function Header() {
         borderBottomRightRadius: RADIO_INFERIOR,
         paddingTop: 'env(safe-area-inset-top)',
       }}
-      className="flex-shrink-0"
+      className={cn('flex-shrink-0', className)}
     >
       <div className="flex h-[62px] items-center justify-between gap-3 px-3.5 md:h-[60px] md:gap-4 md:px-4">
         <Link href="/inicio" className="flex min-w-0 items-center gap-2 md:gap-2.5" title="Volver al inicio">
