@@ -1,35 +1,32 @@
 'use client'
 
-// Resumen general del área de Administración — "sala de control".
+// Resumen general del área de Administración.
 //
-// Seis módulos del mismo peso, cada uno con su forma propia y una etiqueta de
-// estado: la portada del área no es un informe que se lee de arriba abajo, es
-// un tablero que se barre con la vista para saber dónde hay que mirar hoy.
-// Diseño elegido por Hotman el 20-ago sobre tres propuestas.
+// Reutiliza las piezas del Inicio —la gráfica de facturación, el desglose del
+// mes y el podio de asesores— en vez de tener versiones propias más pobres:
+// son los mismos datos y el equipo ya sabe leerlas (Hotman, 20-ago). Alrededor,
+// los módulos que solo existen aquí: cartera, marketing, equipo y cobros.
 //
-// Las cifras vienen de un solo endpoint y no de varias llamadas, para que
-// salgan de la misma foto — consultadas por aparte, dos peticiones a distinto
-// segundo pueden mostrar totales que no cuadran entre sí. La cartera sale del
-// mismo cálculo que usa la tarjeta de Ventas (calcularPendientes), no de una
-// consulta paralela que un día dejaría de coincidir.
+// Las cifras de cartera salen de calcularPendientes, el mismo cálculo que usa
+// la tarjeta de Ventas, para que las dos pantallas no puedan discrepar.
 
-import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Loader2, ChevronRight, TrendingUp, Users, Megaphone, Wallet, Receipt, CircleDollarSign } from 'lucide-react'
+import { Loader2, ChevronRight, Users, Megaphone, Receipt, CircleDollarSign, PieChart } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { formatCOP, cn } from '@/lib/utils'
+import { FacturadoMensual } from '@/components/charts/FacturadoMensual'
+import { DesgloseMes } from '@/components/charts/DesgloseMes'
+import { TopAsesores } from '@/components/charts/TopAsesores'
 
 interface Resumen {
   periodo: { desde: string; hasta: string }
   ventas: {
     facturado: number; neto: number; comisiones: number; cantidad: number
     asesores: number; sinAsesor: number
-    porDia: { dia: number; monto: number; cantidad: number }[]
-    mejorDia: { dia: number; monto: number; cantidad: number }
-    top: { nombre: string; monto: number }[]
+    pendiente?: { cantidad: number; monto: number }
   }
   cartera: {
     vencido: number; cuotas: number
@@ -37,34 +34,25 @@ interface Resumen {
   }
   marketing: {
     planificado: number; enProceso: number; publicado: number; equipo: number
+    porPersona: { nombre: string; image: string | null; cantidad: number }[]
+    porTipo: { tipo: string; cantidad: number }[]
     cobros: { porAprobar: number; aprobado: number; pagado: number }
   }
 }
 
-const COLOR = { ventas: '#1a7de0', mkt: '#db2777', fin: '#16a34a', cartera: '#d97706' }
+const COLOR = { ventas: '#1a7de0', mkt: '#db2777', fin: '#16a34a', cartera: '#d97706', morado: '#7c3aed' }
 
-/** Cuenta desde cero al aparecer. Respeta "reducir movimiento". */
-function useCuenta(objetivo: number, activo = true) {
-  const [v, setV] = useState(0)
-  const raf = useRef<number | null>(null)
-  useEffect(() => {
-    if (!activo) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setV(objetivo); return }
-    const t0 = performance.now(), dur = 1000
-    const tick = (t: number) => {
-      const p = Math.min((t - t0) / dur, 1)
-      setV(objetivo * (1 - Math.pow(1 - p, 3)))
-      if (p < 1) raf.current = requestAnimationFrame(tick)
-    }
-    raf.current = requestAnimationFrame(tick)
-    return () => { if (raf.current) cancelAnimationFrame(raf.current) }
-  }, [objetivo, activo])
-  return v
+// Los mismos nombres cortos que usa el tablero de Marketing.
+const TIPO_LABEL: Record<string, string> = {
+  VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme',
+  TIKTOKERO: 'TikTokero', GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
 }
+// Orden fijo de colores para la dona: el tipo conserva su color aunque cambie
+// su posición de un mes a otro.
+const TIPO_COLORES = [COLOR.mkt, COLOR.morado, COLOR.ventas, COLOR.cartera, COLOR.fin, '#64748b']
 
-/** Etiqueta de estado: el módulo dice solo si está bien o pide atención. */
 function Semaforo({ tono, children }: { tono: 'ok' | 'atencion' | 'info'; children: React.ReactNode }) {
-  const c = tono === 'ok' ? '#16a34a' : tono === 'atencion' ? '#d97706' : '#1a7de0'
+  const c = tono === 'ok' ? COLOR.fin : tono === 'atencion' ? COLOR.cartera : COLOR.mkt
   return (
     <span
       className="inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-[3px] text-[9.5px] font-bold tracking-wide"
@@ -76,13 +64,18 @@ function Semaforo({ tono, children }: { tono: 'ok' | 'atencion' | 'info'; childr
   )
 }
 
-function Modulo({ titulo, icono: Icono, color, href, estado, ancho, children }: {
+/**
+ * Módulo del tablero. Cuando lleva `href` se comporta como tarjeta clicable:
+ * se levanta al pasar el cursor y muestra a dónde va. Sin ese estado no había
+ * forma de saber que llevaba a alguna parte (Hotman, 20-ago).
+ */
+function Modulo({ titulo, icono: Icono, color, href, irA, estado, children }: {
   titulo: string
-  icono: typeof TrendingUp
+  icono: typeof Users
   color: string
   href?: string
+  irA?: string
   estado?: React.ReactNode
-  ancho?: boolean
   children: React.ReactNode
 }) {
   const cuerpo = (
@@ -96,44 +89,22 @@ function Modulo({ titulo, icono: Icono, color, href, estado, ancho, children }: 
       </div>
       {children}
       {href && (
-        <span className="mt-3 flex items-center gap-0.5 text-[11px] font-medium text-primary">
-          Ir <ChevronRight className="size-3" />
+        <span className="ir mt-auto flex items-center gap-0.5 pt-3 text-[11px] font-semibold text-primary opacity-45 transition-all duration-200">
+          {irA ?? 'Ir'} <ChevronRight className="size-3" />
         </span>
       )}
     </>
   )
   const clase = cn(
-    'card p-4 animate-card-enter flex flex-col',
-    ancho && 'md:col-span-2',
-    href && 'transition-colors hover:border-primary/30',
+    'card flex flex-col p-4',
+    href && [
+      'cursor-pointer transition-all duration-200',
+      'hover:-translate-y-[3px] hover:border-primary/45 hover:shadow-float',
+      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+      '[&:hover_.ir]:opacity-100',
+    ],
   )
   return href ? <Link href={href} className={clase}>{cuerpo}</Link> : <div className={clase}>{cuerpo}</div>
-}
-
-/** Mapa de calor: un cuadrito por día, más oscuro cuanto más se vendió. */
-function MapaCalor({ dias, hoy }: { dias: { dia: number; monto: number; cantidad: number }[]; hoy: number }) {
-  const max = Math.max(...dias.map(d => d.monto), 1)
-  return (
-    <div className="mt-3 grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${Math.min(dias.length, 16)}, minmax(0, 1fr))` }}>
-      {dias.map(d => {
-        const futuro = d.dia > hoy
-        const int = futuro ? 0 : Math.round(18 + (d.monto / max) * 82)
-        return (
-          <span
-            key={d.dia}
-            title={futuro ? `Día ${d.dia}` : `Día ${d.dia}: ${formatCOP(d.monto)} · ${d.cantidad} venta${d.cantidad !== 1 ? 's' : ''}`}
-            className="aspect-square rounded-[3px] transition-colors duration-500"
-            style={{
-              background: futuro
-                ? 'var(--surface-high)'
-                : `color-mix(in srgb, ${COLOR.ventas} ${int}%, var(--surface-high))`,
-              transitionDelay: `${d.dia * 18}ms`,
-            }}
-          />
-        )
-      })}
-    </div>
-  )
 }
 
 export default function AdminResumenPage() {
@@ -143,10 +114,7 @@ export default function AdminResumenPage() {
     staleTime: 60_000,
   })
   const r = data?.data
-  const facturado = useCuenta(r?.ventas.facturado ?? 0, !!r)
-
   const mes = r ? format(new Date(r.periodo.desde), "MMMM 'de' yyyy", { locale: es }) : ''
-  const hoy = new Date().getDate()
 
   if (isLoading) {
     return (
@@ -157,12 +125,23 @@ export default function AdminResumenPage() {
   }
   if (!r) return null
 
-  const pctNeto = r.ventas.facturado > 0 ? Math.round((r.ventas.neto / r.ventas.facturado) * 100) : 0
+  const desde = r.periodo.desde.slice(0, 10)
+  const hasta = r.periodo.hasta.slice(0, 10)
+
   const pctGestion = r.cartera.abierto > 0 ? Math.round((r.cartera.gestion / r.cartera.abierto) * 100) : 0
-  const maxTop = Math.max(...r.ventas.top.map(t => t.monto), 1)
-  const totalMkt = r.marketing.publicado + r.marketing.enProceso + r.marketing.planificado
-  const maxMkt = Math.max(r.marketing.publicado, r.marketing.enProceso, r.marketing.planificado, 1)
   const equipoTotal = r.ventas.asesores + r.marketing.equipo
+  const maxPersona = Math.max(...r.marketing.porPersona.map(p => p.cantidad), 1)
+  const totalPiezas = r.marketing.porTipo.reduce((s, t) => s + t.cantidad, 0)
+
+  // Arcos de la dona: cada tipo ocupa su porción y arranca donde terminó el
+  // anterior. El 25 inicial es lo que endereza el arranque a las 12 en punto.
+  let acumulado = 0
+  const arcos = r.marketing.porTipo.slice(0, 5).map((t, i) => {
+    const pct = totalPiezas > 0 ? (t.cantidad / totalPiezas) * 100 : 0
+    const offset = 25 - acumulado
+    acumulado += pct
+    return { ...t, pct, offset, color: TIPO_COLORES[i % TIPO_COLORES.length] }
+  })
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -173,27 +152,22 @@ export default function AdminResumenPage() {
         </p>
       </div>
 
+      {/* ── Facturación del mes + a dónde va el dinero ── */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
+        <div className="min-w-0 flex-1">
+          <FacturadoMensual />
+        </div>
+        <div className="md:w-72 md:flex-shrink-0">
+          <DesgloseMes desde={desde} hasta={hasta} />
+        </div>
+      </div>
+
+      {/* ── Quién está vendiendo ── */}
+      <TopAsesores />
+
+      {/* ── Los módulos propios del área ── */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
 
-        {/* ── Ventas del mes, con el día a día ── */}
-        <Modulo
-          titulo={`Ventas · ${mes.split(' ')[0]}`} icono={TrendingUp} color={COLOR.ventas}
-          href="/admin/ventas" ancho
-          estado={<Semaforo tono="ok">{r.ventas.cantidad} ventas</Semaforo>}
-        >
-          <p className="text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums text-on-surface">
-            {formatCOP(facturado)}
-          </p>
-          <p className="mt-1 text-[10.5px] text-on-surface-variant">
-            Mejor día: {r.ventas.mejorDia.dia} de {mes.split(' ')[0]} ({formatCOP(r.ventas.mejorDia.monto)})
-          </p>
-          <MapaCalor dias={r.ventas.porDia} hoy={hoy} />
-          <div className="mt-1.5 flex justify-between text-[9px] text-on-surface-variant">
-            <span>1 {mes.split(' ')[0].slice(0, 3)}</span><span>hoy</span>
-          </div>
-        </Modulo>
-
-        {/* ── Cartera: qué porcentaje del saldo hay que perseguir ── */}
         <Modulo
           titulo="Cartera" icono={CircleDollarSign} color={COLOR.cartera}
           estado={<Semaforo tono={pctGestion > 15 ? 'atencion' : 'ok'}>
@@ -201,12 +175,11 @@ export default function AdminResumenPage() {
           </Semaforo>}
         >
           <div className="grid place-items-center py-1">
-            <svg width="118" height="70" viewBox="0 0 112 66" aria-hidden="true">
+            <svg width="120" height="70" viewBox="0 0 112 66" aria-hidden="true">
               <path d="M10,60 A46,46 0 0,1 102,60" fill="none" stroke="var(--surface-high)" strokeWidth="9" strokeLinecap="round" />
               <path
                 d="M10,60 A46,46 0 0,1 102,60" fill="none" stroke={COLOR.cartera} strokeWidth="9" strokeLinecap="round"
-                strokeDasharray="145"
-                strokeDashoffset={145 - 145 * Math.min(pctGestion / 100, 1)}
+                strokeDasharray="145" strokeDashoffset={145 - 145 * Math.min(pctGestion / 100, 1)}
                 style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(0.22,1,0.36,1)' }}
               />
               <text x="56" y="52" textAnchor="middle" fontSize="16" fontWeight="800" fill="var(--on-surface)">{pctGestion}%</text>
@@ -214,80 +187,40 @@ export default function AdminResumenPage() {
           </div>
           <p className="text-center text-[10.5px] text-on-surface-variant">
             de {formatCOP(r.cartera.abierto)} requiere gestión
-            <span className="mt-0.5 block text-[10px]">{r.cartera.gestionEst} de {r.cartera.estudiantes} estudiantes</span>
+            <span className="mt-0.5 block">{r.cartera.gestionEst} de {r.cartera.estudiantes} estudiantes</span>
           </p>
         </Modulo>
 
-        {/* ── Quién está vendiendo ── */}
-        <Modulo titulo="Top asesores" icono={Users} color={COLOR.ventas} href="/admin/ventas">
-          <div className="flex flex-col gap-2">
-            {r.ventas.top.length === 0 && (
-              <p className="py-3 text-center text-[11px] text-on-surface-variant">Sin ventas este mes</p>
-            )}
-            {r.ventas.top.map((t, i) => (
-              <div key={t.nombre} className="grid grid-cols-[70px_1fr_auto] items-center gap-2 text-[10.5px]">
-                <span className="truncate text-on-surface-variant">{t.nombre.split(' ').slice(0, 2).join(' ')}</span>
-                <span className="h-2 overflow-hidden rounded-full bg-surface-high">
-                  <span
-                    className="block h-full rounded-full"
-                    style={{
-                      width: `${(t.monto / maxTop) * 100}%`, background: COLOR.ventas,
-                      transition: 'width 900ms cubic-bezier(0.22,1,0.36,1)', transitionDelay: `${i * 80}ms`,
-                    }}
-                  />
-                </span>
-                <b className="tabular-nums text-on-surface">{formatCOP(t.monto)}</b>
-              </div>
-            ))}
-          </div>
-        </Modulo>
-
-        {/* ── Lo que de verdad queda ── */}
-        <Modulo titulo="Neto recibido" icono={Wallet} color={COLOR.fin} href="/finanzas">
-          <p className="text-[24px] font-bold leading-none tracking-[-0.02em] tabular-nums" style={{ color: COLOR.fin }}>
-            {formatCOP(r.ventas.neto)}
-          </p>
-          <p className="mt-1 text-[10.5px] text-on-surface-variant">
-            {pctNeto}% de lo facturado · {formatCOP(r.ventas.comisiones)} en comisiones
-          </p>
-          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-surface-high">
-            <span
-              className="block h-full rounded-full"
-              style={{ width: `${pctNeto}%`, background: COLOR.fin, transition: 'width 1s cubic-bezier(0.22,1,0.36,1)' }}
-            />
-          </div>
-        </Modulo>
-
-        {/* ── Contenido de Marketing ── */}
+        {/* Producción: la carga real de cada persona del equipo */}
         <Modulo
-          titulo="Marketing" icono={Megaphone} color={COLOR.mkt} href="/marketing"
-          estado={<Semaforo tono="info">{totalMkt} piezas</Semaforo>}
+          titulo="Marketing · producción" icono={Megaphone} color={COLOR.mkt}
+          href="/marketing" irA="Ir a Marketing"
+          estado={<Semaforo tono="info">{totalPiezas} pieza{totalPiezas !== 1 ? 's' : ''}</Semaforo>}
         >
-          <div className="mt-1 flex h-[52px] items-end gap-1.5">
-            {[
-              { n: r.marketing.publicado, o: 1 },
-              { n: r.marketing.enProceso, o: 0.55 },
-              { n: r.marketing.planificado, o: 0.3 },
-            ].map((b, i) => (
-              <span
-                key={i}
-                className="flex-1 rounded-t"
-                style={{
-                  height: `${Math.max((b.n / maxMkt) * 100, 4)}%`, background: COLOR.mkt, opacity: b.o,
-                  transition: 'height 900ms cubic-bezier(0.22,1,0.36,1)', transitionDelay: `${i * 90}ms`,
-                }}
-              />
-            ))}
-          </div>
-          <div className="mt-1.5 flex gap-1.5 text-[9px] text-on-surface-variant">
-            <span className="flex-1">Publicado {r.marketing.publicado}</span>
-            <span className="flex-1">Proceso {r.marketing.enProceso}</span>
-            <span className="flex-1">Plan {r.marketing.planificado}</span>
-          </div>
+          {r.marketing.porPersona.length === 0 ? (
+            <p className="py-4 text-center text-[11px] text-on-surface-variant">Sin contenido este mes</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {r.marketing.porPersona.slice(0, 5).map((p, i) => (
+                <div key={p.nombre} className="grid grid-cols-[74px_1fr_auto] items-center gap-2 text-[10.5px]">
+                  <span className="truncate text-on-surface-variant">{p.nombre.split(' ').slice(0, 2).join(' ')}</span>
+                  <span className="h-2 overflow-hidden rounded-full bg-surface-high">
+                    <span
+                      className="block h-full rounded-full"
+                      style={{
+                        width: `${(p.cantidad / maxPersona) * 100}%`, background: COLOR.mkt,
+                        transition: 'width 900ms cubic-bezier(0.22,1,0.36,1)', transitionDelay: `${i * 80}ms`,
+                      }}
+                    />
+                  </span>
+                  <b className="tabular-nums text-on-surface">{p.cantidad}</b>
+                </div>
+              ))}
+            </div>
+          )}
         </Modulo>
 
-        {/* ── Equipo ── */}
-        <Modulo titulo="Equipo" icono={Users} color={COLOR.ventas} href="/admin/usuarios">
+        <Modulo titulo="Equipo" icono={Users} color={COLOR.ventas} href="/admin/usuarios" irA="Ir a Usuarios">
           <p className="text-[24px] font-bold leading-none tabular-nums text-on-surface">{equipoTotal}</p>
           <p className="mt-1 text-[10.5px] text-on-surface-variant">
             {r.ventas.asesores} asesores · {r.marketing.equipo} marketing
@@ -303,9 +236,42 @@ export default function AdminResumenPage() {
           )}
         </Modulo>
 
-        {/* ── Cobros freelance ── */}
+        {/* Mezcla: qué se está produciendo, no solo cuánto */}
         <Modulo
-          titulo="Cobros freelance" icono={Receipt} color={COLOR.cartera} href="/marketing/cobros"
+          titulo="Marketing · mezcla" icono={PieChart} color={COLOR.mkt}
+          href="/marketing" irA="Ir a Marketing"
+        >
+          {totalPiezas === 0 ? (
+            <p className="py-4 text-center text-[11px] text-on-surface-variant">Sin contenido este mes</p>
+          ) : (
+            <div className="flex items-center gap-4">
+              <svg width="94" height="94" viewBox="0 0 42 42" aria-hidden="true" className="flex-shrink-0">
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--surface-high)" strokeWidth="5.5" />
+                {arcos.map(a => (
+                  <circle
+                    key={a.tipo} cx="21" cy="21" r="15.9" fill="none" stroke={a.color} strokeWidth="5.5"
+                    strokeDasharray={`${a.pct} ${100 - a.pct}`} strokeDashoffset={a.offset} strokeLinecap="butt"
+                  />
+                ))}
+                <text x="21" y="20.5" textAnchor="middle" fontSize="8" fontWeight="800" fill="var(--on-surface)">{totalPiezas}</text>
+                <text x="21" y="26" textAnchor="middle" fontSize="3.3" fill="var(--on-surface-variant)">piezas</text>
+              </svg>
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                {arcos.map(a => (
+                  <div key={a.tipo} className="flex items-center gap-2 text-[10.5px] text-on-surface-variant">
+                    <span className="size-2 flex-shrink-0 rounded-sm" style={{ background: a.color }} />
+                    <span className="truncate">{TIPO_LABEL[a.tipo] ?? a.tipo}</span>
+                    <b className="ml-auto tabular-nums text-on-surface">{a.cantidad}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Modulo>
+
+        <Modulo
+          titulo="Cobros freelance" icono={Receipt} color={COLOR.cartera}
+          href="/marketing/cobros" irA="Ir a Cobros"
           estado={r.marketing.cobros.porAprobar > 0
             ? <Semaforo tono="atencion">Por aprobar</Semaforo>
             : <Semaforo tono="ok">Al día</Semaforo>}

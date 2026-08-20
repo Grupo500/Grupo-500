@@ -1529,7 +1529,7 @@ export async function resumenGeneral(req: Request, res: Response) {
   const fin    = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59)
 
   const [pagosMes, asesoresActivos, sinAsesor, atrasadas, contenidoMes, cobros, equipoMkt,
-         pagosDelMes, cartera] =
+         porPersonaRaw, porTipoRaw, miembrosMkt, pagosDelMes, cartera] =
     await Promise.all([
       prisma.pago.aggregate({
         where: { estado: 'PAGADO', fechaPago: { gte: inicio, lte: fin } },
@@ -1546,6 +1546,16 @@ export async function resumenGeneral(req: Request, res: Response) {
         select: { valor: true, estadoCobro: true },
       }),
       prisma.miembroMarketing.count({ where: { activo: true } }),
+      // Quién produjo qué y de qué tipo: el panel muestra la carga por persona
+      // y la mezcla de contenido, que es lo que se puede accionar. Los conteos
+      // por estado solos no decían nada cuando todo está en "planificado".
+      prisma.contenidoMarketing.groupBy({
+        by: ['asignadoAId'], where: { fecha: { gte: inicio, lte: fin } }, _count: true,
+      }),
+      prisma.contenidoMarketing.groupBy({
+        by: ['tipo'], where: { fecha: { gte: inicio, lte: fin } }, _count: true,
+      }),
+      prisma.miembroMarketing.findMany({ select: { id: true, nombre: true, user: { select: { image: true } } } }),
       // Los pagos uno a uno, para el día a día y el ranking: agregarlos aquí
       // evita dos consultas más y sale de la misma foto que el resto.
       prisma.pago.findMany({
@@ -1619,6 +1629,20 @@ export async function resumenGeneral(req: Request, res: Response) {
       enProceso:   porEstado('EN_PROCESO'),
       publicado:   porEstado('PUBLICADO'),
       equipo:      equipoMkt,
+      // Carga por persona, de mayor a menor. Sin asignar entra como tal: es un
+      // dato, no un vacío que convenga esconder.
+      porPersona: porPersonaRaw
+        .map(g => ({
+          nombre: g.asignadoAId
+            ? miembrosMkt.find(m => m.id === g.asignadoAId)?.nombre ?? 'Sin asignar'
+            : 'Sin asignar',
+          image: g.asignadoAId ? miembrosMkt.find(m => m.id === g.asignadoAId)?.user?.image ?? null : null,
+          cantidad: g._count,
+        }))
+        .sort((a, b) => b.cantidad - a.cantidad),
+      porTipo: porTipoRaw
+        .map(g => ({ tipo: g.tipo as string, cantidad: g._count }))
+        .sort((a, b) => b.cantidad - a.cantidad),
       cobros: {
         porAprobar: sumaCobros('POR_APROBAR'),
         aprobado:   sumaCobros('APROBADO'),
