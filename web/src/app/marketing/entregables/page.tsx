@@ -1024,8 +1024,10 @@ export default function EntregablesPage() {
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
   // Cómo prefiere verlo cada quien. Se recuerda en el equipo: quien trabaja
   // con la tabla no tiene que volver a elegirla cada mañana (Hotman, 20-ago).
-  // Arranca en tarjetas para no cambiarle la pantalla a nadie sin avisar.
-  const [vista, setVista] = useState<'tarjetas' | 'tabla'>('tarjetas')
+  // La tabla es la vista de entrada: es la que responde las preguntas del día
+  // —qué hay para el 21, qué falta por publicar, cuánto se debe— y la que se
+  // parece a la hoja de cálculo con la que el equipo ya trabajaba.
+  const [vista, setVista] = useState<'tarjetas' | 'tabla'>('tabla')
   useEffect(() => {
     const guardada = localStorage.getItem('entregables-vista')
     if (guardada === 'tabla' || guardada === 'tarjetas') setVista(guardada)
@@ -1131,8 +1133,8 @@ export default function EntregablesPage() {
               cada quien?" y la tabla "¿qué hay para el 21?". */}
           <div className="flex gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-1" role="group" aria-label="Forma de ver">
             {([
-              { v: 'tarjetas' as const, icono: LayoutList, texto: 'Tarjetas' },
               { v: 'tabla'    as const, icono: Rows3,      texto: 'Tabla' },
+              { v: 'tarjetas' as const, icono: LayoutList, texto: 'Tarjetas' },
             ]).map(o => (
               <button
                 key={o.v}
