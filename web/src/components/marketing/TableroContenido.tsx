@@ -23,7 +23,6 @@ import { es } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Plus, Loader2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
 import {
   ContenidoModal,
   type Contenido,
@@ -129,18 +128,17 @@ export function TableroContenido() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-[17px] font-semibold tracking-[-0.022em] text-on-surface">
-            Tablero de contenido
-          </h2>
-          <p className="mt-0.5 text-[12px] text-on-surface-variant">
-            Planificación y asignación del equipo
-          </p>
-        </div>
-        <Button onClick={() => setModal({ modo: 'crear', fecha: hoy })}>
-          <Plus className="h-4 w-4" /> Nuevo contenido
-        </Button>
+      {/* Sin botón de "nuevo contenido": se crea con el + del día, que además
+          ya deja el contenido en la fecha correcta. El botón de arriba abría
+          el formulario en el día de hoy y había que corregir la fecha a mano
+          (Hotman, 20-ago). */}
+      <div>
+        <h2 className="text-[17px] font-semibold tracking-[-0.022em] text-on-surface">
+          Tablero de contenido
+        </h2>
+        <p className="mt-0.5 text-[12px] text-on-surface-variant">
+          Planificación y asignación del equipo · toca el <span className="font-semibold text-primary">+</span> de un día para agregar
+        </p>
       </div>
 
       <div className="card-panel overflow-hidden p-0">
