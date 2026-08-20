@@ -420,6 +420,41 @@ export async function eliminarContenido(req: Request, res: Response) {
   return ApiResponse.noContent(res)
 }
 
+/**
+ * Recordarle a alguien que le faltan datos para poder cobrar.
+ *
+ * Sin cédula, banco y número de cuenta no hay a dónde girar, y hasta ahora eso
+ * se descubría el día del pago. El aviso lo manda quien está mirando Cobros
+ * —los líderes—, con el detalle de qué falta (Hotman, 20-ago).
+ */
+export async function recordarDatos(req: Request, res: Response) {
+  if (!esLiderMarketing(req.userRole)) {
+    throw new ForbiddenError('Solo los líderes piden estos datos')
+  }
+
+  const miembro = await prisma.miembroMarketing.findUnique({
+    where: { id: req.params.id },
+    select: { userId: true, nombre: true, ...SELECT_FINANCIEROS },
+  })
+  if (!miembro) throw new NotFoundError('Esa persona no está en el equipo')
+
+  const { falta } = datosFinancierosDe(miembro)
+  if (falta.length === 0) throw new ValidationError('Ya tiene todos sus datos')
+
+  const quien = await nombreDe(req.userId)
+  await avisar({
+    userId: miembro.userId,
+    autorId: req.userId,
+    tipo: 'CAMBIOS_PEDIDOS',
+    titulo: 'Te faltan datos para cobrar',
+    texto: `${quien} necesita ${falta.join(', ')} para poder pagarte. Se llenan una sola vez en Ajustes.`,
+    url: '/ajustes',
+  })
+
+  auditLog(req, 'CREATE', 'recordatorio_datos', miembro.userId)
+  return ApiResponse.success(res, { faltan: falta.length })
+}
+
 // ── Entregables ───────────────────────────────────────────────────────────
 const crearEntregableSchema = z.object({
   plataforma: z.enum(['YOUTUBE', 'INSTAGRAM', 'TIKTOK', 'FACEBOOK', 'DRIVE', 'OTRO']),

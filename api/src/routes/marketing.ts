@@ -8,6 +8,7 @@ const router = Router()
 
 router.use(authenticate, requireRole('ADMIN', ...ROLES.MARKETING))
 
+router.post('/miembros/:id/recordar-datos', asyncHandler(ctrl.recordarDatos))
 router.get('/miembros', asyncHandler(ctrl.listarMiembros))
 
 router.get('/contenidos',          asyncHandler(ctrl.listarContenidos))

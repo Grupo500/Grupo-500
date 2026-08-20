@@ -19,7 +19,9 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Loader2, Check, Wallet, BadgeCheck, AlertTriangle, FileText, ExternalLink } from 'lucide-react'
+import {
+  Loader2, Check, Wallet, BadgeCheck, AlertTriangle, FileText, ExternalLink, ChevronDown,
+} from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -123,6 +125,23 @@ export default function CobrosPage() {
   })
   const ocupado = mover.isPending || moverLote.isPending
 
+  // Qué bloques cerró la persona a mano. Por defecto se abre el de quien
+  // tiene algo pendiente y se pliega el de quien ya está al día.
+  const [plegados, setPlegados] = useState<Set<string>>(new Set())
+  const alternar = (id: string) => setPlegados(prev => {
+    const s = new Set(prev)
+    s.has(id) ? s.delete(id) : s.add(id)
+    return s
+  })
+
+  /** Un empujón a quien no ha llenado sus datos, en vez de esperar al giro. */
+  const recordar = useMutation({
+    mutationFn: (miembroId: string) =>
+      apiFetch(`/marketing/miembros/${miembroId}/recordar-datos`, { method: 'POST' }),
+    onSuccess: () => alert('Le llegó el recordatorio.'),
+    onError: (e: Error) => alert(e.message || 'No se pudo enviar'),
+  })
+
   /**
    * Genera la cuenta de cobro, la descarga y la archiva en Drive.
    *
@@ -205,6 +224,92 @@ export default function CobrosPage() {
     )
   }, [cobros])
 
+  /**
+   * Un trabajo con su valor, su etapa y lo que se puede hacer con él.
+   *
+   * Vive dentro de la página porque necesita las mutaciones y los permisos, y
+   * pasárselos sueltos serían ocho props para nada. Se usa en la liquidación
+   * —dentro del bloque de cada persona— y en el detalle de una sola.
+   */
+  function FilaCobro({ c, conNombre }: { c: Cobro; conNombre: boolean }) {
+    return (
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#7c3aed]/15">
+          <Wallet className="size-3.5 text-[#7c3aed]" />
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-semibold text-on-surface">{c.titulo}</p>
+          <p className="mt-0.5 text-[11px] text-on-surface-variant">
+            {detalleDe(c, conNombre)}
+          </p>
+        </div>
+
+        <span className="shrink-0 text-[13px] font-bold tabular-nums text-on-surface">
+          {c.valor != null ? formatCOP(c.valor) : 'Sin valor'}
+        </span>
+
+        <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold', ESTADO_CLASE[c.estadoCobro])}>
+          {ESTADO_LABEL[c.estadoCobro]}
+        </span>
+
+        {puedeAprobar && c.estadoCobro === 'POR_APROBAR' && (
+          <button
+            onClick={() => mover.mutate({ id: c.id, accion: 'aprobar' })}
+            disabled={ocupado}
+            className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            <BadgeCheck className="mr-1 inline size-3.5" />Aprobar
+          </button>
+        )}
+        {puedeAprobar && c.estadoCobro === 'APROBADO' && (
+          <button
+            onClick={() => mover.mutate({ id: c.id, accion: 'pagar' })}
+            disabled={ocupado}
+            className="shrink-0 cursor-pointer rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high disabled:opacity-40"
+          >
+            <Check className="mr-1 inline size-3.5" />Marcar pagado
+          </button>
+        )}
+
+        {/* La cuenta de cobro solo existe después del visto bueno: antes
+            no hay nada que cobrar, y una cuenta suelta en la carpeta de
+            contabilidad es justo lo que no debe pasar. */}
+        {c.estadoCobro !== 'POR_APROBAR' && (
+          c.cuentaCobroUrl ? (
+            <a
+              href={c.cuentaCobroUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex shrink-0 items-center gap-1 rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high"
+            >
+              <ExternalLink className="size-3.5" />Ver cuenta de cobro
+            </a>
+          ) : c.asignadoA && !c.asignadoA.completos ? (
+            <span
+              title={`Falta ${c.asignadoA.falta.join(', ')}`}
+              className="flex shrink-0 items-center gap-1 rounded-lg bg-[#d97706]/12 px-3 py-1.5 text-[11px] font-semibold text-[#9a5b06]"
+            >
+              <AlertTriangle className="size-3.5" />
+              {puedeAprobar ? 'Le faltan datos' : 'Completa tus datos en Ajustes'}
+            </span>
+          ) : (
+            <button
+              onClick={() => generarCuenta(c)}
+              disabled={generando === c.id}
+              className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {generando === c.id
+                ? <Loader2 className="size-3.5 animate-spin" />
+                : <FileText className="size-3.5" />}
+              Generar cuenta de cobro
+            </button>
+          )
+        )}
+      </div>
+    )
+  }
+
   const elegida = persona ? porPersona.find(p => p.id === persona) ?? null : null
 
   const idsEn = (lista: Cobro[], e: EstadoCobro) =>
@@ -271,93 +376,112 @@ export default function CobrosPage() {
           No hay cobros freelance en este período.
         </div>
 
-      /* ── Liquidación: una fila por persona ─────────────────────────────── */
+      /* ── Liquidación: cada persona con los trabajos que componen su cifra ─
+         Se aprueba trabajo, no gente: para firmar que hay que pagar $250.000
+         hay que ver que son cinco carruseles de $50.000, y poder dejar fuera
+         el que quedó a medias. Antes era una fila por persona con tres
+         columnas de plata —dos de ellas siempre en guion, porque un cobro
+         está en una sola etapa— y un "Aprobar todo" sin ver qué (Hotman,
+         20-ago). */
       ) : puedeAprobar && !elegida ? (
-        <div className="card-panel overflow-x-auto p-0">
-          <table className="w-full min-w-[620px] border-collapse">
-            <thead>
-              <tr className="border-b border-outline-variant">
-                <th className="px-4 py-3 text-left text-[10.5px] font-semibold text-on-surface-variant">Persona</th>
-                <th className="px-4 py-3 text-right text-[10.5px] font-semibold text-on-surface-variant">Por aprobar</th>
-                <th className="px-4 py-3 text-right text-[10.5px] font-semibold text-on-surface-variant">Aprobado</th>
-                <th className="px-4 py-3 text-right text-[10.5px] font-semibold text-on-surface-variant">Pagado</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {porPersona.map(p => {
-                const idsPorAprobar = idsEn(p.cobros, 'POR_APROBAR')
-                const idsAprobados  = idsEn(p.cobros, 'APROBADO')
-                return (
-                  <tr key={p.id} className="border-b border-outline-variant/50 last:border-0">
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => setPersona(p.id)}
-                        className="flex items-center gap-2.5 text-left transition-opacity hover:opacity-70"
-                      >
-                        {p.id === SIN_ASIGNAR
-                          ? <span className="grid size-[26px] shrink-0 place-items-center rounded-full bg-surface-high">
-                              <Wallet className="size-3 text-on-surface-variant" />
-                            </span>
-                          : <AvatarMiembro id={p.id} nombre={p.nombre} image={p.foto} size={26} />}
-                        <span className="min-w-0">
-                          <span className="block truncate text-[12.5px] font-semibold text-on-surface">{p.nombre}</span>
-                          {/* Los datos de pago se avisan aquí y no cuando ya se
-                              iba a transferir. */}
-                          {p.id !== SIN_ASIGNAR && (
-                            p.completos
-                              ? <span className="block text-[10px] text-on-surface-variant">Datos completos</span>
-                              : <span
-                                  title={`Falta ${p.falta.join(', ')}`}
-                                  className="flex items-center gap-1 text-[10px] font-semibold text-[#9a5b06]"
-                                >
-                                  <AlertTriangle className="size-2.5" />
-                                  {p.falta.length === 1 ? `Falta ${p.falta[0]}` : `Le faltan ${p.falta.length} datos`}
-                                </span>
-                          )}
+        <div className="space-y-3">
+          {porPersona.map(p => {
+            const idsPorAprobar = idsEn(p.cobros, 'POR_APROBAR')
+            const idsAprobados  = idsEn(p.cobros, 'APROBADO')
+            // Abierto si hay algo que hacer; plegado si ya está todo cerrado.
+            const abierto = plegados.has(p.id) ? false : idsPorAprobar.length + idsAprobados.length > 0
+            const acento = idsPorAprobar.length > 0 ? '#d97706' : idsAprobados.length > 0 ? '#16a34a' : 'var(--outline)'
+            return (
+              <div key={p.id} className="card-panel overflow-hidden p-0">
+                <div
+                  className="flex flex-wrap items-center gap-3 bg-surface-low px-4 py-3"
+                  style={{ boxShadow: `inset 3px 0 0 ${acento}` }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => alternar(p.id)}
+                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
+                  >
+                    <ChevronDown className={cn('size-3.5 shrink-0 text-on-surface-variant transition-transform', !abierto && '-rotate-90')} />
+                    {p.id === SIN_ASIGNAR
+                      ? <span className="grid size-[30px] shrink-0 place-items-center rounded-full bg-surface-high">
+                          <Wallet className="size-3.5 text-on-surface-variant" />
                         </span>
-                      </button>
-                    </td>
-                    <td className={cn('px-4 py-3 text-right text-[12.5px] tabular-nums',
-                      p.porAprobar > 0 ? 'font-semibold text-[#9a5b06]' : 'text-on-surface-variant')}>
-                      {p.porAprobar > 0 ? formatCOP(p.porAprobar) : '—'}
-                    </td>
-                    <td className={cn('px-4 py-3 text-right text-[12.5px] tabular-nums',
-                      p.aprobado > 0 ? 'font-semibold text-[#0f7a35]' : 'text-on-surface-variant')}>
-                      {p.aprobado > 0 ? formatCOP(p.aprobado) : '—'}
-                    </td>
-                    <td className={cn('px-4 py-3 text-right text-[12.5px] tabular-nums',
-                      p.pagado > 0 ? 'text-on-surface' : 'text-on-surface-variant')}>
-                      {p.pagado > 0 ? formatCOP(p.pagado) : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {idsPorAprobar.length > 0 ? (
+                      : <AvatarMiembro id={p.id} nombre={p.nombre} image={p.foto} size={30} />}
+                    <span className="min-w-0">
+                      <span className="block truncate text-[13.5px] font-semibold text-on-surface">{p.nombre}</span>
+                      <span className="block text-[11px] text-on-surface-variant">
+                        {p.cobros.length} trabajo{p.cobros.length !== 1 ? 's' : ''}
+                        {p.id !== SIN_ASIGNAR && (p.completos
+                          ? ' · datos completos'
+                          : null)}
+                        {p.id !== SIN_ASIGNAR && !p.completos && (
+                          <span className="font-semibold text-[#9a5b06]">
+                            {' · '}
+                            {p.falta.length === 1 ? `falta ${p.falta[0]}` : `le faltan ${p.falta.length} datos`}
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                  </button>
+
+                  <span className="shrink-0 text-[16px] font-semibold tabular-nums tracking-tight text-on-surface">
+                    {formatCOP(p.porAprobar + p.aprobado + p.pagado)}
+                  </span>
+
+                  {idsPorAprobar.length > 0 ? (
+                    <button
+                      onClick={() => moverLote.mutate({ ids: idsPorAprobar, accion: 'aprobar' })}
+                      disabled={ocupado || !p.completos}
+                      title={p.completos ? undefined : `Sin ${p.falta.join(', ')} no se le puede girar`}
+                      className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[11.5px] font-bold text-on-primary transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <BadgeCheck className="size-3.5" />
+                      {/* Dice cuántos: "Aprobar todo" no deja saber qué se firma. */}
+                      Aprobar {idsPorAprobar.length > 1 ? `los ${idsPorAprobar.length}` : ''}
+                    </button>
+                  ) : idsAprobados.length > 0 ? (
+                    <button
+                      onClick={() => moverLote.mutate({ ids: idsAprobados, accion: 'pagar' })}
+                      disabled={ocupado}
+                      className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-[11.5px] font-semibold text-on-surface-variant transition-colors hover:border-outline hover:text-on-surface disabled:opacity-40"
+                    >
+                      <Check className="size-3.5" />
+                      Marcar {idsAprobados.length > 1 ? `los ${idsAprobados.length} ` : ''}pagado{idsAprobados.length > 1 ? 's' : ''}
+                    </button>
+                  ) : (
+                    <span className="shrink-0 text-[11px] text-on-surface-variant">Nada pendiente</span>
+                  )}
+                </div>
+
+                {abierto && (
+                  <>
+                    {/* La consecuencia, no la cuenta: "le faltan 9 datos" no
+                        dice qué pasa si se aprueba igual. */}
+                    {p.id !== SIN_ASIGNAR && !p.completos && (
+                      <div className="flex flex-wrap items-center gap-2.5 border-b border-outline-variant bg-[#dc2626]/[0.06] px-4 py-2.5 text-[11.5px] text-on-surface">
+                        <AlertTriangle className="size-3.5 shrink-0 text-[#dc2626]" />
+                        <span className="min-w-0 flex-1">
+                          Sin {p.falta.join(', ')} no se le puede girar aunque se apruebe.
+                        </span>
                         <button
-                          onClick={() => moverLote.mutate({ ids: idsPorAprobar, accion: 'aprobar' })}
-                          disabled={ocupado}
-                          className="cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
+                          type="button"
+                          onClick={() => recordar.mutate(p.id)}
+                          disabled={recordar.isPending}
+                          className="shrink-0 cursor-pointer text-[11.5px] font-semibold text-[#dc2626] hover:underline disabled:opacity-50"
                         >
-                          <BadgeCheck className="mr-1 inline size-3.5" />
-                          Aprobar {idsPorAprobar.length > 1 ? 'todo' : ''}
+                          {recordar.isPending && recordar.variables === p.id ? 'Enviando…' : 'Recordárselo'}
                         </button>
-                      ) : idsAprobados.length > 0 ? (
-                        <button
-                          onClick={() => moverLote.mutate({ ids: idsAprobados, accion: 'pagar' })}
-                          disabled={ocupado}
-                          className="cursor-pointer rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high disabled:opacity-40"
-                        >
-                          <Check className="mr-1 inline size-3.5" />Marcar pagado
-                        </button>
-                      ) : (
-                        <span className="text-[10.5px] text-on-surface-variant">Nada pendiente</span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                      </div>
+                    )}
+                    <div className="divide-y divide-outline-variant/50">
+                      {p.cobros.map(c => <FilaCobro key={c.id} c={c} conNombre={false} />)}
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })}
         </div>
 
       /* ── Detalle: los trabajos de una persona (o los propios) ──────────── */
@@ -390,80 +514,7 @@ export default function CobrosPage() {
 
           <div className="divide-y divide-outline-variant">
             {(elegida ? elegida.cobros : cobros).map(c => (
-              <div key={c.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#7c3aed]/15">
-                  <Wallet className="size-3.5 text-[#7c3aed]" />
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-on-surface">{c.titulo}</p>
-                  <p className="mt-0.5 text-[11px] text-on-surface-variant">
-                    {detalleDe(c, puedeAprobar && !elegida)}
-                  </p>
-                </div>
-
-                <span className="shrink-0 text-[13px] font-bold tabular-nums text-on-surface">
-                  {c.valor != null ? formatCOP(c.valor) : 'Sin valor'}
-                </span>
-
-                <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold', ESTADO_CLASE[c.estadoCobro])}>
-                  {ESTADO_LABEL[c.estadoCobro]}
-                </span>
-
-                {puedeAprobar && c.estadoCobro === 'POR_APROBAR' && (
-                  <button
-                    onClick={() => mover.mutate({ id: c.id, accion: 'aprobar' })}
-                    disabled={ocupado}
-                    className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
-                  >
-                    <BadgeCheck className="mr-1 inline size-3.5" />Aprobar
-                  </button>
-                )}
-                {puedeAprobar && c.estadoCobro === 'APROBADO' && (
-                  <button
-                    onClick={() => mover.mutate({ id: c.id, accion: 'pagar' })}
-                    disabled={ocupado}
-                    className="shrink-0 cursor-pointer rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high disabled:opacity-40"
-                  >
-                    <Check className="mr-1 inline size-3.5" />Marcar pagado
-                  </button>
-                )}
-
-                {/* La cuenta de cobro solo existe después del visto bueno: antes
-                    no hay nada que cobrar, y una cuenta suelta en la carpeta de
-                    contabilidad es justo lo que no debe pasar. */}
-                {c.estadoCobro !== 'POR_APROBAR' && (
-                  c.cuentaCobroUrl ? (
-                    <a
-                      href={c.cuentaCobroUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex shrink-0 items-center gap-1 rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high"
-                    >
-                      <ExternalLink className="size-3.5" />Ver cuenta de cobro
-                    </a>
-                  ) : c.asignadoA && !c.asignadoA.completos ? (
-                    <span
-                      title={`Falta ${c.asignadoA.falta.join(', ')}`}
-                      className="flex shrink-0 items-center gap-1 rounded-lg bg-[#d97706]/12 px-3 py-1.5 text-[11px] font-semibold text-[#9a5b06]"
-                    >
-                      <AlertTriangle className="size-3.5" />
-                      {puedeAprobar ? 'Le faltan datos' : 'Completa tus datos en Ajustes'}
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => generarCuenta(c)}
-                      disabled={generando === c.id}
-                      className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                    >
-                      {generando === c.id
-                        ? <Loader2 className="size-3.5 animate-spin" />
-                        : <FileText className="size-3.5" />}
-                      Generar cuenta de cobro
-                    </button>
-                  )
-                )}
-              </div>
+              <FilaCobro key={c.id} c={c} conNombre={puedeAprobar && !elegida} />
             ))}
           </div>
         </div>
