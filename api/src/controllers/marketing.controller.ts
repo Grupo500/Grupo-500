@@ -6,6 +6,8 @@ import { auditLog } from '../utils/auditLogger'
 import { esLiderMarketing } from '../utils/roles'
 import { datosFinancierosDe, SELECT_FINANCIEROS } from '../utils/cuentaCobro'
 import { subirCuentaDeCobro } from '../services/googleDrive'
+import { sendPushToUser } from '../services/push'
+import { broadcast } from '../utils/sseManager'
 import { z } from 'zod'
 
 const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, userId: true, user: { select: { image: true } } }
@@ -27,18 +29,52 @@ const rangoSchema = z.object({
   hasta: z.string(),
 })
 
+/**
+ * Quién puede repartir trabajo: community managers, líderes y administradores.
+ * Un editor no asigna — recibe. Su contenido queda a su nombre solo.
+ */
+const PUEDE_ASIGNAR: string[] = ['ADMIN', 'COMMUNITY', 'LIDER_EDICION', 'LIDER_DISENO']
+const puedeAsignar = (rol?: string) => PUEDE_ASIGNAR.includes(rol ?? '')
+
+/**
+ * Qué contenido puede ver quien pregunta.
+ *
+ * El trabajo de cada quien es suyo: un editor no tiene por qué ver la carga de
+ * los demás (decisión de Hotman, 20-ago). Quien reparte trabajo sí ve lo que
+ * asignó, para poder revisarlo. Los administradores y la jefa de marketing
+ * —`esLiderMarketing`, el mismo criterio que ya rige en Cobros— ven todo.
+ *
+ * Devuelve `null` cuando no hay filtro (ve todo).
+ */
+async function filtroVisibilidad(req: Request) {
+  if (esLiderMarketing(req.userRole)) return null
+
+  const yo = (await miMiembro(req.userId))?.id ?? '__sin_miembro__'
+  // Quien asigna ve lo suyo y lo que repartió; el resto, solo lo suyo. Se usa
+  // un id imposible cuando no hay ficha de marketing: ante la duda, nada.
+  return puedeAsignar(req.userRole)
+    ? { OR: [{ asignadoAId: yo }, { asignadoPorId: req.userId }] }
+    : { asignadoAId: yo }
+}
+
 export async function listarContenidos(req: Request, res: Response) {
   const { desde, hasta } = rangoSchema.parse(req.query)
+  const visible = await filtroVisibilidad(req)
   const contenidos = await prisma.contenidoMarketing.findMany({
     where: {
       fecha: {
         gte: new Date(desde + 'T00:00:00'),
         lte: new Date(hasta + 'T23:59:59'),
       },
+      ...(visible ?? {}),
     },
     include: {
       asignadoA: { select: SELECT_MIEMBRO },
       entregables: true,
+      correcciones: {
+        orderBy: { createdAt: 'desc' },
+        include: { pedidaPor: { select: { nombre: true, email: true, image: true } } },
+      },
     },
     orderBy: { fecha: 'asc' },
   })
@@ -77,23 +113,127 @@ const crearContenidoSchema = z.object({
 export async function crearContenido(req: Request, res: Response) {
   const data = crearContenidoSchema.parse(req.body)
 
-  // El contenido queda a nombre de quien lo crea, sin preguntar: así es como
-  // el equipo lo viene haciendo —cada quien anota lo suyo— y el selector de
-  // "asignado a" solo era un clic más para elegirse a sí mismo (Hotman,
-  // 20-ago). Si el cuerpo trae un asignado explícito manda ese, para no
-  // romper a un admin que reparta trabajo desde afuera.
-  const asignadoAId = data.asignadoAId ?? (await miMiembro(req.userId))?.id ?? null
+  // Quien reparte trabajo (community, líderes, admin) puede poner a otro; el
+  // resto crea siempre a su nombre, sin preguntar —así es como el equipo lo
+  // viene haciendo—. Se guarda además quién asignó, para que pueda revisarlo
+  // después (Hotman, 20-ago).
+  const mio = (await miMiembro(req.userId))?.id ?? null
+  const otro = puedeAsignar(req.userRole) ? data.asignadoAId ?? null : null
+  const asignadoAId = otro ?? mio
 
   const contenido = await prisma.contenidoMarketing.create({
     data: {
       ...data,
       asignadoAId,
+      // Solo cuenta como "asignado por" cuando se le encarga a alguien más:
+      // apuntarse uno mismo no es repartir trabajo.
+      asignadoPorId: otro && otro !== mio ? req.userId ?? null : null,
       fecha: new Date(data.fecha),
       valor: valorSegunTrabajo(data.tipoTrabajo, data.valor) ?? null,
     },
     include: { asignadoA: { select: SELECT_MIEMBRO }, entregables: true },
   })
+
+  // Aviso a quien recibe el encargo: si se lo asignaron, tiene que enterarse
+  // sin depender de que abra la app por casualidad.
+  if (otro && otro !== mio) {
+    const destino = await prisma.miembroMarketing.findUnique({
+      where: { id: otro }, select: { userId: true },
+    })
+    if (destino) {
+      void sendPushToUser(destino.userId, {
+        title: 'Te asignaron un trabajo',
+        body: contenido.titulo,
+        url: '/marketing/entregables',
+      }).catch(() => {})
+    }
+  }
+
+  broadcast('contenido-actualizado', { id: contenido.id })
   return ApiResponse.created(res, contenido)
+}
+
+// ── Correcciones ─────────────────────────────────────────────────────────────
+const correccionSchema = z.object({ mensaje: z.string().min(3) })
+
+/**
+ * Pedir cambios sobre un trabajo. Puede hacerlo quien lo asignó, los líderes y
+ * los administradores — no cualquiera del equipo: una corrección es una orden
+ * de rehacer, y tiene que quedar claro de quién viene.
+ */
+export async function pedirCorreccion(req: Request, res: Response) {
+  const { mensaje } = correccionSchema.parse(req.body)
+  const contenido = await prisma.contenidoMarketing.findUnique({
+    where: { id: req.params.id },
+    include: { asignadoA: { select: { userId: true, nombre: true } } },
+  })
+  if (!contenido) throw new NotFoundError('Contenido no encontrado')
+
+  const puede = esLiderMarketing(req.userRole) || contenido.asignadoPorId === req.userId
+  if (!puede) throw new ForbiddenError('Solo quien asignó el trabajo o un líder puede pedir cambios')
+
+  const correccion = await prisma.correccionContenido.create({
+    data: { contenidoId: contenido.id, mensaje, pedidaPorId: req.userId! },
+    include: { pedidaPor: { select: { nombre: true, email: true, image: true } } },
+  })
+
+  // Un trabajo con cambios pedidos vuelve a estar en proceso: darlo por
+  // publicado mientras hay algo que rehacer falsea el tablero.
+  if (contenido.estado === 'PUBLICADO') {
+    await prisma.contenidoMarketing.update({
+      where: { id: contenido.id }, data: { estado: 'EN_PROCESO' },
+    })
+  }
+
+  if (contenido.asignadoA?.userId) {
+    void sendPushToUser(contenido.asignadoA.userId, {
+      title: 'Tienes correcciones en un trabajo',
+      body: `«${contenido.titulo}» — ${mensaje.slice(0, 90)}`,
+      url: '/marketing/entregables',
+    }).catch(() => {})
+  }
+
+  broadcast('contenido-actualizado', { id: contenido.id })
+  auditLog(req, 'CREATE', 'marketing_correccion', correccion.id, { contenido: contenido.titulo })
+  return ApiResponse.created(res, correccion)
+}
+
+/** Quien hizo el trabajo marca que ya corrigió. Avisa a quien las pidió. */
+export async function resolverCorrecciones(req: Request, res: Response) {
+  const contenido = await prisma.contenidoMarketing.findUnique({
+    where: { id: req.params.id },
+    include: {
+      asignadoA: { select: { userId: true, nombre: true } },
+      correcciones: { where: { resueltaEn: null }, select: { id: true, pedidaPorId: true } },
+    },
+  })
+  if (!contenido) throw new NotFoundError('Contenido no encontrado')
+
+  const esSuyo = contenido.asignadoA?.userId === req.userId
+  if (!esSuyo && !esLiderMarketing(req.userRole)) {
+    throw new ForbiddenError('Solo quien hizo el trabajo puede marcar las correcciones como hechas')
+  }
+  if (contenido.correcciones.length === 0) {
+    throw new ValidationError('No hay correcciones pendientes')
+  }
+
+  await prisma.correccionContenido.updateMany({
+    where: { contenidoId: contenido.id, resueltaEn: null },
+    data: { resueltaEn: new Date() },
+  })
+
+  // Aviso de vuelta a quien las pidió, para que vaya a revisar.
+  const pidieron = [...new Set(contenido.correcciones.map(c => c.pedidaPorId))]
+  for (const userId of pidieron) {
+    void sendPushToUser(userId, {
+      title: 'Correcciones listas para revisar',
+      body: `${contenido.asignadoA?.nombre ?? 'El equipo'} corrigió «${contenido.titulo}»`,
+      url: '/marketing/entregables',
+    }).catch(() => {})
+  }
+
+  broadcast('contenido-actualizado', { id: contenido.id })
+  return ApiResponse.success(res, { resueltas: contenido.correcciones.length })
 }
 
 const actualizarContenidoSchema = z.object({
@@ -123,6 +263,7 @@ export async function actualizarContenido(req: Request, res: Response) {
     },
     include: { asignadoA: { select: SELECT_MIEMBRO }, entregables: true },
   })
+  broadcast('contenido-actualizado', { id: contenido.id })
   return ApiResponse.success(res, contenido)
 }
 
@@ -159,6 +300,7 @@ export async function crearEntregable(req: Request, res: Response) {
   })
   // Publicar un entregable implica que el contenido ya quedó listo.
   await prisma.contenidoMarketing.update({ where: { id: req.params.id }, data: { estado: 'PUBLICADO' } })
+  broadcast('contenido-actualizado', { id: req.params.id })
   return ApiResponse.created(res, entregable)
 }
 

@@ -30,6 +30,7 @@ model User {
   marketing      MiembroMarketing?
   passkeys       Passkey[]
   sessions       Session[]
+  correcciones   CorreccionContenido[]
   pushSubs       PushSubscription[]
   apiKeys        ApiKey[]
 }
@@ -568,9 +569,38 @@ enum EstadoCobroMarketing {
   PAGADO
 }
 
+/// Una ronda de correcciones sobre un trabajo.
+///
+/// Reemplaza lo que el equipo hacía en Trello (decisión de Hotman, 20-ago):
+/// quien revisa escribe qué hay que arreglar, le llega a quien lo hizo, y la
+/// tarea queda marcada hasta que se corrija. Se guardan TODAS las rondas y no
+/// solo la última: si un video va por la tercera corrección, eso se tiene que
+/// poder ver.
+model CorreccionContenido {
+  id          String             @id @default(cuid())
+  contenidoId String
+  contenido   ContenidoMarketing @relation(fields: [contenidoId], references: [id], onDelete: Cascade)
+  mensaje     String
+  /// Quién las pidió. Va contra User y no contra MiembroMarketing porque un
+  /// administrador puede pedir cambios sin tener ficha de marketing.
+  pedidaPorId String
+  pedidaPor   User               @relation(fields: [pedidaPorId], references: [id])
+  /// Cuándo quien lo hizo marcó que ya corrigió. Null = todavía pendiente.
+  resueltaEn  DateTime?
+  createdAt   DateTime           @default(now())
+
+  @@index([contenidoId])
+  @@map("marketing_correcciones")
+}
+
 model ContenidoMarketing {
   id            String                    @id @default(cuid())
   titulo        String
+  correcciones  CorreccionContenido[]
+  /// Quién repartió este trabajo (userId). Sin esto, un community manager no
+  /// puede ver lo que él mismo asignó: el trabajo queda a nombre del editor y
+  /// se pierde el rastro de quién lo encargó y debe revisarlo.
+  asignadoPorId String?
   tipo          TipoContenidoMarketing
   destino       DestinoContenido?
   clasificacion ClasificacionContenido    @default(ORGANICO)

@@ -57,6 +57,11 @@ export function useSSE() {
       es.addEventListener('estudiante-asignado', refrescarTodo)
       es.addEventListener('nuevo-estudiante', refrescarTodo)
       es.addEventListener('pago-registrado', refrescarTodo)
+      // Marketing: si alguien mueve una tarea de estado o de día, o pide
+      // correcciones, el resto del equipo lo ve al instante — dos personas
+      // planificando sobre tableros distintos terminan pisándose el trabajo
+      // (Hotman, 20-ago).
+      es.addEventListener('contenido-actualizado', refrescarTodo)
 
       es.onerror = () => {
         // Se cierra a mano para que EventSource no reintente por su cuenta con

@@ -16,6 +16,10 @@ router.patch('/contenidos/:id',    asyncHandler(ctrl.actualizarContenido))
 router.delete('/contenidos/:id',   asyncHandler(ctrl.eliminarContenido))
 router.post('/contenidos/:id/entregables', asyncHandler(ctrl.crearEntregable))
 
+// Correcciones: reemplazan el flujo que el equipo llevaba en Trello.
+router.post('/contenidos/:id/correcciones',  asyncHandler(ctrl.pedirCorreccion))
+router.patch('/contenidos/:id/correcciones', asyncHandler(ctrl.resolverCorrecciones))
+
 router.get('/entregables',    asyncHandler(ctrl.listarEntregables))
 router.delete('/entregables/:id', asyncHandler(ctrl.eliminarEntregable))
 

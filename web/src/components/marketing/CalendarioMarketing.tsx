@@ -439,7 +439,14 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   const [tipoTrabajo, setTipoTrabajo] = useState<Contenido['tipoTrabajo']>(contenido?.tipoTrabajo ?? 'EMPRESA')
   const [valor, setValor] = useState(contenido?.valor != null ? String(contenido.valor) : '')
   const [estado, setEstado]         = useState<Contenido['estado']>(contenido?.estado ?? 'PLANIFICADO')
-  const [fechaStr, setFechaStr]     = useState(toISO(contenido ? new Date(contenido.fecha) : fecha ?? new Date()))
+  // La fecha guardada llega como medianoche UTC ("2026-08-19T00:00:00.000Z").
+  // Pasarla por `new Date()` la corría al día anterior en Colombia (UTC-5), así
+  // que el formulario abría con un día menos y al guardar —aunque solo se
+  // hubiera tocado el estado— movía la tarea de día (Hotman, 20-ago). Se ancla
+  // con deISO, igual que el resto del calendario.
+  const [fechaStr, setFechaStr]     = useState(
+    contenido ? contenido.fecha.slice(0, 10) : toISO(fecha ?? new Date()),
+  )
   const [asignadoAId] = useState(contenido?.asignadoA?.id ?? '')
   const [notas, setNotas]           = useState(contenido?.notas ?? '')
   const [error, setError]           = useState('')
