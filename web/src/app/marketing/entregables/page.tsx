@@ -21,7 +21,7 @@ import { es } from 'date-fns/locale'
 import { useSession } from 'next-auth/react'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { esLiderMarketing } from '@/lib/roles'
+import { esLiderMarketing, ROL_LABEL } from '@/lib/roles'
 import { visiblesPara } from '@/lib/visibilidadMarketing'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
@@ -76,7 +76,22 @@ const SIGUIENTE: Partial<Record<Contenido['estado'], {
   EN_PROCESO:  { estado: 'PUBLICADO',  texto: 'Publicar', color: '#16a34a' },
 }
 
-/** Una tarea. El enlace solo aparece cuando ya hay algo publicado. */
+/** Cómo se llama cada cuenta en la tarjeta. Sin cuenta no se dibuja el chip. */
+const CUENTA_LABEL: Record<string, string> = {
+  SEBASTIAN_PERSONAL: 'Sebastián personal',
+  ANDRES_PERSONAL: 'Andrés personal',
+  PREICFES: 'Preicfes',
+  PREMEDICO: 'Premédico',
+}
+
+/**
+ * Una tarea dentro de la tarjeta de su responsable.
+ *
+ * Lleva la cuenta y el valor porque son lo primero que se pregunta al mirar
+ * una pieza y no estaban en ningún lado de la tarjeta. Y si tiene correcciones
+ * por hacer, el texto de la última va a la vista: antes decía "1 corrección
+ * por hacer" y había que abrir para saber cuál era (Hotman, 20-ago).
+ */
 function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
   c: Contenido
   onAvanzar: (id: string, estado: Contenido['estado']) => void
@@ -84,9 +99,10 @@ function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
   onAbrir?: (c: Contenido) => void
 }) {
   const e = ESTADO[c.estado]
-  const Icono = e.icono
   const paso = SIGUIENTE[c.estado]
-  const pendientes = (c.correcciones ?? []).filter(x => !x.resueltaEn).length
+  const pendientes = (c.correcciones ?? []).filter(x => !x.resueltaEn)
+  const ultima = pendientes[pendientes.length - 1]
+
   return (
     <div
       onClick={() => onAbrir?.(c)}
@@ -97,33 +113,50 @@ function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
       // caben en una línea, y hasta ahora no había forma de verlos sin ir al
       // Planificador (Hotman, 20-ago).
       className={cn(
-        'flex items-center gap-3 px-4 py-2.5',
+        'flex gap-3 px-4 py-2.5',
+        ultima ? 'items-start' : 'items-center',
         onAbrir && 'cursor-pointer transition-colors hover:bg-surface-low',
-        pendientes > 0 && 'border-l-[3px] border-l-[#dc2626] bg-[#dc2626]/[0.04]',
+        ultima && 'border-l-[3px] border-l-[#dc2626] bg-[#dc2626]/[0.04] pl-[13px]',
       )}
     >
-      {/* El icono de estado a 18px: a 14 el círculo y el visto no se
-          distinguían de un punto (Hotman, 20-ago). */}
-      <Icono className="size-[18px] shrink-0" strokeWidth={2.2} style={{ color: e.color }} />
+      <span
+        className={cn('size-2.5 shrink-0 rounded-full', ultima && 'mt-[5px]')}
+        style={{ background: ultima ? '#dc2626' : e.color }}
+      />
+
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-medium text-on-surface">{c.titulo}</p>
-        <p className="mt-0.5 text-[11px] text-on-surface-variant">
-          {TIPO_LABEL[c.tipo]} · {format(deISO(c.fecha), "d 'de' MMM", { locale: es })}
-          {c.tipoTrabajo === 'FREELANCE' && ' · Freelance'}
-          {/* Una tarea publicada sin enlace no es un error, pero conviene que
-              se note: el enlace es la razón de ser de esta pantalla. */}
-          {c.estado === 'PUBLICADO' && c.entregables.length === 0 && ' · sin enlace'}
-          {pendientes > 0 && (
-            <span className="font-semibold text-[#dc2626]">
-              {' · '}{pendientes} corrección{pendientes !== 1 ? 'es' : ''} por hacer
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-on-surface-variant">
+          {c.destino && (
+            <span className="rounded-md bg-surface-low px-1.5 py-0.5 text-[10px] font-semibold text-on-surface-variant">
+              {CUENTA_LABEL[c.destino]}
             </span>
           )}
+          <span>
+            {TIPO_LABEL[c.tipo]} · {format(deISO(c.fecha), "d 'de' MMM", { locale: es })}
+            {c.tipoTrabajo === 'FREELANCE' && c.valor
+              ? ` · $${c.valor.toLocaleString('es-CO')}`
+              : ''}
+            {/* Una tarea publicada sin enlace no es un error, pero conviene que
+                se note: el enlace es la razón de ser de esta pantalla. */}
+            {c.estado === 'PUBLICADO' && c.entregables.length === 0 && (
+              <span className="font-semibold text-[#dc2626]"> · sin enlace</span>
+            )}
+          </span>
         </p>
+
+        {ultima && (
+          <p className="mt-1.5 rounded-[3px_10px_10px_10px] bg-[#dc2626]/[0.09] px-2.5 py-1.5 text-[11px] leading-snug text-on-surface">
+            <b className="font-semibold">{ultima.pedidaPor?.nombre ?? 'Alguien'}:</b>{' '}
+            {ultima.mensaje}
+          </p>
+        )}
       </div>
+
       {/* Ancho fijo a la derecha: sin él, "Publicado" y los botones "Empezar"
           quedaban a distinta distancia del borde y la columna se veía rota
           (Hotman, 20-ago). Todo lo que va aquí ocupa el mismo espacio. */}
-      <div className="flex w-[112px] shrink-0 items-center justify-end gap-1.5">
+      <div className={cn('flex w-[112px] shrink-0 items-center justify-end gap-1.5', ultima && 'mt-px')}>
         {c.entregables.slice(0, 1).map(en => (
           <a
             key={en.id}
@@ -1015,7 +1048,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
 /** Cuántas tareas se ven en la tarjeta antes de mandar el resto al modal. */
 const VISIBLES = 5
 
-type Grupo = { id: string; nombre: string; foto: string | null; tareas: Contenido[] }
+type Grupo = { id: string; nombre: string; foto: string | null; rol: string | null; freelance: number; tareas: Contenido[] }
 
 export default function EntregablesPage() {
   const now = new Date()
@@ -1147,9 +1180,22 @@ export default function EntregablesPage() {
         id,
         nombre: c.asignadoA?.nombre ?? 'Sin responsable',
         foto: c.asignadoA?.user?.image ?? null,
+        rol: c.asignadoA?.rol ? ROL_LABEL[c.asignadoA.rol as keyof typeof ROL_LABEL] ?? null : null,
+        freelance: 0,
         tareas: [],
       })
-      mapa.get(id)!.tareas.push(c)
+      const g = mapa.get(id)!
+      g.tareas.push(c)
+      if (c.tipoTrabajo === 'FREELANCE') g.freelance += c.valor ?? 0
+    }
+    // Dentro de cada persona, lo que hay que rehacer va primero: es lo que
+    // frena su mes, y por fecha quedaba enterrado entre lo ya publicado.
+    for (const g of mapa.values()) {
+      g.tareas.sort((x, y) => {
+        const cx = (x.correcciones ?? []).some(k => !k.resueltaEn) ? 0 : 1
+        const cy = (y.correcciones ?? []).some(k => !k.resueltaEn) ? 0 : 1
+        return cx - cy || x.fecha.localeCompare(y.fecha)
+      })
     }
     return [...mapa.values()].sort((a, b) =>
       a.id === '__sin__' ? 1 : b.id === '__sin__' ? -1 : a.nombre.localeCompare(b.nombre),
@@ -1312,34 +1358,76 @@ export default function EntregablesPage() {
           {grupos.map(g => {
             const sinDueno   = g.id === '__sin__'
             const publicados = g.tareas.filter(t => t.estado === 'PUBLICADO').length
-            const pendientes = g.tareas.length - publicados
+            const enProceso  = g.tareas.filter(t => t.estado === 'EN_PROCESO').length
+            const planificados = g.tareas.length - publicados - enProceso
+            const conCorreccion = g.tareas.filter(t => (t.correcciones ?? []).some(x => !x.resueltaEn)).length
+            const tramo = (n: number) => `${(n / g.tareas.length) * 100}%`
             return (
-              <div key={g.id} className="card overflow-hidden">
-                <div className="flex items-center gap-2.5 border-b border-outline-variant px-4 py-3">
+              <div key={g.id} className="card overflow-hidden self-start">
+                <div className="flex items-start gap-3 px-4 pt-4">
                   {sinDueno
-                    ? <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-high">
-                        <HelpCircle className="size-4 text-on-surface-variant" />
+                    ? <span className="grid size-[42px] shrink-0 place-items-center rounded-full bg-surface-high">
+                        <HelpCircle className="size-5 text-on-surface-variant" />
                       </span>
-                    : <AvatarMiembro id={g.id} nombre={g.nombre} image={g.foto} size={32} />}
-                  <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-on-surface">{g.nombre}</p>
-                  <p className="shrink-0 text-[11px] tabular-nums text-on-surface-variant">
-                    {pendientes > 0 && <span className="font-semibold text-[#d97706]">{pendientes} pend.</span>}
-                    {pendientes > 0 && publicados > 0 && ' · '}
-                    {publicados > 0 && <span className="font-semibold text-[#16a34a]">{publicados} publ.</span>}
+                    : <AvatarMiembro id={g.id} nombre={g.nombre} image={g.foto} size={42} />}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-semibold tracking-[-0.015em] text-on-surface">{g.nombre}</p>
+                    <p className="mt-0.5 truncate text-[11.5px] text-on-surface-variant">
+                      {g.rol ? `${g.rol} · ` : ''}
+                      {g.tareas.length} tarea{g.tareas.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  {/* Lo que se le debe, que es la razón por la que se mira esta
+                      pantalla y no estaba en ningún lado: había que ir a Cobros
+                      o sumarlo a mano (Hotman, 20-ago). */}
+                  {g.freelance > 0 && (
+                    <div className="shrink-0 text-right">
+                      <p className="text-[18px] font-semibold tabular-nums tracking-[-0.025em] text-on-surface">
+                        ${g.freelance.toLocaleString('es-CO')}
+                      </p>
+                      <p className="mt-px text-[10px] text-on-surface-variant">en freelance</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* El mes de esa persona en tres tramos: se ve quién va colgado
+                    sin contar filas. */}
+                <div className="px-4 pt-3.5">
+                  <div
+                    className="flex h-[7px] gap-0.5 overflow-hidden rounded-full"
+                    style={{ background: 'color-mix(in srgb, var(--outline) 16%, transparent)' }}
+                  >
+                    {publicados > 0 && <span className="h-full" style={{ width: tramo(publicados), background: '#16a34a' }} />}
+                    {enProceso > 0 && <span className="h-full" style={{ width: tramo(enProceso), background: '#d97706' }} />}
+                    {planificados > 0 && <span className="h-full" style={{ width: tramo(planificados), background: 'var(--outline)' }} />}
+                  </div>
+                  <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-on-surface-variant">
+                    {publicados > 0 && (
+                      <span><i className="mr-1.5 inline-block size-[7px] rounded-full align-middle" style={{ background: '#16a34a' }} /><b className="font-semibold tabular-nums text-on-surface">{publicados}</b> publicada{publicados !== 1 ? 's' : ''}</span>
+                    )}
+                    {enProceso > 0 && (
+                      <span><i className="mr-1.5 inline-block size-[7px] rounded-full align-middle" style={{ background: '#d97706' }} /><b className="font-semibold tabular-nums text-on-surface">{enProceso}</b> en proceso</span>
+                    )}
+                    {planificados > 0 && (
+                      <span><i className="mr-1.5 inline-block size-[7px] rounded-full align-middle" style={{ background: 'var(--outline)' }} /><b className="font-semibold tabular-nums text-on-surface">{planificados}</b> sin empezar</span>
+                    )}
+                    {conCorreccion > 0 && (
+                      <span className="text-[#dc2626]"><i className="mr-1.5 inline-block size-[7px] rounded-full align-middle" style={{ background: '#dc2626' }} /><b className="font-semibold tabular-nums">{conCorreccion}</b> con correcciones</span>
+                    )}
                   </p>
                 </div>
-                {/* Solo las 5 más recientes: con diez y pico tareas la tarjeta
-                    de una persona estiraba la página y descuadraba la columna
-                    de al lado. El resto se ve completo en el modal (Hotman,
-                    20-ago). */}
-                <div className="divide-y divide-outline-variant/50">
+
+                {/* Solo las 5 primeras: con diez y pico tareas la tarjeta de una
+                    persona estiraba la página y descuadraba la columna de al
+                    lado. El resto se ve completo en el modal. */}
+                <div className="mt-3.5 divide-y divide-outline-variant/50 border-t border-outline-variant">
                   {g.tareas.slice(0, VISIBLES).map(t => <Tarea key={t.id} c={t} onAbrir={setDetalle} onAvanzar={(id, estado) => avanzar.mutate({ id, estado })} avanzando={avanzar.isPending && avanzar.variables?.id === t.id} />)}
                 </div>
                 {g.tareas.length > VISIBLES && (
                   <button
                     type="button"
                     onClick={() => setVerTodas(g)}
-                    className="w-full cursor-pointer border-t border-outline-variant px-4 py-2.5 text-[12px] font-semibold text-primary transition-colors hover:bg-surface-low"
+                    className="w-full cursor-pointer border-t border-outline-variant bg-surface-low px-4 py-2.5 text-[12px] font-semibold text-primary transition-colors hover:bg-surface-high"
                   >
                     Ver las {g.tareas.length} tareas
                   </button>
