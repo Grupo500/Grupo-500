@@ -128,15 +128,26 @@ export default function AdminResumenPage() {
   const desde = r.periodo.desde.slice(0, 10)
   const hasta = r.periodo.hasta.slice(0, 10)
 
-  const pctGestion = r.cartera.abierto > 0 ? Math.round((r.cartera.gestion / r.cartera.abierto) * 100) : 0
-  const equipoTotal = r.ventas.asesores + r.marketing.equipo
-  const maxPersona = Math.max(...r.marketing.porPersona.map(p => p.cantidad), 1)
-  const totalPiezas = r.marketing.porTipo.reduce((s, t) => s + t.cantidad, 0)
+  // Todo lo que viene del API se lee con respaldo: el frontend se despliega en
+  // Vercel y el backend en Railway, y entre uno y otro hay minutos en los que
+  // la pantalla nueva recibe la respuesta vieja. Sin esto, un campo que aún no
+  // existe tumba la página entera con "cannot read properties of undefined".
+  const cartera = r.cartera ?? { abierto: 0, gestion: 0, gestionEst: 0, estudiantes: 0 }
+  const ventas = r.ventas ?? { asesores: 0, sinAsesor: 0 }
+  const mkt = r.marketing ?? {}
+  const porPersona = mkt.porPersona ?? []
+  const porTipo = mkt.porTipo ?? []
+  const cobros = mkt.cobros ?? { porAprobar: 0, aprobado: 0, pagado: 0 }
+
+  const pctGestion = cartera.abierto > 0 ? Math.round((cartera.gestion / cartera.abierto) * 100) : 0
+  const equipoTotal = (ventas.asesores ?? 0) + (mkt.equipo ?? 0)
+  const maxPersona = Math.max(...porPersona.map(p => p.cantidad), 1)
+  const totalPiezas = porTipo.reduce((s, t) => s + t.cantidad, 0)
 
   // Arcos de la dona: cada tipo ocupa su porción y arranca donde terminó el
   // anterior. El 25 inicial es lo que endereza el arranque a las 12 en punto.
   let acumulado = 0
-  const arcos = r.marketing.porTipo.slice(0, 5).map((t, i) => {
+  const arcos = porTipo.slice(0, 5).map((t, i) => {
     const pct = totalPiezas > 0 ? (t.cantidad / totalPiezas) * 100 : 0
     const offset = 25 - acumulado
     acumulado += pct
@@ -186,8 +197,8 @@ export default function AdminResumenPage() {
             </svg>
           </div>
           <p className="text-center text-[10.5px] text-on-surface-variant">
-            de {formatCOP(r.cartera.abierto)} requiere gestión
-            <span className="mt-0.5 block">{r.cartera.gestionEst} de {r.cartera.estudiantes} estudiantes</span>
+            de {formatCOP(cartera.abierto)} requiere gestión
+            <span className="mt-0.5 block">{cartera.gestionEst} de {cartera.estudiantes} estudiantes</span>
           </p>
         </Modulo>
 
@@ -197,11 +208,11 @@ export default function AdminResumenPage() {
           href="/marketing" irA="Ir a Marketing"
           estado={<Semaforo tono="info">{totalPiezas} pieza{totalPiezas !== 1 ? 's' : ''}</Semaforo>}
         >
-          {r.marketing.porPersona.length === 0 ? (
+          {porPersona.length === 0 ? (
             <p className="py-4 text-center text-[11px] text-on-surface-variant">Sin contenido este mes</p>
           ) : (
             <div className="flex flex-col gap-2">
-              {r.marketing.porPersona.slice(0, 5).map((p, i) => (
+              {porPersona.slice(0, 5).map((p, i) => (
                 <div key={p.nombre} className="grid grid-cols-[74px_1fr_auto] items-center gap-2 text-[10.5px]">
                   <span className="truncate text-on-surface-variant">{p.nombre.split(' ').slice(0, 2).join(' ')}</span>
                   <span className="h-2 overflow-hidden rounded-full bg-surface-high">
@@ -223,15 +234,15 @@ export default function AdminResumenPage() {
         <Modulo titulo="Equipo" icono={Users} color={COLOR.ventas} href="/admin/usuarios" irA="Ir a Usuarios">
           <p className="text-[24px] font-bold leading-none tabular-nums text-on-surface">{equipoTotal}</p>
           <p className="mt-1 text-[10.5px] text-on-surface-variant">
-            {r.ventas.asesores} asesores · {r.marketing.equipo} marketing
+            {(ventas.asesores ?? 0)} asesores · {(mkt.equipo ?? 0)} marketing
           </p>
           <div className="mt-3 flex h-2.5 gap-[2px] overflow-hidden rounded-full">
-            <span style={{ width: `${(r.ventas.asesores / Math.max(equipoTotal, 1)) * 100}%`, background: COLOR.ventas }} />
+            <span style={{ width: `${((ventas.asesores ?? 0) / Math.max(equipoTotal, 1)) * 100}%`, background: COLOR.ventas }} />
             <span className="flex-1" style={{ background: COLOR.mkt }} />
           </div>
-          {r.ventas.sinAsesor > 0 && (
+          {(ventas.sinAsesor ?? 0) > 0 && (
             <p className="mt-2 text-[10px] text-on-surface-variant">
-              {r.ventas.sinAsesor} pagos sin asesor acreditado
+              {(ventas.sinAsesor ?? 0)} pagos sin asesor acreditado
             </p>
           )}
         </Modulo>
@@ -272,23 +283,23 @@ export default function AdminResumenPage() {
         <Modulo
           titulo="Cobros freelance" icono={Receipt} color={COLOR.cartera}
           href="/marketing/cobros" irA="Ir a Cobros"
-          estado={r.marketing.cobros.porAprobar > 0
+          estado={cobros.porAprobar > 0
             ? <Semaforo tono="atencion">Por aprobar</Semaforo>
             : <Semaforo tono="ok">Al día</Semaforo>}
         >
           <p className="text-[22px] font-bold leading-none tabular-nums"
-             style={{ color: r.marketing.cobros.porAprobar > 0 ? COLOR.cartera : 'var(--on-surface)' }}>
-            {formatCOP(r.marketing.cobros.porAprobar)}
+             style={{ color: cobros.porAprobar > 0 ? COLOR.cartera : 'var(--on-surface)' }}>
+            {formatCOP(cobros.porAprobar)}
           </p>
           <p className="mt-1 text-[10.5px] text-on-surface-variant">esperando tu aprobación</p>
           <div className="mt-3 flex gap-2 text-[10px] text-on-surface-variant">
             <span className="flex-1 rounded-lg bg-surface-high px-2.5 py-1.5">
               Aprobado
-              <b className="block text-[12px] tabular-nums text-on-surface">{formatCOP(r.marketing.cobros.aprobado)}</b>
+              <b className="block text-[12px] tabular-nums text-on-surface">{formatCOP(cobros.aprobado)}</b>
             </span>
             <span className="flex-1 rounded-lg bg-surface-high px-2.5 py-1.5">
               Pagado
-              <b className="block text-[12px] tabular-nums" style={{ color: COLOR.fin }}>{formatCOP(r.marketing.cobros.pagado)}</b>
+              <b className="block text-[12px] tabular-nums" style={{ color: COLOR.fin }}>{formatCOP(cobros.pagado)}</b>
             </span>
           </div>
         </Modulo>
