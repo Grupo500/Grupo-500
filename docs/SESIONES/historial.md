@@ -1536,3 +1536,129 @@ conservan por si vuelven, y a los 60 días se eliminan del todo.
 - Rotación de la contraseña de Postgres + rol `app_rw` para el backend, cuando
   Railway sane.
 - Confirmar identidad de "Sofía Duarte" en HubSpot.
+
+---
+
+## Sesión 043 — 2026-08-19 (máquina de Hotman)
+
+**Objetivo:** cerrar la recuperación del borrado (leads de Trengo, datos de
+compradores) y rematar lo que fue apareciendo: suspensión de usuarios,
+atribución rota del webhook, y el rediseño del dashboard.
+
+### La atribución de ventas se rompió sin que nadie tocara nada
+
+Hotmart **cambió la llave del nombre del afiliado** en sus webhooks: manda
+`name` donde antes mandaba `affiliate_name`. El controlador leía solo la vieja,
+así que **todas las ventas del 19-ago entraron sin asesor** — los asesores
+veían su dashboard congelado mientras vendían.
+
+Tres capas de arreglo para que no vuelva a pasar:
+1. Se leen **ambas llaves**.
+2. Si el nombre no cruza por alias, se compara contra el nombre del perfil.
+3. **Auto-aprendizaje**: al cruzar por nombre se guarda el `affiliate_code` en
+   `codigosHotmart`, así la próxima venta cierra por código aunque cambien otra
+   vez el formato del nombre.
+
+Los 20 pagos huérfanos se reatribuyeron con los payloads crudos de
+`hotmart_webhook_logs` — esa tabla de auditoría fue lo que salvó el día. De
+paso: 4 asesores tenían el nombre con espacios al final y eso rompía el cruce.
+
+### Emparejador pago→curso: el monto manda, la fecha desempata
+
+Con dos cursos comprados el MISMO día, el criterio de "curso con fecha más
+cercana" empataba y apilaba ambos pagos en el primero: el otro quedaba "sin
+abonos" y la lista de gestión **inventaba deudores** (Landon Romero pagó sus
+dos cursos completos y aparecía debiendo $370.000).
+
+`utils/asignarPagos.ts` es ahora el ÚNICO emparejador (lo usan
+`pendientesPorCobrar`, `cuotas()` y `backfillCuotas`): primero calce por monto
+—de contado o cuota × cuotas, con 2% de tolerancia por conversión de divisa—,
+y solo si nada calza manda la fecha, con el curso ya saldado perdiendo el
+empate. Verificado contra los casos reales.
+
+### La serie de un mes llegaba agrupada por semana
+
+`estudiantesPorMes` calculaba los días del rango con `round`: de 00:00 del 1 a
+23:59 del 31 hay 30,99 días → redondeaba a 32 → **cualquier mes completo se
+pasaba del umbral de 31** y caía al agrupado semanal. La gráfica del dashboard
+mostraba 5 puntos (202, 229, 124, 0, 0) y el eje decía "día 1" un 19 de agosto.
+Con `floor` da 31 y la serie llega diaria; cada punto trae además su `fecha`
+para no deducir el día de su posición en la lista.
+
+### Suspensión de usuarios (sin borrar la cuenta)
+
+`User.suspendido` + `suspendidoEn`. El middleware del API rechaza
+`CUENTA_SUSPENDIDA` **en cada petición**, así que corta también las sesiones ya
+abiertas; NextAuth niega el login nuevo. Botón con confirmación en Usuarios,
+chip ámbar y tarjeta atenuada; el mismo botón restablece. Un admin no puede
+auto-suspenderse. Los 7 retirados quedaron suspendidos: retirar (ranking,
+purga a 60 días) y suspender (acceso) son cosas distintas.
+
+### Recuperación de leads: COMPLETA
+
+- **Trengo**: con el token de API que consiguió Hotman se recuperaron **~51.000
+  tickets** (ago 16.416 · jul 27.807 · jun 6.746). El historial de Trengo
+  arranca el **13-jun-2026**. Las últimas 540 páginas no trajeron ni un lead
+  nuevo: lo que queda son tickets sin asesor asignado. `backfillTrengo.ts`
+  quedó reanudable (`TRENGO_DESDE_PAGINA`) y con corte automático en junio.
+- **HubSpot**: además de la resincronización, ahora **se sincroniza sola cada
+  30 minutos** (era manual: los tickets que el equipo se asignaba a mano solo
+  entraban cuando un admin corría la sync). Trengo no lo necesita: su webhook
+  registra cada asignación al instante.
+- **Compradores de Hotmart**: `/sales/users` dio **2.437 teléfonos** y **1.592
+  documentos** que el import inicial no traía. Lo que sigue vacío no existe en
+  Hotmart — el comprador nunca lo dio.
+
+### Tasas de cierre reales (equipo 3,8% en julio y en agosto)
+
+Julio: Cielo 13,3% · Sara 10,1% · Jeniffer 3,6% · Luis 2,7% · Leidy 2,5% ·
+Natalia 2,3% · Leonardo 2,1% · Narda 1,9% · David 1,8% · Oscar 1,6%.
+Agosto (al 19): Cielo 21,0% · Jeniffer 6,7% · Sara 5,3% · Leonardo 3,6% ·
+David 3,3% · Oscar 3,2% · Leidy 3,1% · Luis 2,7% · Alicia 2,5% · Natalia 2,4% ·
+Narda 2,3% · María Buelvas 1,8%.
+
+**Hallazgos del cruce de correos** (para el negocio, no para el código):
+- **8 asesores venden sin recibir un solo lead del CRM** (Silvia Martínez,
+  Angie Espitia, Ana María, Sebastián Silva, Shary Flórez, Sarah Michelle,
+  Sebas Ramírez, Juan Diego Castro): no tienen cuenta en Trengo ni HubSpot.
+  Por eso la app les muestra "—" y no 0% — no hay contra qué medir.
+- **`admin@resultadosgrupo500.com` acumula 7.886 leads** en Trengo: la bandeja
+  general, leads que nunca se asignaron a nadie. Es la cola más grande del CRM.
+- `info@klubdeventas.com` (233 leads) parece una agencia externa.
+- **Sofía Duarte** (`sofduartetrabajo@`, 2.372 leads entre ambas plataformas)
+  es otra persona, ya no está — confirmado por Hotman. Sus leads quedan sin
+  asignar a propósito.
+- El cruce ahora suma **todos** los correos del asesor (`llavesCorreo`);
+  María Buelvas atendía Trengo con un Gmail distinto al de su perfil.
+
+### Dashboard rediseñado (boceto aprobado)
+
+Fila 1: Total facturado a todo el ancho + Desglose del mes (bruta − comisiones
+= neto, reemplazando tres KPIs sueltos). Fila 2: Top 5 asesores. Fila 3:
+Nuevos estudiantes + Cursos más vendidos (la versión de barras de Analíticas).
+Fila 4: Pendiente por cobrar sola, a lo ancho.
+
+Dos datos nuevos que no se veían en ninguna parte: la **serie diaria de
+inscripciones** (barras, hoy resaltado, mejor día en verde, línea de promedio)
+con proyección de cierre de mes, y **"Recuperado este mes"** en Pendiente por
+cobrar — cuotas 2+ cobradas en el mes contra el saldo con que arrancó.
+
+### Otros
+
+- **Firma y API Keys se mudaron de Ajustes a Administración**: son
+  configuración de la empresa, no del perfil personal de nadie.
+- **La API key pública se perdió con el borrado y es irrecuperable por diseño**
+  (solo se guarda su hash). Hay que crear una nueva desde
+  Administración → API Keys; Hotman cree que estaba vinculada a Google Ads.
+- **Selector de país del teléfono** rehecho con el diseño de la app (Radix
+  Popover, banderas, buscador): el `<select>` nativo no acepta ni banderas ni
+  estilos. Regla nueva: **ningún dropdown nativo en la app**.
+
+### Pendiente
+
+- Rotación de la contraseña de Postgres + backend con el rol `app_rw`.
+- Crear la API key nueva y reconectarla (¿Google Ads? — confirmar con David).
+- Reingresar las credenciales de la App de Meta en Redes (`ConfigApp` vacía).
+- Decidir si los 8 asesores sin CRM deben tener cuenta en Trengo/HubSpot.
+- Revisar la cola de 7.886 leads sin asignar en `admin@resultadosgrupo500.com`.
+- Shopify: Hotman quiere conectar su tienda; falta el token de la Admin API.
