@@ -17,8 +17,16 @@ import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import { AvatarMiembro } from './AvatarMiembro'
 
-export interface Miembro { id: string; nombre: string; activo: boolean; userId?: string; user?: { image: string | null } }
+export interface Miembro { id: string; nombre: string; activo: boolean; userId?: string; rol?: string; user?: { image: string | null } }
 export interface EntregableDto { id: string; plataforma: string; url: string | null; videoUrl: string | null; publicadoEn: string }
+/** Una ronda de correcciones. `resueltaEn` en null = todavía pendiente. */
+export interface CorreccionDto {
+  id: string
+  mensaje: string
+  createdAt: string
+  resueltaEn: string | null
+  pedidaPor?: { nombre: string | null; email: string; image: string | null } | null
+}
 export interface Contenido {
   id: string
   titulo: string
@@ -32,7 +40,10 @@ export interface Contenido {
   estado: 'PLANIFICADO' | 'EN_PROCESO' | 'PUBLICADO'
   notas: string | null
   asignadoA: Miembro | null
+  /** Quién repartió el trabajo (userId); null si se lo puso uno mismo. */
+  asignadoPorId?: string | null
   entregables: EntregableDto[]
+  correcciones?: CorreccionDto[]
 }
 
 const TIPO_LABEL: Record<Contenido['tipo'], string> = {
@@ -447,7 +458,14 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   const [fechaStr, setFechaStr]     = useState(
     contenido ? contenido.fecha.slice(0, 10) : toISO(fecha ?? new Date()),
   )
-  const [asignadoAId] = useState(contenido?.asignadoA?.id ?? '')
+  const [asignadoAId, setAsignadoAId] = useState(contenido?.asignadoA?.id ?? '')
+
+  // Quien reparte trabajo ve el campo de asignar; el resto crea a su nombre.
+  // La lista son solo los editores de video: es a ellos a quienes se encarga.
+  const { data: sesion } = useSession()
+  const rol = (sesion?.user as { role?: string } | undefined)?.role
+  const puedeAsignar = ['ADMIN', 'COMMUNITY', 'LIDER_EDICION', 'LIDER_DISENO'].includes(rol ?? '')
+  const editores = miembros.filter(m => m.activo && m.rol === 'EDITOR')
   const [notas, setNotas]           = useState(contenido?.notas ?? '')
   const [error, setError]           = useState('')
 
@@ -680,11 +698,57 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
           </div>
         )}
 
-        {/* El "asignado a" no aparece en el formulario: el contenido queda
-            siempre a nombre de quien lo crea y eso lo resuelve el backend
-            (Hotman, 20-ago). Mostrarlo tampoco aportaba —era una fila fija
-            que nadie podía cambiar— y el responsable ya se ve en la ficha del
-            calendario y en el tablero. */}
+        {/* Asignar solo lo ven quienes reparten trabajo (community, líderes,
+            admin) y la lista trae únicamente editores de video: es a ellos a
+            quienes se les encarga (Hotman, 20-ago). Quien no reparte crea
+            siempre a su nombre y no ve este campo. */}
+        {puedeAsignar && (
+          <div>
+            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Asignar a</label>
+            <div className="flex flex-wrap gap-1.5">
+              {editores.map(m => {
+                const activo = asignadoAId === m.id
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setAsignadoAId(activo ? '' : m.id)}
+                    aria-pressed={activo}
+                    title={m.nombre}
+                    className={cn(
+                      'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[12px] transition-colors',
+                      activo
+                        ? 'border-primary bg-primary-container text-on-surface'
+                        : 'border-outline-variant bg-surface-lowest text-on-surface hover:border-outline',
+                    )}
+                  >
+                    <AvatarMiembro id={m.id} nombre={m.nombre} image={m.user?.image} size={19} />
+                    {m.nombre.split(' ')[0]}
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                onClick={() => setAsignadoAId('')}
+                aria-pressed={!asignadoAId}
+                className={cn(
+                  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[12px] transition-colors',
+                  !asignadoAId
+                    ? 'border-primary bg-primary-container text-on-surface'
+                    : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
+                )}
+              >
+                <span className="grid h-[19px] w-[19px] place-items-center rounded-full border border-dashed border-outline text-[8.5px] font-bold text-on-surface-variant">
+                  ?
+                </span>
+                A mi nombre
+              </button>
+            </div>
+            {editores.length === 0 && (
+              <p className="mt-1 text-[11px] text-outline">No hay editores de video registrados.</p>
+            )}
+          </div>
+        )}
 
         {esEdicion && (
           <div>

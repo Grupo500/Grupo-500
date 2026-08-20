@@ -18,12 +18,15 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useSession } from 'next-auth/react'
 import { apiFetch } from '@/lib/api'
+import { cn } from '@/lib/utils'
+import { esLiderMarketing } from '@/lib/roles'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
-import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check } from 'lucide-react'
+import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil } from 'lucide-react'
 import { type Contenido } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
@@ -68,17 +71,34 @@ const SIGUIENTE: Partial<Record<Contenido['estado'], {
 }
 
 /** Una tarea. El enlace solo aparece cuando ya hay algo publicado. */
-function Tarea({ c, onAvanzar, avanzando }: {
+function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
   c: Contenido
   onAvanzar: (id: string, estado: Contenido['estado']) => void
   avanzando: boolean
+  onAbrir?: (c: Contenido) => void
 }) {
   const e = ESTADO[c.estado]
   const Icono = e.icono
   const paso = SIGUIENTE[c.estado]
+  const pendientes = (c.correcciones ?? []).filter(x => !x.resueltaEn).length
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5">
-      <Icono className="size-3.5 shrink-0" style={{ color: e.color }} />
+    <div
+      onClick={() => onAbrir?.(c)}
+      role={onAbrir ? 'button' : undefined}
+      tabIndex={onAbrir ? 0 : undefined}
+      onKeyDown={ev => { if (onAbrir && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); onAbrir(c) } }}
+      // La fila entera abre el detalle: el título y las notas de una tarea no
+      // caben en una línea, y hasta ahora no había forma de verlos sin ir al
+      // Planificador (Hotman, 20-ago).
+      className={cn(
+        'flex items-center gap-3 px-4 py-2.5',
+        onAbrir && 'cursor-pointer transition-colors hover:bg-surface-low',
+        pendientes > 0 && 'border-l-[3px] border-l-[#dc2626] bg-[#dc2626]/[0.04]',
+      )}
+    >
+      {/* El icono de estado a 18px: a 14 el círculo y el visto no se
+          distinguían de un punto (Hotman, 20-ago). */}
+      <Icono className="size-[18px] shrink-0" strokeWidth={2.2} style={{ color: e.color }} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-medium text-on-surface">{c.titulo}</p>
         <p className="mt-0.5 text-[11px] text-on-surface-variant">
@@ -87,16 +107,25 @@ function Tarea({ c, onAvanzar, avanzando }: {
           {/* Una tarea publicada sin enlace no es un error, pero conviene que
               se note: el enlace es la razón de ser de esta pantalla. */}
           {c.estado === 'PUBLICADO' && c.entregables.length === 0 && ' · sin enlace'}
+          {pendientes > 0 && (
+            <span className="font-semibold text-[#dc2626]">
+              {' · '}{pendientes} corrección{pendientes !== 1 ? 'es' : ''} por hacer
+            </span>
+          )}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        {c.entregables.map(en => (
+      {/* Ancho fijo a la derecha: sin él, "Publicado" y los botones "Empezar"
+          quedaban a distinta distancia del borde y la columna se veía rota
+          (Hotman, 20-ago). Todo lo que va aquí ocupa el mismo espacio. */}
+      <div className="flex w-[112px] shrink-0 items-center justify-end gap-1.5">
+        {c.entregables.slice(0, 1).map(en => (
           <a
             key={en.id}
             href={en.url ?? en.videoUrl ?? '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 rounded-full bg-surface-high px-2 py-1 text-[10px] font-semibold text-on-surface-variant transition-colors hover:text-primary"
+            onClick={ev => ev.stopPropagation()}
+            className="flex items-center gap-1 rounded-full bg-surface-high px-2.5 py-1.5 text-[10px] font-semibold text-on-surface-variant transition-colors hover:text-primary"
           >
             <Link2 className="size-3" />
             {PLATAFORMA_LABEL[en.plataforma] ?? en.plataforma}
@@ -106,23 +135,175 @@ function Tarea({ c, onAvanzar, avanzando }: {
           <button
             type="button"
             disabled={avanzando}
-            onClick={() => onAvanzar(c.id, paso.estado)}
+            onClick={ev => { ev.stopPropagation(); onAvanzar(c.id, paso.estado) }}
             title={`Marcar como ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'publicado'}`}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white transition-[transform,filter] hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[10.5px] font-bold text-white transition-[transform,filter] hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
             style={{ background: paso.color }}
           >
             {avanzando
-              ? <Loader2 className="size-3 animate-spin" />
-              : paso.estado === 'EN_PROCESO' ? <Play className="size-3" /> : <Check className="size-3" />}
+              ? <Loader2 className="size-3.5 animate-spin" />
+              : paso.estado === 'EN_PROCESO' ? <Play className="size-3.5" /> : <Check className="size-3.5" />}
             {paso.texto}
           </button>
         ) : (
           c.entregables.length === 0 && (
-            <span className="text-[10px] font-semibold" style={{ color: e.color }}>{e.label}</span>
+            <span
+              className="inline-flex items-center rounded-full px-3 py-1.5 text-[10.5px] font-bold"
+              style={{ background: `color-mix(in srgb, ${e.color} 14%, transparent)`, color: e.color }}
+            >
+              {e.label}
+            </span>
           )
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Detalle de una tarea: todo lo que no cabe en la fila, y el hilo de
+ * correcciones. Quien puede pedir cambios escribe aquí; quien hizo el trabajo
+ * marca desde aquí que ya corrigió.
+ */
+function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio }: {
+  c: Contenido
+  puedePedir: boolean
+  esMio: boolean
+  onCerrar: () => void
+  onCambio: () => void
+}) {
+  const [mensaje, setMensaje] = useState('')
+  const e = ESTADO[c.estado]
+  const correcciones = c.correcciones ?? []
+  const pendientes = correcciones.filter(x => !x.resueltaEn)
+
+  const pedir = useMutation({
+    mutationFn: () => apiFetch(`/marketing/contenidos/${c.id}/correcciones`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensaje: mensaje.trim() }),
+    }),
+    onSuccess: () => { setMensaje(''); onCambio() },
+    onError: (err: Error) => alert(err.message || 'No se pudo enviar'),
+  })
+
+  const resolver = useMutation({
+    mutationFn: () => apiFetch(`/marketing/contenidos/${c.id}/correcciones`, { method: 'PATCH' }),
+    onSuccess: onCambio,
+    onError: (err: Error) => alert(err.message || 'No se pudo marcar'),
+  })
+
+  return (
+    <Modal abierto onClose={onCerrar} titulo={c.titulo}
+           subtitulo={`${TIPO_LABEL[c.tipo]} · ${format(deISO(c.fecha), "d 'de' MMMM", { locale: es })}`}>
+      <div className="space-y-4 px-1 py-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold"
+                style={{ background: `color-mix(in srgb, ${e.color} 14%, transparent)`, color: e.color }}>
+            {e.label}
+          </span>
+          {c.tipoTrabajo === 'FREELANCE' && (
+            <span className="rounded-full bg-surface-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant">
+              Freelance{c.valor ? ` · $${c.valor.toLocaleString('es-CO')}` : ''}
+            </span>
+          )}
+          {c.clasificacion === 'PAUTA' && (
+            <span className="rounded-full bg-surface-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant">Pauta</span>
+          )}
+          {c.asignadoA && (
+            <span className="ml-auto flex items-center gap-2 text-[12px] text-on-surface-variant">
+              <AvatarMiembro id={c.asignadoA.id} nombre={c.asignadoA.nombre} image={c.asignadoA.user?.image} size={22} />
+              {c.asignadoA.nombre}
+            </span>
+          )}
+        </div>
+
+        {c.notas && (
+          <div>
+            <p className="mb-1 text-[11px] font-semibold text-on-surface-variant">Notas</p>
+            <p className="whitespace-pre-wrap rounded-xl bg-surface-low px-3.5 py-3 text-[12.5px] leading-relaxed text-on-surface">
+              {c.notas}
+            </p>
+          </div>
+        )}
+
+        {c.entregables.length > 0 && (
+          <div>
+            <p className="mb-1.5 text-[11px] font-semibold text-on-surface-variant">Publicado en</p>
+            <div className="flex flex-wrap gap-2">
+              {c.entregables.map(en => (
+                <a key={en.id} href={en.url ?? en.videoUrl ?? '#'} target="_blank" rel="noopener noreferrer"
+                   className="flex items-center gap-1.5 rounded-full bg-surface-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant hover:text-primary">
+                  <Link2 className="size-3.5" />
+                  {PLATAFORMA_LABEL[en.plataforma] ?? en.plataforma}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Correcciones ── */}
+        <div className="border-t border-outline-variant pt-3.5">
+          <p className="mb-2 text-[11px] font-semibold text-on-surface-variant">
+            Correcciones {correcciones.length > 0 && `(${correcciones.length})`}
+          </p>
+
+          {correcciones.length === 0 && (
+            <p className="text-[12px] text-on-surface-variant">Ninguna. El trabajo no ha necesitado cambios.</p>
+          )}
+
+          <div className="space-y-2">
+            {correcciones.map(x => (
+              <div key={x.id}
+                   className={cn(
+                     'rounded-xl border-l-[3px] px-3.5 py-2.5',
+                     x.resueltaEn
+                       ? 'border-l-outline-variant bg-surface-low'
+                       : 'border-l-[#dc2626] bg-[#dc2626]/[0.07]',
+                   )}>
+                <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-on-surface">{x.mensaje}</p>
+                <p className="mt-1.5 text-[10.5px] text-on-surface-variant">
+                  {x.pedidaPor?.nombre ?? 'Alguien'} · {format(new Date(x.createdAt), "d 'de' MMM, h:mm a", { locale: es })}
+                  {x.resueltaEn && <span className="font-semibold text-[#16a34a]"> · corregido</span>}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {esMio && pendientes.length > 0 && (
+            <button
+              type="button"
+              disabled={resolver.isPending}
+              onClick={() => resolver.mutate()}
+              className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-[#d97706] px-3.5 py-2 text-[11.5px] font-bold text-white hover:brightness-110 disabled:opacity-60"
+            >
+              {resolver.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+              Ya lo corregí
+            </button>
+          )}
+
+          {puedePedir && (
+            <div className="mt-3">
+              <textarea
+                value={mensaje}
+                onChange={ev => setMensaje(ev.target.value)}
+                placeholder="¿Qué hay que corregir?"
+                className="min-h-[74px] w-full resize-y rounded-xl border border-outline-variant bg-surface-lowest px-3.5 py-2.5 text-[12.5px] text-on-surface outline-none focus:border-primary"
+              />
+              <button
+                type="button"
+                disabled={mensaje.trim().length < 3 || pedir.isPending}
+                onClick={() => pedir.mutate()}
+                className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-[#dc2626] px-3.5 py-2 text-[11.5px] font-bold text-white hover:brightness-110 disabled:opacity-45"
+              >
+                {pedir.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Pencil className="size-3.5" />}
+                Pedir cambios
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </Modal>
   )
 }
 
@@ -138,6 +319,10 @@ export default function EntregablesPage() {
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
   const [verTodas, setVerTodas] = useState<Grupo | null>(null)
+  const [detalle, setDetalle] = useState<Contenido | null>(null)
+  const { data: sesion } = useSession()
+  const rol = (sesion?.user as { role?: string } | undefined)?.role
+  const miUserId = sesion?.user?.id
   const queryClient = useQueryClient()
 
   // Avanzar la tarea al siguiente estado. Se refresca la lista al terminar en
@@ -251,7 +436,7 @@ export default function EntregablesPage() {
                     de al lado. El resto se ve completo en el modal (Hotman,
                     20-ago). */}
                 <div className="divide-y divide-outline-variant/50">
-                  {g.tareas.slice(0, VISIBLES).map(t => <Tarea key={t.id} c={t} onAvanzar={(id, estado) => avanzar.mutate({ id, estado })} avanzando={avanzar.isPending && avanzar.variables?.id === t.id} />)}
+                  {g.tareas.slice(0, VISIBLES).map(t => <Tarea key={t.id} c={t} onAbrir={setDetalle} onAvanzar={(id, estado) => avanzar.mutate({ id, estado })} avanzando={avanzar.isPending && avanzar.variables?.id === t.id} />)}
                 </div>
                 {g.tareas.length > VISIBLES && (
                   <button
@@ -278,9 +463,25 @@ export default function EntregablesPage() {
           : ''}
       >
         <div className="divide-y divide-outline-variant/50">
-          {verTodas?.tareas.map(t => <Tarea key={t.id} c={t} onAvanzar={(id, estado) => avanzar.mutate({ id, estado })} avanzando={avanzar.isPending && avanzar.variables?.id === t.id} />)}
+          {verTodas?.tareas.map(t => <Tarea key={t.id} c={t} onAbrir={setDetalle} onAvanzar={(id, estado) => avanzar.mutate({ id, estado })} avanzando={avanzar.isPending && avanzar.variables?.id === t.id} />)}
         </div>
       </Modal>
+
+      {/* Detalle de una tarea, con su hilo de correcciones */}
+      {detalle && (
+        <DetalleTarea
+          // Se relee de la lista para que el hilo se refresque al pedir o
+          // resolver una corrección sin cerrar y volver a abrir.
+          c={(data?.data ?? []).find(x => x.id === detalle.id) ?? detalle}
+          // Pide cambios quien repartió ese trabajo, y los líderes y admins.
+          puedePedir={
+            esLiderMarketing(rol) || (!!detalle.asignadoPorId && detalle.asignadoPorId === miUserId)
+          }
+          esMio={detalle.asignadoA?.userId === miUserId}
+          onCerrar={() => setDetalle(null)}
+          onCambio={() => queryClient.invalidateQueries({ queryKey: ['marketing-contenidos-equipo'] })}
+        />
+      )}
     </div>
   )
 }

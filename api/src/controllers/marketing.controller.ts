@@ -10,7 +10,7 @@ import { sendPushToUser } from '../services/push'
 import { broadcast } from '../utils/sseManager'
 import { z } from 'zod'
 
-const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, userId: true, user: { select: { image: true } } }
+const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, userId: true, user: { select: { image: true, role: true } } }
 
 // ── Miembros del equipo ──────────────────────────────────────────────────────
 export async function listarMiembros(req: Request, res: Response) {
@@ -20,7 +20,9 @@ export async function listarMiembros(req: Request, res: Response) {
     select: SELECT_MIEMBRO,
     orderBy: { nombre: 'asc' },
   })
-  return ApiResponse.success(res, miembros)
+  // El rol se aplana: quien asigna trabajo necesita saber quién es editor de
+  // video, y anidarlo dentro de user obligaba a cada pantalla a bajarlo.
+  return ApiResponse.success(res, miembros.map(m => ({ ...m, rol: m.user?.role ?? null })))
 }
 
 // ── Contenidos (calendario) ──────────────────────────────────────────────────
