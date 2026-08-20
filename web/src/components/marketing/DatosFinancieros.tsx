@@ -20,7 +20,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Save, Check, Landmark, AlertTriangle, FileText } from 'lucide-react'
 import { getClientToken, createClientFetcher } from '@/lib/api'
 import { Select } from '@/components/ui/Select'
-import { CampoFirma } from './CampoFirma'
 import { CampoTelefono } from '@/components/ui/CampoTelefono'
 
 export interface Financieros {
@@ -67,7 +66,6 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
     tipoCuenta:       inicial.tipoCuenta ?? 'AHORROS',
     numeroCuenta:     inicial.numeroCuenta ?? '',
   })
-  const [firmaUrl, setFirmaUrl] = useState(inicial.firmaUrl)
   const set = (k: keyof typeof f) => (v: string) => setF(p => ({ ...p, [k]: v }))
 
   const guardar = useMutation({
@@ -76,7 +74,7 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
       return createClientFetcher(token ?? '')('/auth/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...f, firmaUrl }),
+        body: JSON.stringify(f),
       })
     },
     onSuccess: () => {
@@ -97,7 +95,6 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
     !f.rut.trim()              && 'tu RUT',
     !f.banco.trim()            && 'el banco',
     !f.numeroCuenta.trim()     && 'el número de cuenta',
-    !firmaUrl                  && 'tu firma',
   ].filter(Boolean) as string[]
 
   const listo = falta.length === 0
@@ -168,11 +165,9 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
           />
         </div>
         <Campo ancho label="N° de cuenta" valor={f.numeroCuenta} onCambio={set('numeroCuenta')} placeholder="03212345678" />
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-xs font-medium text-on-surface-variant">Firma</label>
-          <CampoFirma valor={firmaUrl} onCambio={setFirmaUrl} />
-          <p className="mt-1 text-[11px] text-on-surface-variant">Queda incrustada sobre la línea de firma del PDF.</p>
-        </div>
+        {/* La firma dibujada salió de aquí (Hotman, 20-ago): la cuenta de cobro
+            se genera igual y firmarla con el dedo en el navegador daba un
+            garabato distinto cada vez. El PDF deja la línea para firmar. */}
       </div>
 
       {/* ── Previa ── */}
@@ -190,9 +185,7 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
           que te aprueben, con su periodo y su valor reales.<br />
           Pago a cuenta de {f.tipoCuenta === 'CORRIENTE' ? 'corriente' : 'ahorros'} {f.banco || '—'} N° {f.numeroCuenta || '—'}.
           <div className="mt-3 border-t border-outline-variant pt-2 text-[10.5px]">
-            {firmaUrl
-              ? <img src={firmaUrl} alt="" className="mb-1 h-8 object-contain" />
-              : <span className="opacity-45">___________________________</span>}
+            <span className="opacity-45">___________________________</span>
             <div>{f.nombreCompleto || '—'} · C.C. {f.cedula || '—'}{f.celular ? ` · ${f.celular}` : ''}</div>
           </div>
         </div>
