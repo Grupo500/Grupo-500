@@ -135,7 +135,12 @@ export default function CobrosPage() {
     mutationFn: async (c: Cobro) => {
       const p = c.asignadoA
       if (!p) throw new Error('Este cobro no tiene a nadie asignado')
-      if (!p.completos) throw new Error(`Faltan datos financieros: ${p.falta.join(', ')}`)
+      // Igual que arriba: la firma ya no se pide, así que no puede frenar una
+      // aprobación aunque el servidor viejo la siga reportando como faltante.
+      const faltanDeVerdad = (p.falta ?? []).filter(f => !/firma/i.test(f))
+      if (faltanDeVerdad.length > 0) {
+        throw new Error(`Faltan datos financieros: ${faltanDeVerdad.join(', ')}`)
+      }
 
       const emision = c.aprobadoEn ? new Date(c.aprobadoEn) : new Date()
       const { blob, base64, archivo } = await generarCuentaDeCobro(p, {
@@ -174,12 +179,17 @@ export default function CobrosPage() {
     }>()
     for (const c of cobros) {
       const id = c.asignadoA?.id ?? SIN_ASIGNAR
+      // La firma dejó de pedirse, pero el servidor puede seguir enviándola en
+      // la lista de faltantes hasta que suba la versión nueva; mientras tanto
+      // marcaría a todo el equipo con un dato imposible de llenar y les
+      // frenaría el cobro (Hotman, 20-ago).
+      const faltaReal = (c.asignadoA?.falta ?? []).filter(f => !/firma/i.test(f))
       if (!mapa.has(id)) mapa.set(id, {
         id,
         nombre: c.asignadoA?.nombre ?? 'Sin asignar',
         foto:   c.asignadoA?.user?.image ?? null,
-        falta:  c.asignadoA?.falta ?? [],
-        completos: c.asignadoA?.completos ?? false,
+        falta:  faltaReal,
+        completos: (c.asignadoA?.completos ?? false) || faltaReal.length === 0,
         cobros: [], porAprobar: 0, aprobado: 0, pagado: 0,
       })
       const g = mapa.get(id)!
