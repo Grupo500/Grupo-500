@@ -14,7 +14,7 @@
  * solo al final. Filtrar por entregables dejaba fuera justo lo pendiente.
  */
 
-import { useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -29,7 +29,8 @@ import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import {
   Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil,
-  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, Trash2, RotateCcw, type LucideIcon,
+  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, Trash2, RotateCcw,
+  ChevronRight, ChevronDown, ChevronsUpDown, Building2, LayoutList, Rows3, type LucideIcon,
 } from 'lucide-react'
 import { ContenidoModal, type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
@@ -699,6 +700,311 @@ function DetalleTarea({
   )
 }
 
+/* ── Vista de tabla ────────────────────────────────────────────────────── */
+
+const DESTINO_LABEL: Record<string, string> = {
+  SEBASTIAN_PERSONAL: 'Sebastián personal',
+  ANDRES_PERSONAL: 'Andrés personal',
+  PREICFES: 'Preicfes',
+  PREMEDICO: 'Premédico',
+  __sin__: 'Sin cuenta asignada',
+}
+/** El orden de las bandas: el mismo de la hoja de cálculo del equipo. */
+const ORDEN_DESTINO = ['SEBASTIAN_PERSONAL', 'ANDRES_PERSONAL', 'PREICFES', 'PREMEDICO', '__sin__']
+
+type Columna = 'titulo' | 'tipo' | 'responsable' | 'estado' | 'fecha' | 'valor'
+
+/** El estado de una tarea, y el botón que la mueve, en una sola celda. */
+function CeldaEstado({ c, onAvanzar, avanzando }: {
+  c: Contenido
+  onAvanzar: (id: string, estado: Contenido['estado']) => void
+  avanzando: boolean
+}) {
+  const e = ESTADO[c.estado]
+  const paso = SIGUIENTE[c.estado]
+
+  // Publicada ya no avanza: deja de ser botón y ofrece la vuelta.
+  if (!paso) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-semibold"
+          style={{ background: `color-mix(in srgb, ${e.color} 14%, transparent)`, color: e.color }}
+        >
+          <span className="size-[7px] shrink-0 rounded-full" style={{ background: e.color }} />
+          {e.label}
+        </span>
+        <button
+          type="button"
+          disabled={avanzando}
+          title="Reabrir — vuelve a En proceso"
+          onClick={() => onAvanzar(c.id, 'EN_PROCESO')}
+          className="grid size-[26px] cursor-pointer place-items-center rounded-full text-on-surface-variant opacity-0 transition-[opacity,background,color] hover:bg-[#d97706]/14 hover:text-[#d97706] focus-visible:opacity-100 group-hover/fila:opacity-100"
+        >
+          {avanzando ? <Loader2 className="size-3 animate-spin" /> : <RotateCcw className="size-[13px]" />}
+        </button>
+      </span>
+    )
+  }
+
+  // Al pasar el mouse se tiñe del color del paso siguiente: se ve a dónde
+  // lleva antes de pulsar, sin tener que leer el globo de ayuda.
+  return (
+    <button
+      type="button"
+      disabled={avanzando}
+      title={`Pulsa para marcarla ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'publicada'}`}
+      onClick={() => onAvanzar(c.id, paso.estado)}
+      className="group/est inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-transparent px-2.5 py-1 text-[10.5px] font-semibold transition-colors disabled:cursor-wait"
+      style={{
+        background: `color-mix(in srgb, ${e.color} 13%, transparent)`,
+        color: e.color,
+        // Variables para que el hover pinte con el color del paso siguiente
+        // sin duplicar la clase por estado.
+        ['--sig' as string]: paso.color,
+      }}
+      onMouseEnter={ev => {
+        ev.currentTarget.style.background = `color-mix(in srgb, ${paso.color} 16%, transparent)`
+        ev.currentTarget.style.color = paso.color
+        ev.currentTarget.style.borderColor = `color-mix(in srgb, ${paso.color} 38%, transparent)`
+      }}
+      onMouseLeave={ev => {
+        ev.currentTarget.style.background = `color-mix(in srgb, ${e.color} 13%, transparent)`
+        ev.currentTarget.style.color = e.color
+        ev.currentTarget.style.borderColor = 'transparent'
+      }}
+    >
+      {avanzando
+        ? <Loader2 className="size-3 animate-spin" />
+        : <span className="size-[7px] shrink-0 rounded-full transition-colors" style={{ background: 'currentColor' }} />}
+      {e.label}
+      <ChevronRight className="size-3 opacity-0 transition-[opacity,transform] group-hover/est:translate-x-0.5 group-hover/est:opacity-100" />
+    </button>
+  )
+}
+
+/**
+ * Las mismas tareas, en filas.
+ *
+ * Las tarjetas responden «¿qué tiene cada quien?»; la tabla responde «¿qué hay
+ * para el 21?», «¿qué falta por publicar?» y «¿cuánto se debe en freelance este
+ * mes?». Va agrupada por cuenta, que es como el equipo lo lleva en su hoja de
+ * cálculo, y ordenable por cualquier columna (Hotman, 20-ago).
+ */
+function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
+  tareas: Contenido[]
+  onAbrir: (c: Contenido) => void
+  onAvanzar: (id: string, estado: Contenido['estado']) => void
+  avanzandoId?: string
+}) {
+  const [orden, setOrden] = useState<{ col: Columna; asc: boolean }>({ col: 'fecha', asc: true })
+
+  const ordenar = (col: Columna) =>
+    setOrden(o => (o.col === col ? { col, asc: !o.asc } : { col, asc: true }))
+
+  const bandas = useMemo(() => {
+    const clave = (c: Contenido, col: Columna) => {
+      switch (col) {
+        case 'titulo':      return c.titulo.toLowerCase()
+        case 'tipo':        return TIPO_LABEL[c.tipo]
+        case 'responsable': return c.asignadoA?.nombre ?? 'zzz'
+        case 'estado':      return ['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO'].indexOf(c.estado)
+        case 'fecha':       return c.fecha.slice(0, 10)
+        case 'valor':       return c.valor ?? -1
+      }
+    }
+    const mapa = new Map<string, Contenido[]>()
+    for (const c of tareas) {
+      const k = c.destino ?? '__sin__'
+      if (!mapa.has(k)) mapa.set(k, [])
+      mapa.get(k)!.push(c)
+    }
+    return ORDEN_DESTINO
+      .filter(k => mapa.has(k))
+      .map(k => ({
+        destino: k,
+        // La ordenación manda dentro de cada cuenta: reordenar el mundo entero
+        // rompería las bandas, que es lo que da sentido a la lista.
+        filas: [...mapa.get(k)!].sort((a, b) => {
+          const x = clave(a, orden.col), y = clave(b, orden.col)
+          const cmp = x < y ? -1 : x > y ? 1 : 0
+          return orden.asc ? cmp : -cmp
+        }),
+      }))
+  }, [tareas, orden])
+
+  const publicadas = tareas.filter(t => t.estado === 'PUBLICADO').length
+  const conCorreccion = tareas.filter(t => (t.correcciones ?? []).some(x => !x.resueltaEn)).length
+  const freelance = tareas.reduce((a, t) => a + (t.tipoTrabajo === 'FREELANCE' ? t.valor ?? 0 : 0), 0)
+
+  const Cabecera = ({ col, texto, alDerecha }: { col: Columna; texto: string; alDerecha?: boolean }) => (
+    <th className={cn('whitespace-nowrap px-3.5 py-2.5 first:pl-5 last:pr-5', alDerecha ? 'text-right' : 'text-left')}>
+      <button
+        type="button"
+        onClick={() => ordenar(col)}
+        className={cn(
+          'inline-flex cursor-pointer items-center gap-1.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] transition-colors',
+          orden.col === col ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface',
+        )}
+      >
+        {texto}
+        {orden.col === col
+          ? <ChevronDown className={cn('size-3 text-primary transition-transform', !orden.asc && 'rotate-180')} />
+          : <ChevronsUpDown className="size-3 opacity-35" />}
+      </button>
+    </th>
+  )
+
+  return (
+    <div className="card overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] border-collapse">
+          <thead>
+            <tr className="border-b border-outline-variant bg-surface-low">
+              <Cabecera col="titulo" texto="Nombre" />
+              <Cabecera col="tipo" texto="Tipo" />
+              <Cabecera col="responsable" texto="Responsable" />
+              <Cabecera col="estado" texto="Estado" />
+              <Cabecera col="fecha" texto="Fecha" />
+              <th className="px-3.5 py-2.5 text-left text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
+                Enlace
+              </th>
+              <Cabecera col="valor" texto="Pago" alDerecha />
+            </tr>
+          </thead>
+          <tbody>
+            {bandas.map(b => {
+              const publ = b.filas.filter(t => t.estado === 'PUBLICADO').length
+              return (
+                <Fragment key={b.destino}>
+                  {/* La misma franja de cuenta que la hoja de cálculo */}
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="border-b border-outline-variant px-5 py-2.5 text-left"
+                      style={{ background: 'color-mix(in srgb, var(--primary) 12%, var(--surface-lowest))' }}
+                    >
+                      <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface">
+                        {b.destino === '__sin__'
+                          ? <HelpCircle className="size-3.5 text-primary" />
+                          : <Building2 className="size-3.5 text-primary" />}
+                        {DESTINO_LABEL[b.destino]}
+                        <span className="text-[10.5px] font-medium normal-case tracking-normal text-on-surface-variant">
+                          {b.filas.length} pieza{b.filas.length !== 1 ? 's' : ''} · {publ} publicada{publ !== 1 ? 's' : ''}
+                        </span>
+                      </span>
+                    </td>
+                  </tr>
+
+                  {b.filas.map(t => {
+                    const pendientes = (t.correcciones ?? []).filter(x => !x.resueltaEn).length
+                    const enlace = t.entregables[0]
+                    return (
+                      <tr
+                        key={t.id}
+                        onClick={() => onAbrir(t)}
+                        className={cn(
+                          'group/fila cursor-pointer border-b border-outline-variant transition-colors last:border-b-0 hover:bg-surface-low',
+                          pendientes > 0 && 'bg-[#dc2626]/[0.04] shadow-[inset_3px_0_0_#dc2626]',
+                        )}
+                      >
+                        <td className="max-w-[280px] px-3.5 py-2.5 pl-5">
+                          <p className="truncate text-[12.5px] font-medium text-on-surface">{t.titulo}</p>
+                          {pendientes > 0 && (
+                            <p className="mt-0.5 text-[10.5px] font-semibold text-[#dc2626]">
+                              {pendientes} corrección{pendientes !== 1 ? 'es' : ''} por hacer
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-3.5 py-2.5">
+                          <span className="inline-block whitespace-nowrap rounded-md bg-surface-high px-2 py-1 text-[10.5px] font-semibold text-on-surface-variant">
+                            {TIPO_LABEL[t.tipo]}
+                          </span>
+                        </td>
+                        <td className="px-3.5 py-2.5">
+                          {t.asignadoA ? (
+                            <span className="inline-flex max-w-[150px] items-center gap-2">
+                              <AvatarMiembro
+                                id={t.asignadoA.id}
+                                nombre={t.asignadoA.nombre}
+                                image={t.asignadoA.user?.image}
+                                size={22}
+                              />
+                              <span className="truncate text-[12px] text-on-surface">
+                                {t.asignadoA.nombre.split(' ').slice(0, 2).join(' ')}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-[11.5px] italic text-on-surface-variant opacity-60">Sin responsable</span>
+                          )}
+                        </td>
+                        <td className="px-3.5 py-2.5" onClick={ev => ev.stopPropagation()}>
+                          <CeldaEstado c={t} onAvanzar={onAvanzar} avanzando={avanzandoId === t.id} />
+                        </td>
+                        <td className="whitespace-nowrap px-3.5 py-2.5 text-[12px] text-on-surface">
+                          {format(deISO(t.fecha), "d 'de' MMM", { locale: es })}
+                        </td>
+                        <td className="px-3.5 py-2.5" onClick={ev => ev.stopPropagation()}>
+                          {enlace ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <a
+                                href={enlace.url ?? enlace.videoUrl ?? '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 rounded-full bg-surface-high px-2.5 py-1 text-[10.5px] font-semibold text-on-surface-variant transition-colors hover:bg-primary-container hover:text-primary"
+                              >
+                                <Link2 className="size-3" />
+                                {PLATAFORMA_LABEL[enlace.plataforma] ?? enlace.plataforma}
+                              </a>
+                              {t.entregables.length > 1 && (
+                                <span className="text-[10.5px] font-semibold text-on-surface-variant">
+                                  +{t.entregables.length - 1}
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-on-surface-variant opacity-45">—</span>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-3.5 py-2.5 pr-5 text-right">
+                          {t.tipoTrabajo === 'FREELANCE' ? (
+                            <span className="text-[12.5px] font-semibold tabular-nums tracking-tight text-on-surface">
+                              ${(t.valor ?? 0).toLocaleString('es-CO')}
+                            </span>
+                          ) : (
+                            <span className="text-[12px] text-on-surface-variant">Empresa</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </Fragment>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Lo que hoy hay que sacar a mano para Cobros. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant bg-surface-low px-5 py-3">
+        <p className="text-[11.5px] text-on-surface-variant">
+          <b className="font-semibold text-on-surface">{tareas.length}</b> pieza{tareas.length !== 1 ? 's' : ''}
+          {' · '}<b className="font-semibold text-on-surface">{publicadas}</b> publicada{publicadas !== 1 ? 's' : ''}
+          {conCorreccion > 0 && <> · <b className="font-semibold text-[#dc2626]">{conCorreccion}</b> con correcciones</>}
+        </p>
+        <p className="flex items-baseline gap-2.5">
+          <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
+            Freelance del período
+          </span>
+          <span className="text-[17px] font-semibold tabular-nums tracking-tight text-on-surface">
+            ${freelance.toLocaleString('es-CO')}
+          </span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
 /** Cuántas tareas se ven en la tarjeta antes de mandar el resto al modal. */
 const VISIBLES = 5
 
@@ -710,6 +1016,18 @@ export default function EntregablesPage() {
   const [month, setMonth] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
+  // Cómo prefiere verlo cada quien. Se recuerda en el equipo: quien trabaja
+  // con la tabla no tiene que volver a elegirla cada mañana (Hotman, 20-ago).
+  // Arranca en tarjetas para no cambiarle la pantalla a nadie sin avisar.
+  const [vista, setVista] = useState<'tarjetas' | 'tabla'>('tarjetas')
+  useEffect(() => {
+    const guardada = localStorage.getItem('entregables-vista')
+    if (guardada === 'tabla' || guardada === 'tarjetas') setVista(guardada)
+  }, [])
+  const cambiarVista = (v: 'tarjetas' | 'tabla') => {
+    setVista(v)
+    localStorage.setItem('entregables-vista', v)
+  }
   const [verTodas, setVerTodas] = useState<Grupo | null>(null)
   const [detalle, setDetalle] = useState<Contenido | null>(null)
   const [editando, setEditando] = useState<Contenido | null>(null)
@@ -777,6 +1095,10 @@ export default function EntregablesPage() {
     )
   }, [data, filtro, rol, miUserId, miembrosMkt])
 
+  // Las mismas tareas sin agrupar. Sale de `grupos` a propósito: así la tabla
+  // no puede enseñar de más — el filtro de privacidad ya se aplicó ahí.
+  const planas = useMemo(() => grupos.flatMap(g => g.tareas), [grupos])
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -799,6 +1121,30 @@ export default function EntregablesPage() {
             onChange={(m, r) => { setMonth(m); setDateRange(r) }}
             alignRight
           />
+          {/* Dos formas de ver lo mismo: las tarjetas responden "¿qué tiene
+              cada quien?" y la tabla "¿qué hay para el 21?". */}
+          <div className="flex gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-1" role="group" aria-label="Forma de ver">
+            {([
+              { v: 'tarjetas' as const, icono: LayoutList, texto: 'Tarjetas' },
+              { v: 'tabla'    as const, icono: Rows3,      texto: 'Tabla' },
+            ]).map(o => (
+              <button
+                key={o.v}
+                type="button"
+                onClick={() => cambiarVista(o.v)}
+                aria-pressed={vista === o.v}
+                className={cn(
+                  'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[11.5px] font-semibold transition-colors',
+                  vista === o.v
+                    ? 'bg-surface-lowest text-on-surface shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface',
+                )}
+              >
+                <o.icono className="size-3.5" />
+                {o.texto}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -810,6 +1156,13 @@ export default function EntregablesPage() {
         <div className="card py-16 text-center text-[13px] text-on-surface-variant">
           Nada agendado en este período.
         </div>
+      ) : vista === 'tabla' ? (
+        <TablaEntregables
+          tareas={planas}
+          onAbrir={setDetalle}
+          onAvanzar={(id, estado) => avanzar.mutate({ id, estado })}
+          avanzandoId={avanzar.isPending ? avanzar.variables?.id : undefined}
+        />
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
           {grupos.map(g => {
