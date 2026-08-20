@@ -1,4 +1,4 @@
-import { LayoutDashboard, Receipt, ShieldCheck, Gamepad2, Pen, KeyRound, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Receipt, ShieldCheck, Gamepad2, KeyRound, type LucideIcon } from 'lucide-react'
 
 export interface AdminTab {
   href: string
@@ -18,9 +18,7 @@ export const ADMIN_TABS: AdminTab[] = [
   { href: '/admin/ventas',   label: 'Ventas generales', icon: Receipt },
   { href: '/admin/usuarios', label: 'Usuarios',         icon: ShieldCheck },
   { href: '/admin/brito',    label: 'Brito',            icon: Gamepad2 },
-  // Firma y API Keys vivían en Ajustes: son configuración de la EMPRESA
-  // (la firma de los certificados, las llaves de integraciones), no del
-  // perfil personal de nadie — pedido de Hotman, 19-ago.
-  { href: '/admin/firma',    label: 'Firma',            icon: Pen },
+  // API Keys vivía en Ajustes: es configuración de la EMPRESA, no del perfil
+  // personal de nadie.
   { href: '/admin/api-keys', label: 'API Keys',         icon: KeyRound },
 ]
