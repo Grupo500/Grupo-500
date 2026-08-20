@@ -480,7 +480,7 @@ export default function CuotasPage() {
                       <div>
                         <div className="flex items-center gap-1.5 mb-1 text-on-surface-variant">
                           <BookOpen className="w-3.5 h-3.5" />
-                          <span className="text-[10.5px] uppercase tracking-wide">Curso</span>
+                          <span className="text-[10.5px]">Curso</span>
                         </div>
                         <p className="text-on-surface font-medium">{detalle.curso}</p>
                         {detalle.asesor && <p className="text-on-surface-variant text-[11.5px] mt-0.5">Asesor: {detalle.asesor}</p>}
@@ -526,7 +526,7 @@ export default function CuotasPage() {
                       <div>
                         <div className="flex items-center gap-1.5 mb-1 text-on-surface-variant">
                           <Calendar className="w-3.5 h-3.5" />
-                          <span className="text-[10.5px] uppercase tracking-wide">Fechas</span>
+                          <span className="text-[10.5px]">Fechas</span>
                         </div>
                         <p className="text-on-surface">Última cuota pagada: <strong>{fmtFecha(detalle.fechaUltimaCuota)}</strong></p>
                         {detalle.estado === 'al-dia' && (

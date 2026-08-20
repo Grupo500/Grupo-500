@@ -134,7 +134,7 @@ export function TomarLeccion({
 
       {/* Contenido */}
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 pb-40 pt-7">
-        <p className="mb-4 text-[11.5px] font-semibold uppercase tracking-wider text-[#a5a49b]">
+        <p className="mb-4 text-[11.5px] font-semibold text-[#a5a49b]">
           Pregunta {indice + 1} de {preguntas.length}
         </p>
 

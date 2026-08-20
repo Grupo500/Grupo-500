@@ -189,7 +189,7 @@ export function RankingModal({
 function Separador({ texto, color }: { texto: string; color: string }) {
   return (
     <div className="mb-1.5 mt-2 flex items-center gap-2 first:mt-0">
-      <span className="text-[9.5px] font-bold uppercase tracking-wider" style={{ color }}>{texto}</span>
+      <span className="text-[11px] font-bold" style={{ color }}>{texto}</span>
       <span className="h-px flex-1" style={{ background: color, opacity: 0.45 }} />
     </div>
   )

@@ -60,7 +60,7 @@ function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCo
         {/* Estado + nombre */}
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider
+            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold
               px-2 py-0.5 rounded-full transition-all duration-200 ${
               form.activo
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -70,7 +70,7 @@ function FormCard({ form, index, onDelete, onToggleActivo, onToggleLanding, onCo
               {form.activo ? 'Activo' : 'Inactivo'}
             </span>
             {form.visibleEnLanding && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold
                 px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                 <Globe className="w-2.5 h-2.5" />Landing
               </span>
@@ -490,7 +490,7 @@ export default function FormulariosPage() {
           {/* Divisor */}
           <div className="flex items-center gap-3" style={{ animation: 'fadeIn 0.4s ease-out 0.15s both' }}>
             <div className="h-px flex-1 bg-outline-variant" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+            <span className="text-[11px] font-bold text-on-surface-variant">
               {formularios.length} formulario{formularios.length !== 1 ? 's' : ''}
             </span>
             <div className="h-px flex-1 bg-outline-variant" />
@@ -559,7 +559,7 @@ export default function FormulariosPage() {
               </div>
             </div>
 
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">
               Nombre
             </label>
             <input

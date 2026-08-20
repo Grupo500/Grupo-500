@@ -151,7 +151,7 @@ export function VentasSemana() {
         <>
           <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">{labelActivo}</p>
+              <p className="text-[11px] font-semibold text-on-surface-variant">{labelActivo}</p>
               <div className="flex items-baseline gap-2 mt-0.5">
                 <span className="text-[28px] font-bold text-on-surface tabular-nums leading-none">{formatCOP(animMonto)}</span>
                 {variacion !== null && (
@@ -172,7 +172,7 @@ export function VentasSemana() {
               )}
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Total semana</p>
+              <p className="text-[11px] font-semibold text-on-surface-variant">Total semana</p>
               <p className="text-[17px] font-bold text-on-surface tabular-nums mt-0.5">{formatCOP(totalSemana)}</p>
             </div>
           </div>

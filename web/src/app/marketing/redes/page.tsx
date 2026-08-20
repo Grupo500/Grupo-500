@@ -214,7 +214,7 @@ function Composer({ cuentas, abierto, onClose }: { cuentas: Cuenta[]; abierto: b
         </div>
 
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1.5">Cuentas</p>
+          <p className="text-[11px] font-semibold text-on-surface-variant mb-1.5">Cuentas</p>
           <div className="flex flex-wrap gap-2">
             {cuentas.map(c => {
               const activa = seleccion.includes(c.id)
@@ -238,7 +238,7 @@ function Composer({ cuentas, abierto, onClose }: { cuentas: Cuenta[]; abierto: b
         </div>
 
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1.5">
+          <p className="text-[11px] font-semibold text-on-surface-variant mb-1.5">
             {tipo === 'REEL' ? 'Video' : 'Imagen o video'}
             {tipo === 'HISTORIA' && ' (vertical 9:16 recomendado)'}
           </p>
@@ -264,7 +264,7 @@ function Composer({ cuentas, abierto, onClose }: { cuentas: Cuenta[]; abierto: b
 
         {captionAplica && (
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1.5">Texto</p>
+            <p className="text-[11px] font-semibold text-on-surface-variant mb-1.5">Texto</p>
             <textarea
               value={caption}
               onChange={e => setCaption(e.target.value)}
@@ -278,12 +278,12 @@ function Composer({ cuentas, abierto, onClose }: { cuentas: Cuenta[]; abierto: b
 
         <div className="flex items-end gap-3 flex-wrap">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1.5">Fecha</p>
+            <p className="text-[11px] font-semibold text-on-surface-variant mb-1.5">Fecha</p>
             <input type="date" value={fecha} onChange={e => setFecha(e.target.value)}
               className="h-9 px-3 rounded-lg border border-outline-variant bg-surface-lowest text-[13px] text-on-surface outline-none focus:border-primary" />
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1.5">Hora</p>
+            <p className="text-[11px] font-semibold text-on-surface-variant mb-1.5">Hora</p>
             <input type="time" value={hora} onChange={e => setHora(e.target.value)}
               className="h-9 px-3 rounded-lg border border-outline-variant bg-surface-lowest text-[13px] text-on-surface outline-none focus:border-primary" />
           </div>

@@ -120,7 +120,7 @@ function Campo({ label, obligatorio, ayuda, children }: {
       <label className="mb-1.5 block text-[11.5px] font-medium text-on-surface-variant">
         {label}
         {obligatorio && (
-          <span className="ml-1.5 text-[9.5px] font-semibold uppercase tracking-wider text-[#d97706]">
+          <span className="ml-1.5 text-[11px] font-semibold text-[#d97706]">
             obligatorio
           </span>
         )}
@@ -267,7 +267,7 @@ function CampoFecha({ valor, onCambio, agenda, idActual }: {
           </div>
 
           <div className="mt-3 border-t border-outline-variant pt-2.5">
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-on-surface-variant">
+            <p className="mb-1.5 text-[11px] font-semibold tracking-[0.04em] text-on-surface-variant">
               Ese día
             </p>
             {delDia.length === 0 ? (
@@ -543,9 +543,16 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   const [plataforma, setPlataforma] = useState('YOUTUBE')
   const [url, setUrl]               = useState('')
   const [subiendo, setSubiendo]     = useState(false)
+  // La lista vive aquí y no en `contenido` porque quitar un enlace es un
+  // cambio del formulario como cualquier otro: se ve al instante, pero no
+  // toca la base hasta que se pulsa Guardar. Antes el borrado se aplicaba
+  // solo y de paso cerraba la ventana, sin dar ocasión de arrepentirse
+  // (Hotman, 20-ago).
+  const [entregables, setEntregables] = useState<EntregableDto[]>(contenido?.entregables ?? [])
+  const [porBorrar, setPorBorrar]     = useState<string[]>([])
 
   const guardar = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const body = {
         titulo, tipo, clasificacion, fecha: fechaStr,
         tipoTrabajo,
@@ -558,9 +565,14 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
         // paso hacia adelante y "Reabrir" como unica vuelta (Hotman, 20-ago).
         // Mandarlo desde aqui deshacia lo que otro acababa de publicar.
       }
-      return esEdicion
-        ? apiFetch(`/marketing/contenidos/${contenido!.id}`, { method: 'PATCH', body: JSON.stringify(body) })
-        : apiFetch('/marketing/contenidos', { method: 'POST', body: JSON.stringify(body) })
+      if (!esEdicion) {
+        return apiFetch('/marketing/contenidos', { method: 'POST', body: JSON.stringify(body) })
+      }
+      // Los enlaces que se quitaron se borran de verdad ahora, no antes.
+      for (const id of porBorrar) {
+        await apiFetch(`/marketing/entregables/${id}`, { method: 'DELETE' })
+      }
+      return apiFetch(`/marketing/contenidos/${contenido!.id}`, { method: 'PATCH', body: JSON.stringify(body) })
     },
     onSuccess: onSaved,
     onError: (e: Error) => setError(e.message || 'Error al guardar'),
@@ -572,21 +584,31 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
     onError: (e: Error) => setError(e.message || 'Error al eliminar'),
   })
 
+  // Agregar sí toca la base al momento —hace falta el id que devuelve—, pero
+  // se queda en la ventana: pegar un enlace no es terminar de editar.
   const agregarEntregable = useMutation({
-    mutationFn: (videoUrl?: string) => apiFetch(`/marketing/contenidos/${contenido!.id}/entregables`, {
-      method: 'POST',
-      body: JSON.stringify({ plataforma, url: videoUrl ? null : url, videoUrl: videoUrl ?? null }),
-    }),
-    onSuccess: () => { setUrl(''); onSaved() },
+    mutationFn: (videoUrl?: string) => apiFetch<{ data: EntregableDto }>(
+      `/marketing/contenidos/${contenido!.id}/entregables`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ plataforma, url: videoUrl ? null : url, videoUrl: videoUrl ?? null }),
+      },
+    ),
+    onSuccess: res => {
+      setUrl('')
+      setEntregables(prev => [...prev, res.data])
+    },
     onError: (e: Error) => setError(e.message || 'Error al agregar entregable'),
   })
 
-  /** Quitar un enlace mal pegado. Antes solo se podian agregar. */
-  const quitarEntregable = useMutation({
-    mutationFn: (id: string) => apiFetch(`/marketing/entregables/${id}`, { method: 'DELETE' }),
-    onSuccess: onSaved,
-    onError: (e: Error) => setError(e.message || 'No se pudo quitar el enlace'),
-  })
+  /**
+   * Quitar un enlace mal pegado. Solo lo saca de la lista: el borrado de
+   * verdad ocurre al guardar, así que Cancelar lo deja como estaba.
+   */
+  function quitarEntregable(id: string) {
+    setEntregables(prev => prev.filter(e => e.id !== id))
+    setPorBorrar(prev => [...prev, id])
+  }
 
   async function subirVideo(file: File) {
     setSubiendo(true)
@@ -671,7 +693,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
 
         {/* ── La pieza ── */}
         <div className="border-b border-outline-variant px-5 py-4">
-          <p className="mb-3.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+          <p className="mb-3.5 text-[11px] font-semibold text-on-surface-variant opacity-75">
             La pieza
           </p>
 
@@ -729,7 +751,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
 
         {/* ── El trabajo ── */}
         <div className="border-b border-outline-variant px-5 py-4">
-          <p className="mb-3.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+          <p className="mb-3.5 text-[11px] font-semibold text-on-surface-variant opacity-75">
             El trabajo
           </p>
 
@@ -821,7 +843,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
 
         {/* ── Notas ── */}
         <div className={cn('px-5 py-4', esEdicion && 'border-b border-outline-variant')}>
-          <p className="mb-3 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+          <p className="mb-3 text-[11px] font-semibold text-on-surface-variant opacity-75">
             Notas
           </p>
           <textarea
@@ -837,23 +859,23 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
         {esEdicion && (
           <div className="px-5 py-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+              <p className="text-[11px] font-semibold text-on-surface-variant opacity-75">
                 Enlaces publicados
               </p>
-              {contenido!.entregables.length > 0 && (
+              {entregables.length > 0 && (
                 <p className="shrink-0 text-[10px] tabular-nums text-on-surface-variant">
-                  {contenido!.entregables.length} enlace{contenido!.entregables.length !== 1 ? 's' : ''}
+                  {entregables.length} enlace{entregables.length !== 1 ? 's' : ''}
                 </p>
               )}
             </div>
 
-            {contenido!.entregables.length === 0 ? (
+            {entregables.length === 0 ? (
               <p className="mb-3 rounded-xl border border-dashed border-outline-variant px-4 py-3 text-[12px] text-on-surface-variant">
                 Todavía no hay nada publicado.
               </p>
             ) : (
               <div className="mb-3 flex flex-col gap-2">
-                {contenido!.entregables.map(en => {
+                {entregables.map(en => {
                   const enlace = en.url ?? en.videoUrl
                   return (
                     <div
@@ -886,19 +908,22 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
                         <button
                           type="button"
                           title="Quitar este enlace"
-                          disabled={quitarEntregable.isPending}
-                          onClick={() => confirm('¿Quitar este enlace?') && quitarEntregable.mutate(en.id)}
-                          className="grid size-7 cursor-pointer place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-[#dc2626]/12 hover:text-[#dc2626] disabled:opacity-40"
+                          onClick={() => confirm('¿Quitar este enlace? Se borra al guardar.') && quitarEntregable(en.id)}
+                          className="grid size-7 cursor-pointer place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-[#dc2626]/12 hover:text-[#dc2626]"
                         >
-                          {quitarEntregable.isPending && quitarEntregable.variables === en.id
-                            ? <Loader2 className="size-3.5 animate-spin" />
-                            : <Trash2 className="size-3.5" />}
+                          <Trash2 className="size-3.5" />
                         </button>
                       </span>
                     </div>
                   )
                 })}
               </div>
+            )}
+
+            {porBorrar.length > 0 && (
+              <p className="mb-3 rounded-lg bg-[#d97706]/10 px-3 py-2 text-[11.5px] text-[#9a5b06]">
+                {porBorrar.length === 1 ? 'Un enlace se va a borrar' : `${porBorrar.length} enlaces se van a borrar`} al guardar.
+              </p>
             )}
 
             <div className="flex flex-wrap gap-2">

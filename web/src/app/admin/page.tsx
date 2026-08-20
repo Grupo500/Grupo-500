@@ -85,7 +85,7 @@ function Modulo({ titulo, icono: Icono, color, href, irA, estado, ancho, childre
   const cuerpo = (
     <>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.07em] text-on-surface-variant">
+        <p className="flex min-w-0 items-center gap-1.5 text-[11px] font-semibold text-on-surface-variant">
           <Icono className="size-3 flex-shrink-0" style={{ color }} />
           <span className="truncate">{titulo}</span>
         </p>

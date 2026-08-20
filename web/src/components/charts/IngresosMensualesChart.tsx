@@ -42,7 +42,7 @@ function fmtCompact(n: number) {
 function Kpi({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div className="min-w-0 px-4 first:pl-0 last:pr-0">
-      <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wide truncate">{label}</p>
+      <p className="text-[11px] font-semibold text-on-surface-variant truncate">{label}</p>
       <p className="text-[15px] font-bold tabular-nums leading-tight mt-0.5 truncate" style={color ? { color } : undefined}>
         {value}
       </p>

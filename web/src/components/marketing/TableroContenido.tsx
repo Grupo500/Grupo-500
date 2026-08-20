@@ -252,7 +252,7 @@ export function TableroContenido() {
           {DIAS.map(d => (
             <span
               key={d}
-              className="px-2 py-1.5 text-center text-[10px] font-bold uppercase tracking-[0.05em] text-on-surface-variant"
+              className="px-2 py-1.5 text-center text-[11px] font-bold tracking-[0.05em] text-on-surface-variant"
             >
               {d}
             </span>
@@ -401,7 +401,7 @@ function Ficha({ contenido, onAbrir, onArrastrar }: {
       className="flex w-full min-w-0 cursor-grab items-center gap-1.5 overflow-hidden rounded-[3px] border-l-[2.5px] border-l-[var(--marca)] bg-[color-mix(in_srgb,var(--marca)_15%,transparent)] px-1.5 py-1 text-left leading-none transition-colors hover:bg-[color-mix(in_srgb,var(--marca)_25%,transparent)] active:cursor-grabbing"
     >
       <span
-        className="shrink-0 text-[8.5px] font-bold uppercase leading-none tracking-[0.03em]"
+        className="shrink-0 text-[8.5px] font-bold leading-none tracking-[0.03em]"
         style={{ color: marca }}
       >
         {TIPO_CORTO[contenido.tipo]}

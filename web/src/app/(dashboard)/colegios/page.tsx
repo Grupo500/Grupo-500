@@ -166,7 +166,7 @@ function EstudiantesColegioModal({
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
+                <p className="text-xs font-semibold text-on-surface-variant mb-3">
                   {estudiantes.length} estudiante{estudiantes.length !== 1 ? 's' : ''}
                 </p>
                 {estudiantes.map((e: any) => (
@@ -1209,7 +1209,7 @@ export default function ColegiosPage() {
             {/* ── Divisor ── */}
             <div className="flex items-center gap-3 pt-4">
               <div className="h-px flex-1 bg-outline-variant/40" />
-              <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">Colegios aliados</span>
+              <span className="text-[11px] font-semibold text-on-surface-variant">Colegios aliados</span>
               <div className="h-px flex-1 bg-outline-variant/40" />
             </div>
 
@@ -1246,7 +1246,7 @@ export default function ColegiosPage() {
                       className="group relative bg-surface-lowest border border-green-200 dark:border-green-900/40 rounded-xl p-4 cursor-pointer hover:border-green-400/60 hover:shadow-md transition-all"
                     >
                       {/* Badge aliado */}
-                      <span className="absolute top-3 right-3 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 uppercase tracking-wide">
+                      <span className="absolute top-3 right-3 inline-flex items-center gap-1 text-[10.5px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">
                         ✓ Aliado
                       </span>
 
@@ -1306,7 +1306,7 @@ export default function ColegiosPage() {
               <label className={labelCls}>Ciudad *</label>
               <input className={inputCls} value={formColegio.ciudad} onChange={e => setFormColegio(f => ({ ...f, ciudad: e.target.value }))} placeholder="Bogotá" />
             </div>
-            <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider pt-1">Contacto institucional</p>
+            <p className="text-[11px] font-semibold text-on-surface-variant pt-1">Contacto institucional</p>
             <div>
               <label className={labelCls}>Rector / Coordinador</label>
               <input className={inputCls} value={formColegio.contactoNombre} onChange={e => setFormColegio(f => ({ ...f, contactoNombre: e.target.value }))} placeholder="Nombre completo" />
@@ -1392,7 +1392,7 @@ export default function ColegiosPage() {
               <input className={inputCls} value={formEditarColegio.ciudad}
                 onChange={e => setFormEditarColegio(f => ({ ...f, ciudad: e.target.value }))} />
             </div>
-            <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide pt-1">Contacto institucional</p>
+            <p className="text-[11px] font-semibold text-on-surface-variant pt-1">Contacto institucional</p>
             <div>
               <label className="block text-xs font-medium text-on-surface-variant mb-1">Nombre del contacto</label>
               <input className={inputCls} value={formEditarColegio.contactoNombre} placeholder="Rector / Coordinador"

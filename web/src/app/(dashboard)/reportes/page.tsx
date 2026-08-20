@@ -167,7 +167,7 @@ export default function ReportesPage() {
             <div className="w-7 h-7 rounded-md bg-[var(--primary-container)] flex items-center justify-center">
               <Users className="w-3.5 h-3.5 text-primary" />
             </div>
-            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-on-surface-variant">Estudiantes</h3>
+            <h3 className="text-[12px] font-semibold text-on-surface-variant">Estudiantes</h3>
           </div>
           <div className="grid grid-cols-[1fr_1px_1fr] gap-4 items-center">
             <div>
@@ -198,7 +198,7 @@ export default function ReportesPage() {
             <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: '#edfdf4' }}>
               <TrendingUp className="w-3.5 h-3.5" style={{ color: '#16a34a' }} />
             </div>
-            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-on-surface-variant">Cobranza</h3>
+            <h3 className="text-[12px] font-semibold text-on-surface-variant">Cobranza</h3>
           </div>
           <div className="grid grid-cols-[1fr_1px_auto] gap-4 items-center">
             <div>

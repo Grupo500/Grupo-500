@@ -186,7 +186,7 @@ function Dato({ label, children, className }: {
 }) {
   return (
     <div className={cn('min-w-0 bg-surface-lowest px-4 py-3.5', className)}>
-      <p className="mb-1.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+      <p className="mb-1.5 text-[11px] font-semibold text-on-surface-variant opacity-75">
         {label}
       </p>
       <div className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-on-surface">
@@ -439,7 +439,7 @@ function DetalleTarea({
                   />
                 </span>
                 <span className={cn(
-                  'mt-2 block truncate text-[9.5px] font-semibold uppercase tracking-[0.08em]',
+                  'mt-2 block truncate text-[11px] font-semibold',
                   i === indice ? 'text-on-surface'
                     : i < indice ? 'text-on-surface-variant'
                     : 'text-on-surface-variant opacity-50',
@@ -492,7 +492,7 @@ function DetalleTarea({
         {/* ── Notas: el encargo, tal como se dio ── */}
         {c.notas && (
           <div className="border-b border-outline-variant px-5 py-4">
-            <p className="mb-2.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+            <p className="mb-2.5 text-[11px] font-semibold text-on-surface-variant opacity-75">
               Notas
             </p>
             <p className="whitespace-pre-wrap rounded-xl bg-surface-low px-3.5 py-3 text-[12.5px] leading-relaxed text-on-surface">
@@ -505,7 +505,7 @@ function DetalleTarea({
         {c.entregables.length > 0 && (
           <div className="border-b border-outline-variant px-5 py-4">
             <div className="mb-2.5 flex items-center justify-between gap-3">
-              <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+              <p className="text-[11px] font-semibold text-on-surface-variant opacity-75">
                 Publicado en
               </p>
               <p className="shrink-0 text-[10px] tabular-nums text-on-surface-variant">
@@ -547,7 +547,7 @@ function DetalleTarea({
         {/* ── Correcciones: un hilo, no una lista de cajas ── */}
         <div className="px-5 py-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+            <p className="text-[11px] font-semibold text-on-surface-variant opacity-75">
               Correcciones
             </p>
             {correcciones.length > 0 && (
@@ -598,14 +598,14 @@ function DetalleTarea({
                         </span>
                         {x.resueltaEn ? (
                           <span
-                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#16a34a]"
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-[#16a34a]"
                             style={{ background: 'color-mix(in srgb, #16a34a 14%, transparent)' }}
                           >
                             <Check className="size-2.5" strokeWidth={3} /> Corregido
                           </span>
                         ) : (
                           <span
-                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#dc2626]"
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-[#dc2626]"
                             style={{ background: 'color-mix(in srgb, #dc2626 12%, transparent)' }}
                           >
                             <HelpCircle className="size-2.5" strokeWidth={2.6} /> Pendiente
@@ -843,7 +843,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
         type="button"
         onClick={() => ordenar(col)}
         className={cn(
-          'inline-flex cursor-pointer items-center gap-1.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] transition-colors',
+          'inline-flex cursor-pointer items-center gap-1.5 text-[11px] font-semibold transition-colors',
           orden.col === col ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface',
         )}
       >
@@ -866,7 +866,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
               <Cabecera col="responsable" texto="Responsable" />
               <Cabecera col="estado" texto="Estado" />
               <Cabecera col="fecha" texto="Fecha" />
-              <th className="px-3.5 py-2.5 text-left text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
+              <th className="px-3.5 py-2.5 text-left text-[11px] font-semibold text-on-surface-variant">
                 Enlace
               </th>
               <Cabecera col="valor" texto="Pago" alDerecha />
@@ -888,7 +888,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
                       colSpan={7}
                       className="border-y border-outline-variant bg-surface-highest px-5 py-3 text-left shadow-[inset_4px_0_0_var(--primary)]"
                     >
-                      <span className="inline-flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.11em] text-on-surface">
+                      <span className="inline-flex items-center gap-2.5 text-[11px] font-bold text-on-surface">
                         {b.destino === '__sin__'
                           ? <HelpCircle className="size-4 text-on-surface" />
                           : <Building2 className="size-4 text-on-surface" />}
@@ -997,7 +997,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
           {conCorreccion > 0 && <> · <b className="font-semibold text-[#dc2626]">{conCorreccion}</b> con correcciones</>}
         </p>
         <p className="flex items-baseline gap-2.5">
-          <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
+          <span className="text-[11px] font-semibold text-on-surface-variant">
             Freelance del período
           </span>
           <span className="text-[17px] font-semibold tabular-nums tracking-tight text-on-surface">

@@ -125,7 +125,7 @@ export default async function HistoricoPersonaPage({
 
       {/* Desglose por área: el "unificada arriba, separada abajo" del equipo. */}
       <div>
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Por departamento</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Por departamento</h2>
         <div className="space-y-2">
           {porArea.map(a => (
             <Link key={a.id} href={`/marketing/contabilidad/${a.dept.id}/${a.slug}`}
@@ -145,7 +145,7 @@ export default async function HistoricoPersonaPage({
 
       {porCategoria.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Por categoría</h2>
+          <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Por categoría</h2>
           <div className="bg-surface-lowest border border-outline-variant rounded-xl divide-y divide-outline-variant">
             {porCategoria.map(([categoria, a]) => (
               <div key={categoria} className="px-4 py-2.5 flex items-center gap-3">
@@ -160,7 +160,7 @@ export default async function HistoricoPersonaPage({
 
       {meses.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Por mes y quincena</h2>
+          <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Por mes y quincena</h2>
           <div className="space-y-2">
             {meses.map(([mes, m]) => (
               <div key={mes} className="bg-surface-lowest border border-outline-variant rounded-xl overflow-hidden">
@@ -185,7 +185,7 @@ export default async function HistoricoPersonaPage({
       )}
 
       <div>
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Detalle completo</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Detalle completo</h2>
         {registros.length === 0 ? (
           <div className="bg-surface-lowest border border-outline-variant rounded-xl p-8 text-center text-sm text-on-surface-variant">
             Esta persona todavía no tiene actividades registradas.

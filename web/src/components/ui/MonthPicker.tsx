@@ -276,7 +276,7 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
               </div>
 
               {/* Cabecera días semana */}
-              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-[var(--on-surface-variant)] uppercase mb-1.5">
+              <div className="grid grid-cols-7 text-center text-[11px] font-bold text-[var(--on-surface-variant)] mb-1.5">
                 {['Lu','Ma','Mi','Ju','Vi','Sa','Do'].map(d => <div key={d}>{d}</div>)}
               </div>
 

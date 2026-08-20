@@ -67,7 +67,7 @@ export function TablaContabilidad({ datos, anio, editable }: {
       <div className="overflow-x-auto">
         <table className="w-full text-[12px] border-separate border-spacing-0">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wide text-on-surface-variant">
+            <tr className="text-[11px] text-on-surface-variant">
               <th className="text-left py-1.5 pr-3 font-medium sticky left-0 bg-surface-container-lowest z-10">
                 Categoría
               </th>
@@ -252,7 +252,7 @@ export function TablaNomina({ datos, editable }: { datos: GastosAgenciaData; edi
       <div className="overflow-x-auto">
         <table className="w-full text-[12px]">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-wide text-on-surface-variant">
+            <tr className="text-left text-[11px] text-on-surface-variant">
               <th className="py-1.5 px-1 font-medium">Persona</th>
               <th className="py-1.5 px-1 font-medium">Banco</th>
               <th className="py-1.5 px-1 font-medium">Cuenta</th>
@@ -345,7 +345,7 @@ export function TablaProduccion({ datos, editable }: { datos: GastosAgenciaData;
           <div className="overflow-x-auto">
             <table className="w-full text-[12px]">
               <thead>
-                <tr className="text-[10px] uppercase tracking-wide text-on-surface-variant">
+                <tr className="text-[11px] text-on-surface-variant">
                   <th className="text-left py-1.5 pr-3 font-medium">Tipo</th>
                   {MESES_CORTOS.map(m => (
                     <th key={m} className="py-1.5 px-1 font-medium text-right min-w-[62px]">{m}</th>
@@ -422,7 +422,7 @@ export function TablaTarifario({ datos, editable }: { datos: GastosAgenciaData; 
               return (
                 <div key={`${it.seccion ?? ''}-${it.concepto}`}>
                   {nuevaSeccion && (
-                    <p className="text-[10px] uppercase tracking-wide text-on-surface-variant pt-2.5 pb-1">
+                    <p className="text-[11px] text-on-surface-variant pt-2.5 pb-1">
                       {it.seccion}
                     </p>
                   )}

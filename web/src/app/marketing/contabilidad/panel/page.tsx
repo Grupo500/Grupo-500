@@ -94,7 +94,7 @@ export default async function PanelContabilidadPage({
 
       {/* Quincenas enviadas por los líderes */}
       <div>
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Envíos recibidos</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Envíos recibidos</h2>
         {envios.length === 0 ? (
           <p className="text-sm text-on-surface-variant">Ningún líder ha enviado esta quincena todavía.</p>
         ) : (
@@ -120,13 +120,13 @@ export default async function PanelContabilidadPage({
 
       {/* Consolidado con pagos en lote */}
       <div>
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Consolidado de la quincena</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Consolidado de la quincena</h2>
         <Consolidado quincena={quincena} accionable />
       </div>
 
       {/* Gestión de departamentos */}
       <div>
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Departamentos</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Departamentos</h2>
         <FormDepartamento />
       </div>
     </div>

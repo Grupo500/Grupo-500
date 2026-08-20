@@ -151,7 +151,7 @@ export default function PreviewCliente({
             background: "var(--azul-claro)", color: "var(--azul-osc)",
             fontWeight: 800, padding: "9px 16px", borderRadius: 999,
           }}>
-            <span style={{ fontSize: ".7rem", fontWeight: 600, color: "var(--azul)", textTransform: "uppercase", letterSpacing: ".08em" }}>
+            <span style={{ fontSize: ".7rem", fontWeight: 600, color: "var(--azul)", textTransform: "", letterSpacing: ".08em" }}>
               Vista previa
             </span>
           </div>
@@ -199,7 +199,7 @@ export default function PreviewCliente({
             <div key={area}>
               <div style={{
                 fontSize: ".8rem", fontWeight: 800, color: "var(--azul)",
-                textTransform: "uppercase", letterSpacing: ".1em",
+                textTransform: "", letterSpacing: ".1em",
                 margin: "10px 2px 6px", display: "flex", alignItems: "center", gap: 10,
               }}>
                 {area}
@@ -235,7 +235,7 @@ export default function PreviewCliente({
                       }}>
                         <div style={{
                           fontSize: ".67rem", fontWeight: 800, letterSpacing: ".07em",
-                          textTransform: "uppercase", color: "var(--azul)", marginBottom: 10, opacity: .8,
+                          textTransform: "", color: "var(--azul)", marginBottom: 10, opacity: .8,
                         }}>
                           {p.numero === ctxLastNum
                             ? `Responda la pregunta ${p.numero} de acuerdo con la siguiente información`

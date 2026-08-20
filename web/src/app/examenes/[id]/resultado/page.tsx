@@ -148,7 +148,7 @@ export default async function PaginaResultado({
             <div key={a.area} className="tarjeta" style={{ padding: "16px 18px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: COLOR_AREA[a.area] ?? "var(--azul)", flexShrink: 0 }} />
-                <span style={{ fontSize: ".78rem", fontWeight: 700, color: "var(--gris)", textTransform: "uppercase", letterSpacing: ".05em" }}>
+                <span style={{ fontSize: ".78rem", fontWeight: 700, color: "var(--gris)", textTransform: "", letterSpacing: ".05em" }}>
                   {a.area}
                 </span>
               </div>
@@ -203,7 +203,7 @@ export default async function PaginaResultado({
                         }}>
                           {p.numero}
                         </span>
-                        <span style={{ fontSize: ".75rem", fontWeight: 700, color: "var(--gris)", textTransform: "uppercase" }}>
+                        <span style={{ fontSize: ".75rem", fontWeight: 700, color: "var(--gris)", textTransform: "" }}>
                           {p.area}
                         </span>
                         <span style={{

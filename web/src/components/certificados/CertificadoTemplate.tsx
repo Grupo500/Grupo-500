@@ -129,7 +129,7 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         {/* Cuerpo */}
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '18px' }}>
           Que el/la estudiante{' '}
-          <strong style={{ textTransform: 'uppercase' }}>{nombreEstudiante}</strong>
+          <strong style={{ textTransform: '' }}>{nombreEstudiante}</strong>
           {' '}identificado/a con {tipoDocumento} N°{' '}
           <strong>{documento || '_______________'}</strong>,
           {' '}{tipoBold} en nuestro Preicfes modalidad Virtual.

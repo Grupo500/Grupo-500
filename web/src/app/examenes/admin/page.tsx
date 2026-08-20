@@ -76,7 +76,7 @@ export default async function AdminSimulacrosPage() {
         </div>
 
         {/* Simulacros */}
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Simulacros</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-3">Simulacros</h2>
         <div className="space-y-3">
           {examenes.map(ex => {
             const s = statsPorExamen.get(ex.id)!

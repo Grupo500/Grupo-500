@@ -90,7 +90,7 @@ const SEV_DOT: Record<number, string> = {
 function StatTile({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
   return (
     <div className="card !p-4">
-      <p className="text-[10px] font-semibold tracking-[0.06em] uppercase text-on-surface-variant">{label}</p>
+      <p className="text-[11px] font-semibold text-on-surface-variant">{label}</p>
       <p className={cn('text-[22px] font-bold tracking-tight mt-0.5', warn ? 'text-amber-600' : 'text-on-surface')}>{value}</p>
     </div>
   )
@@ -361,7 +361,7 @@ export default function PanelEdicionPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-[12.5px]">
                 <thead>
-                  <tr className="text-[10px] font-semibold tracking-[0.06em] uppercase text-on-surface-variant">
+                  <tr className="text-[11px] font-semibold text-on-surface-variant">
                     <th className="text-left px-5 py-2">Editor</th>
                     {meses.map(m => <th key={m.label} className="px-3 py-2 text-center">{m.label}</th>)}
                     <th className="px-5 py-2 text-center">Total</th>

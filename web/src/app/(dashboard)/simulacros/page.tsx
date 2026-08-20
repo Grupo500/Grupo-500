@@ -317,11 +317,11 @@ export default function SimulacrosPage() {
                 <table className="hidden md:table w-full">
                   <thead>
                     <tr className="bg-surface-low">
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Estudiante</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Puntaje</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Rendimiento</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Áreas débiles</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden xl:table-cell">Intensivo</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant">Estudiante</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant">Puntaje</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant">Rendimiento</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant hidden lg:table-cell">Áreas débiles</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-on-surface-variant hidden xl:table-cell">Intensivo</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/30">

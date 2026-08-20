@@ -105,12 +105,12 @@ function CursoCard({
         {/* Fila: tipo + acción toggle */}
         <div className="flex items-center justify-between gap-2">
           {isCombo ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border bg-amber-50 text-amber-600 border-amber-200/70">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-600 border-amber-200/70">
               <Package className="w-2.5 h-2.5" />
               Combo
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border bg-primary/8 text-primary border-primary/15">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border bg-primary/8 text-primary border-primary/15">
               <BookOpen className="w-2.5 h-2.5" />
               Individual
             </span>

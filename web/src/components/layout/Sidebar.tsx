@@ -366,7 +366,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
               if (item.type === 'section') {
                 return collapsed
                   ? <div key={i} className="my-1 mx-3 h-px bg-white/[0.06]" />
-                  : <p key={i} className="pt-3 pb-0.5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 select-none">
+                  : <p key={i} className="pt-3 pb-0.5 px-3 text-[11px] font-semibold text-slate-500 select-none">
                       {item.label}
                     </p>
               }

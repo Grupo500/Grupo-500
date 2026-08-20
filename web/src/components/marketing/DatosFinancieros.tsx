@@ -59,7 +59,7 @@ function Campo({ label, valor, onCambio, ayuda, placeholder, ancho, falta }: {
       <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-on-surface-variant">
         {label}
         {falta && (
-          <span className="rounded-full bg-[#d97706]/15 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#9a5b06]">
+          <span className="rounded-full bg-[#d97706]/15 px-1.5 py-0.5 text-[11px] font-bold text-[#9a5b06]">
             Falta
           </span>
         )}
@@ -173,7 +173,7 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
           <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-on-surface-variant">
             Celular de contacto
             {!f.celular.trim() && (
-              <span className="rounded-full bg-[#d97706]/15 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#9a5b06]">
+              <span className="rounded-full bg-[#d97706]/15 px-1.5 py-0.5 text-[11px] font-bold text-[#9a5b06]">
                 Falta
               </span>
             )}

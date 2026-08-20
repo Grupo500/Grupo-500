@@ -80,7 +80,7 @@ export default async function ContabilidadPage({
       {/* Administración: los dos paneles de la app original, solo ADMIN */}
       {esAdmin && (
         <div>
-          <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Administración</h2>
+          <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Administración</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link href={`/marketing/contabilidad/panel?q=${quincena}`}
               className="bg-surface-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3.5 hover:border-primary/40 hover:shadow-sm transition-all">
@@ -108,7 +108,7 @@ export default async function ContabilidadPage({
         </div>
       )}
 
-      <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider -mb-2">Departamentos</h2>
+      <h2 className="text-xs font-semibold text-on-surface-variant -mb-2">Departamentos</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {depts.map(d => {
           const s = porDept.get(d.id)

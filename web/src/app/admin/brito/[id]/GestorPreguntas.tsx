@@ -50,7 +50,7 @@ export function GestorPreguntas({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Preguntas ya en la lección */}
       <div className="space-y-2">
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+        <h2 className="text-xs font-semibold text-on-surface-variant">
           En la lección ({preguntasActuales.length})
         </h2>
         {preguntasActuales.length === 0 && (
@@ -75,7 +75,7 @@ export function GestorPreguntas({
 
       {/* Buscador del banco */}
       <div className="space-y-2">
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Banco de preguntas</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant">Banco de preguntas</h2>
         <div className="flex gap-2">
           <Select
             value={area}

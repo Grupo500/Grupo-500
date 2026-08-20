@@ -672,7 +672,7 @@ const subirComprobante = async (file: File) => {
             {/* ── Paso 1: Datos personales ── */}
             {pasoCrear === 1 && (
               <>
-                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Datos del estudiante</p>
+                <p className="text-xs font-semibold text-on-surface-variant">Datos del estudiante</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
                     <label className={labelCls}>Nombre completo *</label>
@@ -749,7 +749,7 @@ const subirComprobante = async (file: File) => {
                   )}
                 </div>
 
-                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mt-4">Acudiente (opcional)</p>
+                <p className="text-xs font-semibold text-on-surface-variant mt-4">Acudiente (opcional)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
                     <label className={labelCls}>Nombre del acudiente</label>
@@ -775,7 +775,7 @@ const subirComprobante = async (file: File) => {
             {/* ── Paso 2: Curso ── */}
             {pasoCrear === 2 && (
               <>
-                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Curso adquirido</p>
+                <p className="text-xs font-semibold text-on-surface-variant">Curso adquirido</p>
                 <div className="space-y-3">
                   <div>
                     <label className={labelCls}>Curso</label>
@@ -824,7 +824,7 @@ const subirComprobante = async (file: File) => {
             {/* ── Paso 3: Revisión ── */}
             {pasoCrear === 3 && (
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Revisión</p>
+                <p className="text-xs font-semibold text-on-surface-variant">Revisión</p>
                 <div className="rounded-xl border border-outline-variant divide-y divide-outline-variant/40">
                   {[
                     ['Nombre', form.nombre],

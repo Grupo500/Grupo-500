@@ -197,7 +197,7 @@ export function RankingAsesores({ desde, hasta, periodoLabel }: Props) {
           {/* ── Lista del 4° en adelante ───────────────────────────── */}
           {restoTotal.length > 0 && (
             <div className="space-y-1.5 pt-2">
-              <div className="hidden sm:grid grid-cols-[32px_36px_1fr_auto_64px_64px_44px_16px] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wide text-on-surface-variant">
+              <div className="hidden sm:grid grid-cols-[32px_36px_1fr_auto_64px_64px_44px_16px] gap-2 px-3 pb-1 text-[11px] text-on-surface-variant">
                 <span>#</span>
                 <span></span>
                 <span>Asesor</span>

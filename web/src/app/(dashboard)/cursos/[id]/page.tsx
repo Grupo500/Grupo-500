@@ -80,7 +80,7 @@ export default function CursoDetallePage() {
         ) : (
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border mb-2 ${
+              <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border mb-2 ${
                 isCombo ? 'bg-amber-50 text-amber-600 border-amber-200/70' : 'bg-primary/8 text-primary border-primary/15'
               }`}>
                 {isCombo ? <Package className="w-2.5 h-2.5" /> : <BookOpen className="w-2.5 h-2.5" />}

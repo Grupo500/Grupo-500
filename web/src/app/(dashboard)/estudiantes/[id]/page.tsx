@@ -189,7 +189,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
     <div className="space-y-6">
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Datos personales</p>
+          <p className="text-xs font-semibold text-on-surface-variant">Datos personales</p>
           <button onClick={() => setEditando(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-outline-variant text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-high transition-colors cursor-pointer">
             <Pencil className="w-3 h-3" />Editar
@@ -221,7 +221,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 
       {cursoActivo && (
         <section className="space-y-2">
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Curso adquirido</p>
+          <p className="text-xs font-semibold text-on-surface-variant">Curso adquirido</p>
           <div className="flex items-center gap-3 p-3 rounded-xl border border-outline-variant bg-surface-lowest">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               <BookOpen className="w-4 h-4 text-primary" />
@@ -236,7 +236,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
 
       {e.acudiente && (
         <section className="space-y-2">
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Acudiente</p>
+          <p className="text-xs font-semibold text-on-surface-variant">Acudiente</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: 'Nombre',   value: e.acudiente.nombre },
@@ -258,7 +258,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Editando perfil</p>
+        <p className="text-xs font-semibold text-on-surface-variant">Editando perfil</p>
         <button onClick={() => setEditando(false)} className="text-xs text-on-surface-variant hover:text-on-surface cursor-pointer">Cancelar</button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -334,7 +334,7 @@ function TabPerfil({ e, fetcher, isAdmin, colegios, asesores, cursos, onRefresh 
         )}
       </div>
       <div>
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-3">Acudiente</p>
+        <p className="text-xs font-semibold text-on-surface-variant mb-3">Acudiente</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="col-span-2">
             <label className={labelCls}>Nombre</label>
@@ -437,7 +437,7 @@ function FormNuevoPago({ estudianteId, fetcher, onSuccess }: {
 
   return (
     <div className="space-y-4 pt-3 border-t border-outline-variant/40">
-      <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Registrar pago directo</p>
+      <p className="text-xs font-semibold text-on-surface-variant">Registrar pago directo</p>
 
       {/* ── 1. Toggle "Pagar ahora" PRIMERO — define el flujo completo ── */}
       <div
@@ -635,7 +635,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
   // ── Modo edición ──────────────────────────────────────────────────────────
   if (editando) return (
     <div className="px-3 py-3 rounded-xl border-2 border-primary/40 bg-primary/5 space-y-3">
-      <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Editando pago directo</p>
+      <p className="text-[11px] font-semibold text-primary">Editando pago directo</p>
 
       <div className="grid grid-cols-2 gap-2">
         <div>
@@ -747,7 +747,7 @@ function FilaPagoDirecto({ p, fetcher, onRefresh }: {
       {/* Panel de confirmación de pago */}
       {abierto && (
         <div className="px-4 py-3 border-t border-outline-variant/30 bg-surface-lowest space-y-3">
-          <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Confirmar pago</p>
+          <p className="text-[11px] font-semibold text-primary">Confirmar pago</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className={labelCls}>Fecha de pago *</label>
@@ -958,7 +958,7 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
           ya cobró— así que se muestran derivadas del plan. */}
       {plan.esperadas.length > 0 && (
         <section className="space-y-2">
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+          <p className="text-xs font-semibold text-on-surface-variant">
             Cuotas por cobrar
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-1.5">
@@ -1004,7 +1004,7 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
       {/* Pagos directos */}
       {pagos.length > 0 && (
         <section className="space-y-2">
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Pagos directos</p>
+          <p className="text-xs font-semibold text-on-surface-variant">Pagos directos</p>
           <div className="space-y-2">
             {pagos.map(p => (
               <FilaPagoDirecto key={p.id} p={p} fetcher={fetcher} onRefresh={onRefresh} />
@@ -1144,7 +1144,7 @@ function TabCertificados({ e, fetcher, onRefresh }: {
 
       {/* Generar certificado adicional (ej. CURSANDO ya emitido, falta COMPLETADO) */}
       <div className="bg-surface-lowest border border-outline-variant rounded-2xl p-4 space-y-3">
-        <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Generar certificado</p>
+        <p className="text-xs font-semibold text-on-surface-variant">Generar certificado</p>
 
         {!tieneDocumento && (
           <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#d97706]/8 border border-[#d97706]/20">

@@ -70,7 +70,7 @@ export default async function CofundadorPage({
 
       {/* Ranking de ingresos */}
       <div>
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2 flex items-center gap-1.5">
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-2 flex items-center gap-1.5">
           <Trophy className="w-3.5 h-3.5 text-[#c9971a]" /> Ranking de ingresos (histórico)
         </h2>
         <div className="bg-surface-lowest border border-outline-variant rounded-xl divide-y divide-outline-variant">
@@ -106,7 +106,7 @@ export default async function CofundadorPage({
 
       {/* La misma vista de contabilidad, sin acciones */}
       <div>
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Consolidado de la quincena</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-2">Consolidado de la quincena</h2>
         <Consolidado quincena={quincena} accionable={false} />
       </div>
     </div>

@@ -519,7 +519,7 @@ export default function ExamenCliente({
             fontVariantNumeric: "tabular-nums",
             transition: "background .3s",
           }}>
-            <span style={{ fontSize: ".7rem", fontWeight: 600, color: enTiempoExtra ? "var(--mal)" : "var(--azul)", textTransform: "uppercase", letterSpacing: ".08em" }}>
+            <span style={{ fontSize: ".7rem", fontWeight: 600, color: enTiempoExtra ? "var(--mal)" : "var(--azul)", textTransform: "", letterSpacing: ".08em" }}>
               {enTiempoExtra ? "Tiempo extra" : enCountdown ? "Tiempo" : "Transcurrido"}
             </span>
             {" "}
@@ -557,7 +557,7 @@ export default function ExamenCliente({
             background: "rgba(255,255,255,.04)", pointerEvents: "none",
           }} />
           <div style={{ position: "relative" }}>
-            <p style={{ fontSize: ".67rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", opacity: .55, marginBottom: 4 }}>
+            <p style={{ fontSize: ".67rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "", opacity: .55, marginBottom: 4 }}>
               {sesion === 1 ? "Primera sesión" : "Segunda sesión"}
             </p>
             <h1 style={{ fontSize: "1.35rem", fontWeight: 800, letterSpacing: "-.02em" }}>

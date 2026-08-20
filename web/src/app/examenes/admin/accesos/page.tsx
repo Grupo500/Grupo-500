@@ -53,7 +53,7 @@ export default async function AdminAccesosPage() {
           <CargarCsv />
         </div>
 
-        <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Habilitados por simulacro</h2>
+        <h2 className="text-xs font-semibold text-on-surface-variant mb-3">Habilitados por simulacro</h2>
         <div className="space-y-3">
           {examenes.map(ex => (
             <div key={ex.id} className="bg-surface-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-4 flex-wrap">

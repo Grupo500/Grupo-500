@@ -623,7 +623,7 @@ function CustomDate({
           {vista === 'dias' && (<>
             <div className="grid grid-cols-7 gap-1 mb-1">
               {DIAS.map((d, i) => (
-                <div key={i} className="text-center text-[10px] font-bold text-slate-400 uppercase py-1">{d}</div>
+                <div key={i} className="text-center text-[11px] font-bold text-slate-400 py-1">{d}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-1">
@@ -700,7 +700,7 @@ function FieldInput({ campo, value, onChange, onChange2, error, valores }: {
       <div className="pt-2 pb-1">
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-slate-200" />
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{campo.label}</span>
+          <span className="text-xs font-bold text-slate-400">{campo.label}</span>
           <div className="h-px flex-1 bg-slate-200" />
         </div>
         {campo.descripcion && <p className="text-xs text-slate-400 text-center mt-1">{campo.descripcion}</p>}
@@ -784,7 +784,7 @@ function FieldInput({ campo, value, onChange, onChange2, error, valores }: {
             <div className="flex items-center gap-2">
               <p className="text-sm font-bold text-slate-700">{cursoSelec.nombre}</p>
               {cursoSelec.tipoCurso === 'COMBO' && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 uppercase">Combo</span>
+                <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 ">Combo</span>
               )}
             </div>
             {cursoSelec.descripcion && <p className="text-xs text-slate-500">{cursoSelec.descripcion}</p>}
