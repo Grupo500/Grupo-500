@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import { AvatarMiembro } from './AvatarMiembro'
+import { PUEDE_ASIGNAR } from '@/lib/visibilidadMarketing'
 
 export interface Miembro { id: string; nombre: string; activo: boolean; userId?: string; rol?: string; user?: { image: string | null } }
 export interface EntregableDto { id: string; plataforma: string; url: string | null; videoUrl: string | null; publicadoEn: string }
@@ -464,7 +465,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   // La lista son solo los editores de video: es a ellos a quienes se encarga.
   const { data: sesion } = useSession()
   const rol = (sesion?.user as { role?: string } | undefined)?.role
-  const puedeAsignar = ['ADMIN', 'COMMUNITY', 'LIDER_EDICION', 'LIDER_DISENO'].includes(rol ?? '')
+  const puedeAsignar = PUEDE_ASIGNAR.includes(rol ?? '')
   const editores = miembros.filter(m => m.activo && m.rol === 'EDITOR')
   const [notas, setNotas]           = useState(contenido?.notas ?? '')
   const [error, setError]           = useState('')

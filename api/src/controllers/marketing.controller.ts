@@ -35,7 +35,7 @@ const rangoSchema = z.object({
  * Quién puede repartir trabajo: community managers, líderes y administradores.
  * Un editor no asigna — recibe. Su contenido queda a su nombre solo.
  */
-const PUEDE_ASIGNAR: string[] = ['ADMIN', 'COMMUNITY', 'LIDER_EDICION', 'LIDER_DISENO']
+const PUEDE_ASIGNAR: string[] = ['ADMIN', 'COMMUNITY', 'SOCIAL_MEDIA', 'LIDER_EDICION', 'LIDER_DISENO']
 const puedeAsignar = (rol?: string) => PUEDE_ASIGNAR.includes(rol ?? '')
 
 /**

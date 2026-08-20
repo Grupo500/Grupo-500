@@ -2,7 +2,7 @@ import { esLiderMarketing } from '@/lib/roles'
 import type { Contenido, Miembro } from '@/components/marketing/CalendarioMarketing'
 
 /** Quién reparte trabajo: ve además lo que asignó, para poder revisarlo. */
-export const PUEDE_ASIGNAR = ['ADMIN', 'COMMUNITY', 'LIDER_EDICION', 'LIDER_DISENO']
+export const PUEDE_ASIGNAR = ['ADMIN', 'COMMUNITY', 'SOCIAL_MEDIA', 'LIDER_EDICION', 'LIDER_DISENO']
 export const puedeAsignar = (rol?: string | null) => PUEDE_ASIGNAR.includes(rol ?? '')
 
 /**
