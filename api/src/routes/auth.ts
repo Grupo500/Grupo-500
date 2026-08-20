@@ -110,6 +110,76 @@ router.patch('/me', authenticate, asyncHandler(async (req, res) => {
   return ApiResponse.success(res, { ok: true })
 }))
 
+// ── Editar el perfil de otro (solo ADMIN) ───────────────────────────────────
+//
+// Usuarios ofrecía "editar" solo a quien tuviera ficha de asesor, porque
+// escribía contra `PATCH /asesores/:id`. El equipo de marketing no la tiene, así
+// que sus tarjetas salían sin lápiz: un nombre mal escrito o un correo viejo no
+// había forma de arreglarlos (Hotman, 20-ago). Esto escribe donde corresponda
+// según quién sea, igual que `PATCH /me` hace con el propio.
+const perfilAjenoSchema = z.object({
+  nombre:   z.string().min(2).optional(),
+  email:    z.string().email().transform(e => e.toLowerCase().trim()).optional(),
+  telefono: z.string().min(3).optional().nullable(),
+})
+
+router.patch('/usuarios/:id/perfil', authenticate, requireRole('ADMIN'), asyncHandler(async (req, res) => {
+  const { nombre, email, telefono } = perfilAjenoSchema.parse(req.body)
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, asesor: { select: { id: true } }, marketing: { select: { id: true } } },
+  })
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
+
+  // El correo es la llave con la que se entra: dos cuentas con el mismo dejan
+  // a una sin poder iniciar sesión.
+  if (email) {
+    const ocupado = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' }, id: { not: user.id } },
+      select: { id: true },
+    })
+    if (ocupado) return res.status(409).json({ error: 'Ese correo ya está en uso' })
+  }
+
+  await prisma.$transaction(async tx => {
+    if (nombre || email) {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { ...(nombre ? { nombre } : {}), ...(email ? { email } : {}) },
+      })
+    }
+    // El nombre vive en dos sitios (la cuenta y la ficha del área) y se guardan
+    // juntos: desincronizados, la persona sale con un nombre en Usuarios y con
+    // otro en el calendario de marketing.
+    if (user.asesor && (nombre || email || telefono)) {
+      await tx.asesor.update({
+        where: { id: user.asesor.id },
+        data: {
+          ...(nombre ? { nombre } : {}),
+          ...(email ? { email } : {}),
+          ...(telefono ? { telefono } : {}),
+        },
+      })
+    }
+    if (user.marketing && (nombre || telefono !== undefined)) {
+      await tx.miembroMarketing.update({
+        where: { id: user.marketing.id },
+        data: {
+          ...(nombre ? { nombre } : {}),
+          // En marketing el teléfono es el celular de la cuenta de cobro: es el
+          // único número que se le pide a esa persona.
+          ...(telefono !== undefined ? { celular: telefono || null } : {}),
+        },
+      })
+    }
+  })
+
+  broadcast('perfil-actualizado', { userId: user.id })
+  auditLog(req, 'UPDATE', 'perfil_usuario', user.id)
+  return ApiResponse.success(res, { ok: true })
+}))
+
 // ── Actualizar foto de perfil ────────────────────────────────────────────────
 router.patch('/usuarios/:id/foto', authenticate, asyncHandler(async (req, res) => {
   // Solo el propio usuario o un ADMIN puede cambiar la foto

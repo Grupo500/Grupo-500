@@ -877,19 +877,23 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
               const publ = b.filas.filter(t => t.estado === 'PUBLICADO').length
               return (
                 <Fragment key={b.destino}>
-                  {/* La misma franja de cuenta que la hoja de cálculo */}
+                  {/* La franja de cuenta, como en la hoja de cálculo.
+                      Llevaba el mismo azul claro que la fila de títulos y que
+                      el fondo de la página, así que las tres se confundían y
+                      la banda dejaba de separar nada (Hotman, 20-ago). Ahora
+                      es un tono decididamente más oscuro, con una barra de
+                      color a la izquierda que la ancla como corte. */}
                   <tr>
                     <td
                       colSpan={7}
-                      className="border-b border-outline-variant px-5 py-2.5 text-left"
-                      style={{ background: 'color-mix(in srgb, var(--primary) 12%, var(--surface-lowest))' }}
+                      className="border-y border-outline-variant bg-surface-highest px-5 py-3 text-left shadow-[inset_4px_0_0_var(--primary)]"
                     >
-                      <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface">
+                      <span className="inline-flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.11em] text-on-surface">
                         {b.destino === '__sin__'
-                          ? <HelpCircle className="size-3.5 text-primary" />
-                          : <Building2 className="size-3.5 text-primary" />}
+                          ? <HelpCircle className="size-4 text-on-surface" />
+                          : <Building2 className="size-4 text-on-surface" />}
                         {DESTINO_LABEL[b.destino]}
-                        <span className="text-[10.5px] font-medium normal-case tracking-normal text-on-surface-variant">
+                        <span className="rounded-full bg-surface-lowest/70 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-on-surface-variant">
                           {b.filas.length} pieza{b.filas.length !== 1 ? 's' : ''} · {publ} publicada{publ !== 1 ? 's' : ''}
                         </span>
                       </span>

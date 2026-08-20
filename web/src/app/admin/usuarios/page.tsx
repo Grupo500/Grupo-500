@@ -55,8 +55,12 @@ export default function UsuariosPage() {
   const [formRole, setFormRole] = useState<Usuario['role']>('VENDEDOR')
   const [formError, setFormError] = useState('')
 
-  // Modal editar asesor
-  const [editAsesor, setEditAsesor] = useState<{ asesorId: string; userId: string; nombre: string; telefono: string; email: string } | null>(null)
+  // Modal editar perfil. Sirve para cualquiera: hasta ahora solo salía en las
+  // tarjetas con ficha de asesor, así que a marketing no había forma de
+  // corregirle un nombre ni ponerle contraseña (Hotman, 20-ago).
+  const [editAsesor, setEditAsesor] = useState<{
+    userId: string; nombre: string; telefono: string; email: string; esMarketing: boolean
+  } | null>(null)
   const [editPassword, setEditPassword] = useState('')
   const [editError, setEditError]   = useState('')
 
@@ -132,21 +136,20 @@ export default function UsuariosPage() {
     mutationFn: async () => {
       const errors: string[] = []
 
-      // Actualizar datos del asesor (solo si tiene asesorId)
-      if (editAsesor!.asesorId) {
-        try {
-          await fetcher(`/asesores/${editAsesor!.asesorId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              nombre: editAsesor!.nombre,
-              telefono: editAsesor!.telefono,
-              email: editAsesor!.email,
-            }),
-          })
-        } catch (e: any) {
-          errors.push(`Datos del asesor: ${e.message}`)
-        }
+      // Un solo endpoint: el backend escribe en la ficha de asesor o en la de
+      // marketing según a quién se esté editando.
+      try {
+        await fetcher(`/auth/usuarios/${editAsesor!.userId}/perfil`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: editAsesor!.nombre,
+            email: editAsesor!.email,
+            ...(editAsesor!.telefono.trim() ? { telefono: editAsesor!.telefono.trim() } : {}),
+          }),
+        })
+      } catch (e: any) {
+        errors.push(`Datos: ${e.message}`)
       }
 
       // Actualizar contraseña si se ingresó
@@ -419,15 +422,22 @@ export default function UsuariosPage() {
                       options={OPCIONES_ROL}
                     />
                   </div>
-                  {u.asesor && (
-                    <button
-                      onClick={() => { setEditAsesor({ asesorId: (u.asesor as any).id, userId: u.id, nombre: u.asesor!.nombre, telefono: u.asesor!.telefono, email: u.email }); setEditPassword('') }}
-                      className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
-                      title="Editar asesor"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setEditAsesor({
+                        userId: u.id,
+                        nombre: u.nombre ?? u.asesor?.nombre ?? '',
+                        telefono: u.asesor?.telefono ?? '',
+                        email: u.email,
+                        esMarketing: !u.asesor,
+                      })
+                      setEditPassword('')
+                    }}
+                    className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+                    title="Editar datos y contraseña"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={() => {
                       const pregunta = u.suspendido
@@ -481,8 +491,10 @@ export default function UsuariosPage() {
           <div className="relative card w-full max-w-md p-6 space-y-5 animate-slide-up">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold text-on-surface">Editar perfil asesor</h2>
-                <p className="text-xs text-on-surface-variant mt-0.5">Actualiza los datos del asesor</p>
+                <h2 className="text-base font-semibold text-on-surface">Editar perfil</h2>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Sus datos de acceso y su contraseña
+                </p>
               </div>
               <button onClick={() => { setEditAsesor(null); setEditError('') }}
                 className="p-1.5 rounded-md text-on-surface-variant hover:bg-[var(--surface-high)]">
@@ -501,7 +513,14 @@ export default function UsuariosPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
+                <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
+                  {editAsesor.esMarketing ? 'Celular' : 'Teléfono'}
+                  {editAsesor.esMarketing && (
+                    <span className="ml-1.5 text-[10px] font-normal text-on-surface-variant/60">
+                      (el de su cuenta de cobro)
+                    </span>
+                  )}
+                </label>
                 <input
                   type="tel"
                   value={editAsesor.telefono}
@@ -543,7 +562,12 @@ export default function UsuariosPage() {
               <button onClick={() => { setEditAsesor(null); setEditError('') }} className="btn-ghost">Cancelar</button>
               <button
                 onClick={() => guardarAsesor.mutate()}
-                disabled={!editAsesor.nombre.trim() || !editAsesor.telefono.trim() || guardarAsesor.isPending || (!!editPassword && editPassword.length < 8)}
+                disabled={
+                  !editAsesor.nombre.trim() ||
+                  (!editAsesor.esMarketing && !editAsesor.telefono.trim()) ||
+                  guardarAsesor.isPending ||
+                  (!!editPassword && editPassword.length < 8)
+                }
                 className="btn-primary"
               >
                 {guardarAsesor.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
