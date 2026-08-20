@@ -83,9 +83,11 @@ export default function AjustesPage() {
       }),
     }),
     onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ['mi-cuenta'] })
-      queryClient.invalidateQueries({ queryKey: ['marketing-miembros'] })
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      // Todo el cache, no tres claves elegidas a mano: el nombre y el teléfono
+      // salen en Usuarios, en el Planificador, en Entregables, en Cobros y en
+      // los rankings. Nombrar pantallas una por una siempre deja alguna atrás.
+      await queryClient.invalidateQueries()
+      await queryClient.refetchQueries({ type: 'active' })
       // El nombre viaja DENTRO del update: la sesión lo aplica al instante y
       // el menú cambia sin esperar el viaje de vuelta a la base.
       await updateSession({ name: nombre.trim() })

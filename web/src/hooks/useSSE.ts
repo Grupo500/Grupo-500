@@ -62,6 +62,10 @@ export function useSSE() {
       // planificando sobre tableros distintos terminan pisándose el trabajo
       // (Hotman, 20-ago).
       es.addEventListener('contenido-actualizado', refrescarTodo)
+      // Perfil: nombre, teléfono y los datos con los que se arma la cuenta de
+      // cobro. Cambian poco, pero mientras no llegaban, quien revisa Cobros
+      // seguía viendo "le falta el banco" de alguien que acababa de ponerlo.
+      es.addEventListener('perfil-actualizado', refrescarTodo)
 
       es.onerror = () => {
         // Se cierra a mano para que EventSource no reintente por su cuenta con

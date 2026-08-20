@@ -19,6 +19,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Save, Check, Landmark, AlertTriangle, FileText } from 'lucide-react'
 import { getClientToken, createClientFetcher } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { Select } from '@/components/ui/Select'
 import { CampoTelefono } from '@/components/ui/CampoTelefono'
 
@@ -39,15 +40,33 @@ export interface Financieros {
 
 const enPesos = (n: number) => '$' + n.toLocaleString('es-CO')
 
-function Campo({ label, valor, onCambio, ayuda, placeholder, ancho }: {
+function Campo({ label, valor, onCambio, ayuda, placeholder, ancho, falta }: {
   label: string; valor: string; onCambio: (v: string) => void
   ayuda?: string; placeholder?: string; ancho?: boolean
+  /**
+   * Marca el campo mientras esté vacío. Nació de un caso concreto: el campo
+   * Banco tenía de ejemplo "Bancolombia" —un banco de verdad, escrito en gris
+   * dentro del recuadro—, así que se leía como un dato ya puesto y se saltaba.
+   * El aviso de arriba decía "falta el banco" y no había forma de relacionarlo
+   * con el recuadro que lo tenía (Hotman, 20-ago). Ahora el propio campo lo
+   * dice, y todos los ejemplos empiezan por "Ej." para que no se confundan
+   * con algo escrito.
+   */
+  falta?: boolean
 }) {
   return (
     <div className={ancho ? 'sm:col-span-2' : undefined}>
-      <label className="mb-1.5 block text-xs font-medium text-on-surface-variant">{label}</label>
+      <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-on-surface-variant">
+        {label}
+        {falta && (
+          <span className="rounded-full bg-[#d97706]/15 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#9a5b06]">
+            Falta
+          </span>
+        )}
+      </label>
       <input type="text" value={valor} placeholder={placeholder}
-             onChange={e => onCambio(e.target.value)} className="input-base" />
+             onChange={e => onCambio(e.target.value)}
+             className={cn('input-base', falta && 'border-[#d97706]/55 bg-[#d97706]/[0.05]')} />
       {ayuda && <p className="mt-1 text-[11px] text-on-surface-variant">{ayuda}</p>}
     </div>
   )
@@ -77,9 +96,15 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
         body: JSON.stringify(f),
       })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mi-cuenta'] })
-      queryClient.invalidateQueries({ queryKey: ['marketing-cobros'] })
+    // "En toda la plataforma" es literal. Estos datos se leen en Ajustes, en
+    // Cobros, en el Planificador y en Entregables, y cada pantalla los pide con
+    // su propia clave; ir nombrándolas una por una siempre dejaba alguna con lo
+    // viejo, y la persona veía "falta el banco" después de haberlo guardado
+    // (Hotman, 20-ago). Se invalida todo el cache y se vuelve a pedir lo que
+    // esté en pantalla. El backend además avisa por SSE, para los demás.
+    onSuccess: async () => {
+      await queryClient.invalidateQueries()
+      await queryClient.refetchQueries({ type: 'active' })
     },
     onError: (e: any) => alert(e?.message ?? 'No se pudo guardar'),
   })
@@ -136,16 +161,27 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
 
       <div className="mb-4 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
         <Campo ancho label="Nombre completo" valor={f.nombreCompleto} onCambio={set('nombreCompleto')}
-               placeholder="Como aparece en tu cédula" />
-        <Campo label="Cédula de ciudadanía" valor={f.cedula} onCambio={set('cedula')} placeholder="1098765432" />
-        <Campo label="Ciudad de expedición" valor={f.ciudadExpedicion} onCambio={set('ciudadExpedicion')} placeholder="Bucaramanga" />
-        <Campo label="Ciudad" valor={f.ciudad} onCambio={set('ciudad')} placeholder="Bucaramanga"
+               falta={!f.nombreCompleto.trim()} placeholder="Como aparece en tu cédula" />
+        <Campo label="Cédula de ciudadanía" valor={f.cedula} onCambio={set('cedula')}
+               falta={!f.cedula.trim()} placeholder="Ej. 1098765432" />
+        <Campo label="Ciudad de expedición" valor={f.ciudadExpedicion} onCambio={set('ciudadExpedicion')}
+               falta={!f.ciudadExpedicion.trim()} placeholder="Ej. Bucaramanga" />
+        <Campo label="Ciudad" valor={f.ciudad} onCambio={set('ciudad')}
+               falta={!f.ciudad.trim()} placeholder="Ej. Bucaramanga"
                ayuda="Desde dónde se emite la cuenta de cobro." />
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-on-surface-variant">Celular de contacto</label>
+          <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-on-surface-variant">
+            Celular de contacto
+            {!f.celular.trim() && (
+              <span className="rounded-full bg-[#d97706]/15 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#9a5b06]">
+                Falta
+              </span>
+            )}
+          </label>
           <CampoTelefono valor={f.celular} onCambio={v => setF(p => ({ ...p, celular: v }))} placeholder="300 123 4567" />
         </div>
-        <Campo ancho label="RUT" valor={f.rut} onCambio={set('rut')} placeholder="1098765432-1"
+        <Campo ancho label="RUT" valor={f.rut} onCambio={set('rut')}
+               falta={!f.rut.trim()} placeholder="Ej. 1098765432-1"
                ayuda="Lo pide contabilidad para soportar el pago." />
       </div>
 
@@ -154,7 +190,8 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
       </p>
 
       <div className="mb-4 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
-        <Campo label="Banco" valor={f.banco} onCambio={set('banco')} placeholder="Bancolombia" />
+        <Campo label="Banco" valor={f.banco} onCambio={set('banco')}
+               falta={!f.banco.trim()} placeholder="Ej. Bancolombia" />
         <div>
           <label className="mb-1.5 block text-xs font-medium text-on-surface-variant">Tipo de cuenta</label>
           <Select
@@ -164,7 +201,8 @@ export function DatosFinancieros({ inicial }: { inicial: Financieros }) {
             options={[{ value: 'AHORROS', label: 'Ahorros' }, { value: 'CORRIENTE', label: 'Corriente' }]}
           />
         </div>
-        <Campo ancho label="N° de cuenta" valor={f.numeroCuenta} onCambio={set('numeroCuenta')} placeholder="03212345678" />
+        <Campo ancho label="N° de cuenta" valor={f.numeroCuenta} onCambio={set('numeroCuenta')}
+               falta={!f.numeroCuenta.trim()} placeholder="Ej. 03212345678" />
         {/* La firma dibujada salió de aquí (Hotman, 20-ago): la cuenta de cobro
             se genera igual y firmarla con el dedo en el navegador daba un
             garabato distinto cada vez. El PDF deja la línea para firmar. */}

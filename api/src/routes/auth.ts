@@ -9,6 +9,7 @@ import { prisma } from '../config/prisma'
 import { z } from 'zod'
 import * as ROLES from '../utils/roles'
 import { datosFinancierosDe } from '../utils/cuentaCobro'
+import { broadcast } from '../utils/sseManager'
 import { ValidationError } from '../utils/errors'
 
 const router = Router()
@@ -98,6 +99,12 @@ router.patch('/me', authenticate, asyncHandler(async (req, res) => {
       }
     }
   })
+
+  // El resto del equipo tiene estos datos en pantalla ahora mismo: quien
+  // reparte trabajo ve el nombre en el Planificador y la líder ve en Cobros
+  // qué le falta a cada quien para poder pagarle. Sin este aviso había que
+  // recargar para enterarse de que un dato ya estaba puesto.
+  broadcast('perfil-actualizado', { userId: user.id })
 
   auditLog(req, 'UPDATE', 'mi_perfil', user.id)
   return ApiResponse.success(res, { ok: true })
