@@ -134,7 +134,7 @@ export function TableroContenido() {
           (Hotman, 20-ago). */}
       <div>
         <h2 className="text-[17px] font-semibold tracking-[-0.022em] text-on-surface">
-          Tablero de contenido
+          Planificador
         </h2>
         <p className="mt-0.5 text-[12px] text-on-surface-variant">
           Planificación y asignación del equipo · toca el <span className="font-semibold text-primary">+</span> de un día para agregar

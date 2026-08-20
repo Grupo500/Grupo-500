@@ -8,7 +8,7 @@ export interface MarketingTab {
 
 /** Secciones del área de Marketing, en el orden en que se consultan. */
 export const MARKETING_TABS: MarketingTab[] = [
-  { href: '/marketing',               label: 'Calendario',       icon: CalendarDays },
+  { href: '/marketing',               label: 'Planificador',     icon: CalendarDays },
   { href: '/marketing/entregables',   label: 'Entregables',      icon: Link2 },
   // Va después de lo que se produce y antes de las herramientas: el cobro es
   // la consecuencia del trabajo, no una herramienta aparte.

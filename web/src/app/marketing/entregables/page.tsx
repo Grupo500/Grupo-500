@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { apiFetch } from '@/lib/api'
@@ -23,7 +23,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
-import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock } from 'lucide-react'
+import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check } from 'lucide-react'
 import { type Contenido } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
@@ -55,10 +55,27 @@ function deISO(iso: string) {
   return new Date(a, m - 1, d)
 }
 
+/**
+ * El paso siguiente de una tarea. Es lo único que se ofrece: la tarea avanza,
+ * no se elige un estado de una lista (diseño elegido por Hotman, 20-ago).
+ * Publicado no tiene siguiente — ahí termina.
+ */
+const SIGUIENTE: Partial<Record<Contenido['estado'], {
+  estado: Contenido['estado']; texto: string; color: string
+}>> = {
+  PLANIFICADO: { estado: 'EN_PROCESO', texto: 'Empezar',  color: '#d97706' },
+  EN_PROCESO:  { estado: 'PUBLICADO',  texto: 'Publicar', color: '#16a34a' },
+}
+
 /** Una tarea. El enlace solo aparece cuando ya hay algo publicado. */
-function Tarea({ c }: { c: Contenido }) {
+function Tarea({ c, onAvanzar, avanzando }: {
+  c: Contenido
+  onAvanzar: (id: string, estado: Contenido['estado']) => void
+  avanzando: boolean
+}) {
   const e = ESTADO[c.estado]
   const Icono = e.icono
+  const paso = SIGUIENTE[c.estado]
   return (
     <div className="flex items-center gap-3 px-4 py-2.5">
       <Icono className="size-3.5 shrink-0" style={{ color: e.color }} />
@@ -67,6 +84,9 @@ function Tarea({ c }: { c: Contenido }) {
         <p className="mt-0.5 text-[11px] text-on-surface-variant">
           {TIPO_LABEL[c.tipo]} · {format(deISO(c.fecha), "d 'de' MMM", { locale: es })}
           {c.tipoTrabajo === 'FREELANCE' && ' · Freelance'}
+          {/* Una tarea publicada sin enlace no es un error, pero conviene que
+              se note: el enlace es la razón de ser de esta pantalla. */}
+          {c.estado === 'PUBLICADO' && c.entregables.length === 0 && ' · sin enlace'}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
@@ -82,8 +102,24 @@ function Tarea({ c }: { c: Contenido }) {
             {PLATAFORMA_LABEL[en.plataforma] ?? en.plataforma}
           </a>
         ))}
-        {c.entregables.length === 0 && (
-          <span className="text-[10px] font-semibold" style={{ color: e.color }}>{e.label}</span>
+        {paso ? (
+          <button
+            type="button"
+            disabled={avanzando}
+            onClick={() => onAvanzar(c.id, paso.estado)}
+            title={`Marcar como ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'publicado'}`}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white transition-[transform,filter] hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+            style={{ background: paso.color }}
+          >
+            {avanzando
+              ? <Loader2 className="size-3 animate-spin" />
+              : paso.estado === 'EN_PROCESO' ? <Play className="size-3" /> : <Check className="size-3" />}
+            {paso.texto}
+          </button>
+        ) : (
+          c.entregables.length === 0 && (
+            <span className="text-[10px] font-semibold" style={{ color: e.color }}>{e.label}</span>
+          )
         )}
       </div>
     </div>
@@ -102,6 +138,24 @@ export default function EntregablesPage() {
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
   const [verTodas, setVerTodas] = useState<Grupo | null>(null)
+  const queryClient = useQueryClient()
+
+  // Avanzar la tarea al siguiente estado. Se refresca la lista al terminar en
+  // vez de pintar el cambio antes de tiempo: si el guardado falla, la pantalla
+  // no puede quedar diciendo que algo se publicó cuando no.
+  const avanzar = useMutation({
+    mutationFn: ({ id, estado }: { id: string; estado: Contenido['estado'] }) =>
+      apiFetch(`/marketing/contenidos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['marketing-contenidos-equipo'] })
+      queryClient.invalidateQueries({ queryKey: ['marketing-contenidos'] })
+    },
+    onError: (e: Error) => alert(e.message || 'No se pudo cambiar el estado'),
+  })
 
   const { desde, hasta } = dateRange
     ? { desde: toISO(dateRange.start), hasta: toISO(dateRange.end) }
@@ -197,7 +251,7 @@ export default function EntregablesPage() {
                     de al lado. El resto se ve completo en el modal (Hotman,
                     20-ago). */}
                 <div className="divide-y divide-outline-variant/50">
-                  {g.tareas.slice(0, VISIBLES).map(t => <Tarea key={t.id} c={t} />)}
+                  {g.tareas.slice(0, VISIBLES).map(t => <Tarea key={t.id} c={t} onAvanzar={(id, estado) => avanzar.mutate({ id, estado })} avanzando={avanzar.isPending && avanzar.variables?.id === t.id} />)}
                 </div>
                 {g.tareas.length > VISIBLES && (
                   <button
@@ -224,7 +278,7 @@ export default function EntregablesPage() {
           : ''}
       >
         <div className="divide-y divide-outline-variant/50">
-          {verTodas?.tareas.map(t => <Tarea key={t.id} c={t} />)}
+          {verTodas?.tareas.map(t => <Tarea key={t.id} c={t} onAvanzar={(id, estado) => avanzar.mutate({ id, estado })} avanzando={avanzar.isPending && avanzar.variables?.id === t.id} />)}
         </div>
       </Modal>
     </div>
