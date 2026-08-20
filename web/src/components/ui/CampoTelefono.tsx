@@ -21,15 +21,34 @@ import { Check, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PAISES, banderaDe, partirTelefono, unirTelefono, type Pais } from '@/lib/paises'
 
+/**
+ * La bandera como imagen y no como emoji: Windows no trae tipografía de
+ * banderas, así que el emoji cae a las dos letras del país y se veía "CO",
+ * "AF", "AL" en vez de banderas (Hotman, 20-ago). flagcdn.com ya está
+ * permitido en la política de contenido de la app.
+ *
+ * Si la imagen no carga —sin conexión, o un ISO que el CDN no tenga— se
+ * muestra el emoji, que en macOS y celular sí es una bandera de verdad y en
+ * Windows al menos deja las dos letras.
+ */
 function Bandera({ iso, className }: { iso: string; className?: string }) {
-  // La bandera en una cajita: en Windows el emoji cae a las dos letras del
-  // país, y con fondo eso se lee como insignia y no como un glifo roto.
+  const [falló, setFalló] = useState(false)
   return (
     <span className={cn(
-      'grid h-[15px] w-[21px] shrink-0 place-items-center overflow-hidden rounded-[3px] bg-surface-high text-[12px] leading-none ring-1 ring-black/10',
+      'grid h-[15px] w-[21px] shrink-0 place-items-center overflow-hidden rounded-[3px] bg-surface-high text-[11px] leading-none ring-1 ring-black/10',
       className,
     )}>
-      {banderaDe(iso)}
+      {falló ? banderaDe(iso) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`https://flagcdn.com/w40/${iso.toLowerCase()}.png`}
+          srcSet={`https://flagcdn.com/w80/${iso.toLowerCase()}.png 2x`}
+          alt=""
+          loading="lazy"
+          onError={() => setFalló(true)}
+          className="h-full w-full object-cover"
+        />
+      )}
     </span>
   )
 }
