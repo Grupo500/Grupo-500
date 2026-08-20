@@ -8,7 +8,7 @@ import { datosFinancierosDe, SELECT_FINANCIEROS } from '../utils/cuentaCobro'
 import { subirCuentaDeCobro } from '../services/googleDrive'
 import { z } from 'zod'
 
-const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, user: { select: { image: true } } }
+const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, userId: true, user: { select: { image: true } } }
 
 // ── Miembros del equipo ──────────────────────────────────────────────────────
 export async function listarMiembros(req: Request, res: Response) {
@@ -76,9 +76,18 @@ const crearContenidoSchema = z.object({
 
 export async function crearContenido(req: Request, res: Response) {
   const data = crearContenidoSchema.parse(req.body)
+
+  // El contenido queda a nombre de quien lo crea, sin preguntar: así es como
+  // el equipo lo viene haciendo —cada quien anota lo suyo— y el selector de
+  // "asignado a" solo era un clic más para elegirse a sí mismo (Hotman,
+  // 20-ago). Si el cuerpo trae un asignado explícito manda ese, para no
+  // romper a un admin que reparta trabajo desde afuera.
+  const asignadoAId = data.asignadoAId ?? (await miMiembro(req.userId))?.id ?? null
+
   const contenido = await prisma.contenidoMarketing.create({
     data: {
       ...data,
+      asignadoAId,
       fecha: new Date(data.fecha),
       valor: valorSegunTrabajo(data.tipoTrabajo, data.valor) ?? null,
     },

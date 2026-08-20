@@ -150,6 +150,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (dbUser.email)  token.email = dbUser.email
           if (dbUser.role)   token.role = dbUser.role
           if (dbUser.image && !token.image) token.image = dbUser.image
+
+          // La foto de Google vive en el token desde que la persona entró,
+          // pero si nunca llegó a la base, NADIE MÁS la ve: el resto de la
+          // app lee la foto de la base, no de la sesión ajena. Le pasó a casi
+          // todo el equipo de marketing —se veían a sí mismos con foto y entre
+          // ellos con iniciales—. Aquí se cura sola en la siguiente relectura.
+          if (!dbUser.image && token.image) {
+            await prisma.user.update({
+              where: { id: dbUser.id },
+              data:  { image: String(token.image) },
+            }).catch(() => {})
+          }
         }
         ;(token as any).leidoEn = Date.now()
       }
