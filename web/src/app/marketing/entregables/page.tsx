@@ -1115,7 +1115,7 @@ export default function EntregablesPage() {
           <Select
             value={filtro}
             onValueChange={v => setFiltro(v as typeof filtro)}
-            className="w-[160px]"
+            className="h-[38px] w-[160px]"
             options={[
               { value: '',           label: 'Todo' },
               { value: 'PENDIENTE',  label: 'Pendiente' },
@@ -1131,7 +1131,7 @@ export default function EntregablesPage() {
           />
           {/* Dos formas de ver lo mismo: las tarjetas responden "¿qué tiene
               cada quien?" y la tabla "¿qué hay para el 21?". */}
-          <div className="flex gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-1" role="group" aria-label="Forma de ver">
+          <div className="flex h-[38px] items-center gap-0.5 rounded-lg border border-outline-variant bg-surface-low p-1" role="group" aria-label="Forma de ver">
             {([
               { v: 'tabla'    as const, icono: Rows3,      texto: 'Tabla' },
               { v: 'tarjetas' as const, icono: LayoutList, texto: 'Tarjetas' },
@@ -1142,7 +1142,7 @@ export default function EntregablesPage() {
                 onClick={() => cambiarVista(o.v)}
                 aria-pressed={vista === o.v}
                 className={cn(
-                  'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[11.5px] font-semibold transition-colors',
+                  'inline-flex h-[28px] cursor-pointer items-center gap-1.5 rounded-md px-3 text-[12px] font-semibold transition-colors',
                   vista === o.v
                     ? 'bg-surface-lowest text-on-surface shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface',

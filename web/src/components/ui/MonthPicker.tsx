@@ -163,13 +163,13 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
       ) : (
         <button
           onClick={() => setOpen(p => !p)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-high)] hover:border-[var(--primary)] text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] text-xs font-medium transition-all duration-150 focus:outline-none"
+          className="flex h-[38px] items-center gap-2 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-high)] px-3.5 text-[13px] font-medium text-[var(--on-surface-variant)] transition-all duration-150 hover:border-[var(--primary)] hover:text-[var(--on-surface)] focus:outline-none"
         >
           <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+          {/* Sin el "(actual)" que iba detrás del mes: el selector ya abre en
+              el mes en curso, así que aclararlo solo alargaba el botón
+              (Hotman, 20-ago). */}
           <span className="hidden sm:inline capitalize">{triggerLabel}</span>
-          {value === null && !dateRange && (
-            <span className="hidden sm:inline text-[var(--on-surface-variant)] opacity-60">(actual)</span>
-          )}
           <ChevronRight className={`w-3 h-3 shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
         </button>
       )}
