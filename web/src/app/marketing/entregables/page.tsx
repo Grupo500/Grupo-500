@@ -29,7 +29,7 @@ import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import {
   Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil,
-  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, type LucideIcon,
+  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, Trash2, type LucideIcon,
 } from 'lucide-react'
 import { ContenidoModal, type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
@@ -210,7 +210,9 @@ function Dato({ label, children, className }: {
  * las correcciones —a lo que se entra— quedaban al final, tras una frase
  * suelta que decía "Ninguna" (rediseño aprobado por Hotman, 20-ago).
  */
-function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar, onAvanzar, avanzando }: {
+function DetalleTarea({
+  c, puedePedir, esMio, onCerrar, onCambio, onEditar, onAvanzar, avanzando, miUserId, esAdmin,
+}: {
   c: Contenido
   puedePedir: boolean
   esMio: boolean
@@ -220,11 +222,17 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar, onAv
   onEditar?: () => void
   onAvanzar: (id: string, estado: Contenido['estado']) => void
   avanzando: boolean
+  /** Para saber cuáles correcciones son propias y se pueden arreglar o retirar. */
+  miUserId?: string | null
+  esAdmin: boolean
 }) {
   const [mensaje, setMensaje] = useState('')
   // El recuadro de escribir empieza plegado: ocupa una línea hasta que hace
   // falta, y así el hilo se lee sin un formulario vacío ocupando el pie.
   const [escribiendo, setEscribiendo] = useState(false)
+  // La corrección que se está reescribiendo, si hay alguna. Se edita en el
+  // mismo sitio donde está: sacarla a otra ventana la saca del hilo.
+  const [corrigiendo, setCorrigiendo] = useState<{ id: string; texto: string } | null>(null)
   const e = ESTADO[c.estado]
   const paso = SIGUIENTE[c.estado]
   const correcciones = c.correcciones ?? []
@@ -245,6 +253,23 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar, onAv
     mutationFn: () => apiFetch(`/marketing/contenidos/${c.id}/correcciones`, { method: 'PATCH' }),
     onSuccess: onCambio,
     onError: (err: Error) => alert(err.message || 'No se pudo marcar'),
+  })
+
+  const editarCorr = useMutation({
+    mutationFn: ({ id, mensaje }: { id: string; mensaje: string }) =>
+      apiFetch(`/marketing/correcciones/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje }),
+      }),
+    onSuccess: () => { setCorrigiendo(null); onCambio() },
+    onError: (err: Error) => alert(err.message || 'No se pudo guardar'),
+  })
+
+  const borrarCorr = useMutation({
+    mutationFn: (id: string) => apiFetch(`/marketing/correcciones/${id}`, { method: 'DELETE' }),
+    onSuccess: onCambio,
+    onError: (err: Error) => alert(err.message || 'No se pudo eliminar'),
   })
 
   return (
@@ -529,8 +554,13 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar, onAv
             <div className="flex flex-col">
               {correcciones.map((x, i) => {
                 const ultima = i === correcciones.length - 1
+                // Se arregla o se retira la propia, y mientras siga pendiente:
+                // una ya corregida se hizo sobre ese texto, y reescribirlo
+                // después deja el trabajo respondiendo a algo que ya no dice.
+                const mia = !x.resueltaEn && (x.pedidaPorId === miUserId || esAdmin)
+                const enEdicion = corrigiendo?.id === x.id
                 return (
-                  <div key={x.id} className={cn('relative grid grid-cols-[26px_1fr] gap-3', !ultima && 'pb-4')}>
+                  <div key={x.id} className={cn('group relative grid grid-cols-[26px_1fr] gap-3', !ultima && 'pb-4')}>
                     {/* La línea que cose el hilo: se lee como una conversación
                         en orden y no como cajas sueltas una debajo de otra. */}
                     {!ultima && <span className="absolute bottom-1 left-[12.5px] top-8 w-px bg-outline-variant" />}
@@ -563,19 +593,83 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar, onAv
                             <HelpCircle className="size-2.5" strokeWidth={2.6} /> Pendiente
                           </span>
                         )}
-                      </div>
-                      <p
-                        className={cn(
-                          'whitespace-pre-wrap rounded-[3px_12px_12px_12px] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-on-surface',
-                          x.resueltaEn && 'bg-surface-low opacity-75',
+
+                        {/* Arreglar o retirar lo que uno mismo pidió. Aparecen
+                            al pasar el mouse para no llenar el hilo de iconos,
+                            y quedan fijos en pantallas táctiles, donde no hay
+                            forma de "pasar por encima". */}
+                        {mia && !enEdicion && (
+                          <span className="ml-auto flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                            <button
+                              type="button"
+                              title="Corregir el texto"
+                              aria-label="Corregir el texto"
+                              onClick={() => setCorrigiendo({ id: x.id, texto: x.mensaje })}
+                              className="grid size-6 cursor-pointer place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-high hover:text-on-surface"
+                            >
+                              <Pencil className="size-3" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Retirar la corrección"
+                              aria-label="Retirar la corrección"
+                              disabled={borrarCorr.isPending}
+                              onClick={() => {
+                                if (confirm('¿Retirar esta corrección? Deja de contar como pendiente.')) {
+                                  borrarCorr.mutate(x.id)
+                                }
+                              }}
+                              className="grid size-6 cursor-pointer place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-[#dc2626]/12 hover:text-[#dc2626]"
+                            >
+                              {borrarCorr.isPending && borrarCorr.variables === x.id
+                                ? <Loader2 className="size-3 animate-spin" />
+                                : <Trash2 className="size-3" />}
+                            </button>
+                          </span>
                         )}
-                        style={x.resueltaEn ? undefined : {
-                          background: 'color-mix(in srgb, #dc2626 8%, var(--surface-lowest))',
-                          boxShadow: 'inset 2px 0 0 #dc2626',
-                        }}
-                      >
-                        {x.mensaje}
-                      </p>
+                      </div>
+
+                      {enEdicion ? (
+                        <div>
+                          <textarea
+                            autoFocus
+                            value={corrigiendo.texto}
+                            onChange={ev => setCorrigiendo({ id: x.id, texto: ev.target.value })}
+                            className="min-h-[70px] w-full resize-y rounded-[3px_12px_12px_12px] border border-outline-variant bg-surface-lowest px-3.5 py-2.5 text-[12.5px] leading-relaxed text-on-surface outline-none focus:border-primary"
+                          />
+                          <div className="mt-2 flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setCorrigiendo(null)}
+                              className="cursor-pointer rounded-full border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:border-outline hover:text-on-surface"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              disabled={corrigiendo.texto.trim().length < 3 || editarCorr.isPending}
+                              onClick={() => editarCorr.mutate({ id: x.id, mensaje: corrigiendo.texto.trim() })}
+                              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-on transition-[filter,transform] hover:brightness-110 active:scale-[0.97] disabled:opacity-45"
+                            >
+                              {editarCorr.isPending && <Loader2 className="size-3 animate-spin" />}
+                              Guardar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p
+                          className={cn(
+                            'whitespace-pre-wrap rounded-[3px_12px_12px_12px] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-on-surface',
+                            x.resueltaEn && 'bg-surface-low opacity-75',
+                          )}
+                          style={x.resueltaEn ? undefined : {
+                            background: 'color-mix(in srgb, #dc2626 8%, var(--surface-lowest))',
+                            boxShadow: 'inset 2px 0 0 #dc2626',
+                          }}
+                        >
+                          {x.mensaje}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )
@@ -782,6 +876,8 @@ export default function EntregablesPage() {
           // volver a buscar la fila después de arreglar una corrección.
           onAvanzar={(id, estado) => avanzar.mutate({ id, estado })}
           avanzando={avanzar.isPending && avanzar.variables?.id === detalle.id}
+          miUserId={miUserId}
+          esAdmin={rol === 'ADMIN'}
         />
       )}
 

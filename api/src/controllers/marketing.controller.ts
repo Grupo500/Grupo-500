@@ -74,7 +74,7 @@ export async function listarContenidos(req: Request, res: Response) {
       asignadoA: { select: SELECT_MIEMBRO },
       entregables: true,
       correcciones: {
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' }, // el hilo se lee de arriba abajo, como una conversación
         include: { pedidaPor: { select: { nombre: true, email: true, image: true } } },
       },
     },
@@ -238,6 +238,56 @@ export async function resolverCorrecciones(req: Request, res: Response) {
   return ApiResponse.success(res, { resueltas: contenido.correcciones.length })
 }
 
+/**
+ * Corregir la corrección, o retirarla.
+ *
+ * Una corrección se escribe a las prisas y en caliente: se manda con una
+ * palabra de más, o pidiendo algo que resulta que ya estaba. Sin poder
+ * arreglarla, la única salida era escribir otra debajo aclarando la anterior,
+ * y el hilo terminaba diciendo dos cosas distintas (Hotman, 20-ago).
+ *
+ * La toca quien la escribió, y los administradores. Ni siquiera los líderes
+ * editan lo que pidió otra persona: sería cambiarle las palabras en la boca.
+ */
+async function correccionPropia(req: Request) {
+  const correccion = await prisma.correccionContenido.findUnique({
+    where: { id: req.params.correccionId },
+    select: { id: true, pedidaPorId: true, contenidoId: true, resueltaEn: true },
+  })
+  if (!correccion) throw new NotFoundError('Corrección no encontrada')
+  if (correccion.pedidaPorId !== req.userId && req.userRole !== 'ADMIN') {
+    throw new ForbiddenError('Solo quien pidió el cambio puede modificarlo')
+  }
+  return correccion
+}
+
+export async function editarCorreccion(req: Request, res: Response) {
+  const { mensaje } = correccionSchema.parse(req.body)
+  const previa = await correccionPropia(req)
+  // Ya resuelta no se toca: lo que se hizo se hizo sobre ese texto, y
+  // reescribirlo después deja el trabajo respondiendo a algo que ya no dice.
+  if (previa.resueltaEn) throw new ValidationError('Esta corrección ya se marcó como hecha')
+
+  const correccion = await prisma.correccionContenido.update({
+    where: { id: previa.id },
+    data: { mensaje },
+    include: { pedidaPor: { select: { nombre: true, email: true, image: true } } },
+  })
+
+  broadcast('contenido-actualizado', { id: previa.contenidoId })
+  auditLog(req, 'UPDATE', 'marketing_correccion', correccion.id)
+  return ApiResponse.success(res, correccion)
+}
+
+export async function eliminarCorreccion(req: Request, res: Response) {
+  const previa = await correccionPropia(req)
+  await prisma.correccionContenido.delete({ where: { id: previa.id } })
+
+  broadcast('contenido-actualizado', { id: previa.contenidoId })
+  auditLog(req, 'DELETE', 'marketing_correccion', previa.id)
+  return ApiResponse.noContent(res)
+}
+
 const actualizarContenidoSchema = z.object({
   titulo:        z.string().min(2).optional(),
   tipo:          z.enum(TIPO_CONTENIDO).optional(),
@@ -253,11 +303,33 @@ const actualizarContenidoSchema = z.object({
 
 export async function actualizarContenido(req: Request, res: Response) {
   const data = actualizarContenidoSchema.parse(req.body)
+
+  const antes = await prisma.contenidoMarketing.findUnique({
+    where: { id: req.params.id },
+    select: { asignadoAId: true, asignadoPorId: true, titulo: true },
+  })
+  if (!antes) throw new NotFoundError('Contenido no encontrado')
+
+  // Repartir trabajo no solo pasa al crear la tarea: muchas nacen sueltas y se
+  // le pasan a alguien después, desde el formulario de edición. Hasta ahora eso
+  // no quedaba anotado, así que quien la repartía no podía pedirle cambios —y
+  // sin motivo aparente, porque al crearla sí podía (Hotman, 20-ago). Quien
+  // pone el nombre de otra persona en la tarea es quien la asignó, da igual
+  // cuándo lo haga.
+  const mio = (await miMiembro(req.userId))?.id ?? null
+  const reasignada =
+    puedeAsignar(req.userRole) &&
+    data.asignadoAId !== undefined &&
+    data.asignadoAId !== antes.asignadoAId &&
+    data.asignadoAId !== null &&
+    data.asignadoAId !== mio
+
   const contenido = await prisma.contenidoMarketing.update({
     where: { id: req.params.id },
     data: {
       ...data,
       ...(data.fecha ? { fecha: new Date(data.fecha) } : {}),
+      ...(reasignada ? { asignadoPorId: req.userId ?? null } : {}),
       // Si el trabajo pasa a ser de empresa, el valor que tuviera se descarta.
       ...(valorSegunTrabajo(data.tipoTrabajo, data.valor) !== undefined
         ? { valor: valorSegunTrabajo(data.tipoTrabajo, data.valor) }
@@ -265,6 +337,17 @@ export async function actualizarContenido(req: Request, res: Response) {
     },
     include: { asignadoA: { select: SELECT_MIEMBRO }, entregables: true },
   })
+
+  // El mismo aviso que al crear: quien recibe el encargo tiene que enterarse
+  // sin depender de que abra la app por casualidad.
+  if (reasignada && contenido.asignadoA?.userId) {
+    void sendPushToUser(contenido.asignadoA.userId, {
+      title: 'Te asignaron un trabajo',
+      body: contenido.titulo,
+      url: '/marketing/entregables',
+    }).catch(() => {})
+  }
+
   broadcast('contenido-actualizado', { id: contenido.id })
   return ApiResponse.success(res, contenido)
 }

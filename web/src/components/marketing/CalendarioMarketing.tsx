@@ -26,6 +26,8 @@ export interface CorreccionDto {
   mensaje: string
   createdAt: string
   resueltaEn: string | null
+  /** Quién la escribió. Solo esa persona (y un admin) puede corregirla o retirarla. */
+  pedidaPorId?: string | null
   pedidaPor?: { nombre: string | null; email: string; image: string | null } | null
 }
 export interface Contenido {

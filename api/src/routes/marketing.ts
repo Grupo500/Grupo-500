@@ -19,6 +19,9 @@ router.post('/contenidos/:id/entregables', asyncHandler(ctrl.crearEntregable))
 // Correcciones: reemplazan el flujo que el equipo llevaba en Trello.
 router.post('/contenidos/:id/correcciones',  asyncHandler(ctrl.pedirCorreccion))
 router.patch('/contenidos/:id/correcciones', asyncHandler(ctrl.resolverCorrecciones))
+// Una correccion se arregla o se retira; la toca quien la escribio.
+router.patch('/correcciones/:correccionId',   asyncHandler(ctrl.editarCorreccion))
+router.delete('/correcciones/:correccionId',  asyncHandler(ctrl.eliminarCorreccion))
 
 router.get('/entregables',    asyncHandler(ctrl.listarEntregables))
 router.delete('/entregables/:id', asyncHandler(ctrl.eliminarEntregable))
