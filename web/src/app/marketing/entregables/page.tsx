@@ -30,10 +30,11 @@ import { Modal } from '@/components/ui/Modal'
 import {
   Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil,
   ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, Trash2, RotateCcw,
-  ChevronRight, ChevronDown, ChevronsUpDown, LayoutList, Rows3, type LucideIcon,
+  ChevronRight, ChevronDown, ChevronsUpDown, LayoutList, Rows3, Search, X, type LucideIcon,
 } from 'lucide-react'
 import { ContenidoModal, type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
+import { FiltroResponsable } from '@/components/marketing/FiltroResponsable'
 
 const TIPO_LABEL: Record<Contenido['tipo'], string> = {
   VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme', TIKTOKERO: 'TikTokero',
@@ -1022,6 +1023,10 @@ export default function EntregablesPage() {
   const [month, setMonth] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
+  // Estos tres no se recuerdan entre sesiones a propósito: son de momento, y
+  // encontrarlos puestos al día siguiente hace creer que el mes está vacío.
+  const [responsable, setResponsable] = useState('')
+  const [busqueda, setBusqueda] = useState('')
   // Cómo prefiere verlo cada quien. Se recuerda en el equipo: quien trabaja
   // con la tabla no tiene que volver a elegirla cada mañana (Hotman, 20-ago).
   // La tabla es la vista de entrada: es la que responde las preguntas del día
@@ -1078,17 +1083,65 @@ export default function EntregablesPage() {
     staleTime: 30_000,
   })
 
+  /**
+   * Lo que esta persona puede ver del período, antes de filtrar nada.
+   *
+   * De aquí salen los contadores de la barra: "Pendientes 12" tiene que decir
+   * cuántas hay en el mes, no cuántas quedan después del filtro que ya está
+   * puesto — si el número cambiara al elegirlo, dejaría de servir para
+   * decidir (Hotman, 20-ago).
+   */
+  const delPeriodo = useMemo(
+    () => visiblesPara(data?.data ?? [], { rol, userId: miUserId, miembros: miembrosMkt }),
+    [data, rol, miUserId, miembrosMkt],
+  )
+
+  const conteos = useMemo(() => {
+    const publicadas = delPeriodo.filter(c => c.estado === 'PUBLICADO').length
+    return { todas: delPeriodo.length, publicadas, pendientes: delPeriodo.length - publicadas }
+  }, [delPeriodo])
+
+  /** Quién tiene trabajo este mes. La lista del desplegable son estos, no los
+   *  once del área: siete nombres vacíos son siete líneas que leer para nada. */
+  const responsables = useMemo(() => {
+    const mapa = new Map<string, { id: string; nombre: string; foto: string | null; total: number; pendientes: number }>()
+    for (const c of delPeriodo) {
+      const id = c.asignadoA?.id ?? '__sin__'
+      if (!mapa.has(id)) mapa.set(id, {
+        id,
+        nombre: c.asignadoA?.nombre ?? 'Sin responsable',
+        foto: c.asignadoA?.user?.image ?? null,
+        total: 0,
+        pendientes: 0,
+      })
+      const r = mapa.get(id)!
+      r.total++
+      if (c.estado !== 'PUBLICADO') r.pendientes++
+    }
+    return [...mapa.values()].sort((a, b) =>
+      a.id === '__sin__' ? 1 : b.id === '__sin__' ? -1 : b.total - a.total,
+    )
+  }, [delPeriodo])
+
+  const filtradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return delPeriodo.filter(c => {
+      if (filtro === 'PUBLICADO' && c.estado !== 'PUBLICADO') return false
+      if (filtro === 'PENDIENTE' && c.estado === 'PUBLICADO') return false
+      if (responsable && (c.asignadoA?.id ?? '__sin__') !== responsable) return false
+      if (texto && !c.titulo.toLowerCase().includes(texto)) return false
+      return true
+    })
+  }, [delPeriodo, filtro, responsable, busqueda])
+
+  const hayFiltro = filtro !== '' || responsable !== '' || busqueda.trim() !== ''
+  const limpiarFiltros = () => { setFiltro(''); setResponsable(''); setBusqueda('') }
+
   // Agrupado por persona, y los que nadie tomó al final: no es una persona
   // más, es una alerta — algo agendado que no tiene quién lo haga.
   const grupos = useMemo(() => {
-    const todos = visiblesPara(data?.data ?? [], { rol, userId: miUserId, miembros: miembrosMkt })
-    const visibles = todos.filter(c =>
-      filtro === '' ? true
-      : filtro === 'PUBLICADO' ? c.estado === 'PUBLICADO'
-      : c.estado !== 'PUBLICADO',
-    )
     const mapa = new Map<string, Grupo>()
-    for (const c of visibles) {
+    for (const c of filtradas) {
       const id = c.asignadoA?.id ?? '__sin__'
       if (!mapa.has(id)) mapa.set(id, {
         id,
@@ -1101,60 +1154,143 @@ export default function EntregablesPage() {
     return [...mapa.values()].sort((a, b) =>
       a.id === '__sin__' ? 1 : b.id === '__sin__' ? -1 : a.nombre.localeCompare(b.nombre),
     )
-  }, [data, filtro, rol, miUserId, miembrosMkt])
-
-  // Las mismas tareas sin agrupar. Sale de `grupos` a propósito: así la tabla
-  // no puede enseñar de más — el filtro de privacidad ya se aplicó ahí.
-  const planas = useMemo(() => grupos.flatMap(g => g.tareas), [grupos])
+  }, [filtradas])
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title="Entregables" subtitle="Las tareas de cada quien y lo que ya publicó" />
-        <div className="flex items-center gap-2">
-          <Select
-            value={filtro}
-            onValueChange={v => setFiltro(v as typeof filtro)}
-            className="h-[38px] w-[160px]"
-            options={[
-              { value: '',           label: 'Todo' },
-              { value: 'PENDIENTE',  label: 'Pendiente' },
-              { value: 'PUBLICADO',  label: 'Publicado' },
-            ]}
-          />
+      <PageHeader title="Entregables" subtitle="Las tareas de cada quien y lo que ya publicó" />
+
+      {/* La barra, en una sola fila y en el orden en que se decide: primero
+          cuándo, después qué y quién, de último buscar. La forma de verlo va
+          al extremo, separada, porque no filtra nada (Hotman, 20-ago).
+          El buscador es el único elástico: absorbe el espacio que sobra y es
+          el primero en encogerse, así los demás nunca se parten de línea. */}
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 max-[900px]:flex-wrap max-[900px]:overflow-visible">
+        <div className="shrink-0">
           <MonthPicker
             value={month}
             currentMonth={currentMonth}
             dateRange={dateRange}
             onChange={(m, r) => { setMonth(m); setDateRange(r) }}
-            alignRight
+            comoPeriodo
           />
-          {/* Dos formas de ver lo mismo: las tarjetas responden "¿qué tiene
-              cada quien?" y la tabla "¿qué hay para el 21?". */}
-          <div className="flex h-[38px] items-center gap-0.5 rounded-lg border border-outline-variant bg-surface-low p-1" role="group" aria-label="Forma de ver">
-            {([
-              { v: 'tabla'    as const, icono: Rows3,      texto: 'Tabla' },
-              { v: 'tarjetas' as const, icono: LayoutList, texto: 'Tarjetas' },
-            ]).map(o => (
-              <button
-                key={o.v}
-                type="button"
-                onClick={() => cambiarVista(o.v)}
-                aria-pressed={vista === o.v}
-                className={cn(
-                  'inline-flex h-[28px] cursor-pointer items-center gap-1.5 rounded-md px-3 text-[12px] font-semibold transition-colors',
-                  vista === o.v
-                    ? 'bg-surface-lowest text-on-surface shadow-sm'
-                    : 'text-on-surface-variant hover:text-on-surface',
-                )}
-              >
-                <o.icono className="size-3.5" />
-                {o.texto}
-              </button>
-            ))}
-          </div>
+        </div>
+
+        {/* La raya marca que el mes es el alcance de todo lo demás. */}
+        <span className="h-6 w-px shrink-0 bg-outline-variant max-[900px]:hidden" />
+
+        {/* El estado, con su cifra: filtra y de paso dice cuántas hay. Un
+            desplegable que decía "Todo" no decía todo de qué, y obligaba a
+            contar filas para saber cuántas faltaban. */}
+        <div className="flex h-[38px] shrink-0 items-center gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-[3px]" role="group" aria-label="Filtrar por estado">
+          {([
+            { v: ''           as const, texto: 'Todas',      n: conteos.todas,      color: null },
+            { v: 'PENDIENTE'  as const, texto: 'Pendientes', n: conteos.pendientes, color: '#d97706' },
+            { v: 'PUBLICADO'  as const, texto: 'Publicadas', n: conteos.publicadas, color: '#16a34a' },
+          ]).map(o => (
+            <button
+              key={o.v}
+              type="button"
+              onClick={() => setFiltro(o.v)}
+              aria-pressed={filtro === o.v}
+              className={cn(
+                'inline-flex h-[30px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[12.5px] transition-colors',
+                filtro === o.v
+                  ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface',
+              )}
+            >
+              {o.color && <span className="size-[7px] shrink-0 rounded-full" style={{ background: o.color }} />}
+              {o.texto}
+              <span className={cn(
+                'font-semibold tabular-nums',
+                filtro === o.v ? 'text-on-surface' : 'text-on-surface-variant opacity-75',
+              )}>
+                {o.n}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <FiltroResponsable
+          valor={responsable}
+          onCambio={setResponsable}
+          opciones={responsables}
+          total={conteos.todas}
+        />
+
+        {/* Con veinte piezas al mes, encontrar una por el ojo es recorrer la
+            lista entera. */}
+        <label className="flex h-[38px] min-w-[130px] max-w-[280px] flex-1 items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
+          <Search className="size-3.5 shrink-0 text-on-surface-variant" />
+          <input
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            placeholder="Buscar una tarea…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
+          />
+          {busqueda && (
+            <button
+              type="button"
+              onClick={() => setBusqueda('')}
+              aria-label="Limpiar búsqueda"
+              className="grid size-[18px] shrink-0 cursor-pointer place-items-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
+            >
+              <X className="size-2.5" strokeWidth={3} />
+            </button>
+          )}
+        </label>
+
+        <span className="min-w-0 flex-1 max-[900px]:hidden" />
+
+        {/* Dos formas de ver lo mismo: la tabla responde "¿qué hay para el
+            21?" y las tarjetas "¿qué tiene cada quien?". */}
+        <div className="flex h-[38px] shrink-0 items-center gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-[3px]" role="group" aria-label="Forma de ver">
+          {([
+            { v: 'tabla'    as const, icono: Rows3,      texto: 'Tabla' },
+            { v: 'tarjetas' as const, icono: LayoutList, texto: 'Tarjetas' },
+          ]).map(o => (
+            <button
+              key={o.v}
+              type="button"
+              onClick={() => cambiarVista(o.v)}
+              aria-pressed={vista === o.v}
+              className={cn(
+                'inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[12.5px] transition-colors',
+                vista === o.v
+                  ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface',
+              )}
+            >
+              <o.icono className="size-3.5" />
+              {o.texto}
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* Solo cuando hay algo filtrado. Sin esto es fácil abrir la pantalla,
+          ver tres filas y creer que el mes estuvo flojo, cuando lo que queda
+          es un filtro puesto ayer. */}
+      {hayFiltro && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-primary/25 bg-primary/[0.06] px-4 py-2.5 text-[12px] text-on-surface-variant">
+          <span>
+            <b className="font-semibold tabular-nums text-on-surface">{filtradas.length}</b>
+            {' de '}{conteos.todas} pieza{conteos.todas !== 1 ? 's' : ''}
+            {filtro === 'PENDIENTE' && ' · pendientes'}
+            {filtro === 'PUBLICADO' && ' · publicadas'}
+            {responsable && ` · ${responsables.find(r => r.id === responsable)?.nombre ?? ''}`}
+            {busqueda.trim() && ` · «${busqueda.trim()}»`}
+          </span>
+          <button
+            type="button"
+            onClick={limpiarFiltros}
+            className="ml-auto shrink-0 cursor-pointer text-[12px] font-semibold text-primary hover:underline"
+          >
+            Quitar filtros
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-24 text-on-surface-variant">
@@ -1166,7 +1302,7 @@ export default function EntregablesPage() {
         </div>
       ) : vista === 'tabla' ? (
         <TablaEntregables
-          tareas={planas}
+          tareas={filtradas}
           onAbrir={setDetalle}
           onAvanzar={(id, estado) => avanzar.mutate({ id, estado })}
           avanzandoId={avanzar.isPending ? avanzar.variables?.id : undefined}

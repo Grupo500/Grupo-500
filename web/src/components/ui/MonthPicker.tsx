@@ -23,6 +23,12 @@ interface Props {
   onChange: (month: string | null, range: DateRange | null) => void
   alignRight?: boolean
   iconOnly?: boolean
+  /**
+   * Lo pinta como el alcance de la pantalla y no como un filtro más: relleno
+   * suave y sin borde, para que se lea antes que el resto de la fila
+   * (Hotman, 20-ago).
+   */
+  comoPeriodo?: boolean
 }
 
 function buildDays(base: Date): Date[] {
@@ -34,7 +40,7 @@ function buildDays(base: Date): Date[] {
   return days
 }
 
-export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRight = false, iconOnly = false }: Props) {
+export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRight = false, iconOnly = false, comoPeriodo = false }: Props) {
   const [open,     setOpen]     = useState(false)
   const [step,     setStep]     = useState<'month' | 'days'>('month')
   const [viewYear, setViewYear] = useState(() => {
@@ -110,8 +116,29 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
     setCalBase(new Date(y, m - 1, 1))
     onChange(monthKey === currentMonth ? null : monthKey, null)
     setRangeStart(null); setRangeEnd(null)
-    setStep('days')
+    // Elegir un mes cierra. Antes abría solo el calendario de días encima, y
+    // es lo que menos se usa: había que cerrarlo a mano cada vez.
+    setOpen(false)
   }
+
+  /** Los tres períodos que se piden casi siempre, sin navegar el calendario. */
+  function atajo(cual: 'mes' | 'anterior' | 'anio') {
+    if (cual === 'mes') { onChange(null, null); setOpen(false); return }
+    if (cual === 'anio') { handleSelectYear(); return }
+    const [y, m] = currentMonth.split('-').map(Number)
+    const previo = new Date(y, m - 2, 1)
+    const clave = `${previo.getFullYear()}-${String(previo.getMonth() + 1).padStart(2, '0')}`
+    setCalBase(previo)
+    onChange(clave, null)
+    setRangeStart(null); setRangeEnd(null)
+    setOpen(false)
+  }
+
+  const mesAnterior = (() => {
+    const [y, m] = currentMonth.split('-').map(Number)
+    const p = new Date(y, m - 2, 1)
+    return `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}`
+  })()
 
   function handleDayClick(day: Date) {
     if (!rangeStart || (rangeStart && rangeEnd)) {
@@ -163,7 +190,13 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
       ) : (
         <button
           onClick={() => setOpen(p => !p)}
-          className="flex h-[38px] items-center gap-2 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-high)] px-3.5 text-[13px] font-medium text-[var(--on-surface-variant)] transition-all duration-150 hover:border-[var(--primary)] hover:text-[var(--on-surface)] focus:outline-none"
+          className={[
+            'flex h-[38px] cursor-pointer items-center gap-2 rounded-lg border px-3.5 text-[13px] transition-all duration-150 focus:outline-none',
+            comoPeriodo
+              ? 'border-transparent bg-[var(--surface-low)] font-semibold text-[var(--on-surface)] hover:border-[var(--outline)]'
+              : 'border-[var(--outline-variant)] bg-[var(--surface-high)] font-medium text-[var(--on-surface-variant)] hover:border-[var(--primary)] hover:text-[var(--on-surface)]',
+            open ? 'border-[var(--primary)]' : '',
+          ].join(' ')}
         >
           <CalendarDays className="w-3.5 h-3.5 shrink-0" />
           {/* Sin el "(actual)" que iba detrás del mes: el selector ya abre en
@@ -185,6 +218,27 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
           {/* ── PASO 1: Selección de mes ── */}
           {step === 'month' && (
             <>
+              <div className="-mx-4 -mt-4 mb-3 flex flex-wrap gap-1.5 border-b border-[var(--outline-variant)] px-4 py-3">
+                {([
+                  { k: 'mes'      as const, texto: 'Este mes',   activo: value === null && !dateRange },
+                  { k: 'anterior' as const, texto: 'Mes pasado', activo: value === mesAnterior && !dateRange },
+                  { k: 'anio'     as const, texto: 'Este año',   activo: !!isFullYear },
+                ]).map(a => (
+                  <button
+                    key={a.k}
+                    onClick={() => atajo(a.k)}
+                    className={[
+                      'h-7 cursor-pointer rounded-full border px-3 text-[11.5px] transition-colors',
+                      a.activo
+                        ? 'border-transparent bg-[var(--primary)] font-semibold text-[var(--on-primary)]'
+                        : 'border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:border-[var(--outline)] hover:text-[var(--on-surface)]',
+                    ].join(' ')}
+                  >
+                    {a.texto}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex items-center justify-between mb-3">
                 <button
                   onClick={() => setViewYear(y => y - 1)}
@@ -235,14 +289,17 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
                 })}
               </div>
 
-              {value !== null && (
+              {/* El rango de días sigue estando, pero se pide: es lo que menos
+                  se usa y era lo primero que aparecía. */}
+              <div className="-mx-4 -mb-4 mt-3 flex items-center justify-between gap-2 border-t border-[var(--outline-variant)] bg-[var(--surface-low)] px-4 py-2.5">
+                <span className="text-[11px] text-[var(--on-surface-variant)]">¿Necesitas días sueltos?</span>
                 <button
-                  onClick={() => { onChange(null, null); setOpen(false) }}
-                  className="mt-3 w-full text-xs text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors py-1"
+                  onClick={() => { setCalBase(calBase ?? new Date(selected + '-01')); setStep('days') }}
+                  className="shrink-0 cursor-pointer text-[11.5px] font-semibold text-[var(--primary)] hover:underline"
                 >
-                  → Ir al mes actual
+                  Elegir un rango
                 </button>
-              )}
+              </div>
             </>
           )}
 
