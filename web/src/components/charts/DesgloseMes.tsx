@@ -5,7 +5,11 @@ import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
 import { Landmark, Users, Wallet } from 'lucide-react'
 
-interface Desglose { bruto: number; comisionHotmart: number; comisionAsesor: number; neto: number }
+interface Desglose {
+  bruto: number; comisionHotmart: number; comisionAsesor: number; neto: number
+  /** Ventas que Hotmart aún no liquida: sus comisiones van estimadas. */
+  pendiente?: { cantidad: number; monto: number }
+}
 
 /**
  * La tarjeta "Desglose del mes" del dashboard: bruta − Hotmart − asesores =
@@ -64,7 +68,14 @@ export function DesgloseMes({ desde, hasta }: { desde: string; hasta: string }) 
               </span>
             </div>
             <p className="text-[10px] text-on-surface-variant leading-relaxed pt-1">
-              Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.
+              {d.pendiente && d.pendiente.cantidad > 0 ? (
+                <>
+                  Hotmart aún no liquida {d.pendiente.cantidad} venta{d.pendiente.cantidad !== 1 ? 's' : ''} de este mes
+                  ({formatCOP(d.pendiente.monto)}); sus comisiones van estimadas con la tasa del mes.
+                </>
+              ) : (
+                'Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.'
+              )}
             </p>
           </div>
       }

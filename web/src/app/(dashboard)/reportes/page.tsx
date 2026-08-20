@@ -26,7 +26,7 @@ interface MediosPagoData { total: number; totalCantidad: number; metodos: MedioP
 interface DashboardData {
   estudiantes: { total: number; nuevosMes: number }
   cobranza: { cobrado: { monto: number; cantidad: number } }
-  desglose?: { bruto: number; comisionHotmart: number; comisionAsesor: number; neto: number }
+  desglose?: { bruto: number; comisionHotmart: number; comisionAsesor: number; neto: number; pendiente?: { cantidad: number; monto: number } }
 }
 
 const COLORES = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#14b8a6','#f97316']
@@ -288,7 +288,9 @@ export default function ReportesPage() {
                   </div>}
             {!isAsesor && (
               <p className="text-[9px] text-on-surface-variant/70 mt-3 leading-tight">
-                Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.
+                {desglose.pendiente && desglose.pendiente.cantidad > 0
+                  ? `Hotmart aún no liquida ${desglose.pendiente.cantidad} venta${desglose.pendiente.cantidad !== 1 ? 's' : ''} de este período (${formatCOP(desglose.pendiente.monto)}); sus comisiones van estimadas con la tasa del período.`
+                  : 'Neto estimado a TRM oficial; puede variar levemente del depósito real de Hotmart.'}
               </p>
             )}
           </div>

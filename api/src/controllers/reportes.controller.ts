@@ -8,6 +8,55 @@ import { filtroAsesorDe } from '../utils/pagos'
 import { montoPagadoPago } from '../utils/pagos'
 import { asignarPagosACursos } from '../utils/asignarPagos'
 
+/**
+ * Desglose bruto → comisiones → neto de un período, cerrando la cuenta.
+ *
+ * Hotmart publica el reparto de cada venta DÍAS DESPUÉS de cobrarla. Mientras
+ * tanto esos pagos suman en el bruto pero no traen comisión ni neto, así que
+ * sumar las columnas por separado daba una resta que no cuadraba: bruto menos
+ * dos comisiones pequeñas y un neto mucho menor, sin nada que explicara la
+ * diferencia (75 millones en agosto de 2026).
+ *
+ * Lo pendiente se completa con la tasa real del MISMO período —lo que se
+ * llevaron Hotmart y los asesores de las ventas ya liquidadas—, de modo que
+ * `bruto − comisiones = neto` siempre. `pendiente` dice cuánto va estimado
+ * para que la pantalla lo pueda advertir en vez de fingir precisión.
+ */
+async function desgloseConEstimacion(
+  filtroPeriodo: { gte: Date; lte: Date },
+  filtroEstPago: Record<string, unknown>,
+  suma: { monto: number | null; comisionHotmart: number | null; comisionAsesor: number | null; montoNeto: number | null },
+) {
+  const bruto = suma.monto ?? 0
+  const hotReal = suma.comisionHotmart ?? 0
+  const aseReal = suma.comisionAsesor ?? 0
+
+  const sinLiquidar = await prisma.pago.aggregate({
+    where: { estado: 'PAGADO', fechaPago: filtroPeriodo, comisionAsesor: null, ...filtroEstPago },
+    _sum: { monto: true }, _count: true,
+  })
+  const brutoPendiente = sinLiquidar._sum.monto ?? 0
+  const brutoLiquidado = bruto - brutoPendiente
+
+  // Sin nada liquidado todavía no hay tasa que aplicar: se devuelve lo que hay
+  // y la pantalla dirá que el mes entero está pendiente.
+  const tasaHot = brutoLiquidado > 0 ? hotReal / brutoLiquidado : 0
+  const tasaAse = brutoLiquidado > 0 ? aseReal / brutoLiquidado : 0
+
+  const comisionHotmart = Math.round(hotReal + brutoPendiente * tasaHot)
+  const comisionAsesor  = Math.round(aseReal + brutoPendiente * tasaAse)
+
+  return {
+    bruto,
+    comisionHotmart,
+    comisionAsesor,
+    // El neto se deriva de la resta, no de la suma de netos guardados: así la
+    // cuenta que ve la persona es exactamente la que cierra.
+    neto: bruto - comisionHotmart - comisionAsesor,
+    pendiente: { cantidad: sinLiquidar._count, monto: brutoPendiente },
+  }
+}
+
 export async function dashboard(req: Request, res: Response) {
   const hoy = new Date()
   const periodo = (req.query.periodo as string) ?? 'mensual'
@@ -55,6 +104,18 @@ export async function dashboard(req: Request, res: Response) {
     prisma.curso.count({ where: { activo: true } }),
   ])
 
+  // Hotmart publica las comisiones DÍAS DESPUÉS de la venta (se lo preguntamos
+  // a su API: las de los últimos días simplemente no existen todavía). Esos
+  // pagos suman en el bruto pero no en el neto, así que la tarjeta mostraba
+  // una resta que no cuadraba —$296M − $16M − $6M y abajo $197M— y no había
+  // forma de que el lector entendiera el hueco.
+  //
+  // Se completan con la tasa real del propio mes: lo que Hotmart y los
+  // asesores se llevaron de las ventas que SÍ tienen desglose. Así la cuenta
+  // cierra y el neto deja de estar subestimado; la pantalla avisa cuántas
+  // ventas van estimadas.
+  const desglose = await desgloseConEstimacion(filtroPeriodo, filtroEstPago, pagosCobrados._sum)
+
   const s = pagosCobrados._sum
   return ApiResponse.success(res, {
     estudiantes: { total: totalEstudiantes, nuevosMes: estudiantesNuevosMes },
@@ -65,13 +126,9 @@ export async function dashboard(req: Request, res: Response) {
       pendiente: { monto: pagosPorCobrar._sum.monto ?? 0, cantidad: pagosPorCobrar._count },
     },
     cobradoMes: s.monto ?? 0,
-    // Desglose de comisiones del período (en COP)
-    desglose: {
-      bruto:           s.monto ?? 0,
-      comisionHotmart: s.comisionHotmart ?? 0,
-      comisionAsesor:  s.comisionAsesor ?? 0,
-      neto:            s.montoNeto ?? 0,
-    },
+    // Desglose de comisiones del período (en COP), con las ventas que Hotmart
+    // aún no liquida estimadas a la tasa real del mes.
+    desglose,
     cursosActivos,
     periodo,
   })
@@ -1476,7 +1533,7 @@ export async function resumenGeneral(req: Request, res: Response) {
     await Promise.all([
       prisma.pago.aggregate({
         where: { estado: 'PAGADO', fechaPago: { gte: inicio, lte: fin } },
-        _sum: { monto: true, montoNeto: true, comisionAsesor: true }, _count: true,
+        _sum: { monto: true, montoNeto: true, comisionAsesor: true, comisionHotmart: true }, _count: true,
       }),
       prisma.asesor.count({ where: { esAdministrativo: false } }),
       prisma.pago.count({ where: { asesorId: null, estado: 'PAGADO' } }),
@@ -1497,6 +1554,10 @@ export async function resumenGeneral(req: Request, res: Response) {
       }),
       calcularPendientes(null),
     ])
+
+  const desglose = await desgloseConEstimacion(
+    { gte: inicio, lte: fin }, {}, pagosMes._sum,
+  )
 
   const porEstado = (e: string) => contenidoMes.find(c => c.estado === e)?._count ?? 0
   const sumaCobros = (e: string) =>
@@ -1529,9 +1590,12 @@ export async function resumenGeneral(req: Request, res: Response) {
   return ApiResponse.success(res, {
     periodo: { desde: inicio, hasta: fin },
     ventas: {
-      facturado:   pagosMes._sum.monto ?? 0,
-      neto:        pagosMes._sum.montoNeto ?? 0,
-      comisiones:  pagosMes._sum.comisionAsesor ?? 0,
+      facturado:   desglose.bruto,
+      // Mismo criterio que el dashboard: lo que Hotmart aún no liquida va
+      // estimado, o el neto queda subestimado y las dos pantallas se pelean.
+      neto:        desglose.neto,
+      comisiones:  desglose.comisionHotmart + desglose.comisionAsesor,
+      pendiente:   desglose.pendiente,
       cantidad:    pagosMes._count,
       asesores:    asesoresActivos,
       sinAsesor,
