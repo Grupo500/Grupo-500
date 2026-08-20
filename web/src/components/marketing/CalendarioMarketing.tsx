@@ -444,15 +444,6 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   const [notas, setNotas]           = useState(contenido?.notas ?? '')
   const [error, setError]           = useState('')
 
-  // Quién queda como responsable: al editar, el que ya tenía; al crear, uno
-  // mismo. El backend hace la misma cuenta —esto es solo para mostrarlo—, así
-  // que si la persona no tiene ficha de marketing (un admin, por ejemplo) el
-  // contenido queda sin asignar y aquí se dice.
-  const { data: sesion } = useSession()
-  const responsable = esEdicion
-    ? miembros.find(m => m.id === asignadoAId) ?? null
-    : miembros.find(m => m.userId === sesion?.user?.id) ?? null
-
   // Entregables
   const [plataforma, setPlataforma] = useState('YOUTUBE')
   const [url, setUrl]               = useState('')
@@ -674,32 +665,11 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
           </div>
         )}
 
-        {/* Sin selector: el contenido queda a nombre de quien lo está creando,
-            que es como el equipo lo viene haciendo (Hotman, 20-ago). Elegirse
-            a sí mismo en una lista de once caras era un clic de más. Se muestra
-            a quién queda para que no sea magia invisible; al editar, se sigue
-            viendo el responsable real aunque lo haya puesto otra persona. */}
-        <div>
-          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Asignado a</label>
-          <div className="inline-flex items-center gap-2 rounded-full border border-outline-variant bg-surface-lowest py-1 pl-1 pr-3">
-            {responsable ? (
-              <>
-                <AvatarMiembro id={responsable.id} nombre={responsable.nombre} image={responsable.user?.image} size={21} />
-                <span className="text-[12.5px] text-on-surface">{responsable.nombre}</span>
-              </>
-            ) : (
-              <>
-                <span className="grid h-[21px] w-[21px] place-items-center rounded-full border border-dashed border-outline text-[9px] font-bold text-on-surface-variant">
-                  ?
-                </span>
-                <span className="text-[12.5px] text-on-surface-variant">Sin asignar</span>
-              </>
-            )}
-          </div>
-          {!esEdicion && responsable && (
-            <p className="mt-1 text-[11px] text-outline">Queda a tu nombre.</p>
-          )}
-        </div>
+        {/* El "asignado a" no aparece en el formulario: el contenido queda
+            siempre a nombre de quien lo crea y eso lo resuelve el backend
+            (Hotman, 20-ago). Mostrarlo tampoco aportaba —era una fila fija
+            que nadie podía cambiar— y el responsable ya se ve en la ficha del
+            calendario y en el tablero. */}
 
         {esEdicion && (
           <div>

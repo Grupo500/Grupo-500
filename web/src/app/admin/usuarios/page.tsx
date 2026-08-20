@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { InputPassword } from '@/components/ui/InputPassword'
 import { Select } from '@/components/ui/Select'
 import { formatDate, cn } from '@/lib/utils'
-import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp, Megaphone, Ban } from 'lucide-react'
+import { Users, Shield, UserCheck, Loader2, RefreshCw, UserPlus, Trash2, X, Pencil, Search, TrendingUp, Megaphone, Ban, Camera } from 'lucide-react'
 import { ROLES_MARKETING, OPCIONES_ROL, ROL_LABEL, type Rol } from '@/lib/roles'
 
 interface Asesor {
@@ -87,6 +87,35 @@ export default function UsuariosPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
     onError: (e: Error) => alert(e.message || 'Error al eliminar el usuario'),
   })
+
+  // Subir la foto de cualquier persona (solo ADMIN, que ya lo valida el API).
+  // Dos pasos, el mismo flujo que usa Ajustes: la imagen va a Cloudinary y
+  // luego se guarda su URL en el usuario.
+  const [subiendoFoto, setSubiendoFoto] = useState<string | null>(null)
+  const subirFoto = async (userId: string, file: File) => {
+    setSubiendoFoto(userId)
+    try {
+      const token = await getClientToken()
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
+      })
+      if (!res.ok) throw new Error('No se pudo subir la imagen')
+      const { data } = await res.json()
+      await fetcher(`/auth/usuarios/${userId}/foto`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: data.url }),
+      })
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      queryClient.invalidateQueries({ queryKey: ['marketing-miembros'] })
+    } catch (e: any) {
+      alert(e?.message ?? 'Error al cambiar la foto')
+    } finally {
+      setSubiendoFoto(null)
+    }
+  }
 
   const suspender = useMutation({
     mutationFn: ({ id, suspendido }: { id: string; suspendido: boolean }) =>
@@ -291,14 +320,38 @@ export default function UsuariosPage() {
 
                 {/* Avatar + nombre + badge */}
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 md:w-11 md:h-11 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0">
+                  {/* El avatar es también el botón para ponerle foto a alguien.
+                      La foto de Google solo llega si la persona entra con
+                      Google; quien usa contraseña se quedaba sin foto para
+                      siempre y nadie del equipo podía arreglárselo (caso de
+                      Valentina Valbuena, 20-ago). */}
+                  <label
+                    className="group relative w-9 h-9 md:w-11 md:h-11 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex-shrink-0 cursor-pointer"
+                    title={`Cambiar la foto de ${u.nombre ?? u.email}`}
+                  >
                     {u.image
                       ? <img src={u.image} alt={u.nombre ?? u.email} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center">
                           <span className="text-xs md:text-sm font-bold text-primary">{(u.nombre ?? u.email)[0].toUpperCase()}</span>
                         </div>
                     }
-                  </div>
+                    <span className="absolute inset-0 grid place-items-center bg-black/0 transition-colors group-hover:bg-black/50">
+                      {subiendoFoto === u.id
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                        : <Camera className="w-3.5 h-3.5 text-white opacity-0 transition-opacity group-hover:opacity-100" />}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      disabled={!!subiendoFoto}
+                      onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) subirFoto(u.id, f)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] md:text-sm font-semibold text-on-surface truncate leading-snug">
                       {u.nombre ?? u.asesor?.nombre ?? '—'}

@@ -22,6 +22,7 @@ import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
+import { Modal } from '@/components/ui/Modal'
 import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock } from 'lucide-react'
 import { type Contenido } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
@@ -89,12 +90,18 @@ function Tarea({ c }: { c: Contenido }) {
   )
 }
 
+/** Cuántas tareas se ven en la tarjeta antes de mandar el resto al modal. */
+const VISIBLES = 5
+
+type Grupo = { id: string; nombre: string; foto: string | null; tareas: Contenido[] }
+
 export default function EntregablesPage() {
   const now = new Date()
   const currentMonth = format(now, 'yyyy-MM')
   const [month, setMonth] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
+  const [verTodas, setVerTodas] = useState<Grupo | null>(null)
 
   const { desde, hasta } = dateRange
     ? { desde: toISO(dateRange.start), hasta: toISO(dateRange.end) }
@@ -115,7 +122,7 @@ export default function EntregablesPage() {
       : filtro === 'PUBLICADO' ? c.estado === 'PUBLICADO'
       : c.estado !== 'PUBLICADO',
     )
-    const mapa = new Map<string, { id: string; nombre: string; foto: string | null; tareas: Contenido[] }>()
+    const mapa = new Map<string, Grupo>()
     for (const c of visibles) {
       const id = c.asignadoA?.id ?? '__sin__'
       if (!mapa.has(id)) mapa.set(id, {
@@ -185,14 +192,41 @@ export default function EntregablesPage() {
                     {publicados > 0 && <span className="font-semibold text-[#16a34a]">{publicados} publ.</span>}
                   </p>
                 </div>
+                {/* Solo las 5 más recientes: con diez y pico tareas la tarjeta
+                    de una persona estiraba la página y descuadraba la columna
+                    de al lado. El resto se ve completo en el modal (Hotman,
+                    20-ago). */}
                 <div className="divide-y divide-outline-variant/50">
-                  {g.tareas.map(t => <Tarea key={t.id} c={t} />)}
+                  {g.tareas.slice(0, VISIBLES).map(t => <Tarea key={t.id} c={t} />)}
                 </div>
+                {g.tareas.length > VISIBLES && (
+                  <button
+                    type="button"
+                    onClick={() => setVerTodas(g)}
+                    className="w-full cursor-pointer border-t border-outline-variant px-4 py-2.5 text-[12px] font-semibold text-primary transition-colors hover:bg-surface-low"
+                  >
+                    Ver las {g.tareas.length} tareas
+                  </button>
+                )}
               </div>
             )
           })}
         </div>
       )}
+
+      {/* Todas las tareas de una persona, sin recortar */}
+      <Modal
+        abierto={!!verTodas}
+        onClose={() => setVerTodas(null)}
+        titulo={verTodas?.nombre ?? ''}
+        subtitulo={verTodas
+          ? `${verTodas.tareas.length} tarea${verTodas.tareas.length !== 1 ? 's' : ''} en el período`
+          : ''}
+      >
+        <div className="divide-y divide-outline-variant/50">
+          {verTodas?.tareas.map(t => <Tarea key={t.id} c={t} />)}
+        </div>
+      </Modal>
     </div>
   )
 }

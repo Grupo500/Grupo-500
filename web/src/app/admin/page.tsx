@@ -15,6 +15,8 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Loader2, ChevronRight, Users, Megaphone, Receipt, CircleDollarSign, PieChart } from 'lucide-react'
+import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 import { apiFetch } from '@/lib/api'
 import { formatCOP, cn } from '@/lib/utils'
 import { FacturadoMensual } from '@/components/charts/FacturadoMensual'
@@ -49,7 +51,7 @@ const TIPO_LABEL: Record<string, string> = {
 }
 // Orden fijo de colores para la dona: el tipo conserva su color aunque cambie
 // su posición de un mes a otro.
-const TIPO_COLORES = [COLOR.mkt, COLOR.morado, COLOR.ventas, COLOR.cartera, COLOR.fin, '#64748b']
+const TIPO_COLORES = ['#1a7de0', '#2e9e6b', '#d97706', '#7c3aed', '#dc2626', '#0891b2']
 
 function Semaforo({ tono, children }: { tono: 'ok' | 'atencion' | 'info'; children: React.ReactNode }) {
   const c = tono === 'ok' ? COLOR.fin : tono === 'atencion' ? COLOR.cartera : COLOR.mkt
@@ -69,13 +71,15 @@ function Semaforo({ tono, children }: { tono: 'ok' | 'atencion' | 'info'; childr
  * se levanta al pasar el cursor y muestra a dónde va. Sin ese estado no había
  * forma de saber que llevaba a alguna parte (Hotman, 20-ago).
  */
-function Modulo({ titulo, icono: Icono, color, href, irA, estado, children }: {
+function Modulo({ titulo, icono: Icono, color, href, irA, estado, ancho, children }: {
   titulo: string
   icono: typeof Users
   color: string
   href?: string
   irA?: string
   estado?: React.ReactNode
+  /** Ocupa dos columnas de la rejilla. */
+  ancho?: boolean
   children: React.ReactNode
 }) {
   const cuerpo = (
@@ -97,6 +101,7 @@ function Modulo({ titulo, icono: Icono, color, href, irA, estado, children }: {
   )
   const clase = cn(
     'card flex flex-col p-4',
+    ancho && 'md:col-span-2',
     href && [
       'cursor-pointer transition-all duration-200',
       'hover:-translate-y-[3px] hover:border-primary/45 hover:shadow-float',
@@ -202,20 +207,28 @@ export default function AdminResumenPage() {
           </p>
         </Modulo>
 
-        {/* Producción: la carga real de cada persona del equipo */}
+        {/* Producción: la carga real de cada persona. Ocupa dos columnas —el
+            espacio que dejó Equipo al bajar— y con ese ancho caben la foto y
+            el nombre completo (Hotman, 20-ago). */}
         <Modulo
           titulo="Marketing · producción" icono={Megaphone} color={COLOR.mkt}
-          href="/marketing" irA="Ir a Marketing"
+          href="/marketing" irA="Ir a Marketing" ancho
           estado={<Semaforo tono="info">{totalPiezas} pieza{totalPiezas !== 1 ? 's' : ''}</Semaforo>}
         >
           {porPersona.length === 0 ? (
             <p className="py-4 text-center text-[11px] text-on-surface-variant">Sin contenido este mes</p>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2.5">
               {porPersona.slice(0, 5).map((p, i) => (
-                <div key={p.nombre} className="grid grid-cols-[74px_1fr_auto] items-center gap-2 text-[10.5px]">
-                  <span className="truncate text-on-surface-variant">{p.nombre.split(' ').slice(0, 2).join(' ')}</span>
-                  <span className="h-2 overflow-hidden rounded-full bg-surface-high">
+                <div key={p.nombre} className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+                  <span className="flex w-[168px] min-w-0 items-center gap-2.5">
+                    <AvatarMiembro
+                      id={p.nombre} nombre={p.nombre} image={p.image} size={30}
+                      className="ring-2 ring-surface-lowest"
+                    />
+                    <span className="truncate text-[12px] text-on-surface">{p.nombre}</span>
+                  </span>
+                  <span className="h-2.5 overflow-hidden rounded-full bg-surface-high">
                     <span
                       className="block h-full rounded-full"
                       style={{
@@ -224,7 +237,7 @@ export default function AdminResumenPage() {
                       }}
                     />
                   </span>
-                  <b className="tabular-nums text-on-surface">{p.cantidad}</b>
+                  <b className="min-w-[20px] text-right text-[13px] font-bold tabular-nums text-on-surface">{p.cantidad}</b>
                 </div>
               ))}
             </div>
@@ -244,39 +257,6 @@ export default function AdminResumenPage() {
             <p className="mt-2 text-[10px] text-on-surface-variant">
               {(ventas.sinAsesor ?? 0)} pagos sin asesor acreditado
             </p>
-          )}
-        </Modulo>
-
-        {/* Mezcla: qué se está produciendo, no solo cuánto */}
-        <Modulo
-          titulo="Marketing · mezcla" icono={PieChart} color={COLOR.mkt}
-          href="/marketing" irA="Ir a Marketing"
-        >
-          {totalPiezas === 0 ? (
-            <p className="py-4 text-center text-[11px] text-on-surface-variant">Sin contenido este mes</p>
-          ) : (
-            <div className="flex items-center gap-4">
-              <svg width="94" height="94" viewBox="0 0 42 42" aria-hidden="true" className="flex-shrink-0">
-                <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--surface-high)" strokeWidth="5.5" />
-                {arcos.map(a => (
-                  <circle
-                    key={a.tipo} cx="21" cy="21" r="15.9" fill="none" stroke={a.color} strokeWidth="5.5"
-                    strokeDasharray={`${a.pct} ${100 - a.pct}`} strokeDashoffset={a.offset} strokeLinecap="butt"
-                  />
-                ))}
-                <text x="21" y="20.5" textAnchor="middle" fontSize="8" fontWeight="800" fill="var(--on-surface)">{totalPiezas}</text>
-                <text x="21" y="26" textAnchor="middle" fontSize="3.3" fill="var(--on-surface-variant)">piezas</text>
-              </svg>
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                {arcos.map(a => (
-                  <div key={a.tipo} className="flex items-center gap-2 text-[10.5px] text-on-surface-variant">
-                    <span className="size-2 flex-shrink-0 rounded-sm" style={{ background: a.color }} />
-                    <span className="truncate">{TIPO_LABEL[a.tipo] ?? a.tipo}</span>
-                    <b className="ml-auto tabular-nums text-on-surface">{a.cantidad}</b>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
         </Modulo>
 
@@ -302,6 +282,49 @@ export default function AdminResumenPage() {
               <b className="block text-[12px] tabular-nums" style={{ color: COLOR.fin }}>{formatCOP(cobros.pagado)}</b>
             </span>
           </div>
+        </Modulo>
+
+        {/* Mezcla: qué se está produciendo. Misma dona que "Cursos más
+            vendidos" del dashboard —anillo delgado, rebanadas separadas con
+            puntas redondeadas y el total al centro— para que las dos donas de
+            la app se lean igual (Hotman, 20-ago). */}
+        <Modulo
+          titulo="Marketing · mezcla" icono={PieChart} color={COLOR.mkt}
+          href="/marketing" irA="Ir a Marketing"
+        >
+          {totalPiezas === 0 ? (
+            <p className="py-4 text-center text-[11px] text-on-surface-variant">Sin contenido este mes</p>
+          ) : (
+            <>
+              <div className="relative mx-auto" style={{ width: 124, height: 124 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RePieChart>
+                    <Pie
+                      data={arcos} dataKey="cantidad" nameKey="tipo"
+                      innerRadius="82%" outerRadius="100%"
+                      paddingAngle={3} cornerRadius={10} stroke="none"
+                      startAngle={90} endAngle={-270}
+                    >
+                      {arcos.map(a => <Cell key={a.tipo} fill={a.color} />)}
+                    </Pie>
+                  </RePieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-[20px] font-bold leading-none tabular-nums text-on-surface">{totalPiezas}</span>
+                  <span className="mt-0.5 text-[11px] text-on-surface-variant">piezas</span>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {arcos.map(a => (
+                  <div key={a.tipo} className="flex items-start gap-2">
+                    <span className="mt-[3px] size-2.5 flex-shrink-0 rounded-full" style={{ background: a.color }} />
+                    <span className="flex-1 text-[12px] leading-snug text-on-surface">{TIPO_LABEL[a.tipo] ?? a.tipo}</span>
+                    <span className="flex-shrink-0 text-[12px] font-bold tabular-nums text-on-surface">{a.cantidad}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </Modulo>
 
       </div>
