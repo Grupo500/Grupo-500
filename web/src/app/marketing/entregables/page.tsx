@@ -27,7 +27,10 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
-import { Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil } from 'lucide-react'
+import {
+  Link2, Loader2, HelpCircle, CheckCircle2, Circle, Clock, Play, Check, Pencil,
+  ArrowUpRight, Video, LayoutGrid, FileText, Megaphone, type LucideIcon,
+} from 'lucide-react'
 import { ContenidoModal, type Contenido, type Miembro } from '@/components/marketing/CalendarioMarketing'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
@@ -161,12 +164,53 @@ function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
   )
 }
 
+/** El icono que encabeza la ficha, según lo que sea la tarea. */
+const ICONO_TIPO: Record<Contenido['tipo'], LucideIcon> = {
+  VIDEO: Video, VSL: Video, TIKTOKERO: Video,
+  CARRUSEL: LayoutGrid, CARRUMEME: LayoutGrid,
+  GUION: FileText, PUBLICACION: Megaphone, OTRO: Megaphone,
+}
+
+/** Los tres estados en el orden en que ocurren, para el riel de progreso. */
+const RIEL: Contenido['estado'][] = ['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO']
+
+/** Una dirección legible: sin protocolo ni www, que en un enlace son ruido. */
+function direccionCorta(u: string) {
+  return u.replace(/^https?:\/\//, '').replace(/^www\./, '')
+}
+
+/** Un dato de la ficha: etiqueta arriba en pequeño, valor abajo. */
+function Dato({ label, children, className }: {
+  label: string; children: React.ReactNode; className?: string
+}) {
+  return (
+    <div className={cn('min-w-0 bg-surface-lowest px-4 py-3.5', className)}>
+      <p className="mb-1.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+        {label}
+      </p>
+      <div className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-on-surface">
+        {children}
+      </div>
+    </div>
+  )
+}
+
 /**
- * Detalle de una tarea: todo lo que no cabe en la fila, y el hilo de
- * correcciones. Quien puede pedir cambios escribe aquí; quien hizo el trabajo
- * marca desde aquí que ya corrigió.
+ * Detalle de una tarea: todo lo que no cabe en la fila.
+ *
+ * El orden lo manda a qué se entra. Arriba el estado —la pregunta que se hace
+ * de un vistazo, ¿dónde va esto?— con el mismo botón que avanza en la lista:
+ * quien acaba de arreglar una corrección la marca y publica sin cerrar ni
+ * volver a buscar la fila. Después la ficha (quién, para cuándo, cuánto), los
+ * enlaces, y al final el hilo de correcciones, que es lo que reemplaza a
+ * Trello. Escribir queda anclado al pie, que no se va con el scroll.
+ *
+ * Antes era una pila de pastillas del mismo tamaño donde el estado pesaba lo
+ * mismo que el pago, los $50.000 se leían como una etiqueta gris cualquiera y
+ * las correcciones —a lo que se entra— quedaban al final, tras una frase
+ * suelta que decía "Ninguna" (rediseño aprobado por Hotman, 20-ago).
  */
-function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar }: {
+function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar, onAvanzar, avanzando }: {
   c: Contenido
   puedePedir: boolean
   esMio: boolean
@@ -174,11 +218,18 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar }: {
   onCambio: () => void
   /** Abre el formulario completo. Solo se ofrece a quien puede tocar la tarea. */
   onEditar?: () => void
+  onAvanzar: (id: string, estado: Contenido['estado']) => void
+  avanzando: boolean
 }) {
   const [mensaje, setMensaje] = useState('')
+  // El recuadro de escribir empieza plegado: ocupa una línea hasta que hace
+  // falta, y así el hilo se lee sin un formulario vacío ocupando el pie.
+  const [escribiendo, setEscribiendo] = useState(false)
   const e = ESTADO[c.estado]
+  const paso = SIGUIENTE[c.estado]
   const correcciones = c.correcciones ?? []
   const pendientes = correcciones.filter(x => !x.resueltaEn)
+  const indice = RIEL.indexOf(c.estado)
 
   const pedir = useMutation({
     mutationFn: () => apiFetch(`/marketing/contenidos/${c.id}/correcciones`, {
@@ -186,7 +237,7 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar }: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mensaje: mensaje.trim() }),
     }),
-    onSuccess: () => { setMensaje(''); onCambio() },
+    onSuccess: () => { setMensaje(''); setEscribiendo(false); onCambio() },
     onError: (err: Error) => alert(err.message || 'No se pudo enviar'),
   })
 
@@ -197,123 +248,338 @@ function DetalleTarea({ c, puedePedir, esMio, onCerrar, onCambio, onEditar }: {
   })
 
   return (
-    <Modal abierto onClose={onCerrar} titulo={c.titulo}
-           subtitulo={`${TIPO_LABEL[c.tipo]} · ${format(deISO(c.fecha), "d 'de' MMMM", { locale: es })}`}>
-      <div className="space-y-4 px-1 py-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold"
-                style={{ background: `color-mix(in srgb, ${e.color} 14%, transparent)`, color: e.color }}>
-            {e.label}
-          </span>
-          {c.tipoTrabajo === 'FREELANCE' && (
-            <span className="rounded-full bg-surface-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant">
-              Freelance{c.valor ? ` · $${c.valor.toLocaleString('es-CO')}` : ''}
-            </span>
+    <Modal
+      abierto
+      onClose={onCerrar}
+      titulo={c.titulo}
+      icono={ICONO_TIPO[c.tipo]}
+      subtitulo={`${TIPO_LABEL[c.tipo]} · ${format(deISO(c.fecha), "d 'de' MMMM", { locale: es })}`}
+      // Editar sin ir al Planificador: quien tiene la tarea delante es quien
+      // nota que el título quedó mal o que falta el enlace (Hotman, 20-ago).
+      extra={onEditar && (
+        <button
+          type="button"
+          onClick={onEditar}
+          title="Editar"
+          aria-label="Editar"
+          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
+        >
+          <Pencil className="size-3.5" />
+        </button>
+      )}
+      pie={(esMio && pendientes.length > 0) || puedePedir ? (
+        <div className="-mx-5 -my-3.5 space-y-3 bg-surface-low px-5 py-3.5">
+          {esMio && pendientes.length > 0 && (
+            <div className="flex items-center justify-between gap-3">
+              <p className="min-w-0 text-[11.5px] text-on-surface-variant">
+                {pendientes.length === 1
+                  ? 'Tienes un cambio por hacer.'
+                  : `Tienes ${pendientes.length} cambios por hacer.`}
+              </p>
+              <button
+                type="button"
+                disabled={resolver.isPending}
+                onClick={() => resolver.mutate()}
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[#16a34a] px-3.5 py-2 text-[11.5px] font-bold text-white transition-[filter,transform] hover:brightness-110 active:scale-[0.97] disabled:opacity-60"
+              >
+                {resolver.isPending
+                  ? <Loader2 className="size-3.5 animate-spin" />
+                  : <Check className="size-3.5" strokeWidth={2.6} />}
+                Ya lo corregí
+              </button>
+            </div>
           )}
-          {c.clasificacion === 'PAUTA' && (
-            <span className="rounded-full bg-surface-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant">Pauta</span>
-          )}
-          {c.asignadoA && (
-            <span className="ml-auto flex items-center gap-2 text-[12px] text-on-surface-variant">
-              <AvatarMiembro id={c.asignadoA.id} nombre={c.asignadoA.nombre} image={c.asignadoA.user?.image} size={22} />
-              {c.asignadoA.nombre}
-            </span>
-          )}
-          {/* Editar sin ir al Planificador: quien tiene la tarea delante es
-              quien nota que el título quedó mal o que falta el enlace
-              (Hotman, 20-ago). Abre el mismo formulario de siempre. */}
-          {onEditar && (
-            <button
-              type="button"
-              onClick={onEditar}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface transition-colors hover:border-primary hover:text-primary"
-            >
-              <Pencil className="size-3.5" /> Editar
-            </button>
-          )}
+
+          {puedePedir && (escribiendo ? (
+            <div>
+              <textarea
+                autoFocus
+                value={mensaje}
+                onChange={ev => setMensaje(ev.target.value)}
+                placeholder="¿Qué hay que corregir?"
+                className="min-h-[76px] w-full resize-y rounded-[13px] border border-outline-variant bg-surface-lowest px-3.5 py-2.5 text-[12.5px] leading-relaxed text-on-surface outline-none focus:border-primary"
+              />
+              <div className="mt-2.5 flex items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-[10.5px] text-on-surface-variant">
+                  {c.asignadoA
+                    ? `Le llega a ${c.asignadoA.nombre} como notificación.`
+                    : 'Nadie tiene esta tarea asignada todavía.'}
+                </p>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setEscribiendo(false); setMensaje('') }}
+                    className="cursor-pointer rounded-full border border-outline-variant px-3.5 py-2 text-[11.5px] font-semibold text-on-surface-variant transition-colors hover:border-outline hover:text-on-surface"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={mensaje.trim().length < 3 || pedir.isPending}
+                    onClick={() => pedir.mutate()}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-[#dc2626] px-3.5 py-2 text-[11.5px] font-bold text-white transition-[filter,transform] hover:brightness-110 active:scale-[0.97] disabled:opacity-45"
+                  >
+                    {pedir.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Pencil className="size-3.5" />}
+                    Pedir cambios
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setEscribiendo(true)}
+                className="min-w-0 flex-1 cursor-text truncate rounded-full border border-outline-variant bg-surface-lowest px-4 py-2.5 text-left text-[12.5px] text-on-surface-variant transition-colors hover:border-outline"
+              >
+                ¿Qué hay que corregir?
+              </button>
+              <button
+                type="button"
+                onClick={() => setEscribiendo(true)}
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[#dc2626] px-3.5 py-2.5 text-[11.5px] font-bold text-white transition-[filter,transform] hover:brightness-110 active:scale-[0.97]"
+              >
+                <Pencil className="size-3.5" /> Pedir cambios
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : undefined}
+    >
+      {/* Las secciones van de borde a borde: el Modal acolcha el cuerpo y aquí
+          la barra de estado y la ficha llevan fondo y líneas propias. */}
+      <div className="-mx-5 -my-2">
+
+        {/* ── Estado: dónde va la tarea, y el botón que la mueve ── */}
+        <div className="border-b border-outline-variant bg-surface-low px-5 py-4">
+          <div className="mb-3.5 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="size-2.5 shrink-0 rounded-full" style={{ background: e.color }} />
+              <span className="shrink-0 text-[14px] font-semibold" style={{ color: e.color }}>{e.label}</span>
+              {pendientes.length > 0 ? (
+                <span className="truncate text-[11.5px] text-on-surface-variant">
+                  · {pendientes.length} corrección{pendientes.length !== 1 ? 'es' : ''} abierta{pendientes.length !== 1 ? 's' : ''}
+                </span>
+              ) : c.estado === 'PUBLICADO' && c.entregables.length === 0 ? (
+                <span className="truncate text-[11.5px] text-on-surface-variant">· sin enlace</span>
+              ) : null}
+            </div>
+            {paso && (
+              <button
+                type="button"
+                disabled={avanzando}
+                onClick={() => onAvanzar(c.id, paso.estado)}
+                title={`Marcar como ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'publicado'}`}
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-[11.5px] font-bold text-white transition-[transform,filter] hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+                style={{ background: paso.color }}
+              >
+                {avanzando
+                  ? <Loader2 className="size-3.5 animate-spin" />
+                  : paso.estado === 'EN_PROCESO' ? <Play className="size-3.5" /> : <Check className="size-3.5" />}
+                {paso.texto}
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-1.5">
+            {RIEL.map((p, i) => (
+              <div key={p} className="min-w-0 flex-1">
+                {/* `block` en la pista es obligatorio: como elemento en línea la
+                    altura no aplica y la barra crece hasta el alto del texto. */}
+                <span
+                  className="block h-[5px] overflow-hidden rounded-full"
+                  style={{ background: 'color-mix(in srgb, var(--outline) 24%, transparent)' }}
+                >
+                  <span
+                    className="block h-full rounded-full transition-[width] duration-500"
+                    style={{ width: i <= indice ? '100%' : 0, background: ESTADO[p].color }}
+                  />
+                </span>
+                <span className={cn(
+                  'mt-2 block truncate text-[9.5px] font-semibold uppercase tracking-[0.08em]',
+                  i === indice ? 'text-on-surface'
+                    : i < indice ? 'text-on-surface-variant'
+                    : 'text-on-surface-variant opacity-50',
+                )}>
+                  {ESTADO[p].label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
+        {/* ── Ficha: quién, para cuándo, cuánto ── */}
+        <dl className="grid grid-cols-[1.35fr_1fr_1fr] gap-px border-b border-outline-variant bg-outline-variant">
+          <Dato label="Responsable" className="pl-5">
+            {c.asignadoA ? (
+              <>
+                <AvatarMiembro id={c.asignadoA.id} nombre={c.asignadoA.nombre} image={c.asignadoA.user?.image} size={26} />
+                <span className="truncate">{c.asignadoA.nombre}</span>
+              </>
+            ) : (
+              <span className="text-on-surface-variant">Sin asignar</span>
+            )}
+          </Dato>
+
+          <Dato label="Entrega">
+            {format(deISO(c.fecha), "d 'de' MMM", { locale: es })}
+          </Dato>
+
+          {/* El valor de un freelance se lee como plata y no como una etiqueta
+              más: es el dato que después hay que aprobar en Cobros. */}
+          <Dato label={c.tipoTrabajo === 'FREELANCE' ? 'Pago' : 'Trabajo'} className="pr-5">
+            <span className="min-w-0">
+              <span className={cn(
+                'block',
+                c.tipoTrabajo === 'FREELANCE' && 'text-[15px] font-semibold tabular-nums tracking-tight',
+              )}>
+                {c.tipoTrabajo === 'FREELANCE'
+                  ? (c.valor ? `$${c.valor.toLocaleString('es-CO')}` : 'Sin valor')
+                  : 'De la empresa'}
+              </span>
+              <span className="mt-0.5 block truncate text-[10.5px] font-medium text-on-surface-variant">
+                {c.tipoTrabajo === 'FREELANCE'
+                  ? `Freelance${c.clasificacion === 'PAUTA' ? ' · Pauta' : ''}`
+                  : (c.clasificacion === 'PAUTA' ? 'Pauta' : 'Orgánico')}
+              </span>
+            </span>
+          </Dato>
+        </dl>
+
+        {/* ── Notas: el encargo, tal como se dio ── */}
         {c.notas && (
-          <div>
-            <p className="mb-1 text-[11px] font-semibold text-on-surface-variant">Notas</p>
+          <div className="border-b border-outline-variant px-5 py-4">
+            <p className="mb-2.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+              Notas
+            </p>
             <p className="whitespace-pre-wrap rounded-xl bg-surface-low px-3.5 py-3 text-[12.5px] leading-relaxed text-on-surface">
               {c.notas}
             </p>
           </div>
         )}
 
+        {/* ── Enlaces: una tarjeta por sitio, con la dirección a la vista ── */}
         {c.entregables.length > 0 && (
-          <div>
-            <p className="mb-1.5 text-[11px] font-semibold text-on-surface-variant">Publicado en</p>
-            <div className="flex flex-wrap gap-2">
-              {c.entregables.map(en => (
-                <a key={en.id} href={en.url ?? en.videoUrl ?? '#'} target="_blank" rel="noopener noreferrer"
-                   className="flex items-center gap-1.5 rounded-full bg-surface-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant hover:text-primary">
-                  <Link2 className="size-3.5" />
-                  {PLATAFORMA_LABEL[en.plataforma] ?? en.plataforma}
-                </a>
-              ))}
+          <div className="border-b border-outline-variant px-5 py-4">
+            <div className="mb-2.5 flex items-center justify-between gap-3">
+              <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+                Publicado en
+              </p>
+              <p className="shrink-0 text-[10px] tabular-nums text-on-surface-variant">
+                {c.entregables.length} enlace{c.entregables.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {c.entregables.map(en => {
+                const url = en.url ?? en.videoUrl
+                return (
+                  <a
+                    key={en.id}
+                    href={url ?? '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-3 rounded-xl border border-outline-variant px-3.5 py-2.5 transition-[border-color,transform] hover:translate-x-0.5 hover:border-primary"
+                  >
+                    <span className="grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-primary-container text-primary">
+                      <Link2 className="size-[15px]" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[12.5px] font-semibold text-on-surface">
+                        {PLATAFORMA_LABEL[en.plataforma] ?? en.plataforma}
+                      </span>
+                      {url && (
+                        <span className="block truncate text-[10.5px] text-on-surface-variant">
+                          {direccionCorta(url)}
+                        </span>
+                      )}
+                    </span>
+                    <ArrowUpRight className="size-3.5 shrink-0 text-on-surface-variant opacity-50 transition-[color,opacity] group-hover:text-primary group-hover:opacity-100" />
+                  </a>
+                )
+              })}
             </div>
           </div>
         )}
 
-        {/* ── Correcciones ── */}
-        <div className="border-t border-outline-variant pt-3.5">
-          <p className="mb-2 text-[11px] font-semibold text-on-surface-variant">
-            Correcciones {correcciones.length > 0 && `(${correcciones.length})`}
-          </p>
-
-          {correcciones.length === 0 && (
-            <p className="text-[12px] text-on-surface-variant">Ninguna. El trabajo no ha necesitado cambios.</p>
-          )}
-
-          <div className="space-y-2">
-            {correcciones.map(x => (
-              <div key={x.id}
-                   className={cn(
-                     'rounded-xl border-l-[3px] px-3.5 py-2.5',
-                     x.resueltaEn
-                       ? 'border-l-outline-variant bg-surface-low'
-                       : 'border-l-[#dc2626] bg-[#dc2626]/[0.07]',
-                   )}>
-                <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-on-surface">{x.mensaje}</p>
-                <p className="mt-1.5 text-[10.5px] text-on-surface-variant">
-                  {x.pedidaPor?.nombre ?? 'Alguien'} · {format(new Date(x.createdAt), "d 'de' MMM, h:mm a", { locale: es })}
-                  {x.resueltaEn && <span className="font-semibold text-[#16a34a]"> · corregido</span>}
-                </p>
-              </div>
-            ))}
+        {/* ── Correcciones: un hilo, no una lista de cajas ── */}
+        <div className="px-5 py-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant opacity-75">
+              Correcciones
+            </p>
+            {correcciones.length > 0 && (
+              <p className="shrink-0 text-[10px] tabular-nums text-on-surface-variant">{correcciones.length}</p>
+            )}
           </div>
 
-          {esMio && pendientes.length > 0 && (
-            <button
-              type="button"
-              disabled={resolver.isPending}
-              onClick={() => resolver.mutate()}
-              className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-[#d97706] px-3.5 py-2 text-[11.5px] font-bold text-white hover:brightness-110 disabled:opacity-60"
-            >
-              {resolver.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
-              Ya lo corregí
-            </button>
-          )}
-
-          {puedePedir && (
-            <div className="mt-3">
-              <textarea
-                value={mensaje}
-                onChange={ev => setMensaje(ev.target.value)}
-                placeholder="¿Qué hay que corregir?"
-                className="min-h-[74px] w-full resize-y rounded-xl border border-outline-variant bg-surface-lowest px-3.5 py-2.5 text-[12.5px] text-on-surface outline-none focus:border-primary"
-              />
-              <button
-                type="button"
-                disabled={mensaje.trim().length < 3 || pedir.isPending}
-                onClick={() => pedir.mutate()}
-                className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-[#dc2626] px-3.5 py-2 text-[11.5px] font-bold text-white hover:brightness-110 disabled:opacity-45"
+          {correcciones.length === 0 ? (
+            <div className="flex items-center gap-3 rounded-[13px] border border-dashed border-outline-variant px-4 py-3.5">
+              <span
+                className="flex size-[34px] shrink-0 items-center justify-center rounded-full text-[#16a34a]"
+                style={{ background: 'color-mix(in srgb, #16a34a 13%, transparent)' }}
               >
-                {pedir.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Pencil className="size-3.5" />}
-                Pedir cambios
-              </button>
+                <Check className="size-4" strokeWidth={2.6} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[12.5px] font-semibold text-on-surface">Sin cambios pedidos</span>
+                <span className="block text-[11.5px] text-on-surface-variant">El trabajo pasó tal como se entregó.</span>
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              {correcciones.map((x, i) => {
+                const ultima = i === correcciones.length - 1
+                return (
+                  <div key={x.id} className={cn('relative grid grid-cols-[26px_1fr] gap-3', !ultima && 'pb-4')}>
+                    {/* La línea que cose el hilo: se lee como una conversación
+                        en orden y no como cajas sueltas una debajo de otra. */}
+                    {!ultima && <span className="absolute bottom-1 left-[12.5px] top-8 w-px bg-outline-variant" />}
+                    <AvatarMiembro
+                      id={x.pedidaPor?.email ?? x.id}
+                      nombre={x.pedidaPor?.nombre ?? 'Alguien'}
+                      image={x.pedidaPor?.image}
+                      size={26}
+                    />
+                    <div className="min-w-0">
+                      <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
+                        <span className="text-[12px] font-semibold text-on-surface">
+                          {x.pedidaPor?.nombre ?? 'Alguien'}
+                        </span>
+                        <span className="text-[10.5px] text-on-surface-variant">
+                          {format(new Date(x.createdAt), "d 'de' MMM, h:mm a", { locale: es })}
+                        </span>
+                        {x.resueltaEn ? (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#16a34a]"
+                            style={{ background: 'color-mix(in srgb, #16a34a 14%, transparent)' }}
+                          >
+                            <Check className="size-2.5" strokeWidth={3} /> Corregido
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-[#dc2626]"
+                            style={{ background: 'color-mix(in srgb, #dc2626 12%, transparent)' }}
+                          >
+                            <HelpCircle className="size-2.5" strokeWidth={2.6} /> Pendiente
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={cn(
+                          'whitespace-pre-wrap rounded-[3px_12px_12px_12px] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-on-surface',
+                          x.resueltaEn && 'bg-surface-low opacity-75',
+                        )}
+                        style={x.resueltaEn ? undefined : {
+                          background: 'color-mix(in srgb, #dc2626 8%, var(--surface-lowest))',
+                          boxShadow: 'inset 2px 0 0 #dc2626',
+                        }}
+                      >
+                        {x.mensaje}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -512,6 +778,10 @@ export default function EntregablesPage() {
           }
           onCerrar={() => setDetalle(null)}
           onCambio={() => queryClient.invalidateQueries({ queryKey: ['marketing-contenidos-equipo'] })}
+          // El mismo botón que avanza en la lista, para no tener que cerrar y
+          // volver a buscar la fila después de arreglar una corrección.
+          onAvanzar={(id, estado) => avanzar.mutate({ id, estado })}
+          avanzando={avanzar.isPending && avanzar.variables?.id === detalle.id}
         />
       )}
 
