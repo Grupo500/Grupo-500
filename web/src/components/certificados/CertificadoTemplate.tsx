@@ -56,20 +56,30 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
     firmaAndres,
   } = data
 
-  const tipoBold = tipo === 'CURSANDO' ? 'se encuentra matriculado/a' : 'ha completado satisfactoriamente'
+  // Todo el cuerpo se conjuga según si el curso ya terminó o sigue abierto: el
+  // certificado de quien terminó habla en pasado ("se encontró matriculado",
+  // "abarcó") y el de quien sigue estudiando en presente. Redacción pedida por
+  // Hotman el 20-ago, calcada del formato que el equipo venía usando a mano.
+  const enCurso  = tipo === 'CURSANDO'
+  const tipoBold = enCurso ? 'se encuentra matriculado' : 'se encontró matriculado'
 
   // Frase de fechas: solo si hay al menos una fecha configurada en el curso
   let fraseFechas = ''
   if (fechaInicioCurso && fechaFinCurso) {
-    fraseFechas = `, con fecha de inicio el ${formatFechaCorta(fechaInicioCurso)} y fecha de finalización el ${formatFechaCorta(fechaFinCurso)}`
+    fraseFechas = ` que inició el ${formatFechaCorta(fechaInicioCurso)} y ${enCurso ? 'concluye' : 'concluyó'} el ${formatFechaCorta(fechaFinCurso)}`
   } else if (fechaInicioCurso) {
-    fraseFechas = `, con fecha de inicio el ${formatFechaCorta(fechaInicioCurso)}`
+    fraseFechas = ` que inició el ${formatFechaCorta(fechaInicioCurso)}`
   } else if (fechaFinCurso) {
-    fraseFechas = `, con fecha de finalización el ${formatFechaCorta(fechaFinCurso)}`
+    fraseFechas = ` que ${enCurso ? 'concluye' : 'concluyó'} el ${formatFechaCorta(fechaFinCurso)}`
   }
 
   // Materias, simulacros y horario vienen del curso — antes este párrafo era
   // el mismo texto fijo para todos los certificados sin importar el curso real.
+  // Las materias se enumeran con "y" antes de la última, como se escribe en
+  // español; una lista con comas hasta el final se lee a máquina.
+  const listaMaterias = materias.length > 1
+    ? `${materias.slice(0, -1).join(', ')} y ${materias[materias.length - 1]}`
+    : materias[0] ?? ''
 
   return (
     <div
@@ -121,17 +131,21 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
           Que el/la estudiante{' '}
           <strong style={{ textTransform: 'uppercase' }}>{nombreEstudiante}</strong>
           {' '}identificado/a con {tipoDocumento} N°{' '}
-          <strong>{documento || '_______________'}</strong>
-          {' '}{tipoBold} en nuestro PREICFES Modalidad Virtual.
+          <strong>{documento || '_______________'}</strong>,
+          {' '}{tipoBold} en nuestro Preicfes modalidad Virtual.
         </p>
 
         <p style={{ fontSize: '13px', lineHeight: '1.85', textAlign: 'justify', marginBottom: '32px' }}>
-          Pertenece al programa <strong>{curso}</strong>{fraseFechas}.
-          El plan académico abarca un total de <strong>{duracionHoras} horas</strong>
-          {materias.length > 0
-            ? <>, e incluye asignaturas como <em>{materias.join(', ')}</em>{simulacros ? ` y ${simulacros} simulacro${simulacros !== 1 ? 's' : ''} tipo prueba` : ''}.</>
-            : simulacros ? `, e incluye ${simulacros} simulacro${simulacros !== 1 ? 's' : ''} tipo prueba.` : '.'}
-          {' '}{horarioTexto ?? ''}
+          {enCurso ? 'Pertenece al' : 'Perteneció al'} Grupo <strong>{curso}</strong> modalidad virtual{fraseFechas}.
+          {' '}El programa académico {enCurso ? 'abarca' : 'abarcó'} un total de{' '}
+          <strong>{duracionHoras} horas</strong> de clases.
+          {materias.length > 0 && (
+            <>{' '}{enCurso ? 'Incluye' : 'Incluyó'} asignaturas como {listaMaterias}.</>
+          )}
+          {simulacros ? (
+            <>{' '}{enCurso ? 'Contempla' : 'Contempló'} {simulacros} simulacro{simulacros !== 1 ? 's' : ''} tipo prueba.</>
+          ) : null}
+          {horarioTexto ? <>{' '}{horarioTexto}</> : null}
         </p>
 
         <p style={{ fontSize: '13px', marginBottom: '36px', fontStyle: 'italic' }}>Atentamente,</p>
