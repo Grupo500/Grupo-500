@@ -190,8 +190,14 @@ export function BarraRiel({ pestanas, className }: {
       // es parte del contorno, no un elemento que se pueda transicionar. La
       // sombra descansa durante el viaje y vuelve al llegar.
       if (silueta.current) silueta.current.style.filter = 'none'
-      const inicio = performance.now()
+      // El reloj arranca en el PRIMER cuadro que corre, no al programar el
+      // viaje: al cambiar de módulo, Next puede bloquear el hilo medio
+      // segundo hidratando la página nueva, y con el reloj pre-encendido el
+      // primer cuadro llegaba con t=1 — el hueco se teletransportaba en el
+      // teléfono en vez de deslizar (Hotman, 21-ago).
+      let inicio: number | null = null
       const paso = (ahora: number) => {
+        if (inicio === null) inicio = ahora
         const t = Math.min(1, (ahora - inicio) / DURACION_MS)
         const x = desde + (cx - desde) * curva(t)
         dibujar(x)
