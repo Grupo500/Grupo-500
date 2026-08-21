@@ -52,6 +52,7 @@ import { sincronizarAtrasos } from './jobs/sincronizarAtrasos'
 import redesRoutes from './routes/redes'
 import { publicarRedesPendientes } from './jobs/publicarRedes'
 import { respaldarBaseDatos, backupVencido, horaColombia } from './jobs/backupBaseDatos'
+import { revisarCobrosQuincena } from './jobs/enviarCobrosQuincena'
 import { purgarAsesoresRetirados } from './jobs/purgarAsesoresRetirados'
 import { sincronizarLeadsHubspot } from './services/hubspot.service'
 
@@ -276,6 +277,12 @@ app.listen(PORT, () => {
   // Publicador de redes sociales (Marketing > Redes): cada minuto revisa las
   // publicaciones programadas vencidas y las sube a IG/FB vía la Graph API.
   setInterval(() => { void publicarRedesPendientes() }, 60 * 1000)
+
+  // Envío quincenal de cuentas de cobro a Drive (el 14 y el penúltimo día,
+  // aviso la víspera). El candado del día vive en ConfigApp, así que revisar
+  // cada minuto es barato y sobrevive reinicios. Arranca en simulación:
+  // COBROS_QUINCENA_REAL=true lo vuelve de verdad.
+  setInterval(() => { void revisarCobrosQuincena() }, 60 * 1000)
 
   // Respaldo nocturno de la base a Drive, a las 23:59 de Colombia. Se revisa
   // el reloj cada minuto en vez de calcular un setTimeout largo: sobrevive a

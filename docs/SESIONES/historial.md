@@ -1662,3 +1662,105 @@ cobrar — cuotas 2+ cobradas en el mes contra el saldo con que arrancó.
 - Decidir si los 8 asesores sin CRM deben tener cuenta en Trengo/HubSpot.
 - Revisar la cola de 7.886 leads sin asignar en `admin@resultadosgrupo500.com`.
 - Shopify: Hotman quiere conectar su tienda; falta el token de la Admin API.
+
+## Sesión 044 — 2026-08-21 (máquina de Hotman)
+
+**Objetivo:** una tanda larga de diseño móvil dirigida por Hotman con el flujo
+widget-primero (propuesta en artifact → aprobación → código), más datos de
+cursos, certificados y el envío quincenal de cobros a Drive.
+
+### La barra móvil nueva: "la barra con joroba"
+
+Reemplazo completo de la barra inferior (`BarraJoroba.tsx` + `BottomNav.tsx`),
+réplica de un componente que Hotman trajo de 21st.dev y que se afinó en
+~15 iteraciones de widget:
+
+- **De borde a borde y asentada al fondo** (sin esquinas): el icono activo sube
+  a un círculo azul de 64px, la barra levanta una joroba (clipPath 202.9×45.5,
+  2.24× el diámetro del círculo) y las líneas del icono se dibujan de un trazo
+  (`pathLength=100` normaliza los largos). Sin rótulos. Iconos de 34px.
+- **Una sola velocidad: 0,8s** para joroba, subida, caída, trazo y la hoja de
+  "Más" (elegida con una perilla en vivo en el widget).
+- **Siempre cinco pestañas** en toda área: cuatro módulos y "Más". La barra
+  llena sus puestos con los primeros módulos del área (al admin le entra
+  Cursos; nada de pestañas inventadas) y el resto va al panel.
+- **Se esconde al hacer scroll** (cualquier dirección) y vuelve al detenerse.
+- La hoja de "Más" va de borde a borde, pegada al fondo, POR ENCIMA de la
+  barra (regla nueva: una hoja inferior nunca queda bajo la navegación).
+
+**Tres lecciones que costaron horas** (guardadas también en memoria):
+1. El deslizamiento de la joroba se hace con **Web Animations API** con puntos
+   explícitos — las transiciones CSS se tragan el viaje cuando la navegación
+   de Next comprime los cuadros (la joroba "teletransportaba").
+2. **Nada de `filter: drop-shadow` en un contenedor con hijos animados**: re-
+   rasteriza todo por cuadro y en teléfono va a saltos. `box-shadow` en la
+   barra y sombra propia en la joroba.
+3. La pestaña activa se guarda **fuera del componente**: cada área tiene su
+   propia barra y al navegar entre áreas nace de cero — sin memoria, saltaba.
+
+### Celular: se fue la franja de marca; escritorio intacto
+
+`HeaderCondicional` ya no muestra el header azul en móvil (52px ganados arriba).
+Los botones de inicio/notificaciones/actualizar bajaron al renglón del título
+de cada portada (`AccionesPortada`, círculos blancos con borde). El botón de
+"panel" lleva la cuadrícula y el ítem de Ventas se llama **Inicio** con la
+casita (iconos intercambiados). El saludo dice **solo el primer nombre**
+(`primerNombre()` en `lib/utils`, único para los tres saludos) y cabe en un
+renglón. Fuera el enlace "Ver todas las ventas" del dashboard.
+
+### Estudiantes: buscador y filtros en un renglón
+
+`PanelFiltros.tsx` (nuevo, reusable): botón "Filtros" que abre hoja desde abajo
+en celular y panel colgado en escritorio; se aplica al tocar; el botón muestra
+cuántos filtros hay puestos. Fuera el filtro de matrícula (no se usaba); "Solo
+míos" es interruptor con explicación. Exportar/Seleccionar/Nuevo entran a esa
+misma fila en escritorio. El avatar de las tarjetas ganó fondo propio.
+
+### Certificados
+
+- Pestaña rediseñada (opción "con la hoja a la vista"): la miniatura es el
+  MISMO `CertificadoTemplate` del PDF escalado (no puede mentir), con la lista
+  de "lo que va impreso" con vistos/alertas y el documento editable en línea.
+- La miniatura abre un modal a tamaño de lectura con **zoom nativo**: se
+  levanta `maximumScale` del viewport solo mientras está abierto.
+- El botón emite Y descarga ("Descargar el certificado"); si el tipo ya
+  existe, baja el que hay.
+- Marca de agua del PDF a 620px; **solo firma Andrés** (se eliminó la ruta y
+  el campo `firmaSebastian`, que nunca se imprimió).
+
+### Datos de cursos (producción, vía Railway)
+
+Con lo que Nana/Hotman pasaron por WhatsApp: Ruta 500 (100h, 2 simulacros,
+horario completo con viernes de orientación y domingos de corrección),
+Intensivos (40h, 1 simulacro, sáb 6-10pm), Calendario G 2026 (4 simulacros,
+17-oct→20-dic, L-V 4-8pm), B 2027 y A 2027 (310h, 4 simulacros), Premédico
+Cal. A (5 materias propias: histología, biología celular, bioquímica,
+anatomía, fisiología; 5-sep→20-dic, mar/jue 6-8pm + sáb 8-12). Los calendarios
+puros restantes quedaron con 4 simulacros (mismo producto, otra cohorte).
+**Pendiente:** simulacros de combos/Año 500/Premédico y fechas exactas de
+B 2027 ("enero a marzo") y A 2027 ("abril a julio").
+
+### Envío quincenal de cuentas de cobro a Drive (en SIMULACIÓN)
+
+`api/src/jobs/enviarCobrosQuincena.ts` + `services/cuentaCobroPdf.ts` (el
+dibujo del PDF portado a Node, idéntico al del navegador):
+
+- **El 14 y el penúltimo día, 8:00 Colombia**: archiva en Drive todo cobro
+  freelance APROBADO/PAGADO sin `cuentaCobroUrl` (carpeta mes → quincena, la
+  misma lógica del archivo manual). Omite y reporta los que tengan datos
+  financieros incompletos.
+- **El 13 y el antepenúltimo**: aviso a quienes aprueban (ADMIN y líderes,
+  Cristal incluida) con cuántos trabajos y cuánta plata siguen sin aprobar.
+- Candado del día en `ConfigApp` (sobrevive reinicios). **Arranca en
+  simulación**: solo escribe en el log qué habría enviado. Se vuelve real
+  poniendo `COBROS_QUINCENA_REAL=true` en Railway cuando Hotman vea un par
+  de simulaciones.
+
+### Pendientes que siguen abiertos
+
+- Poner `COBROS_QUINCENA_REAL=true` tras revisar la simulación del 30-31 ago.
+- Parche de seguridad de Postgres en Railway (CVE-2026-15741): se aplica
+  reiniciando la base — falta que Hotman diga la hora.
+- Simulacros de combos/Año 500/Premédico; fechas exactas de Cal. B/A 2027.
+- Rotación de credenciales de Postgres + rol `app_rw`; API key nueva;
+  credenciales de Meta en Redes; Shopify; Panel de Edición sin Trello.
