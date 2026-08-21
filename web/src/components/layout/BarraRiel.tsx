@@ -223,8 +223,10 @@ export function BarraRiel({ pestanas, className }: {
       }}
     >
       <svg ref={svgRef} className="absolute inset-0 h-full w-full" aria-hidden preserveAspectRatio="none">
-        {/* Sombra hacia arriba del riel, barata: no re-rasteriza en cada cuadro. */}
-        <path ref={silueta} fill={RIEL} d="" style={{ filter: 'drop-shadow(0 -4px 10px rgba(0,29,61,0.18))' }} />
+        {/* Sin sombra sobre la silueta: un drop-shadow aquí re-rasteriza el
+            SVG entero en cada cuadro del viaje y en el teléfono el hueco se
+            mueve a tirones. El widget aprobado tampoco la lleva. */}
+        <path ref={silueta} fill={RIEL} d="" />
       </svg>
 
       {/* El círculo cian del sidebar, con su resplandor, medio afuera del riel. */}
