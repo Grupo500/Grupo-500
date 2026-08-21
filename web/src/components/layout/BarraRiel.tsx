@@ -46,6 +46,14 @@ const APAGADO = '#94a3b8'
 
 const DURACION_MS = 700
 
+/**
+ * La sombra del riel descansa mientras el hueco viaja: un drop-shadow sobre
+ * una silueta que cambia re-rasteriza el SVG entero en cada cuadro y el
+ * viaje se ve a saltos en el telefono (Hotman, 21-ago) - la misma leccion
+ * de la joroba, colada por segunda vez.
+ */
+const SOMBRA = 'drop-shadow(0 -4px 10px rgba(0,29,61,0.18))'
+
 /** Zona transparente arriba del riel: por ahí asoma el círculo. */
 const TECHO = 34
 const ALTO_FILA = 64
@@ -86,6 +94,7 @@ export function BarraRiel({ pestanas, className }: {
   const fila       = useRef<HTMLDivElement>(null)
   const cxActual   = useRef<number | null>(null)
   const animacion  = useRef<number | null>(null)
+  const medida     = useRef({ w: 0, h: 0 })
 
   const activaReal = pestanas.find(p => p.activa)?.key ?? null
   const [activaVisual, setActivaVisual] = useState<string | null>(() =>
@@ -113,12 +122,20 @@ export function BarraRiel({ pestanas, className }: {
 
   useEffect(() => { memoriaActiva = activaVisual }, [activaVisual])
 
+  /** Mide UNA vez por colocación: leer clientWidth en cada cuadro, justo
+   *  después de escribir estilos, fuerza un recálculo de layout por cuadro. */
+  const medir = () => {
+    const caja = contenedor.current, svg = svgRef.current
+    if (!caja || !svg) return
+    medida.current = { w: caja.clientWidth, h: caja.clientHeight }
+    svg.setAttribute('viewBox', `0 0 ${medida.current.w} ${medida.current.h}`)
+  }
+
   /** La silueta del riel: borde superior recto con el hueco cóncavo en `cx`. */
   const dibujar = (cx: number | null) => {
-    const caja = contenedor.current, path = silueta.current, svg = svgRef.current
-    if (!caja || !path || !svg) return
-    const w = caja.clientWidth, h = caja.clientHeight
-    svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
+    const path = silueta.current
+    if (!path) return
+    const { w, h } = medida.current
     const p = [`M0,${TECHO}`]
     if (cx !== null) {
       p.push(
@@ -131,8 +148,12 @@ export function BarraRiel({ pestanas, className }: {
     path.setAttribute('d', p.join(' '))
   }
 
+  // Por transform y no por `left`: el transform lo compone el navegador sin
+  // recalcular layout, y esto corre 60 veces por segundo.
   const ponerCirculo = (cx: number) => {
-    if (circulo.current) circulo.current.style.left = `${cx}px`
+    if (circulo.current) {
+      circulo.current.style.transform = `translate(${cx - CIRCULO / 2}px, ${-CIRCULO / 2}px)`
+    }
   }
 
   useEffect(() => {
@@ -147,6 +168,7 @@ export function BarraRiel({ pestanas, className }: {
 
     const colocar = (animando: boolean) => {
       if (animacion.current) cancelAnimationFrame(animacion.current)
+      medir()
       const cx = centroActiva()
       if (cx === null) {
         dibujar(null)
@@ -159,19 +181,27 @@ export function BarraRiel({ pestanas, className }: {
       const desde = cxActual.current
       cxActual.current = cx
       if (!animando || desde === null || desde === cx) {
+        if (silueta.current) silueta.current.style.filter = SOMBRA
         dibujar(cx)
         ponerCirculo(cx)
         return
       }
       // El lazo redibuja silueta y círculo juntos, cuadro a cuadro: el hueco
-      // es parte del contorno, no un elemento que se pueda transicionar.
+      // es parte del contorno, no un elemento que se pueda transicionar. La
+      // sombra descansa durante el viaje y vuelve al llegar.
+      if (silueta.current) silueta.current.style.filter = 'none'
       const inicio = performance.now()
       const paso = (ahora: number) => {
         const t = Math.min(1, (ahora - inicio) / DURACION_MS)
         const x = desde + (cx - desde) * curva(t)
         dibujar(x)
         ponerCirculo(x)
-        animacion.current = t < 1 ? requestAnimationFrame(paso) : null
+        if (t < 1) {
+          animacion.current = requestAnimationFrame(paso)
+        } else {
+          animacion.current = null
+          if (silueta.current) silueta.current.style.filter = SOMBRA
+        }
       }
       animacion.current = requestAnimationFrame(paso)
     }
@@ -223,8 +253,7 @@ export function BarraRiel({ pestanas, className }: {
       }}
     >
       <svg ref={svgRef} className="absolute inset-0 h-full w-full" aria-hidden preserveAspectRatio="none">
-        {/* Sombra hacia arriba del riel, barata: no re-rasteriza en cada cuadro. */}
-        <path ref={silueta} fill={RIEL} d="" style={{ filter: 'drop-shadow(0 -4px 10px rgba(0,29,61,0.18))' }} />
+        <path ref={silueta} fill={RIEL} d="" style={{ filter: SOMBRA }} />
       </svg>
 
       {/* El círculo cian del sidebar, con su resplandor, medio afuera del riel. */}
@@ -239,7 +268,9 @@ export function BarraRiel({ pestanas, className }: {
           height: CIRCULO,
           background: CIAN,
           boxShadow: '0 6px 16px rgba(33,185,247,0.5)',
-          transform: 'translate(-50%,-50%)',
+          // `ponerCirculo` lo lleva por transform; esto es solo el arranque.
+          transform: `translate(${-CIRCULO / 2}px, ${-CIRCULO / 2}px)`,
+          willChange: 'transform',
         }}
       >
         {IconoActivo && <IconoActivo className="h-[22px] w-[22px]" strokeWidth={2} />}
