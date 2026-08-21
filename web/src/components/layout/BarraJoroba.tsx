@@ -59,6 +59,16 @@ const JOROBA_ALTO  = Math.round(JOROBA_ANCHO / 4.46)     // 32
 /** Cuánto sube el par icono+círculo: deja el círculo asomando sobre la barra. */
 const SUBIDA = 18
 
+/**
+ * La pestaña activa que se vio por última vez, FUERA del componente.
+ *
+ * Cada área tiene su propio layout con su propia barra: al navegar entre
+ * áreas el componente nace de cero, y sin esta memoria pintaba la pestaña
+ * nueva ya activa — la joroba saltaba en vez de deslizarse (Hotman, 21-ago).
+ * El recién nacido arranca desde la pestaña anterior y anima hacia la nueva.
+ */
+let memoriaActiva: string | null = null
+
 export function BarraJoroba({ pestanas, className }: {
   pestanas: PestanaBarra[]
   className?: string
@@ -68,7 +78,23 @@ export function BarraJoroba({ pestanas, className }: {
   const joroba = useRef<HTMLSpanElement>(null)
   const [listo, setListo] = useState(false)
 
-  const indiceActiva = pestanas.findIndex(p => p.activa)
+  const activaReal = pestanas.find(p => p.activa)?.key ?? null
+  // Arranca en la que se veía antes (si sigue existiendo en esta barra) y un
+  // cuadro después salta a la real: ese cambio de estado es lo que dispara
+  // las transiciones de subida, círculo y joroba.
+  const [activaVisual, setActivaVisual] = useState<string | null>(() =>
+    memoriaActiva !== null && pestanas.some(p => p.key === memoriaActiva)
+      ? memoriaActiva
+      : activaReal,
+  )
+
+  useEffect(() => {
+    if (activaVisual === activaReal) return
+    const id = requestAnimationFrame(() => setActivaVisual(activaReal))
+    return () => cancelAnimationFrame(id)
+  }, [activaReal, activaVisual])
+
+  useEffect(() => { memoriaActiva = activaVisual }, [activaVisual])
 
   /**
    * Normaliza el largo de los trazos de los iconos a 100 (`pathLength`).
@@ -121,11 +147,11 @@ export function BarraJoroba({ pestanas, className }: {
       const activa = nav.querySelector<HTMLElement>('[data-activa="true"]')
       if (!activa) { bulto.style.opacity = '0'; return }
       if (!animando) bulto.style.transition = 'none'
-      // offsetLeft se mide desde el borde exterior de la barra, pero un
-      // elemento absoluto se ancla al interior (tras el padding): sin este
-      // descuento la joroba quedaba corrida 12px a la derecha del circulo.
-      const pad = parseFloat(getComputedStyle(nav).paddingLeft) || 0
-      const x = Math.round(activa.offsetLeft - pad + (activa.offsetWidth - JOROBA_ANCHO) / 2)
+      // offsetLeft y el left:0 de la joroba miden desde el mismo borde: la
+      // caja de padding arranca en el borde interior, el padding no la corre.
+      // (Restarle el padding "para corregir" fue lo que la tiro a la
+      // izquierda el 21-ago.)
+      const x = Math.round(activa.offsetLeft + (activa.offsetWidth - JOROBA_ANCHO) / 2)
       bulto.style.transform = `translate3d(${x}px,0,0)`
       bulto.style.opacity = '1'
       if (!animando) requestAnimationFrame(() => { bulto.style.transition = '' })
@@ -145,7 +171,7 @@ export function BarraJoroba({ pestanas, className }: {
     }
     // `listo` a propósito fuera: solo distingue la primera pasada.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [indiceActiva, pestanas.length])
+  }, [activaVisual, pestanas.length])
 
   return (
     <div
@@ -176,10 +202,11 @@ export function BarraJoroba({ pestanas, className }: {
         // los extremos la cola de la joroba corre hasta el borde y se funde
         // con el, como en el original (Hotman, 21-ago).
         className="relative flex items-end px-3"
-        // Aire mínimo garantizado bajo los iconos: en el navegador la zona
-        // segura del sistema puede ser cero y quedaban contra el borde
-        // (Hotman, 21-ago).
-        style={{ background: FONDO, paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }}
+        // El MAYOR entre la zona segura y 10px, no la suma: sumarlos doblaba
+        // el aire en el iPhone instalado (la zona segura ya es un colchon) y
+        // los iconos quedaban arriba con un vacio enorme debajo. En navegador
+        // la zona es cero y mandan los 10px (Hotman, 21-ago).
+        style={{ background: FONDO, paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 18px)' }}
       >
         <span
           ref={joroba}
@@ -197,12 +224,13 @@ export function BarraJoroba({ pestanas, className }: {
 
         {pestanas.map(p => {
           const Icono = p.icon
+          const activa = p.key === activaVisual
           const dentro = (
             <span
-              className={cn('relative grid place-items-center', p.activa && 'trazo-icono')}
+              className={cn('relative grid place-items-center', activa && 'trazo-icono')}
               style={{
-                transform: p.activa ? `translateY(-${SUBIDA}px)` : 'translateY(0)',
-                color: p.activa ? '#fff' : '#8fa6c9',
+                transform: activa ? `translateY(-${SUBIDA}px)` : 'translateY(0)',
+                color: activa ? '#fff' : '#8fa6c9',
                 transition: `transform ${DURACION} ${CURVA}, color .4s`,
               }}
             >
@@ -214,8 +242,8 @@ export function BarraJoroba({ pestanas, className }: {
                   height: CIRCULO,
                   background: '#2094ff',
                   zIndex: -1,
-                  transform: `translate(-50%,-50%) scale(${p.activa ? 1 : 0.2})`,
-                  opacity: p.activa ? 1 : 0,
+                  transform: `translate(-50%,-50%) scale(${activa ? 1 : 0.2})`,
+                  opacity: activa ? 1 : 0,
                   transition: `transform ${DURACION} ${CURVA}, opacity ${DURACION} ${CURVA}`,
                 }}
               />
@@ -227,12 +255,12 @@ export function BarraJoroba({ pestanas, className }: {
 
           return p.href
             ? (
-              <Link key={p.key} href={p.href} aria-label={p.label} data-activa={p.activa} aria-current={p.activa ? 'page' : undefined} className={clases}>
+              <Link key={p.key} href={p.href} aria-label={p.label} data-activa={activa} aria-current={activa ? 'page' : undefined} className={clases}>
                 {dentro}
               </Link>
             )
             : (
-              <button key={p.key} type="button" onClick={p.onClick} aria-label={p.label} data-activa={p.activa} aria-expanded={p.activa} className={clases}>
+              <button key={p.key} type="button" onClick={p.onClick} aria-label={p.label} data-activa={activa} aria-expanded={activa} className={clases}>
                 {dentro}
               </button>
             )

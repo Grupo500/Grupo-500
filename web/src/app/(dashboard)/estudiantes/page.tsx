@@ -377,42 +377,47 @@ const subirComprobante = async (file: File) => {
   const cursoPrecioActual = cursos.find(c => c.id === form.cursoId)?.precio ?? 0
   const precioFinal = cursoPrecioActual - (Number(form.descuentoValor) || 0)
 
+  const botonesAccion = (
+    <>
+      {isAdmin && (
+        <button
+          onClick={exportarEstudiantes}
+          disabled={exportando}
+          title="Exportar base de estudiantes a Excel"
+          className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-lowest transition-colors cursor-pointer disabled:opacity-60"
+        >
+          {exportando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          <span className="hidden sm:inline">{exportando ? 'Exportando…' : 'Exportar'}</span>
+        </button>
+      )}
+      <button
+        onClick={() => { setModoSeleccion(m => !m); setSeleccionados(new Set()) }}
+        className={cn(
+          'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer border',
+          modoSeleccion
+            ? 'bg-primary/10 border-primary/40 text-primary'
+            : 'bg-surface-high border-outline-variant text-on-surface hover:bg-surface-lowest',
+        )}
+      >
+        <CheckSquare className="w-4 h-4" />
+        <span className="hidden sm:inline">{modoSeleccion ? 'Cancelar' : 'Seleccionar'}</span>
+      </button>
+      <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setFormError('') }}
+        className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
+        <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo</span>
+      </button>
+    </>
+  )
+
   return (
     <div className="space-y-5">
+      {/* Los mismos botones en dos sitios: junto al título en celular y en la
+          fila del buscador en escritorio (Hotman, 21-ago). Definidos una vez
+          para que no se desincronicen. */}
       <PageHeader
         title="Estudiantes"
         subtitle={`${totalCount} estudiante${totalCount !== 1 ? 's' : ''} registrado${totalCount !== 1 ? 's' : ''}`}
-        actions={
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <button
-                onClick={exportarEstudiantes}
-                disabled={exportando}
-                title="Exportar base de estudiantes a Excel"
-                className="flex items-center gap-2 px-4 py-2 bg-surface-high border border-outline-variant text-on-surface rounded-xl text-sm font-semibold hover:bg-surface-lowest transition-colors cursor-pointer disabled:opacity-60"
-              >
-                {exportando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                <span className="hidden sm:inline">{exportando ? 'Exportando…' : 'Exportar'}</span>
-              </button>
-            )}
-            <button
-              onClick={() => { setModoSeleccion(m => !m); setSeleccionados(new Set()) }}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer border',
-                modoSeleccion
-                  ? 'bg-primary/10 border-primary/40 text-primary'
-                  : 'bg-surface-high border-outline-variant text-on-surface hover:bg-surface-lowest',
-              )}
-            >
-              <CheckSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">{modoSeleccion ? 'Cancelar' : 'Seleccionar'}</span>
-            </button>
-            <button onClick={() => { setModalCrear(true); setPasoCrear(1); setForm(FORM_EMPTY); setFormError('') }}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
-              <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuevo</span>
-            </button>
-          </div>
-        }
+        actions={<div className="flex items-center gap-2 md:hidden">{botonesAccion}</div>}
       />
 
       {/* ── Buscar y filtrar, en un renglón (Hotman, 21-ago) ──
@@ -437,7 +442,8 @@ const subirComprobante = async (file: File) => {
           )}
         </div>
 
-        <div className="md:ml-auto">
+        <div className="flex items-center gap-2 md:ml-auto">
+          <div className="hidden items-center gap-2 md:flex">{botonesAccion}</div>
           <PanelFiltros
             activos={(filtroTipo !== 'todos' ? 1 : 0) + (soloMios ? 1 : 0)}
             onLimpiar={() => { setFiltroTipo('todos'); setSoloMios(false); setPage(1) }}

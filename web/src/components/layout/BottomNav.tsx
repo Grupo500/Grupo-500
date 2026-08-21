@@ -32,9 +32,9 @@ const primaryItems: NavItem[] = [
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,         adminOnly: false },
   { href: '/mis-ventas',  label: 'Mis ventas',  icon: Receipt,       adminOnly: false, soloAsesor: true },
   { href: '/reportes',    label: 'Analíticas',  icon: BarChart3,     adminOnly: false },
-  // De ultimo a proposito: al admin le completa sus cuatro modulos (no ve
-  // Mis ventas); al asesor, que ya tiene cuatro, se le va al panel de Mas.
-  { href: '/cuotas',      label: 'Cuotas',      icon: CalendarCheck, adminOnly: false },
+  // El cuarto del admin es Ventas generales — no ve Mis ventas y Cuotas no
+  // es un modulo de su barra (Hotman, 21-ago). El asesor ya tiene sus cuatro.
+  { href: '/admin/ventas', label: 'Ventas',     icon: Receipt,       adminOnly: true },
 ]
 
 // Salida al selector de módulos. Va en "Más" en TODAS las áreas: en celular
