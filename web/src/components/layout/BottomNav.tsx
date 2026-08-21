@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { useEffect, useState } from 'react'
 import {
-  Home, Users, CalendarDays,
-  MoreHorizontal, X, BookOpen, School,
+  Home, Users,
+  Menu, X, BookOpen, School,
   FileBarChart2, BarChart3,
-  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck,
+  ClipboardList, Settings, Receipt, Link2, CalendarCheck,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,7 @@ import { FINANZAS_TABS } from '@/lib/finanzasNav'
 import { MARKETING_TABS } from '@/lib/marketingNav'
 import { ADMIN_TABS } from '@/lib/adminNav'
 import { esMarketing, type Rol } from '@/lib/roles'
+import { BarraJoroba, type PestanaBarra } from './BarraJoroba'
 
 
 
@@ -89,36 +90,37 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     ? [{ href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
     : [{ href: '/mis-ventas', label: 'Mis ventas', icon: Receipt, adminOnly: false }, { href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
 
-  const visiblePrimary = enAdmin
-    ? ADMIN_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
-    : enFinanzas
-    ? finanzasDisponibles.slice(0, 4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
-    : enMarketing
-    ? MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: false }))
-    : enVentas
-    ? ventasTabs
-    : primaryItems.filter(porRol)
-
   // Ventas no es un área aparte como Finanzas o Marketing: es una sección de
-  // la app. Por eso, aunque la barra muestre sus pestañas, "Más" conserva los
-  // módulos de siempre — incluidos los tres que quedaron desplazados de la
-  // barra— en vez de vaciarse y dejar al usuario encerrado.
+  // la app. Por eso, aunque la barra muestre sus pestañas, los módulos de
+  // siempre siguen a mano en vez de dejar al usuario encerrado.
   const desplazadosPorVentas = primaryItems
     .filter(porRol)
     .filter(i => !ventasTabs.some(t => t.href === i.href))
 
-  // Sin "Inicio": el header ya lleva el botón de la casita y el logo, los dos
-  // a /inicio, y estaban siempre a la vista. Repetirlo aquí gastaba la primera
-  // casilla del panel en un atajo que ya se tenía (Hotman, 21-ago).
-  const visibleMore = enAdmin
-    ? []
+  // Todo lo que el área podría enseñar en la barra, en orden de importancia.
+  const primariasDelArea: NavItem[] = enAdmin
+    ? ADMIN_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
     : enFinanzas
-    ? finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
+    ? finanzasDisponibles.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
     : enMarketing
-    ? []
+    ? MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: false }))
     : enVentas
-    ? [...desplazadosPorVentas, ...moreItems.filter(porRol)]
-    : moreItems.filter(porRol)
+    ? [...ventasTabs, ...desplazadosPorVentas]
+    : primaryItems.filter(porRol)
+
+  // Tres y "Más", siempre, en todas las áreas (Hotman, 21-ago): antes cada
+  // área decidía cuántas pestañas caben y la barra pasaba de cuatro a cinco
+  // de una pantalla a otra. Lo que no entra en los tres se va al panel.
+  const visiblePrimary = primariasDelArea.slice(0, 3)
+  const fueraDeLaBarra = primariasDelArea.slice(3)
+
+  // Sin "Inicio": el header ya lleva el botón de la casita y el logo, los dos
+  // a /inicio, y estaban siempre a la vista. Repetirlo aquí gastaba una casilla
+  // del panel en un atajo que ya se tenía (Hotman, 21-ago).
+  const visibleMore = [
+    ...fueraDeLaBarra,
+    ...(enAdmin || enFinanzas || enMarketing ? [] : moreItems.filter(porRol)),
+  ]
   const hrefActivoActual = hrefActivo(pathname, [...visiblePrimary, ...visibleMore].map(i => i.href))
   const isMoreActive = visibleMore.some(i => i.href === hrefActivoActual)
   const handleClose = () => setMoreOpen(false)
@@ -141,7 +143,9 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           sheetVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none',
         )}
         style={{
-          bottom: 'calc(env(safe-area-inset-bottom) + 88px)',
+          // Baja hasta la barra y la tapa: una hoja que sube desde abajo nunca
+          // queda por debajo de la navegación (Hotman, 21-ago).
+          bottom: 'calc(env(safe-area-inset-bottom) + 12px)',
           background: 'var(--surface-lowest)',
           border: '1px solid color-mix(in srgb, var(--outline-variant) 60%, transparent)',
         }}
@@ -221,88 +225,27 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
         </div>
       </div>
 
-      {/* ── Floating Tab Bar ── */}
-      <div
-        className="fixed left-4 right-4 z-40 md:hidden"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
-      >
-        <nav
-          className="flex items-center justify-around h-[62px] px-2 rounded-[28px] shadow-2xl"
-          // El mismo azul oscuro del header y del sidebar, plano y no en
-          // degradado: en celular la barra flotante y el header son las dos
-          // piezas de chrome que enmarcan la pantalla, así que comparten
-          // color. El degradado las hacía ver de sistemas distintos.
-          style={{
-            background: '#15203a',
-            boxShadow: '0 8px 32px rgba(0,29,61,0.45), 0 2px 8px rgba(0,29,61,0.25)',
-          }}
-        >
-          {/* Ítems primarios */}
-          {visiblePrimary.map((item, idx) => {
-            const Icon = item.icon
-            const isActive = item.href === hrefActivoActual
-
-            // Ítem central (índice 1 = Estudiantes) con acento especial
-            const isCentral = idx === 1
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex flex-col items-center justify-center gap-1 flex-1 h-full relative group"
-              >
-                <div className={cn(
-                  'flex items-center justify-center rounded-2xl transition-all duration-250',
-                  isActive
-                    ? 'w-12 h-9'
-                    : 'w-10 h-8 group-active:bg-white/10',
-                )}
-                  style={isActive ? {
-                    background: '#21b9f7',
-                    boxShadow: '0 2px 12px rgba(33,185,247,0.5)',
-                  } : undefined}
-                >
-                  <Icon className={cn(
-                    'w-5 h-5 transition-all duration-250',
-                    isActive ? 'text-white' : 'text-white/45',
-                  )} />
-                </div>
-                <span className={cn(
-                  'text-[9px] font-semibold leading-none transition-all duration-250',
-                  isActive ? 'text-[#95daff]' : 'text-white/40',
-                )}>
-                  {item.label}
-                </span>
-              </Link>
-            )
-          })}
-
-          {/* Botón Más */}
-          <button
-            onClick={() => setMoreOpen(!moreOpen)}
-            className="flex flex-col items-center justify-center gap-1 flex-1 h-full relative group"
-          >
-            <div
-              className={cn(
-                'flex items-center justify-center rounded-2xl transition-all duration-250',
-                (moreOpen || isMoreActive) ? 'w-12 h-9' : 'w-10 h-8 group-active:bg-white/10',
-              )}
-              style={(moreOpen || isMoreActive) ? { background: 'rgba(32,148,255,0.22)' } : undefined}
-            >
-              <MoreHorizontal className={cn(
-                'w-5 h-5 transition-all duration-250',
-                (moreOpen || isMoreActive) ? 'text-white' : 'text-white/45',
-              )} />
-            </div>
-            <span className={cn(
-              'text-[9px] font-semibold leading-none transition-all duration-250',
-              (moreOpen || isMoreActive) ? 'text-[#95daff]' : 'text-white/40',
-            )}>
-              Más
-            </span>
-          </button>
-        </nav>
-      </div>
+      {/* ── La barra, con joroba ── */}
+      <BarraJoroba
+        pestanas={[
+          ...visiblePrimary.map<PestanaBarra>(item => ({
+            key:   item.href,
+            label: item.label,
+            icon:  item.icon,
+            href:  item.href,
+            activa: item.href === hrefActivoActual,
+          })),
+          // Las tres rayas van de últimas: ahí vive "Más" y ahí está el pulgar
+          // cuando se sostiene el teléfono (Hotman, 21-ago).
+          {
+            key:   '__mas__',
+            label: 'Más',
+            icon:  Menu,
+            onClick: () => setMoreOpen(o => !o),
+            activa: moreOpen || isMoreActive,
+          },
+        ]}
+      />
     </>
   )
 }
