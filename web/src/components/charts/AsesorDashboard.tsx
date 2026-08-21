@@ -6,10 +6,9 @@ import { useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { apiFetch } from '@/lib/api'
 import { formatCOP } from '@/lib/utils'
-import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
-import { RefreshButton } from '@/components/ui/RefreshButton'
 import { VentasSemana } from './VentasSemana'
 import { PendientesPorCobrar } from './PendientesPorCobrar'
+import { AccionesPortada } from '@/components/layout/AccionesPortada'
 import {
   TrendingUp, TrendingDown, Wallet, Users, Receipt,
   Trophy, Award, Crown,
@@ -144,9 +143,9 @@ export function AsesorDashboard() {
             <p className="text-[13px] text-on-surface-variant mt-0.5 font-medium">Tu desempeño y comisiones</p>
           </div>
         </div>
-        {/* Los botones de refrescar y notificaciones viven en el header de
-            arriba: tenerlos también aquí los mostraba dos veces seguidas en
-            celular (Hotman, 20-ago). */}
+        {/* En escritorio siguen en la franja de arriba; aquí solo aparecen en
+            celular, donde esa franja ya no existe (Hotman, 21-ago). */}
+        <AccionesPortada />
       </div>
 
       {/* Ventas de la semana — pulso diario, exclusivo del dashboard de asesor */}

@@ -31,6 +31,7 @@ import {
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 import { useSession } from 'next-auth/react'
 import { visiblesPara } from '@/lib/visibilidadMarketing'
+import { AccionesPortada } from '@/components/layout/AccionesPortada'
 
 type Estado = Contenido['estado']
 
@@ -172,13 +173,16 @@ export function TableroContenido() {
           ya deja el contenido en la fecha correcta. El botón de arriba abría
           el formulario en el día de hoy y había que corregir la fecha a mano
           (Hotman, 20-ago). */}
-      <div>
-        <h2 className="text-[17px] font-semibold tracking-[-0.022em] text-on-surface">
-          Planificador
-        </h2>
-        <p className="mt-0.5 text-[12px] text-on-surface-variant">
-          Planificación y asignación del equipo · toca el <span className="font-semibold text-primary">+</span> de un día para agregar
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[17px] font-semibold tracking-[-0.022em] text-on-surface">
+            Planificador
+          </h2>
+          <p className="mt-0.5 text-[12px] text-on-surface-variant">
+            Planificación y asignación del equipo · toca el <span className="font-semibold text-primary">+</span> de un día para agregar
+          </p>
+        </div>
+        <AccionesPortada />
       </div>
 
       <div className="card-panel overflow-hidden p-0">

@@ -58,7 +58,11 @@ function cuando(iso: string) {
   return format(d, "d 'de' MMM, h:mm a", { locale: es })
 }
 
-export function NotificacionesButton({ className }: { className?: string }) {
+export function NotificacionesButton({ className, anillo = 'border-[#15203a]' }: {
+  className?: string
+  /** Color del anillo del globo de no leídas: iguala al fondo donde se para el botón. */
+  anillo?: string
+}) {
   const { estado, activar } = usePushNotificaciones()
   const [abierto, setAbierto] = useState(false)
   const caja = useRef<HTMLDivElement>(null)
@@ -147,7 +151,10 @@ export function NotificacionesButton({ className }: { className?: string }) {
               : <Bell className="w-4 h-4" />}
 
         {sinLeer > 0 && (
-          <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-[#15203a] bg-[#dc2626] px-1 text-[9.5px] font-bold tabular-nums leading-none text-white">
+          <span className={cn(
+            'absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 bg-[#dc2626] px-1 text-[9.5px] font-bold tabular-nums leading-none text-white',
+            anillo,
+          )}>
             {sinLeer > 9 ? '9+' : sinLeer}
           </span>
         )}

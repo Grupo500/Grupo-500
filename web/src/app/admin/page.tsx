@@ -22,6 +22,7 @@ import { formatCOP, cn } from '@/lib/utils'
 import { FacturadoMensual } from '@/components/charts/FacturadoMensual'
 import { DesgloseMes } from '@/components/charts/DesgloseMes'
 import { TopAsesores } from '@/components/charts/TopAsesores'
+import { AccionesPortada } from '@/components/layout/AccionesPortada'
 
 interface Resumen {
   periodo: { desde: string; hasta: string }
@@ -161,11 +162,14 @@ export default function AdminResumenPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div>
-        <h1 className="text-[22px] font-bold leading-tight tracking-tight text-on-surface">Resumen general</h1>
-        <p className="mt-0.5 text-[13px] font-medium capitalize text-on-surface-variant">
-          {mes} · las áreas en una sola pantalla
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[22px] font-bold leading-tight tracking-tight text-on-surface">Resumen general</h1>
+          <p className="mt-0.5 text-[13px] font-medium capitalize text-on-surface-variant">
+            {mes} · las áreas en una sola pantalla
+          </p>
+        </div>
+        <AccionesPortada />
       </div>
 
       {/* ── Facturación del mes + a dónde va el dinero ── */}

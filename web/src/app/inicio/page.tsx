@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone, ShieldCheck } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
 import { esMarketing, type Rol } from '@/lib/roles'
+import { AccionesPortada } from '@/components/layout/AccionesPortada'
 
 /** Fecha de hoy en Colombia, con el día y el mes capitalizados. */
 function fechaDeHoy(): string {
@@ -168,8 +169,10 @@ export default async function InicioPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <span className="hidden sm:block text-[13px] text-[#64748b]">{fechaDeHoy()}</span>
+            {/* Sin la casita: ya se está en inicio. */}
+            <AccionesPortada conInicio={false} />
             <LogoutButton />
           </div>
         </header>

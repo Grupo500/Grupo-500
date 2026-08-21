@@ -10,6 +10,7 @@ import { TarjetaKPI, rangoDelMes, nombreMes, pct, numero } from '@/components/fi
 import { SerieDiaria } from '@/components/finanzas/SerieDiaria'
 import { TablaIndicadores } from '@/components/finanzas/TablaIndicadores'
 import { CircleDollarSign, Info } from 'lucide-react'
+import { AccionesPortada } from '@/components/layout/AccionesPortada'
 
 interface Totales {
   ventasNuevas: number
@@ -68,6 +69,9 @@ export default function FinanzasResumenPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
+      {/* Aquí no caben junto al título: ese renglón ya lo llena el selector de
+          mes. Van encima, pegados al borde derecho. */}
+      <AccionesPortada className="-mb-2 justify-end" />
       <PageHeader
         title="Resumen financiero"
         subtitle={

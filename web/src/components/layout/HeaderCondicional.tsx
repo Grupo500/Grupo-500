@@ -1,30 +1,28 @@
-'use client'
-
-import { usePathname } from 'next/navigation'
 import { Header } from './Header'
 
 /**
- * La franja de marca se comporta distinto según el tamaño de pantalla
- * (Hotman, 20-ago):
+ * La franja de marca es cosa de escritorio (Hotman, 21-ago).
  *
  * - **Escritorio: siempre.** Hay alto de sobra y la franja es la marca de la
  *   app; quitarla dejaba las pantallas internas empezando en el vacío.
- * - **Celular: solo en las portadas.** Ahí sí competía por espacio — repetía
- *   el logo encima de cada lista y le robaba una franja a lo que la persona
- *   vino a ver. En las pantallas internas basta el título de la página, y la
- *   navegación vive en la barra de abajo.
+ * - **Celular: nunca.** Repetía el nombre de la app encima de cada pantalla de
+ *   la app, y se llevaba 52px de la parte de arriba, que es la que se ve sin
+ *   desplazar. Los tres botones que vivían ahí —inicio, notificaciones y
+ *   actualizar— bajaron al renglón del título de cada portada, con
+ *   `AccionesPortada`.
  *
  * Se oculta con CSS y no dejando de renderizarla, para que el servidor y el
  * navegador pinten lo mismo: decidirlo con el ancho de la ventana provoca un
  * parpadeo en la primera carga.
- *
- * Portadas: el dashboard de Ventas, el selector de módulos y el resumen de
- * cada área (Administración, Finanzas, Marketing).
  */
-const PORTADAS = new Set(['/dashboard', '/inicio', '/admin', '/finanzas', '/marketing'])
-
 export function HeaderCondicional() {
-  const pathname = usePathname()
-  const esPortada = !!pathname && PORTADAS.has(pathname)
-  return <Header className={esPortada ? undefined : 'max-md:hidden'} />
+  return (
+    <>
+      {/* Sin franja, el espacio de la muesca del teléfono lo reserva esta
+          tira: si no, el título se mete debajo del reloj y la señal cuando la
+          app está instalada en la pantalla de inicio. */}
+      <div className="flex-shrink-0 md:hidden" style={{ height: 'env(safe-area-inset-top)' }} />
+      <Header className="max-md:hidden" />
+    </>
+  )
 }

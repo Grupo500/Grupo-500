@@ -11,6 +11,7 @@ import { FacturadoMensual } from './FacturadoMensual'
 import { DesgloseMes } from './DesgloseMes'
 import { TopAsesores } from './TopAsesores'
 import { PendientesPorCobrar } from './PendientesPorCobrar'
+import { AccionesPortada } from '@/components/layout/AccionesPortada'
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 
@@ -30,7 +31,9 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
   return (
     <div className="space-y-4 animate-fade-in">
 
-      <div>
+      {/* En celular los tres botones del header viven en este renglón. */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
         {/* Un renglón también en el teléfono. El salto de línea forzado partía
             el saludo en dos y le comía dos dedos de alto a la pantalla más
             corta; a 19px la frase entra entera (Hotman, 21-ago). */}
@@ -40,7 +43,7 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
         {/* En una sola fila: son dos mitades de la misma frase, no dos datos.
             Alineadas por la línea base y no por el centro, que es lo que las
             deja parejas de verdad teniendo tamaños distintos. */}
-        <p className="mt-2 flex items-baseline gap-1.5 leading-tight">
+        <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 leading-tight">
           <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">Resumen del mes</span>
           <span className="text-[11px] text-outline">·</span>
           <span className="text-[13px] font-semibold text-on-surface">{mesLabel}</span>
@@ -53,6 +56,9 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
             </Link>
           )}
         </p>
+        </div>
+
+        <AccionesPortada />
       </div>
 
       {/* ── Rediseño (Hotman, 19-ago): la gráfica toma todo el ancho arriba y
