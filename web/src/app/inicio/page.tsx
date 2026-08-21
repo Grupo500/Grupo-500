@@ -97,7 +97,23 @@ export default async function InicioPage() {
       }
     : null
 
+  // El orden es decisión de Hotman (21-ago): tras Ventas van las áreas de
+  // dirección (Marketing, Finanzas), luego las de estudiantes (Simulacros,
+  // Brito) y Administración cierra — en el mosaico de celular/tablet queda
+  // como la tarjeta ancha del fondo.
   const secundarios = [
+    verMarketing && {
+      href: '/marketing', titulo: 'Marketing', icono: Megaphone,
+      // Magenta y no ámbar: el ámbar es de Brito, y además en el resto de la
+      // app significa "pendiente" (cuotas, cobros, alertas).
+      de: '#be185d', a: '#ec4899', borde: '#ec4899',
+      texto: 'Calendario de contenido, cobros y entregables del equipo.',
+    },
+    verFinanzas && {
+      href: '/finanzas', titulo: 'Finanzas', icono: Landmark,
+      de: '#0f766e', a: '#14b8a6', borde: '#14b8a6',
+      texto: 'Ritmo de ventas, mix comercial y cierre mensual.',
+    },
     verSimulacros && {
       href: '/examenes', titulo: 'Simulacros', icono: ClipboardList,
       // Violeta y no azul: el azul es de Ventas, y dos módulos del mismo color
@@ -117,18 +133,6 @@ export default async function InicioPage() {
       // trabajo con identidad propia como Ventas o Marketing.
       de: '#15203a', a: '#2a3a5e', borde: '#2a3a5e',
       texto: 'Resumen de todas las áreas, usuarios y accesos.',
-    },
-    verFinanzas && {
-      href: '/finanzas', titulo: 'Finanzas', icono: Landmark,
-      de: '#0f766e', a: '#14b8a6', borde: '#14b8a6',
-      texto: 'Ritmo de ventas, mix comercial y cierre mensual.',
-    },
-    verMarketing && {
-      href: '/marketing', titulo: 'Marketing', icono: Megaphone,
-      // Magenta y no ámbar: el ámbar es de Brito, y además en el resto de la
-      // app significa "pendiente" (cuotas, cobros, alertas).
-      de: '#be185d', a: '#ec4899', borde: '#ec4899',
-      texto: 'Calendario de contenido, cobros y entregables del equipo.',
     },
   ].filter(Boolean).filter(m => (m as { href: string }).href !== destacado?.href) as {
     href: string; titulo: string; icono: typeof Wallet
