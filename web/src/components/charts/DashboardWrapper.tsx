@@ -31,9 +31,11 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
     <div className="space-y-4 animate-fade-in">
 
       <div>
-        <h1 className="text-[22px] font-bold text-on-surface tracking-tight leading-tight">
-          <span className="md:hidden">{saludo},<br />{firstName} 👋</span>
-          <span className="hidden md:inline">{saludo}, {firstName} 👋</span>
+        {/* Un renglón también en el teléfono. El salto de línea forzado partía
+            el saludo en dos y le comía dos dedos de alto a la pantalla más
+            corta; a 19px la frase entra entera (Hotman, 21-ago). */}
+        <h1 className="text-[19px] sm:text-[22px] font-bold text-on-surface tracking-tight leading-tight">
+          {saludo}, {firstName} 👋
         </h1>
         {/* En una sola fila: son dos mitades de la misma frase, no dos datos.
             Alineadas por la línea base y no por el centro, que es lo que las

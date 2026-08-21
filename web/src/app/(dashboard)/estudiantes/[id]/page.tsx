@@ -1134,14 +1134,37 @@ function TabCertificados({ e, fetcher, onRefresh }: {
     onError: (err: any) => alert(err?.message ?? 'Error al guardar el documento'),
   })
 
-  const generarMutation = useMutation({
-    mutationFn: () => fetcher('/certificados', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estudianteId, tipo: tipoNuevo }),
-    }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['certificados-estudiante', estudianteId] }),
-    onError: (e: any) => alert(e?.message ?? 'Error al generar certificado'),
+  /**
+   * Un solo botón: emite el certificado y baja el PDF.
+   *
+   * Emitir sin bajar dejaba a medias lo que se venía a hacer — nadie entra a
+   * esta pestaña a crear un registro, entra a conseguir el papel. Si el de ese
+   * tipo ya existe no se crea otro: se baja el que hay, para no llenar el
+   * historial de duplicados (Hotman, 21-ago).
+   */
+  const descargarMutation = useMutation({
+    mutationFn: async () => {
+      const existente = certificados.find(c => c.tipo === tipoNuevo)
+      if (existente) {
+        await generarPDF(existente, certificados.indexOf(existente), certificados.length, firmas)
+        return
+      }
+
+      const creado = await fetcher<{ data: { id: string } }>('/certificados', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estudianteId, tipo: tipoNuevo }),
+      })
+
+      // El PDF necesita el colegio y el curso completos, que la respuesta del
+      // POST no trae: se relee la lista y se arma con el recién creado.
+      const { data: lista } = await fetcher<{ data: Certificado[] }>(`/certificados/estudiante/${estudianteId}`)
+      queryClient.setQueryData(['certificados-estudiante', estudianteId], { data: lista })
+
+      const i = lista.findIndex(c => c.id === creado.data.id)
+      if (i >= 0) await generarPDF(lista[i], i, lista.length, firmas)
+    },
+    onError: (e: any) => alert(e?.message ?? 'No se pudo generar el certificado'),
   })
 
   const certificados  = data?.data ?? []
@@ -1155,8 +1178,6 @@ function TabCertificados({ e, fetcher, onRefresh }: {
   const horas = curso?.duracionHoras && curso.duracionHoras > 0
     ? curso.duracionHoras
     : horasPorNombreCurso(curso?.nombre ?? '')
-
-  const yaEmitido = certificados.some(c => c.tipo === tipoNuevo)
 
   // Exactamente los datos que recibirá el PDF. La miniatura renderiza la misma
   // plantilla con este objeto, así que no puede enseñar algo distinto de lo
@@ -1347,15 +1368,15 @@ function TabCertificados({ e, fetcher, onRefresh }: {
           </div>
 
           <button
-            onClick={() => generarMutation.mutate()}
-            disabled={generarMutation.isPending || !tieneDocumento}
+            onClick={() => descargarMutation.mutate()}
+            disabled={descargarMutation.isPending || !tieneDocumento}
             title={!tieneDocumento ? 'Registra el número de documento primero' : undefined}
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-all hover:bg-primary/90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {generarMutation.isPending
+            {descargarMutation.isPending
               ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Award className="w-4 h-4" />}
-            {yaEmitido ? 'Emitir otro' : 'Emitir'} el de {etiquetaTipo}
+              : <Download className="w-4 h-4" />}
+            Descargar el certificado
           </button>
         </div>
       </div>

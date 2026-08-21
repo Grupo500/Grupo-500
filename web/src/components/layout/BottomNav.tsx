@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   FileBarChart2, BarChart3,
-  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck, Home,
+  ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -37,7 +37,6 @@ const primaryItems: NavItem[] = [
 // no hay sidebar ni header, así que sin esta entrada se entra a un área y no
 // se sale — pasaba en Ventas, donde la barra se convierte en las pestañas del
 // área y "Más" quedaba vacío.
-const INICIO: NavItem = { href: '/inicio', label: 'Inicio', icon: Home, adminOnly: false }
 
 const moreItems: NavItem[] = [
   { href: '/cursos',          label: 'Cursos',           icon: BookOpen,      adminOnly: false },
@@ -108,15 +107,18 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     .filter(porRol)
     .filter(i => !ventasTabs.some(t => t.href === i.href))
 
+  // Sin "Inicio": el header ya lleva el botón de la casita y el logo, los dos
+  // a /inicio, y estaban siempre a la vista. Repetirlo aquí gastaba la primera
+  // casilla del panel en un atajo que ya se tenía (Hotman, 21-ago).
   const visibleMore = enAdmin
-    ? [INICIO]
+    ? []
     : enFinanzas
-    ? [INICIO, ...finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))]
+    ? finanzasDisponibles.slice(4).map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: true }))
     : enMarketing
-    ? [INICIO]
+    ? []
     : enVentas
-    ? [INICIO, ...desplazadosPorVentas, ...moreItems.filter(porRol)]
-    : [INICIO, ...moreItems.filter(porRol)]
+    ? [...desplazadosPorVentas, ...moreItems.filter(porRol)]
+    : moreItems.filter(porRol)
   const hrefActivoActual = hrefActivo(pathname, [...visiblePrimary, ...visibleMore].map(i => i.href))
   const isMoreActive = visibleMore.some(i => i.href === hrefActivoActual)
   const handleClose = () => setMoreOpen(false)
@@ -153,6 +155,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
         </div>
 
         {/* Grid */}
+        {visibleMore.length > 0 && (
         <div className="grid grid-cols-4 gap-2 p-4">
           {visibleMore.map((item, i) => {
             const Icon = item.icon
@@ -194,6 +197,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
             )
           })}
         </div>
+        )}
 
         {/* Footer cuenta */}
         <div
