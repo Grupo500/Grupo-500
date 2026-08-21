@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone, ShieldCheck } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
 import { esMarketing, type Rol } from '@/lib/roles'
-import { primerNombre } from '@/lib/utils'
+import { cn, primerNombre } from '@/lib/utils'
 
 /** Fecha de hoy en Colombia, con el día y el mes capitalizados. */
 function fechaDeHoy(): string {
@@ -233,36 +233,51 @@ export default async function InicioPage() {
 
         {/* ── Módulos secundarios ────────────────────────────────────── */}
         {secundarios.length > 0 && (
-          <div className={`grid gap-4 ${
-            secundarios.length >= 3 ? 'sm:grid-cols-3'
-            : secundarios.length === 2 ? 'sm:grid-cols-2'
+          <div className={`grid gap-3 lg:gap-4 ${
+            secundarios.length >= 3 ? 'grid-cols-2 lg:grid-cols-3'
+            : secundarios.length === 2 ? 'grid-cols-2'
             : 'grid-cols-1'
           }`}>
-            {secundarios.map((m, i) => (
-              <Link
-                key={m.href}
-                href={m.href}
-                className="group bg-white rounded-[20px] border border-[#e2e8f0] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--borde)] animate-card-enter"
-                style={{
-                  animationDelay: `${0.12 + i * 0.06}s`,
-                  // El color del borde en hover se resuelve con una variable para
-                  // no generar una clase de Tailwind por módulo.
-                  ['--borde' as string]: m.borde,
-                }}
-              >
-                <div
-                  className="w-11 h-11 rounded-[13px] flex items-center justify-center mb-3.5"
-                  style={{ background: `linear-gradient(135deg, ${m.de}, ${m.a})` }}
+            {secundarios.map((m, i) => {
+              // En celular las áreas van en mosaico de dos columnas y no en
+              // fila, y en tablet igual (Hotman, 21-ago); si el conteo es impar,
+              // la última cierra a lo ancho y acostada para no dejar un
+              // hueco. Las tres columnas quedan solo para escritorio (lg+).
+              const cierraSola = i === secundarios.length - 1 && secundarios.length % 2 === 1
+              return (
+                <Link
+                  key={m.href}
+                  href={m.href}
+                  className={cn(
+                    'group bg-white rounded-[18px] lg:rounded-[20px] border border-[#e2e8f0] p-4 lg:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--borde)] animate-card-enter',
+                    cierraSola && 'col-span-2 lg:col-span-1 flex items-center gap-3.5 lg:block',
+                  )}
+                  style={{
+                    animationDelay: `${0.12 + i * 0.06}s`,
+                    // El color del borde en hover se resuelve con una variable para
+                    // no generar una clase de Tailwind por módulo.
+                    ['--borde' as string]: m.borde,
+                  }}
                 >
-                  <m.icono className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <p className="text-[16px] font-semibold text-[#0f172a]">{m.titulo}</p>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#94a3b8] transition-transform group-hover:translate-x-0.5" />
-                </div>
-                <p className="text-[12.5px] text-[#64748b] leading-relaxed">{m.texto}</p>
-              </Link>
-            ))}
+                  <div
+                    className={cn(
+                      'w-10 h-10 lg:w-11 lg:h-11 rounded-[12px] lg:rounded-[13px] flex items-center justify-center shrink-0 mb-3 lg:mb-3.5',
+                      cierraSola && 'mb-0 lg:mb-3.5',
+                    )}
+                    style={{ background: `linear-gradient(135deg, ${m.de}, ${m.a})` }}
+                  >
+                    <m.icono className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <p className="text-[14.5px] lg:text-[16px] font-semibold text-[#0f172a]">{m.titulo}</p>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#94a3b8] transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                    <p className="text-[11px] lg:text-[12.5px] text-[#64748b] leading-relaxed">{m.texto}</p>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         )}
 
