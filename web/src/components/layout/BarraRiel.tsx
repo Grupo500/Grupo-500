@@ -249,7 +249,9 @@ export function BarraRiel({ pestanas, className }: {
         {pestanas.map(p => {
           const activa = p.key === activaVisual
           const Icono = p.icon
-          const dentro = <Icono className="h-[30px] w-[30px] flex-none" strokeWidth={2} />
+          // Mismo tamano que el icono del circulo: a 30px los inactivos se
+          // veian mas grandes que el activo (Hotman, 21-ago).
+          const dentro = <Icono className="h-6 w-6 flex-none" strokeWidth={2} />
           const clases = cn(
             'flex h-16 min-w-0 cursor-pointer items-center justify-center transition-opacity duration-300',
             // El icono activo vive dentro del círculo, no en la fila.
