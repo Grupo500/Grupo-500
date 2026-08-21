@@ -1122,10 +1122,7 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
   const [ancho, setAncho] = useState(560)
   const [zoom, setZoom]   = useState(1)
   const caja  = useRef<HTMLDivElement>(null)
-  // El zoom también en un ref: durante un pellizco llegan muchos eventos
-  // seguidos y el valor del último render se queda viejo.
   const zoomRef = useRef(1)
-  const pellizco = useRef<{ dedos: number; zoom: number } | null>(null)
 
   useEffect(() => {
     const medir = () => setAncho(Math.max(260, Math.min(
@@ -1143,8 +1140,31 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
     }
   }, [onCerrar])
 
+  /**
+   * Mientras esta hoja está abierta, el navegador puede acercar con los dedos.
+   *
+   * La app trae el zoom bloqueado (`maximumScale: 1` en el viewport) y esa
+   * regla es una sola para todas las pantallas — no se puede permitir en un
+   * elemento y prohibir en el resto. Se levanta al abrir el certificado y se
+   * vuelve a poner al cerrarlo, así el pellizco es el del teléfono, con su
+   * inercia y su arrastre, y ninguna otra pantalla queda destrabada (Hotman,
+   * 21-ago).
+   */
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]')
+    if (!meta) return
+    const original = meta.getAttribute('content') ?? ''
+    meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes')
+    return () => { meta.setAttribute('content', original) }
+  }, [])
+
   const alto = Math.round(ancho * (1123 / 794))
   const TOPE = 4
+
+  // El doble clic solo donde hay ratón. En pantalla táctil el doble toque ya
+  // lo atiende el navegador, y encadenar los dos acercamientos —el suyo y el
+  // nuestro— dejaba la hoja en cualquier parte.
+  const conRaton = typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches
 
   /**
    * Cambia el acercamiento dejando quieto el punto del papel que estaba bajo
@@ -1166,46 +1186,6 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
     })
   }
 
-  /**
-   * El pellizco, con oyentes nativos.
-   *
-   * React entrega `touchmove` como oyente pasivo y ahí `preventDefault` no
-   * hace nada: sin él, dos dedos desplazan la hoja en vez de acercarla.
-   */
-  useEffect(() => {
-    const cont = caja.current
-    if (!cont) return
-    const separacion = (t: TouchList) =>
-      Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
-
-    const empieza = (ev: TouchEvent) => {
-      if (ev.touches.length === 2) {
-        pellizco.current = { dedos: separacion(ev.touches), zoom: zoomRef.current }
-      }
-    }
-    const mueve = (ev: TouchEvent) => {
-      if (ev.touches.length !== 2 || !pellizco.current) return
-      ev.preventDefault()
-      const mx = (ev.touches[0].clientX + ev.touches[1].clientX) / 2
-      const my = (ev.touches[0].clientY + ev.touches[1].clientY) / 2
-      acercar(pellizco.current.zoom * (separacion(ev.touches) / pellizco.current.dedos), mx, my)
-    }
-    const termina = () => { pellizco.current = null }
-
-    cont.addEventListener('touchstart', empieza, { passive: true })
-    cont.addEventListener('touchmove',  mueve,   { passive: false })
-    cont.addEventListener('touchend',   termina)
-    cont.addEventListener('touchcancel', termina)
-    return () => {
-      cont.removeEventListener('touchstart', empieza)
-      cont.removeEventListener('touchmove',  mueve)
-      cont.removeEventListener('touchend',   termina)
-      cont.removeEventListener('touchcancel', termina)
-    }
-    // `acercar` se redefine en cada render pero lee todo de refs, así que
-    // basta con volver a montarlo cuando cambia el tamaño de la hoja.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ancho])
 
   return (
     <div
@@ -1229,16 +1209,14 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
       <div
         ref={caja}
         onClick={ev => ev.stopPropagation()}
-        onDoubleClick={ev => {
+        onDoubleClick={conRaton ? (ev => {
           ev.stopPropagation()
           acercar(zoomRef.current > 1 ? 1 : 2, ev.clientX, ev.clientY)
-        }}
+        }) : undefined}
         className="max-w-full overflow-auto overscroll-contain rounded-md"
         style={{
           maxHeight: alto,
-          // Un dedo desplaza la hoja; dos los atendemos nosotros.
-          touchAction: 'pan-x pan-y',
-          cursor: zoom > 1 ? 'zoom-out' : 'zoom-in',
+          cursor: conRaton ? (zoom > 1 ? 'zoom-out' : 'zoom-in') : undefined,
         }}
       >
         <div style={{ width: ancho * zoom, height: alto * zoom }}>
@@ -1249,9 +1227,11 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
       </div>
 
       <p className="text-[11px] text-white/55">
-        {zoom > 1
-          ? `Acercado ${Math.round(zoom * 100)}% · doble clic para volver`
-          : 'Doble clic para acercar, o júntalo con dos dedos'}
+        {!conRaton
+          ? 'Junta dos dedos para acercar'
+          : zoom > 1
+            ? `Acercado ${Math.round(zoom * 100)}% · doble clic para volver`
+            : 'Doble clic para acercar'}
       </p>
 
       <button
