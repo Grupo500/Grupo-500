@@ -102,7 +102,10 @@ export function CertificadoTemplate({ data, innerRef }: Props) {
         opacity: 0.05, pointerEvents: 'none', zIndex: 0,
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-grupo500.png" alt="" style={{ width: '420px' }} />
+        {/* 620px sobre una hoja de 794: llena el ancho util sin tocar los
+            margenes. A 420 quedaba como un sello pequeno en el centro y casi
+            no se leia como marca de agua (Hotman, 21-ago). */}
+        <img src="/logo-grupo500.png" alt="" style={{ width: '620px' }} />
       </div>
 
       {/* ── Contenido principal ── */}
