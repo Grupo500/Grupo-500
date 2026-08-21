@@ -2,37 +2,26 @@ import { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { ApiResponse } from '../utils/response'
 
-const CLAVES = {
-  firmaSebastian: 'firma_sebastian',
-  firmaAndres:    'firma_andres',
-}
+// El certificado lo firma solo el representante legal. Hubo una segunda
+// firma configurable, pero la plantilla nunca la imprimio y no habia pantalla
+// para subirla (Hotman, 21-ago).
+const CLAVE_FIRMA = 'firma_andres'
 
 export async function getFirmas(_req: Request, res: Response) {
-  const configs = await prisma.configApp.findMany({
-    where: { clave: { in: Object.values(CLAVES) } },
-  })
+  const config = await prisma.configApp.findUnique({ where: { clave: CLAVE_FIRMA } })
 
-  const map = Object.fromEntries(configs.map(c => [c.clave, c.valor]))
-
-  return ApiResponse.success(res, {
-    firmaSebastian: map[CLAVES.firmaSebastian] ?? null,
-    firmaAndres:    map[CLAVES.firmaAndres]    ?? null,
-  })
+  return ApiResponse.success(res, { firmaAndres: config?.valor ?? null })
 }
 
-export function subirFirma(quien: 'sebastian' | 'andres') {
-  return async (req: Request, res: Response) => {
-    const file = req.file as Express.Multer.File & { path: string }
-    if (!file) return res.status(400).json({ error: 'No se recibió imagen' })
+export async function subirFirma(req: Request, res: Response) {
+  const file = req.file as Express.Multer.File & { path: string }
+  if (!file) return res.status(400).json({ error: 'No se recibió imagen' })
 
-    const clave = quien === 'sebastian' ? CLAVES.firmaSebastian : CLAVES.firmaAndres
+  await prisma.configApp.upsert({
+    where:  { clave: CLAVE_FIRMA },
+    update: { valor: file.path },
+    create: { clave: CLAVE_FIRMA, valor: file.path },
+  })
 
-    await prisma.configApp.upsert({
-      where:  { clave },
-      update: { valor: file.path },
-      create: { clave, valor: file.path },
-    })
-
-    return ApiResponse.success(res, { url: file.path })
-  }
+  return ApiResponse.success(res, { url: file.path })
 }

@@ -32,12 +32,11 @@ const router = Router()
 
 router.use(authenticate)
 
-// Cualquier usuario autenticado puede leer las firmas (para generar el PDF)
+// Cualquier usuario autenticado puede leer la firma (para generar el PDF)
 router.get('/firmas', asyncHandler(getFirmas))
 
-// Solo ADMIN puede subir firmas
-router.post('/firmas/sebastian', requireRole('ADMIN'), uploadFirma.single('firma'), asyncHandler(subirFirma('sebastian')))
-router.post('/firmas/andres',    requireRole('ADMIN'), uploadFirma.single('firma'), asyncHandler(subirFirma('andres')))
+// Solo ADMIN puede subirla
+router.post('/firmas/andres', requireRole('ADMIN'), uploadFirma.single('firma'), asyncHandler(subirFirma))
 
 // ── PATCH /api/config/precios — configurar precios de un curso ────────────────
 router.patch('/precios', requireRole('ADMIN'), asyncHandler(async (req, res) => {

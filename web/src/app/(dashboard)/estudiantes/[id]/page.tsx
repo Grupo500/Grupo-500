@@ -1145,7 +1145,7 @@ function TabCertificados({ e, fetcher, onRefresh }: {
   })
 
   const certificados  = data?.data ?? []
-  const firmas: Firmas = firmasData?.data ?? { firmaSebastian: null, firmaAndres: null }
+  const firmas: Firmas = firmasData?.data ?? { firmaAndres: null }
   const tieneDocumento = !!e.documento
 
   const curso = e.cursos?.[0]?.curso

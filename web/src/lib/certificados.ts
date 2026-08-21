@@ -20,7 +20,8 @@ export interface Certificado {
     cursos?: CursoEstudiante[]
   }
 }
-export interface Firmas { firmaSebastian: string | null; firmaAndres: string | null }
+/** El certificado lo firma solo el representante legal. */
+export interface Firmas { firmaAndres: string | null }
 
 export const TIPOS: Record<'CURSANDO' | 'COMPLETADO', { label: string; color: string; icon: LucideIcon }> = {
   CURSANDO:   { label: 'Cursando',   color: 'text-yellow-500 bg-yellow-400/10', icon: Clock },
