@@ -1,20 +1,33 @@
 'use client'
 
 /**
- * La barra de abajo, con joroba.
+ * La barra de abajo, con joroba — réplica del widget aprobado por Hotman
+ * (21-ago, "La barra con joroba").
  *
- * El icono de la sección abierta se sube a un círculo azul y la barra se
- * levanta debajo para recibirlo; la joroba se desliza de una pestaña a otra.
- * La curva sale de un `clipPath` recortado sobre un rectángulo del mismo color
- * de la barra — dibujarla con `border-radius` no da esa entrada suave a los
- * lados (Hotman, 21-ago).
+ * De borde a borde y asentada en el fondo de la pantalla, sin esquinas
+ * redondeadas: así la joroba acompaña a la primera y a la última pestaña sin
+ * pisar ninguna curva. Cubre también la zona de la línea de gesto del
+ * teléfono en el mismo azul. Sin rótulos: los iconos hablan solos.
  *
- * La joroba se coloca midiendo dónde quedó la pestaña abierta: su ancho es
- * exactamente el de una pestaña, así que en la primera y en la última no se
- * sale de la barra ni pisa las esquinas redondeadas.
+ * El icono de la sección abierta se sube a un círculo azul, la barra se
+ * levanta debajo para recibirlo (la joroba: un `clipPath` sobre un
+ * rectángulo del color de la barra) y las líneas del icono se dibujan de un
+ * trazo. Al deseleccionarse, cae a su puesto con el mismo movimiento.
  *
- * Siempre son cuatro pestañas —tres módulos y "Más"—, regla de toda la app en
- * celular; con un número fijo, cada salto recorre la misma distancia.
+ * El círculo vive DENTRO del contenedor del icono: su centro es el centro
+ * del icono por construcción — cuadrarlos a mano con píxeles se descuadraba
+ * con cada ajuste. Y no viaja entre pestañas: aparece en la nueva y
+ * desaparece de la anterior, a la par con la joroba.
+ *
+ * Las cuatro animaciones —joroba, subida, caída y trazo— duran exactamente
+ * DURACION, con la misma curva: velocidades distintas hacían que el conjunto
+ * no se leyera como un solo gesto (el círculo, con la opacidad a un tercio
+ * del tiempo, parecía llegar antes). 0.8s es la que eligió Hotman con la
+ * perilla del widget.
+ *
+ * Proporciones medidas del original: joroba 2.24 veces el diámetro del
+ * círculo, alto = ancho/4.46 (la proporción natural del clipPath, 202.9 ×
+ * 45.5). SIEMPRE centrada en su pestaña.
  */
 
 import Link from 'next/link'
@@ -24,6 +37,7 @@ import type { LucideIcon } from 'lucide-react'
 
 export interface PestanaBarra {
   key: string
+  /** Solo para lectores de pantalla: la barra no lleva rótulos a la vista. */
   label: string
   icon: LucideIcon
   activa: boolean
@@ -34,7 +48,16 @@ export interface PestanaBarra {
 
 /** Azul oscuro del header y del sidebar: las tres son la misma pieza de chrome. */
 const FONDO = '#15203a'
-const ALTO_JOROBA = 26
+
+/** La única velocidad de las cuatro animaciones (elegida con la perilla). */
+const DURACION = '.8s'
+const CURVA = 'cubic-bezier(.45,0,.15,1)'
+
+const CIRCULO = 64
+const JOROBA_ANCHO = Math.round(CIRCULO * 2.24)          // 143
+const JOROBA_ALTO  = Math.round(JOROBA_ANCHO / 4.46)     // 32
+/** Cuánto sube el par icono+círculo: deja el círculo asomando sobre la barra. */
+const SUBIDA = 18
 
 export function BarraJoroba({ pestanas, className }: {
   pestanas: PestanaBarra[]
@@ -46,6 +69,21 @@ export function BarraJoroba({ pestanas, className }: {
 
   const indiceActiva = pestanas.findIndex(p => p.activa)
 
+  /**
+   * Normaliza el largo de los trazos de los iconos a 100 (`pathLength`).
+   *
+   * Sin esto el dibujo es disparejo: el dash de la animación mide lo mismo
+   * para todos, pero una raya del menú mide una fracción de lo que mide la
+   * casita — el trazo corto pasaba casi toda la animación invisible y
+   * aparecía de golpe al final. lucide no expone el atributo, así que se
+   * pone a mano sobre el DOM.
+   */
+  useEffect(() => {
+    barra.current
+      ?.querySelectorAll('svg :is(path,circle,rect,line,polyline)')
+      .forEach(el => el.setAttribute('pathLength', '100'))
+  }, [pestanas.length])
+
   useEffect(() => {
     const nav = barra.current
     const bulto = joroba.current
@@ -55,9 +93,8 @@ export function BarraJoroba({ pestanas, className }: {
       const activa = nav.querySelector<HTMLElement>('[data-activa="true"]')
       if (!activa) { bulto.style.opacity = '0'; return }
       if (!animando) bulto.style.transition = 'none'
-      const ancho = activa.offsetWidth
-      bulto.style.width = `${ancho}px`
-      bulto.style.transform = `translate3d(${Math.round(activa.offsetLeft)}px,0,0)`
+      const x = Math.round(activa.offsetLeft + (activa.offsetWidth - JOROBA_ANCHO) / 2)
+      bulto.style.transform = `translate3d(${x}px,0,0)`
       bulto.style.opacity = '1'
       if (!animando) requestAnimationFrame(() => { bulto.style.transition = '' })
     }
@@ -80,14 +117,11 @@ export function BarraJoroba({ pestanas, className }: {
 
   return (
     <div
-      className={cn('fixed left-4 right-4 z-30 md:hidden', className)}
-      style={{
-        bottom: 'calc(env(safe-area-inset-bottom) + 12px)',
-        // La sombra va aquí y no en la barra: `drop-shadow` sigue la silueta
-        // completa —barra más joroba— mientras que un `box-shadow` dibujaría
-        // el rectángulo y dejaría la joroba flotando sin sombra.
-        filter: 'drop-shadow(0 10px 26px rgba(0,29,61,0.45))',
-      }}
+      className={cn('fixed inset-x-0 bottom-0 z-30 md:hidden', className)}
+      // `drop-shadow` y no `box-shadow`: sigue la silueta completa, barra más
+      // joroba. Un box-shadow dibujaría el rectángulo y dejaría la joroba sin
+      // sombra.
+      style={{ filter: 'drop-shadow(0 -6px 22px rgba(0,29,61,0.25))' }}
     >
       {/* La curva, una sola vez. `clip-path: url(#…)` la busca en el documento. */}
       <svg width="0" height="0" aria-hidden className="absolute">
@@ -100,66 +134,66 @@ export function BarraJoroba({ pestanas, className }: {
         </clipPath>
       </svg>
 
-      <nav ref={barra} className="relative flex h-16 items-end rounded-[28px]" style={{ background: FONDO }}>
+      <nav
+        ref={barra}
+        // 12px de resguardo y no mas: el aire se lo llevan las pestanas, y en
+        // los extremos la cola de la joroba corre hasta el borde y se funde
+        // con el, como en el original (Hotman, 21-ago).
+        className="relative flex items-end px-3"
+        style={{ background: FONDO, paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <span
           ref={joroba}
           aria-hidden
           className="pointer-events-none absolute left-0 opacity-0"
           style={{
-            top: -ALTO_JOROBA + 1,
-            height: ALTO_JOROBA,
+            top: -JOROBA_ALTO + 1,
+            width: JOROBA_ANCHO,
+            height: JOROBA_ALTO,
             background: FONDO,
             clipPath: 'url(#joroba-curva)',
-            transition: 'transform .45s cubic-bezier(.42,0,.14,1.05), width .45s cubic-bezier(.42,0,.14,1.05)',
+            transition: `transform ${DURACION} ${CURVA}`,
           }}
         />
 
         {pestanas.map(p => {
           const Icono = p.icon
           const dentro = (
-            <>
-              {/* El círculo, detrás del icono levantado. */}
+            <span
+              className={cn('relative grid place-items-center', p.activa && 'trazo-icono')}
+              style={{
+                transform: p.activa ? `translateY(-${SUBIDA}px)` : 'translateY(0)',
+                color: p.activa ? '#fff' : '#8fa6c9',
+                transition: `transform ${DURACION} ${CURVA}, color .4s`,
+              }}
+            >
               <span
                 aria-hidden
-                className={cn(
-                  'pointer-events-none absolute left-1/2 rounded-full transition-[transform,opacity] duration-[450ms] ease-[cubic-bezier(.34,1.4,.5,1)]',
-                  p.activa ? 'opacity-100' : 'opacity-0',
-                )}
+                className="pointer-events-none absolute left-1/2 top-1/2 rounded-full"
                 style={{
-                  top: -26,
-                  width: 52,
-                  height: 52,
+                  width: CIRCULO,
+                  height: CIRCULO,
                   background: '#2094ff',
-                  transform: `translateX(-50%) scale(${p.activa ? 1 : 0.2})`,
+                  zIndex: -1,
+                  transform: `translate(-50%,-50%) scale(${p.activa ? 1 : 0.2})`,
+                  opacity: p.activa ? 1 : 0,
+                  transition: `transform ${DURACION} ${CURVA}, opacity ${DURACION} ${CURVA}`,
                 }}
               />
-              <Icono
-                className={cn(
-                  'relative w-[21px] h-[21px] transition-[transform,color] duration-[450ms] ease-[cubic-bezier(.42,0,.14,1.05)]',
-                  p.activa ? 'text-white -translate-y-8' : 'text-[#8fa6c9]',
-                )}
-              />
-              <span
-                className={cn(
-                  'absolute bottom-2 text-[10.5px] font-semibold leading-none text-white transition-[opacity,transform] duration-300 delay-100',
-                  p.activa ? 'opacity-100 translate-y-0' : 'translate-y-2 opacity-0',
-                )}
-              >
-                {p.label}
-              </span>
-            </>
+              <Icono className="h-[34px] w-[34px]" strokeWidth={2} />
+            </span>
           )
 
           const clases = 'relative flex h-16 flex-1 min-w-0 cursor-pointer flex-col items-center justify-center'
 
           return p.href
             ? (
-              <Link key={p.key} href={p.href} data-activa={p.activa} aria-current={p.activa ? 'page' : undefined} className={clases}>
+              <Link key={p.key} href={p.href} aria-label={p.label} data-activa={p.activa} aria-current={p.activa ? 'page' : undefined} className={clases}>
                 {dentro}
               </Link>
             )
             : (
-              <button key={p.key} type="button" onClick={p.onClick} data-activa={p.activa} aria-expanded={p.activa} className={clases}>
+              <button key={p.key} type="button" onClick={p.onClick} aria-label={p.label} data-activa={p.activa} aria-expanded={p.activa} className={clases}>
                 {dentro}
               </button>
             )

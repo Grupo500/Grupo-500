@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { createClientFetcher } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
+import { PanelFiltros, GrupoSegmentado, Interruptor } from '@/components/ui/PanelFiltros'
 import { formatCOP, montoPagadoPago } from '@/lib/utils'
 import { planDeCuotas } from '@/lib/cuotas'
 import {
@@ -178,7 +179,6 @@ export default function EstudiantesPage() {
   const [busquedaInput, setBusquedaInput] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [filtroTipo,     setFiltroTipo]     = useState<'todos' | 'nuevo' | 'antiguo'>('todos')
-  const [filtroConfirm,  setFiltroConfirm]  = useState<'todos' | 'activo' | 'inactivo'>('todos')
   const [soloMios,       setSoloMios]       = useState(false)
 
   useEffect(() => {
@@ -362,8 +362,9 @@ const subirComprobante = async (file: File) => {
   const totalCount  = data?.pagination?.total ?? 0
 
   // Filtros cliente
+  // El filtro de matrícula (activos/inactivos) se eliminó: ya no se usaba
+  // (Hotman, 21-ago).
   const estudiantesFiltrados = estudiantes
-    .filter(e => filtroConfirm === 'todos' || (filtroConfirm === 'activo' ? e.verificado : !e.verificado))
     .filter(e => {
       if (filtroTipo === 'nuevo')   return (e.cursos?.length ?? 0) <= 1
       if (filtroTipo === 'antiguo') return (e.cursos?.length ?? 0) > 1
@@ -414,72 +415,51 @@ const subirComprobante = async (file: File) => {
         }
       />
 
-      {/* ── Filtros ── */}
-      <div className="flex flex-col gap-2.5">
-        {/* Fila 1: Búsqueda */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-          <input type="text" placeholder="Buscar por nombre, correo o teléfono..." value={busquedaInput}
+      {/* ── Buscar y filtrar, en un renglón (Hotman, 21-ago) ──
+          Los filtros vivían en una tira que se arrastraba de lado y cortaba
+          el último por la mitad; el de matrícula ya no se usaba y se fue.
+          Ahora van detrás de un botón: hoja desde abajo en celular, panel
+          colgado del botón en escritorio. */}
+      <div className="flex items-center gap-2.5">
+        <div className="relative min-w-0 flex-1 md:max-w-[520px]">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input type="text" placeholder="Buscar nombre, correo o teléfono" value={busquedaInput}
             onChange={e => setBusquedaInput(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-surface-lowest border border-outline-variant rounded-xl text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50" />
+            className="h-11 w-full rounded-xl border border-outline-variant bg-surface-lowest pl-10 pr-4 text-sm text-on-surface placeholder-on-surface-variant focus:border-primary/50 focus:outline-none" />
+          {busquedaInput && (
+            <button
+              onClick={() => setBusquedaInput('')}
+              aria-label="Borrar búsqueda"
+              className="absolute right-3 top-1/2 grid w-5 h-5 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-on-surface-variant opacity-60 hover:opacity-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* Fila 2: todos los filtros con título, una sola línea, scroll en móvil */}
-        <div className="flex items-center gap-3 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden">
-
-          {/* Matrícula */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[11px] text-on-surface-variant font-medium whitespace-nowrap">Matrícula:</span>
-            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
-              {([
-                { val: 'todos',    label: 'Todos'     },
-                { val: 'activo',   label: 'Activos'   },
-                { val: 'inactivo', label: 'Inactivos' },
-              ] as const).map(({ val, label }) => (
-                <button key={val} onClick={() => setFiltroConfirm(val)}
-                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
-                    filtroConfirm === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-px h-5 bg-outline-variant/40 flex-shrink-0" />
-
-          {/* Tipo */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[11px] text-on-surface-variant font-medium whitespace-nowrap">Tipo:</span>
-            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-surface-high border border-outline-variant/40">
-              {([
+        <div className="md:ml-auto">
+          <PanelFiltros
+            activos={(filtroTipo !== 'todos' ? 1 : 0) + (soloMios ? 1 : 0)}
+            onLimpiar={() => { setFiltroTipo('todos'); setSoloMios(false); setPage(1) }}
+            pie={`Ver ${(filtroTipo === 'todos' ? totalCount : estudiantesFiltrados.length).toLocaleString('es-CO')} estudiante${(filtroTipo === 'todos' ? totalCount : estudiantesFiltrados.length) !== 1 ? 's' : ''}`}
+          >
+            <GrupoSegmentado
+              titulo="Tipo de estudiante"
+              valor={filtroTipo}
+              onCambio={v => setFiltroTipo(v)}
+              opciones={[
                 { val: 'todos',   label: 'Todos'   },
                 { val: 'nuevo',   label: 'Nuevo'   },
                 { val: 'antiguo', label: 'Antiguo' },
-              ] as const).map(({ val, label }) => (
-                <button key={val} onClick={() => setFiltroTipo(val)}
-                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap',
-                    filtroTipo === val ? 'bg-surface-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface')}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-px h-5 bg-outline-variant/40 flex-shrink-0" />
-
-          {/* Solo míos */}
-          <button
-            onClick={() => { setSoloMios(s => !s); setPage(1) }}
-            className={cn(
-              'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap',
-              soloMios
-                ? 'bg-primary/10 border-primary/30 text-primary'
-                : 'border-outline-variant text-on-surface-variant hover:text-on-surface hover:border-outline',
-            )}
-          >
-            <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', soloMios ? 'bg-primary animate-pulse' : 'bg-on-surface-variant/40')} />
-            Solo míos
-          </button>
+              ]}
+            />
+            <Interruptor
+              titulo="Solo míos"
+              detalle="Los estudiantes que yo matriculé"
+              activo={soloMios}
+              onCambio={v => { setSoloMios(v); setPage(1) }}
+            />
+          </PanelFiltros>
         </div>
       </div>
 

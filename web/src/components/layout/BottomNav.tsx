@@ -108,11 +108,11 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     ? [...ventasTabs, ...desplazadosPorVentas]
     : primaryItems.filter(porRol)
 
-  // Tres y "Más", siempre, en todas las áreas (Hotman, 21-ago): antes cada
-  // área decidía cuántas pestañas caben y la barra pasaba de cuatro a cinco
-  // de una pantalla a otra. Lo que no entra en los tres se va al panel.
-  const visiblePrimary = primariasDelArea.slice(0, 3)
-  const fueraDeLaBarra = primariasDelArea.slice(3)
+  // Cuatro módulos y "Más", siempre, en todas las áreas (Hotman, 21-ago):
+  // antes cada área decidía cuántas pestañas caben y la barra cambiaba de una
+  // pantalla a otra. Lo que no entra en los cuatro se va al panel.
+  const visiblePrimary = primariasDelArea.slice(0, 4)
+  const fueraDeLaBarra = primariasDelArea.slice(4)
 
   // Sin "Inicio": el header ya lleva el botón de la casita y el logo, los dos
   // a /inicio, y estaban siempre a la vista. Repetirlo aquí gastaba una casilla
@@ -136,18 +136,17 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
         )}
       />
 
-      {/* Sheet "Más" */}
+      {/* Sheet "Más" — igual que en el widget aprobado: de borde a borde,
+          pegada al fondo, y POR ENCIMA de la barra: una hoja que sube desde
+          abajo nunca queda por debajo de la navegación (Hotman, 21-ago). */}
       <div
         className={cn(
-          'fixed left-4 right-4 z-50 md:hidden rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 ease-out',
-          sheetVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none',
+          'fixed inset-x-0 bottom-0 z-50 md:hidden rounded-t-[26px] overflow-hidden shadow-[0_-12px_40px_-12px_rgba(0,29,61,0.4)] transition-transform duration-[450ms] ease-[cubic-bezier(.32,.9,.28,1)]',
+          sheetVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none',
         )}
         style={{
-          // Baja hasta la barra y la tapa: una hoja que sube desde abajo nunca
-          // queda por debajo de la navegación (Hotman, 21-ago).
-          bottom: 'calc(env(safe-area-inset-bottom) + 12px)',
           background: 'var(--surface-lowest)',
-          border: '1px solid color-mix(in srgb, var(--outline-variant) 60%, transparent)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         {/* Header */}

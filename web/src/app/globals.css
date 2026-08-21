@@ -365,3 +365,23 @@
     background-size: 200px 200px;
   }
 }
+
+/* ── Barra con joroba (BarraJoroba.tsx) ──────────────────────────────────
+   Las lineas del icono activo se dibujan desde un punto hasta completarse.
+   El dash cubre el trazo entero (400 > cualquier path de lucide); correr el
+   offset hasta 0 lo va pintando. Misma duracion que el resto de la barra. */
+@keyframes trazo-icono {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+/* 100 y no el largo real: BarraJoroba normaliza cada trazo con pathLength
+   para que todos se dibujen durante el tiempo completo — sin eso, un trazo
+   corto pasa casi toda la animacion invisible y aparece de golpe. */
+.trazo-icono svg path,
+.trazo-icono svg circle,
+.trazo-icono svg rect,
+.trazo-icono svg line,
+.trazo-icono svg polyline {
+  stroke-dasharray: 100 100;
+  animation: trazo-icono 0.8s cubic-bezier(0.5, 0, 0.2, 1) 0.08s both;
+}
