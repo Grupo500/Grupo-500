@@ -63,6 +63,7 @@ export function BarraJoroba({ pestanas, className }: {
   pestanas: PestanaBarra[]
   className?: string
 }) {
+  const contenedor = useRef<HTMLDivElement>(null)
   const barra  = useRef<HTMLElement>(null)
   const joroba = useRef<HTMLSpanElement>(null)
   const [listo, setListo] = useState(false)
@@ -84,6 +85,33 @@ export function BarraJoroba({ pestanas, className }: {
       .forEach(el => el.setAttribute('pathLength', '100'))
   }, [pestanas.length])
 
+  /**
+   * Mientras se hace scroll — en cualquier dirección — la barra se desliza
+   * fuera de la pantalla, y al detenerse vuelve: la pantalla completa queda
+   * para el contenido mientras se navega (Hotman, 21-ago).
+   *
+   * El oyente va en captura porque el que desplaza es el `<main>` del área,
+   * no la ventana, y los eventos de scroll no burbujean. Se toca el estilo
+   * directo (sin estado de React) para no re-renderizar a 60 eventos por
+   * segundo. Los 36px extra del corrimiento son la joroba: sin ellos la
+   * punta de la curva quedaba asomada.
+   */
+  useEffect(() => {
+    const caja = contenedor.current
+    if (!caja) return
+    let quieto: ReturnType<typeof setTimeout> | undefined
+    const alDesplazar = () => {
+      caja.style.transform = 'translateY(calc(100% + 36px))'
+      clearTimeout(quieto)
+      quieto = setTimeout(() => { caja.style.transform = 'translateY(0)' }, 220)
+    }
+    window.addEventListener('scroll', alDesplazar, { capture: true, passive: true })
+    return () => {
+      clearTimeout(quieto)
+      window.removeEventListener('scroll', alDesplazar, { capture: true })
+    }
+  }, [])
+
   useEffect(() => {
     const nav = barra.current
     const bulto = joroba.current
@@ -93,7 +121,11 @@ export function BarraJoroba({ pestanas, className }: {
       const activa = nav.querySelector<HTMLElement>('[data-activa="true"]')
       if (!activa) { bulto.style.opacity = '0'; return }
       if (!animando) bulto.style.transition = 'none'
-      const x = Math.round(activa.offsetLeft + (activa.offsetWidth - JOROBA_ANCHO) / 2)
+      // offsetLeft se mide desde el borde exterior de la barra, pero un
+      // elemento absoluto se ancla al interior (tras el padding): sin este
+      // descuento la joroba quedaba corrida 12px a la derecha del circulo.
+      const pad = parseFloat(getComputedStyle(nav).paddingLeft) || 0
+      const x = Math.round(activa.offsetLeft - pad + (activa.offsetWidth - JOROBA_ANCHO) / 2)
       bulto.style.transform = `translate3d(${x}px,0,0)`
       bulto.style.opacity = '1'
       if (!animando) requestAnimationFrame(() => { bulto.style.transition = '' })
@@ -117,11 +149,15 @@ export function BarraJoroba({ pestanas, className }: {
 
   return (
     <div
+      ref={contenedor}
       className={cn('fixed inset-x-0 bottom-0 z-30 md:hidden', className)}
       // `drop-shadow` y no `box-shadow`: sigue la silueta completa, barra más
       // joroba. Un box-shadow dibujaría el rectángulo y dejaría la joroba sin
       // sombra.
-      style={{ filter: 'drop-shadow(0 -6px 22px rgba(0,29,61,0.25))' }}
+      style={{
+        filter: 'drop-shadow(0 -6px 22px rgba(0,29,61,0.25))',
+        transition: 'transform .35s cubic-bezier(.4,0,.2,1)',
+      }}
     >
       {/* La curva, una sola vez. `clip-path: url(#…)` la busca en el documento. */}
       <svg width="0" height="0" aria-hidden className="absolute">
@@ -140,7 +176,10 @@ export function BarraJoroba({ pestanas, className }: {
         // los extremos la cola de la joroba corre hasta el borde y se funde
         // con el, como en el original (Hotman, 21-ago).
         className="relative flex items-end px-3"
-        style={{ background: FONDO, paddingBottom: 'env(safe-area-inset-bottom)' }}
+        // Aire mínimo garantizado bajo los iconos: en el navegador la zona
+        // segura del sistema puede ser cero y quedaban contra el borde
+        // (Hotman, 21-ago).
+        style={{ background: FONDO, paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }}
       >
         <span
           ref={joroba}

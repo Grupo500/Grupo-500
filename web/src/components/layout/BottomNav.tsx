@@ -28,10 +28,13 @@ type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boole
 // Las ventas son el uso diario del asesor en el celular, así que ocupan un
 // puesto fijo en la barra; Cursos se consulta poco y pasa al menú "Más".
 const primaryItems: NavItem[] = [
-  { href: '/dashboard',   label: 'Inicio',     icon: Home,            adminOnly: false },
-  { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
-  { href: '/mis-ventas',  label: 'Mis ventas',  icon: Receipt,         adminOnly: false, soloAsesor: true },
-  { href: '/reportes',     label: 'Analíticas',  icon: BarChart3,       adminOnly: false },
+  { href: '/dashboard',   label: 'Inicio',      icon: Home,          adminOnly: false },
+  { href: '/estudiantes', label: 'Estudiantes', icon: Users,         adminOnly: false },
+  { href: '/mis-ventas',  label: 'Mis ventas',  icon: Receipt,       adminOnly: false, soloAsesor: true },
+  { href: '/reportes',    label: 'Analíticas',  icon: BarChart3,     adminOnly: false },
+  // De ultimo a proposito: al admin le completa sus cuatro modulos (no ve
+  // Mis ventas); al asesor, que ya tiene cuatro, se le va al panel de Mas.
+  { href: '/cuotas',      label: 'Cuotas',      icon: CalendarCheck, adminOnly: false },
 ]
 
 // Salida al selector de módulos. Va en "Más" en TODAS las áreas: en celular
