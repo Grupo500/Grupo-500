@@ -32,9 +32,6 @@ const primaryItems: NavItem[] = [
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,         adminOnly: false },
   { href: '/mis-ventas',  label: 'Mis ventas',  icon: Receipt,       adminOnly: false, soloAsesor: true },
   { href: '/reportes',    label: 'Analíticas',  icon: BarChart3,     adminOnly: false },
-  // El cuarto del admin es Ventas generales — no ve Mis ventas y Cuotas no
-  // es un modulo de su barra (Hotman, 21-ago). El asesor ya tiene sus cuatro.
-  { href: '/admin/ventas', label: 'Ventas',     icon: Receipt,       adminOnly: true },
 ]
 
 // Salida al selector de módulos. Va en "Más" en TODAS las áreas: en celular
@@ -108,8 +105,8 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
     : enMarketing
     ? MARKETING_TABS.map(t => ({ href: t.href, label: t.label, icon: t.icon, adminOnly: false }))
     : enVentas
-    ? [...ventasTabs, ...desplazadosPorVentas]
-    : primaryItems.filter(porRol)
+    ? [...ventasTabs, ...desplazadosPorVentas, ...moreItems.filter(porRol)]
+    : [...primaryItems.filter(porRol), ...moreItems.filter(porRol)]
 
   // Cuatro módulos y "Más", siempre, en todas las áreas (Hotman, 21-ago):
   // antes cada área decidía cuántas pestañas caben y la barra cambiaba de una
@@ -120,10 +117,9 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   // Sin "Inicio": el header ya lleva el botón de la casita y el logo, los dos
   // a /inicio, y estaban siempre a la vista. Repetirlo aquí gastaba una casilla
   // del panel en un atajo que ya se tenía (Hotman, 21-ago).
-  const visibleMore = [
-    ...fueraDeLaBarra,
-    ...(enAdmin || enFinanzas || enMarketing ? [] : moreItems.filter(porRol)),
-  ]
+  // Todo lo que no cupo en la barra — los moreItems ya vienen incluidos en
+  // primariasDelArea, asi que aqui no se vuelven a sumar.
+  const visibleMore = fueraDeLaBarra
   const hrefActivoActual = hrefActivo(pathname, [...visiblePrimary, ...visibleMore].map(i => i.href))
   const isMoreActive = visibleMore.some(i => i.href === hrefActivoActual)
   const handleClose = () => setMoreOpen(false)
