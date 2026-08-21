@@ -50,7 +50,7 @@ export default function manifest(): MetadataRoute.Manifest {
         type: 'image/png',
 
         form_factor: 'wide',
-        label: 'Dashboard Grupo 500',
+        label: 'Inicio Grupo 500',
       },
       {
         src: '/android-chrome-192x192.png',

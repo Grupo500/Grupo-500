@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { useEffect, useState } from 'react'
 import {
-  LayoutDashboard, Users, CalendarDays,
+  Home, Users, CalendarDays,
   MoreHorizontal, X, BookOpen, School,
   FileBarChart2, BarChart3,
   ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck,
@@ -27,7 +27,7 @@ type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly: boole
 // Las ventas son el uso diario del asesor en el celular, así que ocupan un
 // puesto fijo en la barra; Cursos se consulta poco y pasa al menú "Más".
 const primaryItems: NavItem[] = [
-  { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard',   label: 'Inicio',     icon: Home,            adminOnly: false },
   { href: '/estudiantes', label: 'Estudiantes', icon: Users,           adminOnly: false },
   { href: '/mis-ventas',  label: 'Mis ventas',  icon: Receipt,         adminOnly: false, soloAsesor: true },
   { href: '/reportes',     label: 'Analíticas',  icon: BarChart3,       adminOnly: false },

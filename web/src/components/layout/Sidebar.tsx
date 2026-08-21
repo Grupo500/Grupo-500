@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import {
-  LayoutDashboard, Users, CalendarDays,
+  Home, Users, CalendarDays,
   BookOpen, School, FileBarChart2,
   BarChart3, ChevronLeft, ChevronRight,
   ShieldCheck, ClipboardList, Settings, Gamepad2, Receipt, Link2, CalendarCheck,
@@ -31,7 +31,7 @@ type NavItem =
   | { type: 'section'; label: string; adminOnly: boolean; soloAsesor?: boolean }
 
 const navItems: NavItem[] = [
-  { type: 'link',    href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard, adminOnly: false },
+  { type: 'link',    href: '/dashboard',       label: 'Inicio',          icon: Home,            adminOnly: false },
   { type: 'link',    href: '/estudiantes',     label: 'Estudiantes',     icon: Users,           adminOnly: false },
   { type: 'link',    href: '/mis-ventas',      label: 'Mis ventas',      icon: Receipt,         adminOnly: false, soloAsesor: true },
   { type: 'link',    href: '/cursos',          label: 'Cursos',          icon: BookOpen,        adminOnly: false },

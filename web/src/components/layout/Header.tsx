@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Home } from 'lucide-react'
+import { LayoutDashboard } from 'lucide-react'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 import { cn } from '@/lib/utils'
@@ -72,11 +72,11 @@ export function Header({ className }: { className?: string }) {
         <div className="flex flex-shrink-0 items-center gap-1.5 md:gap-2">
           <Link
             href="/inicio"
-            title="Volver al inicio"
-            aria-label="Volver al inicio"
+            title="Panel de módulos"
+            aria-label="Panel de módulos"
             className={`flex items-center justify-center transition-colors ${BOTON}`}
           >
-            <Home className="h-4 w-4" />
+            <LayoutDashboard className="h-4 w-4" />
           </Link>
           <NotificacionesButton className={BOTON} />
           <RefreshButton className={BOTON} />

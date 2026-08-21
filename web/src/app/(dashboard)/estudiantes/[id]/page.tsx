@@ -12,7 +12,7 @@ import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, Users, CreditCard, Award,
   Wallet, CheckCircle, AlertTriangle, Paperclip,
-  Save, ChevronDown, ChevronUp, Download, Clock, Receipt, Check,
+  Save, ChevronDown, ChevronUp, Download, Clock, Receipt, Check, X, Maximize2,
   type LucideIcon,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
@@ -1102,6 +1102,72 @@ function DatoImpreso({ ok, etiqueta, children }: {
   )
 }
 
+/**
+ * El certificado a tamaño de lectura, encima de la pantalla.
+ *
+ * Es la misma plantilla del PDF, no un visor de PDF: armar el archivo solo
+ * para mirarlo obliga a esperar el render a imagen y en el teléfono muchos
+ * navegadores ni siquiera lo muestran dentro de la página. Lo que se ve aquí
+ * es exactamente lo que sale al descargar (Hotman, 21-ago).
+ */
+function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }: {
+  data: CertificadoData
+  etiqueta: string
+  onCerrar: () => void
+  onDescargar: () => void
+  descargando: boolean
+}) {
+  // La hoja se agranda hasta donde quepa: limitada por el ancho de la ventana
+  // y, sobre todo, por su alto — es una hoja vertical.
+  const [ancho, setAncho] = useState(560)
+  useEffect(() => {
+    const medir = () => setAncho(Math.max(260, Math.min(
+      720,
+      window.innerWidth - 48,
+      (window.innerHeight - 150) * (794 / 1123),
+    )))
+    medir()
+    const esc = (ev: KeyboardEvent) => { if (ev.key === 'Escape') onCerrar() }
+    window.addEventListener('resize', medir)
+    window.addEventListener('keydown', esc)
+    return () => {
+      window.removeEventListener('resize', medir)
+      window.removeEventListener('keydown', esc)
+    }
+  }, [onCerrar])
+
+  return (
+    <div
+      onClick={onCerrar}
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-black/70 p-6 backdrop-blur-sm animate-fade-in"
+    >
+      <div className="flex w-full max-w-[720px] items-center justify-between gap-3" style={{ maxWidth: ancho }}>
+        <p className="truncate text-sm font-semibold text-white">Certificado de {etiqueta}</p>
+        <button
+          onClick={onCerrar}
+          aria-label="Cerrar"
+          className="grid w-8 h-8 flex-shrink-0 cursor-pointer place-items-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div onClick={ev => ev.stopPropagation()} className="overflow-auto">
+        <VistaPreviaCertificado data={data} ancho={ancho} />
+      </div>
+
+      <button
+        onClick={ev => { ev.stopPropagation(); onDescargar() }}
+        disabled={descargando}
+        className="flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary transition-all hover:bg-primary/90 active:scale-[0.99] disabled:opacity-50"
+      >
+        {descargando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+        Descargar el certificado
+      </button>
+    </div>
+  )
+}
+
 function TabCertificados({ e, fetcher, onRefresh }: {
   e: EstudianteDetalle
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
@@ -1112,6 +1178,7 @@ function TabCertificados({ e, fetcher, onRefresh }: {
   const [tipoNuevo, setTipoNuevo] = useState<'CURSANDO' | 'COMPLETADO'>('CURSANDO')
   const [descargando, setDescargando] = useState<string | null>(null)
   const [editandoDoc, setEditandoDoc] = useState(false)
+  const [previaAbierta, setPreviaAbierta] = useState(false)
   const [tipoDocInput, setTipoDocInput] = useState(e.tipoDocumento || 'CC')
   const [documentoInput, setDocumentoInput] = useState(e.documento ?? '')
 
@@ -1232,12 +1299,20 @@ function TabCertificados({ e, fetcher, onRefresh }: {
 
         {/* ── La hoja, tal como va a salir ── */}
         <div className="grid place-items-center border-b border-outline-variant bg-surface-low p-5 md:border-b-0 md:border-r">
-          <div>
-            <VistaPreviaCertificado data={previa} ancho={ANCHO_PREVIA} />
-            <p className="mt-2.5 text-center text-[10.5px] text-on-surface-variant">
-              certificado de {etiquetaTipo}
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setPreviaAbierta(true)}
+            title="Ver el certificado en grande"
+            className="group cursor-pointer"
+          >
+            <span className="block transition-transform group-hover:-translate-y-0.5">
+              <VistaPreviaCertificado data={previa} ancho={ANCHO_PREVIA} />
+            </span>
+            <span className="mt-2.5 flex items-center justify-center gap-1 text-[10.5px] text-on-surface-variant transition-colors group-hover:text-primary">
+              Certificado de {etiquetaTipo}
+              <Maximize2 className="w-2.5 h-2.5" />
+            </span>
+          </button>
         </div>
 
         {/* ── Lo que lleva impreso y el botón de emitir ── */}
@@ -1418,6 +1493,16 @@ function TabCertificados({ e, fetcher, onRefresh }: {
           </div>
         )}
       </div>
+
+      {previaAbierta && (
+        <ModalCertificado
+          data={previa}
+          etiqueta={etiquetaTipo}
+          onCerrar={() => setPreviaAbierta(false)}
+          onDescargar={() => descargarMutation.mutate()}
+          descargando={descargarMutation.isPending}
+        />
+      )}
     </div>
   )
 }

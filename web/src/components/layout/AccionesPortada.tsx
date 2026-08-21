@@ -15,7 +15,7 @@
  */
 
 import Link from 'next/link'
-import { Home } from 'lucide-react'
+import { LayoutDashboard } from 'lucide-react'
 import { RefreshButton } from '@/components/ui/RefreshButton'
 import { NotificacionesButton } from '@/components/ui/NotificacionesButton'
 import { cn } from '@/lib/utils'
@@ -29,7 +29,7 @@ const BOTON =
   'text-on-surface-variant hover:bg-surface-low hover:text-on-surface'
 
 export function AccionesPortada({ conInicio = true, className }: {
-  /** En el selector de módulos sobra: ya se está en inicio. */
+  /** En el propio panel de módulos sobra: ya se está ahí. */
   conInicio?: boolean
   className?: string
 }) {
@@ -38,11 +38,11 @@ export function AccionesPortada({ conInicio = true, className }: {
       {conInicio && (
         <Link
           href="/inicio"
-          title="Volver al inicio"
-          aria-label="Volver al inicio"
+          title="Panel de módulos"
+          aria-label="Panel de módulos"
           className={cn('flex items-center justify-center transition-colors', BOTON)}
         >
-          <Home className="w-4 h-4" />
+          <LayoutDashboard className="w-4 h-4" />
         </Link>
       )}
       {/* El anillo del globo de no leídas iguala al fondo de la página, no al
