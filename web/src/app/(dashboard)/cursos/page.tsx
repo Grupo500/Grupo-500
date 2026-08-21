@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { PanelFiltros, GrupoSegmentado } from '@/components/ui/PanelFiltros'
 import { formatCOP } from '@/lib/utils'
 import { BookOpen, Clock, Users, Search, CalendarDays, Power, Package, X, Pencil, Loader2 } from 'lucide-react'
 
@@ -295,11 +296,6 @@ export default function CursosPage() {
     return true
   })
 
-  const counts = {
-    activos:   cursosTodos.filter(c =>  c.activo).length,
-    inactivos: cursosTodos.filter(c => !c.activo).length,
-    todos:     cursosTodos.length,
-  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -314,50 +310,43 @@ export default function CursosPage() {
         />
       </div>
 
-      {/* Barra de filtros — búsqueda arriba, tabs abajo */}
-      <div className="flex flex-col gap-3">
-
-        <div className="flex gap-2 w-full">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre..."
-              value={busqueda}
-              onChange={e => setBusqueda(e.target.value)}
-              className="w-full bg-surface-high border border-outline-variant rounded-xl pl-9 pr-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
-            />
-          </div>
+      {/* ── Buscar y filtrar, en un renglón — el mismo diseño de Estudiantes
+          (Hotman, 21-ago): el estado del curso vive detrás del botón, hoja
+          desde abajo en celular y panel colgado del botón en escritorio. */}
+      <div className="flex items-center gap-2.5">
+        <div className="relative min-w-0 flex-1 md:max-w-[520px]">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+          <input type="text" placeholder="Buscar por nombre..." value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="h-11 w-full rounded-xl border border-outline-variant bg-surface-lowest pl-10 pr-4 text-sm text-on-surface placeholder-on-surface-variant focus:border-primary/50 focus:outline-none" />
           {busqueda && (
             <button
-              type="button"
               onClick={() => setBusqueda('')}
-              className="px-2.5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
+              aria-label="Borrar búsqueda"
+              className="absolute right-3 top-1/2 grid w-5 h-5 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-on-surface-variant opacity-60 hover:opacity-100"
             >
               <X className="w-4 h-4" />
             </button>
           )}
         </div>
 
-        <div className="relative flex p-1 bg-surface-high rounded-xl border border-outline-variant self-start shrink-0">
-          {(['todos', 'activos', 'inactivos'] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFiltroActivo(f)}
-              className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap ${
-                filtroActivo === f
-                  ? 'bg-surface-lowest text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              {f === 'activos' ? 'Habilitados' : f === 'inactivos' ? 'Deshabilitados' : 'Todos'}
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors duration-150 shrink-0 ${
-                filtroActivo === f ? 'bg-primary/15 text-primary' : 'bg-outline-variant/20 text-on-surface-variant'
-              }`}>
-                {counts[f]}
-              </span>
-            </button>
-          ))}
+        <div className="md:ml-auto">
+          <PanelFiltros
+            activos={filtroActivo !== 'todos' ? 1 : 0}
+            onLimpiar={() => setFiltroActivo('todos')}
+            pie={`Ver ${cursos.length.toLocaleString('es-CO')} curso${cursos.length !== 1 ? 's' : ''}`}
+          >
+            <GrupoSegmentado
+              titulo="Estado del curso"
+              valor={filtroActivo}
+              onCambio={v => setFiltroActivo(v)}
+              opciones={[
+                { val: 'todos',     label: 'Todos' },
+                { val: 'activos',   label: 'Habilitados' },
+                { val: 'inactivos', label: 'Deshabilitados' },
+              ]}
+            />
+          </PanelFiltros>
         </div>
       </div>
 
