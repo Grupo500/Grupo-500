@@ -555,10 +555,11 @@ const subirComprobante = async (file: File) => {
                         }
                       </div>
                     ) : (
-                    {/* El círculo lleva fondo propio y no un 10% del azul: sobre
-                        la tarjeta blanca ese tono casi no se distinguía y la
-                        inicial parecía flotar sola (Hotman, 21-ago). */}
-                    <div className={cn('w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold',
+                    <div className={cn(
+                      // El círculo lleva fondo propio y no un 10% del azul: sobre
+                      // la tarjeta blanca ese tono casi no se distinguía y la
+                      // inicial parecía flotar sola (Hotman, 21-ago).
+                      'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold',
                       fin.estado === 'mora' ? 'bg-[#dc2626]/15 text-[#dc2626]' : 'bg-surface-low text-primary')}>
                       {e.nombre[0]?.toUpperCase()}
                     </div>
