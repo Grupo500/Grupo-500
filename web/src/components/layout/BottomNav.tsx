@@ -140,7 +140,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           abajo nunca queda por debajo de la navegación (Hotman, 21-ago). */}
       <div
         className={cn(
-          'fixed inset-x-0 bottom-0 z-50 md:hidden rounded-t-[26px] overflow-hidden shadow-[0_-12px_40px_-12px_rgba(0,29,61,0.4)] transition-transform duration-[700ms] ease-[cubic-bezier(.32,.9,.28,1)]',
+          'fixed inset-x-0 bottom-0 z-50 md:hidden rounded-t-[26px] overflow-hidden shadow-[0_-12px_40px_-12px_rgba(0,29,61,0.4)] transition-transform duration-[900ms] ease-[cubic-bezier(.45,0,.15,1)]',
           sheetVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none',
         )}
         style={{
@@ -174,7 +174,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
                 style={{
                   opacity: sheetVisible ? 1 : 0,
                   transform: sheetVisible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.95)',
-                  transition: `opacity 250ms ${i * 25}ms ease-out, transform 250ms ${i * 25}ms ease-out`,
+                  transition: `opacity 300ms ${250 + i * 45}ms ease-out, transform 300ms ${250 + i * 45}ms ease-out`,
                 }}
               >
                 <div
@@ -207,7 +207,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           style={{
             opacity: sheetVisible ? 1 : 0,
             transform: sheetVisible ? 'translateY(0)' : 'translateY(6px)',
-            transition: 'opacity 280ms 200ms ease-out, transform 280ms 200ms ease-out',
+            transition: 'opacity 300ms 500ms ease-out, transform 300ms 500ms ease-out',
           }}
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
