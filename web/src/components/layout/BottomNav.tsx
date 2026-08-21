@@ -16,7 +16,7 @@ import { FINANZAS_TABS } from '@/lib/finanzasNav'
 import { MARKETING_TABS } from '@/lib/marketingNav'
 import { ADMIN_TABS } from '@/lib/adminNav'
 import { esMarketing, type Rol } from '@/lib/roles'
-import { BarraJoroba, type PestanaBarra } from './BarraJoroba'
+import { BarraRiel, type PestanaBarra } from './BarraRiel'
 
 
 
@@ -145,7 +145,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
         )}
         style={{
           background: 'var(--surface-lowest)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 34px)',
         }}
       >
         {/* Header */}
@@ -223,8 +223,8 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
         </div>
       </div>
 
-      {/* ── La barra, con joroba ── */}
-      <BarraJoroba
+      {/* ── La barra riel: el sidebar de escritorio, acostado ── */}
+      <BarraRiel
         pestanas={[
           ...visiblePrimary.map<PestanaBarra>(item => ({
             key:   item.href,

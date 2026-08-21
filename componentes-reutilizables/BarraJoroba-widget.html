@@ -1,0 +1,588 @@
+<title>La barra con joroba</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface-lowest:#ffffff; --surface-low:#e4f0ff; --surface:#d8eaff;
+  --surface-high:#c8deff; --surface-highest:#b8d0f5;
+  --on-surface:#001d3d; --on-surface-variant:#2a4172;
+  --outline:#5a74a8; --outline-variant:#c2d4ef;
+  --primary:#2094ff; --primary-container:#cce4ff;
+  --ok:#16a34a; --warn:#d97706;
+  --barra:#15203a; --barra-txt:#8fa6c9;
+  --page:#eef5ff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --surface-lowest:#0a1525; --surface-low:#0f1e35; --surface:#142543;
+    --surface-high:#1c2f52; --surface-highest:#253a61;
+    --on-surface:#d6eaff; --on-surface-variant:#95c8f0;
+    --outline:#4a6fa0; --outline-variant:#253a61;
+    --primary:#95daff; --primary-container:#1c3f68;
+    --ok:#4ade80; --warn:#fbbf24;
+    --page:#060e1a;
+  }
+}
+:root[data-theme="dark"]{
+  --surface-lowest:#0a1525; --surface-low:#0f1e35; --surface:#142543;
+  --surface-high:#1c2f52; --surface-highest:#253a61;
+  --on-surface:#d6eaff; --on-surface-variant:#95c8f0;
+  --outline:#4a6fa0; --outline-variant:#253a61;
+  --primary:#95daff; --primary-container:#1c3f68;
+  --ok:#4ade80; --warn:#fbbf24;
+  --page:#060e1a;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--page);color:var(--on-surface);
+  font-family:Poppins,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:940px;margin:0 auto;padding:44px 20px 90px}
+.eyebrow{font-size:11px;color:var(--on-surface-variant);margin:0 0 8px;font-weight:600;opacity:.85}
+h1{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 12px;font-weight:700;letter-spacing:-.03em;text-wrap:balance}
+.lede{font-size:14.5px;line-height:1.6;color:var(--on-surface-variant);max-width:62ch;margin:0}
+
+.bloque{margin-top:40px;padding:22px;border-radius:16px;background:var(--surface-lowest);border:1px solid var(--outline-variant)}
+.bloque h2{font-size:15px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em}
+.bloque p{font-size:13.5px;line-height:1.65;color:var(--on-surface-variant);margin:0 0 11px;max-width:66ch}
+.bloque p:last-child{margin-bottom:0}
+.bloque b{color:var(--on-surface);font-weight:600}
+.lista{margin:0;padding:0;list-style:none;display:grid;gap:12px}
+.lista li{font-size:13.5px;line-height:1.55;padding-left:20px;position:relative;color:var(--on-surface-variant)}
+.lista li::before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;border-radius:2px;background:var(--primary);opacity:.75}
+.lista b{color:var(--on-surface);font-weight:600}
+
+.pista{
+  margin-top:18px;text-align:center;font-size:12px;color:var(--on-surface-variant);
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.pista span{
+  display:inline-grid;place-items:center;width:19px;height:19px;border-radius:99px;
+  background:var(--primary);color:#fff;font-size:11px;font-weight:700;
+}
+
+/* ── iPhone 14 Pro Max: 430 × 932 ─────────────────────── */
+.escena{margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.iphone{
+  width:462px;height:964px;border-radius:70px;padding:16px;flex:none;
+  background:linear-gradient(150deg,#4d5461,#23272e 28%,#191c21 62%,#3a4049);
+  box-shadow:0 26px 60px -22px rgba(0,29,61,.55);
+}
+@media (max-width:520px){
+  .iphone{transform:scale(.72);transform-origin:top center;margin-bottom:-270px}
+}
+.screen{
+  width:430px;height:932px;border-radius:55px;overflow:hidden;position:relative;
+  background:var(--surface-low);
+}
+.screen::before{
+  content:"";position:absolute;inset:0;opacity:.45;pointer-events:none;z-index:0;
+  background-image:radial-gradient(var(--outline-variant) 1.1px,transparent 1.1px);
+  background-size:26px 26px;
+}
+.isla{
+  position:absolute;top:11px;left:50%;transform:translateX(-50%);
+  width:125px;height:36px;border-radius:20px;background:#000;z-index:30;
+}
+.estado{
+  position:relative;z-index:20;height:54px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 32px 0 36px;
+  font-size:15px;font-weight:600;color:var(--on-surface);
+}
+.estado .der{display:flex;align-items:center;gap:5px}
+.barrita{display:flex;align-items:flex-end;gap:2px;height:11px}
+.barrita span{width:3px;background:var(--on-surface);border-radius:1px}
+.pila{width:24px;height:12px;border:1.5px solid var(--on-surface);border-radius:4px;position:relative;padding:1.5px}
+.pila i{display:block;height:100%;width:78%;background:var(--on-surface);border-radius:1.5px}
+.gesto{
+  position:absolute;bottom:9px;left:50%;transform:translateX(-50%);
+  width:140px;height:5px;border-radius:99px;background:#fff;opacity:.4;z-index:40;
+}
+.lienzo{position:relative;z-index:10;padding:6px 18px 140px;height:calc(932px - 54px);overflow:hidden}
+.lienzo.rueda{overflow-y:auto;scrollbar-width:none}
+
+.cab{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.cab h2{font-size:24px;font-weight:700;letter-spacing:-.035em;margin:0;line-height:1.1}
+.cab p{font-size:12.5px;color:var(--on-surface-variant);margin:3px 0 0}
+.acc{display:flex;gap:8px;flex:none}
+.acc span{
+  width:38px;height:38px;border-radius:99px;display:grid;place-items:center;
+  background:var(--surface-lowest);border:1px solid var(--outline-variant);color:var(--on-surface-variant);
+}
+.acc span.pri{background:var(--primary);border-color:var(--primary);color:#fff}
+.fila{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.buscar{
+  flex:1;min-width:0;height:44px;border-radius:14px;display:flex;align-items:center;gap:9px;
+  padding:0 14px;background:var(--surface-lowest);border:1px solid var(--outline-variant);
+  font-size:14px;color:var(--on-surface-variant);
+}
+.filtrar{
+  flex:none;height:44px;border-radius:14px;display:flex;align-items:center;gap:8px;
+  padding:0 15px;background:var(--surface-lowest);border:1px solid var(--outline-variant);
+  font-size:13.5px;font-weight:600;color:var(--on-surface-variant);
+}
+.card{
+  background:var(--surface-lowest);border:1px solid var(--outline-variant);
+  border-radius:18px;padding:14px 15px;margin-bottom:11px;
+}
+.card .top{display:flex;align-items:flex-start;gap:11px}
+.ava{
+  width:36px;height:36px;border-radius:99px;flex:none;display:grid;place-items:center;
+  background:var(--surface-low);color:var(--primary);font-size:15px;font-weight:700;
+}
+.card .nom{font-size:15px;font-weight:600;letter-spacing:-.015em;margin:0;line-height:1.25}
+.card .tel{font-size:12px;color:var(--on-surface-variant);margin:3px 0 0;font-variant-numeric:tabular-nums}
+.aldia{font-size:11px;font-weight:600;color:var(--ok);flex:none;margin-top:2px}
+.curso{
+  margin-top:11px;background:var(--surface-low);border-radius:11px;padding:8px 11px;
+  font-size:12.5px;font-weight:500;color:var(--on-surface);
+}
+.pag{margin-top:11px}
+.pag .r{display:flex;justify-content:space-between;font-size:11px;color:var(--on-surface-variant);margin-bottom:5px}
+.pag .track{height:5px;border-radius:99px;background:var(--surface-high);overflow:hidden}
+.pag .track i{display:block;height:100%;background:var(--ok);border-radius:99px}
+
+/* ══════════════ LA BARRA ══════════════ */
+/* Proporciones del original: joroba 2.24 veces el diámetro del círculo,
+   y su alto = ancho / 4.46 — la proporción natural del clipPath (202.9 ×
+   45.5); estirarla la deforma. Va SIEMPRE centrada en su pestaña. */
+/* Una sola velocidad para las cuatro animaciones: cambio de modulo,
+   subida, caida y trazo del icono. Numero mas alto = mas lento. */
+.screen{--dur:.8s}
+.svg-oculto{position:absolute;width:0;height:0;overflow:hidden}
+
+.nav{
+  /* De borde a borde y asentada abajo, como el original: sin esquinas que
+     la joroba pueda pisar, asi que las pestanas ya no necesitan resguardo
+     y el aire lateral es solo estetico (Hotman, 21-ago). El alto extra de
+     abajo cubre la zona de la linea de gesto, en el mismo azul. */
+  position:absolute;left:0;right:0;bottom:0;height:94px;z-index:35;
+  background:var(--barra);display:flex;align-items:flex-end;
+  padding:0 12px 30px;
+  box-shadow:0 -6px 22px rgba(0,29,61,.25);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+/* Mientras la lista se mueve, la barra se va — en cualquier direccion — y
+   al detenerse vuelve. Se corre su alto mas la joroba, para que ni la
+   punta de la curva quede asomada. */
+.nav.escondida{transform:translateY(calc(100% + 36px))}
+.joroba{
+  position:absolute;top:-31px;left:0;width:143px;height:32px;
+  background:var(--barra);
+  clip-path:url(#curva-joroba);
+  transition:transform var(--dur) cubic-bezier(.45,0,.15,1);
+  filter:drop-shadow(0 -4px 8px rgba(0,29,61,.2));
+  will-change:transform;
+  pointer-events:none;z-index:1;
+}
+.it{
+  flex:1;min-width:0;height:60px;position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:0;background:transparent;cursor:pointer;padding:0;font-family:inherit;
+}
+/* El circulo es un ::before del contenedor del ICONO: su centro es el
+   centro del icono por construccion — nunca mas cuadrarlos a mano. Aparece
+   en su pestana y desaparece de la anterior A LA PAR con la joroba: misma
+   curva y misma duracion, sin rebote que lo adelante. */
+.it .ic::before{
+  content:"";position:absolute;left:50%;top:50%;width:64px;height:64px;
+  border-radius:99px;background:var(--primary);z-index:-1;
+  transform:translate(-50%,-50%) scale(.2);opacity:0;
+  transition:transform var(--dur) cubic-bezier(.45,0,.15,1),opacity var(--dur) cubic-bezier(.45,0,.15,1);
+}
+.it.on .ic::before{transform:translate(-50%,-50%) scale(1);opacity:1}
+.it .ic{
+  position:relative;color:var(--barra-txt);display:grid;place-items:center;
+  transition:transform var(--dur) cubic-bezier(.45,0,.15,1),color calc(var(--dur)/2);
+}
+/* Sube 16px: queda centrado en el círculo, no pegado al borde. */
+.it.on .ic{transform:translateY(-18px);color:#fff}
+
+/* Las líneas del icono se dibujan al activarse: el trazo arranca vacío
+   (dashoffset = largo del dash) y corre hasta completarse. Es la pieza del
+   original que faltaba — su CSS traía el keyframe `strok` para esto. */
+@keyframes dibujar{
+  0%{stroke-dashoffset:100}
+  100%{stroke-dashoffset:0}
+}
+.it .ic svg path,.it .ic svg circle,.it .ic svg line,.it .ic svg polyline{stroke-dasharray:100 100}
+.it.on .ic svg path,.it.on .ic svg circle,.it.on .ic svg line,.it.on .ic svg polyline{
+  animation:dibujar var(--dur) cubic-bezier(.5,0,.2,1) .1s both;
+}
+
+/* ══════════════ EL PANEL "MÁS" ══════════════ */
+/* Sube desde abajo y PASA POR ENCIMA de la barra — una hoja inferior nunca
+   queda tapada por la navegación. El velo oscurece el resto. */
+.velo{
+  position:absolute;inset:0;z-index:40;background:rgba(0,20,45,.55);
+  backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.velo.on{opacity:1;pointer-events:auto}
+.hoja-mas{
+  position:absolute;left:0;right:0;bottom:0;z-index:45;
+  background:var(--surface-lowest);border-radius:26px 26px 0 0;
+  padding:10px 20px 34px;
+  box-shadow:0 -12px 40px -12px rgba(0,29,61,.4);
+  transform:translateY(105%);
+  transition:transform .8s cubic-bezier(.32,.9,.28,1);
+}
+.hoja-mas.on{transform:translateY(0)}
+.agarre{width:38px;height:4px;border-radius:99px;background:var(--outline-variant);margin:0 auto 14px}
+.hoja-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.hoja-top h3{font-size:17px;font-weight:700;letter-spacing:-.025em;margin:0}
+.hoja-x{
+  width:30px;height:30px;border-radius:99px;background:var(--surface-high);
+  display:grid;place-items:center;color:var(--on-surface-variant);border:0;cursor:pointer;
+}
+.rejilla-mas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.mod{
+  display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;
+  border-radius:16px;cursor:pointer;
+  opacity:0;transform:translateY(12px) scale(.94);
+  transition:opacity .3s ease-out,transform .3s ease-out;
+}
+.hoja-mas.on .mod{opacity:1;transform:translateY(0) scale(1)}
+/* Entran en cascada, uno tras otro. */
+.hoja-mas.on .mod:nth-child(1){transition-delay:.10s}
+.hoja-mas.on .mod:nth-child(2){transition-delay:.15s}
+.hoja-mas.on .mod:nth-child(3){transition-delay:.20s}
+.hoja-mas.on .mod:nth-child(4){transition-delay:.25s}
+.mod .cir{
+  width:46px;height:46px;border-radius:16px;display:grid;place-items:center;
+  background:var(--surface-high);color:var(--on-surface-variant);
+}
+.mod span{font-size:10.5px;font-weight:600;color:var(--on-surface-variant);text-align:center}
+.cuenta{
+  display:flex;align-items:center;gap:11px;border-top:1px solid var(--outline-variant);
+  padding-top:13px;
+  opacity:0;transform:translateY(8px);transition:opacity .3s .3s,transform .3s .3s;
+}
+.hoja-mas.on .cuenta{opacity:1;transform:translateY(0)}
+.cuenta .ava2{
+  width:34px;height:34px;border-radius:99px;background:var(--surface-high);
+  display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--on-surface-variant);
+}
+.cuenta .qn{flex:1;min-width:0}
+.cuenta .qn b{display:block;font-size:12.5px;font-weight:600}
+.cuenta .qn span{display:block;font-size:10.5px;color:var(--on-surface-variant)}
+
+/* ── La barra sola, para verla de cerca ─────────────── */
+.suelta{
+  margin-top:22px;background:var(--surface-low);border:1px solid var(--outline-variant);
+  border-radius:20px;padding:56px 22px 26px;position:relative;
+}
+.suelta .nav{position:relative;left:auto;right:auto;bottom:auto;width:100%}
+</style>
+
+<!-- La curva de la joroba: una sola vez para toda la página. -->
+<svg class="svg-oculto" viewBox="0 0 202.9 45.5" aria-hidden="true">
+  <clipPath id="curva-joroba" clipPathUnits="objectBoundingBox"
+            transform="scale(0.0049285362247413 0.021978021978022)">
+    <path d="M6.7,45.5c5.7,0.1,14.1-0.4,23.3-4c5.7-2.3,9.9-5,18.1-10.5c10.7-7.1,11.8-9.2,20.6-14.3c5-2.9,9.2-5.2,15.2-7 c7.1-2.1,13.3-2.3,17.6-2.1c4.2-0.2,10.5,0.1,17.6,2.1c6.1,1.8,10.2,4.1,15.2,7c8.8,5,9.9,7.1,20.6,14.3c8.3,5.5,12.4,8.2,18.1,10.5 c9.2,3.6,17.6,4.2,23.3,4H6.7z"/>
+  </clipPath>
+</svg>
+
+<div class="wrap">
+
+  <p class="eyebrow">Celular · barra de navegación</p>
+  <h1>La barra con joroba</h1>
+  <p class="lede">
+    De borde a borde y asentada abajo, como el original: el icono de la sección abierta
+    se sube a un círculo azul, la barra se levanta debajo para recibirlo y la joroba se
+    desliza de una pestaña a otra. «Más» va al final, con las tres rayas.
+  </p>
+
+  <div class="escena">
+    <div class="iphone">
+      <div class="screen">
+        <div class="isla"></div>
+        <div class="estado">
+          <span>11:53</span>
+          <span class="der">
+            <span class="barrita"><span style="height:4px"></span><span style="height:6px"></span><span style="height:8px"></span><span style="height:11px"></span></span>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.2a10 10 0 0 1 14 0"/><path d="M3.6 6.9a6.3 6.3 0 0 1 8.8 0"/><path d="M6.2 9.5a2.6 2.6 0 0 1 3.6 0"/></svg>
+            <span class="pila"><i></i></span>
+          </span>
+        </div>
+
+        <div class="lienzo">
+          <div class="cab">
+            <div>
+              <h2 id="titulo">Estudiantes</h2>
+              <p id="subtitulo">2.934 registrados</p>
+            </div>
+            <div class="acc">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 20h16"/></svg></span>
+              <span class="pri"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+            </div>
+          </div>
+
+          <div class="fila">
+            <div class="buscar">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              Buscar nombre, correo o teléfono
+            </div>
+            <div class="filtrar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h18"/><path d="M7 12h10"/><path d="M11 19h2"/></svg>
+              Filtros
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="top">
+              <span class="ava">J</span>
+              <div style="flex:1;min-width:0">
+                <p class="nom">Juan Diego Gómez Castillo</p>
+                <p class="tel">573008086298</p>
+              </div>
+              <span class="aldia">Al día</span>
+            </div>
+            <div class="curso">Ruta 500</div>
+            <div class="pag">
+              <div class="r"><span>Pagado</span><span>100%</span></div>
+              <div class="track"><i style="width:100%"></i></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="top">
+              <span class="ava">M</span>
+              <div style="flex:1;min-width:0">
+                <p class="nom">María Camila Gómez Rueda</p>
+                <p class="tel">573156620418</p>
+              </div>
+              <span class="aldia" style="color:var(--warn)">Debe</span>
+            </div>
+            <div class="curso">Calendario G 2026</div>
+            <div class="pag">
+              <div class="r"><span>Pagado</span><span>45%</span></div>
+              <div class="track"><i style="width:45%;background:var(--warn)"></i></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="top">
+              <span class="ava">E</span>
+              <div style="flex:1;min-width:0">
+                <p class="nom">Emily Sophia Mejías Ontiveros</p>
+                <p class="tel">573204471899</p>
+              </div>
+              <span class="aldia">Al día</span>
+            </div>
+            <div class="curso">Premédico | MED500</div>
+          </div>
+        </div>
+
+        <nav class="nav" id="nav">
+          <div class="joroba" id="joroba"></div>
+
+          <button class="it" data-t="Inicio" data-s="Buenos días, Grupo">
+            <span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path pathLength="100" d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline pathLength="100" points="9 22 9 12 15 12 15 22"/></svg></span>
+          </button>
+
+          <button class="it on" data-t="Estudiantes" data-s="2.934 registrados">
+            <span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path pathLength="100" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle pathLength="100" cx="9" cy="7" r="4"/><path pathLength="100" d="M22 21v-2a4 4 0 0 0-3-3.87"/><path pathLength="100" d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          </button>
+
+          <button class="it" data-t="Analíticas" data-s="Agosto de 2026">
+            <span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path pathLength="100" d="M3 3v18h18"/><path pathLength="100" d="M18 17V9"/><path pathLength="100" d="M13 17V5"/><path pathLength="100" d="M8 17v-3"/></svg></span>
+          </button>
+
+          <button class="it" data-t="Cursos" data-s="Catálogo y precios">
+            <span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path pathLength="100" d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path pathLength="100" d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+          </button>
+
+          <button class="it" data-t="Más secciones" data-s="Cursos, colegios, simulacros…">
+            <span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line pathLength="100" x1="4" x2="20" y1="12" y2="12"/><line pathLength="100" x1="4" x2="20" y1="6" y2="6"/><line pathLength="100" x1="4" x2="20" y1="18" y2="18"/></svg></span>
+          </button>
+        </nav>
+
+        <div class="velo" id="velo"></div>
+        <div class="hoja-mas" id="hojaMas">
+          <div class="agarre"></div>
+          <div class="hoja-top">
+            <h3>Más secciones</h3>
+            <button class="hoja-x" id="cerrarMas" aria-label="Cerrar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
+          </div>
+          <div class="rejilla-mas">
+            <div class="mod"><span class="cir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H12v17H5.5A2.5 2.5 0 0 0 3 22Z"/><path d="M21 5.5A2.5 2.5 0 0 0 18.5 3H12v17h6.5a2.5 2.5 0 0 1 2.5 2Z"/></svg></span><span>Cursos</span></div>
+            <div class="mod"><span class="cir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4h6v4"/></svg></span><span>Colegios</span></div>
+            <div class="mod"><span class="cir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 15v3M12 12v6M15 14v4"/></svg></span><span>Simulacros</span></div>
+            <div class="mod"><span class="cir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>Formularios</span></div>
+          </div>
+          <div class="cuenta">
+            <span class="ava2">G5</span>
+            <span class="qn"><b>Grupo 500 Educación</b><span>pregrupo500@gmail.com</span></span>
+            <button class="hoja-x" aria-label="Ajustes">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="gesto"></div>
+      </div>
+    </div>
+
+    <p class="pista"><span>↑</span>Tócala — y abre las tres rayas para ver el panel</p>
+    <div class="pista" style="gap:10px">
+      <span style="width:auto;background:transparent;color:var(--on-surface-variant);font-weight:600">Velocidad</span>
+      <input type="range" id="perilla" min="0.4" max="4" step="0.1" value="0.8" style="width:180px;accent-color:var(--primary)">
+      <b id="perillaTxt" style="font-variant-numeric:tabular-nums">0,8s</b>
+      <span style="width:auto;background:transparent;color:var(--on-surface-variant)">más alto = más lento</span>
+    </div>
+  </div>
+
+  <div class="bloque">
+    <h2>Las decisiones</h2>
+    <ul class="lista">
+      <li>
+        <b>Las tres rayas van de últimas.</b> Ahí vive «Más», y ahí está el pulgar cuando
+        se sostiene el teléfono con la derecha. En el ejemplo original iban primero, pero
+        ahí no abrían un menú de secciones sino que eran la sección principal.
+      </li>
+      <li>
+        <b>Sin rótulos, como el original.</b> Los iconos hablan solos y la barra queda
+        limpia; el título de la pantalla ya dice dónde se está.
+      </li>
+      <li>
+        <b>Una sola velocidad para todo.</b> Cambio de módulo, subida, caída y trazo
+        del icono duran exactamente lo mismo — muévela con la perilla de abajo del
+        teléfono. Número más alto, animación más lenta.
+      </li>
+      <li>
+        <b>Un solo azul, no un color por sección.</b> El ejemplo pinta cada pestaña de un
+        color distinto y cambia el fondo de la página. Grupo 500 no tiene un color por
+        área, y meterlo ahora obligaría a decidir de qué color es Analíticas, de qué color
+        es Cursos, y a sostener esa decisión en el resto de la app.
+      </li>
+      <li>
+        <b>La joroba se desliza, no salta.</b> Va con la misma curva de aceleración que el
+        icono que sube, así que las dos cosas se leen como un solo movimiento.
+      </li>
+      <li>
+        <b>Se esconde al hacer scroll.</b> En cuanto la lista se mueve — hacia arriba o
+        hacia abajo — la barra se desliza fuera de la pantalla, y al detenerse vuelve.
+        La pantalla completa queda para el contenido mientras se navega. Pruébalo
+        desplazando la lista del teléfono.
+      </li>
+      <li>
+        <b>Deja de ser flotante.</b> Pegada a los lados y al fondo, cubre también la zona
+        de la línea de gesto en el mismo azul — el iPhone pinta su rayita encima.
+      </li>
+      <li>
+        <b>Y respeta lo de ayer:</b> cuando «Más» abre su hoja desde abajo, la hoja y su
+        velo pasan por encima de la barra. La joroba no queda flotando sobre el menú.
+      </li>
+    </ul>
+  </div>
+
+  <div class="bloque">
+    <h2>Siempre cinco</h2>
+    <p>
+      Cuatro módulos y «Más», en toda área: Ventas, Finanzas, Marketing, Administración.
+      Lo que no quepa en esos cuatro se va al panel de «Más».
+    </p>
+    <p>
+      Hoy no es así — la barra calcula cuántas pestañas mostrar según dónde estés, y
+      cambia de cuatro a cinco de una pantalla a otra. Con cuatro fijas la barra deja de
+      moverse bajo el pulgar, y de paso la joroba siempre recorre la misma distancia:
+      un cuarto del ancho por salto.
+    </p>
+  </div>
+
+  <div class="bloque">
+    <h2>Lo que cuesta</h2>
+    <p>
+      La joroba se coloca midiendo dónde quedó la pestaña abierta, no con una regla de
+      CSS: hay que recalcularla al cambiar el ancho de la pantalla y al girar el
+      teléfono. Es poco código, pero es código con estado que hoy no existe.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  const nav = document.getElementById('nav')
+  const joroba = document.getElementById('joroba')
+  const items = [...nav.querySelectorAll('.it')]
+  const titulo = document.getElementById('titulo')
+  const subtitulo = document.getElementById('subtitulo')
+
+  function colocar(animando) {
+    const activa = nav.querySelector('.it.on')
+    if (!activa) return
+    if (!animando) joroba.style.transition = 'none'
+    const r = activa.getBoundingClientRect()
+    const rn = nav.getBoundingClientRect()
+    // Centrada en su pestaña, siempre.
+    const x = Math.round(r.left - rn.left + (r.width - joroba.offsetWidth) / 2)
+    joroba.style.transform = `translate3d(${x}px,0,0)`
+    if (!animando) requestAnimationFrame(() => { joroba.style.transition = '' })
+  }
+
+  const velo = document.getElementById('velo')
+  const hoja = document.getElementById('hojaMas')
+  const btnMas = items[items.length - 1]
+  let previa = nav.querySelector('.it.on')
+
+  function activar(it) {
+    items.forEach(o => o.classList.remove('on'))
+    it.classList.add('on')
+    colocar(true)
+  }
+  function abrirMas() {
+    previa = nav.querySelector('.it.on')
+    activar(btnMas)
+    velo.classList.add('on')
+    hoja.classList.add('on')
+  }
+  function cerrarMas() {
+    velo.classList.remove('on')
+    hoja.classList.remove('on')
+    // La joroba vuelve a la seccion en la que se estaba.
+    if (previa && previa !== btnMas) activar(previa)
+  }
+
+  items.forEach(it => it.addEventListener('click', () => {
+    if (it === btnMas) {
+      if (hoja.classList.contains('on')) cerrarMas()
+      else abrirMas()
+      return
+    }
+    if (hoja.classList.contains('on')) { velo.classList.remove('on'); hoja.classList.remove('on') }
+    if (it.classList.contains('on')) return
+    activar(it)
+    titulo.textContent = it.dataset.t
+    subtitulo.textContent = it.dataset.s
+  }))
+  velo.addEventListener('click', cerrarMas)
+  document.getElementById('cerrarMas').addEventListener('click', cerrarMas)
+
+  const perilla = document.getElementById('perilla')
+  const perillaTxt = document.getElementById('perillaTxt')
+  perilla.addEventListener('input', () => {
+    document.querySelector('.screen').style.setProperty('--dur', perilla.value + 's')
+    perillaTxt.textContent = String(perilla.value).replace('.', ',') + 's'
+  })
+
+  // La lista del primer telefono se puede desplazar para probar el gesto:
+  // se clonan las tarjetas para que haya suficiente contenido.
+  const lienzo = document.querySelector('.lienzo')
+  lienzo.classList.add('rueda')
+  const tarjetas = [...lienzo.querySelectorAll('.card')]
+  for (let i = 0; i < 3; i++) tarjetas.forEach(c => lienzo.appendChild(c.cloneNode(true)))
+
+  let quieto
+  lienzo.addEventListener('scroll', () => {
+    nav.classList.add('escondida')
+    clearTimeout(quieto)
+    quieto = setTimeout(() => nav.classList.remove('escondida'), 220)
+  }, { passive: true })
+
+  colocar(false)
+  window.addEventListener('resize', () => colocar(false))
+  document.fonts?.ready.then(() => colocar(false))
+</script>
