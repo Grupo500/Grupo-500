@@ -1756,17 +1756,6 @@ dibujo del PDF portado a Node, idéntico al del navegador):
   poniendo `COBROS_QUINCENA_REAL=true` en Railway cuando Hotman vea un par
   de simulaciones.
 
-### El viaje del hueco, ahora fluido
-
-Hotman sintio el cambio de modulo "lento": no era la duracion (0,7s se queda)
-sino que en el telefono el viaje iba a saltos. Tres costos por cuadro en el
-lazo de `BarraRiel`: el `drop-shadow` sobre la silueta que cambia (re-rasteriza
-el SVG entero — la misma leccion de la joroba, colada por segunda vez; en el
-widget no estaba y por eso alla si deslizaba), leer `clientWidth` en cada
-cuadro (layout forzado) y mover el circulo con `left` (layout otra vez).
-Arreglo: la sombra descansa durante el viaje y vuelve al llegar, las medidas
-se toman una vez por colocacion, y el circulo viaja por `transform`.
-
 ### Pendientes que siguen abiertos
 
 - Poner `COBROS_QUINCENA_REAL=true` tras revisar la simulación del 30-31 ago.
