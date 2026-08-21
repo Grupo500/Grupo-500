@@ -242,7 +242,7 @@ export function BarraRiel({ pestanas, className }: {
           transform: 'translate(-50%,-50%)',
         }}
       >
-        {IconoActivo && <IconoActivo className="h-6 w-6" strokeWidth={2} />}
+        {IconoActivo && <IconoActivo className="h-[22px] w-[22px]" strokeWidth={2} />}
       </span>
 
       <div ref={fila} className="absolute left-3 right-3 flex items-center" style={{ top: TECHO, height: ALTO_FILA }}>
