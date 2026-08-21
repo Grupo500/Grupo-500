@@ -51,6 +51,7 @@ const FONDO = '#15203a'
 
 /** La única velocidad de las cuatro animaciones (elegida con la perilla). */
 const DURACION = '.8s'
+const DURACION_MS = 800
 const CURVA = 'cubic-bezier(.45,0,.15,1)'
 
 const CIRCULO = 64
@@ -76,6 +77,8 @@ export function BarraJoroba({ pestanas, className }: {
   const contenedor = useRef<HTMLDivElement>(null)
   const barra  = useRef<HTMLElement>(null)
   const joroba = useRef<HTMLSpanElement>(null)
+  /** Última posición colocada: el punto de partida explícito del viaje. */
+  const xActual = useRef<number | null>(null)
   const [listo, setListo] = useState(false)
 
   const activaReal = pestanas.find(p => p.activa)?.key ?? null
@@ -161,26 +164,31 @@ export function BarraJoroba({ pestanas, className }: {
 
     const colocar = (animando: boolean) => {
       const activa = nav.querySelector<HTMLElement>('[data-activa="true"]')
-      if (!activa) { bulto.style.opacity = '0'; return }
+      if (!activa) { bulto.style.opacity = '0'; xActual.current = null; return }
       // offsetLeft y el left:0 de la joroba miden desde el mismo borde: la
       // caja de padding arranca en el borde interior, el padding no la corre.
       const x = Math.round(activa.offsetLeft + (activa.offsetWidth - JOROBA_ANCHO) / 2)
-      if (!animando) {
-        bulto.style.transition = 'none'
-        bulto.style.transform = `translate3d(${x}px,0,0)`
-        bulto.style.opacity = '1'
-        // Sienta el valor ANTES de reactivar la transicion: sin este calculo
-        // forzado, el navegador podia ver solo el estado final y la joroba
-        // aparecia alli sin viajar (Hotman, 21-ago).
-        void bulto.offsetWidth
-        bulto.style.transition = ''
-        return
-      }
-      // Tambien antes de animar: garantiza que el punto de partida este
-      // registrado aunque la navegacion haya apretado todo en un cuadro.
-      void bulto.offsetWidth
+      const desde = xActual.current
+      bulto.getAnimations().forEach(a => a.cancel())
+      // El estilo queda SIEMPRE en el destino; la animacion pinta el viaje
+      // encima y al terminar cae sobre esa base.
       bulto.style.transform = `translate3d(${x}px,0,0)`
       bulto.style.opacity = '1'
+      if (animando && desde !== null && desde !== x) {
+        // Web Animations y no transicion CSS: la transicion necesita que el
+        // navegador haya registrado el valor viejo en un calculo previo, y
+        // la navegacion de Next comprimia los cuadros y se lo tragaba — la
+        // joroba aparecia en el destino sin viajar (Hotman, 21-ago). Aqui el
+        // punto de partida va explicito y el viaje corre siempre.
+        bulto.animate(
+          [
+            { transform: `translate3d(${desde}px,0,0)` },
+            { transform: `translate3d(${x}px,0,0)` },
+          ],
+          { duration: DURACION_MS, easing: 'cubic-bezier(.45,0,.15,1)' },
+        )
+      }
+      xActual.current = x
     }
 
     // La primera colocación va sin animación: si no, la joroba entra
@@ -246,7 +254,6 @@ export function BarraJoroba({ pestanas, className }: {
             height: JOROBA_ALTO,
             background: FONDO,
             clipPath: 'url(#joroba-curva)',
-            transition: `transform ${DURACION} ${CURVA}`,
             filter: 'drop-shadow(0 -4px 8px rgba(0,29,61,0.2))',
             willChange: 'transform',
           }}
