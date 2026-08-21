@@ -1,6 +1,7 @@
 import { auth } from '@/auth'
 import { AsesorDashboard } from '@/components/charts/AsesorDashboard'
 import { DashboardWrapper } from '@/components/charts/DashboardWrapper'
+import { primerNombre } from '@/lib/utils'
 
 export default async function DashboardPage() {
   const session = await auth().catch(() => null)
@@ -11,8 +12,7 @@ export default async function DashboardPage() {
     return <AsesorDashboard />
   }
 
-  const fullName  = session?.user?.name ?? session?.user?.email?.split('@')[0] ?? ''
-  const firstName = fullName.split(' ')[0]
+  const firstName = primerNombre(session?.user?.name ?? session?.user?.email?.split('@')[0])
   const horaColombia = Number(
     new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date())
   )

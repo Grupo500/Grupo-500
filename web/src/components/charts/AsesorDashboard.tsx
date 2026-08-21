@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { apiFetch } from '@/lib/api'
-import { formatCOP } from '@/lib/utils'
+import { formatCOP, primerNombre } from '@/lib/utils'
 import { VentasSemana } from './VentasSemana'
 import { PendientesPorCobrar } from './PendientesPorCobrar'
 import { AccionesPortada } from '@/components/layout/AccionesPortada'
@@ -75,7 +75,7 @@ export function AsesorDashboard() {
   const { data: session } = useSession()
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
-  const firstName = (session?.user?.name ?? session?.user?.email?.split('@')[0] ?? '').split(' ')[0]
+  const firstName = primerNombre(session?.user?.name ?? session?.user?.email?.split('@')[0])
   const horaColombia = Number(
     new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date())
   )

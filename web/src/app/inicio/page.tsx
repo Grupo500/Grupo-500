@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { Wallet, ClipboardList, Lock, ArrowRight, Gamepad2, Landmark, Megaphone, ShieldCheck } from 'lucide-react'
 import { LogoutButton } from './LogoutButton'
 import { esMarketing, type Rol } from '@/lib/roles'
+import { primerNombre } from '@/lib/utils'
 
 /** Fecha de hoy en Colombia, con el día y el mes capitalizados. */
 function fechaDeHoy(): string {
@@ -59,13 +60,7 @@ export default async function InicioPage() {
 
   const role = ((session.user as any).role ?? 'VENDEDOR') as Rol
 
-  function primerNombre(nombreCompleto: string): string {
-    const partes = nombreCompleto.trim().split(/\s+/)
-    if (role !== 'ESTUDIANTE' || partes.length <= 2) return partes[0]
-    const nombres = partes.slice(2).filter(p => !p.includes('.') && p.length > 1)
-    return nombres.length ? nombres.slice(0, 2).join(' ') : partes[0]
-  }
-  const nombre = session.user.name ? primerNombre(session.user.name) : 'Hola'
+  const nombre = primerNombre(session.user.name ?? session.user.email?.split('@')[0])
 
   const verVentas     = role === 'ADMIN' || role === 'VENDEDOR'
   const verSimulacros = role === 'ADMIN' || role === 'ESTUDIANTE'

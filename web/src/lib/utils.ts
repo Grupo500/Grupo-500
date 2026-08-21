@@ -66,3 +66,16 @@ export function formatCurso(nombre: string): string {
 export function hoyColombia(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
 }
+
+/**
+ * El primer nombre de una persona, para saludarla.
+ *
+ * Una sola palabra, siempre: "Cielo Valentina Guevara Uribe" saluda a Cielo
+ * (Hotman, 21-ago). Y en mayúscula inicial aunque venga escrito de cualquier
+ * forma — los nombres entran a la base como los teclee quien matricula.
+ */
+export function primerNombre(nombreCompleto: string | null | undefined): string {
+  const palabra = (nombreCompleto ?? '').trim().split(/\s+/)[0] ?? ''
+  if (!palabra) return ''
+  return palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase()
+}
