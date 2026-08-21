@@ -1120,6 +1120,13 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
   // La hoja se agranda hasta donde quepa: limitada por el ancho de la ventana
   // y, sobre todo, por su alto — es una hoja vertical.
   const [ancho, setAncho] = useState(560)
+  const [zoom, setZoom]   = useState(1)
+  const caja  = useRef<HTMLDivElement>(null)
+  // El zoom también en un ref: durante un pellizco llegan muchos eventos
+  // seguidos y el valor del último render se queda viejo.
+  const zoomRef = useRef(1)
+  const pellizco = useRef<{ dedos: number; zoom: number } | null>(null)
+
   useEffect(() => {
     const medir = () => setAncho(Math.max(260, Math.min(
       720,
@@ -1135,6 +1142,70 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
       window.removeEventListener('keydown', esc)
     }
   }, [onCerrar])
+
+  const alto = Math.round(ancho * (1123 / 794))
+  const TOPE = 4
+
+  /**
+   * Cambia el acercamiento dejando quieto el punto del papel que estaba bajo
+   * el dedo o el cursor. Sin esto, acercar salta a otra parte de la hoja.
+   */
+  function acercar(nuevo: number, cx: number, cy: number) {
+    const cont = caja.current
+    if (!cont) return
+    const previo = zoomRef.current
+    const limitado = Math.min(TOPE, Math.max(1, nuevo))
+    const r = cont.getBoundingClientRect()
+    const px = (cont.scrollLeft + cx - r.left) / (ancho * previo)
+    const py = (cont.scrollTop  + cy - r.top)  / (alto  * previo)
+    zoomRef.current = limitado
+    setZoom(limitado)
+    requestAnimationFrame(() => {
+      cont.scrollLeft = px * ancho * limitado - (cx - r.left)
+      cont.scrollTop  = py * alto  * limitado - (cy - r.top)
+    })
+  }
+
+  /**
+   * El pellizco, con oyentes nativos.
+   *
+   * React entrega `touchmove` como oyente pasivo y ahí `preventDefault` no
+   * hace nada: sin él, dos dedos desplazan la hoja en vez de acercarla.
+   */
+  useEffect(() => {
+    const cont = caja.current
+    if (!cont) return
+    const separacion = (t: TouchList) =>
+      Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+
+    const empieza = (ev: TouchEvent) => {
+      if (ev.touches.length === 2) {
+        pellizco.current = { dedos: separacion(ev.touches), zoom: zoomRef.current }
+      }
+    }
+    const mueve = (ev: TouchEvent) => {
+      if (ev.touches.length !== 2 || !pellizco.current) return
+      ev.preventDefault()
+      const mx = (ev.touches[0].clientX + ev.touches[1].clientX) / 2
+      const my = (ev.touches[0].clientY + ev.touches[1].clientY) / 2
+      acercar(pellizco.current.zoom * (separacion(ev.touches) / pellizco.current.dedos), mx, my)
+    }
+    const termina = () => { pellizco.current = null }
+
+    cont.addEventListener('touchstart', empieza, { passive: true })
+    cont.addEventListener('touchmove',  mueve,   { passive: false })
+    cont.addEventListener('touchend',   termina)
+    cont.addEventListener('touchcancel', termina)
+    return () => {
+      cont.removeEventListener('touchstart', empieza)
+      cont.removeEventListener('touchmove',  mueve)
+      cont.removeEventListener('touchend',   termina)
+      cont.removeEventListener('touchcancel', termina)
+    }
+    // `acercar` se redefine en cada render pero lee todo de refs, así que
+    // basta con volver a montarlo cuando cambia el tamaño de la hoja.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ancho])
 
   return (
     <div
@@ -1152,9 +1223,36 @@ function ModalCertificado({ data, etiqueta, onCerrar, onDescargar, descargando }
         </button>
       </div>
 
-      <div onClick={ev => ev.stopPropagation()} className="overflow-auto">
-        <VistaPreviaCertificado data={data} ancho={ancho} />
+      {/* La hoja se dibuja una sola vez al tamaño que cabe y el acercamiento
+          es un `scale` encima: volver a renderizar la plantilla en cada paso
+          del pellizco arrastraba el gesto entero. */}
+      <div
+        ref={caja}
+        onClick={ev => ev.stopPropagation()}
+        onDoubleClick={ev => {
+          ev.stopPropagation()
+          acercar(zoomRef.current > 1 ? 1 : 2, ev.clientX, ev.clientY)
+        }}
+        className="max-w-full overflow-auto overscroll-contain rounded-md"
+        style={{
+          maxHeight: alto,
+          // Un dedo desplaza la hoja; dos los atendemos nosotros.
+          touchAction: 'pan-x pan-y',
+          cursor: zoom > 1 ? 'zoom-out' : 'zoom-in',
+        }}
+      >
+        <div style={{ width: ancho * zoom, height: alto * zoom }}>
+          <div style={{ width: ancho, height: alto, transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
+            <VistaPreviaCertificado data={data} ancho={ancho} />
+          </div>
+        </div>
       </div>
+
+      <p className="text-[11px] text-white/55">
+        {zoom > 1
+          ? `Acercado ${Math.round(zoom * 100)}% · doble clic para volver`
+          : 'Doble clic para acercar, o júntalo con dos dedos'}
+      </p>
 
       <button
         onClick={ev => { ev.stopPropagation(); onDescargar() }}
