@@ -100,8 +100,11 @@ export function BarraJoroba({ pestanas, className }: {
 
   useEffect(() => {
     if (activaVisual === activaReal) return
-    const id = requestAnimationFrame(() => setActivaVisual(activaReal))
-    return () => cancelAnimationFrame(id)
+    let id2 = 0
+    const id = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => setActivaVisual(activaReal))
+    })
+    return () => { cancelAnimationFrame(id); cancelAnimationFrame(id2) }
   }, [activaReal, activaVisual])
 
   useEffect(() => { memoriaActiva = activaVisual }, [activaVisual])
@@ -159,15 +162,25 @@ export function BarraJoroba({ pestanas, className }: {
     const colocar = (animando: boolean) => {
       const activa = nav.querySelector<HTMLElement>('[data-activa="true"]')
       if (!activa) { bulto.style.opacity = '0'; return }
-      if (!animando) bulto.style.transition = 'none'
       // offsetLeft y el left:0 de la joroba miden desde el mismo borde: la
       // caja de padding arranca en el borde interior, el padding no la corre.
-      // (Restarle el padding "para corregir" fue lo que la tiro a la
-      // izquierda el 21-ago.)
       const x = Math.round(activa.offsetLeft + (activa.offsetWidth - JOROBA_ANCHO) / 2)
+      if (!animando) {
+        bulto.style.transition = 'none'
+        bulto.style.transform = `translate3d(${x}px,0,0)`
+        bulto.style.opacity = '1'
+        // Sienta el valor ANTES de reactivar la transicion: sin este calculo
+        // forzado, el navegador podia ver solo el estado final y la joroba
+        // aparecia alli sin viajar (Hotman, 21-ago).
+        void bulto.offsetWidth
+        bulto.style.transition = ''
+        return
+      }
+      // Tambien antes de animar: garantiza que el punto de partida este
+      // registrado aunque la navegacion haya apretado todo en un cuadro.
+      void bulto.offsetWidth
       bulto.style.transform = `translate3d(${x}px,0,0)`
       bulto.style.opacity = '1'
-      if (!animando) requestAnimationFrame(() => { bulto.style.transition = '' })
     }
 
     // La primera colocación va sin animación: si no, la joroba entra
