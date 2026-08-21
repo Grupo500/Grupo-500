@@ -13,7 +13,7 @@
  * El viaje entre módulos redibuja la silueta en cada cuadro: el hueco no es
  * un elemento que se desplaza sino parte del contorno del riel, así que se
  * recalcula el trazado mientras el círculo avanza — los dos llegan como una
- * sola pieza, en 0.8s con la curva de siempre. Se anima con un lazo propio
+ * sola pieza, en 0.7s con la curva de siempre. Se anima con un lazo propio
  * (no transiciones CSS): las transiciones se tragan el viaje cuando la
  * navegación de Next comprime los cuadros, ya nos pasó con la joroba.
  *
@@ -44,7 +44,7 @@ const RIEL = '#15203a'
 const CIAN = '#21b9f7'
 const APAGADO = '#94a3b8'
 
-const DURACION_MS = 800
+const DURACION_MS = 700
 
 /** Zona transparente arriba del riel: por ahí asoma el círculo. */
 const TECHO = 34
