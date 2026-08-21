@@ -140,7 +140,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           abajo nunca queda por debajo de la navegación (Hotman, 21-ago). */}
       <div
         className={cn(
-          'fixed inset-x-0 bottom-0 z-50 md:hidden rounded-t-[26px] overflow-hidden shadow-[0_-12px_40px_-12px_rgba(0,29,61,0.4)] transition-transform duration-[450ms] ease-[cubic-bezier(.32,.9,.28,1)]',
+          'fixed inset-x-0 bottom-0 z-50 md:hidden rounded-t-[26px] overflow-hidden shadow-[0_-12px_40px_-12px_rgba(0,29,61,0.4)] transition-transform duration-[800ms] ease-[cubic-bezier(.32,.9,.28,1)]',
           sheetVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none',
         )}
         style={{

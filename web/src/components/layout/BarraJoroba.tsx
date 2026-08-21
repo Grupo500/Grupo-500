@@ -88,8 +88,15 @@ export function BarraJoroba({ pestanas, className }: {
       : activaReal,
   )
 
+  // Momento del ultimo cambio de pestana (y del montaje: navegar entre
+  // areas remonta la barra). Mientras corre la animacion, el scroll que
+  // dispara la propia navegacion no debe esconder la barra — escondia el
+  // deslizamiento detras del telon y se percibia como un salto.
+  const ultimoCambio = useRef(Date.now())
+
   useEffect(() => {
     if (activaVisual === activaReal) return
+    ultimoCambio.current = Date.now()
     const id = requestAnimationFrame(() => setActivaVisual(activaReal))
     return () => cancelAnimationFrame(id)
   }, [activaReal, activaVisual])
@@ -127,6 +134,9 @@ export function BarraJoroba({ pestanas, className }: {
     if (!caja) return
     let quieto: ReturnType<typeof setTimeout> | undefined
     const alDesplazar = () => {
+      // El scroll de la propia navegacion no cuenta: dejaria la joroba
+      // deslizando a escondidas.
+      if (Date.now() - ultimoCambio.current < 1000) return
       caja.style.transform = 'translateY(calc(100% + 36px))'
       clearTimeout(quieto)
       quieto = setTimeout(() => { caja.style.transform = 'translateY(0)' }, 220)
