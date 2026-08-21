@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { createClientFetcher, getClientToken } from '@/lib/api'
@@ -11,12 +12,13 @@ import {
   ArrowLeft, Pencil, Trash2, Loader2, User, BookOpen,
   Phone, Mail, Users, CreditCard, Award,
   Wallet, CheckCircle, AlertTriangle, Paperclip,
-  Save, ChevronDown, ChevronUp, Download, Clock, Receipt,
+  Save, ChevronDown, ChevronUp, Download, Clock, Receipt, Check,
   type LucideIcon,
 } from 'lucide-react'
 import { VerComprobante } from '@/components/ui/VerComprobante'
 import { Select } from '@/components/ui/Select'
-import { TIPOS as TIPOS_CERTIFICADO, generarPDF, type Certificado, type Firmas } from '@/lib/certificados'
+import { TIPOS as TIPOS_CERTIFICADO, generarPDF, horasPorNombreCurso, type Certificado, type Firmas } from '@/lib/certificados'
+import type { CertificadoData } from '@/components/certificados/CertificadoTemplate'
 import { DEPARTAMENTOS, getMunicipios } from '@/lib/colombia'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
@@ -37,7 +39,7 @@ interface EstudianteDetalle {
   tipoDocumento?: string; documento?: string; documentoUrl?: string | null
   email: string; telefono: string; fechaNacimiento: string
   departamento?: string; ciudad?: string
-  colegio?: { id: string; nombre: string }
+  colegio?: { id: string; nombre: string; ciudad?: string }
   acudiente?: { nombre: string; email: string; telefono: string; relacion: string }
   asesor?: { id: string; nombre: string }
   lineaAutorizada?: number | null
@@ -46,7 +48,16 @@ interface EstudianteDetalle {
   verificado?: boolean
   verificadoPor?: string | null
   verificadoAt?: string | null
-  cursos?: { id: string; cursoId: string; descuentoPorcentaje: number; precioAcordado?: number | null; curso: { id: string; nombre: string; precio: number } }[]
+  cursos?: {
+    id: string; cursoId: string; descuentoPorcentaje: number; precioAcordado?: number | null
+    // El endpoint devuelve el curso entero; estos campos van impresos en el
+    // certificado, por eso estan aqui y no solo nombre/precio.
+    curso: {
+      id: string; nombre: string; precio: number
+      duracionHoras?: number; materias?: string[]; simulacros?: number | null
+      horarioTexto?: string | null; fechaInicio?: string | null; fechaFin?: string | null
+    }
+  }[]
   pagos?: Pago[]
   createdAt: string
 }
@@ -1042,6 +1053,55 @@ function TabFinanciero({ e, fetcher, onRefresh, cursos, isAdmin }: {
 // ══════════════════════════════════════════════════════════════════════════
 // TAB CERTIFICADOS
 // ══════════════════════════════════════════════════════════════════════════
+// ── Certificados ───────────────────────────────────────────────────────────
+// La plantilla del certificado pesa (fuentes, logos, firmas en base64) y solo
+// hace falta en esta pestaña: se carga aparte.
+const VistaPreviaCertificado = dynamic(
+  () => import('@/components/certificados/VistaPreviaCertificado').then(m => m.VistaPreviaCertificado),
+  { ssr: false, loading: () => <HojaCargando /> },
+)
+
+const ANCHO_PREVIA = 190
+
+function HojaCargando() {
+  return (
+    <div
+      className="grid place-items-center rounded-md border border-outline-variant bg-surface-lowest"
+      style={{ width: ANCHO_PREVIA, height: Math.round((1123 / 794) * ANCHO_PREVIA) }}
+    >
+      <Loader2 className="w-4 h-4 animate-spin text-on-surface-variant opacity-50" />
+    </div>
+  )
+}
+
+/**
+ * Una línea de "lo que va impreso".
+ *
+ * Cada dato dice si está o si falta antes de emitir, porque el certificado es
+ * un documento que sale firmado: enterarse de que iba sin documento después de
+ * entregarlo obliga a rehacerlo (Hotman, 21-ago).
+ */
+function DatoImpreso({ ok, etiqueta, children }: {
+  ok: boolean
+  etiqueta: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid grid-cols-[16px_1fr_auto] items-center gap-2.5 border-t border-outline-variant/55 py-2 text-[12.5px] first:border-t-0">
+      <span className={cn(
+        'grid w-4 h-4 place-items-center rounded-full',
+        ok ? 'bg-[#16a34a]/15 text-[#16a34a]' : 'bg-[#d97706]/20 text-[#d97706]',
+      )}>
+        {ok
+          ? <Check className="w-2.5 h-2.5" strokeWidth={3.5} />
+          : <AlertTriangle className="w-2.5 h-2.5" />}
+      </span>
+      <span className="text-on-surface-variant">{etiqueta}</span>
+      <span className="min-w-0 truncate text-right font-medium text-on-surface">{children}</span>
+    </div>
+  )
+}
+
 function TabCertificados({ e, fetcher, onRefresh }: {
   e: EstudianteDetalle
   fetcher: <T>(path: string, opts?: RequestInit) => Promise<T>
@@ -1051,6 +1111,7 @@ function TabCertificados({ e, fetcher, onRefresh }: {
   const queryClient = useQueryClient()
   const [tipoNuevo, setTipoNuevo] = useState<'CURSANDO' | 'COMPLETADO'>('CURSANDO')
   const [descargando, setDescargando] = useState<string | null>(null)
+  const [editandoDoc, setEditandoDoc] = useState(false)
   const [tipoDocInput, setTipoDocInput] = useState(e.tipoDocumento || 'CC')
   const [documentoInput, setDocumentoInput] = useState(e.documento ?? '')
 
@@ -1069,7 +1130,7 @@ function TabCertificados({ e, fetcher, onRefresh }: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipoDocumento: tipoDocInput, documento: documentoInput.trim() }),
     }),
-    onSuccess: () => onRefresh(),
+    onSuccess: () => { setEditandoDoc(false); onRefresh() },
     onError: (err: any) => alert(err?.message ?? 'Error al guardar el documento'),
   })
 
@@ -1083,10 +1144,47 @@ function TabCertificados({ e, fetcher, onRefresh }: {
     onError: (e: any) => alert(e?.message ?? 'Error al generar certificado'),
   })
 
+  const certificados  = data?.data ?? []
+  const firmas: Firmas = firmasData?.data ?? { firmaSebastian: null, firmaAndres: null }
   const tieneDocumento = !!e.documento
 
-  const certificados = data?.data ?? []
-  const firmas: Firmas = firmasData?.data ?? { firmaSebastian: null, firmaAndres: null }
+  const curso = e.cursos?.[0]?.curso
+  // Misma regla que el PDF: si el curso no tiene horas configuradas se deducen
+  // del nombre, para que la miniatura no muestre "0 horas" cuando el PDF sí
+  // va a imprimir un número.
+  const horas = curso?.duracionHoras && curso.duracionHoras > 0
+    ? curso.duracionHoras
+    : horasPorNombreCurso(curso?.nombre ?? '')
+
+  const yaEmitido = certificados.some(c => c.tipo === tipoNuevo)
+
+  // Exactamente los datos que recibirá el PDF. La miniatura renderiza la misma
+  // plantilla con este objeto, así que no puede enseñar algo distinto de lo
+  // que se va a emitir.
+  const previa: CertificadoData = {
+    nombreEstudiante: e.nombre,
+    tipoDocumento:    e.tipoDocumento ?? 'CC',
+    documento:        e.documento ?? '',
+    colegio:          e.colegio?.nombre ?? '',
+    ciudadColegio:    e.colegio?.ciudad ?? e.ciudad ?? '',
+    curso:            curso?.nombre ?? 'Preicfes',
+    duracionHoras:    horas,
+    materias:         curso?.materias ?? [],
+    simulacros:       curso?.simulacros ?? null,
+    horarioTexto:     curso?.horarioTexto ?? null,
+    fechaInicioCurso: curso?.fechaInicio ?? null,
+    fechaFinCurso:    curso?.fechaFin ?? null,
+    tipo:             tipoNuevo,
+    fechaEmision:     new Date().toISOString(),
+    numeroCertificado: certificados.length + 1,
+    firmaAndres:      firmas.firmaAndres ?? undefined,
+  }
+
+  const abrirDocumento = () => {
+    setTipoDocInput(e.tipoDocumento || 'CC')
+    setDocumentoInput(e.documento ?? '')
+    setEditandoDoc(true)
+  }
 
   const handleDescargar = async (cert: Certificado, i: number) => {
     if (descargando) return
@@ -1105,112 +1203,199 @@ function TabCertificados({ e, fetcher, onRefresh }: {
     <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-on-surface-variant" /></div>
   )
 
+  const etiquetaTipo = TIPOS_CERTIFICADO[tipoNuevo].label.toLowerCase()
+
   return (
-    <div className="space-y-4">
-      {certificados.length === 0 ? (
-        <div className="text-center py-8 text-on-surface-variant text-sm">
-          <Award className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          Este estudiante aún no tiene certificados
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {certificados.map((c, i) => {
-            const { label, color, icon: Icon } = TIPOS_CERTIFICADO[c.tipo]
-            const cargando = descargando === c.id
-            return (
-              <div key={c.id} className="flex items-center gap-3 bg-surface-lowest border border-outline-variant rounded-xl p-3.5">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Award className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium', color)}>
-                    <Icon className="w-3 h-3" />{label}
-                  </span>
-                  <p className="text-[11px] text-on-surface-variant mt-1">Emitido {fmtFecha(c.fechaEmision)}</p>
-                </div>
-                <button
-                  onClick={() => handleDescargar(c, i)}
-                  disabled={!!descargando}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50 transition-colors text-xs font-medium flex-shrink-0"
-                >
-                  {cargando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                  Descargar
-                </button>
-              </div>
-            )
-          })}
-        </div>
-      )}
+    <div className="overflow-hidden rounded-2xl border border-outline-variant bg-surface-lowest">
+      <div className="grid md:grid-cols-[236px_1fr]">
 
-      {/* Generar certificado adicional (ej. CURSANDO ya emitido, falta COMPLETADO) */}
-      <div className="bg-surface-lowest border border-outline-variant rounded-2xl p-4 space-y-3">
-        <p className="text-xs font-semibold text-on-surface-variant">Generar certificado</p>
-
-        {!tieneDocumento && (
-          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#d97706]/8 border border-[#d97706]/20">
-            <AlertTriangle className="w-4 h-4 text-[#d97706] mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-on-surface leading-relaxed">
-              Este estudiante no tiene número de documento registrado — hace falta para que aparezca en el certificado.
+        {/* ── La hoja, tal como va a salir ── */}
+        <div className="grid place-items-center border-b border-outline-variant bg-surface-low p-5 md:border-b-0 md:border-r">
+          <div>
+            <VistaPreviaCertificado data={previa} ancho={ANCHO_PREVIA} />
+            <p className="mt-2.5 text-center text-[10.5px] text-on-surface-variant">
+              certificado de {etiquetaTipo}
             </p>
           </div>
-        )}
-
-        <div className="grid grid-cols-[100px_1fr] gap-2">
-          <Select
-            value={tipoDocInput}
-            onValueChange={setTipoDocInput}
-            className="bg-surface-high w-auto"
-            options={['CC', 'TI', 'CE', 'PA', 'RC'].map(t => ({ value: t, label: t }))}
-          />
-          <input
-            type="text"
-            placeholder="Número de documento"
-            value={documentoInput}
-            onChange={e => setDocumentoInput(e.target.value)}
-            className="w-full min-w-0 bg-surface-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-          />
         </div>
-        {documentoInput.trim() !== (e.documento ?? '') && (
-          <div className="flex justify-end">
-            <button
-              onClick={() => guardarDocumentoMutation.mutate()}
-              disabled={!documentoInput.trim() || guardarDocumentoMutation.isPending}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50 transition-colors text-xs font-medium"
-            >
-              {guardarDocumentoMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              Guardar documento
-            </button>
-          </div>
-        )}
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          {(['CURSANDO', 'COMPLETADO'] as const).map(tipo => (
-            <button
-              key={tipo}
-              onClick={() => setTipoNuevo(tipo)}
-              className={cn(
-                'flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors',
-                tipoNuevo === tipo
-                  ? 'border-primary bg-primary text-on-primary shadow-sm'
-                  : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:bg-surface-high'
+        {/* ── Lo que lleva impreso y el botón de emitir ── */}
+        <div className="p-4">
+          {!tieneDocumento && !editandoDoc && (
+            <div className="mb-3.5 flex items-start gap-2.5 rounded-xl border border-[#d97706]/30 bg-[#d97706]/[0.09] p-3 text-[11.5px] leading-snug text-on-surface">
+              <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0 text-[#d97706]" />
+              <span className="flex-1">
+                Sin el número de documento el certificado sale sin identificar al estudiante.{' '}
+                <button
+                  onClick={abrirDocumento}
+                  className="cursor-pointer font-semibold text-[#d97706] underline underline-offset-2"
+                >
+                  Agregarlo
+                </button>
+              </span>
+            </div>
+          )}
+
+          <p className="mb-3 text-xs font-semibold text-on-surface-variant">Lo que va impreso</p>
+
+          <div className="mb-4">
+            <DatoImpreso ok etiqueta="Nombre">{e.nombre}</DatoImpreso>
+
+            <DatoImpreso ok={tieneDocumento} etiqueta="Documento">
+              {tieneDocumento ? (
+                <button
+                  onClick={abrirDocumento}
+                  className="inline-flex cursor-pointer items-center gap-1.5 tabular-nums transition-colors hover:text-primary"
+                >
+                  {e.tipoDocumento ?? 'CC'} {e.documento}
+                  <Pencil className="w-3 h-3 opacity-50" />
+                </button>
+              ) : (
+                <button
+                  onClick={abrirDocumento}
+                  className="cursor-pointer font-semibold text-[#d97706] hover:underline"
+                >
+                  falta — agregarlo
+                </button>
               )}
-            >
-              {tipo === 'CURSANDO' ? <Clock className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-              {TIPOS_CERTIFICADO[tipo].label}
-            </button>
-          ))}
-        </div>
-        <div className="flex justify-end">
+            </DatoImpreso>
+
+            <DatoImpreso ok={!!curso} etiqueta="Curso">
+              {curso?.nombre ?? 'sin curso asignado'}
+            </DatoImpreso>
+
+            <DatoImpreso ok={horas > 0} etiqueta="Intensidad">
+              {horas > 0 ? `${horas} horas` : 'sin horas'}
+              {(curso?.materias?.length ?? 0) > 0 && ` · ${curso!.materias!.length} materias`}
+            </DatoImpreso>
+
+            <DatoImpreso ok={!!firmas.firmaAndres} etiqueta="Firma">
+              {firmas.firmaAndres ? 'Andrés Felipe Díaz' : 'sin firma cargada'}
+            </DatoImpreso>
+          </div>
+
+          {editandoDoc && (
+            <div className="mb-4 rounded-xl border border-outline-variant bg-surface-low p-3">
+              <p className="mb-2 text-[11px] font-semibold text-on-surface-variant">
+                Documento del estudiante
+              </p>
+              <div className="grid grid-cols-[92px_1fr] gap-2">
+                <Select
+                  value={tipoDocInput}
+                  onValueChange={setTipoDocInput}
+                  className="w-auto bg-surface-lowest"
+                  options={['CC', 'TI', 'CE', 'PA', 'RC'].map(t => ({ value: t, label: t }))}
+                />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Número"
+                  value={documentoInput}
+                  onChange={ev => setDocumentoInput(ev.target.value)}
+                  onKeyDown={ev => {
+                    if (ev.key === 'Enter' && documentoInput.trim()) guardarDocumentoMutation.mutate()
+                    if (ev.key === 'Escape') setEditandoDoc(false)
+                  }}
+                  className="w-full min-w-0 rounded-lg border border-outline-variant bg-surface-lowest px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  onClick={() => setEditandoDoc(false)}
+                  className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface-variant transition-colors hover:bg-surface-high"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => guardarDocumentoMutation.mutate()}
+                  disabled={!documentoInput.trim() || guardarDocumentoMutation.isPending}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+                >
+                  {guardarDocumentoMutation.isPending
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <Save className="w-3.5 h-3.5" />}
+                  Guardar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Elegir cuál de los dos. El visto verde marca el que ya se entregó. */}
+          <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-surface-low p-1">
+            {(['CURSANDO', 'COMPLETADO'] as const).map(tipo => {
+              const { label, icon: Icon } = TIPOS_CERTIFICADO[tipo]
+              const activo  = tipoNuevo === tipo
+              const emitido = certificados.some(c => c.tipo === tipo)
+              return (
+                <button
+                  key={tipo}
+                  onClick={() => setTipoNuevo(tipo)}
+                  aria-pressed={activo}
+                  className={cn(
+                    'flex cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-[12.5px] font-semibold transition-colors',
+                    activo
+                      ? 'bg-surface-lowest text-on-surface shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface',
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                  {emitido && <Check className="w-3 h-3 text-[#16a34a]" strokeWidth={3} />}
+                </button>
+              )
+            })}
+          </div>
+
           <button
             onClick={() => generarMutation.mutate()}
             disabled={generarMutation.isPending || !tieneDocumento}
             title={!tieneDocumento ? 'Registra el número de documento primero' : undefined}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-all hover:bg-primary/90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {generarMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
-            Generar
+            {generarMutation.isPending
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <Award className="w-4 h-4" />}
+            {yaEmitido ? 'Emitir otro' : 'Emitir'} el de {etiquetaTipo}
           </button>
         </div>
+      </div>
+
+      {/* ── Los que ya se entregaron ── */}
+      <div className="border-t border-outline-variant bg-surface-low px-4 py-3">
+        <p className="mb-2 text-[11px] font-semibold text-on-surface-variant">Ya emitidos</p>
+        {certificados.length === 0 ? (
+          <p className="py-1 text-[11.5px] text-on-surface-variant opacity-80">Ninguno todavía.</p>
+        ) : (
+          <div className="divide-y divide-outline-variant/55">
+            {certificados.map((c, i) => {
+              const { label, color, icon: Icon } = TIPOS_CERTIFICADO[c.tipo]
+              const cargando = descargando === c.id
+              return (
+                <div key={c.id} className="flex items-center gap-2.5 py-2">
+                  <span className={cn('grid w-7 h-7 flex-shrink-0 place-items-center rounded-lg', color)}>
+                    <Icon className="w-3.5 h-3.5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[12px] font-medium text-on-surface">{label}</span>
+                    <span className="block text-[10.5px] tabular-nums text-on-surface-variant">
+                      {fmtFecha(c.fechaEmision)} · serie {c.numeroSerie}
+                    </span>
+                  </span>
+                  <button
+                    onClick={() => handleDescargar(c, i)}
+                    disabled={!!descargando}
+                    className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+                  >
+                    {cargando
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Download className="w-3.5 h-3.5" />}
+                    Descargar
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

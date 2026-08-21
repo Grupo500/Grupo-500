@@ -1,6 +1,6 @@
 import React from 'react'
 
-interface CertificadoData {
+export interface CertificadoData {
   nombreEstudiante: string
   tipoDocumento: string
   documento: string
