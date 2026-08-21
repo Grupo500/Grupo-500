@@ -94,9 +94,12 @@ export function BarraJoroba({ pestanas, className }: {
   // deslizamiento detras del telon y se percibia como un salto.
   const ultimoCambio = useRef(Date.now())
 
+  // En el render y no en el efecto: el scroll que dispara la navegacion
+  // puede llegar antes de que los efectos corran.
+  if (activaVisual !== activaReal) ultimoCambio.current = Date.now()
+
   useEffect(() => {
     if (activaVisual === activaReal) return
-    ultimoCambio.current = Date.now()
     const id = requestAnimationFrame(() => setActivaVisual(activaReal))
     return () => cancelAnimationFrame(id)
   }, [activaReal, activaVisual])
@@ -187,13 +190,11 @@ export function BarraJoroba({ pestanas, className }: {
     <div
       ref={contenedor}
       className={cn('fixed inset-x-0 bottom-0 z-30 md:hidden', className)}
-      // `drop-shadow` y no `box-shadow`: sigue la silueta completa, barra más
-      // joroba. Un box-shadow dibujaría el rectángulo y dejaría la joroba sin
-      // sombra.
-      style={{
-        filter: 'drop-shadow(0 -6px 22px rgba(0,29,61,0.25))',
-        transition: 'transform .35s cubic-bezier(.4,0,.2,1)',
-      }}
+      // Sin filtro en el contenedor: un drop-shadow aqui obligaba a
+      // re-rasterizar la barra entera en cada cuadro del deslizamiento y en
+      // el telefono se veia a saltos (Hotman, 21-ago). La sombra vive como
+      // box-shadow en la barra y la joroba lleva la suya propia.
+      style={{ transition: 'transform .35s cubic-bezier(.4,0,.2,1)' }}
     >
       {/* La curva, una sola vez. `clip-path: url(#…)` la busca en el documento. */}
       <svg width="0" height="0" aria-hidden className="absolute">
@@ -216,7 +217,11 @@ export function BarraJoroba({ pestanas, className }: {
         // el aire en el iPhone instalado (la zona segura ya es un colchon) y
         // los iconos quedaban arriba con un vacio enorme debajo. En navegador
         // la zona es cero y mandan los 10px (Hotman, 21-ago).
-        style={{ background: FONDO, paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 18px)' }}
+        style={{
+          background: FONDO,
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 18px)',
+          boxShadow: '0 -6px 22px rgba(0,29,61,0.25)',
+        }}
       >
         <span
           ref={joroba}
@@ -229,6 +234,8 @@ export function BarraJoroba({ pestanas, className }: {
             background: FONDO,
             clipPath: 'url(#joroba-curva)',
             transition: `transform ${DURACION} ${CURVA}`,
+            filter: 'drop-shadow(0 -4px 8px rgba(0,29,61,0.2))',
+            willChange: 'transform',
           }}
         />
 
