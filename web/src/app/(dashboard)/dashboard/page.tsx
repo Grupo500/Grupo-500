@@ -19,10 +19,6 @@ export default async function DashboardPage() {
   const saludo = horaColombia < 12 ? 'Buenos días' : horaColombia < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   return (
-    <DashboardWrapper
-      firstName={firstName}
-      saludo={saludo}
-      esAdmin={(session?.user as any)?.role === 'ADMIN'}
-    />
+    <DashboardWrapper firstName={firstName} saludo={saludo} />
   )
 }

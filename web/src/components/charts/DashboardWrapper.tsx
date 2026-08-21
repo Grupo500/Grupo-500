@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { EstudiantesMes } from './EstudiantesMes'
@@ -18,10 +17,9 @@ function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
 interface Props {
   firstName: string
   saludo: string
-  esAdmin?: boolean
 }
 
-export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
+export function DashboardWrapper({ firstName, saludo }: Props) {
   const now   = new Date()
   const desde = toISO(startOfMonth(now))
   const hasta = toISO(endOfMonth(now))
@@ -47,14 +45,6 @@ export function DashboardWrapper({ firstName, saludo, esAdmin }: Props) {
           <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">Resumen del mes</span>
           <span className="text-[11px] text-outline">·</span>
           <span className="text-[13px] font-semibold text-on-surface">{mesLabel}</span>
-          {/* Ventas generales se mudó a Administración. Sin este atajo, un
-              administrador se quedaba sin ninguna lista de ventas dentro del
-              área donde están los estudiantes que las generan. */}
-          {esAdmin && (
-            <Link href="/admin/ventas" className="ml-1 text-[11px] text-primary hover:underline">
-              Ver todas las ventas
-            </Link>
-          )}
         </p>
         </div>
 
