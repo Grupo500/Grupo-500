@@ -124,10 +124,11 @@ export default function CobrosPage() {
   })
   const ocupado = mover.isPending || moverLote.isPending
 
-  // Qué bloques cerró la persona a mano. Por defecto se abre el de quien
-  // tiene algo pendiente y se pliega el de quien ya está al día.
-  const [plegados, setPlegados] = useState<Set<string>>(new Set())
-  const alternar = (id: string) => setPlegados(prev => {
+  // Qué bloques abrió la persona a mano. Por defecto TODOS plegados: se
+  // entra, se ve la liquidación por persona, y se abre el que se quiera —
+  // llegar con todo desplegado era ruido (Hotman, 22-ago).
+  const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
+  const alternar = (id: string) => setAbiertos(prev => {
     const s = new Set(prev)
     s.has(id) ? s.delete(id) : s.add(id)
     return s
@@ -300,8 +301,7 @@ export default function CobrosPage() {
           {porPersona.map(p => {
             const idsPorAprobar = idsEn(p.cobros, 'POR_APROBAR')
             const idsAprobados  = idsEn(p.cobros, 'APROBADO')
-            // Abierto si hay algo que hacer; plegado si ya está todo cerrado.
-            const abierto = plegados.has(p.id) ? false : idsPorAprobar.length + idsAprobados.length > 0
+            const abierto = abiertos.has(p.id)
             const acento = idsPorAprobar.length > 0 ? '#d97706' : idsAprobados.length > 0 ? '#16a34a' : 'var(--outline)'
             return (
               <div key={p.id} className="card-panel overflow-hidden p-0">
