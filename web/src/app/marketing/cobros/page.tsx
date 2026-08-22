@@ -57,8 +57,6 @@ interface Cobro {
 interface Respuesta {
   cobros: Cobro[]
   puedeAprobar: boolean
-  /** La líder de diseño aprueba sus propios trabajos (Hotman, 22-ago). */
-  apruebaLosSuyos: boolean
   totales: { porAprobar: number; aprobado: number; pagado: number }
 }
 
@@ -136,7 +134,6 @@ export default function CobrosPage() {
     ? delPeriodo
     : delPeriodo.filter(c => (estado === 'POR_APROBAR') === (c.estadoCobro === 'POR_APROBAR'))
   const puedeAprobar = r?.puedeAprobar ?? false
-  const apruebaLosSuyos = r?.apruebaLosSuyos ?? false
 
   const invalidar = () => queryClient.invalidateQueries({ queryKey: ['marketing-cobros'] })
 
@@ -234,7 +231,7 @@ export default function CobrosPage() {
           {ESTADO_LABEL[c.estadoCobro]}
         </span>
 
-        {(puedeAprobar || apruebaLosSuyos) && c.estadoCobro === 'POR_APROBAR' && (
+        {puedeAprobar && c.estadoCobro === 'POR_APROBAR' && (
           <button
             onClick={() => mover.mutate(c.id)}
             disabled={ocupado}

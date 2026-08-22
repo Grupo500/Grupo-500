@@ -582,9 +582,6 @@ export async function listarCobros(req: Request, res: Response) {
   return ApiResponse.success(res, {
     cobros,
     puedeAprobar: lider,
-    // La líder de diseño se aprueba lo suyo: su lista ya viene acotada a
-    // ella, así que el botón aparece en sus filas y en ninguna más.
-    apruebaLosSuyos: req.userRole === 'LIDER_DISENO',
     totales: {
       porAprobar: suma('POR_APROBAR'),
       aprobado:   suma('APROBADO'),
@@ -594,24 +591,21 @@ export async function listarCobros(req: Request, res: Response) {
 }
 
 /**
- * Aprobar es de la líder; el resto no puede ni intentarlo — con una
- * excepción: la líder de diseño aprueba SUS PROPIOS trabajos, porque no hay
- * nadie por encima de ella en diseño que se los revise (Hotman, 22-ago).
+ * Aprobar es de la líder; el resto no puede ni intentarlo.
  *
  * Aquí no se marca nada como pagado: el pago no depende de Cristal ni de
  * nadie del equipo sino de que contabilidad gire de verdad, y eso lo van a
  * registrar desde su propio módulo (Hotman, 22-ago).
  */
 export async function aprobarCobro(req: Request, res: Response) {
-  const actual = await prisma.contenidoMarketing.findUnique({
-    where: { id: req.params.id },
-    select: { tipoTrabajo: true, asignadoA: { select: { userId: true } } },
-  })
-  if (!actual) throw new NotFoundError('Contenido no encontrado')
-  const esSuyo = !!actual.asignadoA?.userId && actual.asignadoA.userId === req.userId
-  if (!esLiderMarketing(req.userRole) && !(req.userRole === 'LIDER_DISENO' && esSuyo)) {
+  if (!esLiderMarketing(req.userRole)) {
     return res.status(403).json({ error: 'Solo la líder de edición o un administrador pueden hacer esto' })
   }
+  const actual = await prisma.contenidoMarketing.findUnique({
+    where: { id: req.params.id },
+    select: { tipoTrabajo: true },
+  })
+  if (!actual) throw new NotFoundError('Contenido no encontrado')
   if (actual.tipoTrabajo !== 'FREELANCE') {
     throw new ValidationError('Este trabajo no es freelance, no tiene cobro que aprobar')
   }
