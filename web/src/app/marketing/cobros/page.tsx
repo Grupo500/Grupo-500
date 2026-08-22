@@ -465,9 +465,8 @@ export default function CobrosPage() {
               : null
             return (
               <div key={p.id} className="card-panel overflow-hidden p-0">
-                {/* La ficha: quién, qué hizo, el total con su sello y el botón de
-                    abrir. En celular la línea de títulos baja a una segunda
-                    línea. */}
+                {/* La ficha: quién, el total con su sello y el botón de abrir.
+                    El centro va vacío salvo que haya algo que decir. */}
                 <div className="grid grid-cols-[minmax(0,1fr)_auto_32px] items-center gap-x-3 gap-y-3 px-4 py-3.5 md:grid-cols-[270px_minmax(0,1fr)_150px_32px] md:gap-x-4">
                   <button
                     type="button"
@@ -500,18 +499,13 @@ export default function CobrosPage() {
                     </span>
                   </button>
 
-                  {/* El centro cuenta qué hizo —hasta tres títulos y "+N más"—,
-                      no el avance: ese ya lo da el tablero de arriba, y la
-                      barra por ficha lo repetía (Hotman, 22-ago). La plata
-                      repartida solo sale si hay algo pendiente; lo que falta,
-                      en rojo. */}
-                  <div className="order-last col-span-3 min-w-0 md:order-none md:col-span-1">
-                    <p className="truncate text-[12px] text-on-surface-variant">
-                      {p.cobros.slice(0, 3).map(c => c.titulo).join(' · ')}
-                      {n > 3 && <span className="font-semibold"> · +{n - 3} más</span>}
-                    </p>
+                  {/* El centro solo habla cuando hace falta: la plata repartida
+                      si hay algo pendiente, y en rojo lo que falte. Ni barra
+                      de avance —la da el tablero de arriba— ni los títulos:
+                      para eso se abre la ficha (Hotman, 22-ago). */}
+                  <div className="order-last col-span-3 min-w-0 empty:hidden md:order-none md:col-span-1 md:empty:block">
                     {(pendientes > 0 || faltante) && (
-                      <p className="mt-0.5 flex flex-wrap gap-x-3.5 text-[11px] text-on-surface-variant">
+                      <p className="flex flex-wrap gap-x-3.5 text-[11px] text-on-surface-variant">
                         {pendientes > 0 && listo > 0 && (
                           <span><b className="font-semibold text-[#0f7a35]">{formatCOP(listo)}</b> aprobado</span>
                         )}
