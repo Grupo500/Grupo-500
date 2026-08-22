@@ -558,6 +558,10 @@ export async function listarCobros(req: Request, res: Response) {
 
   const where = {
     tipoTrabajo: 'FREELANCE' as const,
+    // Regla de Hotman (22-ago): a Cobros solo llega lo PUBLICADO. Un trabajo
+    // a medias no tiene nada que cobrar todavía, y mostrarlo aquí invitaba a
+    // aprobarlo antes de tiempo.
+    estado: 'PUBLICADO' as const,
     ...(yo ? { asignadoAId: yo } : {}),
     ...(estado ? { estadoCobro: String(estado) as any } : {}),
     ...(desde && hasta ? { fecha: { gte: new Date(String(desde)), lte: new Date(String(hasta)) } } : {}),
@@ -603,11 +607,15 @@ export async function aprobarCobro(req: Request, res: Response) {
   }
   const actual = await prisma.contenidoMarketing.findUnique({
     where: { id: req.params.id },
-    select: { tipoTrabajo: true },
+    select: { tipoTrabajo: true, estado: true },
   })
   if (!actual) throw new NotFoundError('Contenido no encontrado')
   if (actual.tipoTrabajo !== 'FREELANCE') {
     throw new ValidationError('Este trabajo no es freelance, no tiene cobro que aprobar')
+  }
+  // La misma regla que en la lista: sin publicar no hay cobro que aprobar.
+  if (actual.estado !== 'PUBLICADO') {
+    throw new ValidationError('El trabajo tiene que estar publicado antes de aprobar su cobro')
   }
 
   const quien = await miMiembro(req.userId)

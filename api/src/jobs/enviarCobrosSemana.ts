@@ -93,6 +93,9 @@ async function enviarPendientes(corte: string) {
   const pendientes = await prisma.contenidoMarketing.findMany({
     where: {
       tipoTrabajo: 'FREELANCE',
+      // A Cobros solo llega lo publicado (Hotman, 22-ago): un aprobado de
+      // antes de esa regla que siga sin publicar espera a publicarse.
+      estado: 'PUBLICADO',
       estadoCobro: { in: ['APROBADO', 'PAGADO'] },
       cuentaCobroUrl: null,
       valor: { gt: 0 },
