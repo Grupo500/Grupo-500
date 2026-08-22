@@ -1,130 +1,76 @@
 'use client'
 
+/**
+ * Perfil: quién eres en la plataforma. La foto y el rol arriba, los datos
+ * que el resto del equipo ve debajo. El correo se muestra y no se edita: es
+ * la llave con la que se entra; lo cambia un admin desde Usuarios.
+ */
+
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
-import { createClientFetcher, getClientToken } from '@/lib/api'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { Save, Lock, Loader2, Camera, Mail, User, Check } from 'lucide-react'
-import { DatosFinancieros, type Financieros } from '@/components/marketing/DatosFinancieros'
+import { Camera, Loader2, Lock, Check, Save } from 'lucide-react'
+import { apiFetch, getClientToken } from '@/lib/api'
+import { ROL_LABEL } from '@/lib/roles'
 import { CampoTelefono } from '@/components/ui/CampoTelefono'
+import { Tarjeta } from '@/components/ajustes/Tarjeta'
+import type { Financieros } from '@/components/marketing/DatosFinancieros'
 
 interface MiCuenta {
   role: string; email: string; nombre: string | null; image: string | null
   telefono?: string
   esMarketing: boolean
-  /** Solo llega con valor para el equipo de marketing. */
   financieros: Financieros | null
 }
 
-function SeccionCabecera({ icon: Icon, tono, titulo, descripcion }: {
-  icon: typeof Camera
-  tono: 'primary' | 'secondary' | 'tertiary'
-  titulo: string
-  descripcion: string
-}) {
-  const bg = tono === 'primary' ? 'bg-primary-container text-primary'
-    : tono === 'secondary' ? 'bg-secondary-container text-secondary'
-    : 'bg-tertiary-container text-tertiary'
-  return (
-    <div className="flex items-start gap-3 mb-5">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${bg}`}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <div>
-        <p className="text-[15px] font-semibold text-on-surface">{titulo}</p>
-        <p className="text-xs text-on-surface-variant mt-0.5">{descripcion}</p>
-      </div>
-    </div>
-  )
-}
-
-export default function AjustesPage() {
+export default function PerfilPage() {
   const { data: session, update: updateSession } = useSession()
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
-  const [email, setEmail] = useState('')
   const [telefono, setTelefono] = useState('')
-  const [rut, setRut] = useState('')
   const [cargado, setCargado] = useState(false)
-  const [password, setPassword] = useState('')
-  const [passwordMsg, setPasswordMsg] = useState('')
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [fotoOverride, setFotoOverride] = useState<string | null>(null)
 
-  const fetcher = async <T,>(path: string, opts?: RequestInit) => {
-    const token = await getClientToken()
-    return createClientFetcher(token ?? '')<T>(path, opts)
-  }
-
-  // Todo sale de /auth/me: antes el nombre y el teléfono venían de la ficha de
-  // asesor, que el equipo de marketing no tiene — la pantalla les quedaba vacía
-  // y sin nada que guardar.
+  // Todo sale de /auth/me: el nombre y el teléfono de quien sea, tenga ficha
+  // de asesor o no.
   const { data: cuentaData, refetch: refetchCuenta } = useQuery({
     queryKey: ['mi-cuenta'],
-    queryFn: () => fetcher<{ data: MiCuenta }>('/auth/me'),
+    queryFn: () => apiFetch<{ data: MiCuenta }>('/auth/me'),
   })
-
   const cuenta = cuentaData?.data
   if (cuenta && !cargado) {
     setNombre(cuenta.nombre ?? '')
-    setEmail(cuenta.email ?? '')
     setTelefono(cuenta.telefono ?? '')
     setCargado(true)
   }
 
   const guardar = useMutation({
-    mutationFn: () => fetcher('/auth/me', {
+    mutationFn: () => apiFetch('/auth/me', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nombre: nombre.trim(),
-        ...(telefono.trim() ? { telefono: telefono.trim() } : {}),
-      }),
+      body: JSON.stringify({ nombre: nombre.trim(), ...(telefono.trim() ? { telefono: telefono.trim() } : {}) }),
     }),
     onSuccess: async () => {
-      // Todo el cache, no tres claves elegidas a mano: el nombre y el teléfono
-      // salen en Usuarios, en el Planificador, en Entregables, en Cobros y en
-      // los rankings. Nombrar pantallas una por una siempre deja alguna atrás.
+      // Todo el cache: el nombre sale en Usuarios, Planificador, Entregables,
+      // Cobros y rankings; nombrar pantallas una por una deja alguna atrás.
       await queryClient.invalidateQueries()
       await queryClient.refetchQueries({ type: 'active' })
-      // El nombre viaja DENTRO del update: la sesión lo aplica al instante y
-      // el menú cambia sin esperar el viaje de vuelta a la base.
       await updateSession({ name: nombre.trim() })
     },
-    onError: (e: any) => alert(e?.message ?? 'Error al guardar'),
+    onError: (e: Error) => alert(e.message || 'Error al guardar'),
   })
 
-  const cambiarPassword = useMutation({
-    mutationFn: () => fetcher(`/auth/usuarios/${session!.user.id}/password`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    }),
-    onSuccess: () => { setPassword(''); setPasswordMsg('Contraseña actualizada') },
-    onError: (e: any) => setPasswordMsg(e?.message ?? 'Error al cambiar contraseña'),
-  })
-
-  const handleSubirFoto = async (file: File) => {
+  const subirFoto = async (file: File) => {
     setSubiendoFoto(true)
     try {
       const token = await getClientToken()
       const formData = new FormData()
       formData.append('file', file)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      })
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/imagen`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData })
       if (!res.ok) throw new Error('Error al subir la imagen')
       const json = await res.json()
       const url = json.data.url as string
-
-      await fetcher(`/auth/usuarios/${session!.user.id}/foto`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: url }),
-      })
+      await apiFetch(`/auth/usuarios/${session!.user.id}/foto`, { method: 'PATCH', body: JSON.stringify({ image: url }) })
       setFotoOverride(url)
       refetchCuenta()
     } catch (e: any) {
@@ -135,131 +81,72 @@ export default function AjustesPage() {
   }
 
   if (!session?.user) return null
-
   const fotoActual = fotoOverride ?? cuenta?.image ?? session.user.image ?? null
+  const rol = (cuenta?.role ?? session.user.role) as keyof typeof ROL_LABEL
+  const inicial = (nombre || cuenta?.email || '?')[0]?.toUpperCase()
 
   return (
-    <div className="space-y-5">
-      <PageHeader title="Ajustes" subtitle="Tu perfil y configuración general del sistema" className="animate-slide-up" />
-
-      {/* ── Foto de perfil ── */}
-      <div className="card p-5 animate-card-enter">
-        <SeccionCabecera icon={Camera} tono="primary" titulo="Foto de perfil" descripcion="Se muestra en tu menú de usuario y en el listado de asesores." />
-
-        <label className="group inline-flex items-center gap-4 cursor-pointer rounded-xl -m-1.5 p-1.5 focus-within:ring-2 focus-within:ring-primary/30 transition-shadow">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0 transition-transform duration-200 group-hover:scale-[1.04]">
+    <>
+      {/* Identidad: foto, nombre, rol y correo de un vistazo */}
+      <section className="rounded-2xl border border-outline-variant bg-surface-lowest p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="group relative size-[72px] shrink-0 cursor-pointer overflow-hidden rounded-full border border-outline-variant bg-primary/10 focus-within:ring-2 focus-within:ring-primary/30">
             {fotoActual
-              ? <img src={fotoActual} alt="Foto de perfil" className="w-full h-full object-cover" />
-              : <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-lg font-bold text-primary">{(nombre || '?')[0]?.toUpperCase()}</span>
-                </div>
-            }
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/45 flex items-center justify-center transition-colors duration-200">
-              {subiendoFoto
-                ? <Loader2 className="w-4 h-4 text-white animate-spin" />
-                : <Camera className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 scale-75 group-hover:scale-100" />
-              }
-            </div>
+              ? <img src={fotoActual} alt="Foto de perfil" className="size-full object-cover" />
+              : <span className="grid size-full place-items-center text-xl font-bold text-primary">{inicial}</span>}
+            <span className="absolute inset-0 grid place-items-center bg-black/0 transition-colors group-hover:bg-black/45">
+              {subiendoFoto ? <Loader2 className="size-4 animate-spin text-white" /> : <Camera className="size-4 text-white opacity-0 transition-opacity group-hover:opacity-100" />}
+            </span>
+            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={subiendoFoto}
+              onChange={e => { const f = e.target.files?.[0]; if (f) subirFoto(f); e.target.value = '' }} />
+          </label>
+          <div className="min-w-0 flex-1">
+            <p className="flex flex-wrap items-center gap-2 text-[18px] font-bold tracking-[-0.015em] text-on-surface">
+              <span className="truncate">{nombre || 'Sin nombre'}</span>
+              <span className="rounded-full bg-[#e8f3ff] px-2.5 py-0.5 text-[10.5px] font-bold text-[#0b4f9c]">{ROL_LABEL[rol] ?? rol}</span>
+            </p>
+            <p className="mt-0.5 text-[12.5px] text-on-surface-variant">{cuenta?.email ?? session.user.email}</p>
           </div>
-          <span className="text-sm font-semibold text-primary group-hover:underline underline-offset-2">
-            Cambiar foto
-          </span>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            disabled={subiendoFoto}
-            onChange={e => {
-              const f = e.target.files?.[0]
-              if (f) handleSubirFoto(f)
-              e.target.value = ''
-            }}
-          />
-        </label>
-      </div>
+          <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-lowest px-3 text-[12.5px] font-semibold text-on-surface transition-colors hover:bg-surface-low">
+            <Camera className="size-3.5" />Cambiar foto
+            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={subiendoFoto}
+              onChange={e => { const f = e.target.files?.[0]; if (f) subirFoto(f); e.target.value = '' }} />
+          </label>
+        </div>
+      </section>
 
-      {/* ── Datos personales ── */}
-      <div className="card p-5 animate-card-enter delay-1">
-        <SeccionCabecera icon={User} tono="secondary" titulo="Datos personales" descripcion="Cómo te ve el resto del equipo dentro de la plataforma." />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mb-4">
+      <Tarjeta titulo="Datos personales" descripcion="Cómo te ve el resto del equipo dentro de la plataforma.">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Nombre</label>
+            <label className="mb-1.5 block text-[11.5px] font-semibold text-on-surface">Nombre</label>
             <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="input-base" />
           </div>
           {/* El teléfono vive en la ficha de asesor: a quien no la tiene no se
               le muestra un campo que al guardar no iría a ninguna parte. */}
           {!cuenta?.esMarketing && (
             <div>
-              <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Teléfono</label>
+              <label className="mb-1.5 block text-[11.5px] font-semibold text-on-surface">Teléfono</label>
               <CampoTelefono valor={telefono} onCambio={setTelefono} />
             </div>
           )}
-          <div>
-            <label className="text-xs font-medium text-on-surface-variant block mb-1.5 flex items-center gap-1.5">
-              <Mail className="w-3 h-3" /> Correo
-            </label>
-            {/* Se muestra pero no se edita: es la llave con la que se entra y
-                con la que Google reconoce la cuenta. Lo cambia un admin desde
-                Usuarios, que es donde se puede revisar que nadie se quede por
-                fuera. */}
-            <input type="email" value={email} disabled className="input-base cursor-not-allowed opacity-60" />
-            <p className="mt-1 text-[11px] text-on-surface-variant">
-              Es con el que entras a la plataforma. Contacta a un administrador para cambiarlo.
-            </p>
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-[11.5px] font-semibold text-on-surface">Correo</label>
+            <div className="flex h-10 items-center gap-2 rounded-xl border border-outline-variant bg-surface-low px-3 text-[13px] text-on-surface-variant">
+              <Lock className="size-3.5" />{cuenta?.email ?? session.user.email}
+            </div>
+            <p className="mt-1 text-[11px] text-on-surface-variant">Es con el que entras a la plataforma. Lo cambia un administrador.</p>
           </div>
         </div>
-
-        <div className="pt-4 border-t border-outline-variant flex items-center justify-end gap-3">
+        <div className="mt-4 flex items-center justify-end gap-3 border-t border-outline-variant pt-4">
           {guardar.isSuccess && !guardar.isPending && (
-            <span className="flex items-center gap-1 text-xs font-medium text-secondary animate-slide-up">
-              <Check className="w-3.5 h-3.5" /> Guardado
-            </span>
+            <span className="flex items-center gap-1 text-[12px] font-medium text-[#0f7a35]"><Check className="size-3.5" />Guardado</span>
           )}
-          <button
-            onClick={() => guardar.mutate()}
-            disabled={!nombre.trim() || guardar.isPending}
-            className="btn-primary"
-          >
-            {guardar.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Guardar
+          <button onClick={() => guardar.mutate()} disabled={!nombre.trim() || guardar.isPending} className="btn-primary">
+            {guardar.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            Guardar cambios
           </button>
         </div>
-      </div>
-
-      {/* ── Datos financieros — solo el equipo de marketing cobra freelance ── */}
-      {cuenta?.esMarketing && cuenta.financieros && (
-        <DatosFinancieros inicial={cuenta.financieros} />
-      )}
-
-      {/* ── Contraseña ── */}
-      <div className="card p-5 animate-card-enter delay-2">
-        <SeccionCabecera icon={Lock} tono="tertiary" titulo="Contraseña" descripcion="Actualiza la contraseña de tu cuenta." />
-
-        <div className="max-w-sm mb-4">
-          <label className="text-xs font-medium text-on-surface-variant block mb-1.5">Nueva contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => { setPassword(e.target.value); setPasswordMsg('') }}
-            placeholder="Mínimo 8 caracteres"
-            autoComplete="new-password"
-            className="input-base"
-          />
-          {passwordMsg && <p className="text-[11px] mt-1 text-on-surface-variant animate-slide-up">{passwordMsg}</p>}
-        </div>
-
-        <div className="pt-4 border-t border-outline-variant flex justify-end">
-          <button
-            onClick={() => cambiarPassword.mutate()}
-            disabled={password.length < 8 || cambiarPassword.isPending}
-            className="btn-primary"
-          >
-            {cambiarPassword.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-            Cambiar contraseña
-          </button>
-        </div>
-      </div>
-    </div>
+      </Tarjeta>
+    </>
   )
 }

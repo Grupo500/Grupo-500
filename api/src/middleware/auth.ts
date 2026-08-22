@@ -13,6 +13,8 @@ declare global {
     interface Request {
       userId?:   string
       userRole?: Role
+      /** La sesión (SesionActiva.sid) del token, si lo trae. */
+      sid?:      string
       asesorId?: string
       userName?: string
     }
@@ -23,6 +25,7 @@ interface JwtPayload {
   sub: string   // userId de la DB
   email: string
   role: Role
+  sid?: string  // sesión abierta; si está cerrada, el token no vale
 }
 
 export async function authenticate(req: Request, _res: Response, next: NextFunction) {
@@ -47,6 +50,14 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     // de inmediato aunque la persona tenga una sesión abierta.
     if (user.suspendido) return next(new ForbiddenError('CUENTA_SUSPENDIDA'))
 
+    // Sesión cerrada desde Ajustes ("cerrar las demás", o al cambiar la
+    // contraseña): el token sigue firmado pero ya no vale.
+    if (payload.sid) {
+      const sesion = await prisma.sesionActiva.findUnique({ where: { sid: payload.sid }, select: { cerradaEn: true } })
+      if (sesion?.cerradaEn) return next(new UnauthorizedError('SESION_CERRADA'))
+    }
+
+    req.sid      = payload.sid
     req.userId   = user.id
     req.userRole = user.role
     req.asesorId = user.asesor?.id

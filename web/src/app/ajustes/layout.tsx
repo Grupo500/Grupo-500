@@ -4,6 +4,7 @@ import { HeaderCondicional } from '@/components/layout/HeaderCondicional'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { QueryProvider } from '@/components/layout/QueryProvider'
+import { AjustesShell } from '@/components/ajustes/AjustesShell'
 import type { Rol } from '@/lib/roles'
 
 /**
@@ -36,7 +37,7 @@ export default async function AjustesLayout({ children }: { children: React.Reac
 
           <main className="flex-1 overflow-y-auto edu-bg-pattern">
             <div className="mx-auto max-w-container p-4 pb-20 md:p-6 md:pb-6">
-              {children}
+              <AjustesShell>{children}</AjustesShell>
             </div>
           </main>
 

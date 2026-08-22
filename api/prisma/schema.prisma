@@ -37,6 +37,7 @@ model User {
   notificacionesQueCauso Notificacion[]        @relation("AutorNotificacion")
   apuntes                Apunte[]
   apuntesCompartidos     ApunteCompartido[]
+  sesiones               SesionActiva[]
 }
 
 /// El bloc de notas de cada quien en Marketing (Hotman, 22-ago). Privado por
@@ -1237,4 +1238,23 @@ model ContabCategoria {
   orden  Int    @default(0)
 
   @@map("contab_categorias")
+}
+
+/// Dónde está abierta una cuenta (Hotman, 22-ago). La sesión de Auth.js es un
+/// JWT sin rastro en el servidor; esta fila es el rastro: nace al entrar (el
+/// token lleva un `sid`), se refresca en cada carga de pantalla y se cierra
+/// desde Ajustes > Seguridad. Un token cuyo sid está cerrado ya no vale.
+model SesionActiva {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sid         String    @unique
+  navegador   String?
+  dispositivo String?
+  creadaEn    DateTime  @default(now())
+  ultimaVezEn DateTime  @default(now())
+  cerradaEn   DateTime?
+
+  @@index([userId, cerradaEn])
+  @@map("sesiones_activas")
 }

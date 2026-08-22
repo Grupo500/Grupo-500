@@ -50,6 +50,7 @@ export const authConfig: NextAuthConfig = {
         session.user.role  = token.role  as 'ADMIN' | 'VENDEDOR' | 'ESTUDIANTE'
         session.user.image = token.image as string | null
         if (token.name) session.user.name = token.name as string
+        session.user.sid   = (token as any).sid as string | undefined
       }
       return session
     },

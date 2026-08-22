@@ -10,6 +10,8 @@ declare module 'next-auth' {
     user: {
       id:   string
       role: Rol
+      /** La sesión abierta (SesionActiva.sid); viaja al API dentro del token. */
+      sid?: string
     } & DefaultSession['user']
   }
 
@@ -22,5 +24,6 @@ declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     id:   string
     role: Rol
+    sid?: string
   }
 }

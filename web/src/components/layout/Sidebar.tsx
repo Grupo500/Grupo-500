@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { AJUSTES_TABS } from '@/lib/ajustesNav'
+import { leerOrigen, recordarOrigen } from '@/lib/origenAjustes'
 import { FINANZAS_TABS } from '@/lib/finanzasNav'
 import { MARKETING_TABS } from '@/lib/marketingNav'
 import { ADMIN_TABS } from '@/lib/adminNav'
@@ -143,7 +143,16 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
   // Algunas áreas reemplazan el nav principal por el suyo, con un botón de
   // regreso arriba. Antes esto era exclusivo de Ajustes; ahora es genérico
   // para que Finanzas (y lo que venga) no duplique el bloque de renderizado.
-  const dentroDe = (base: string) => pathname === base || pathname.startsWith(base + '/')
+  // En Ajustes el sidebar no cambia: sigue mostrando el área de la que se
+  // vino (Hotman, 22-ago). El origen se lee en el navegador; en el primer
+  // render del servidor se cae al área por defecto del rol.
+  const enAjustes = pathname === '/ajustes' || pathname.startsWith('/ajustes/')
+  const [origen, setOrigen] = useState<string | null>(null)
+  useEffect(() => { if (enAjustes) setOrigen(leerOrigen()) }, [enAjustes])
+  const rutaBase = enAjustes
+    ? (origen ?? (role === 'ADMIN' || role === 'VENDEDOR' ? '/dashboard' : '/inicio'))
+    : pathname
+  const dentroDe = (base: string) => rutaBase === base || rutaBase.startsWith(base + '/')
 
   // Cuando el href de un ítem (ej. la pestaña "raíz" de un área, '/marketing')
   // es prefijo del href de otro ('/marketing/entregables'), la comparación
@@ -168,18 +177,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
     tabs: { href: string; label: string; icon: LucideIcon; proximamente: boolean }[]
   }
 
-  const subNav: SubNav | null = dentroDe('/ajustes')
-    ? {
-        titulo: 'Ajustes',
-        // Se vuelve a donde se estaba: quien trabaja en Ventas al dashboard,
-        // y el resto al selector de módulos — a marketing el dashboard le está
-        // vedado, así que mandarlo allá era devolverlo a una puerta cerrada.
-        volverA: role === 'ADMIN' || role === 'VENDEDOR' ? '/dashboard' : '/inicio',
-        tabs: AJUSTES_TABS
-          .filter(t => !t.adminOnly || role === 'ADMIN')
-          .map(t => ({ href: t.href, label: t.label, icon: t.icon, proximamente: false })),
-      }
-    : dentroDe('/finanzas') && role === 'ADMIN'
+  const subNav: SubNav | null = dentroDe('/finanzas') && role === 'ADMIN'
     ? {
         titulo: 'Finanzas',
         // Finanzas es un área propia: el regreso a /inicio es el botón
@@ -465,6 +463,7 @@ export function Sidebar({ role = 'VENDEDOR' }: SidebarProps) {
         {/* Ajustes */}
         <Link
           href="/ajustes"
+          onClick={() => recordarOrigen(pathname)}
           title={collapsed ? 'Ajustes' : undefined}
           className={cn(
             'relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150 group',

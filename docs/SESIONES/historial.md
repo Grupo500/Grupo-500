@@ -1860,6 +1860,25 @@ Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
 - Planificador: se quitó la leyenda del pie ("Planificado · En proceso ·
   Hecho · Pauta · Toca un día para agregar").
 
+- **Ajustes rediseñado** (diseño aprobado en widget; Hotman pidió que
+  Seguridad fuera real): navegación interna por secciones (`AjustesShell` +
+  `ajustesNav`): Perfil, Seguridad, Notificaciones, Datos de cobro (solo
+  marketing) y Plataforma (solo admin). **El sidebar y la barra móvil ya no
+  cambian al entrar a Ajustes**: siguen en el área de origen
+  (`lib/origenAjustes.ts`, sessionStorage) y "Volver" regresa a donde se
+  estaba. Sin subtítulo. **Seguridad real**: contraseña con medidor (y al
+  cambiarla se cierran las demás sesiones), llaves de acceso (listar, agregar
+  este equipo, quitar — sobre los endpoints de /passkeys que ya existían) y
+  **sesiones abiertas**: tabla `sesiones_activas` (migración
+  `20260822230000_sesiones_activas`, aplicada en producción), el JWT de
+  Auth.js lleva un `sid` que nace al entrar, `/api/auth/token` anota la
+  sesión (navegador/dispositivo por user-agent) en cada carga, y tanto el
+  callback `jwt` del web como `authenticate` del API rechazan una sesión
+  cerrada. Endpoints `/auth/sesiones` (listar, cerrar una, cerrar las demás).
+  Notificaciones muestra el estado real del permiso del navegador (el hook
+  `usePushNotificaciones`). Los avisos por tipo (apagar/encender) quedaron
+  como propuesta: requieren preferencias nuevas en la base.
+
 ### Pendientes
 
 - ~~Tipo "Historia"~~: hecho al final del día por decisión de Hotman —

@@ -1,4 +1,5 @@
 import NextAuth from 'next-auth'
+import { randomUUID } from 'crypto'
 import Google      from 'next-auth/providers/google'
 import Microsoft   from 'next-auth/providers/microsoft-entra-id'
 import Credentials from 'next-auth/providers/credentials'
@@ -98,6 +99,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id    = user.id ?? token.sub ?? ''
         token.role  = (user as any).role ?? 'VENDEDOR'
         token.image = user.image ?? null
+        // Cada entrada es una sesión con su propio sid: es lo que Ajustes >
+        // Seguridad lista y lo que "cerrar las demás" apaga (Hotman, 22-ago).
+        ;(token as any).sid = randomUUID()
+      }
+      // Sesión cerrada desde otro equipo: el token se invalida y la persona
+      // vuelve al login. Una consulta por índice único, por petición.
+      if (!user && (token as any).sid) {
+        const abierta = await prisma.sesionActiva.findUnique({
+          where:  { sid: String((token as any).sid) },
+          select: { cerradaEn: true },
+        })
+        if (abierta?.cerradaEn) return null
       }
       // Google OAuth: foto del perfil de Google
       if (account?.provider === 'google' && profile) {

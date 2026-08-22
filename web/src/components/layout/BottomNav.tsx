@@ -17,6 +17,7 @@ import { MARKETING_TABS } from '@/lib/marketingNav'
 import { ADMIN_TABS } from '@/lib/adminNav'
 import { esMarketing, type Rol } from '@/lib/roles'
 import { BarraRiel, type PestanaBarra } from './BarraRiel'
+import { leerOrigen, recordarOrigen } from '@/lib/origenAjustes'
 
 
 
@@ -80,11 +81,18 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
   // Dentro de Finanzas/Marketing la barra muestra las secciones del área, no
   // las de Ventas: son áreas distintas y mezclarlas deja al usuario sin forma
   // de moverse por donde está.
-  const enFinanzas = pathname === '/finanzas' || pathname.startsWith('/finanzas/')
+  // En Ajustes la barra sigue siendo la del área de origen (Hotman, 22-ago).
+  const enAjustes = pathname === '/ajustes' || pathname.startsWith('/ajustes/')
+  const [origen, setOrigen] = useState<string | null>(null)
+  useEffect(() => { if (enAjustes) setOrigen(leerOrigen()) }, [enAjustes])
+  const rutaBase = enAjustes
+    ? (origen ?? (role === 'ADMIN' || role === 'VENDEDOR' ? '/dashboard' : '/inicio'))
+    : pathname
+  const enFinanzas = rutaBase === '/finanzas' || rutaBase.startsWith('/finanzas/')
   const finanzasDisponibles = FINANZAS_TABS.filter(t => !t.proximamente)
-  const enMarketing = pathname === '/marketing' || pathname.startsWith('/marketing/')
-  const enVentas = ['/mis-ventas', '/cuotas'].some(b => pathname === b || pathname.startsWith(b + '/'))
-  const enAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
+  const enMarketing = rutaBase === '/marketing' || rutaBase.startsWith('/marketing/')
+  const enVentas = ['/mis-ventas', '/cuotas'].some(b => rutaBase === b || rutaBase.startsWith(b + '/'))
+  const enAdmin = rutaBase === '/admin' || rutaBase.startsWith('/admin/')
   // Ventas generales se mudó a Administración; al admin aquí solo le queda Cuotas.
   const ventasTabs = role === 'ADMIN'
     ? [{ href: '/cuotas', label: 'Cuotas', icon: CalendarCheck, adminOnly: false }]
@@ -215,7 +223,7 @@ export function BottomNav({ role = 'VENDEDOR' }: BottomNavProps) {
           </div>
           <Link
             href="/ajustes"
-            onClick={handleClose}
+            onClick={() => { recordarOrigen(pathname); handleClose() }}
             className="w-9 h-9 rounded-2xl bg-surface-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all active:scale-90"
           >
             <Settings className="w-4 h-4" />

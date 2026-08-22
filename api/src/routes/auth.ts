@@ -282,6 +282,16 @@ router.patch('/usuarios/:id/password', authenticate, asyncHandler(async (req, re
 
   const hashedPassword = await bcrypt.hash(password, 12)
   await prisma.user.update({ where: { id: req.params.id }, data: { hashedPassword } })
+  // Al cambiar la contraseña se cierran las demás sesiones de esa cuenta: si
+  // alguien la cambia es porque quiere que lo que esté abierto por ahí deje
+  // de valer (Hotman, 22-ago). La de quien la está cambiando sigue.
+  await prisma.sesionActiva.updateMany({
+    where: {
+      userId: req.params.id, cerradaEn: null,
+      ...(req.userId === req.params.id && req.sid ? { sid: { not: req.sid } } : {}),
+    },
+    data: { cerradaEn: new Date() },
+  })
   auditLog(req, 'UPDATE', 'usuario_password', req.params.id)
   return ApiResponse.success(res, { message: 'Contraseña actualizada' })
 }))
@@ -316,6 +326,36 @@ router.delete('/usuarios/:id', authenticate, requireRole('ADMIN'), asyncHandler(
   await prisma.user.delete({ where: { id: user.id } })
   auditLog(req, 'DELETE', 'usuario', req.params.id, { email: user.email })
   return ApiResponse.success(res, { message: 'Usuario eliminado correctamente' })
+}))
+
+// ── Sesiones abiertas ─────────────────────────────────────────────────────────
+// Cada entrada deja una fila en SesionActiva (la escribe el web en
+// /api/auth/token, que se toca en cada carga de pantalla). Aquí se listan y
+// se cierran; el middleware rechaza el token de una sesión cerrada.
+router.get('/sesiones', authenticate, asyncHandler(async (req, res) => {
+  const filas = await prisma.sesionActiva.findMany({
+    where: { userId: req.userId!, cerradaEn: null },
+    orderBy: { ultimaVezEn: 'desc' },
+    select: { id: true, sid: true, navegador: true, dispositivo: true, creadaEn: true, ultimaVezEn: true },
+  })
+  return ApiResponse.success(res, filas.map(({ sid, ...f }) => ({ ...f, actual: sid === req.sid })))
+}))
+
+router.delete('/sesiones/:id', authenticate, asyncHandler(async (req, res) => {
+  await prisma.sesionActiva.updateMany({
+    where: { id: req.params.id, userId: req.userId! },
+    data: { cerradaEn: new Date() },
+  })
+  return ApiResponse.noContent(res)
+}))
+
+router.post('/sesiones/cerrar-otras', authenticate, asyncHandler(async (req, res) => {
+  const { count } = await prisma.sesionActiva.updateMany({
+    where: { userId: req.userId!, cerradaEn: null, ...(req.sid ? { sid: { not: req.sid } } : {}) },
+    data: { cerradaEn: new Date() },
+  })
+  auditLog(req, 'UPDATE', 'sesiones_cerradas', req.userId!, { cerradas: count })
+  return ApiResponse.success(res, { cerradas: count })
 }))
 
 export default router
