@@ -81,7 +81,7 @@ export function TableroContenido() {
   const queryClient = useQueryClient()
   const hoy = startOfToday()
   const [mes, setMes] = useState(startOfMonth(hoy))
-  const [ocultos, setOcultos] = useState<Estado[]>([])
+  const [estadoFiltro, setEstadoFiltro] = useState<'' | Estado>('')
   const [busqueda, setBusqueda] = useState('')
   const [responsable, setResponsable] = useState('')
   const [modal, setModal] = useState<Modal>(null)
@@ -160,13 +160,11 @@ export function TableroContenido() {
   }, [contenidos])
 
   const visibles = useMemo(
-    () => filtrados.filter(c => !ocultos.includes(c.estado)),
-    [filtrados, ocultos],
+    () => filtrados.filter(c => !estadoFiltro || c.estado === estadoFiltro),
+    [filtrados, estadoFiltro],
   )
   const delDia = (d: Date) => visibles.filter(c => isSameDay(diaDe(c.fecha), d))
 
-  const alternar = (e: Estado) =>
-    setOcultos(p => (p.includes(e) ? p.filter(x => x !== e) : [...p, e]))
 
   const cerrarYRefrescar = () => {
     queryClient.invalidateQueries({ queryKey: ['marketing-contenidos'] })
@@ -242,26 +240,41 @@ export function TableroContenido() {
               opciones={responsables}
               total={filtrados.length}
             />
-            {/* Conteos por estado; filtran al tocarlos */}
-            {ORDEN_ESTADOS.map(e => {
-              const activo = !ocultos.includes(e)
-              return (
+            {/* El estado, como en Entregables: un solo grupo, una sola
+                elección, con su cifra (Hotman, 22-ago). */}
+            <div className="flex h-[38px] shrink-0 items-center gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-[3px]" role="group" aria-label="Filtrar por estado">
+              {([
+                { v: '' as '' | Estado, texto: 'Todos', n: filtrados.length, color: null as string | null },
+                ...ORDEN_ESTADOS.map(e => ({
+                  v: e as '' | Estado,
+                  texto: ESTADO_PLURAL[e].charAt(0).toUpperCase() + ESTADO_PLURAL[e].slice(1),
+                  n: conteos[e],
+                  color: ESTADO_COLOR[e] as string | null,
+                })),
+              ]).map(o => (
                 <button
-                  key={e}
-                  onClick={() => alternar(e)}
-                  aria-pressed={activo}
+                  key={o.v || 'todos'}
+                  type="button"
+                  onClick={() => setEstadoFiltro(o.v)}
+                  aria-pressed={estadoFiltro === o.v}
                   className={cn(
-                    'inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-surface-lowest py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none transition-opacity',
-                    !activo && 'opacity-40',
+                    'inline-flex h-[30px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[12.5px] transition-colors',
+                    estadoFiltro === o.v
+                      ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface',
                   )}
-                  style={{ borderColor: activo ? ESTADO_COLOR[e] : 'transparent' }}
                 >
-                  <span className="size-[7px] shrink-0 rounded-full" style={{ background: ESTADO_COLOR[e] }} />
-                  <b className="font-bold tabular-nums leading-none text-on-surface">{conteos[e]}</b>
-                  <span className="leading-none text-on-surface-variant">{ESTADO_PLURAL[e]}</span>
+                  {o.color && <span className="size-[7px] shrink-0 rounded-full" style={{ background: o.color }} />}
+                  {o.texto}
+                  <span className={cn(
+                    'font-semibold tabular-nums',
+                    estadoFiltro === o.v ? 'text-on-surface' : 'text-on-surface-variant opacity-75',
+                  )}>
+                    {o.n}
+                  </span>
                 </button>
-              )
-            })}
+              ))}
+            </div>
             <AccionesPortada />
           </div>
         }
