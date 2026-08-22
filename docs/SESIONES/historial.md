@@ -1822,9 +1822,11 @@ Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
 
 ### Pendientes
 
-- Tipo **"Historia"** en Nuevo contenido: requiere migración (enum
-  `TipoContenidoMarketing`); el frente de `prisma/` lo tiene Cristal y a
-  producción solo lo aplica David.
+- ~~Tipo "Historia"~~: hecho al final del día por decisión de Hotman —
+  migración `20260822180000_tipo_contenido_historia` (enum
+  `TipoContenidoMarketing`), aplicada en producción desde esta máquina con
+  `migrate deploy` (la base estaba al día con sus 78 migraciones), y el tipo
+  en el backend, el Planificador, Entregables y Administración.
 - 3 trabajos sin asignar en producción ("Video Nico y dani", "Nnn", "Prueba")
   — Hotman dirá de quién era cada uno o si se borran los de prueba.
 - `COBROS_SEMANA_REAL=true` en Railway tras revisar la simulación del sábado.
