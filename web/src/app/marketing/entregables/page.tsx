@@ -46,7 +46,7 @@ const PLATAFORMA_LABEL: Record<string, string> = {
 const ESTADO = {
   PLANIFICADO: { label: 'Planificado', color: 'var(--outline)', icono: Circle },
   EN_PROCESO:  { label: 'En proceso',  color: '#d97706',        icono: Clock },
-  PUBLICADO:   { label: 'Publicado',   color: '#16a34a',        icono: CheckCircle2 },
+  PUBLICADO:   { label: 'Hecho',   color: '#16a34a',        icono: CheckCircle2 },
 } as const
 
 function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
@@ -175,7 +175,7 @@ function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
             type="button"
             disabled={avanzando}
             onClick={ev => { ev.stopPropagation(); onAvanzar(c.id, paso.estado) }}
-            title={`Marcar como ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'publicado'}`}
+            title={`Marcar como ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'hecho'}`}
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[10.5px] font-bold text-white transition-[transform,filter] hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
             style={{ background: paso.color }}
           >
@@ -429,7 +429,7 @@ function DetalleTarea({
                 type="button"
                 disabled={avanzando}
                 onClick={() => onAvanzar(c.id, paso.estado)}
-                title={`Marcar como ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'publicado'}`}
+                title={`Marcar como ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'hecho'}`}
                 className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-[11.5px] font-bold text-white transition-[transform,filter] hover:-translate-y-px hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
                 style={{ background: paso.color }}
               >
@@ -540,7 +540,7 @@ function DetalleTarea({
           <div className="border-b border-outline-variant px-5 py-4">
             <div className="mb-2.5 flex items-center justify-between gap-3">
               <p className="text-[11px] font-semibold text-on-surface-variant opacity-75">
-                Publicado en
+                Entregado en
               </p>
               <p className="shrink-0 text-[10px] tabular-nums text-on-surface-variant">
                 {c.entregables.length} enlace{c.entregables.length !== 1 ? 's' : ''}
@@ -787,7 +787,7 @@ function CeldaEstado({ c, onAvanzar, avanzando }: {
     <button
       type="button"
       disabled={avanzando}
-      title={`Pulsa para marcarla ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'publicada'}`}
+      title={`Pulsa para marcarla ${paso.estado === 'EN_PROCESO' ? 'en proceso' : 'hecha'}`}
       onClick={() => onAvanzar(c.id, paso.estado)}
       className="group/est inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-transparent px-2.5 py-1 text-[10.5px] font-semibold transition-colors disabled:cursor-wait"
       style={{
@@ -930,7 +930,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
                           {DESTINO_LABEL[b.destino]}
                         </span>
                         <span className="text-[11.5px] text-on-surface-variant">
-                          {b.filas.length} pieza{b.filas.length !== 1 ? 's' : ''} · {publ} publicada{publ !== 1 ? 's' : ''}
+                          {b.filas.length} pieza{b.filas.length !== 1 ? 's' : ''} · {publ} hecha{publ !== 1 ? 's' : ''}
                         </span>
                       </span>
                     </td>
@@ -1029,7 +1029,7 @@ function TablaEntregables({ tareas, onAbrir, onAvanzar, avanzandoId }: {
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant bg-surface-low px-5 py-3">
         <p className="text-[11.5px] text-on-surface-variant">
           <b className="font-semibold text-on-surface">{tareas.length}</b> pieza{tareas.length !== 1 ? 's' : ''}
-          {' · '}<b className="font-semibold text-on-surface">{publicadas}</b> publicada{publicadas !== 1 ? 's' : ''}
+          {' · '}<b className="font-semibold text-on-surface">{publicadas}</b> hecha{publicadas !== 1 ? 's' : ''}
           {conCorreccion > 0 && <> · <b className="font-semibold text-[#dc2626]">{conCorreccion}</b> con correcciones</>}
         </p>
         <p className="flex items-baseline gap-2.5">
@@ -1261,7 +1261,7 @@ export default function EntregablesPage() {
           {([
             { v: ''           as const, texto: 'Todas',      n: conteos.todas,      color: null },
             { v: 'PENDIENTE'  as const, texto: 'Pendientes', n: conteos.pendientes, color: '#d97706' },
-            { v: 'PUBLICADO'  as const, texto: 'Publicadas', n: conteos.publicadas, color: '#16a34a' },
+            { v: 'PUBLICADO'  as const, texto: 'Hechas', n: conteos.publicadas, color: '#16a34a' },
           ]).map(o => (
             <button
               key={o.v}
@@ -1323,7 +1323,7 @@ export default function EntregablesPage() {
             <b className="font-semibold tabular-nums text-on-surface">{filtradas.length}</b>
             {' de '}{conteos.todas} pieza{conteos.todas !== 1 ? 's' : ''}
             {filtro === 'PENDIENTE' && ' · pendientes'}
-            {filtro === 'PUBLICADO' && ' · publicadas'}
+            {filtro === 'PUBLICADO' && ' · hechas'}
             {responsable && ` · ${responsables.find(r => r.id === responsable)?.nombre ?? ''}`}
             {busqueda.trim() && ` · «${busqueda.trim()}»`}
           </span>
@@ -1402,7 +1402,7 @@ export default function EntregablesPage() {
                   </div>
                   <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-on-surface-variant">
                     {publicados > 0 && (
-                      <span><i className="mr-1.5 inline-block size-[7px] rounded-full align-middle" style={{ background: '#16a34a' }} /><b className="font-semibold tabular-nums text-on-surface">{publicados}</b> publicada{publicados !== 1 ? 's' : ''}</span>
+                      <span><i className="mr-1.5 inline-block size-[7px] rounded-full align-middle" style={{ background: '#16a34a' }} /><b className="font-semibold tabular-nums text-on-surface">{publicados}</b> hecha{publicados !== 1 ? 's' : ''}</span>
                     )}
                     {enProceso > 0 && (
                       <span><i className="mr-1.5 inline-block size-[7px] rounded-full align-middle" style={{ background: '#d97706' }} /><b className="font-semibold tabular-nums text-on-surface">{enProceso}</b> en proceso</span>

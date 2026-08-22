@@ -26,12 +26,12 @@ export interface OpcionResponsable {
   pendientes: number
 }
 
-/** "6 pendientes · 4 publicadas", y solo lo que aplique. */
+/** "6 pendientes · 4 hechas", y solo lo que aplique. */
 function desgloseEntregables(o: OpcionResponsable) {
   const publicadas = o.total - o.pendientes
   const partes = [
     o.pendientes > 0 ? `${o.pendientes} pendiente${o.pendientes !== 1 ? 's' : ''}` : null,
-    publicadas > 0 ? `${publicadas} publicada${publicadas !== 1 ? 's' : ''}` : null,
+    publicadas > 0 ? `${publicadas} hecha${publicadas !== 1 ? 's' : ''}` : null,
   ].filter(Boolean)
   return partes.join(' · ')
 }
@@ -43,7 +43,7 @@ export function FiltroResponsable({ valor, onCambio, opciones, total, desglose =
   opciones: OpcionResponsable[]
   total: number
   /** La cifra bajo cada nombre. Por defecto habla de entregables
-   *  ("pendientes · publicadas"); Cobros la redacta en su idioma. */
+   *  ("pendientes · hechas"); Cobros la redacta en su idioma. */
   desglose?: (o: OpcionResponsable) => string
 }) {
   const [abierto, setAbierto] = useState(false)

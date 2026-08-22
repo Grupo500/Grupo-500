@@ -45,12 +45,12 @@ const ESTADO_COLOR: Record<Estado, string> = {
 const ESTADO_PLURAL: Record<Estado, string> = {
   PLANIFICADO: 'planificados',
   EN_PROCESO: 'en proceso',
-  PUBLICADO: 'publicados',
+  PUBLICADO: 'hechos',
 }
 const ESTADO_SINGULAR: Record<Estado, string> = {
   PLANIFICADO: 'Planificado',
   EN_PROCESO: 'En proceso',
-  PUBLICADO: 'Publicado',
+  PUBLICADO: 'Hecho',
 }
 const ORDEN_ESTADOS: Estado[] = ['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO']
 

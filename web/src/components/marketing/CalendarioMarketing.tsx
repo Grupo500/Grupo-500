@@ -56,7 +56,7 @@ const TIPO_LABEL: Record<Contenido['tipo'], string> = {
   VIDEO: 'Reel', HISTORIA: 'Historia', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme',
   TIKTOKERO: 'TikTokero', GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
 }
-const ESTADO_LABEL: Record<Contenido['estado'], string> = { PLANIFICADO: 'Planificado', EN_PROCESO: 'En proceso', PUBLICADO: 'Publicado' }
+const ESTADO_LABEL: Record<Contenido['estado'], string> = { PLANIFICADO: 'Planificado', EN_PROCESO: 'En proceso', PUBLICADO: 'Hecho' }
 const ESTADO_COLOR: Record<Contenido['estado'], string> = {
   PLANIFICADO: 'var(--outline)',
   EN_PROCESO:  '#f59e0b',
@@ -866,12 +866,12 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
           />
         </div>
 
-        {/* ── Enlaces publicados ── */}
+        {/* ── Enlaces entregados ── */}
         {esEdicion && (
           <div className="px-5 py-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-[11px] font-semibold text-on-surface-variant opacity-75">
-                Enlaces publicados
+                Enlaces entregados
               </p>
               {entregables.length > 0 && (
                 <p className="shrink-0 text-[10px] tabular-nums text-on-surface-variant">
@@ -882,7 +882,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
 
             {entregables.length === 0 ? (
               <p className="mb-3 rounded-xl border border-dashed border-outline-variant px-4 py-3 text-[12px] text-on-surface-variant">
-                Todavía no hay nada publicado.
+                Todavía no hay enlaces.
               </p>
             ) : (
               <div className="mb-3 flex flex-col gap-2">

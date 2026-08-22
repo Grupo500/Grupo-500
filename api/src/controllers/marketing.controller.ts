@@ -404,8 +404,8 @@ export async function actualizarContenido(req: Request, res: Response) {
       userId: contenido.asignadoPorId,
       autorId: req.userId,
       tipo: 'TAREA_PUBLICADA',
-      titulo: 'Se publicó un trabajo',
-      texto: `${quien} publicó «${contenido.titulo}».`,
+      titulo: 'Quedó hecho un trabajo',
+      texto: `${quien} terminó «${contenido.titulo}».`,
       url: '/marketing/entregables',
       contenidoId: contenido.id,
     })
@@ -615,7 +615,7 @@ export async function aprobarCobro(req: Request, res: Response) {
   }
   // La misma regla que en la lista: sin publicar no hay cobro que aprobar.
   if (actual.estado !== 'PUBLICADO') {
-    throw new ValidationError('El trabajo tiene que estar publicado antes de aprobar su cobro')
+    throw new ValidationError('El trabajo tiene que estar hecho antes de aprobar su cobro')
   }
 
   const quien = await miMiembro(req.userId)
