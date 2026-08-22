@@ -20,7 +20,8 @@ import {
   isSameDay, isSameMonth, isToday, startOfMonth, startOfToday, startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Loader2, Search, X } from 'lucide-react'
+import { FiltroResponsable, type OpcionResponsable } from '@/components/marketing/FiltroResponsable'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import {
@@ -81,6 +82,8 @@ export function TableroContenido() {
   const hoy = startOfToday()
   const [mes, setMes] = useState(startOfMonth(hoy))
   const [ocultos, setOcultos] = useState<Estado[]>([])
+  const [busqueda, setBusqueda] = useState('')
+  const [responsable, setResponsable] = useState('')
   const [modal, setModal] = useState<Modal>(null)
 
   // Semana de lunes a domingo, con los días de relleno del mes vecino.
@@ -117,16 +120,48 @@ export function TableroContenido() {
     [data, rol, sesion?.user?.id, miembros],
   )
 
+  // Buscar y responsable acotan el mes (Hotman, 22-ago); los conteos por
+  // estado hablan de lo que queda tras ese recorte, y las pastillas de
+  // estado solo esconden.
+  const filtrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return contenidos.filter(c => {
+      if (responsable && (c.asignadoA?.id ?? '__sin__') !== responsable) return false
+      if (texto && !c.titulo.toLowerCase().includes(texto)) return false
+      return true
+    })
+  }, [contenidos, busqueda, responsable])
+
   const conteos = useMemo(() => {
     const c: Record<Estado, number> = { PLANIFICADO: 0, EN_PROCESO: 0, PUBLICADO: 0 }
-    for (const x of contenidos) c[x.estado]++
+    for (const x of filtrados) c[x.estado]++
     return c
+  }, [filtrados])
+
+  /** Quién tiene trabajo este mes, con su cifra; "Sin responsable" de último. */
+  const responsables = useMemo(() => {
+    const mapa = new Map<string, OpcionResponsable>()
+    for (const c of contenidos) {
+      const id = c.asignadoA?.id ?? '__sin__'
+      if (!mapa.has(id)) mapa.set(id, {
+        id,
+        nombre: c.asignadoA?.nombre ?? 'Sin responsable',
+        foto: c.asignadoA?.user?.image ?? null,
+        total: 0,
+        pendientes: 0,
+      })
+      const r = mapa.get(id)!
+      r.total++
+      if (c.estado !== 'PUBLICADO') r.pendientes++
+    }
+    return [...mapa.values()].sort((a, b) =>
+      a.id === '__sin__' ? 1 : b.id === '__sin__' ? -1 : b.total - a.total,
+    )
   }, [contenidos])
-  const sinResponsable = contenidos.filter(c => !c.asignadoA).length
 
   const visibles = useMemo(
-    () => contenidos.filter(c => !ocultos.includes(c.estado)),
-    [contenidos, ocultos],
+    () => filtrados.filter(c => !ocultos.includes(c.estado)),
+    [filtrados, ocultos],
   )
   const delDia = (d: Date) => visibles.filter(c => isSameDay(diaDe(c.fecha), d))
 
@@ -176,7 +211,61 @@ export function TableroContenido() {
           (Hotman, 20-ago). */}
       {/* El mismo PageHeader de las demás pestañas, y sin descripción: los
           subtítulos que explicaban cada módulo sobraban (Hotman, 22-ago). */}
-      <PageHeader title="Planificador" actions={<AccionesPortada />} />
+      <PageHeader
+        title="Planificador"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {/* La fila de estados subió al renglón del título, con buscador
+                y responsable (Hotman, 22-ago). */}
+            <label className="flex h-[38px] w-[220px] items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
+              <Search className="size-3.5 shrink-0 text-on-surface-variant" />
+              <input
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar una tarea…"
+                className="min-w-0 flex-1 bg-transparent text-[12.5px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
+              />
+              {busqueda && (
+                <button
+                  type="button"
+                  onClick={() => setBusqueda('')}
+                  aria-label="Limpiar búsqueda"
+                  className="grid size-[18px] shrink-0 cursor-pointer place-items-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
+                >
+                  <X className="size-2.5" strokeWidth={3} />
+                </button>
+              )}
+            </label>
+            <FiltroResponsable
+              valor={responsable}
+              onCambio={setResponsable}
+              opciones={responsables}
+              total={filtrados.length}
+            />
+            {/* Conteos por estado; filtran al tocarlos */}
+            {ORDEN_ESTADOS.map(e => {
+              const activo = !ocultos.includes(e)
+              return (
+                <button
+                  key={e}
+                  onClick={() => alternar(e)}
+                  aria-pressed={activo}
+                  className={cn(
+                    'inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-surface-lowest py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none transition-opacity',
+                    !activo && 'opacity-40',
+                  )}
+                  style={{ borderColor: activo ? ESTADO_COLOR[e] : 'transparent' }}
+                >
+                  <span className="size-[7px] shrink-0 rounded-full" style={{ background: ESTADO_COLOR[e] }} />
+                  <b className="font-bold tabular-nums leading-none text-on-surface">{conteos[e]}</b>
+                  <span className="leading-none text-on-surface-variant">{ESTADO_PLURAL[e]}</span>
+                </button>
+              )
+            })}
+            <AccionesPortada />
+          </div>
+        }
+      />
 
       <div className="card-panel overflow-hidden p-0">
         {/* Navegación */}
@@ -204,44 +293,6 @@ export function TableroContenido() {
           >
             Hoy
           </button>
-        </div>
-
-        {/* Pulso del mes: conteos por estado, y filtran al tocarlos */}
-        <div className="flex flex-wrap gap-1.5 border-b border-outline-variant bg-surface-low px-3.5 py-2.5">
-          {ORDEN_ESTADOS.map(e => {
-            const activo = !ocultos.includes(e)
-            return (
-              <button
-                key={e}
-                onClick={() => alternar(e)}
-                aria-pressed={activo}
-                className={cn(
-                  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-surface-lowest py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none transition-opacity',
-                  !activo && 'opacity-40',
-                )}
-                style={{ borderColor: activo ? ESTADO_COLOR[e] : 'transparent' }}
-              >
-                <span className="size-[7px] shrink-0 rounded-full" style={{ background: ESTADO_COLOR[e] }} />
-                <b className="font-bold tabular-nums leading-none text-on-surface">{conteos[e]}</b>
-                <span className="leading-none text-on-surface-variant">{ESTADO_PLURAL[e]}</span>
-              </button>
-            )
-          })}
-          {sinResponsable > 0 && (
-            <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-lowest py-1.5 pl-2 pr-2.5 text-[11.5px] leading-none">
-              {/* El mismo "?" que llevan las fichas sin responsable en las
-                  celdas: así el filtro y lo que hay que buscar en el mes se
-                  reconocen por la misma marca. */}
-              <span
-                className="grid size-[15px] shrink-0 place-items-center rounded-full border border-dashed text-[7.5px] font-bold leading-none"
-                style={{ borderColor: 'var(--outline)', color: 'var(--outline)' }}
-              >
-                ?
-              </span>
-              <b className="font-bold tabular-nums leading-none text-on-surface">{sinResponsable}</b>
-              <span className="leading-none text-on-surface-variant">sin responsable</span>
-            </span>
-          )}
         </div>
 
         {/* Cabecera de días */}
