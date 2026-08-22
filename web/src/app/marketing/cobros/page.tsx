@@ -20,7 +20,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  Loader2, Check, Wallet, BadgeCheck, AlertTriangle, ChevronDown,
+  Loader2, Wallet, BadgeCheck, AlertTriangle, ChevronDown,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
@@ -353,14 +353,9 @@ export default function CobrosPage() {
                     {formatCOP(p.porAprobar + p.aprobado + p.pagado)}
                   </span>
 
-                  {/* Sin botón general: se aprueba uno a uno al desplegar
-                      (Hotman, 22-ago). Cuando no queda nada, el sello lo dice. */}
-                  {idsPorAprobar.length === 0 && (
-                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#16a34a]/12 px-3 py-1.5 text-[11px] font-bold text-[#0f7a35]">
-                      <Check className="size-3.5" />
-                      Todo aprobado
-                    </span>
-                  )}
+                  {/* Sin botón general ni sello a la derecha: se aprueba uno a
+                      uno al desplegar, y el estado ya lo dice el subtítulo
+                      (Hotman, 22-ago). */}
                 </div>
 
                 {abierto && (
