@@ -209,76 +209,73 @@ export function TableroContenido() {
           (Hotman, 20-ago). */}
       {/* El mismo PageHeader de las demás pestañas, y sin descripción: los
           subtítulos que explicaban cada módulo sobraban (Hotman, 22-ago). */}
-      <PageHeader
-        title="Planificador"
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* La fila de estados subió al renglón del título, con buscador
-                y responsable (Hotman, 22-ago). */}
-            <label className="flex h-[38px] w-[220px] items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
-              <Search className="size-3.5 shrink-0 text-on-surface-variant" />
-              <input
-                value={busqueda}
-                onChange={e => setBusqueda(e.target.value)}
-                placeholder="Buscar una tarea…"
-                className="min-w-0 flex-1 bg-transparent text-[12.5px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
-              />
-              {busqueda && (
-                <button
-                  type="button"
-                  onClick={() => setBusqueda('')}
-                  aria-label="Limpiar búsqueda"
-                  className="grid size-[18px] shrink-0 cursor-pointer place-items-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
-                >
-                  <X className="size-2.5" strokeWidth={3} />
-                </button>
+      <PageHeader title="Planificador" actions={<AccionesPortada />} />
+
+      {/* La barra, en su propia fila debajo del título, igual que en
+          Entregables (Hotman, 22-ago): buscar · responsable · estado. El
+          buscador es el único elástico. */}
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 max-[900px]:flex-wrap max-[900px]:overflow-visible">
+        <label className="flex h-[38px] min-w-[130px] flex-1 items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
+          <Search className="size-3.5 shrink-0 text-on-surface-variant" />
+          <input
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            placeholder="Buscar una tarea…"
+            className="min-w-0 flex-1 bg-transparent text-[12.5px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
+          />
+          {busqueda && (
+            <button
+              type="button"
+              onClick={() => setBusqueda('')}
+              aria-label="Limpiar búsqueda"
+              className="grid size-[18px] shrink-0 cursor-pointer place-items-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
+            >
+              <X className="size-2.5" strokeWidth={3} />
+            </button>
+          )}
+        </label>
+        <FiltroResponsable
+          valor={responsable}
+          onCambio={setResponsable}
+          opciones={responsables}
+          total={filtrados.length}
+        />
+        {/* El estado, como en Entregables: un solo grupo, una sola
+            elección, con su cifra (Hotman, 22-ago). */}
+        <div className="flex h-[38px] shrink-0 items-center gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-[3px]" role="group" aria-label="Filtrar por estado">
+          {([
+            { v: '' as '' | Estado, texto: 'Todos', n: filtrados.length, color: null as string | null },
+            ...ORDEN_ESTADOS.map(e => ({
+              v: e as '' | Estado,
+              texto: ESTADO_PLURAL[e].charAt(0).toUpperCase() + ESTADO_PLURAL[e].slice(1),
+              n: conteos[e],
+              color: ESTADO_COLOR[e] as string | null,
+            })),
+          ]).map(o => (
+            <button
+              key={o.v || 'todos'}
+              type="button"
+              onClick={() => setEstadoFiltro(o.v)}
+              aria-pressed={estadoFiltro === o.v}
+              className={cn(
+                'inline-flex h-[30px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[12.5px] transition-colors',
+                estadoFiltro === o.v
+                  ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface',
               )}
-            </label>
-            <FiltroResponsable
-              valor={responsable}
-              onCambio={setResponsable}
-              opciones={responsables}
-              total={filtrados.length}
-            />
-            {/* El estado, como en Entregables: un solo grupo, una sola
-                elección, con su cifra (Hotman, 22-ago). */}
-            <div className="flex h-[38px] shrink-0 items-center gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-[3px]" role="group" aria-label="Filtrar por estado">
-              {([
-                { v: '' as '' | Estado, texto: 'Todos', n: filtrados.length, color: null as string | null },
-                ...ORDEN_ESTADOS.map(e => ({
-                  v: e as '' | Estado,
-                  texto: ESTADO_PLURAL[e].charAt(0).toUpperCase() + ESTADO_PLURAL[e].slice(1),
-                  n: conteos[e],
-                  color: ESTADO_COLOR[e] as string | null,
-                })),
-              ]).map(o => (
-                <button
-                  key={o.v || 'todos'}
-                  type="button"
-                  onClick={() => setEstadoFiltro(o.v)}
-                  aria-pressed={estadoFiltro === o.v}
-                  className={cn(
-                    'inline-flex h-[30px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[12.5px] transition-colors',
-                    estadoFiltro === o.v
-                      ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface',
-                  )}
-                >
-                  {o.color && <span className="size-[7px] shrink-0 rounded-full" style={{ background: o.color }} />}
-                  {o.texto}
-                  <span className={cn(
-                    'font-semibold tabular-nums',
-                    estadoFiltro === o.v ? 'text-on-surface' : 'text-on-surface-variant opacity-75',
-                  )}>
-                    {o.n}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <AccionesPortada />
-          </div>
-        }
-      />
+            >
+              {o.color && <span className="size-[7px] shrink-0 rounded-full" style={{ background: o.color }} />}
+              {o.texto}
+              <span className={cn(
+                'font-semibold tabular-nums',
+                estadoFiltro === o.v ? 'text-on-surface' : 'text-on-surface-variant opacity-75',
+              )}>
+                {o.n}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="card-panel overflow-hidden p-0">
         {/* Navegación */}
