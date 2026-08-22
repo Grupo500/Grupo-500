@@ -1214,7 +1214,7 @@ export default function EntregablesPage() {
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 max-[900px]:flex-wrap max-[900px]:overflow-visible">
         {/* Con veinte piezas al mes, encontrar una por el ojo es recorrer la
             lista entera. */}
-        <label className="flex h-[38px] min-w-[130px] max-w-[280px] flex-1 items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
+        <label className="flex h-[38px] min-w-[130px] flex-1 items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
           <Search className="size-3.5 shrink-0 text-on-surface-variant" />
           <input
             value={busqueda}
@@ -1284,7 +1284,6 @@ export default function EntregablesPage() {
           ))}
         </div>
 
-        <span className="min-w-0 flex-1 max-[900px]:hidden" />
 
         {/* Dos formas de ver lo mismo: la tabla responde "¿qué hay para el
             21?" y las tarjetas "¿qué tiene cada quien?". */}
