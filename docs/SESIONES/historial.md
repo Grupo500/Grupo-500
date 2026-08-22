@@ -1892,10 +1892,11 @@ Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
   Hotman eligió la 2, **fichas con avance**): avatar de 40 con el punto de
   estado (verde con chulo = todo aprobado, ámbar = falta algo), nombre con el
   oficio (`ROL_LABEL` del rol de la cuenta, que `SELECT_MIEMBRO` ya traía) y
-  cuántos trabajos, la barra verde/ámbar de cuánto va aprobado frente a lo
-  pendiente con su leyenda ("3 aprobados · $150.000", "2 por aprobar ·
-  $100.000", y en rojo si le faltan datos), el total con su sello y un botón
-  redondo para abrir. Al abrir, los trabajos salen en **tabla** con cabecera
+  cuántos trabajos, en el centro **qué hizo** (hasta tres títulos y "+N más";
+  debajo, solo si hay algo pendiente, "$150.000 aprobado · $100.000 por
+  aprobar", y en rojo si le faltan datos), el total con su sello y un botón
+  redondo para abrir. La primera versión llevaba una barra verde/ámbar por
+  ficha; Hotman la quitó porque repetía la del tablero. Al abrir, los trabajos salen en **tabla** con cabecera
   (Trabajo · Tipo · Entregado · Valor · Estado): icono por tipo, plataformas
   de los enlaces como subtítulo (el select de cobros ahora trae
   `entregables.plataforma`), fecha de entrega, valor y "Aprobado / Cristal ·

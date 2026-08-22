@@ -457,20 +457,17 @@ export default function CobrosPage() {
           {porPersona.map(p => {
             const n = p.cobros.length
             const pendientes = idsEn(p.cobros, 'POR_APROBAR').length
-            const aprobados = n - pendientes
             const total = p.porAprobar + p.aprobado + p.pagado
             const listo = p.aprobado + p.pagado
-            // La barra reparte la plata; si nadie puso valor, reparte trabajos.
-            const pct = total > 0 ? Math.round((listo / total) * 100) : Math.round((aprobados / n) * 100)
             const abierto = abiertos.has(p.id)
             const faltante = p.id !== SIN_ASIGNAR && !p.completos
               ? (p.falta.length === 1 ? `Falta ${p.falta[0]}` : `Le faltan ${p.falta.length} datos`)
               : null
             return (
               <div key={p.id} className="card-panel overflow-hidden p-0">
-                {/* La ficha: quién, cuánto va aprobado frente a lo pendiente, el
-                    total con su sello y el botón de abrir. En celular la barra
-                    baja a una segunda línea. */}
+                {/* La ficha: quién, qué hizo, el total con su sello y el botón de
+                    abrir. En celular la línea de títulos baja a una segunda
+                    línea. */}
                 <div className="grid grid-cols-[minmax(0,1fr)_auto_32px] items-center gap-x-3 gap-y-3 px-4 py-3.5 md:grid-cols-[270px_minmax(0,1fr)_150px_32px] md:gap-x-4">
                   <button
                     type="button"
@@ -503,20 +500,27 @@ export default function CobrosPage() {
                     </span>
                   </button>
 
+                  {/* El centro cuenta qué hizo —hasta tres títulos y "+N más"—,
+                      no el avance: ese ya lo da el tablero de arriba, y la
+                      barra por ficha lo repetía (Hotman, 22-ago). La plata
+                      repartida solo sale si hay algo pendiente; lo que falta,
+                      en rojo. */}
                   <div className="order-last col-span-3 min-w-0 md:order-none md:col-span-1">
-                    <div className="flex h-[7px] gap-0.5 overflow-hidden rounded-full bg-surface-high/60" aria-hidden>
-                      {pct > 0 && <span className="h-full bg-[#16a34a]" style={{ width: `${pct}%` }} />}
-                      {pct < 100 && <span className="h-full bg-[#f59e0b]" style={{ width: `${100 - pct}%` }} />}
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-x-3.5 gap-y-0.5 text-[11px] text-on-surface-variant">
-                      {aprobados > 0 && (
-                        <span><b className="font-semibold text-[#0f7a35]">{aprobados} aprobado{aprobados !== 1 ? 's' : ''}</b> · {formatCOP(listo)}</span>
-                      )}
-                      {pendientes > 0 && (
-                        <span><b className="font-semibold text-[#9a5b06]">{pendientes} por aprobar</b> · {formatCOP(p.porAprobar)}</span>
-                      )}
-                      {faltante && <span className="font-semibold text-[#b91c1c]">{faltante}</span>}
-                    </div>
+                    <p className="truncate text-[12px] text-on-surface-variant">
+                      {p.cobros.slice(0, 3).map(c => c.titulo).join(' · ')}
+                      {n > 3 && <span className="font-semibold"> · +{n - 3} más</span>}
+                    </p>
+                    {(pendientes > 0 || faltante) && (
+                      <p className="mt-0.5 flex flex-wrap gap-x-3.5 text-[11px] text-on-surface-variant">
+                        {pendientes > 0 && listo > 0 && (
+                          <span><b className="font-semibold text-[#0f7a35]">{formatCOP(listo)}</b> aprobado</span>
+                        )}
+                        {pendientes > 0 && (
+                          <span><b className="font-semibold text-[#9a5b06]">{formatCOP(p.porAprobar)}</b> por aprobar</span>
+                        )}
+                        {faltante && <span className="font-semibold text-[#b91c1c]">{faltante}</span>}
+                      </p>
+                    )}
                   </div>
 
                   <div className="text-right">
