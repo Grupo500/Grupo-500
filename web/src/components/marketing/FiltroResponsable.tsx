@@ -27,7 +27,7 @@ export interface OpcionResponsable {
 }
 
 /** "6 pendientes · 4 publicadas", y solo lo que aplique. */
-function desglose(o: OpcionResponsable) {
+function desgloseEntregables(o: OpcionResponsable) {
   const publicadas = o.total - o.pendientes
   const partes = [
     o.pendientes > 0 ? `${o.pendientes} pendiente${o.pendientes !== 1 ? 's' : ''}` : null,
@@ -36,12 +36,15 @@ function desglose(o: OpcionResponsable) {
   return partes.join(' · ')
 }
 
-export function FiltroResponsable({ valor, onCambio, opciones, total }: {
+export function FiltroResponsable({ valor, onCambio, opciones, total, desglose = desgloseEntregables }: {
   /** Id del miembro, '__sin__' para las que nadie tomó, '' para todo el equipo. */
   valor: string
   onCambio: (v: string) => void
   opciones: OpcionResponsable[]
   total: number
+  /** La cifra bajo cada nombre. Por defecto habla de entregables
+   *  ("pendientes · publicadas"); Cobros la redacta en su idioma. */
+  desglose?: (o: OpcionResponsable) => string
 }) {
   const [abierto, setAbierto] = useState(false)
   const caja  = useRef<HTMLDivElement>(null)

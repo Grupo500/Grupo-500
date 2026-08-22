@@ -20,12 +20,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  Loader2, Wallet, BadgeCheck, AlertTriangle, ChevronDown,
+  Loader2, Wallet, BadgeCheck, AlertTriangle, ChevronDown, Search, X,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Select } from '@/components/ui/Select'
+import { MonthPicker, DateRange, semanaActual } from '@/components/ui/MonthPicker'
+import { FiltroResponsable, type OpcionResponsable } from '@/components/marketing/FiltroResponsable'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 
 type EstadoCobro = 'POR_APROBAR' | 'APROBADO' | 'PAGADO'
@@ -56,6 +57,8 @@ interface Cobro {
 interface Respuesta {
   cobros: Cobro[]
   puedeAprobar: boolean
+  /** La líder de diseño aprueba sus propios trabajos (Hotman, 22-ago). */
+  apruebaLosSuyos: boolean
   totales: { porAprobar: number; aprobado: number; pagado: number }
 }
 
@@ -75,9 +78,10 @@ const ESTADO_CLASE: Record<EstadoCobro, string> = {
 
 const SIN_ASIGNAR = '__sin__'
 
-function mesActualISO() {
-  const hoy = new Date()
-  return { desde: format(startOfMonth(hoy), 'yyyy-MM-dd'), hasta: format(endOfMonth(hoy), 'yyyy-MM-dd') }
+function toISO(d: Date) { return format(d, 'yyyy-MM-dd') }
+function rangoDelMes(month: string | null) {
+  const base = month ? new Date(month + '-15') : new Date()
+  return { desde: toISO(startOfMonth(base)), hasta: toISO(endOfMonth(base)) }
 }
 
 /** En qué va el trabajo, no solo la fecha: quien aprueba necesita saberlo. */
@@ -95,19 +99,44 @@ function detalleDe(c: Cobro, conNombre: boolean) {
 
 export default function CobrosPage() {
   const queryClient = useQueryClient()
-  const [rango] = useState(mesActualISO)
-  const [estado, setEstado] = useState('')
+  // La misma barra de Entregables (Hotman, 22-ago): por defecto la semana en
+  // curso —la del ciclo de cobros—; otra semana, el mes o un rango se piden
+  // desde el selector de fecha. El estado y la búsqueda filtran en el
+  // navegador sobre lo ya cargado, así las pastillas cuentan sobre lo mismo
+  // que se ve.
+  const now = new Date()
+  const currentMonth = format(now, 'yyyy-MM')
+  const [month, setMonth] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange | null>(() => semanaActual())
+  const [estado, setEstado] = useState<'' | 'POR_APROBAR' | 'APROBADO'>('')
   const [persona, setPersona] = useState('')
+  const [busqueda, setBusqueda] = useState('')
+
+  const { desde, hasta } = dateRange
+    ? { desde: toISO(dateRange.start), hasta: toISO(dateRange.end) }
+    : rangoDelMes(month)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['marketing-cobros', rango.desde, rango.hasta, estado],
-    queryFn: () => apiFetch<{ data: Respuesta }>(
-      `/marketing/cobros?desde=${rango.desde}&hasta=${rango.hasta}${estado ? `&estado=${estado}` : ''}`,
-    ),
+    queryKey: ['marketing-cobros', desde, hasta],
+    queryFn: () => apiFetch<{ data: Respuesta }>(`/marketing/cobros?desde=${desde}&hasta=${hasta}`),
   })
   const r = data?.data
-  const cobros = r?.cobros ?? []
+  const todos = r?.cobros ?? []
+  // Por título del trabajo o por nombre de quien lo tiene.
+  const q = busqueda.trim().toLowerCase()
+  const delPeriodo = q
+    ? todos.filter(c => c.titulo.toLowerCase().includes(q) || (c.asignadoA?.nombre ?? '').toLowerCase().includes(q))
+    : todos
+  const conteos = {
+    todos: delPeriodo.length,
+    porAprobar: delPeriodo.filter(c => c.estadoCobro === 'POR_APROBAR').length,
+    aprobados: delPeriodo.filter(c => c.estadoCobro !== 'POR_APROBAR').length,
+  }
+  const cobros = estado === ''
+    ? delPeriodo
+    : delPeriodo.filter(c => (estado === 'POR_APROBAR') === (c.estadoCobro === 'POR_APROBAR'))
   const puedeAprobar = r?.puedeAprobar ?? false
+  const apruebaLosSuyos = r?.apruebaLosSuyos ?? false
 
   const invalidar = () => queryClient.invalidateQueries({ queryKey: ['marketing-cobros'] })
 
@@ -205,7 +234,7 @@ export default function CobrosPage() {
           {ESTADO_LABEL[c.estadoCobro]}
         </span>
 
-        {puedeAprobar && c.estadoCobro === 'POR_APROBAR' && (
+        {(puedeAprobar || apruebaLosSuyos) && c.estadoCobro === 'POR_APROBAR' && (
           <button
             onClick={() => mover.mutate(c.id)}
             disabled={ocupado}
@@ -228,37 +257,21 @@ export default function CobrosPage() {
   const idsEn = (lista: Cobro[], e: EstadoCobro) =>
     lista.filter(c => c.estadoCobro === e).map(c => c.id)
 
+  const responsables: OpcionResponsable[] = porPersona.map(p => ({
+    id: p.id, nombre: p.nombre, foto: p.foto, total: p.cobros.length,
+    pendientes: idsEn(p.cobros, 'POR_APROBAR').length,
+  }))
+  const desgloseCobros = (o: OpcionResponsable) => {
+    const aprobados = o.total - o.pendientes
+    return [
+      o.pendientes > 0 ? `${o.pendientes} por aprobar` : null,
+      aprobados > 0 ? `${aprobados} aprobado${aprobados !== 1 ? 's' : ''}` : null,
+    ].filter(Boolean).join(' · ')
+  }
+
   return (
     <div className="space-y-4 animate-fade-in">
-      <PageHeader
-        title={puedeAprobar ? 'Cobros freelance' : 'Mis cobros'}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* El filtro es también el conmutador de vista: elegir a alguien
-                abre su detalle, y "Todo el equipo" vuelve a la liquidación. */}
-            {puedeAprobar && (
-              <Select
-                value={persona}
-                onValueChange={setPersona}
-                className="input-base w-[190px]"
-                options={[
-                  { value: '', label: 'Todo el equipo' },
-                  ...porPersona.map(p => ({ value: p.id, label: p.nombre })),
-                ]}
-              />
-            )}
-            <Select
-              value={estado}
-              onValueChange={setEstado}
-              className="input-base w-[170px]"
-              options={[
-                { value: '', label: 'Todos los estados' },
-                ...(Object.keys(ESTADO_LABEL) as EstadoCobro[]).map(e => ({ value: e, label: ESTADO_LABEL[e] })),
-              ]}
-            />
-          </div>
-        }
-      />
+      <PageHeader title={puedeAprobar ? 'Cobros freelance' : 'Mis cobros'} />
 
       {/* Los totales salen de lo mismo que se lista, así que siempre cuadran
           con las filas de abajo. */}
@@ -276,6 +289,83 @@ export default function CobrosPage() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* La barra de Entregables, debajo de las tarjetas (Hotman, 22-ago):
+          buscar · responsable · período · estado. El buscador es el único
+          elástico; los demás nunca se parten de línea. */}
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 max-[900px]:flex-wrap max-[900px]:overflow-visible">
+        <label className="flex h-[38px] min-w-[130px] flex-1 items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
+          <Search className="size-3.5 shrink-0 text-on-surface-variant" />
+          <input
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            placeholder="Buscar un trabajo o una persona…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
+          />
+          {busqueda && (
+            <button
+              type="button"
+              onClick={() => setBusqueda('')}
+              aria-label="Limpiar búsqueda"
+              className="grid size-[18px] shrink-0 cursor-pointer place-items-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
+            >
+              <X className="size-2.5" strokeWidth={3} />
+            </button>
+          )}
+        </label>
+
+        {/* Elegir a alguien abre su detalle; "Todo el equipo" vuelve a la
+            liquidación. */}
+        {puedeAprobar && (
+          <FiltroResponsable
+            valor={persona}
+            onCambio={setPersona}
+            opciones={responsables}
+            total={conteos.todos}
+            desglose={desgloseCobros}
+          />
+        )}
+
+        <div className="shrink-0">
+          <MonthPicker
+            value={month}
+            currentMonth={currentMonth}
+            dateRange={dateRange}
+            onChange={(m, rg) => { setMonth(m); setDateRange(rg) }}
+            comoPeriodo
+          />
+        </div>
+
+        <div className="flex h-[38px] shrink-0 items-center gap-0.5 rounded-xl border border-outline-variant bg-surface-low p-[3px]" role="group" aria-label="Filtrar por estado">
+          {([
+            { v: ''            as const, texto: 'Todos',       n: conteos.todos,      color: null },
+            { v: 'POR_APROBAR' as const, texto: 'Por aprobar', n: conteos.porAprobar, color: '#d97706' },
+            { v: 'APROBADO'    as const, texto: 'Aprobados',   n: conteos.aprobados,  color: '#16a34a' },
+          ]).map(o => (
+            <button
+              key={o.v}
+              type="button"
+              onClick={() => setEstado(o.v)}
+              aria-pressed={estado === o.v}
+              className={cn(
+                'inline-flex h-[30px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[12.5px] transition-colors',
+                estado === o.v
+                  ? 'bg-surface-lowest font-semibold text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface',
+              )}
+            >
+              {o.color && <span className="size-[7px] shrink-0 rounded-full" style={{ background: o.color }} />}
+              {o.texto}
+              <span className={cn(
+                'font-semibold tabular-nums',
+                estado === o.v ? 'text-on-surface' : 'text-on-surface-variant opacity-75',
+              )}>
+                {o.n}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
