@@ -16,6 +16,19 @@ const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov'
 
 export interface DateRange { start: Date; end: Date }
 
+/**
+ * La semana en curso, de domingo a sábado — la misma semana del ciclo de
+ * cobros (Hotman, 22-ago). Es el período por defecto de Entregables.
+ */
+export function semanaActual(hoy: Date = new Date()): DateRange {
+  const start = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - hoy.getDay())
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)
+  return { start, end }
+}
+
+const mismoDia = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+
 interface Props {
   value: string | null           // 'YYYY-MM' del mes seleccionado
   currentMonth: string           // 'YYYY-MM' del mes actual
@@ -121,8 +134,15 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
     setOpen(false)
   }
 
-  /** Los tres períodos que se piden casi siempre, sin navegar el calendario. */
-  function atajo(cual: 'mes' | 'anterior' | 'anio') {
+  /** Los períodos que se piden casi siempre, sin navegar el calendario. */
+  function atajo(cual: 'semana' | 'mes' | 'anterior' | 'anio') {
+    if (cual === 'semana') {
+      const semana = semanaActual()
+      setRangeStart(semana.start); setRangeEnd(semana.end)
+      onChange(null, semana)
+      setOpen(false)
+      return
+    }
     if (cual === 'mes') { onChange(null, null); setOpen(false); return }
     if (cual === 'anio') { handleSelectYear(); return }
     const [y, m] = currentMonth.split('-').map(Number)
@@ -167,9 +187,14 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
     && dateRange.end.getMonth() === 11 && dateRange.end.getDate() === 31
     && dateRange.start.getFullYear() === dateRange.end.getFullYear()
 
+  const semana = semanaActual(now)
+  const esSemanaActual = !!dateRange && mismoDia(dateRange.start, semana.start) && mismoDia(dateRange.end, semana.end)
+
   let triggerLabel = monthLabel
   if (isFullYear) {
     triggerLabel = `${dateRange!.start.getFullYear()}`
+  } else if (esSemanaActual) {
+    triggerLabel = 'Esta semana'
   } else if (dateRange?.start && dateRange?.end) {
     const s = format(dateRange.start, "d MMM", { locale: es })
     const e = format(dateRange.end,   "d MMM", { locale: es })
@@ -220,6 +245,7 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
             <>
               <div className="-mx-4 -mt-4 mb-3 flex flex-wrap gap-1.5 border-b border-[var(--outline-variant)] px-4 py-3">
                 {([
+                  { k: 'semana'   as const, texto: 'Esta semana', activo: esSemanaActual },
                   { k: 'mes'      as const, texto: 'Este mes',   activo: value === null && !dateRange },
                   { k: 'anterior' as const, texto: 'Mes pasado', activo: value === mesAnterior && !dateRange },
                   { k: 'anio'     as const, texto: 'Este año',   activo: !!isFullYear },

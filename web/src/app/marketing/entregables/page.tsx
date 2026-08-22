@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils'
 import { esLiderMarketing, ROL_LABEL } from '@/lib/roles'
 import { visiblesPara } from '@/lib/visibilidadMarketing'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { MonthPicker, DateRange } from '@/components/ui/MonthPicker'
+import { MonthPicker, DateRange, semanaActual } from '@/components/ui/MonthPicker'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import {
@@ -1054,7 +1054,10 @@ export default function EntregablesPage() {
   const now = new Date()
   const currentMonth = format(now, 'yyyy-MM')
   const [month, setMonth] = useState<string | null>(null)
-  const [dateRange, setDateRange] = useState<DateRange | null>(null)
+  // Por defecto, solo la semana en curso (domingo a sábado): con el mes
+  // entero la lista se sobrecargaba. Otra semana o el mes se piden desde el
+  // selector de fecha (Hotman, 22-ago).
+  const [dateRange, setDateRange] = useState<DateRange | null>(() => semanaActual())
   const [filtro, setFiltro] = useState<'' | 'PENDIENTE' | 'PUBLICADO'>('')
   // Estos tres no se recuerdan entre sesiones a propósito: son de momento, y
   // encontrarlos puestos al día siguiente hace creer que el mes está vacío.

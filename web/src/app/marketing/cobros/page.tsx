@@ -119,12 +119,7 @@ export default function CobrosPage() {
     onSuccess: invalidar,
   })
 
-  const moverLote = useMutation({
-    mutationFn: (ids: string[]) =>
-      apiFetch('/marketing/cobros/lote', { method: 'PATCH', body: JSON.stringify({ ids }) }),
-    onSuccess: invalidar,
-  })
-  const ocupado = mover.isPending || moverLote.isPending
+  const ocupado = mover.isPending
 
   // Qué bloques abrió la persona a mano. Por defecto TODOS plegados: se
   // entra, se ve la liquidación por persona, y se abre el que se quiera —
@@ -214,7 +209,7 @@ export default function CobrosPage() {
           <button
             onClick={() => mover.mutate(c.id)}
             disabled={ocupado}
-            className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
+            className="shrink-0 cursor-pointer rounded-lg bg-[#0f7a35] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             <BadgeCheck className="mr-1 inline size-3.5" />Aprobar
           </button>
@@ -309,7 +304,7 @@ export default function CobrosPage() {
             return (
               <div key={p.id} className="card-panel overflow-hidden p-0">
                 <div
-                  className="flex flex-wrap items-center gap-3 bg-surface-low px-4 py-3"
+                  className="flex flex-wrap items-center gap-3 bg-surface-lowest px-4 py-3"
                   style={{ boxShadow: `inset 3px 0 0 ${acento}` }}
                 >
                   <button
@@ -325,11 +320,25 @@ export default function CobrosPage() {
                       : <AvatarMiembro id={p.id} nombre={p.nombre} image={p.foto} size={30} />}
                     <span className="min-w-0">
                       <span className="block truncate text-[13.5px] font-semibold text-on-surface">{p.nombre}</span>
+                      {/* El subtítulo cuenta el estado real —cuántos ya pasaron
+                          y cuántos faltan—, que "28 trabajos" con un "Aprobar" al
+                          lado parecía que nada estuviera aprobado (Hotman,
+                          22-ago). "Datos completos" no se dice: es lo normal;
+                          solo se avisa cuando faltan. */}
                       <span className="block text-[11px] text-on-surface-variant">
                         {p.cobros.length} trabajo{p.cobros.length !== 1 ? 's' : ''}
-                        {p.id !== SIN_ASIGNAR && (p.completos
-                          ? ' · datos completos'
-                          : null)}
+                        {idsPorAprobar.length === 0 ? (
+                          <span className="font-semibold text-[#0f7a35]">{' · '}todo aprobado</span>
+                        ) : (
+                          <>
+                            {p.cobros.length - idsPorAprobar.length > 0 && (
+                              <span className="font-semibold text-[#0f7a35]">
+                                {' · '}{p.cobros.length - idsPorAprobar.length} aprobado{p.cobros.length - idsPorAprobar.length !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                            <span className="font-semibold text-[#9a5b06]">{' · '}{idsPorAprobar.length} por aprobar</span>
+                          </>
+                        )}
                         {p.id !== SIN_ASIGNAR && !p.completos && (
                           <span className="font-semibold text-[#9a5b06]">
                             {' · '}
@@ -344,19 +353,13 @@ export default function CobrosPage() {
                     {formatCOP(p.porAprobar + p.aprobado + p.pagado)}
                   </span>
 
-                  {idsPorAprobar.length > 0 ? (
-                    <button
-                      onClick={() => moverLote.mutate(idsPorAprobar)}
-                      disabled={ocupado || !p.completos}
-                      title={p.completos ? undefined : `Sin ${p.falta.join(', ')} no se le puede girar`}
-                      className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[11.5px] font-bold text-on-primary transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <BadgeCheck className="size-3.5" />
-                      {/* Dice cuántos: "Aprobar todo" no deja saber qué se firma. */}
-                      Aprobar {idsPorAprobar.length > 1 ? `los ${idsPorAprobar.length}` : ''}
-                    </button>
-                  ) : (
-                    <span className="shrink-0 text-[11px] text-on-surface-variant">Nada pendiente</span>
+                  {/* Sin botón general: se aprueba uno a uno al desplegar
+                      (Hotman, 22-ago). Cuando no queda nada, el sello lo dice. */}
+                  {idsPorAprobar.length === 0 && (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#16a34a]/12 px-3 py-1.5 text-[11px] font-bold text-[#0f7a35]">
+                      <Check className="size-3.5" />
+                      Todo aprobado
+                    </span>
                   )}
                 </div>
 

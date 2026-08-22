@@ -1820,6 +1820,23 @@ Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
   y se quitaron las descripciones bajo los títulos (Planificador, Entregables,
   Cobros, Panel de Edición, Redes). Regla de Hotman: no más descripciones.
 
+### Más tarde, el mismo día
+
+- **Cobros**: se fue también "Marcar pagado(s)" (y la ruta `/pagar` y el
+  lote del backend): el pago lo registra contabilidad desde su módulo. Las
+  tarjetas quedan en "Por aprobar" y "Aprobado". El encabezado de cada
+  persona cuenta el estado real ("28 trabajos · 27 aprobados · 1 por
+  aprobar", o "todo aprobado" con sello) y ya no tiene botón general: se
+  aprueba uno a uno al desplegar. Los bloques arrancan plegados y su
+  encabezado es blanco (el azulado se perdía con el fondo). El botón
+  "Aprobar" pasa al verde del sello (#0f7a35) — elegido en widget.
+- **Drive**: dentro del mes, una carpeta por semana ("Semana 23-29 ago -
+  Marketing") en vez de quincenas; el job usa el sábado de corte al
+  mediodía de Colombia para carpeta, nombre y fecha del PDF.
+- **Entregables**: el buscador llena la fila; por defecto muestra solo la
+  semana en curso (domingo a sábado) con "Esta semana" como atajo y rótulo
+  en el selector; el mes o cualquier rango siguen ahí.
+
 ### Pendientes
 
 - ~~Tipo "Historia"~~: hecho al final del día por decisión de Hotman —
