@@ -1837,6 +1837,15 @@ Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
   semana en curso (domingo a sábado) con "Esta semana" como atajo y rótulo
   en el selector; el mes o cualquier rango siguen ahí.
 
+- **Cobros, tarde**: la barra de Entregables (buscar · responsable · período
+  desde "Esta semana" · estado con conteo) debajo de las dos tarjetas; los
+  desplegables del encabezado se van. `FiltroResponsable` acepta el desglose
+  desde afuera. Regla nueva: **a Cobros solo llega lo PUBLICADO** (lista,
+  aprobación y envío del sábado). La auto-aprobación de la líder de diseño se
+  probó y se retiró el mismo día por decisión de Hotman.
+- Datos: "Faltan dos dias corriendo" asignado a Santiago Villarreal en
+  producción (estaba sin responsable).
+
 ### Pendientes
 
 - ~~Tipo "Historia"~~: hecho al final del día por decisión de Hotman —
