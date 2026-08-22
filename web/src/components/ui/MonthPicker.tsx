@@ -193,7 +193,7 @@ export function MonthPicker({ value, currentMonth, dateRange, onChange, alignRig
           className={[
             'flex h-[38px] cursor-pointer items-center gap-2 rounded-lg border px-3.5 text-[13px] transition-all duration-150 focus:outline-none',
             comoPeriodo
-              ? 'border-transparent bg-[var(--surface-low)] font-semibold text-[var(--on-surface)] hover:border-[var(--outline)]'
+              ? 'border-[var(--outline-variant)] bg-[var(--surface-lowest)] font-semibold text-[var(--on-surface)] hover:border-[var(--outline)]'
               : 'border-[var(--outline-variant)] bg-[var(--surface-high)] font-medium text-[var(--on-surface-variant)] hover:border-[var(--primary)] hover:text-[var(--on-surface)]',
             open ? 'border-[var(--primary)]' : '',
           ].join(' ')}
