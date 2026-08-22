@@ -577,6 +577,7 @@ enum TipoContenidoMarketing {
   GUION
   PUBLICACION
   OTRO
+  HISTORIA // historias de IG/FB: otra modalidad de trabajo (Hotman, 22-ago)
 }
 
 enum EstadoContenidoMarketing {

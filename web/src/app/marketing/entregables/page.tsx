@@ -37,8 +37,8 @@ import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 import { FiltroResponsable } from '@/components/marketing/FiltroResponsable'
 
 const TIPO_LABEL: Record<Contenido['tipo'], string> = {
-  VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme', TIKTOKERO: 'TikTokero',
-  GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
+  VIDEO: 'Reel', HISTORIA: 'Historia', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme',
+  TIKTOKERO: 'TikTokero', GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
 }
 const PLATAFORMA_LABEL: Record<string, string> = {
   YOUTUBE: 'YouTube', INSTAGRAM: 'Instagram', TIKTOK: 'TikTok', FACEBOOK: 'Facebook', DRIVE: 'Drive', OTRO: 'Otro',
@@ -201,7 +201,7 @@ function Tarea({ c, onAvanzar, avanzando, onAbrir }: {
 
 /** El icono que encabeza la ficha, según lo que sea la tarea. */
 const ICONO_TIPO: Record<Contenido['tipo'], LucideIcon> = {
-  VIDEO: Video, VSL: Video, TIKTOKERO: Video,
+  VIDEO: Video, HISTORIA: Video, VSL: Video, TIKTOKERO: Video,
   CARRUSEL: LayoutGrid, CARRUMEME: LayoutGrid,
   GUION: FileText, PUBLICACION: Megaphone, OTRO: Megaphone,
 }

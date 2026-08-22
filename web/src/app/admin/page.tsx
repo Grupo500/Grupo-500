@@ -47,7 +47,7 @@ const COLOR = { ventas: '#1a7de0', mkt: '#db2777', fin: '#16a34a', cartera: '#d9
 
 // Los mismos nombres cortos que usa el tablero de Marketing.
 const TIPO_LABEL: Record<string, string> = {
-  VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme',
+  VIDEO: 'Reel', HISTORIA: 'Historia', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme',
   TIKTOKERO: 'TikTokero', GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
 }
 // Orden fijo de colores para la dona: el tipo conserva su color aunque cambie

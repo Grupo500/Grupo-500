@@ -36,7 +36,7 @@ export interface CorreccionDto {
 export interface Contenido {
   id: string
   titulo: string
-  tipo: 'VIDEO' | 'VSL' | 'CARRUSEL' | 'CARRUMEME' | 'TIKTOKERO' | 'GUION' | 'PUBLICACION' | 'OTRO'
+  tipo: 'VIDEO' | 'HISTORIA' | 'VSL' | 'CARRUSEL' | 'CARRUMEME' | 'TIKTOKERO' | 'GUION' | 'PUBLICACION' | 'OTRO'
   destino: 'SEBASTIAN_PERSONAL' | 'ANDRES_PERSONAL' | 'PREICFES' | 'PREMEDICO' | null
   clasificacion: 'ORGANICO' | 'PAUTA'
   tipoTrabajo: 'EMPRESA' | 'FREELANCE'
@@ -53,8 +53,8 @@ export interface Contenido {
 }
 
 const TIPO_LABEL: Record<Contenido['tipo'], string> = {
-  VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme', TIKTOKERO: 'TikTokero',
-  GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
+  VIDEO: 'Reel', HISTORIA: 'Historia', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme',
+  TIKTOKERO: 'TikTokero', GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
 }
 const ESTADO_LABEL: Record<Contenido['estado'], string> = { PLANIFICADO: 'Planificado', EN_PROCESO: 'En proceso', PUBLICADO: 'Publicado' }
 const ESTADO_COLOR: Record<Contenido['estado'], string> = {
@@ -93,7 +93,7 @@ function deISO(iso: string) {
 
 /** El icono que encabeza la ficha, según lo que sea la pieza. */
 const ICONO_TIPO: Record<Contenido['tipo'], LucideIcon> = {
-  VIDEO: Video, VSL: Video, TIKTOKERO: Video,
+  VIDEO: Video, HISTORIA: Video, VSL: Video, TIKTOKERO: Video,
   CARRUSEL: LayoutGrid, CARRUMEME: LayoutGrid,
   GUION: FileText, PUBLICACION: Megaphone, OTRO: Megaphone,
 }

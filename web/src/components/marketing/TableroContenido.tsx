@@ -56,7 +56,7 @@ const ORDEN_ESTADOS: Estado[] = ['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO']
 // Etiqueta corta: dentro de una celda no cabe "Publicación" ni "Carrusel"
 // completos junto al título y el avatar.
 const TIPO_CORTO: Record<Contenido['tipo'], string> = {
-  VIDEO: 'Reel', VSL: 'VSL', CARRUSEL: 'Carrus', CARRUMEME: 'Meme',
+  VIDEO: 'Reel', HISTORIA: 'Historia', VSL: 'VSL', CARRUSEL: 'Carrus', CARRUMEME: 'Meme',
   TIKTOKERO: 'TikTok', GUION: 'Guion', PUBLICACION: 'Publi', OTRO: 'Otro',
 }
 

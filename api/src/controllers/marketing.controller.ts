@@ -102,7 +102,7 @@ export async function listarContenidos(req: Request, res: Response) {
   return ApiResponse.success(res, contenidos)
 }
 
-const TIPO_CONTENIDO = ['VIDEO', 'VSL', 'CARRUSEL', 'CARRUMEME', 'TIKTOKERO', 'GUION', 'PUBLICACION', 'OTRO'] as const
+const TIPO_CONTENIDO = ['VIDEO', 'HISTORIA', 'VSL', 'CARRUSEL', 'CARRUMEME', 'TIKTOKERO', 'GUION', 'PUBLICACION', 'OTRO'] as const
 const DESTINO = ['SEBASTIAN_PERSONAL', 'ANDRES_PERSONAL', 'PREICFES', 'PREMEDICO'] as const
 const CLASIFICACION = ['ORGANICO', 'PAUTA'] as const
 const TIPO_TRABAJO  = ['EMPRESA', 'FREELANCE'] as const
