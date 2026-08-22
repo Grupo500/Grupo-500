@@ -20,7 +20,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  Loader2, Wallet, BadgeCheck, AlertTriangle, ChevronDown, Search, X,
+  Loader2, Wallet, BadgeCheck, AlertTriangle, ChevronDown, Search, X, Check,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
@@ -251,6 +251,28 @@ export default function CobrosPage() {
 
   const elegida = persona ? porPersona.find(p => p.id === persona) ?? null : null
 
+  // El tablero de la semana (Hotman, 22-ago): cuánto va aprobado, cuánto
+  // falta y cuándo sale, con su avance. Se cuenta sobre lo cargado del
+  // período (o de la persona elegida), no sobre lo filtrado por búsqueda.
+  const montoAprobado   = elegida ? elegida.aprobado   : (r?.totales.aprobado ?? 0)
+  const montoPorAprobar = elegida ? elegida.porAprobar : (r?.totales.porAprobar ?? 0)
+  const baseTablero = elegida ? elegida.cobros : todos
+  const trabajosAprobados = baseTablero.filter(c => c.estadoCobro !== 'POR_APROBAR')
+  const trabajosPorAprobar = baseTablero.length - trabajosAprobados.length
+  const personasAprobadas = new Set(trabajosAprobados.map(c => c.asignadoA?.id ?? SIN_ASIGNAR)).size
+  const sumaTablero = montoAprobado + montoPorAprobar
+  const pctAprobado = sumaTablero > 0 ? Math.round((montoAprobado / sumaTablero) * 100) : 0
+  // El sábado que viene (o hoy, si es sábado): a las 11:59 pm sale una cuenta
+  // de cobro por persona al Drive.
+  const proximoCorte = (() => {
+    const hoy = new Date()
+    const d = new Date(hoy)
+    d.setDate(hoy.getDate() + ((6 - hoy.getDay() + 7) % 7))
+    const esHoy = d.toDateString() === hoy.toDateString()
+    const texto = format(d, "EEEE d 'de' MMMM", { locale: es })
+    return `${esHoy ? 'Hoy, ' + texto : texto.charAt(0).toUpperCase() + texto.slice(1)} · 11:59 pm`
+  })()
+
   const idsEn = (lista: Cobro[], e: EstadoCobro) =>
     lista.filter(c => c.estadoCobro === e).map(c => c.id)
 
@@ -272,20 +294,44 @@ export default function CobrosPage() {
 
       {/* Los totales salen de lo mismo que se lista, así que siempre cuadran
           con las filas de abajo. */}
-      {/* Dos tarjetas y no tres: "pagado" ya no se registra aquí sino en el
-          módulo de contabilidad (Hotman, 22-ago). */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {[
-          { l: 'Por aprobar', v: elegida ? elegida.porAprobar : r?.totales.porAprobar, c: 'text-[#9a5b06]' },
-          { l: 'Aprobado',    v: elegida ? elegida.aprobado   : r?.totales.aprobado,   c: 'text-[#0f7a35]' },
-        ].map(k => (
-          <div key={k.l} className="card p-4">
-            <p className="text-[11px] text-on-surface-variant">{k.l}</p>
-            <p className={cn('mt-1 text-[19px] font-bold tracking-[-0.02em] tabular-nums', k.c)}>
-              {isLoading ? '—' : formatCOP(k.v ?? 0)}
+      {/* El tablero de la semana (Hotman, 22-ago): aprobado, por aprobar y el
+          próximo corte en una sola tarjeta, con su avance. Reemplazó a las dos
+          tarjetas sueltas, que se quedaban cortas. */}
+      <div className="rounded-2xl border border-outline-variant bg-surface-lowest p-4 sm:p-5">
+        <div className="grid gap-4 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-outline-variant">
+          <div className="sm:pr-5">
+            <p className="text-[11px] text-on-surface-variant">Aprobado</p>
+            <p className="mt-1 text-[22px] font-bold tracking-[-0.02em] tabular-nums text-[#0f7a35]">{isLoading ? '—' : formatCOP(montoAprobado)}</p>
+            <p className="mt-1.5 text-[11px] text-on-surface-variant">
+              {trabajosAprobados.length} trabajo{trabajosAprobados.length !== 1 ? 's' : ''} · {personasAprobadas} persona{personasAprobadas !== 1 ? 's' : ''}
             </p>
           </div>
-        ))}
+          <div className="sm:px-5">
+            <p className="text-[11px] text-on-surface-variant">Por aprobar</p>
+            <p className="mt-1 text-[22px] font-bold tracking-[-0.02em] tabular-nums text-[#9a5b06]">{isLoading ? '—' : formatCOP(montoPorAprobar)}</p>
+            <p className="mt-1.5 text-[11px]">
+              {trabajosPorAprobar > 0
+                ? <span className="text-on-surface-variant">{trabajosPorAprobar} trabajo{trabajosPorAprobar !== 1 ? 's' : ''} esperando aprobación</span>
+                : <span className="inline-flex items-center gap-1 rounded-full bg-[#dcfce7] px-2 py-0.5 text-[10.5px] font-bold text-[#166534]"><Check className="size-3" />Nada pendiente</span>}
+            </p>
+          </div>
+          <div className="sm:pl-5">
+            <p className="text-[11px] text-on-surface-variant">Próximo corte</p>
+            <p className="mt-1 text-[16px] font-bold tracking-[-0.01em] text-on-surface">{proximoCorte}</p>
+            <p className="mt-1.5 text-[11px] text-on-surface-variant">Sale una cuenta de cobro por persona al Drive</p>
+          </div>
+        </div>
+        {sumaTablero > 0 && (
+          <>
+            <div className="mt-4 flex h-2 overflow-hidden rounded-full bg-[#fde68a]" aria-hidden>
+              <span className="h-full rounded-full bg-[#16a34a]" style={{ width: `${pctAprobado}%` }} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-on-surface-variant">
+              <span><span className="mr-1.5 inline-block size-2 rounded-full bg-[#16a34a] align-middle" /><b className="font-semibold text-on-surface">{pctAprobado} %</b> aprobado</span>
+              <span><span className="mr-1.5 inline-block size-2 rounded-full bg-[#f59e0b] align-middle" /><b className="font-semibold text-on-surface">{100 - pctAprobado} %</b> por aprobar</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* La barra de Entregables, debajo de las tarjetas (Hotman, 22-ago):
