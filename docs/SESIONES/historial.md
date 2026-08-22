@@ -1879,6 +1879,56 @@ Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
   `usePushNotificaciones`). Los avisos por tipo (apagar/encender) quedaron
   como propuesta: requieren preferencias nuevas en la base.
 
+### Cobros: el tablero de la semana y las fichas con avance
+
+- Las dos tarjetas sueltas (Por aprobar / Aprobado) se quedaban cortas. Se
+  presentaron tres opciones en widget y Hotman eligió la recomendada: **el
+  tablero de la semana**, una sola tarjeta con Aprobado (monto, trabajos,
+  personas), Por aprobar (monto, o el sello "Nada pendiente"), el próximo
+  corte (sábado 11:59 pm, sale una cuenta de cobro por persona al Drive) y la
+  barra de avance aprobado/por aprobar. Si se elige a alguien en el filtro, el
+  tablero se acota a esa persona.
+- Las filas por persona también se rediseñaron (dos opciones en widget;
+  Hotman eligió la 2, **fichas con avance**): avatar de 40 con el punto de
+  estado (verde con chulo = todo aprobado, ámbar = falta algo), nombre con el
+  oficio (`ROL_LABEL` del rol de la cuenta, que `SELECT_MIEMBRO` ya traía) y
+  cuántos trabajos, la barra verde/ámbar de cuánto va aprobado frente a lo
+  pendiente con su leyenda ("3 aprobados · $150.000", "2 por aprobar ·
+  $100.000", y en rojo si le faltan datos), el total con su sello y un botón
+  redondo para abrir. Al abrir, los trabajos salen en **tabla** con cabecera
+  (Trabajo · Tipo · Entregado · Valor · Estado): icono por tipo, plataformas
+  de los enlaces como subtítulo (el select de cobros ahora trae
+  `entregables.plataforma`), fecha de entrega, valor y "Aprobado / Cristal ·
+  21 ago" o el botón Aprobar. En celular quedan título, valor y estado; tipo
+  y fecha pasan al subtítulo. La misma tabla sirve para el detalle de una
+  persona y para "Mis cobros". Se fueron `FilaCobro`, `detalleDe` y los mapas
+  de estado, que ya no usaba nadie.
+
+### Sentry: cinco errores revisados
+
+Hotman vio errores en Sentry y pidió corregirlos:
+
+- `GRUPO500-API-H` y `-J` (14-ago, "la tabla marketing_guiones / la columna
+  guionId no existe"): eran del día en que se desplegó el módulo sin correr
+  las migraciones; se aplicaron a mano después y no volvieron. Resueltos en
+  Sentry con su comentario.
+- `GRUPO500-API-K`, `-M` y `-N` eran **ZodError**: un descuento mayor al 100 %
+  al crear un estudiante, un título de una letra en el Planificador y un
+  enlace sin `https://` en los entregables. Son 400 —datos mal mandados—,
+  pero Sentry los reportaba como si fueran 500 porque un `ZodError` no trae
+  `statusCode`. Tres arreglos:
+  1. `setupExpressErrorHandler(app, { shouldHandleError })` en `api/src/index.ts`
+     ignora los ZodError y todo lo que tenga código < 500; el `errorHandler`
+     ya los respondía como 400 con el detalle.
+  2. Enlaces: el servidor (`enlace`, un `z.preprocess`) y el formulario
+     (`completarEnlace`) le ponen `https://` a lo que se pega sin esquema, y
+     si ni así es una dirección el formulario avisa "Pega el enlace completo…"
+     en vez del "Invalid url" del servidor. Título: la pantalla exige dos
+     letras (el botón Crear sigue apagado) y manda el título recortado; el
+     esquema hace `.trim().min(2)`.
+  3. Estudiantes: si el descuento es negativo o mayor que el precio del
+     curso, el formulario lo dice con el precio, antes de mandar nada.
+
 ### Pendientes
 
 - ~~Tipo "Historia"~~: hecho al final del día por decisión de Hotman —

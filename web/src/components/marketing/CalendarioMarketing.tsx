@@ -23,6 +23,14 @@ import { PUEDE_ASIGNAR } from '@/lib/visibilidadMarketing'
 
 export interface Miembro { id: string; nombre: string; activo: boolean; userId?: string; rol?: string; user?: { image: string | null } }
 export interface EntregableDto { id: string; plataforma: string; url: string | null; videoUrl: string | null; publicadoEn: string }
+
+/** "instagram.com/p/abc" → "https://instagram.com/p/abc"; null si ni así es una dirección. */
+function completarEnlace(texto: string): string | null {
+  const s = texto.trim()
+  if (!s) return null
+  const conEsquema = /^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : `https://${s}`
+  try { return new URL(conEsquema).hostname.includes('.') ? conEsquema : null } catch { return null }
+}
 /** Una ronda de correcciones. `resueltaEn` en null = todavía pendiente. */
 export interface CorreccionDto {
   id: string
@@ -554,7 +562,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   const guardar = useMutation({
     mutationFn: async () => {
       const body = {
-        titulo, tipo, clasificacion, fecha: fechaStr,
+        titulo: titulo.trim(), tipo, clasificacion, fecha: fechaStr,
         tipoTrabajo,
         // En un trabajo de empresa el valor no viaja: el backend lo pondría en
         // null de todos modos, y así el cuerpo dice lo mismo que la pantalla.
@@ -587,13 +595,20 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
   // Agregar sí toca la base al momento —hace falta el id que devuelve—, pero
   // se queda en la ventana: pegar un enlace no es terminar de editar.
   const agregarEntregable = useMutation({
-    mutationFn: (videoUrl?: string) => apiFetch<{ data: EntregableDto }>(
-      `/marketing/contenidos/${contenido!.id}/entregables`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ plataforma, url: videoUrl ? null : url, videoUrl: videoUrl ?? null }),
-      },
-    ),
+    mutationFn: (videoUrl?: string) => {
+      // Un enlace pegado sin "https://" se completa aquí; uno que ni así es
+      // una dirección se frena con un aviso claro, en vez del "Invalid url"
+      // del servidor (GRUPO500-API-N).
+      const enlace = videoUrl ? null : completarEnlace(url)
+      if (!videoUrl && !enlace) throw new Error('Pega el enlace completo, por ejemplo https://www.instagram.com/p/…')
+      return apiFetch<{ data: EntregableDto }>(
+        `/marketing/contenidos/${contenido!.id}/entregables`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ plataforma, url: enlace, videoUrl: videoUrl ?? null }),
+        },
+      )
+    },
     onSuccess: res => {
       setUrl('')
       setEntregables(prev => [...prev, res.data])
@@ -677,7 +692,7 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
             <button
               type="button"
               onClick={() => guardar.mutate()}
-              disabled={!titulo.trim() || guardar.isPending}
+              disabled={titulo.trim().length < 2 || guardar.isPending}
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-[12.5px] font-semibold text-primary-on transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:opacity-45"
             >
               {guardar.isPending && <Loader2 className="size-4 animate-spin" />}

@@ -120,7 +120,7 @@ function valorSegunTrabajo(
 }
 
 const crearContenidoSchema = z.object({
-  titulo:        z.string().min(2),
+  titulo:        z.string().trim().min(2),
   tipo:          z.enum(TIPO_CONTENIDO),
   destino:       z.enum(DESTINO).optional().nullable(),
   clasificacion: z.enum(CLASIFICACION).optional(),
@@ -322,7 +322,7 @@ export async function eliminarCorreccion(req: Request, res: Response) {
 }
 
 const actualizarContenidoSchema = z.object({
-  titulo:        z.string().min(2).optional(),
+  titulo:        z.string().trim().min(2).optional(),
   tipo:          z.enum(TIPO_CONTENIDO).optional(),
   destino:       z.enum(DESTINO).optional().nullable(),
   clasificacion: z.enum(CLASIFICACION).optional(),
@@ -467,10 +467,19 @@ export async function recordarDatos(req: Request, res: Response) {
 }
 
 // ── Entregables ───────────────────────────────────────────────────────────
+// Un enlace pegado a mano rara vez trae el "https://": se le pone aquí antes
+// de validarlo, en vez de rechazarlo con un "Invalid url" (GRUPO500-API-N).
+const enlace = z.preprocess(v => {
+  if (typeof v !== 'string') return v
+  const s = v.trim()
+  if (!s) return null
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : `https://${s}`
+}, z.string().url({ message: 'El enlace no es una dirección válida' }).optional().nullable())
+
 const crearEntregableSchema = z.object({
   plataforma: z.enum(['YOUTUBE', 'INSTAGRAM', 'TIKTOK', 'FACEBOOK', 'DRIVE', 'OTRO']),
-  url:        z.string().url().optional().nullable(),
-  videoUrl:   z.string().url().optional().nullable(),
+  url:        enlace,
+  videoUrl:   enlace,
 }).refine(d => d.url || d.videoUrl, { message: 'Se requiere un link o un video subido' })
 
 export async function crearEntregable(req: Request, res: Response) {
@@ -539,7 +548,7 @@ const SELECT_COBRO = {
   // que es justo donde hacen falta para armar la cuenta de cobro.
   asignadoA:   { select: { ...SELECT_MIEMBRO, ...SELECT_FINANCIEROS } },
   aprobadoPor: { select: { id: true, nombre: true } },
-  entregables: { select: { id: true, publicadoEn: true } },
+  entregables: { select: { id: true, publicadoEn: true, plataforma: true } },
 }
 
 /** El perfil de marketing de quien consulta, o null si no tiene. */

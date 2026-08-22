@@ -21,6 +21,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Loader2, Wallet, BadgeCheck, AlertTriangle, ChevronDown, Search, X, Check,
+  Video, LayoutGrid, Image as ImageIcon, FileText, type LucideIcon,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
@@ -28,12 +29,13 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { MonthPicker, DateRange, semanaActual } from '@/components/ui/MonthPicker'
 import { FiltroResponsable, type OpcionResponsable } from '@/components/marketing/FiltroResponsable'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
+import { ROL_LABEL } from '@/lib/roles'
 
 type EstadoCobro = 'POR_APROBAR' | 'APROBADO' | 'PAGADO'
 
 interface Persona {
   id: string; nombre: string
-  user?: { image: string | null }
+  user?: { image: string | null; role?: string | null }
   /** Qué le falta para poder cobrar; lo calcula el backend. */
   falta: string[]
   completos: boolean
@@ -51,7 +53,7 @@ interface Cobro {
   cuentaCobroEn: string | null
   asignadoA: Persona | null
   aprobadoPor: { id: string; nombre: string } | null
-  entregables: { id: string; publicadoEn: string }[]
+  entregables: { id: string; publicadoEn: string; plataforma?: string }[]
 }
 
 interface Respuesta {
@@ -60,18 +62,16 @@ interface Respuesta {
   totales: { porAprobar: number; aprobado: number; pagado: number }
 }
 
-const ESTADO_LABEL: Record<EstadoCobro, string> = {
-  POR_APROBAR: 'Por aprobar',
-  APROBADO: 'Aprobado',
-  PAGADO: 'Pagado',
+const TIPO_LABEL: Record<string, string> = {
+  VIDEO: 'Reel', HISTORIA: 'Historia', VSL: 'VSL', CARRUSEL: 'Carrusel', CARRUMEME: 'Carrumeme',
+  TIKTOKERO: 'TikTokero', GUION: 'Guion', PUBLICACION: 'Publicación', OTRO: 'Otro',
 }
-
-// Ámbar lo que espera acción, verde lo aprobado, gris lo cerrado. Mismo
-// lenguaje de color que el resto del área.
-const ESTADO_CLASE: Record<EstadoCobro, string> = {
-  POR_APROBAR: 'bg-[#d97706]/15 text-[#9a5b06]',
-  APROBADO:    'bg-[#16a34a]/15 text-[#0f7a35]',
-  PAGADO:      'bg-surface-high text-on-surface-variant',
+const PLATAFORMA_LABEL: Record<string, string> = {
+  YOUTUBE: 'YouTube', INSTAGRAM: 'Instagram', TIKTOK: 'TikTok', FACEBOOK: 'Facebook', DRIVE: 'Drive', OTRO: 'Otro',
+}
+const ICONO_TIPO: Record<string, LucideIcon> = {
+  VIDEO: Video, HISTORIA: Video, VSL: Video, TIKTOKERO: Video,
+  CARRUSEL: LayoutGrid, CARRUMEME: LayoutGrid, PUBLICACION: ImageIcon, GUION: FileText,
 }
 
 const SIN_ASIGNAR = '__sin__'
@@ -82,18 +82,8 @@ function rangoDelMes(month: string | null) {
   return { desde: toISO(startOfMonth(base)), hasta: toISO(endOfMonth(base)) }
 }
 
-/** En qué va el trabajo, no solo la fecha: quien aprueba necesita saberlo. */
-function detalleDe(c: Cobro, conNombre: boolean) {
-  const quien = conNombre ? `${c.asignadoA?.nombre ?? 'Sin asignar'} · ` : ''
-  const cuando = c.pagadoEn
-    ? `pagado el ${format(new Date(c.pagadoEn), "d 'de' MMMM", { locale: es })}`
-    : c.aprobadoEn
-      ? `aprobado por ${c.aprobadoPor?.nombre ?? 'alguien'} el ${format(new Date(c.aprobadoEn), "d 'de' MMMM", { locale: es })}`
-      : c.entregables.length > 0
-        ? `entregado el ${format(new Date(c.entregables[0].publicadoEn), "d 'de' MMMM", { locale: es })}`
-        : 'en proceso, sin entregar'
-  return quien + cuando
-}
+/** "jue 20 ago", para las columnas de fecha. */
+const fechaCorta = (iso: string) => format(new Date(iso), 'EEE d MMM', { locale: es })
 
 export default function CobrosPage() {
   const queryClient = useQueryClient()
@@ -170,7 +160,7 @@ export default function CobrosPage() {
   // lista, así que la tabla y el detalle nunca pueden discrepar.
   const porPersona = useMemo(() => {
     const mapa = new Map<string, {
-      id: string; nombre: string; foto: string | null
+      id: string; nombre: string; foto: string | null; rol: string | null
       falta: string[]; completos: boolean
       cobros: Cobro[]; porAprobar: number; aprobado: number; pagado: number
     }>()
@@ -185,6 +175,8 @@ export default function CobrosPage() {
         id,
         nombre: c.asignadoA?.nombre ?? 'Sin asignar',
         foto:   c.asignadoA?.user?.image ?? null,
+        // El oficio (editor, community…) sale del rol de la cuenta.
+        rol:    ROL_LABEL[(c.asignadoA?.user?.role ?? '') as keyof typeof ROL_LABEL] ?? null,
         falta:  faltaReal,
         completos: (c.asignadoA?.completos ?? false) || faltaReal.length === 0,
         cobros: [], porAprobar: 0, aprobado: 0, pagado: 0,
@@ -203,35 +195,39 @@ export default function CobrosPage() {
   }, [cobros])
 
   /**
-   * Un trabajo con su valor, su etapa y lo que se puede hacer con él.
+   * La tabla de trabajos: cabecera de columnas y una fila por trabajo (tipo,
+   * cuándo se entregó, valor y en qué va). Antes cada trabajo era una fila
+   * suelta con el detalle en prosa; en columnas, Cristal compara de un
+   * vistazo y el botón de aprobar queda siempre en el mismo sitio (Hotman,
+   * 22-ago). En celular se quedan título, valor y estado; tipo y fecha pasan
+   * al subtítulo.
    *
-   * Vive dentro de la página porque necesita las mutaciones y los permisos, y
-   * pasárselos sueltos serían ocho props para nada. Se usa en la liquidación
-   * —dentro del bloque de cada persona— y en el detalle de una sola.
+   * Viven dentro de la página porque necesitan la mutación y los permisos, y
+   * pasárselos sueltos serían ocho props para nada.
    */
-  function FilaCobro({ c, conNombre }: { c: Cobro; conNombre: boolean }) {
+  const COLUMNAS = 'md:grid-cols-[minmax(0,1fr)_110px_120px_110px_150px]'
+
+  function CabeceraTrabajos() {
     return (
-      <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#7c3aed]/15">
-          <Wallet className="size-3.5 text-[#7c3aed]" />
-        </span>
+      <div className={cn('hidden gap-x-3 border-b border-outline-variant/60 bg-surface-low/40 py-1.5 pl-[60px] pr-4 text-[10.5px] text-on-surface-variant md:grid', COLUMNAS)}>
+        <span>Trabajo</span><span>Tipo</span><span>Entregado</span>
+        <span className="text-right">Valor</span><span className="text-right">Estado</span>
+      </div>
+    )
+  }
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold text-on-surface">{c.titulo}</p>
-          <p className="mt-0.5 text-[11px] text-on-surface-variant">
-            {detalleDe(c, conNombre)}
-          </p>
-        </div>
+  function FilaTrabajo({ c }: { c: Cobro }) {
+    const Icono = ICONO_TIPO[c.tipo] ?? Wallet
+    const tipo = TIPO_LABEL[c.tipo] ?? c.tipo
+    const entregado = c.entregables[0]?.publicadoEn ? fechaCorta(c.entregables[0].publicadoEn) : null
+    const plataformas = [...new Set(c.entregables.map(e => e.plataforma).filter(Boolean))]
+      .map(pl => PLATAFORMA_LABEL[pl!] ?? pl).join(' · ')
+    // "Cristal · 21 ago": quién aprobó y cuándo, debajo del sello.
+    const quienAprobo = c.aprobadoPor?.nombre.split(' ')[0]
 
-        <span className="shrink-0 text-[13px] font-bold tabular-nums text-on-surface">
-          {c.valor != null ? formatCOP(c.valor) : 'Sin valor'}
-        </span>
-
-        <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold', ESTADO_CLASE[c.estadoCobro])}>
-          {ESTADO_LABEL[c.estadoCobro]}
-        </span>
-
-        {puedeAprobar && c.estadoCobro === 'POR_APROBAR' && (
+    const estado = c.estadoCobro === 'POR_APROBAR'
+      ? puedeAprobar
+        ? (
           <button
             onClick={() => mover.mutate(c.id)}
             disabled={ocupado}
@@ -239,12 +235,41 @@ export default function CobrosPage() {
           >
             <BadgeCheck className="mr-1 inline size-3.5" />Aprobar
           </button>
-        )}
-        {/* Aprobado es sello y ya: ninguna acción por fila (Hotman, 22-ago).
-            El pago se registra por persona desde el encabezado, y la cuenta
-            de cobro la arma el servidor cada sábado —una por persona con
-            todos sus trabajos— y la sube a Drive. Si a alguien le faltan
-            datos, lo dice el encabezado de su grupo. */}
+        )
+        : <span className="rounded-full bg-[#d97706]/15 px-2.5 py-1 text-[10px] font-bold text-[#9a5b06]">Por aprobar</span>
+      : (
+        <span className="text-right text-[11px] font-semibold leading-[1.35] text-[#0f7a35]">
+          {c.estadoCobro === 'PAGADO' ? 'Pagado' : 'Aprobado'}
+          <small className="block text-[10.5px] font-normal text-on-surface-variant">
+            {c.estadoCobro === 'PAGADO'
+              ? (c.pagadoEn ? fechaCorta(c.pagadoEn) : '')
+              : [quienAprobo, c.aprobadoEn ? fechaCorta(c.aprobadoEn) : null].filter(Boolean).join(' · ')}
+          </small>
+        </span>
+      )
+
+    return (
+      <div className={cn('grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 px-4 py-2.5', COLUMNAS)}>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="grid size-[34px] shrink-0 place-items-center rounded-[10px] bg-[#7c3aed]/12">
+            <Icono className="size-3.5 text-[#7c3aed]" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[12.5px] font-semibold text-on-surface">{c.titulo}</p>
+            <p className="truncate text-[10.5px] text-on-surface-variant">
+              <span className="md:hidden">{tipo}{entregado ? ` · ${entregado}` : ''}</span>
+              <span className="hidden md:inline">{plataformas || 'Sin enlace'}</span>
+            </p>
+          </div>
+        </div>
+        <span className="hidden md:block">
+          <span className="inline-block rounded-md border border-outline-variant bg-surface-lowest px-1.5 py-px text-[10.5px] font-semibold text-on-surface-variant">{tipo}</span>
+        </span>
+        <span className="hidden text-[12px] text-on-surface-variant md:block">{entregado ?? '—'}</span>
+        <span className="text-right text-[12.5px] font-semibold tabular-nums text-on-surface">
+          {c.valor != null ? formatCOP(c.valor) : 'Sin valor'}
+        </span>
+        <div className="flex justify-end">{estado}</div>
       </div>
     )
   }
@@ -428,74 +453,99 @@ export default function CobrosPage() {
          está en una sola etapa— y un "Aprobar todo" sin ver qué (Hotman,
          20-ago). */
       ) : puedeAprobar && !elegida ? (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {porPersona.map(p => {
-            const idsPorAprobar = idsEn(p.cobros, 'POR_APROBAR')
-            const idsAprobados  = idsEn(p.cobros, 'APROBADO')
+            const n = p.cobros.length
+            const pendientes = idsEn(p.cobros, 'POR_APROBAR').length
+            const aprobados = n - pendientes
+            const total = p.porAprobar + p.aprobado + p.pagado
+            const listo = p.aprobado + p.pagado
+            // La barra reparte la plata; si nadie puso valor, reparte trabajos.
+            const pct = total > 0 ? Math.round((listo / total) * 100) : Math.round((aprobados / n) * 100)
             const abierto = abiertos.has(p.id)
-            const acento = idsPorAprobar.length > 0 ? '#d97706' : idsAprobados.length > 0 ? '#16a34a' : 'var(--outline)'
+            const faltante = p.id !== SIN_ASIGNAR && !p.completos
+              ? (p.falta.length === 1 ? `Falta ${p.falta[0]}` : `Le faltan ${p.falta.length} datos`)
+              : null
             return (
               <div key={p.id} className="card-panel overflow-hidden p-0">
-                <div
-                  className="flex flex-wrap items-center gap-3 bg-surface-lowest px-4 py-3"
-                  style={{ boxShadow: `inset 3px 0 0 ${acento}` }}
-                >
+                {/* La ficha: quién, cuánto va aprobado frente a lo pendiente, el
+                    total con su sello y el botón de abrir. En celular la barra
+                    baja a una segunda línea. */}
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_32px] items-center gap-x-3 gap-y-3 px-4 py-3.5 md:grid-cols-[270px_minmax(0,1fr)_150px_32px] md:gap-x-4">
                   <button
                     type="button"
                     onClick={() => alternar(p.id)}
-                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
+                    className="flex min-w-0 cursor-pointer items-center gap-3 text-left"
                   >
-                    <ChevronDown className={cn('size-3.5 shrink-0 text-on-surface-variant transition-transform', !abierto && '-rotate-90')} />
-                    {p.id === SIN_ASIGNAR
-                      ? <span className="grid size-[30px] shrink-0 place-items-center rounded-full bg-surface-high">
-                          <Wallet className="size-3.5 text-on-surface-variant" />
-                        </span>
-                      : <AvatarMiembro id={p.id} nombre={p.nombre} image={p.foto} size={30} />}
-                    <span className="min-w-0">
-                      <span className="block truncate text-[13.5px] font-semibold text-on-surface">{p.nombre}</span>
-                      {/* El subtítulo cuenta el estado real —cuántos ya pasaron
-                          y cuántos faltan—, que "28 trabajos" con un "Aprobar" al
-                          lado parecía que nada estuviera aprobado (Hotman,
-                          22-ago). "Datos completos" no se dice: es lo normal;
-                          solo se avisa cuando faltan. */}
-                      <span className="block text-[11px] text-on-surface-variant">
-                        {p.cobros.length} trabajo{p.cobros.length !== 1 ? 's' : ''}
-                        {idsPorAprobar.length === 0 ? (
-                          <span className="font-semibold text-[#0f7a35]">{' · '}todo aprobado</span>
-                        ) : (
-                          <>
-                            {p.cobros.length - idsPorAprobar.length > 0 && (
-                              <span className="font-semibold text-[#0f7a35]">
-                                {' · '}{p.cobros.length - idsPorAprobar.length} aprobado{p.cobros.length - idsPorAprobar.length !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                            <span className="font-semibold text-[#9a5b06]">{' · '}{idsPorAprobar.length} por aprobar</span>
-                          </>
-                        )}
-                        {p.id !== SIN_ASIGNAR && !p.completos && (
-                          <span className="font-semibold text-[#9a5b06]">
-                            {' · '}
-                            {p.falta.length === 1 ? `falta ${p.falta[0]}` : `le faltan ${p.falta.length} datos`}
+                    <span className="relative shrink-0">
+                      {p.id === SIN_ASIGNAR
+                        ? <span className="grid size-10 place-items-center rounded-full bg-surface-high">
+                            <Wallet className="size-4 text-on-surface-variant" />
                           </span>
+                        : <AvatarMiembro id={p.id} nombre={p.nombre} image={p.foto} size={40} />}
+                      {/* El punto de estado: verde con su chulo si ya está todo
+                          aprobado, ámbar si falta algo. */}
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'absolute -bottom-px -right-px grid size-[15px] place-items-center rounded-full border-2 border-surface-lowest',
+                          pendientes > 0 ? 'bg-[#f59e0b]' : 'bg-[#16a34a]',
                         )}
+                      >
+                        {pendientes === 0 && <Check className="size-2 text-white" strokeWidth={4} />}
+                      </span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-semibold text-on-surface">{p.nombre}</span>
+                      <span className="block truncate text-[11px] text-on-surface-variant">
+                        {[p.rol, `${n} trabajo${n !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
                       </span>
                     </span>
                   </button>
 
-                  <span className="shrink-0 text-[16px] font-semibold tabular-nums tracking-tight text-on-surface">
-                    {formatCOP(p.porAprobar + p.aprobado + p.pagado)}
-                  </span>
+                  <div className="order-last col-span-3 min-w-0 md:order-none md:col-span-1">
+                    <div className="flex h-[7px] gap-0.5 overflow-hidden rounded-full bg-surface-high/60" aria-hidden>
+                      {pct > 0 && <span className="h-full bg-[#16a34a]" style={{ width: `${pct}%` }} />}
+                      {pct < 100 && <span className="h-full bg-[#f59e0b]" style={{ width: `${100 - pct}%` }} />}
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-x-3.5 gap-y-0.5 text-[11px] text-on-surface-variant">
+                      {aprobados > 0 && (
+                        <span><b className="font-semibold text-[#0f7a35]">{aprobados} aprobado{aprobados !== 1 ? 's' : ''}</b> · {formatCOP(listo)}</span>
+                      )}
+                      {pendientes > 0 && (
+                        <span><b className="font-semibold text-[#9a5b06]">{pendientes} por aprobar</b> · {formatCOP(p.porAprobar)}</span>
+                      )}
+                      {faltante && <span className="font-semibold text-[#b91c1c]">{faltante}</span>}
+                    </div>
+                  </div>
 
-                  {/* Sin botón general ni sello a la derecha: se aprueba uno a
-                      uno al desplegar, y el estado ya lo dice el subtítulo
-                      (Hotman, 22-ago). */}
+                  <div className="text-right">
+                    <p className="text-[18px] font-semibold leading-none tracking-[-0.015em] tabular-nums text-on-surface">
+                      {formatCOP(total)}
+                    </p>
+                    <p className="mt-1.5">
+                      {pendientes > 0
+                        ? <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fef3c7] px-2 py-0.5 text-[10.5px] font-bold text-[#92400e]"><span className="size-[7px] rounded-full bg-[#d97706]" />{pendientes} por aprobar</span>
+                        : <span className="inline-flex items-center gap-1 rounded-full bg-[#dcfce7] px-2 py-0.5 text-[10.5px] font-bold text-[#166534]"><Check className="size-3" strokeWidth={3} />Todo aprobado</span>}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => alternar(p.id)}
+                    aria-expanded={abierto}
+                    aria-label={abierto ? 'Ocultar los trabajos' : 'Ver los trabajos'}
+                    className="grid size-8 cursor-pointer place-items-center rounded-full border border-outline-variant bg-surface-lowest text-on-surface-variant transition-colors hover:bg-surface-low hover:text-on-surface"
+                  >
+                    <ChevronDown className={cn('size-3.5 transition-transform', abierto && 'rotate-180')} />
+                  </button>
                 </div>
 
                 {abierto && (
-                  <>
+                  <div className="border-t border-outline-variant/60">
                     {/* La consecuencia, no la cuenta: "le faltan 9 datos" no
                         dice qué pasa si se aprueba igual. */}
-                    {p.id !== SIN_ASIGNAR && !p.completos && (
+                    {faltante && (
                       <div className="flex flex-wrap items-center gap-2.5 border-b border-outline-variant bg-[#dc2626]/[0.06] px-4 py-2.5 text-[11.5px] text-on-surface">
                         <AlertTriangle className="size-3.5 shrink-0 text-[#dc2626]" />
                         <span className="min-w-0 flex-1">
@@ -511,10 +561,11 @@ export default function CobrosPage() {
                         </button>
                       </div>
                     )}
+                    <CabeceraTrabajos />
                     <div className="divide-y divide-outline-variant/50">
-                      {p.cobros.map(c => <FilaCobro key={c.id} c={c} conNombre={false} />)}
+                      {p.cobros.map(c => <FilaTrabajo key={c.id} c={c} />)}
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             )
@@ -549,10 +600,9 @@ export default function CobrosPage() {
             </div>
           )}
 
-          <div className="divide-y divide-outline-variant">
-            {(elegida ? elegida.cobros : cobros).map(c => (
-              <FilaCobro key={c.id} c={c} conNombre={puedeAprobar && !elegida} />
-            ))}
+          <CabeceraTrabajos />
+          <div className="divide-y divide-outline-variant/50">
+            {(elegida ? elegida.cobros : cobros).map(c => <FilaTrabajo key={c.id} c={c} />)}
           </div>
         </div>
       )}

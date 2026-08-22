@@ -1,6 +1,7 @@
 import './setTz'
 import './instrument'
 import * as Sentry from '@sentry/node'
+import { ZodError } from 'zod'
 import express, { Request, Response, NextFunction } from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
@@ -219,7 +220,18 @@ app.use('/api/public/v1',    publicRoutes)
 
 // Sentry error handler — debe ir ANTES del errorHandler custom y DESPUÉS de todas las rutas
 if (process.env.SENTRY_DSN) {
-  Sentry.setupExpressErrorHandler(app)
+  Sentry.setupExpressErrorHandler(app, {
+    // Solo fallos nuestros (5xx). Un ZodError es un 400 —datos que el cliente
+    // mandó mal— pero el objeto no trae statusCode, así que Sentry lo tomaba
+    // por 500 y llenaba el tablero de "errores" que no lo son (issues
+    // GRUPO500-API-K, -M y -N, 22-ago). Nuestro errorHandler ya lo responde
+    // como 400 con el detalle.
+    shouldHandleError: (err) => {
+      if (err instanceof ZodError) return false
+      const e = err as { statusCode?: number; status?: number }
+      return (e.statusCode ?? e.status ?? 500) >= 500
+    },
+  })
 }
 
 // Error handler global (siempre al final)

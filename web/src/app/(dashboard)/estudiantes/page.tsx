@@ -232,6 +232,11 @@ const cursos: { id: string; nombre: string; precio: number }[] = (cursosData?.da
         throw new Error('Ingresa la fecha del pago')
       const cursoPrecio = cursos.find(c => c.id === form.cursoId)?.precio ?? 0
       const descuentoValorNum = Number(form.descuentoValor) || 0
+      // Un descuento mayor que el curso no es un descuento: antes se mandaba
+      // igual y el servidor lo rechazaba con un "menor o igual a 100" que no
+      // decía qué corregir (GRUPO500-API-K).
+      if (form.cursoId && (descuentoValorNum < 0 || descuentoValorNum > cursoPrecio))
+        throw new Error(`El descuento debe estar entre $ 0 y el precio del curso (${formatCOP(cursoPrecio)})`)
       const descuentoPct = cursoPrecio > 0 ? (descuentoValorNum / cursoPrecio) * 100 : 0
 
       const payload: any = {
