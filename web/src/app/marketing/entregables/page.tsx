@@ -1204,14 +1204,43 @@ export default function EntregablesPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <PageHeader title="Entregables" subtitle="Las tareas de cada quien y lo que ya publicó" />
+      <PageHeader title="Entregables" />
 
-      {/* La barra, en una sola fila y en el orden en que se decide: primero
-          cuándo, después qué y quién, de último buscar. La forma de verlo va
-          al extremo, separada, porque no filtra nada (Hotman, 20-ago).
-          El buscador es el único elástico: absorbe el espacio que sobra y es
-          el primero en encogerse, así los demás nunca se parten de línea. */}
+      {/* La barra, en una sola fila y en el orden que pidió Hotman (22-ago):
+          buscar, responsable, mes y estado. La forma de verlo va al extremo,
+          separada, porque no filtra nada. El buscador es el único elástico:
+          absorbe el espacio que sobra y es el primero en encogerse, así los
+          demás nunca se parten de línea. */}
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 max-[900px]:flex-wrap max-[900px]:overflow-visible">
+        {/* Con veinte piezas al mes, encontrar una por el ojo es recorrer la
+            lista entera. */}
+        <label className="flex h-[38px] min-w-[130px] max-w-[280px] flex-1 items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
+          <Search className="size-3.5 shrink-0 text-on-surface-variant" />
+          <input
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            placeholder="Buscar una tarea…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
+          />
+          {busqueda && (
+            <button
+              type="button"
+              onClick={() => setBusqueda('')}
+              aria-label="Limpiar búsqueda"
+              className="grid size-[18px] shrink-0 cursor-pointer place-items-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
+            >
+              <X className="size-2.5" strokeWidth={3} />
+            </button>
+          )}
+        </label>
+
+        <FiltroResponsable
+          valor={responsable}
+          onCambio={setResponsable}
+          opciones={responsables}
+          total={conteos.todas}
+        />
+
         <div className="shrink-0">
           <MonthPicker
             value={month}
@@ -1221,9 +1250,6 @@ export default function EntregablesPage() {
             comoPeriodo
           />
         </div>
-
-        {/* La raya marca que el mes es el alcance de todo lo demás. */}
-        <span className="h-6 w-px shrink-0 bg-outline-variant max-[900px]:hidden" />
 
         {/* El estado, con su cifra: filtra y de paso dice cuántas hay. Un
             desplegable que decía "Todo" no decía todo de qué, y obligaba a
@@ -1257,35 +1283,6 @@ export default function EntregablesPage() {
             </button>
           ))}
         </div>
-
-        <FiltroResponsable
-          valor={responsable}
-          onCambio={setResponsable}
-          opciones={responsables}
-          total={conteos.todas}
-        />
-
-        {/* Con veinte piezas al mes, encontrar una por el ojo es recorrer la
-            lista entera. */}
-        <label className="flex h-[38px] min-w-[130px] max-w-[280px] flex-1 items-center gap-2 rounded-lg border border-outline-variant bg-surface-lowest px-3 transition-colors focus-within:border-primary">
-          <Search className="size-3.5 shrink-0 text-on-surface-variant" />
-          <input
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-            placeholder="Buscar una tarea…"
-            className="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="grid size-[18px] shrink-0 cursor-pointer place-items-center rounded-full bg-surface-high text-on-surface-variant transition-colors hover:bg-surface-highest hover:text-on-surface"
-            >
-              <X className="size-2.5" strokeWidth={3} />
-            </button>
-          )}
-        </label>
 
         <span className="min-w-0 flex-1 max-[900px]:hidden" />
 

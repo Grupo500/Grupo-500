@@ -35,7 +35,6 @@ router.get('/cobros',             asyncHandler(ctrl.listarCobros))
 router.patch('/cobros/lote',      asyncHandler(ctrl.cobrosEnLote))
 router.patch('/cobros/:id/aprobar', asyncHandler(ctrl.aprobarCobro))
 router.patch('/cobros/:id/pagar',   asyncHandler(ctrl.pagarCobro))
-router.post('/cobros/:id/cuenta-de-cobro', asyncHandler(ctrl.archivarCuentaDeCobro))
 
 
 export default router

@@ -20,18 +20,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  Loader2, Check, Wallet, BadgeCheck, AlertTriangle, FileText, ExternalLink, ChevronDown,
+  Loader2, Check, Wallet, BadgeCheck, AlertTriangle, ExternalLink, ChevronDown,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
-import { generarCuentaDeCobro, type DatosPersona } from '@/lib/cuentaCobroPdf'
 
 type EstadoCobro = 'POR_APROBAR' | 'APROBADO' | 'PAGADO'
 
-interface Persona extends DatosPersona {
+interface Persona {
   id: string; nombre: string
   user?: { image: string | null }
   /** Qué le falta para poder cobrar; lo calcula el backend. */
@@ -142,51 +141,6 @@ export default function CobrosPage() {
     onError: (e: Error) => alert(e.message || 'No se pudo enviar'),
   })
 
-  /**
-   * Genera la cuenta de cobro, la descarga y la archiva en Drive.
-   *
-   * El PDF se arma en el navegador y se manda al servidor ya hecho: así lo que
-   * queda en la carpeta de contabilidad es exactamente el archivo que la
-   * persona vio, no una segunda versión dibujada por otro código.
-   */
-  const [generando, setGenerando] = useState<string | null>(null)
-  const cuentaDeCobro = useMutation({
-    mutationFn: async (c: Cobro) => {
-      const p = c.asignadoA
-      if (!p) throw new Error('Este cobro no tiene a nadie asignado')
-      // Igual que arriba: la firma ya no se pide, así que no puede frenar una
-      // aprobación aunque el servidor viejo la siga reportando como faltante.
-      const faltanDeVerdad = (p.falta ?? []).filter(f => !/firma/i.test(f))
-      if (faltanDeVerdad.length > 0) {
-        throw new Error(`Faltan datos financieros: ${faltanDeVerdad.join(', ')}`)
-      }
-
-      const emision = c.aprobadoEn ? new Date(c.aprobadoEn) : new Date()
-      const { blob, base64, archivo } = await generarCuentaDeCobro(p, {
-        concepto: c.titulo,
-        valor: c.valor ?? 0,
-        fecha: emision,
-      })
-
-      // Se descarga antes de subir: si Drive falla, la persona igual se queda
-      // con su cuenta de cobro en la mano.
-      const enlace = document.createElement('a')
-      enlace.href = URL.createObjectURL(blob)
-      enlace.download = archivo
-      enlace.click()
-      URL.revokeObjectURL(enlace.href)
-
-      return apiFetch<{ data: { url: string; carpeta: string } }>(
-        `/marketing/cobros/${c.id}/cuenta-de-cobro`,
-        { method: 'POST', body: JSON.stringify({ pdfBase64: base64, archivo }) },
-      )
-    },
-    onSuccess: invalidar,
-    onError: (e: Error) => alert(e.message || 'No se pudo archivar en Drive. El PDF ya se descargó.'),
-    onSettled: () => setGenerando(null),
-  })
-
-  const generarCuenta = (c: Cobro) => { setGenerando(c.id); cuentaDeCobro.mutate(c) }
 
   // Una entrada por persona con sus tres montos. Se arma sobre lo mismo que se
   // lista, así que la tabla y el detalle nunca pueden discrepar.
@@ -262,19 +216,12 @@ export default function CobrosPage() {
             <BadgeCheck className="mr-1 inline size-3.5" />Aprobar
           </button>
         )}
-        {puedeAprobar && c.estadoCobro === 'APROBADO' && (
-          <button
-            onClick={() => mover.mutate({ id: c.id, accion: 'pagar' })}
-            disabled={ocupado}
-            className="shrink-0 cursor-pointer rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high disabled:opacity-40"
-          >
-            <Check className="mr-1 inline size-3.5" />Marcar pagado
-          </button>
-        )}
-
-        {/* La cuenta de cobro solo existe después del visto bueno: antes
-            no hay nada que cobrar, y una cuenta suelta en la carpeta de
-            contabilidad es justo lo que no debe pasar. */}
+        {/* Aprobado es sello y ya: sin "marcar pagado" ni "generar cuenta"
+            por fila (Hotman, 22-ago). El pago se registra por persona desde
+            el encabezado, y la cuenta de cobro la arma el servidor cada
+            sábado —una por persona con todos sus trabajos— y la sube a Drive.
+            Aquí solo queda el enlace cuando ya existe, o el aviso de que
+            faltan datos, porque sin ellos el sábado no sale. */}
         {c.estadoCobro !== 'POR_APROBAR' && (
           c.cuentaCobroUrl ? (
             <a
@@ -293,18 +240,7 @@ export default function CobrosPage() {
               <AlertTriangle className="size-3.5" />
               {puedeAprobar ? 'Le faltan datos' : 'Completa tus datos en Ajustes'}
             </span>
-          ) : (
-            <button
-              onClick={() => generarCuenta(c)}
-              disabled={generando === c.id}
-              className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              {generando === c.id
-                ? <Loader2 className="size-3.5 animate-spin" />
-                : <FileText className="size-3.5" />}
-              Generar cuenta de cobro
-            </button>
-          )
+          ) : null
         )}
       </div>
     )
@@ -319,9 +255,6 @@ export default function CobrosPage() {
     <div className="space-y-4 animate-fade-in">
       <PageHeader
         title={puedeAprobar ? 'Cobros freelance' : 'Mis cobros'}
-        subtitle={puedeAprobar
-          ? 'Cuánto se le debe a cada quien, y por qué trabajos'
-          : 'Tus trabajos freelance y en qué van'}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {/* El filtro es también el conmutador de vista: elegir a alguien

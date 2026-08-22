@@ -253,7 +253,6 @@ export default function PanelEdicionPage() {
     <div className="space-y-4 animate-fade-in">
       <PageHeader
         title="Panel de Edición"
-        subtitle="Videos aprobados por editor · en vivo desde Trello"
         actions={
           <button
             type="button"

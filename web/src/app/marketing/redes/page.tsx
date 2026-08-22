@@ -393,7 +393,6 @@ export default function RedesPage() {
     <div className="space-y-4 animate-fade-in">
       <PageHeader
         title="Redes"
-        subtitle="Cuentas vinculadas y publicaciones programadas"
         actions={
           <>
             {configurada && esAdmin && (

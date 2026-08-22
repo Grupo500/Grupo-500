@@ -32,6 +32,7 @@ import { AvatarMiembro } from '@/components/marketing/AvatarMiembro'
 import { useSession } from 'next-auth/react'
 import { visiblesPara } from '@/lib/visibilidadMarketing'
 import { AccionesPortada } from '@/components/layout/AccionesPortada'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 type Estado = Contenido['estado']
 
@@ -173,17 +174,9 @@ export function TableroContenido() {
           ya deja el contenido en la fecha correcta. El botón de arriba abría
           el formulario en el día de hoy y había que corregir la fecha a mano
           (Hotman, 20-ago). */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-[17px] font-semibold tracking-[-0.022em] text-on-surface">
-            Planificador
-          </h2>
-          <p className="mt-0.5 text-[12px] text-on-surface-variant">
-            Planificación y asignación del equipo · toca el <span className="font-semibold text-primary">+</span> de un día para agregar
-          </p>
-        </div>
-        <AccionesPortada />
-      </div>
+      {/* El mismo PageHeader de las demás pestañas, y sin descripción: los
+          subtítulos que explicaban cada módulo sobraban (Hotman, 22-ago). */}
+      <PageHeader title="Planificador" actions={<AccionesPortada />} />
 
       <div className="card-panel overflow-hidden p-0">
         {/* Navegación */}

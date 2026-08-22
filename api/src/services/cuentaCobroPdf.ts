@@ -1,11 +1,12 @@
 /**
  * La cuenta de cobro en PDF, dibujada en el servidor.
  *
- * Es el MISMO dibujo de `web/src/lib/cuentaCobroPdf.ts`, portado a Node para
- * el envío quincenal automático: cuando llega el corte y un cobro aprobado
- * sigue sin archivar, el servidor arma la cuenta él mismo y la sube a Drive.
- * Si se toca el formato allá, hay que tocarlo aquí — los dos PDFs deben ser
- * indistinguibles.
+ * Una por persona y por semana: el sábado a las 23:59 el servidor reúne todos
+ * los trabajos freelance aprobados de cada quien que sigan sin enviar y los
+ * lista en UNA sola cuenta —cada trabajo con su valor, y el total al pie—
+ * (decisión de Hotman, 22-ago). Antes el navegador dibujaba una cuenta por
+ * trabajo y el servidor solo la archivaba; eso ya no existe: este es el único
+ * dibujo, y lo que queda en Drive es exactamente esto.
  */
 
 import { jsPDF } from 'jspdf'
@@ -23,10 +24,15 @@ export interface DatosPersona {
   firmaUrl: string | null
 }
 
-export interface DatosCobro {
+export interface ItemCobro {
   concepto: string
   valor: number
-  /** Día en que se emite: el de la aprobación, o hoy si aún no la tiene. */
+}
+
+export interface DatosCobro {
+  /** Los trabajos de la semana, uno por renglón. */
+  items: ItemCobro[]
+  /** Día en que se emite: el del corte semanal. */
   fecha: Date
 }
 
@@ -83,22 +89,38 @@ async function firmaComoDataUri(url: string): Promise<string | null> {
   }
 }
 
+const totalDe = (cobro: DatosCobro) => cobro.items.reduce((s, i) => s + i.valor, 0)
+
 export function nombreArchivo(persona: DatosPersona, cobro: DatosCobro): string {
   const quien = (persona.nombreCompleto ?? 'Sin nombre').replace(/[\\/:*?"<>|]/g, '').trim()
   const f = cobro.fecha
   const dia = `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`
-  return `${dia} ${quien} ${enPesos(cobro.valor)}.pdf`
+  return `${dia} ${quien} ${enPesos(totalDe(cobro))}.pdf`
 }
 
 export async function generarCuentaDeCobro(
   persona: DatosPersona,
   cobro: DatosCobro,
 ): Promise<{ pdf: Buffer; archivo: string }> {
+  const total = totalDe(cobro)
   const doc = new jsPDF({ unit: 'mm', format: 'letter' })
   const ancho = doc.internal.pageSize.getWidth()
+  const alto = doc.internal.pageSize.getHeight()
   const margen = 25
   const util = ancho - margen * 2
+  // La firma va anclada al pie de la última hoja y no a `y`: así queda a la
+  // misma altura en todas las cuentas, por larga que sea la lista.
+  const pie = alto - 55
   let y = 30
+
+  // Con veinte trabajos en una semana la lista no cabe en una hoja: lo que no
+  // quepa antes de la firma sigue en la siguiente.
+  const asegurar = (alturaNecesaria: number) => {
+    if (y + alturaNecesaria > pie - 10) {
+      doc.addPage()
+      y = 30
+    }
+  }
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
@@ -136,11 +158,11 @@ export async function generarCuentaDeCobro(
   doc.text('LA SUMA DE:', margen, y)
   y += 7
   doc.setFontSize(13)
-  doc.text(`${enPesos(cobro.valor)} M/CTE`, margen, y)
+  doc.text(`${enPesos(total)} M/CTE`, margen, y)
   y += 6
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(10)
-  const letras = `(${enPalabras(cobro.valor)} pesos m/cte)`
+  const letras = `(${enPalabras(total)} pesos m/cte)`
   doc.text(doc.splitTextToSize(letras.charAt(0).toUpperCase() + letras.slice(1), util), margen, y)
 
   y += 14
@@ -148,13 +170,33 @@ export async function generarCuentaDeCobro(
   doc.setFontSize(11)
   doc.text('POR CONCEPTO DE:', margen, y)
   y += 7
+
+  // Un renglón por trabajo: el concepto a la izquierda (partido si es largo)
+  // y su valor alineado a la derecha. El total cierra la lista.
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10.5)
-  const lineas = doc.splitTextToSize(cobro.concepto + '.', util)
-  doc.text(lineas, margen, y)
-  y += lineas.length * 5.5
+  const anchoConcepto = util - 38
+  for (const item of cobro.items) {
+    const lineas = doc.splitTextToSize(`• ${item.concepto}`, anchoConcepto) as string[]
+    const altura = lineas.length * 5.5 + 1.5
+    asegurar(altura)
+    doc.text(lineas, margen, y)
+    doc.text(enPesos(item.valor), ancho - margen, y, { align: 'right' })
+    y += altura
+  }
+
+  asegurar(14)
+  y += 2
+  doc.setDrawColor(120)
+  doc.line(margen, y, ancho - margen, y)
+  y += 6.5
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.text(`Total (${cobro.items.length} trabajo${cobro.items.length !== 1 ? 's' : ''})`, margen, y)
+  doc.text(enPesos(total), ancho - margen, y, { align: 'right' })
 
   y += 12
+  asegurar(20)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
   doc.text('FORMA DE PAGO:', margen, y)
@@ -168,9 +210,6 @@ export async function generarCuentaDeCobro(
     margen, y, { maxWidth: util },
   )
 
-  // La firma va anclada al pie y no a `y`: así queda a la misma altura en todas
-  // las cuentas, por largo que sea el concepto.
-  const pie = doc.internal.pageSize.getHeight() - 55
   if (persona.firmaUrl) {
     const dataUri = await firmaComoDataUri(persona.firmaUrl)
     if (dataUri) {
@@ -180,6 +219,7 @@ export async function generarCuentaDeCobro(
   doc.setDrawColor(120)
   doc.line(margen, pie, margen + 75, pie)
   doc.setFontSize(10)
+  doc.setTextColor(0)
   doc.text(persona.nombreCompleto ?? '—', margen, pie + 6)
   doc.setFontSize(9)
   doc.setTextColor(90)

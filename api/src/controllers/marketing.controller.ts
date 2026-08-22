@@ -5,7 +5,6 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors'
 import { auditLog } from '../utils/auditLogger'
 import { esLiderMarketing } from '../utils/roles'
 import { datosFinancierosDe, SELECT_FINANCIEROS } from '../utils/cuentaCobro'
-import { subirCuentaDeCobro } from '../services/googleDrive'
 import { sendPushToUser } from '../services/push'
 import { avisar } from '../services/notificaciones'
 import { broadcast } from '../utils/sseManager'
@@ -27,6 +26,8 @@ function enPalabras(fecha: Date) {
 
 /** La corrección, cortada para que quepa en una línea de la bandeja. */
 const recorte = (t: string) => (t.length > 80 ? t.slice(0, 80).trimEnd() + '…' : t)
+
+const enPesos = (n: number) => '$' + n.toLocaleString('es-CO')
 
 const SELECT_MIEMBRO = { id: true, nombre: true, activo: true, userId: true, user: { select: { image: true, role: true } } }
 
@@ -349,18 +350,28 @@ export async function actualizarContenido(req: Request, res: Response) {
   // pone el nombre de otra persona en la tarea es quien la asignó, da igual
   // cuándo lo haga.
   const mio = (await miMiembro(req.userId))?.id ?? null
+  // El selector ya no trae "A mi nombre" (Hotman, 22-ago): vacío significa "a
+  // nombre de quien guarda", igual que al crear —y si quien guarda no tiene
+  // ficha de marketing (un admin), se conserva el dueño actual—. Antes el
+  // vacío se escribía tal cual y el trabajo quedaba al aire; así se perdieron
+  // trabajos de Santiago. Quien no reparte trabajo (un editor) no toca la
+  // asignación al editar, como tampoco la decide al crear.
+  const { asignadoAId: asignadoPedido, ...cambios } = data
+  const asignadoAId =
+    asignadoPedido !== undefined && puedeAsignar(req.userRole)
+      ? asignadoPedido ?? mio ?? antes.asignadoAId ?? undefined
+      : undefined
   const reasignada =
-    puedeAsignar(req.userRole) &&
-    data.asignadoAId !== undefined &&
-    data.asignadoAId !== antes.asignadoAId &&
-    data.asignadoAId !== null &&
-    data.asignadoAId !== mio
+    asignadoAId !== undefined &&
+    asignadoAId !== antes.asignadoAId &&
+    asignadoAId !== mio
 
   const contenido = await prisma.contenidoMarketing.update({
     where: { id: req.params.id },
     data: {
-      ...data,
-      ...(data.fecha ? { fecha: new Date(data.fecha) } : {}),
+      ...cambios,
+      ...(asignadoAId !== undefined ? { asignadoAId } : {}),
+      ...(cambios.fecha ? { fecha: new Date(cambios.fecha) } : {}),
       ...(reasignada ? { asignadoPorId: req.userId ?? null } : {}),
       // Si el trabajo pasa a ser de empresa, el valor que tuviera se descarta.
       ...(valorSegunTrabajo(data.tipoTrabajo, data.valor) !== undefined
@@ -609,6 +620,26 @@ async function cambiarEstadoCobro(
     select: SELECT_COBRO,
   })
   auditLog(req, 'UPDATE', 'cobro_marketing', cobro.id, { estado: destino, valor: cobro.valor })
+
+  // El freelance se entera al instante de que su cobro quedó aprobado y de que
+  // entra en la cuenta del sábado (Hotman, 22-ago).
+  if (destino === 'APROBADO') {
+    const info = await prisma.contenidoMarketing.findUnique({
+      where: { id: cobro.id },
+      select: { titulo: true, valor: true, asignadoA: { select: { userId: true } } },
+    })
+    if (info?.asignadoA?.userId) {
+      void avisar({
+        userId: info.asignadoA.userId,
+        autorId: req.userId,
+        tipo: 'CAMBIOS_PEDIDOS',
+        titulo: 'Cobro aprobado',
+        texto: `Te aprobaron «${info.titulo}»${info.valor ? ` por ${enPesos(info.valor)}` : ''} — entra en la cuenta de cobro del sábado.`,
+        url: '/marketing/cobros',
+        contenidoId: cobro.id,
+      })
+    }
+  }
   return ApiResponse.success(res, cobro)
 }
 
@@ -636,6 +667,26 @@ export async function cobrosEnLote(req: Request, res: Response) {
   const { ids, accion } = loteSchema.parse(req.body)
   const quien = await miMiembro(req.userId)
 
+  // Antes de cambiar nada se mira a quién le toca el aviso: después del
+  // update ya no se distingue lo recién aprobado de lo que ya lo estaba.
+  // Un solo aviso por persona, no uno por trabajo —a María José no le
+  // llegan veintisiete campanazos por un clic de Cristal—.
+  const porAvisar = new Map<string, { n: number; total: number }>()
+  if (accion === 'aprobar') {
+    const proximos = await prisma.contenidoMarketing.findMany({
+      where: { id: { in: ids }, tipoTrabajo: 'FREELANCE', estadoCobro: 'POR_APROBAR' },
+      select: { valor: true, asignadoA: { select: { userId: true } } },
+    })
+    for (const c of proximos) {
+      const u = c.asignadoA?.userId
+      if (!u) continue
+      const e = porAvisar.get(u) ?? { n: 0, total: 0 }
+      e.n += 1
+      e.total += c.valor ?? 0
+      porAvisar.set(u, e)
+    }
+  }
+
   const { count } = await prisma.contenidoMarketing.updateMany({
     where: {
       id: { in: ids },
@@ -647,52 +698,20 @@ export async function cobrosEnLote(req: Request, res: Response) {
       : { estadoCobro: 'PAGADO', pagadoEn: new Date() },
   })
 
+  for (const [userId, e] of porAvisar) {
+    void avisar({
+      userId,
+      autorId: req.userId,
+      tipo: 'CAMBIOS_PEDIDOS',
+      titulo: e.n === 1 ? 'Cobro aprobado' : 'Cobros aprobados',
+      texto: e.n === 1
+        ? `Te aprobaron un trabajo por ${enPesos(e.total)} — entra en la cuenta de cobro del sábado.`
+        : `Te aprobaron ${e.n} trabajos por ${enPesos(e.total)} — entran en la cuenta de cobro del sábado.`,
+      url: '/marketing/cobros',
+    })
+  }
+
   auditLog(req, 'UPDATE', 'cobros_marketing_lote', ids.join(','), { accion, count })
   return ApiResponse.success(res, { actualizados: count })
 }
 
-/**
- * Guarda en Drive la cuenta de cobro que armó el navegador.
- *
- * El PDF se genera en el cliente —ahí ya está jsPDF y ahí se descarga al
- * instante— y aquí solo se archiva: el servidor no vuelve a dibujarlo, así que
- * lo que se guarda es exactamente lo que la persona vio.
- *
- * Solo se archiva un cobro aprobado: antes del visto bueno de la líder no hay
- * nada que cobrar, y una cuenta de cobro suelta en la carpeta de contabilidad
- * es justo lo que no debe pasar.
- */
-const cuentaCobroSchema = z.object({
-  pdfBase64: z.string().min(100),
-  archivo:   z.string().min(3).max(150),
-})
-
-export async function archivarCuentaDeCobro(req: Request, res: Response) {
-  const { pdfBase64, archivo } = cuentaCobroSchema.parse(req.body)
-
-  const cobro = await prisma.contenidoMarketing.findUnique({
-    where: { id: req.params.id },
-    select: { id: true, fecha: true, estadoCobro: true, tipoTrabajo: true, asignadoAId: true, cuentaCobroUrl: true },
-  })
-  if (!cobro) throw new NotFoundError('Cobro no encontrado')
-  if (cobro.tipoTrabajo !== 'FREELANCE') throw new ValidationError('Este trabajo no es freelance')
-  if (cobro.estadoCobro === 'POR_APROBAR') {
-    throw new ValidationError('La cuenta de cobro se genera después de que se apruebe el trabajo')
-  }
-
-  // Cada quien archiva la suya; el líder puede archivar la de cualquiera.
-  const yo = await miMiembro(req.userId)
-  if (!esLiderMarketing(req.userRole) && cobro.asignadoAId !== yo?.id) {
-    throw new ForbiddenError('Este cobro no es tuyo')
-  }
-
-  const pdf = Buffer.from(pdfBase64.replace(/^data:.*?base64,/, ''), 'base64')
-  const subido = await subirCuentaDeCobro(archivo, pdf, cobro.fecha)
-
-  await prisma.contenidoMarketing.update({
-    where: { id: cobro.id },
-    data: { cuentaCobroUrl: subido.url, cuentaCobroEn: new Date() },
-  })
-  auditLog(req, 'CREATE', 'cuenta_de_cobro', cobro.id, { carpeta: subido.carpeta })
-  return ApiResponse.success(res, { url: subido.url, carpeta: subido.carpeta })
-}

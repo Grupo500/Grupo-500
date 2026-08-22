@@ -1764,3 +1764,70 @@ dibujo del PDF portado a Node, idéntico al del navegador):
 - Simulacros de combos/Año 500/Premédico; fechas exactas de Cal. B/A 2027.
 - Rotación de credenciales de Postgres + rol `app_rw`; API key nueva;
   credenciales de Meta en Redes; Shopify; Panel de Edición sin Trello.
+
+## Sesión 045 — 2026-08-22 (máquina de Hotman)
+
+### La barra móvil: marcha atrás y una sola línea
+
+Hotman sentía el viaje del hueco pesado en el teléfono. Apliqué tres
+optimizaciones juntas (sombra apagada durante el viaje, medidas cacheadas,
+círculo por `transform`) y después el reloj del viaje arrancando en el primer
+cuadro real; tras eso la barra se le mostró con el ícono duplicado y el riel
+plano, y pidió volver al commit `639cbcb`. Se revirtieron los dos commits y
+quedó idéntica a ese deploy. Luego, con su visto bueno, un único cambio: la
+silueta pierde su `drop-shadow` (`af57e80`) — era lo único distinto entre el
+widget aprobado (que sí desliza) y la app, y el perfilador lo señalaba como el
+mayor costo por cuadro.
+
+Regla nueva de Hotman, guardada en memoria: **no ejecutar nada sin su
+aprobación**; si describe un problema, primero diagnóstico y propuesta.
+Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
+
+### Panel de áreas, Cursos, selector de mes
+
+- `/inicio` en celular y tablet: Ventas grande y las demás áreas en mosaico
+  de dos columnas; la impar cierra a lo ancho. Tres columnas solo en `lg+`.
+  Orden de Hotman: Ventas, Marketing, Finanzas, Simulacros, Brito,
+  Administración.
+- Cursos: buscador y botón "Filtros" en un renglón (PanelFiltros, el mismo
+  de Estudiantes); las pestañas con conteo se fueron.
+- `MonthPicker` en modo período: blanco con borde (se perdía en el fondo).
+
+### Marketing: Planificador, Cobros, Entregables, títulos
+
+- **Planificador — "A mi nombre" se va.** Diagnóstico (base en solo lectura):
+  la opción mandaba vacío y al EDITAR el backend lo escribía tal cual, dejando
+  el trabajo al aire; además el selector solo lista editores, así que un
+  community (Santiago Villarreal) no veía su propia asignación y volvía a
+  tocar la opción. Ahora: crear sin elegir a nadie = a nombre del creador;
+  editar sin tocar el selector conserva al dueño; deseleccionar sin elegir
+  otro = a nombre de quien guarda; nunca al aire (`actualizarContenido`). Si el
+  dueño no es editor, su ficha se muestra igual.
+- **Cobros — aprobado es sello y ya.** Sin "marcar pagado" ni "generar cuenta"
+  por fila (el pago se registra por persona desde el encabezado). Al aprobar
+  le llega aviso al freelance (uno a uno, y en lote un solo aviso por persona).
+  La cuenta de cobro la arma el servidor **cada sábado a las 23:59**, UNA por
+  persona con todos sus trabajos aprobados sin enviar (detalle + total, PDF
+  multipágina en `services/cuentaCobroPdf`), y la sube a Drive:
+  `jobs/enviarCobrosSemana.ts` reemplaza al quincenal. Ciclo: domingo–viernes
+  se trabaja, sábado Cristal aprueba; lo publicado un sábado entra en la
+  semana siguiente (rutina de ella, no candado del sistema). Sin aviso de
+  víspera. Arranca en SIMULACRO; `COBROS_SEMANA_REAL=true` lo vuelve real. Se
+  eliminaron la generación en navegador (`web/src/lib/cuentaCobroPdf.ts`) y el
+  endpoint `POST /marketing/cobros/:id/cuenta-de-cobro`.
+- **Entregables**: barra en el orden buscar → responsable → mes → estado.
+- **Títulos**: Planificador usa el mismo `PageHeader` que las demás pestañas,
+  y se quitaron las descripciones bajo los títulos (Planificador, Entregables,
+  Cobros, Panel de Edición, Redes). Regla de Hotman: no más descripciones.
+
+### Pendientes
+
+- Tipo **"Historia"** en Nuevo contenido: requiere migración (enum
+  `TipoContenidoMarketing`); el frente de `prisma/` lo tiene Cristal y a
+  producción solo lo aplica David.
+- 3 trabajos sin asignar en producción ("Video Nico y dani", "Nnn", "Prueba")
+  — Hotman dirá de quién era cada uno o si se borran los de prueba.
+- `COBROS_SEMANA_REAL=true` en Railway tras revisar la simulación del sábado.
+- Agente de auditoría de ventas en Analíticas: idea anotada, para después.
+- Siguen: parche Postgres CVE-2026-15741; simulacros/fechas de cursos;
+  credenciales de Meta en Redes; Shopify; Panel de Edición sin Trello.

@@ -793,8 +793,35 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
                 media, líderes, admin) y la lista trae únicamente editores de
                 video: es a ellos a quienes se les encarga (Hotman, 20-ago). */}
             {puedeAsignar && (
-              <Campo label="Asignar a" ayuda="solo editores de video">
+              <Campo label="Asignar a" ayuda="si no eliges a nadie, queda a tu nombre">
                 <div className="flex flex-wrap gap-1.5">
+                  {/* Sin "A mi nombre": era maquillaje —un "?" fijo— y al editar
+                      mandaba vacío y el trabajo quedaba al aire. Ahora la
+                      plataforma lo asume: vacío = a nombre de quien guarda
+                      (Hotman, 22-ago). Si el dueño actual no es editor (un
+                      community, un líder), su ficha se muestra igual, para que
+                      se vea de quién es y no se pise por accidente. */}
+                  {contenido?.asignadoA && !editores.some(m => m.id === contenido.asignadoA?.id) && (() => {
+                    const d = contenido.asignadoA
+                    const activo = asignadoAId === d.id
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => setAsignadoAId(activo ? '' : d.id)}
+                        aria-pressed={activo}
+                        title={d.nombre}
+                        className={cn(
+                          'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-[12px] transition-colors',
+                          activo
+                            ? 'border-primary bg-primary-container font-semibold text-on-surface'
+                            : 'border-outline-variant bg-surface-lowest text-on-surface hover:border-outline',
+                        )}
+                      >
+                        <AvatarMiembro id={d.id} nombre={d.nombre} image={d.user?.image} size={20} />
+                        {d.nombre.split(' ')[0]}
+                      </button>
+                    )
+                  })()}
                   {editores.map(m => {
                     const activo = asignadoAId === m.id
                     return (
@@ -816,22 +843,6 @@ export function ContenidoModal({ fecha, contenido, miembros, agenda = [], onClos
                       </button>
                     )
                   })}
-                  <button
-                    type="button"
-                    onClick={() => setAsignadoAId('')}
-                    aria-pressed={!asignadoAId}
-                    className={cn(
-                      'inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-[12px] transition-colors',
-                      !asignadoAId
-                        ? 'border-primary bg-primary-container text-on-surface'
-                        : 'border-outline-variant bg-surface-lowest text-on-surface-variant hover:border-outline',
-                    )}
-                  >
-                    <span className="grid size-5 place-items-center rounded-full border border-dashed border-outline text-[9px] font-bold text-on-surface-variant">
-                      ?
-                    </span>
-                    A mi nombre
-                  </button>
                 </div>
                 {editores.length === 0 && (
                   <p className="mt-1.5 text-[11px] text-outline">No hay editores de video registrados.</p>
