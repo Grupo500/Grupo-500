@@ -20,7 +20,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  Loader2, Check, Wallet, BadgeCheck, AlertTriangle, ExternalLink, ChevronDown,
+  Loader2, Check, Wallet, BadgeCheck, AlertTriangle, ChevronDown,
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { cn, formatCOP } from '@/lib/utils'
@@ -216,32 +216,11 @@ export default function CobrosPage() {
             <BadgeCheck className="mr-1 inline size-3.5" />Aprobar
           </button>
         )}
-        {/* Aprobado es sello y ya: sin "marcar pagado" ni "generar cuenta"
-            por fila (Hotman, 22-ago). El pago se registra por persona desde
-            el encabezado, y la cuenta de cobro la arma el servidor cada
-            sábado —una por persona con todos sus trabajos— y la sube a Drive.
-            Aquí solo queda el enlace cuando ya existe, o el aviso de que
-            faltan datos, porque sin ellos el sábado no sale. */}
-        {c.estadoCobro !== 'POR_APROBAR' && (
-          c.cuentaCobroUrl ? (
-            <a
-              href={c.cuentaCobroUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex shrink-0 items-center gap-1 rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-high"
-            >
-              <ExternalLink className="size-3.5" />Ver cuenta de cobro
-            </a>
-          ) : c.asignadoA && !c.asignadoA.completos ? (
-            <span
-              title={`Falta ${c.asignadoA.falta.join(', ')}`}
-              className="flex shrink-0 items-center gap-1 rounded-lg bg-[#d97706]/12 px-3 py-1.5 text-[11px] font-semibold text-[#9a5b06]"
-            >
-              <AlertTriangle className="size-3.5" />
-              {puedeAprobar ? 'Le faltan datos' : 'Completa tus datos en Ajustes'}
-            </span>
-          ) : null
-        )}
+        {/* Aprobado es sello y ya: ninguna acción por fila (Hotman, 22-ago).
+            El pago se registra por persona desde el encabezado, y la cuenta
+            de cobro la arma el servidor cada sábado —una por persona con
+            todos sus trabajos— y la sube a Drive. Si a alguien le faltan
+            datos, lo dice el encabezado de su grupo. */}
       </div>
     )
   }
