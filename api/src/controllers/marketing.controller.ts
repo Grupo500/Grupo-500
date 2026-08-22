@@ -590,81 +590,70 @@ export async function listarCobros(req: Request, res: Response) {
   })
 }
 
-/** Aprobar y marcar pagado son del líder; el resto no puede ni intentarlo. */
-async function cambiarEstadoCobro(
-  req: Request, res: Response,
-  destino: 'APROBADO' | 'PAGADO',
-) {
+/**
+ * Aprobar es de la líder; el resto no puede ni intentarlo.
+ *
+ * Aquí no se marca nada como pagado: el pago no depende de Cristal ni de
+ * nadie del equipo sino de que contabilidad gire de verdad, y eso lo van a
+ * registrar desde su propio módulo (Hotman, 22-ago).
+ */
+export async function aprobarCobro(req: Request, res: Response) {
   if (!esLiderMarketing(req.userRole)) {
     return res.status(403).json({ error: 'Solo la líder de edición o un administrador pueden hacer esto' })
   }
   const actual = await prisma.contenidoMarketing.findUnique({
     where: { id: req.params.id },
-    select: { tipoTrabajo: true, estadoCobro: true },
+    select: { tipoTrabajo: true },
   })
   if (!actual) throw new NotFoundError('Contenido no encontrado')
   if (actual.tipoTrabajo !== 'FREELANCE') {
     throw new ValidationError('Este trabajo no es freelance, no tiene cobro que aprobar')
   }
-  // Se paga lo aprobado, no lo que está esperando visto bueno.
-  if (destino === 'PAGADO' && actual.estadoCobro !== 'APROBADO') {
-    throw new ValidationError('Hay que aprobar el cobro antes de marcarlo pagado')
-  }
 
   const quien = await miMiembro(req.userId)
   const cobro = await prisma.contenidoMarketing.update({
     where: { id: req.params.id },
-    data: destino === 'APROBADO'
-      ? { estadoCobro: 'APROBADO', aprobadoEn: new Date(), ...(quien && { aprobadoPorId: quien.id }) }
-      : { estadoCobro: 'PAGADO', pagadoEn: new Date() },
+    data: { estadoCobro: 'APROBADO', aprobadoEn: new Date(), ...(quien && { aprobadoPorId: quien.id }) },
     select: SELECT_COBRO,
   })
-  auditLog(req, 'UPDATE', 'cobro_marketing', cobro.id, { estado: destino, valor: cobro.valor })
+  auditLog(req, 'UPDATE', 'cobro_marketing', cobro.id, { estado: 'APROBADO', valor: cobro.valor })
 
   // El freelance se entera al instante de que su cobro quedó aprobado y de que
   // entra en la cuenta del sábado (Hotman, 22-ago).
-  if (destino === 'APROBADO') {
-    const info = await prisma.contenidoMarketing.findUnique({
-      where: { id: cobro.id },
-      select: { titulo: true, valor: true, asignadoA: { select: { userId: true } } },
+  const info = await prisma.contenidoMarketing.findUnique({
+    where: { id: cobro.id },
+    select: { titulo: true, valor: true, asignadoA: { select: { userId: true } } },
+  })
+  if (info?.asignadoA?.userId) {
+    void avisar({
+      userId: info.asignadoA.userId,
+      autorId: req.userId,
+      tipo: 'CAMBIOS_PEDIDOS',
+      titulo: 'Cobro aprobado',
+      texto: `Te aprobaron «${info.titulo}»${info.valor ? ` por ${enPesos(info.valor)}` : ''} — entra en la cuenta de cobro del sábado.`,
+      url: '/marketing/cobros',
+      contenidoId: cobro.id,
     })
-    if (info?.asignadoA?.userId) {
-      void avisar({
-        userId: info.asignadoA.userId,
-        autorId: req.userId,
-        tipo: 'CAMBIOS_PEDIDOS',
-        titulo: 'Cobro aprobado',
-        texto: `Te aprobaron «${info.titulo}»${info.valor ? ` por ${enPesos(info.valor)}` : ''} — entra en la cuenta de cobro del sábado.`,
-        url: '/marketing/cobros',
-        contenidoId: cobro.id,
-      })
-    }
   }
   return ApiResponse.success(res, cobro)
 }
 
-export const aprobarCobro = (req: Request, res: Response) => cambiarEstadoCobro(req, res, 'APROBADO')
-export const pagarCobro   = (req: Request, res: Response) => cambiarEstadoCobro(req, res, 'PAGADO')
-
 /**
- * Aprobar o pagar de un solo golpe todo lo de una persona.
+ * Aprobar de un solo golpe todo lo pendiente de una persona.
  *
- * A un freelance no se le hacen cinco transferencias, se le hace una: la
- * pantalla liquida por persona y esto es lo que corresponde de este lado. Va
- * como un `updateMany` con el estado de origen en el `where`, así que una fila
- * que ya cambió entretanto simplemente no entra — no hay forma de pagar dos
- * veces lo mismo ni de saltarse la aprobación.
+ * Va como un `updateMany` con POR_APROBAR en el `where`, así que una fila que
+ * ya cambió entretanto simplemente no entra: no hay forma de aprobar dos
+ * veces lo mismo.
  */
 const loteSchema = z.object({
-  ids:    z.array(z.string()).min(1).max(200),
-  accion: z.enum(['aprobar', 'pagar']),
+  ids: z.array(z.string()).min(1).max(200),
 })
 
-export async function cobrosEnLote(req: Request, res: Response) {
+export async function aprobarCobrosEnLote(req: Request, res: Response) {
   if (!esLiderMarketing(req.userRole)) {
     return res.status(403).json({ error: 'Solo la líder de edición o un administrador pueden hacer esto' })
   }
-  const { ids, accion } = loteSchema.parse(req.body)
+  const { ids } = loteSchema.parse(req.body)
   const quien = await miMiembro(req.userId)
 
   // Antes de cambiar nada se mira a quién le toca el aviso: después del
@@ -672,30 +661,22 @@ export async function cobrosEnLote(req: Request, res: Response) {
   // Un solo aviso por persona, no uno por trabajo —a María José no le
   // llegan veintisiete campanazos por un clic de Cristal—.
   const porAvisar = new Map<string, { n: number; total: number }>()
-  if (accion === 'aprobar') {
-    const proximos = await prisma.contenidoMarketing.findMany({
-      where: { id: { in: ids }, tipoTrabajo: 'FREELANCE', estadoCobro: 'POR_APROBAR' },
-      select: { valor: true, asignadoA: { select: { userId: true } } },
-    })
-    for (const c of proximos) {
-      const u = c.asignadoA?.userId
-      if (!u) continue
-      const e = porAvisar.get(u) ?? { n: 0, total: 0 }
-      e.n += 1
-      e.total += c.valor ?? 0
-      porAvisar.set(u, e)
-    }
+  const proximos = await prisma.contenidoMarketing.findMany({
+    where: { id: { in: ids }, tipoTrabajo: 'FREELANCE', estadoCobro: 'POR_APROBAR' },
+    select: { valor: true, asignadoA: { select: { userId: true } } },
+  })
+  for (const c of proximos) {
+    const u = c.asignadoA?.userId
+    if (!u) continue
+    const e = porAvisar.get(u) ?? { n: 0, total: 0 }
+    e.n += 1
+    e.total += c.valor ?? 0
+    porAvisar.set(u, e)
   }
 
   const { count } = await prisma.contenidoMarketing.updateMany({
-    where: {
-      id: { in: ids },
-      tipoTrabajo: 'FREELANCE',
-      estadoCobro: accion === 'aprobar' ? 'POR_APROBAR' : 'APROBADO',
-    },
-    data: accion === 'aprobar'
-      ? { estadoCobro: 'APROBADO', aprobadoEn: new Date(), ...(quien && { aprobadoPorId: quien.id }) }
-      : { estadoCobro: 'PAGADO', pagadoEn: new Date() },
+    where: { id: { in: ids }, tipoTrabajo: 'FREELANCE', estadoCobro: 'POR_APROBAR' },
+    data: { estadoCobro: 'APROBADO', aprobadoEn: new Date(), ...(quien && { aprobadoPorId: quien.id }) },
   })
 
   for (const [userId, e] of porAvisar) {
@@ -711,7 +692,7 @@ export async function cobrosEnLote(req: Request, res: Response) {
     })
   }
 
-  auditLog(req, 'UPDATE', 'cobros_marketing_lote', ids.join(','), { accion, count })
+  auditLog(req, 'UPDATE', 'cobros_marketing_lote', ids.join(','), { count })
   return ApiResponse.success(res, { actualizados: count })
 }
 

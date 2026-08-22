@@ -116,6 +116,11 @@ async function enviarPendientes(corte: string) {
     grupos.set(cobro.asignadoA.id, g)
   }
 
+  // El sábado de corte al mediodía de Colombia: así el mes de la carpeta, el
+  // nombre de la semana y la fecha impresa salen del sábado aunque el
+  // servidor, en UTC, ya esté en la madrugada del domingo.
+  const fechaCorte = new Date(`${corte}T12:00:00-05:00`)
+
   let enviadas = 0
   let trabajos = 0
   for (const { persona, cobros } of grupos.values()) {
@@ -136,10 +141,10 @@ async function enviarPendientes(corte: string) {
     }
 
     try {
-      const { pdf, archivo } = await generarCuentaDeCobro(persona, { items, fecha: new Date() })
-      // La carpeta de Drive se elige por HOY, no por la fecha de los trabajos:
-      // el archivo acompaña al pago que lo origina.
-      const subido = await subirCuentaDeCobro(archivo, pdf, new Date())
+      const { pdf, archivo } = await generarCuentaDeCobro(persona, { items, fecha: fechaCorte })
+      // La carpeta de Drive se elige por el sábado de corte, no por la fecha
+      // de los trabajos: el archivo acompaña al pago que lo origina.
+      const subido = await subirCuentaDeCobro(archivo, pdf, fechaCorte)
       await prisma.contenidoMarketing.updateMany({
         where: { id: { in: cobros.map(c => c.id) } },
         data: { cuentaCobroUrl: subido.url, cuentaCobroEn: new Date() },

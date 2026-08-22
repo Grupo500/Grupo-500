@@ -111,15 +111,17 @@ export default function CobrosPage() {
 
   const invalidar = () => queryClient.invalidateQueries({ queryKey: ['marketing-cobros'] })
 
+  // Desde aquí solo se aprueba. El pago no lo marca nadie del equipo: lo
+  // registra contabilidad desde su módulo cuando de verdad gira, así que no
+  // hay botón de "pagado" en esta pantalla (Hotman, 22-ago).
   const mover = useMutation({
-    mutationFn: ({ id, accion }: { id: string; accion: 'aprobar' | 'pagar' }) =>
-      apiFetch(`/marketing/cobros/${id}/${accion}`, { method: 'PATCH' }),
+    mutationFn: (id: string) => apiFetch(`/marketing/cobros/${id}/aprobar`, { method: 'PATCH' }),
     onSuccess: invalidar,
   })
 
   const moverLote = useMutation({
-    mutationFn: ({ ids, accion }: { ids: string[]; accion: 'aprobar' | 'pagar' }) =>
-      apiFetch('/marketing/cobros/lote', { method: 'PATCH', body: JSON.stringify({ ids, accion }) }),
+    mutationFn: (ids: string[]) =>
+      apiFetch('/marketing/cobros/lote', { method: 'PATCH', body: JSON.stringify({ ids }) }),
     onSuccess: invalidar,
   })
   const ocupado = mover.isPending || moverLote.isPending
@@ -210,7 +212,7 @@ export default function CobrosPage() {
 
         {puedeAprobar && c.estadoCobro === 'POR_APROBAR' && (
           <button
-            onClick={() => mover.mutate({ id: c.id, accion: 'aprobar' })}
+            onClick={() => mover.mutate(c.id)}
             disabled={ocupado}
             className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
           >
@@ -265,11 +267,12 @@ export default function CobrosPage() {
 
       {/* Los totales salen de lo mismo que se lista, así que siempre cuadran
           con las filas de abajo. */}
-      <div className={cn('grid gap-3', puedeAprobar ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
+      {/* Dos tarjetas y no tres: "pagado" ya no se registra aquí sino en el
+          módulo de contabilidad (Hotman, 22-ago). */}
+      <div className="grid gap-3 sm:grid-cols-2">
         {[
           { l: 'Por aprobar', v: elegida ? elegida.porAprobar : r?.totales.porAprobar, c: 'text-[#9a5b06]' },
-          ...(puedeAprobar ? [{ l: 'Aprobado sin pagar', v: elegida ? elegida.aprobado : r?.totales.aprobado, c: 'text-[#0f7a35]' }] : []),
-          { l: 'Pagado este mes', v: elegida ? elegida.pagado : r?.totales.pagado, c: 'text-on-surface' },
+          { l: 'Aprobado',    v: elegida ? elegida.aprobado   : r?.totales.aprobado,   c: 'text-[#0f7a35]' },
         ].map(k => (
           <div key={k.l} className="card p-4">
             <p className="text-[11px] text-on-surface-variant">{k.l}</p>
@@ -343,7 +346,7 @@ export default function CobrosPage() {
 
                   {idsPorAprobar.length > 0 ? (
                     <button
-                      onClick={() => moverLote.mutate({ ids: idsPorAprobar, accion: 'aprobar' })}
+                      onClick={() => moverLote.mutate(idsPorAprobar)}
                       disabled={ocupado || !p.completos}
                       title={p.completos ? undefined : `Sin ${p.falta.join(', ')} no se le puede girar`}
                       className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[11.5px] font-bold text-on-primary transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
@@ -351,15 +354,6 @@ export default function CobrosPage() {
                       <BadgeCheck className="size-3.5" />
                       {/* Dice cuántos: "Aprobar todo" no deja saber qué se firma. */}
                       Aprobar {idsPorAprobar.length > 1 ? `los ${idsPorAprobar.length}` : ''}
-                    </button>
-                  ) : idsAprobados.length > 0 ? (
-                    <button
-                      onClick={() => moverLote.mutate({ ids: idsAprobados, accion: 'pagar' })}
-                      disabled={ocupado}
-                      className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-[11.5px] font-semibold text-on-surface-variant transition-colors hover:border-outline hover:text-on-surface disabled:opacity-40"
-                    >
-                      <Check className="size-3.5" />
-                      Marcar {idsAprobados.length > 1 ? `los ${idsAprobados.length} ` : ''}pagado{idsAprobados.length > 1 ? 's' : ''}
                     </button>
                   ) : (
                     <span className="shrink-0 text-[11px] text-on-surface-variant">Nada pendiente</span>

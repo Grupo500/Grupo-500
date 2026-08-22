@@ -32,9 +32,8 @@ router.delete('/entregables/:id', asyncHandler(ctrl.eliminarEntregable))
 // suyos.
 router.get('/cobros',             asyncHandler(ctrl.listarCobros))
 // Antes que `/cobros/:id/...`, o Express leería "lote" como un id.
-router.patch('/cobros/lote',      asyncHandler(ctrl.cobrosEnLote))
+router.patch('/cobros/lote',      asyncHandler(ctrl.aprobarCobrosEnLote))
 router.patch('/cobros/:id/aprobar', asyncHandler(ctrl.aprobarCobro))
-router.patch('/cobros/:id/pagar',   asyncHandler(ctrl.pagarCobro))
 
 
 export default router

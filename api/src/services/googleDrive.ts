@@ -67,15 +67,30 @@ export function nombreCarpetaMes(fecha: Date): string {
   return `${fecha.getFullYear()}-${String(m + 1).padStart(2, '0')} ${MESES[m]}`
 }
 
+const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun',
+                   'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
 /**
- * "Primera quincena - Marketing" / "Segunda quincena - Marketing".
+ * "Semana 23-29 ago - Marketing": la semana de domingo a sábado en la que cae
+ * `fecha` (si cruza de mes, "Semana 30 ago-5 sep - Marketing").
+ *
+ * Antes era por quincena ("Primera/Segunda quincena - Marketing"); desde que
+ * las cuentas salen cada sábado, una por persona, la carpeta es la semana
+ * (Hotman, 22-ago). Las carpetas de quincena que ya existen no se tocan.
  *
  * El apellido no es decoración: la landing de cuentas de cobro la usa toda la
  * empresa y también crea carpetas sola dentro de la misma madre. Sin el
  * apellido, en un par de meses nadie sabría qué PDF salió de dónde.
  */
-export function nombreCarpetaQuincena(fecha: Date): string {
-  return `${fecha.getDate() <= 15 ? 'Primera' : 'Segunda'} quincena - Marketing`
+export function nombreCarpetaSemana(fecha: Date): string {
+  const sabado = new Date(fecha)
+  sabado.setDate(fecha.getDate() + (6 - fecha.getDay()))
+  const domingo = new Date(sabado)
+  domingo.setDate(sabado.getDate() - 6)
+  const rango = domingo.getMonth() === sabado.getMonth()
+    ? `${domingo.getDate()}-${sabado.getDate()} ${MES_CORTO[sabado.getMonth()]}`
+    : `${domingo.getDate()} ${MES_CORTO[domingo.getMonth()]}-${sabado.getDate()} ${MES_CORTO[sabado.getMonth()]}`
+  return `Semana ${rango} - Marketing`
 }
 
 /**
@@ -110,15 +125,16 @@ async function subcarpeta(token: string, padre: string, nombre: string): Promise
 }
 
 /**
- * Dónde va el PDF: mes → quincena.
+ * Dónde va el PDF: mes → semana.
  *
- * La carpeta del mes se comparte con la landing a propósito; la de la quincena
- * es la que separa lo del área. El corte es el 15: los pagos van por quincena.
+ * La carpeta del mes se comparte con la landing a propósito; la de la semana
+ * es la que separa lo del área. El mes es el del sábado de corte, que es el
+ * del pago: una semana que cruza de mes va al mes donde cae su sábado.
  */
 async function carpetaDestino(token: string, padre: string, fecha: Date) {
   const mes = await subcarpeta(token, padre, nombreCarpetaMes(fecha))
-  const quincena = await subcarpeta(token, mes, nombreCarpetaQuincena(fecha))
-  return { id: quincena, ruta: `${nombreCarpetaMes(fecha)} / ${nombreCarpetaQuincena(fecha)}` }
+  const semana = await subcarpeta(token, mes, nombreCarpetaSemana(fecha))
+  return { id: semana, ruta: `${nombreCarpetaMes(fecha)} / ${nombreCarpetaSemana(fecha)}` }
 }
 
 export interface ArchivoEnDrive { id: string; url: string; carpeta: string }
