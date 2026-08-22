@@ -53,6 +53,7 @@ import redesRoutes from './routes/redes'
 import { publicarRedesPendientes } from './jobs/publicarRedes'
 import { respaldarBaseDatos, backupVencido, horaColombia } from './jobs/backupBaseDatos'
 import { revisarCobrosSemana } from './jobs/enviarCobrosSemana'
+import { purgarApuntes } from './jobs/purgarApuntes'
 import { purgarAsesoresRetirados } from './jobs/purgarAsesoresRetirados'
 import { sincronizarLeadsHubspot } from './services/hubspot.service'
 
@@ -284,6 +285,11 @@ app.listen(PORT, () => {
   // sobrevive reinicios. Arranca en simulación: COBROS_SEMANA_REAL=true lo
   // vuelve de verdad.
   setInterval(() => { void revisarCobrosSemana() }, 60 * 1000)
+
+  // La papelera de Apuntes se vacia de lo que lleve mas de 30 dias. Una vez
+  // al dia basta; el arranque cuenta como primera vez.
+  void purgarApuntes()
+  setInterval(() => { void purgarApuntes() }, 24 * 60 * 60 * 1000)
 
   // Respaldo nocturno de la base a Drive, a las 23:59 de Colombia. Se revisa
   // el reloj cada minuto en vez de calcular un setTimeout largo: sobrevive a

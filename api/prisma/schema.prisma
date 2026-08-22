@@ -35,6 +35,45 @@ model User {
   apiKeys                ApiKey[]
   notificaciones         Notificacion[]        @relation("DestinatarioNotificacion")
   notificacionesQueCauso Notificacion[]        @relation("AutorNotificacion")
+  apuntes                Apunte[]
+  apuntesCompartidos     ApunteCompartido[]
+}
+
+/// El bloc de notas de cada quien en Marketing (Hotman, 22-ago). Privado por
+/// defecto: lo ve solo su dueño y con quien él lo comparta.
+model Apunte {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titulo      String    @default("")
+  /// El HTML del editor (negritas, listas, tareas...), limpiado en el servidor.
+  contenido   String    @default("") @db.Text
+  /// Etiqueta libre ("Pendientes", "Ideas"...) y su color, para agrupar.
+  etiqueta    String?
+  color       String?
+  fijado      Boolean   @default(false)
+  archivadoEn DateTime?
+  /// Papelera: se recupera durante 30 días, después se purga.
+  eliminadoEn DateTime?
+  compartidos ApunteCompartido[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, updatedAt])
+  @@map("marketing_apuntes")
+}
+
+model ApunteCompartido {
+  id          String   @id @default(cuid())
+  apunteId    String
+  apunte      Apunte   @relation(fields: [apunteId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  puedeEditar Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([apunteId, userId])
+  @@map("marketing_apuntes_compartidos")
 }
 
 /// Qué provocó el aviso. Define el icono y el color con que se lee en la

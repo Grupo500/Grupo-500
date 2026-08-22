@@ -1846,6 +1846,20 @@ Lección mía: un cambio a la vez cuando el efecto solo se ve en su teléfono.
 - Datos: "Faltan dos dias corriendo" asignado a Santiago Villarreal en
   producción (estaba sin responsable).
 
+- **Apuntes** (pestaña nueva en Marketing, diseño aprobado en widget): el
+  bloc de notas de cada quien. Tablas `marketing_apuntes` y
+  `marketing_apuntes_compartidos` (migración `20260822210000_apuntes`,
+  aplicada en producción con `migrate deploy`), API `/marketing/apuntes`
+  (listar por vista, crear, editar, duplicar, compartir ver/editar, papelera
+  con purga a 30 días en `jobs/purgarApuntes`), y la pantalla: lista con
+  fijadas/etiquetas de color + editor `contenteditable` con negrita, cursiva,
+  subrayado, tachado, color, marcador, título/subtítulo, alineación, listas,
+  tareas con casillas, cita, enlace, separador, limpiar formato; guardado
+  automático; el servidor limpia el HTML (lista blanca, sin dependencias).
+  Privado por defecto; se comparte de a una persona.
+- Planificador: se quitó la leyenda del pie ("Planificado · En proceso ·
+  Hecho · Pauta · Toca un día para agregar").
+
 ### Pendientes
 
 - ~~Tipo "Historia"~~: hecho al final del día por decisión de Hotman —

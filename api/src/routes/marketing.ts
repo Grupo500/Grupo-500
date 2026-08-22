@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authenticate, requireRole } from '../middleware/auth'
 import { asyncHandler } from '../middleware/errorHandler'
 import * as ctrl from '../controllers/marketing.controller'
+import * as apuntes from '../controllers/apuntes.controller'
 import * as ROLES from '../utils/roles'
 
 const router = Router()
@@ -33,5 +34,15 @@ router.delete('/entregables/:id', asyncHandler(ctrl.eliminarEntregable))
 router.get('/cobros',             asyncHandler(ctrl.listarCobros))
 router.patch('/cobros/:id/aprobar', asyncHandler(ctrl.aprobarCobro))
 
+
+// Apuntes: el bloc de notas de cada quien. El controlador acota: cada uno ve
+// los suyos y los que le compartieron.
+router.get('/apuntes',                      asyncHandler(apuntes.listar))
+router.post('/apuntes',                     asyncHandler(apuntes.crear))
+router.patch('/apuntes/:id',                asyncHandler(apuntes.actualizar))
+router.delete('/apuntes/:id',               asyncHandler(apuntes.eliminarDefinitivo))
+router.post('/apuntes/:id/duplicar',        asyncHandler(apuntes.duplicar))
+router.put('/apuntes/:id/compartir',        asyncHandler(apuntes.compartir))
+router.delete('/apuntes/:id/compartir/:userId', asyncHandler(apuntes.dejarDeCompartir))
 
 export default router

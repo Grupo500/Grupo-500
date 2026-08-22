@@ -47,11 +47,6 @@ const ESTADO_PLURAL: Record<Estado, string> = {
   EN_PROCESO: 'en proceso',
   PUBLICADO: 'hechos',
 }
-const ESTADO_SINGULAR: Record<Estado, string> = {
-  PLANIFICADO: 'Planificado',
-  EN_PROCESO: 'En proceso',
-  PUBLICADO: 'Hecho',
-}
 const ORDEN_ESTADOS: Estado[] = ['PLANIFICADO', 'EN_PROCESO', 'PUBLICADO']
 
 // Etiqueta corta: dentro de una celda no cabe "Publicación" ni "Carrusel"
@@ -400,21 +395,6 @@ export function TableroContenido() {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-3.5 border-t border-outline-variant bg-surface-low px-3.5 py-2.5">
-          {ORDEN_ESTADOS.map(e => (
-            <span key={e} className="inline-flex items-center gap-1.5 text-[11px] leading-none text-on-surface-variant">
-              <span className="size-[7px] shrink-0 rounded-full" style={{ background: ESTADO_COLOR[e] }} />
-              {ESTADO_SINGULAR[e]}
-            </span>
-          ))}
-          <span className="inline-flex items-center gap-1.5 text-[11px] leading-none text-on-surface-variant">
-            <span className="size-[5px] shrink-0 rounded-full bg-on-surface-variant" />
-            Pauta
-          </span>
-          <span className="ml-auto text-[11px] leading-none" style={{ color: 'var(--outline)' }}>
-            Toca un día para agregar
-          </span>
-        </div>
       </div>
 
       {modal && (

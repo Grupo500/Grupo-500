@@ -1,4 +1,4 @@
-import { CalendarDays, Link2, Clapperboard, Share2, Wallet, Calculator, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Link2, Clapperboard, Share2, Wallet, Calculator, NotebookPen, type LucideIcon } from 'lucide-react'
 
 export interface MarketingTab {
   href: string
@@ -20,4 +20,7 @@ export const MARKETING_TABS: MarketingTab[] = [
   // TODOS los departamentos (no solo usuarios de la app) y el ciclo quincenal
   // líder → envío → aprobación → pago de contabilidad.
   { href: '/marketing/contabilidad',  label: 'Contabilidad',     icon: Calculator },
+  // El bloc de notas de cada quien: privado, con formato, para lo que hay
+  // que hacer y no es una pieza del calendario (Hotman, 22-ago).
+  { href: '/marketing/apuntes',       label: 'Apuntes',          icon: NotebookPen },
 ]
